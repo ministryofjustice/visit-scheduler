@@ -1,11 +1,11 @@
 ---
-# Per environment values which override defaults in hmpps-template-kotlin/values.yaml
+# Per environment values which override defaults in visit-scheduler/values.yaml
 
 generic-service:
   replicaCount: 2
 
   ingress:
-    host: hmpps-template-kotlin-dev.hmpps.service.justice.gov.uk
+    host: visit-scheduler-dev.hmpps.service.justice.gov.uk
 
   env:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json

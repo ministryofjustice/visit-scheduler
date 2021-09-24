@@ -1,18 +1,18 @@
 ---
 generic-service:
-  nameOverride: hmpps-template-kotlin
+  nameOverride: visit-scheduler
 
   replicaCount: 4
 
   image:
-    repository: quay.io/hmpps/hmpps-template-kotlin
+    repository: quay.io/hmpps/visit-scheduler
     tag: app_version    # override at deployment time
     port: 8080
 
   ingress:
     enabled: true
     host: app-hostname.local    # override per environment
-    tlsSecretName: hmpps-template-kotlin-cert
+    tlsSecretName: visit-scheduler-cert
     path: /
 
   # Environment variables to load into the deployment
@@ -29,7 +29,7 @@ generic-service:
   #     [name of environment variable as seen by app]: [key of kubernetes secret to load]
 
   namespace_secrets:
-    hmpps-template-kotlin:
+    visit-scheduler:
       APPINSIGHTS_INSTRUMENTATIONKEY: "APPINSIGHTS_INSTRUMENTATIONKEY"
 
   allowlist:
@@ -41,4 +41,4 @@ generic-service:
     cloudplatform-live1-3: "35.177.252.54/32"
 
 generic-prometheus-alerts:
-  targetApplication: hmpps-template-kotlin
+  targetApplication: visit-scheduler

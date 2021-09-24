@@ -1,6 +1,6 @@
 {
   "role": {
-    "name": "hmpps-template-kotlin"
+    "name": "visit-scheduler"
   },
   "customDimensions": {
     "service.version": "${BUILD_NUMBER}"
