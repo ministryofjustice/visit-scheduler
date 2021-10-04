@@ -6,7 +6,7 @@ import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
-import java.util.*
+import java.util.Arrays
 import java.util.stream.Collectors
 
 @Component
@@ -44,8 +44,8 @@ class AuthenticationFacade {
 
     private fun hasMatchingRole(roles: List<String>, authentication: Authentication?): Boolean {
       return authentication != null &&
-          authentication.authorities.stream()
-            .anyMatch { a: GrantedAuthority? -> roles.contains(RegExUtils.replaceFirst(a!!.authority, "ROLE_", "")) }
+        authentication.authorities.stream()
+          .anyMatch { a: GrantedAuthority? -> roles.contains(RegExUtils.replaceFirst(a!!.authority, "ROLE_", "")) }
     }
   }
 }
