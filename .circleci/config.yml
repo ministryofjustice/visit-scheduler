@@ -25,8 +25,7 @@ executors:
 
 jobs:
   validate:
-    executor:
-      executor: validator
+    executor: validator
     steps:
       - checkout
       - run:
