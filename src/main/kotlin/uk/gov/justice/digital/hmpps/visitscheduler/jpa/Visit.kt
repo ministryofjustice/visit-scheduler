@@ -25,7 +25,7 @@ data class Visit(
   @Column(nullable = false)
   val active: Boolean,
 
-  ) {
+) {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

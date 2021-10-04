@@ -31,7 +31,6 @@ class VisitRepositoryTest : IntegrationTestBase() {
       .withVisitDateTime(visitTime)
       .buildAndSave()
 
-
     val visitList = repository.findByPrisonerId(testPrisonerId)
 
     assertThat(visitList.size).isEqualTo(1)
@@ -41,6 +40,4 @@ class VisitRepositoryTest : IntegrationTestBase() {
       assertThat(this.visitDateTime).isEqualTo(visitTime)
     }
   }
-
 }
-

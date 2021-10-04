@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import java.time.LocalDateTime
 
-
 class VisitResourceIntTest : IntegrationTestBase() {
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -42,7 +41,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     @Test
     fun `get visit by prisoner ID`() {
 
-      webTestClient.get().uri("/visits/prisoner/${testPrisonerId}")
+      webTestClient.get().uri("/visits/prisoner/$testPrisonerId")
         .headers(setAuthorisation(roles = listOf("ROLE_PLACEHOLDER_VISIT")))
         .exchange()
         .expectStatus().isOk
@@ -56,7 +55,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     @Test
     fun `access forbidden when no role`() {
 
-      webTestClient.get().uri("/visits/prisoner/${testPrisonerId}")
+      webTestClient.get().uri("/visits/prisoner/$testPrisonerId")
         .headers(setAuthorisation(roles = listOf()))
         .exchange()
         .expectStatus().isForbidden
@@ -65,7 +64,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     @Test
     fun `get visit by prisoner ID forbidden with wrong role`() {
 
-      webTestClient.get().uri("/visits/prisoner/${testPrisonerId}")
+      webTestClient.get().uri("/visits/prisoner/$testPrisonerId")
         .headers(setAuthorisation(roles = listOf("ROLE_BANANAS")))
         .exchange()
         .expectStatus().isForbidden

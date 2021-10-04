@@ -22,7 +22,6 @@ class VisitBuilder(
     repository.saveAndFlush(visit)
   }
 
-
   fun withVisitDateTime(visitDateTime: LocalDateTime): VisitBuilder {
     this.visit = visit.copy(visitDateTime = visitDateTime)
     return this
