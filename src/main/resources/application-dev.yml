@@ -1,9 +1,6 @@
 server:
   shutdown: immediate
 
-aws:
-  provider: localstack
-
 oauth:
   endpoint.url: http://localhost:8090/auth
 
@@ -12,9 +9,11 @@ management.endpoint:
   info.cache.time-to-live: 0
 
 spring:
-  main:
-    allow-bean-definition-overriding: true
-
+  datasource:
+    url: 'jdbc:h2:mem:visit_scheduler_db;MODE=PostgreSQL'
+  h2:
+    console:
+      enabled: true
   jpa:
     show-sql: true
 
