@@ -49,7 +49,6 @@ class VisitResource(
     @PathVariable prisonerId: String
   ): List<VisitDto> =
     visitSchedulerService.findVisits(prisonerId)
-
 }
 
 @JsonInclude(NON_NULL)
@@ -67,5 +66,4 @@ data class VisitDto(
   constructor(visitEntity: Visit) : this(
     visitEntity.id, visitEntity.prisonerId, visitEntity.visitDateTime
   )
-
 }

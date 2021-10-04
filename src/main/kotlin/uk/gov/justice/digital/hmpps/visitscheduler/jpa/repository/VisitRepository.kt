@@ -6,5 +6,5 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 
 @Repository
 interface VisitRepository : JpaRepository<Visit, Long> {
-    fun findByPrisonerId(prisonerId: String): List<Visit>
+  fun findByPrisonerId(prisonerId: String): List<Visit>
 }

@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.health
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.Test
 import org.springframework.boot.info.BuildProperties
-import java.util.*
+import java.util.Properties
 
 class HealthInfoTest {
   @Test

@@ -14,6 +14,4 @@ class VisitSchedulerService(
   fun findVisits(prisonerId: String): List<VisitDto> {
     return visitRepository.findByPrisonerId(prisonerId).map { VisitDto(it) }
   }
-
-
 }
