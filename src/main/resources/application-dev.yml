@@ -10,7 +10,9 @@ management.endpoint:
 
 spring:
   datasource:
-    url: 'jdbc:h2:mem:visit_scheduler_db;MODE=PostgreSQL'
+    url: jdbc:postgresql://localhost:5432/visit_scheduler_db
+    username: admin
+    password: admin_password
   h2:
     console:
       enabled: true

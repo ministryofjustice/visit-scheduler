@@ -34,8 +34,7 @@ class VisitResource(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit Information Returned",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = VisitDto::class))]
+        description = "Visit Information Returned"
       ),
       ApiResponse(
         responseCode = "400",

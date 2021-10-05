@@ -3,6 +3,4 @@ spring:
     url: jdbc:postgresql://localhost:5432/visit_scheduler_db
     username: admin
     password: admin_password
-  flyway:
-    enabled: true
 

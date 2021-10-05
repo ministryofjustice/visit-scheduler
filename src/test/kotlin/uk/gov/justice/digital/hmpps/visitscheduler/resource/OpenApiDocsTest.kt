@@ -1,21 +1,12 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.resource
 
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.MediaType
-import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
-@Suppress("SpringJavaInjectionPointsAutowiringInspection")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
-class OpenApiDocsTest {
-
-  @Autowired
-  lateinit var webTestClient: WebTestClient
+class OpenApiDocsTest : IntegrationTestBase() {
 
   @Test
   fun `open api docs are available`() {
