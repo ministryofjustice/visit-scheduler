@@ -31,6 +31,11 @@ generic-service:
   namespace_secrets:
     visit-scheduler:
       APPINSIGHTS_INSTRUMENTATIONKEY: "APPINSIGHTS_INSTRUMENTATIONKEY"
+    visit-scheduler-rds:
+      SPRING_DATASOURCE_USERNAME: "database_username"
+      SPRING_DATASOURCE_PASSWORD: "database_password"
+      DATABASE_NAME: "database_name"
+      DATABASE_ENDPOINT: "rds_instance_endpoint"
 
   allowlist:
     office: "217.33.148.210/32"
