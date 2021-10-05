@@ -10,6 +10,7 @@ configurations {
 }
 
 dependencies {
+  agentDeps("com.microsoft.azure:applicationinsights-agent:3.2.0-BETA.4")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
