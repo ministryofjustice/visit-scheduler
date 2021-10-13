@@ -1,0 +1,445 @@
+openapi: "3.0.2"
+info:
+  title: Visit Scheduler Service
+  version: "1.0"
+servers:
+  - url: https://book-a-prison-visit.gov.uk/v1
+    variables:
+      environment:
+        default: test # Test
+        enum:
+          - dev       #Development
+          - test      #Test
+          - preprod   #Pre-production
+          - Prod      #Production
+paths:
+  /BookableSessions/Prison/{PrisonId}:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Returns all visit sessions which are within the bookable time period - whether or not they are full
+      operationId: getBookableSessionsByPrison
+      parameters:
+        - name: PrisonId
+          in: path
+          description: NOMIS Prison Identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VisitSession'
+        404:
+          description: Learner record has not been found
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+  /VisitBookings/Prisoner/{PrisonerId}:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Retrieve the set of this prisoner's (future?) visit bookings
+      operationId: getBookedVisitsByPrisoner
+      parameters:
+        - name: PrisonerId
+          in: path
+          description: NOMIS Prisoner Reference
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VisitBooking'
+        404:
+          description: Prisoner record has not been found
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+  /VisitBookings/Visitor/{VisitorId}:
+    get:
+      security:
+        - bearerAuth: []
+      summary: Retrieve the set of future visit bookings for the given visitor
+      operationId: getVisitBookingsByVisitor
+      parameters:
+        - name: VisitorId
+          in: path
+          description: NOMIS Visitor (Contact) Identifier
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VisitBooking'
+        400:
+          description: Request incorrectly formed.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        404:
+          description: Item not found for given parameter
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+  /VisitBookings:
+    post:
+      security:
+        - bearerAuth: []
+      summary: Create a new visit booking
+      operationId: createBooking
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VisitBooking'
+        400:
+          description: Request incorrectly formed.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        404:
+          description: Item not found for given input parameter
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+  /VisitBooking/{BookingReference}:
+    get:
+      security:
+        - bearerAuth: [ ]
+      summary: Retrieve an existing booking
+      operationId: getBooking
+      parameters:
+        - name: BookingReference
+          in: path
+          description: Publicised Reference for this Booking
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VisitBooking'
+        400:
+          description: Request incorrectly formed.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        404:
+          description: Item not found for given parameter
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+    put:
+      security:
+        - bearerAuth: []
+      summary: Revise an existing booking
+      operationId: reviseBooking
+      parameters:
+        - name: BookingReference
+          in: path
+          description: Publicised Reference for this Booking
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/VisitBooking'
+        400:
+          description: Request incorrectly formed.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        404:
+          description: Item not found for given parameter
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    NonSuccessResponse:
+      type: object
+      properties:
+        applicationErrorCode:
+          type: string
+        applicationErrorDescription:
+          type: string
+    VisitSession:
+      type: object
+      properties:
+        sessionId:
+          type: string
+          description: The unique identifier for this session
+        prison:
+          $ref: '#/components/schemas/Prison'
+        visitRoomName:
+          type: string
+          description: The Name of the visit room in which this visit session takes place
+        visitType:
+          type: string
+          description: The type of visits taking place within this session
+        openVisitCapacity:
+          type: integer
+          description: The number of concurrent visits which may take place within this session
+        openVisitBookedCount:
+          type: integer
+          description: The count of open visit bookings already reserved or booked for this session
+        closedVisitCapacity:
+          type: integer
+          description: The number of closed visits which may take place within this session
+        closedVisitBookedCount:
+          type: integer
+          description: The count of closed visit bookings already reserved or booked for this session
+        startTimestamp:
+          type: string
+          format: date-time
+          description: The start timestamp for this visit session
+        endTimestamp:
+          type: string
+          format: date-time
+          description: The end timestamp for this visit session
+    VisitBooking:
+      type: object
+      properties:
+        BookingReference:
+          type: string
+          description: Publicised reference for this booking
+        prisonId:
+          type: string
+          description: The NOMIS identifier for the prison for this visit booking
+        prisonerId:
+          type: string
+          description: Prisoner identifier for the prisoner being visited
+        visitRoom:
+          type: string
+          description: The visit room where this visit is taking place
+        startTimestamp:
+          type: string
+          format: date-time
+          description: Start time and date for the visit
+        endTimestamp:
+          type: string
+          format: date-time
+          description: End time and date for the visit
+        leadVisitor:
+          type: object
+        additionalVisitors:
+          description: Set of Additional Visitors
+          type: array
+          items:
+            type: object
+        reasonableAdjustments:
+          type: string
+          description: Text notes for reasonable adjustments for this visit
+        currentStatus:
+          $ref: '#/components/schemas/BookingStatus'
+        lastRevisedTimestamp:
+          type: string
+          description: Timestamp this booking was last revised
+          format: date-time
+    BookingStatus:
+      type: string
+      nullable: false
+      enum:
+        - Reserved
+        - Booked
+        - Cancelled by Prisoner
+        - Cancelled by Visitor
+        - Cancelled by Prison
+        - Attended
+    Visitor:
+      type: object
+      description: A description
+      properties:
+        visitorId:
+          type: string
+          description: Unique Identifier for this visitor (from NOMIS)
+        firstName:
+          type: string
+          description: Visitor first name
+        middleName:
+          type: string
+          description: Visitor middle name
+        lastName:
+          type: string
+          description: Visitor last name
+        dateOfBirth:
+          type: string
+          description: Visitor date of birth
+          format: date
+        postcode:
+          type: string
+          description: Postcode of the visitor's address
+        relationshiptoPrisoner:
+          type: string
+          description: Relationship to Prisoner
+    Prisoner:
+      type: object
+      description: A description
+      properties:
+        prisonerId:
+          type: string
+          description: Unique identifier for this prisoner (from NOMIS)
+        firstName:
+          type: string
+          description: Prisoner first name
+        middleName:
+          type: string
+          description: Prisoner middle name
+        lastName:
+          type: string
+          description: Prisoner last name
+        dateOfBirth:
+          type: string
+          description: prisoner date of birth
+    Prison:
+      type: object
+      description: Prison Description
+      properties:
+        prisonId:
+          type: string
+          description: Unique identifier for this prison
+        prisonName:
+          type: string
+          description: Prison Name
