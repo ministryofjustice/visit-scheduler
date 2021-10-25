@@ -13,7 +13,7 @@ servers:
           - preprod   #Pre-production
           - Prod      #Production
 paths:
-  /visit-sessions/prison/{prisonId}:
+  /visit-sessions/prison/{PrisonId}:
     get:
       security:
         - bearerAuth: []
