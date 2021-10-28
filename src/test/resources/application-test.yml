@@ -23,3 +23,6 @@ spring:
       resourceserver:
         jwt:
           public-key-location: classpath:local-public-key.pub
+
+policy:
+  book-ahead-period: 50
