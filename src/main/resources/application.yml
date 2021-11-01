@@ -78,3 +78,6 @@ management:
 
 oauth:
   token.url: ${oauth.endpoint.url}/oauth/token
+
+policy:
+  book-ahead-period: 100
