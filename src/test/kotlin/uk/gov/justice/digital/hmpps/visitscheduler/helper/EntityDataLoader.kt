@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import java.time.LocalDate
@@ -55,7 +57,11 @@ fun defaultVisit(): Visit {
   return Visit(
     prisonerId = "AF12345G",
     visitDateTime = LocalDateTime.of(2021, 10, 23, 10, 30),
-    active = true
+    active = true,
+    visitType = VisitType.STANDARD_SOCIAL,
+    prisonId = "MDI",
+    visitStatus = VisitStatus.RESERVED,
+    visitRoom = "123c"
   )
 }
 

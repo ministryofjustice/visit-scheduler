@@ -2,11 +2,15 @@ package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
 import org.hibernate.Hibernate
 import java.time.LocalDateTime
+import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.OneToMany
 import javax.persistence.Table
 
 @Entity
@@ -20,10 +24,26 @@ data class Visit(
   val prisonerId: String,
 
   @Column(nullable = false)
+  val prisonId: String,
+
+  @Column(nullable = false)
+  val visitRoom: String,
+
+  @Column(nullable = false)
   val visitDateTime: LocalDateTime,
 
   @Column(nullable = false)
+  val visitType: VisitType,
+
+  @Column(nullable = false)
   val active: Boolean,
+
+  @Column(nullable = false)
+  val visitStatus: VisitStatus,
+
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
+  @JoinColumn(name = "VISIT_ID")
+  val visitors: MutableList<VisitVisitor> = mutableListOf(),
 
 ) {
 
