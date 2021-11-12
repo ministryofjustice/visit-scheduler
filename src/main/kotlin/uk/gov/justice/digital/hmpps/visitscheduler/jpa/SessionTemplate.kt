@@ -1,27 +1,21 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
 import org.hibernate.Hibernate
-import java.time.LocalDateTime
-import javax.persistence.CascadeType
+import java.time.LocalDate
+import java.time.LocalTime
 import javax.persistence.Column
 import javax.persistence.Entity
-import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
-import javax.persistence.JoinColumn
-import javax.persistence.OneToMany
 import javax.persistence.Table
 
 @Entity
-@Table(name = "VISIT")
-data class Visit(
+@Table(name = "SESSION_TEMPLATE")
+data class SessionTemplate(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Long = 0,
-
-  @Column(nullable = false)
-  val prisonerId: String,
 
   @Column(nullable = false)
   val prisonId: String,
@@ -30,27 +24,38 @@ data class Visit(
   val visitRoom: String,
 
   @Column(nullable = false)
-  val visitDateTime: LocalDateTime,
+  val visitType: String,
 
   @Column(nullable = false)
-  val visitType: VisitType,
+  val frequency: String,
+
+  @Column
+  val restrictions: String?,
 
   @Column(nullable = false)
-  val active: Boolean,
+  val startTime: LocalTime,
 
   @Column(nullable = false)
-  val visitStatus: VisitStatus,
+  val endTime: LocalTime,
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
-  @JoinColumn(name = "VISIT_ID")
-  val visitors: MutableList<VisitVisitor> = mutableListOf(),
+  @Column(nullable = false)
+  val startDate: LocalDate,
+
+  @Column()
+  val expiryDate: LocalDate?,
+
+  @Column(nullable = false)
+  val closedCapacity: Int,
+
+  @Column(nullable = false)
+  val openCapacity: Int,
 
 ) {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
-    other as Visit
+    other as SessionTemplate
 
     return id == other.id
   }

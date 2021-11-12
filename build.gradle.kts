@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "3.3.9"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "3.3.12"
   kotlin("plugin.spring") version "1.5.31"
   kotlin("plugin.jpa") version "1.5.31"
   idea
@@ -22,14 +22,14 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
   implementation("org.flywaydb:flyway-core")
-  runtimeOnly("org.postgresql:postgresql:42.2.23")
+  runtimeOnly("org.postgresql:postgresql:42.3.0")
   implementation("com.vladmihalcea:hibernate-types-52:2.12.1")
 
   implementation("javax.transaction:javax.transaction-api:1.3")
   implementation("javax.xml.bind:jaxb-api:2.3.1")
   implementation("com.google.code.gson:gson:2.8.8")
 
-  implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.12.5")
+  implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0")
 
   implementation("org.springdoc:springdoc-openapi-webmvc-core:1.5.10")
   implementation("org.springdoc:springdoc-openapi-ui:1.5.10")
@@ -39,7 +39,7 @@ dependencies {
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
   testImplementation("net.javacrumbs.json-unit:json-unit-assertj:2.28.0")
-  testImplementation("org.testcontainers:postgresql:1.16.0")
+  testImplementation("org.testcontainers:postgresql:1.16.2")
   testImplementation("io.jsonwebtoken:jjwt:0.9.1")
   testImplementation("org.mockito:mockito-inline:3.12.4")
 }
