@@ -6,6 +6,7 @@ generic-service:
 
   ingress:
     host: visit-scheduler-dev.hmpps.service.justice.gov.uk
+    contextColour: green
 
   env:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
