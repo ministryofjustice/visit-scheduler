@@ -1,0 +1,93 @@
+asyncapi: 2.2.0
+info:
+  title: Visit Scheduler Microservice Events
+  version: 'v1'
+  description: Events posted by the *Visit Scheduler* microservice
+  contact:
+    name: Visit Someone in Prison Team
+    email: prisonvisitsbooking@digital.justice.gov.uk
+
+servers:
+  production:
+    url: hmpps-domain-events-prod.live-1.cloud-platform.service.justice.gov.uk
+    protocol: sqs
+    description: Production Environment
+  pre-production:
+    url: hmpps-domain-events-preprod.live-1.cloud-platform.service.justice.gov.uk
+    protocol: sqs
+    description: Pre-production Environment
+  test:
+    url: hmpps-domain-events-dev.live-1.cloud-platform.service.justice.gov.uk
+    protocol: sqs
+    description: Test Environment
+
+channels:
+  prison-visit.created:
+    description: Prison Visit Created
+    publish:
+      message:
+        $ref: '#/components/messages/prison-visit-created-event'
+      bindings:
+        sns:
+          is: notification service
+  prison-visit.revised:
+    description: Prison Visit Amended
+    publish:
+      message:
+        $ref: '#/components/messages/prison-visit-revised-event'
+      bindings:
+        sns:
+          is: notification service
+  prison-visit.cancelled:
+    description: Prison Visit Cancelled
+    publish:
+      message:
+        $ref: '#/components/messages/prison-visit-cancelled-event'
+      bindings:
+        sns:
+          is: notification service
+
+components:
+  messages:
+    prison-visit-created-event:
+      payload:
+        type: object
+        properties:
+          visitId:
+            type: string
+            description: Visit Reference Identifier
+          visitType:
+            $ref: '#/components/schemas/VisitType'
+            description: Type of Visit
+        example: {visitID: A1-23-45-6C, visitType: social}
+    prison-visit-revised-event:
+      payload:
+        type: object
+        properties:
+          visitId:
+            type: string
+            description: Visit Reference Identifier
+          visitType:
+            $ref: '#/components/schemas/VisitType'
+            description: Type of Visit
+        example: {visitID: A1-23-45-6C, visitType: social}
+    prison-visit-cancelled-event:
+      payload:
+        type: object
+        properties:
+          visitId:
+            type: string
+            description: Visit Reference Identifier
+          visitType:
+            $ref: '#/components/schemas/VisitType'
+            description: Type of Visit
+        example: {visitID: A1-23-45-6C, visitType: social}
+  schemas:
+    VisitType:
+      type: string
+      description: Visit Type
+      enum:
+        - social
+        - family
+        - official
+        - legal
