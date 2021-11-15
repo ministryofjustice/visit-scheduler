@@ -199,7 +199,7 @@ paths:
               schema:
                 items:
                   $ref: '#/components/schemas/NonSuccessResponse'
-  /visits-by-prisoner{prisonerId}:
+  /visits-by-prisoner/{prisonerId}:
     get:
       security:
         - bearerAuth: [ ]
@@ -422,9 +422,9 @@ components:
         relationshiptoPrisoner:
           type: string
           description: Relationship to Prisoner
-        visitorType:
+        contactType:
           type: string
-          description: Type of Visitor
+          description: Type of Contact
     Prisoner:
       type: object
       description: A description
