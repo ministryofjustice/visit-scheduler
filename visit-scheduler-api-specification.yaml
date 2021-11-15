@@ -3,7 +3,7 @@ info:
   title: Visit Scheduler Service
   version: "1.0"
 servers:
-  - url: https://visit-a-prisoner.gov.uk/v1
+  - url: https://visit-scheduler.gov.uk/v1
     variables:
       environment:
         default: test # Test
@@ -13,14 +13,16 @@ servers:
           - preprod   #Pre-production
           - Prod      #Production
 paths:
-  /visit-sessions/prison/{PrisonId}:
+  /bookable-visit-sessions-by-prison/{prisonId}:
     get:
       security:
         - bearerAuth: []
-      summary: Returns all visit sessions which are within the reservable time period - whether or not they are full
-      operationId: getReservableSessionsByPrison
+      summary: Returns visit sessions for the specified prison which are within the bookable time period - whether or not they are full
+      tags:
+        - visit-sessions
+      operationId: getBookableSessionsByPrison
       parameters:
-        - name: PrisonId
+        - name: prisonId
           in: path
           description: NOMIS Prison Identifier
           required: true
@@ -36,7 +38,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/VisitSession'
         404:
-          description: Learner record has not been found
+          description: Prison not found
           content:
             application/json:
               schema:
@@ -56,14 +58,157 @@ paths:
               schema:
                 items:
                   $ref: '#/components/schemas/NonSuccessResponse'
-  /visit-slots/Prisoner/{PrisonerId}:
+  /visits/{visitId}:
     get:
       security:
         - bearerAuth: [ ]
-      summary: Retrieve the set of this prisoner's (future?) visit slots
-      operationId: getVisitSlotsByPrisoner
+      summary: Retrieve details of a visit
+      tags:
+        - visits
+      operationId: getVisits
       parameters:
-        - name: PrisonerId
+        - name: visitId
+          in: path
+          description: Identifier for this visit
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Visit'
+        404:
+          description: Visit identifier not found
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+    put:
+      security:
+        - bearerAuth: []
+      summary: Revise an existing visit
+      tags:
+        - visits
+      operationId: reviseVisit
+      parameters:
+        - name: visitId
+          in: path
+          description: identidier for this visit
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Visit'
+        400:
+          description: Request incorrectly formed.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        404:
+          description: Visit identifier not found
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+  /visits:
+    post:
+      security:
+        - bearerAuth: [ ]
+      summary: Create a new visit
+      tags:
+        - visits
+      operationId: createVisit
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Visit'
+        400:
+          description: Request incorrectly formed.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required.
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        404:
+          description: Visit Identifier not found
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+  /visits-by-prisoner/{prisonerId}:
+    get:
+      security:
+        - bearerAuth: [ ]
+      summary: Retrieve the set of visits for a prisoner.
+      tags:
+        - visits
+      operationId: getVisitsByPrisoner
+      parameters:
+        - name: prisonerId
           in: path
           description: NOMIS Prisoner Reference
           required: true
@@ -77,9 +222,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/VisitSlot'
+                  $ref: '#/components/schemas/Visit'
         404:
-          description: Prisoner record has not been found
+          description: prisoner identifier not found
           content:
             application/json:
               schema:
@@ -99,16 +244,18 @@ paths:
               schema:
                 items:
                   $ref: '#/components/schemas/NonSuccessResponse'
-  /visit-slots/Visitor/{VisitorId}:
+  /visits-by-contact/{nomisContactId}:
     get:
       security:
         - bearerAuth: [ ]
-      summary: Retrieve the set of future visit slots for the given visitor
-      operationId: getVisitSlotsByVisitor
+      summary: Retrieve the set of visits for a contact
+      tags:
+        - visits
+      operationId: getVisitsByNomisContact
       parameters:
-        - name: VisitorId
+        - name: nomisContactId
           in: path
-          description: NOMIS Visitor (Contact) Identifier
+          description: NOMIS Contact Identifier
           required: true
           schema:
             type: string
@@ -120,9 +267,9 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/VisitSlot'
-        400:
-          description: Request incorrectly formed.
+                  $ref: '#/components/schemas/Visit'
+        404:
+          description: NOMIS Contact identifier not found
           content:
             application/json:
               schema:
@@ -137,155 +284,6 @@ paths:
                   $ref: '#/components/schemas/NonSuccessResponse'
         403:
           description: Access denied
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        404:
-          description: Item not found for given parameter
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-  /visit-slots:
-    post:
-      security:
-        - bearerAuth: [ ]
-      summary: Create a new visit slot
-      operationId: createSlot
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/VisitSlot'
-        400:
-          description: Request incorrectly formed.
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        401:
-          description: Authentication required.
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        403:
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        404:
-          description: Item not found for given input parameter
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-  /visit-slot/{SlotReference}:
-    get:
-      security:
-        - bearerAuth: [ ]
-      summary: Retrieve an existing visit slot
-      operationId: getSlot
-      parameters:
-        - name: SlotReference
-          in: path
-          description: Publicised Reference for this Slot
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/VisitSlot'
-        400:
-          description: Request incorrectly formed.
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        401:
-          description: Authentication required.
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        403:
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        404:
-          description: Item not found for given parameter
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-    put:
-      security:
-        - bearerAuth: []
-      summary: Revise an existing slot
-      operationId: reviseSlot
-      parameters:
-        - name: SlotReference
-          in: path
-          description: Publicised reference for this slot
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/VisitSlot'
-        400:
-          description: Request incorrectly formed.
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        401:
-          description: Authentication required.
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        403:
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        404:
-          description: Item not found for given parameter
           content:
             application/json:
               schema:
@@ -339,15 +337,17 @@ components:
           type: string
           format: date-time
           description: The end timestamp for this visit session
-    VisitSlot:
+    Visit:
       type: object
       properties:
-        SlotReference:
+        visitId:
           type: string
-          description: Publicised reference for this visit slot
+          description: Publicised identifier for this visit
         prisonId:
           type: string
-          description: The NOMIS identifier for the prison for this visit slot
+          description: The NOMIS identifier for the prison for this visit
+        visitType:
+          $ref: '#/components/schemas/VisitType'
         prisonerId:
           type: string
           description: Prisoner identifier for the prisoner being visited
@@ -373,12 +373,12 @@ components:
           type: string
           description: Text notes for reasonable adjustments for this visit
         currentStatus:
-          $ref: '#/components/schemas/SlotStatus'
+          $ref: '#/components/schemas/VisitStatus'
         lastRevisedTimestamp:
           type: string
-          description: Timestamp this visit slot was last revised
+          description: Timestamp this visit was last revised
           format: date-time
-    SlotStatus:
+    VisitStatus:
       type: string
       nullable: false
       enum:
@@ -388,25 +388,33 @@ components:
         - Cancelled by Visitor
         - Cancelled by Prison
         - Attended
-    Visitor:
+    VisitType:
+      type: string
+      nullable: false
+      enum:
+        - Social
+        - Family
+        - Official
+        - Legal
+    Contact:
       type: object
       description: A description
       properties:
-        visitorId:
+        nomisContactId:
           type: string
-          description: Unique Identifier for this visitor (from NOMIS)
+          description: Unique Identifier for this contact (from NOMIS)
         firstName:
           type: string
-          description: Visitor first name
+          description: Contact first name
         middleName:
           type: string
-          description: Visitor middle name
+          description: Contact middle name
         lastName:
           type: string
-          description: Visitor last name
+          description: Contact last name
         dateOfBirth:
           type: string
-          description: Visitor date of birth
+          description: Contact date of birth
           format: date
         postcode:
           type: string
@@ -414,9 +422,9 @@ components:
         relationshiptoPrisoner:
           type: string
           description: Relationship to Prisoner
-        visitorType:
+        contactType:
           type: string
-          description: Type of Visitor
+          description: Type of Contact
     Prisoner:
       type: object
       description: A description
