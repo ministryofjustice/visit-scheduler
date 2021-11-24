@@ -10,8 +10,8 @@ import javax.persistence.Table
 
 @Embeddable
 data class VisitVisitorPk(
-  @Column(name = "PERSON_ID", nullable = false)
-  var personId: Long,
+  @Column(name = "CONTACT_ID", nullable = false)
+  var contactId: Long,
   @Column(name = "VISIT_ID", nullable = false)
   var visitId: Long,
 ) : Serializable
