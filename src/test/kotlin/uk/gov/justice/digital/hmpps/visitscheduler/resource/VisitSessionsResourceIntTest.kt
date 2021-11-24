@@ -38,9 +38,9 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
         frequency = SessionFrequency.WEEKLY.name,
         restrictions = "Only B wing"
       )
-    ).buildAndSave()
+    ).save()
     webTestClient.get().uri("/visit-sessions/prison/MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_PLACEHOLDER_VISIT")))
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
       .expectBody()
@@ -77,9 +77,9 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
         frequency = SessionFrequency.WEEKLY.name,
         restrictions = "Only B wing"
       )
-    ).buildAndSave()
+    ).save()
     webTestClient.get().uri("/visit-sessions/prison/MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_PLACEHOLDER_VISIT")))
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
       .expectBody()
@@ -96,9 +96,9 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
         frequency = SessionFrequency.WEEKLY.name,
         restrictions = "Only B wing"
       )
-    ).buildAndSave()
+    ).save()
     webTestClient.get().uri("/visit-sessions/prison/MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_PLACEHOLDER_VISIT")))
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
       .expectBody()
@@ -110,9 +110,9 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
     sessionTemplateCreator(
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(startDate = LocalDate.parse("2021-01-08"))
-    ).buildAndSave()
+    ).save()
     webTestClient.get().uri("/visit-sessions/prison/MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_PLACEHOLDER_VISIT")))
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
       .expectBody()

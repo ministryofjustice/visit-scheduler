@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import VisitSpecification
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
+import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
@@ -11,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.resource.VisitDto
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.function.Supplier
 import javax.transaction.Transactional
 
 @Service
@@ -22,8 +25,9 @@ class VisitSchedulerService(
   @Value("\${policy.book-ahead-period}") private val bookAheadPeriod: Long,
 ) {
 
-  fun findVisits(prisonerId: String): List<VisitDto> {
-    return visitRepository.findByPrisonerId(prisonerId).map { VisitDto(it) }
+  fun getVisitById(visitId: Long): VisitDto {
+    return visitRepository.findById(visitId).map { VisitDto(it) }
+      .orElseThrow(VisitNotFoundException("Visit id  $visitId not found"))
   }
 
   fun getVisitSessions(prisonId: String): List<VisitSession> {
@@ -57,7 +61,20 @@ class VisitSchedulerService(
           visitType = it.visitType,
           restrictions = it.restrictions
         )
-      }.filter { session -> session.startTimestamp > LocalDateTime.now(clock) } // TODO - can visits ever be booked for the same day?
+      }
+      .filter { session -> session.startTimestamp > LocalDateTime.now(clock) } // TODO - can visits ever be booked for the same day?
       .toList()
+  }
+
+  fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
+    return visitRepository.findAll(VisitSpecification(visitFilter)).map { VisitDto(it) }
+  }
+}
+
+class VisitNotFoundException(message: String?) :
+  RuntimeException(message),
+  Supplier<VisitNotFoundException> {
+  override fun get(): VisitNotFoundException {
+    return VisitNotFoundException(message)
   }
 }
