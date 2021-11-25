@@ -157,11 +157,11 @@ class VisitResource(
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "Local Admin user information returned"
+        description = "Visit created"
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to create user information",
+        description = "Incorrect request to create a visit",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       ),
       ApiResponse(
@@ -171,7 +171,7 @@ class VisitResource(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to create a user",
+        description = "Incorrect permissions to create a visit",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       )
     ]

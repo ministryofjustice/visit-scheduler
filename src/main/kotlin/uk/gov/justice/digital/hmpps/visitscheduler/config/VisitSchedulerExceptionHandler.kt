@@ -60,7 +60,7 @@ class VisitSchedulerExceptionHandler {
 
   @ExceptionHandler(MissingServletRequestParameterException::class)
   fun handleValidationException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> {
-    log.debug("Bad Request (400) returned", e)
+    log.debug("Bad Request (400) returned", e.message)
     return ResponseEntity
       .status(BAD_REQUEST)
       .body(ErrorResponse(status = (BAD_REQUEST.value()), developerMessage = (e.message)))
