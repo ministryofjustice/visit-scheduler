@@ -8,19 +8,26 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitSchedulerService
 import java.time.LocalDateTime
+import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 
 @RestController
@@ -133,6 +140,74 @@ class VisitResource(
         contactId = contactId
       )
     )
+
+  @PreAuthorize("hasRole('ROLE_VISIT_SCHEDULER')")
+  @PostMapping
+  @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+    summary = "Create a visit",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = CreateVisitRequest::class)
+        )
+      ]
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "201",
+        description = "Local Admin user information returned"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to create user information",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to create a user",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun createVisit(
+    @RequestBody @Valid createVisitRequest: CreateVisitRequest
+  ): VisitDto = visitSchedulerService.createVisit(createVisitRequest)
+
+  @PreAuthorize("hasRole('ROLE_VISIT_SCHEDULER')")
+  @DeleteMapping("/{visitId}")
+  @Operation(
+    summary = "Delete visit",
+    description = "Delete a visit by visit id",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit deleted"
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to delete a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun deleteVisit(
+    @Schema(description = "visit id", example = "45645", required = true)
+    @PathVariable visitId: Long
+  ) {
+    visitSchedulerService.deleteVisit(visitId)
+  }
 }
 
 @JsonInclude(NON_NULL)
@@ -141,6 +216,11 @@ data class VisitDto(
   @Schema(description = "Visit id", example = "123", required = true) val id: Long,
   @Schema(description = "prisonerId", example = "AF34567G", required = true) val prisonerId: String,
   @Schema(description = "prisonId", example = "MDI", required = true) val prisonId: String,
+  @Schema(description = "visitRoom", example = "A1 L3", required = true) val visitRoom: String,
+  @Schema(description = "visitType", example = "STANDARD_SOCIAL", required = true) val visitType: String,
+  @Schema(description = "visitTypeDescription", example = "Standard Social", required = true) val visitTypeDescription: String,
+  @Schema(description = "status", example = "RESERVED", required = true) val status: String,
+  @Schema(description = "statusDescription", example = "Reserved", required = true) val statusDescription: String,
   @Schema(
     description = "The date and time of the visit",
     example = "2018-12-01T13:45:00",
@@ -158,6 +238,11 @@ data class VisitDto(
     prisonerId = visitEntity.prisonerId,
     prisonId = visitEntity.prisonId,
     startTimestamp = visitEntity.visitStart,
-    endTimestamp = visitEntity.visitEnd
+    endTimestamp = visitEntity.visitEnd,
+    status = visitEntity.status.name,
+    statusDescription = visitEntity.status.description,
+    visitRoom = visitEntity.visitRoom,
+    visitType = visitEntity.visitType.name,
+    visitTypeDescription = visitEntity.visitType.description,
   )
 }
