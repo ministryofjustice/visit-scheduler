@@ -13,17 +13,17 @@ servers:
           - preprod   #Pre-production
           - Prod      #Production
 paths:
-  /visit-sessions?prison={prisonId}:
+  /visit-sessions/prison/{prisonId}:
     get:
       security:
         - bearerAuth: []
       summary: Returns visit sessions for the specified prison which are within the bookable time period - whether or not they are full
       tags:
         - visit-sessions
-      operationId: getVisitSessions
+      operationId: getBookableSessionsByPrison
       parameters:
         - name: prisonId
-          in: query
+          in: path
           description: NOMIS Prison Identifier
           required: true
           schema:
@@ -268,7 +268,7 @@ paths:
             application/json:
               schema:
                 items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
+                $ref: '#/components/schemas/NonSuccessResponse'
 
 components:
   securitySchemes:
@@ -344,12 +344,12 @@ components:
           format: date-time
           description: End time and date for the visit
         leadVisitor:
-          $ref: '#/components/schemas/Contact'
+          type: object
         additionalVisitors:
           description: Set of Additional Visitors
           type: array
           items:
-            $ref: '#/components/schemas/Contact'
+            type: object
         reasonableAdjustments:
           type: string
           description: Text notes for reasonable adjustments for this visit
