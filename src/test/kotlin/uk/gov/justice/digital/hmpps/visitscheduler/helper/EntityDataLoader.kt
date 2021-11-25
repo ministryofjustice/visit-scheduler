@@ -5,8 +5,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitVisitorRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -15,26 +18,25 @@ class VisitBuilder(
   private var visit: Visit,
 ) {
 
-  fun build(): VisitBuilder {
+  fun save(): Visit = repository.saveAndFlush(visit)
+
+  fun withVisitStart(visitDateTime: LocalDateTime): VisitBuilder {
+    this.visit = visit.copy(visitStart = visitDateTime)
     return this
   }
 
-  fun save() {
-    repository.saveAndFlush(visit)
-  }
-
-  fun buildAndSave() {
-    build()
-    repository.saveAndFlush(visit)
-  }
-
-  fun withVisitDateTime(visitDateTime: LocalDateTime): VisitBuilder {
-    this.visit = visit.copy(visitDateTime = visitDateTime)
+  fun withVisitEnd(visitDateTime: LocalDateTime): VisitBuilder {
+    this.visit = visit.copy(visitEnd = visitDateTime)
     return this
   }
 
   fun withPrisonerId(prisonerId: String): VisitBuilder {
     this.visit = visit.copy(prisonerId = prisonerId)
+    return this
+  }
+
+  fun withPrisonId(prisonId: String): VisitBuilder {
+    this.visit = visit.copy(prisonId = prisonId)
     return this
   }
 }
@@ -56,30 +58,28 @@ fun visitDeleter(
 fun defaultVisit(): Visit {
   return Visit(
     prisonerId = "AF12345G",
-    visitDateTime = LocalDateTime.of(2021, 10, 23, 10, 30),
-    active = true,
+    visitStart = LocalDateTime.of(2021, 10, 23, 10, 30),
+    visitEnd = LocalDateTime.of(2021, 10, 23, 11, 30),
     visitType = VisitType.STANDARD_SOCIAL,
     prisonId = "MDI",
-    visitStatus = VisitStatus.RESERVED,
+    status = VisitStatus.RESERVED,
     visitRoom = "123c"
   )
+}
+
+fun visitVisitorCreator(
+  repository: VisitVisitorRepository,
+  contactId: Long,
+  visitId: Long
+) {
+  repository.saveAndFlush(VisitVisitor(VisitVisitorPk(contactId = contactId, visitId = visitId)))
 }
 
 class SessionTemplateBuilder(
   private val repository: SessionTemplateRepository,
   private var sessionTemplate: SessionTemplate,
 ) {
-
-  fun build(): SessionTemplateBuilder {
-    return this
-  }
-
   fun save() {
-    repository.saveAndFlush(sessionTemplate)
-  }
-
-  fun buildAndSave() {
-    build()
     repository.saveAndFlush(sessionTemplate)
   }
 }

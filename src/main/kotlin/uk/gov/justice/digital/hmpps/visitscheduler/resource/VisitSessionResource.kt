@@ -22,7 +22,7 @@ class VisitSessionResource(
   private val visitSchedulerService: VisitSchedulerService
 ) {
 
-  @PreAuthorize("hasRole('ROLE_PLACEHOLDER_VISIT')")
+  @PreAuthorize("hasRole('ROLE_VISIT_SCHEDULER')")
   @GetMapping("/prison/{prisonId}")
   @Operation(
     summary = "Returns all visit sessions which are within the reservable time period - whether or not they are full",
