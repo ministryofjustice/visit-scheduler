@@ -30,19 +30,19 @@ data class Visit(
   val visitRoom: String,
 
   @Column(nullable = false)
-  val visitDateTime: LocalDateTime,
+  val visitStart: LocalDateTime,
+
+  @Column(nullable = false)
+  val visitEnd: LocalDateTime,
 
   @Column(nullable = false)
   val visitType: VisitType,
 
   @Column(nullable = false)
-  val active: Boolean,
-
-  @Column(nullable = false)
-  val visitStatus: VisitStatus,
+  val status: VisitStatus,
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
-  @JoinColumn(name = "VISIT_ID")
+  @JoinColumn(name = "VISIT_ID", updatable = false)
   val visitors: MutableList<VisitVisitor> = mutableListOf(),
 
 ) {

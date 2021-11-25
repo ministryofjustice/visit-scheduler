@@ -1,25 +1,24 @@
--- placeholder table for testing - will be replaced
 CREATE TABLE visit
 (
     id              serial        NOT NULL PRIMARY KEY,
-    session_template_id  serial,
+    session_template_id  integer,
     reference       VARCHAR(80),
     prisoner_id     VARCHAR(80)   NOT NULL,
     visit_type      VARCHAR(80)   NOT NULL,
     prison_id       VARCHAR(6)    NOT NULL,
     visit_room      VARCHAR(255)  NOT NULL,
-    visit_date_time timestamp with time zone NOT NULL,
-    visit_status          VARCHAR(80)   NOT NULL,
-    active          BOOLEAN       NOT NULL,
+    visit_start     timestamp with time zone NOT NULL,
+    visit_end       timestamp with time zone NOT NULL,
+    status          VARCHAR(80)   NOT NULL,
     reasonable_adjustments    text
 );
 
 CREATE TABLE visit_visitor
 (
-    visit_id        serial        NOT NULL,
-    person_id       serial        NOT NULL,
+    visit_id        integer        NOT NULL,
+    contact_id      integer        NOT NULL,
     lead_visitor    BOOLEAN,
-    PRIMARY KEY (visit_id, person_id)
+    PRIMARY KEY (visit_id, contact_id)
 );
 
 CREATE TABLE session_template

@@ -13,17 +13,17 @@ servers:
           - preprod   #Pre-production
           - Prod      #Production
 paths:
-  /bookable-visit-sessions-by-prison/{prisonId}:
+  /visit-sessions?prison={prisonId}:
     get:
       security:
         - bearerAuth: []
       summary: Returns visit sessions for the specified prison which are within the bookable time period - whether or not they are full
       tags:
         - visit-sessions
-      operationId: getBookableSessionsByPrison
+      operationId: getVisitSessions
       parameters:
         - name: prisonId
-          in: path
+          in: query
           description: NOMIS Prison Identifier
           required: true
           schema:
@@ -155,6 +155,76 @@ paths:
                 items:
                   $ref: '#/components/schemas/NonSuccessResponse'
   /visits:
+    get:
+      security:
+        - bearerAuth: [ ]
+      summary: Retrieve visits with optional filtering
+      tags:
+        - visits
+      operationId: getVisitsByPrisoner
+      parameters:
+        - name: prisonerId
+          in: query
+          description: NOMIS Prisoner Reference
+          required: false
+          schema:
+            type: string
+        - name: prisonId
+          in: query
+          description: NOMIS Prison Reference
+          required: false
+          schema:
+            type: string
+        - name: contactId
+          in: query
+          description: contact Id (currently NOMIS person id)
+          required: false
+          schema:
+            type: integer
+        - name: startTimestamp
+          in: query
+          description: retrieve visits when visit start is on or after this timestamp (inclusive)
+          required: false
+          schema:
+            type: string
+          example: 2021-11-03T08:00:00
+        - name: endTimestamp
+          in: query
+          description: retrieve visits when visit start is on or before this timestamp (inclusive)
+          required: false
+          schema:
+            type: string
+          example: 2021-11-03T09:00:00
+      responses:
+        200:
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Visit'
+        400:
+          description: Request incorrectly formed
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        401:
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
+        403:
+          description: Access denied
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/NonSuccessResponse'
     post:
       security:
         - bearerAuth: [ ]
@@ -199,96 +269,7 @@ paths:
               schema:
                 items:
                   $ref: '#/components/schemas/NonSuccessResponse'
-  /visits-by-prisoner/{prisonerId}:
-    get:
-      security:
-        - bearerAuth: [ ]
-      summary: Retrieve the set of visits for a prisoner.
-      tags:
-        - visits
-      operationId: getVisitsByPrisoner
-      parameters:
-        - name: prisonerId
-          in: path
-          description: NOMIS Prisoner Reference
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Visit'
-        404:
-          description: prisoner identifier not found
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        401:
-          description: Authentication required.
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        403:
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-  /visits-by-contact/{nomisContactId}:
-    get:
-      security:
-        - bearerAuth: [ ]
-      summary: Retrieve the set of visits for a contact
-      tags:
-        - visits
-      operationId: getVisitsByNomisContact
-      parameters:
-        - name: nomisContactId
-          in: path
-          description: NOMIS Contact Identifier
-          required: true
-          schema:
-            type: string
-      responses:
-        200:
-          description: Success
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/Visit'
-        404:
-          description: NOMIS Contact identifier not found
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        401:
-          description: Authentication required.
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
-        403:
-          description: Access denied
-          content:
-            application/json:
-              schema:
-                items:
-                  $ref: '#/components/schemas/NonSuccessResponse'
+
 components:
   securitySchemes:
     bearerAuth:
@@ -363,12 +344,12 @@ components:
           format: date-time
           description: End time and date for the visit
         leadVisitor:
-          type: object
+          $ref: '#/components/schemas/Contact'
         additionalVisitors:
           description: Set of Additional Visitors
           type: array
           items:
-            type: object
+            $ref: '#/components/schemas/Contact'
         reasonableAdjustments:
           type: string
           description: Text notes for reasonable adjustments for this visit
