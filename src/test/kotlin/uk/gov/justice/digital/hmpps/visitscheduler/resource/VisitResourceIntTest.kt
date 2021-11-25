@@ -9,10 +9,13 @@ import org.junit.jupiter.api.Test
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitVisitorRepository
 import java.time.LocalDateTime
@@ -28,6 +31,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
     val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
   }
+
+  @AfterEach
+  internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
   @DisplayName("GET /visits")
   @Nested
@@ -52,9 +58,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .save()
       visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id)
     }
-
-    @AfterEach
-    internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
     @Test
     fun `get visit by prisoner ID`() {
@@ -102,7 +105,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectStatus().isOk
         .expectBody()
         .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[-1].startTimestamp").isEqualTo(visitTime.plusDays(2).toString())
+        .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.plusDays(2).toString())
     }
 
     @Test
@@ -131,7 +134,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectStatus().isOk
         .expectBody()
         .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[-1].prisonerId").isEqualTo("FF0000CC")
+        .jsonPath("$[0].prisonerId").isEqualTo("FF0000CC")
     }
 
     @Test
@@ -167,6 +170,14 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
+    fun `get visit by visit id - not found`() {
+      webTestClient.get().uri("/visits/12345")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isNotFound
+    }
+
+    @Test
     fun `access forbidden when no role`() {
 
       webTestClient.get().uri("/visits?prisonerId=FF0000AA")
@@ -184,15 +195,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `get visit by prisoner ID forbidden with wrong role`() {
-
-      webTestClient.get().uri("/visits?prisonerId=FF0000AA")
-        .headers(setAuthorisation(roles = listOf("ROLE_BANANAS")))
-        .exchange()
-        .expectStatus().isForbidden
-    }
-
-    @Test
     fun `no visits found for prisoner`() {
 
       webTestClient.get().uri("/visits?prisonerId=12345")
@@ -201,6 +203,102 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectStatus().isOk
         .expectBody()
         .jsonPath("$.length()").isEqualTo(0)
+    }
+  }
+
+  @DisplayName("DELETE /visits/{visitId}")
+  @Nested
+  inner class DeleteVisitById {
+    @Test
+    fun `delete visit by visit id`() {
+
+      val visitCC = visitCreator(visitRepository)
+        .withPrisonerId("FF0000CC")
+        .withVisitStart(visitTime.plusDays(2))
+        .withVisitEnd(visitTime.plusDays(2).plusHours(1))
+        .withPrisonId("LEI")
+        .save()
+      visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id)
+
+      webTestClient.delete().uri("/visits/${visitCC.id}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+
+      webTestClient.get().uri("/visits/${visitCC.id}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isNotFound
+    }
+  }
+
+  @DisplayName("CREATE /visits/{visitId}")
+  @Nested
+  inner class CreateVisit {
+    val createVisitRequest = CreateVisitRequest(
+      prisonerId = "FF0000FF",
+      startTimestamp = visitTime,
+      endTimestamp = visitTime.plusHours(1),
+      visitRoom = "A1",
+      visitType = VisitType.STANDARD_SOCIAL,
+      prisonId = "MDI"
+    )
+
+    @Test
+    fun `create visit`() {
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest
+          )
+        )
+        .exchange()
+        .expectStatus().isCreated
+
+      webTestClient.get().uri("/visits?prisonerId=FF0000FF")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(1)
+        .jsonPath("$[0].prisonerId").isEqualTo("FF0000FF")
+        .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.toString())
+        .jsonPath("$[0].endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
+        .jsonPath("$[0].visitRoom").isEqualTo("A1")
+        .jsonPath("$[0].prisonId").isEqualTo("MDI")
+        .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
+        .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
+        .jsonPath("$[0].statusDescription").isEqualTo("Reserved")
+        .jsonPath("$[0].status").isEqualTo("RESERVED")
+        .jsonPath("$[0].id").isNumber
+    }
+
+    @Test
+    fun `access forbidden when no role`() {
+
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf()))
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest
+          )
+        )
+        .exchange()
+        .expectStatus().isForbidden
+    }
+
+    @Test
+    fun `unauthorised when no token`() {
+
+      webTestClient.post().uri("/visits")
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest
+          )
+        )
+        .exchange()
+        .expectStatus().isUnauthorized
     }
   }
 }
