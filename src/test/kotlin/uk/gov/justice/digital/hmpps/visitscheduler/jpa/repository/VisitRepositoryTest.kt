@@ -37,7 +37,15 @@ class VisitRepositoryTest : IntegrationTestBase() {
 
     val visitList = repository.findByPrisonerId(testPrisonerId).toMutableList()
 
-    visitList[0] = visitList[0].copy(visitors = mutableListOf(VisitVisitor(VisitVisitorPk(contactId = 123L, visitId = visitList[0].id))))
+    visitList[0] = visitList[0].copy(
+      visitors = mutableListOf(
+        VisitVisitor(
+          VisitVisitorPk(contactId = 123L, visitId = visitList[0].id),
+          leadVisitor = false,
+          visit = visitList[0]
+        )
+      )
+    )
 
     repository.saveAndFlush(visitList[0])
 
@@ -51,9 +59,9 @@ class VisitRepositoryTest : IntegrationTestBase() {
       assertThat(this.visitStart).isEqualTo(visitTime)
       assertThat(this.prisonId).isEqualTo("MDI")
       assertThat(this.visitors).hasSize(1)
-      assertThat(this.visitors[0].leadVisitor).isTrue()
+      assertThat(this.visitors[0].leadVisitor).isFalse()
       assertThat(this.visitors[0].id.contactId).isEqualTo(123L)
-      assertThat(this.visitors[0].id.visitId).isNotNull()
+      assertThat(this.visitors[0].id.visitId).isEqualTo(visitList[0].id)
     }
   }
 }

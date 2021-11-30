@@ -70,9 +70,10 @@ fun defaultVisit(): Visit {
 fun visitVisitorCreator(
   repository: VisitVisitorRepository,
   contactId: Long,
-  visitId: Long
+  visitId: Long,
+  visit: Visit
 ) {
-  repository.saveAndFlush(VisitVisitor(VisitVisitorPk(contactId = contactId, visitId = visitId)))
+  repository.saveAndFlush(VisitVisitor(VisitVisitorPk(contactId = contactId, visitId = visitId), visit = visit))
 }
 
 class SessionTemplateBuilder(

@@ -8,15 +8,17 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
+import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
 import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.resource.VisitDto
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -92,18 +94,34 @@ class VisitSchedulerService(
 
   fun createVisit(createVisitRequest: CreateVisitRequest): VisitDto {
     log.info("Creating visit for ${createVisitRequest.prisonerId}")
-    return VisitDto(
-      visitRepository.save(
-        Visit(
-          prisonId = createVisitRequest.prisonId,
-          prisonerId = createVisitRequest.prisonerId,
-          visitType = createVisitRequest.visitType,
-          visitRoom = createVisitRequest.visitRoom,
-          visitStart = createVisitRequest.startTimestamp,
-          visitEnd = createVisitRequest.endTimestamp,
-          status = VisitStatus.RESERVED
-        )
+    val visitEntity = visitRepository.saveAndFlush(
+      Visit(
+        prisonId = createVisitRequest.prisonId,
+        prisonerId = createVisitRequest.prisonerId,
+        visitType = createVisitRequest.visitType,
+        visitRoom = createVisitRequest.visitRoom,
+        visitStart = createVisitRequest.startTimestamp,
+        visitEnd = createVisitRequest.endTimestamp,
+        status = VisitStatus.RESERVED,
       )
+    )
+
+    createVisitRequest.contactIdList?.let { contactIdList ->
+      contactIdList.forEach {
+        visitEntity.visitors.add(
+          VisitVisitor(
+            id = VisitVisitorPk(
+              contactId = it,
+              visitId = visitEntity.id
+            ),
+            leadVisitor = true, visit = visitEntity
+          )
+        )
+      }
+    }
+
+    return VisitDto(
+      visitEntity
     )
   }
 }

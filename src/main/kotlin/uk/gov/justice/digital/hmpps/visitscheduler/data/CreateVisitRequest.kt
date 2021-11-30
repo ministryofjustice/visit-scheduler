@@ -20,4 +20,5 @@ data class CreateVisitRequest(
   ) @NotBlank val endTimestamp: LocalDateTime,
   @Schema(description = "visitType", example = "STANDARD_SOCIAL", required = true) val visitType: VisitType,
   @Schema(description = "visitRoom", example = "A1", required = true) val visitRoom: String,
+  @Schema(description = "contactId", example = "12345", required = false) val contactIdList: List<Long>?,
 )
