@@ -6,6 +6,8 @@ import javax.persistence.Column
 import javax.persistence.Embeddable
 import javax.persistence.EmbeddedId
 import javax.persistence.Entity
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
 import javax.persistence.Table
 
 @Embeddable
@@ -25,6 +27,10 @@ data class VisitVisitor(
 
   @Column(name = "LEAD_VISITOR")
   val leadVisitor: Boolean = true,
+
+  @ManyToOne
+  @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
+  val visit: Visit,
 
 ) {
   override fun equals(other: Any?): Boolean {

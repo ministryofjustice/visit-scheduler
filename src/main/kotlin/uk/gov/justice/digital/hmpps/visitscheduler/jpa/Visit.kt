@@ -9,7 +9,6 @@ import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
-import javax.persistence.JoinColumn
 import javax.persistence.OneToMany
 import javax.persistence.Table
 
@@ -41,8 +40,7 @@ data class Visit(
   @Column(nullable = false)
   val status: VisitStatus,
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
-  @JoinColumn(name = "VISIT_ID", updatable = false)
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   val visitors: MutableList<VisitVisitor> = mutableListOf(),
 
 ) {

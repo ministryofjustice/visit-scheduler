@@ -56,7 +56,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withPrisonId("LEI")
         .save()
-      visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id)
+      visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id, visitCC)
     }
 
     @Test
@@ -218,7 +218,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withPrisonId("LEI")
         .save()
-      visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id)
+      visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id, visitCC)
 
       webTestClient.delete().uri("/visits/${visitCC.id}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
@@ -241,7 +241,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitRoom = "A1",
       visitType = VisitType.STANDARD_SOCIAL,
-      prisonId = "MDI"
+      prisonId = "MDI",
+      contactIdList = listOf(123)
     )
 
     @Test
@@ -272,6 +273,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].statusDescription").isEqualTo("Reserved")
         .jsonPath("$[0].status").isEqualTo("RESERVED")
         .jsonPath("$[0].id").isNumber
+        .jsonPath("$[0].visitors.length()").isEqualTo(1)
+        .jsonPath("$[0].visitors[0].contactId").isEqualTo(123)
+        .jsonPath("$[0].visitors[0].visitId").isNumber
     }
 
     @Test
