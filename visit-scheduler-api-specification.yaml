@@ -13,18 +13,18 @@ servers:
           - preprod   #Pre-production
           - Prod      #Production
 paths:
-  /visit-sessions?establishment={establishmentId}:
+  /visit-sessions:
     get:
       security:
         - bearerAuth: []
-      summary: Returns visit sessions for the specified establishment which are within the bookable time period - whether or not they are full
+      summary: Returns visit sessions for the specified prison which are within the bookable time period - whether or not they are full
       tags:
         - visit-sessions
       operationId: getBookableSessions
       parameters:
-        - name: establishmentId
+        - name: prisonId
           in: query
-          description: NOMIS Establishment Identifier
+          description: NOMIS prison Identifier
           required: true
           schema:
             type: string
@@ -38,7 +38,7 @@ paths:
                 items:
                   $ref: '#/components/schemas/VisitSession'
         404:
-          description: Establishment not found
+          description: prison not found
           content:
             application/json:
               schema:
@@ -169,9 +169,9 @@ paths:
           required: false
           schema:
             type: string
-        - name: establishmentId
+        - name: prisonId
           in: query
-          description: NOMIS Establishment Reference
+          description: NOMIS prison Reference
           required: false
           schema:
             type: string
@@ -290,8 +290,8 @@ components:
         sessionId:
           type: string
           description: The unique identifier for this session
-        establishment:
-          $ref: '#/components/schemas/Establishment'
+        prison:
+          $ref: '#/components/schemas/prison'
         visitRoomName:
           type: string
           description: The Name of the visit room in which this visit session takes place
@@ -324,9 +324,9 @@ components:
         visitId:
           type: string
           description: Publicised identifier for this visit
-        establishmentId:
+        prisonId:
           type: string
-          description: The NOMIS identifier for the establishment for this visit
+          description: The NOMIS identifier for the prison for this visit
         visitType:
           $ref: '#/components/schemas/VisitType'
         prisonerId:
@@ -371,7 +371,7 @@ components:
         - Confirmed
         - Cancelled by Prisoner
         - Cancelled by Visitor
-        - Cancelled by Establishment
+        - Cancelled by prison
         - Attended
     VisitType:
       type: string
@@ -429,13 +429,13 @@ components:
         dateOfBirth:
           type: string
           description: prisoner date of birth
-    Establishment:
+    prison:
       type: object
-      description: Establishment Description
+      description: prison Description
       properties:
-        establishmentId:
+        prisonId:
           type: string
-          description: Unique identifier for this establishment
-        establishmentName:
+          description: Unique identifier for this prison
+        prisonName:
           type: string
-          description: Establishment Name
+          description: prison Name
