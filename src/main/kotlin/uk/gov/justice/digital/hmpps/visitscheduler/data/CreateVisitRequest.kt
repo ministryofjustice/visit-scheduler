@@ -21,4 +21,5 @@ data class CreateVisitRequest(
   @Schema(description = "visitType", example = "STANDARD_SOCIAL", required = true) val visitType: VisitType,
   @Schema(description = "visitRoom", example = "A1", required = true) val visitRoom: String,
   @Schema(description = "contactId", example = "12345", required = false) val contactIdList: List<Long>?,
+  @Schema(description = "sessionId identifying the visit session template", example = "MDI", required = false) val sessionId: Long?,
 )

@@ -242,7 +242,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
       visitRoom = "A1",
       visitType = VisitType.STANDARD_SOCIAL,
       prisonId = "MDI",
-      contactIdList = listOf(123)
+      contactIdList = listOf(123),
+      sessionId = null
     )
 
     @Test

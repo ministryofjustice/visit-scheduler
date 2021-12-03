@@ -28,6 +28,7 @@ data class VisitDto(
     required = true
   ) @NotBlank val endTimestamp: LocalDateTime,
   @Schema(description = "list of visitors associated with the visit", required = false) val visitors: List<VisitorDto> = listOf(),
+  @Schema(description = "The id of the session template associated with this visit", example = "123", required = false) val sessionId: Long?,
 ) {
 
   constructor(visitEntity: Visit) : this(
@@ -41,6 +42,7 @@ data class VisitDto(
     visitRoom = visitEntity.visitRoom,
     visitType = visitEntity.visitType.name,
     visitTypeDescription = visitEntity.visitType.description,
+    sessionId = visitEntity.sessionTemplateId,
     visitors = visitEntity.visitors.map { VisitorDto(it) }
   )
 }

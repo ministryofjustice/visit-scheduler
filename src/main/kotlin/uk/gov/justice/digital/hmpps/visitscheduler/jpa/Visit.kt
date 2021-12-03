@@ -5,6 +5,8 @@ import java.time.LocalDateTime
 import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
+import javax.persistence.EnumType
+import javax.persistence.Enumerated
 import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
@@ -35,10 +37,15 @@ data class Visit(
   val visitEnd: LocalDateTime,
 
   @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
   val visitType: VisitType,
 
   @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
   val status: VisitStatus,
+
+  @Column
+  val sessionTemplateId: Long?,
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   val visitors: MutableList<VisitVisitor> = mutableListOf(),

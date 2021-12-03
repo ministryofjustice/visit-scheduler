@@ -103,6 +103,7 @@ class VisitSchedulerService(
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp,
         status = VisitStatus.RESERVED,
+        sessionTemplateId = createVisitRequest.sessionId
       )
     )
 
