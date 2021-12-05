@@ -34,7 +34,7 @@ class VisitResource(
   private val visitSchedulerService: VisitSchedulerService
 ) {
 
-  @PreAuthorize("hasRole('ROLE_VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping("/{visitId}")
   @Operation(
     summary = "Get visit",
@@ -72,7 +72,7 @@ class VisitResource(
   ): VisitDto =
     visitSchedulerService.getVisitById(visitId)
 
-  @PreAuthorize("hasRole('ROLE_VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping
   @Operation(
     summary = "Get visits",
@@ -138,7 +138,7 @@ class VisitResource(
       )
     )
 
-  @PreAuthorize("hasRole('ROLE_VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(
@@ -177,7 +177,7 @@ class VisitResource(
     @RequestBody @Valid createVisitRequest: CreateVisitRequest
   ): VisitDto = visitSchedulerService.createVisit(createVisitRequest)
 
-  @PreAuthorize("hasRole('ROLE_VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @DeleteMapping("/{visitId}")
   @Operation(
     summary = "Delete visit",
