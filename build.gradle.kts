@@ -1,7 +1,7 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "3.3.13"
-  kotlin("plugin.spring") version "1.5.31"
-  kotlin("plugin.jpa") version "1.5.31"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.0.0-beta"
+  kotlin("plugin.spring") version "1.6.0"
+  kotlin("plugin.jpa") version "1.6.0"
   idea
 }
 
@@ -42,6 +42,7 @@ dependencies {
   testImplementation("org.testcontainers:postgresql:1.16.2")
   testImplementation("io.jsonwebtoken:jjwt:0.9.1")
   testImplementation("org.mockito:mockito-inline:3.12.4")
+  testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
 }
 
 java {
