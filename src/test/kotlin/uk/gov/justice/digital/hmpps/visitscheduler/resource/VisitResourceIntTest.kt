@@ -43,6 +43,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
       visitCreator(visitRepository)
         .withPrisonerId("FF0000AA")
         .withVisitStart(visitTime)
+        .withPrisonId("MDI")
         .save()
       visitCreator(visitRepository)
         .withPrisonerId("FF0000BB")
@@ -57,6 +58,24 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withPrisonId("LEI")
         .save()
       visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id, visitCC)
+      visitCreator(visitRepository)
+        .withPrisonerId("GG0000BB")
+        .withVisitStart(visitTime.plusHours(1))
+        .withVisitEnd(visitTime.plusHours(2))
+        .withPrisonId("BEI")
+        .save()
+      visitCreator(visitRepository)
+        .withPrisonerId("GG0000BB")
+        .withVisitStart(visitTime.plusDays(1).plusHours(1))
+        .withVisitEnd(visitTime.plusDays(1).plusHours(2))
+        .withPrisonId("BEI")
+        .save()
+      visitCreator(visitRepository)
+        .withPrisonerId("GG0000BB")
+        .withVisitStart(visitTime.plusDays(2).plusHours(1))
+        .withVisitEnd(visitTime.plusDays(2).plusHours(2))
+        .withPrisonId("BEI")
+        .save()
     }
 
     @Test
@@ -109,9 +128,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `get visits starting before a specified date`() {
+    fun `get visits by prisoner ID, prison ID and starting on or after a specified date and time`() {
 
-      webTestClient.get().uri("/visits?endTimestamp=2021-11-03T09:00:00")
+      webTestClient.get().uri("/visits?prisonerId=GG0000BB&prisonId=BEI&startTimestamp=2021-11-01T13:30:45")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isOk
@@ -119,8 +138,39 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.length()").isEqualTo(2)
         .jsonPath("$..startTimestamp").value(
           Matchers.contains(
+            "2021-11-02T13:30:44",
+            "2021-11-03T13:30:44",
+          )
+        )
+        .jsonPath("$..prisonId").value(
+          Matchers.contains(
+            "BEI",
+            "BEI"
+          )
+        )
+        .jsonPath("$..prisonerId").value(
+          Matchers.contains(
+            "GG0000BB",
+            "GG0000BB"
+          )
+        )
+    }
+
+    @Test
+    fun `get visits starting before a specified date`() {
+
+      webTestClient.get().uri("/visits?endTimestamp=2021-11-03T09:00:00")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(4)
+        .jsonPath("$..startTimestamp").value(
+          Matchers.contains(
             "2021-11-01T12:30:44",
-            "2021-11-02T12:30:44"
+            "2021-11-01T13:30:44",
+            "2021-11-02T12:30:44",
+            "2021-11-02T13:30:44"
           )
         )
     }
@@ -145,10 +195,11 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.length()").isEqualTo(1)
+        .jsonPath("$.length()").isEqualTo(2)
         .jsonPath("$..startTimestamp").value(
           Matchers.contains(
-            "2021-11-02T12:30:44"
+            "2021-11-02T12:30:44",
+            "2021-11-02T13:30:44"
           )
         )
     }

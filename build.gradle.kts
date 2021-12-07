@@ -42,6 +42,7 @@ dependencies {
   testImplementation("org.testcontainers:postgresql:1.16.2")
   testImplementation("io.jsonwebtoken:jjwt:0.9.1")
   testImplementation("org.mockito:mockito-inline:3.12.4")
+  testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
 }
 
 java {

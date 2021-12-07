@@ -81,7 +81,7 @@ class VisitSchedulerService(
 
   @Transactional(readOnly = true)
   fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
-    return visitRepository.findAll(VisitSpecification(visitFilter)).map { VisitDto(it) }
+    return visitRepository.findAll(VisitSpecification(visitFilter)).sortedBy { it.visitStart }.map { VisitDto(it) }
   }
 
   fun deleteVisit(visitId: Long) {
