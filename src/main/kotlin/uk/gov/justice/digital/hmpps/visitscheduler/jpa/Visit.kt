@@ -45,6 +45,9 @@ data class Visit(
   val status: VisitStatus,
 
   @Column
+  val reasonableAdjustments: String?,
+
+  @Column
   val sessionTemplateId: Long?,
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)

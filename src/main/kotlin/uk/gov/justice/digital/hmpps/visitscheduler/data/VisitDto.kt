@@ -27,6 +27,7 @@ data class VisitDto(
     example = "2018-12-01T13:45:00",
     required = true
   ) @NotBlank val endTimestamp: LocalDateTime,
+  @Schema(description = "reasonable adjustments text", required = false) val reasonableAdjustments: String?,
   @Schema(description = "list of visitors associated with the visit", required = false) val visitors: List<VisitorDto> = listOf(),
   @Schema(description = "The id of the session template associated with this visit", example = "123", required = false) val sessionId: Long?,
 ) {
@@ -40,6 +41,7 @@ data class VisitDto(
     status = visitEntity.status.name,
     statusDescription = visitEntity.status.description,
     visitRoom = visitEntity.visitRoom,
+    reasonableAdjustments = visitEntity.reasonableAdjustments,
     visitType = visitEntity.visitType.name,
     visitTypeDescription = visitEntity.visitType.description,
     sessionId = visitEntity.sessionTemplateId,
