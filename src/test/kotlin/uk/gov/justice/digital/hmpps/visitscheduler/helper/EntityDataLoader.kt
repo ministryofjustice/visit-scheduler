@@ -64,7 +64,8 @@ fun defaultVisit(): Visit {
     prisonId = "MDI",
     status = VisitStatus.RESERVED,
     visitRoom = "123c",
-    sessionTemplateId = null
+    sessionTemplateId = null,
+    reasonableAdjustments = "some text"
   )
 }
 

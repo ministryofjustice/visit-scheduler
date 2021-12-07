@@ -103,7 +103,8 @@ class VisitSchedulerService(
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp,
         status = VisitStatus.RESERVED,
-        sessionTemplateId = createVisitRequest.sessionId
+        sessionTemplateId = createVisitRequest.sessionId,
+        reasonableAdjustments = createVisitRequest.reasonableAdjustments
       )
     )
 
@@ -112,10 +113,10 @@ class VisitSchedulerService(
         visitEntity.visitors.add(
           VisitVisitor(
             id = VisitVisitorPk(
-              contactId = it,
+              contactId = it.contactId,
               visitId = visitEntity.id
             ),
-            leadVisitor = true, visit = visitEntity
+            leadVisitor = it.leadVisitor, visit = visitEntity
           )
         )
       }

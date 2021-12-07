@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
+import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitorOnVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
@@ -293,8 +294,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
       visitRoom = "A1",
       visitType = VisitType.STANDARD_SOCIAL,
       prisonId = "MDI",
-      contactIdList = listOf(123),
-      sessionId = null
+      contactIdList = listOf(CreateVisitorOnVisit(123)),
+      sessionId = null,
+      reasonableAdjustments = "comment text"
     )
 
     @Test
@@ -323,11 +325,13 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
         .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
         .jsonPath("$[0].statusDescription").isEqualTo("Reserved")
+        .jsonPath("$[0].reasonableAdjustments").isEqualTo("comment text")
         .jsonPath("$[0].status").isEqualTo("RESERVED")
         .jsonPath("$[0].id").isNumber
         .jsonPath("$[0].visitors.length()").isEqualTo(1)
         .jsonPath("$[0].visitors[0].contactId").isEqualTo(123)
         .jsonPath("$[0].visitors[0].visitId").isNumber
+        .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
     }
 
     @Test
@@ -355,6 +359,19 @@ class VisitResourceIntTest : IntegrationTestBase() {
         )
         .exchange()
         .expectStatus().isUnauthorized
+    }
+
+    @Test
+    fun `create visit - invalid request`() {
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(
+            mapOf("wrongProperty" to "wrongValue")
+          )
+        )
+        .exchange()
+        .expectStatus().isBadRequest
     }
   }
 }

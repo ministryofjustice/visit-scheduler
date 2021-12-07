@@ -347,10 +347,8 @@ components:
           type: string
           format: time
           description: End time for the visit
-        leadVisitor:
-          $ref: '#/components/schemas/Contact'
-        additionalVisitors:
-          description: Set of Additional Visitors
+        visitors:
+          description: Set of Visitors
           type: array
           items:
             $ref: '#/components/schemas/Contact'
@@ -383,33 +381,14 @@ components:
         - Legal
     Contact:
       type: object
-      description: A description
+      description: Identifies the contact
       properties:
         nomisContactId:
           type: string
           description: Unique Identifier for this contact (from NOMIS)
-        firstName:
-          type: string
-          description: Contact first name
-        middleName:
-          type: string
-          description: Contact middle name
-        lastName:
-          type: string
-          description: Contact last name
-        dateOfBirth:
-          type: string
-          description: Contact date of birth
-          format: date
-        postcode:
-          type: string
-          description: Postcode of the visitor's address
-        relationshiptoPrisoner:
-          type: string
-          description: Relationship to Prisoner
-        contactType:
-          type: string
-          description: Type of Contact
+        leadVisitor:
+          type: boolean
+          description: indicates if this visitor is the lead visitor
     Prisoner:
       type: object
       description: A description
