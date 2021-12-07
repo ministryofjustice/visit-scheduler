@@ -43,6 +43,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
       visitCreator(visitRepository)
         .withPrisonerId("FF0000AA")
         .withVisitStart(visitTime)
+        .withPrisonId("MDI")
         .save()
       visitCreator(visitRepository)
         .withPrisonerId("FF0000BB")
@@ -57,6 +58,24 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withPrisonId("LEI")
         .save()
       visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id, visitCC)
+      visitCreator(visitRepository)
+        .withPrisonerId("GG0000BB")
+        .withVisitStart(visitTime)
+        .withVisitEnd(visitTime.plusHours(1))
+        .withPrisonId("BEI")
+        .save()
+      visitCreator(visitRepository)
+        .withPrisonerId("GG0000BB")
+        .withVisitStart(visitTime.plusDays(1))
+        .withVisitEnd(visitTime.plusDays(1).plusHours(1))
+        .withPrisonId("BEI")
+        .save()
+      visitCreator(visitRepository)
+        .withPrisonerId("GG0000BB")
+        .withVisitStart(visitTime.plusDays(2).plusHours(1))
+        .withVisitEnd(visitTime.plusDays(2).plusHours(2))
+        .withPrisonId("BEI")
+        .save()
     }
 
     @Test
@@ -106,6 +125,35 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectBody()
         .jsonPath("$.length()").isEqualTo(1)
         .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.plusDays(2).toString())
+    }
+
+    @Test
+    fun `get visits by prisoner ID, prison ID and starting on or after a specified date and time`() {
+
+      webTestClient.get().uri("/visits?prisonerId=GG0000BB&prisonId=BEI&startTimestamp=2021-11-01T12:45:00")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(2)
+        .jsonPath("$..startTimestamp").value(
+          Matchers.contains(
+            "2021-11-02T12:30:44",
+            "2021-11-03T13:30:44",
+          )
+        )
+        .jsonPath("$..prisonId").value(
+          Matchers.contains(
+            "BEI",
+            "BEI"
+          )
+        )
+        .jsonPath("$..prisonerId").value(
+          Matchers.contains(
+            "GG0000BB",
+            "GG0000BB"
+          )
+        )
     }
 
     @Test
