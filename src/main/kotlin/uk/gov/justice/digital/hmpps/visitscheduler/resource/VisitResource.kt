@@ -76,7 +76,7 @@ class VisitResource(
   @GetMapping
   @Operation(
     summary = "Get visits",
-    description = "Retrieve visits with optional filters",
+    description = "Retrieve visits with optional filters, sorted by startTimestamp ascending",
     responses = [
       ApiResponse(
         responseCode = "200",

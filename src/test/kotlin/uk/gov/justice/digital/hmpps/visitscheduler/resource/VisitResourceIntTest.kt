@@ -60,14 +60,14 @@ class VisitResourceIntTest : IntegrationTestBase() {
       visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id, visitCC)
       visitCreator(visitRepository)
         .withPrisonerId("GG0000BB")
-        .withVisitStart(visitTime)
-        .withVisitEnd(visitTime.plusHours(1))
+        .withVisitStart(visitTime.plusHours(1))
+        .withVisitEnd(visitTime.plusHours(2))
         .withPrisonId("BEI")
         .save()
       visitCreator(visitRepository)
         .withPrisonerId("GG0000BB")
-        .withVisitStart(visitTime.plusDays(1))
-        .withVisitEnd(visitTime.plusDays(1).plusHours(1))
+        .withVisitStart(visitTime.plusDays(1).plusHours(1))
+        .withVisitEnd(visitTime.plusDays(1).plusHours(2))
         .withPrisonId("BEI")
         .save()
       visitCreator(visitRepository)
@@ -130,7 +130,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     @Test
     fun `get visits by prisoner ID, prison ID and starting on or after a specified date and time`() {
 
-      webTestClient.get().uri("/visits?prisonerId=GG0000BB&prisonId=BEI&startTimestamp=2021-11-01T12:45:00")
+      webTestClient.get().uri("/visits?prisonerId=GG0000BB&prisonId=BEI&startTimestamp=2021-11-01T13:30:45")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isOk
@@ -138,7 +138,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.length()").isEqualTo(2)
         .jsonPath("$..startTimestamp").value(
           Matchers.contains(
-            "2021-11-02T12:30:44",
+            "2021-11-02T13:30:44",
             "2021-11-03T13:30:44",
           )
         )
@@ -164,11 +164,13 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.length()").isEqualTo(2)
+        .jsonPath("$.length()").isEqualTo(4)
         .jsonPath("$..startTimestamp").value(
           Matchers.contains(
             "2021-11-01T12:30:44",
-            "2021-11-02T12:30:44"
+            "2021-11-01T13:30:44",
+            "2021-11-02T12:30:44",
+            "2021-11-02T13:30:44"
           )
         )
     }
@@ -193,10 +195,11 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.length()").isEqualTo(1)
+        .jsonPath("$.length()").isEqualTo(2)
         .jsonPath("$..startTimestamp").value(
           Matchers.contains(
-            "2021-11-02T12:30:44"
+            "2021-11-02T12:30:44",
+            "2021-11-02T13:30:44"
           )
         )
     }
