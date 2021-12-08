@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitVisitorRepository
@@ -293,8 +294,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitRoom = "A1",
       visitType = VisitType.STANDARD_SOCIAL,
+      visitStatus = VisitStatus.RESERVED,
       prisonId = "MDI",
-      contactIdList = listOf(CreateVisitorOnVisit(123)),
+      contactList = listOf(CreateVisitorOnVisit(123)),
       sessionId = null,
       reasonableAdjustments = "comment text"
     )
@@ -324,9 +326,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].prisonId").isEqualTo("MDI")
         .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
         .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
-        .jsonPath("$[0].statusDescription").isEqualTo("Reserved")
+        .jsonPath("$[0].visitStatusDescription").isEqualTo("Reserved")
         .jsonPath("$[0].reasonableAdjustments").isEqualTo("comment text")
-        .jsonPath("$[0].status").isEqualTo("RESERVED")
+        .jsonPath("$[0].visitStatus").isEqualTo("RESERVED")
         .jsonPath("$[0].id").isNumber
         .jsonPath("$[0].visitors.length()").isEqualTo(1)
         .jsonPath("$[0].visitors[0].contactId").isEqualTo(123)
