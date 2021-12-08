@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
@@ -99,17 +98,17 @@ class VisitSchedulerService(
         prisonId = createVisitRequest.prisonId,
         prisonerId = createVisitRequest.prisonerId,
         visitType = createVisitRequest.visitType,
+        status = createVisitRequest.visitStatus,
         visitRoom = createVisitRequest.visitRoom,
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp,
-        status = VisitStatus.RESERVED,
         sessionTemplateId = createVisitRequest.sessionId,
         reasonableAdjustments = createVisitRequest.reasonableAdjustments
       )
     )
 
-    createVisitRequest.contactIdList?.let { contactIdList ->
-      contactIdList.forEach {
+    createVisitRequest.contactList?.let { contactList ->
+      contactList.forEach {
         visitEntity.visitors.add(
           VisitVisitor(
             id = VisitVisitorPk(
