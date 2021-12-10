@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -13,7 +14,7 @@ fun sessionTemplate(
   openCapacity: Int = 10,
   prisonId: String = "MDI",
   visitRoom: String = "1",
-  visitType: String = "SOCIAL",
+  visitType: VisitType = VisitType.STANDARD_SOCIAL,
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
   frequency: String = SessionFrequency.DAILY.name,

@@ -12,6 +12,7 @@ import org.mockito.kotlin.mock
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import java.time.Clock
@@ -41,7 +42,8 @@ class VisitSchedulerServiceTest() {
       visitRepository,
       sessionTemplateRepository,
       clock,
-      100
+      100,
+      1
     )
   }
 
@@ -49,8 +51,18 @@ class VisitSchedulerServiceTest() {
   @DisplayName("simple session generation")
   inner class SlotGeneration {
 
+    fun mockRepositoryResponse(response: List<SessionTemplate>) {
+      Mockito.`when`(
+        sessionTemplateRepository.findValidSessionsByPrisonId(
+          "MDI",
+          LocalDate.parse("2021-01-01").plusDays(1),
+          LocalDate.parse("2021-01-01").plusDays(100)
+        )
+      ).thenReturn(response)
+    }
+
     @Test
-    fun `a daily session will return 8 sessions including today and expiry day`() {
+    fun `a daily session will return 7 sessions including first bookable day and expiry day`() {
       val dailySession = sessionTemplate(
         expiryDate = LocalDate.parse("2021-01-08"),
         startDate = LocalDate.parse("2021-01-01"),
@@ -58,17 +70,11 @@ class VisitSchedulerServiceTest() {
         endTime = LocalTime.parse("12:30"), // future time
         frequency = SessionFrequency.DAILY.name
       )
-      Mockito.`when`(
-        sessionTemplateRepository.findValidSessionsByPrisonId(
-          "MDI",
-          LocalDate.parse("2021-01-01"),
-          LocalDate.parse("2021-01-01").plusDays(100)
-        )
-      ).thenReturn(listOf(dailySession))
+      mockRepositoryResponse(listOf(dailySession))
+
       val sessions = visitSchedulerService.getVisitSessions("MDI")
-      assertThat(sessions).size().isEqualTo(8) // expiry date is inclusive
+      assertThat(sessions).size().isEqualTo(7) // expiry date is inclusive
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
-        LocalDateTime.parse("2021-01-01T11:30:00"),
         LocalDateTime.parse("2021-01-02T11:30:00"),
         LocalDateTime.parse("2021-01-03T11:30:00"),
         LocalDateTime.parse("2021-01-04T11:30:00"),
@@ -81,7 +87,7 @@ class VisitSchedulerServiceTest() {
 
     @Test
     fun `a weekly session will return 6 sessions including today and expiry date`() {
-      val dailySession = sessionTemplate(
+      val weeklySession = sessionTemplate(
         expiryDate = LocalDate.parse("2021-01-01").plusWeeks(5),
         startDate = LocalDate.parse("2021-01-01"),
         closedCapacity = 5,
@@ -90,17 +96,11 @@ class VisitSchedulerServiceTest() {
         endTime = LocalTime.parse("12:30"),
         frequency = SessionFrequency.WEEKLY.name
       )
-      Mockito.`when`(
-        sessionTemplateRepository.findValidSessionsByPrisonId(
-          "MDI",
-          LocalDate.parse("2021-01-01"),
-          LocalDate.parse("2021-01-01").plusDays(100)
-        )
-      ).thenReturn(listOf(dailySession))
+      mockRepositoryResponse(listOf(weeklySession))
+
       val sessions = visitSchedulerService.getVisitSessions("MDI")
-      assertThat(sessions).size().isEqualTo(6) // expiry date is inclusive
+      assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
-        LocalDateTime.parse("2021-01-01T11:30:00"),
         LocalDateTime.parse("2021-01-08T11:30:00"),
         LocalDateTime.parse("2021-01-15T11:30:00"),
         LocalDateTime.parse("2021-01-22T11:30:00"),
@@ -111,7 +111,7 @@ class VisitSchedulerServiceTest() {
 
     @Test
     fun `sessions are consistently generated, weekly sessions always fall on the same day regardless of date of generation`() {
-      val dailySession = sessionTemplate(
+      val weeklySession = sessionTemplate(
         expiryDate = LocalDate.parse("2021-01-01").plusWeeks(5), // 5 weeks from today
         startDate = LocalDate.parse("2020-12-30"), // session template start date is a Wednesday
         closedCapacity = 5,
@@ -120,13 +120,8 @@ class VisitSchedulerServiceTest() {
         endTime = LocalTime.parse("12:30"),
         frequency = SessionFrequency.WEEKLY.name
       )
-      Mockito.`when`(
-        sessionTemplateRepository.findValidSessionsByPrisonId(
-          "MDI",
-          LocalDate.parse("2021-01-01"),
-          LocalDate.parse("2021-01-01").plusDays(100)
-        )
-      ).thenReturn(listOf(dailySession))
+      mockRepositoryResponse(listOf(weeklySession))
+
       val sessions = visitSchedulerService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
@@ -141,21 +136,17 @@ class VisitSchedulerServiceTest() {
     @Test
     fun `a single session will return 1 session`() {
       val singleSession = sessionTemplate(
-        startDate = LocalDate.parse("2021-01-01"),
+        startDate = LocalDate.parse("2021-02-01"),
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30"), // future time
         frequency = SessionFrequency.SINGLE.name
       )
-      Mockito.`when`(
-        sessionTemplateRepository.findValidSessionsByPrisonId(
-          "MDI", LocalDate.parse("2021-01-01"),
-          LocalDate.parse("2021-01-01").plusDays(100)
-        )
-      ).thenReturn(listOf(singleSession))
+      mockRepositoryResponse(listOf(singleSession))
+
       val sessions = visitSchedulerService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
-        LocalDateTime.parse("2021-01-01T11:30:00")
+        LocalDateTime.parse("2021-02-01T11:30:00")
       )
     }
 
@@ -166,13 +157,8 @@ class VisitSchedulerServiceTest() {
         expiryDate = LocalDate.parse("2021-01-01").minusDays(1),
         frequency = SessionFrequency.DAILY.name
       )
-      Mockito.`when`(
-        sessionTemplateRepository.findValidSessionsByPrisonId(
-          "MDI",
-          LocalDate.parse("2021-01-01"),
-          LocalDate.parse("2021-01-01").plusDays(100)
-        )
-      ).thenReturn(listOf(dailySession))
+      mockRepositoryResponse(listOf(dailySession))
+
       val sessions = visitSchedulerService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(0)
     }
@@ -195,21 +181,21 @@ class VisitSchedulerServiceTest() {
         endTime = LocalTime.of(16, 30, 0),
         id = 2
       )
-      Mockito.`when`(
-        sessionTemplateRepository.findValidSessionsByPrisonId(
-          "MDI",
-          LocalDate.parse("2021-01-01"),
-          LocalDate.parse("2021-01-01").plusDays(100)
-        )
-      ).thenReturn(listOf(monthlySession, dailySession))
+
+      mockRepositoryResponse(listOf(monthlySession, dailySession))
+
       val sessions = visitSchedulerService.getVisitSessions("MDI")
-      assertThat(sessions).size().isEqualTo(7)
-      assertThat(sessions[0].sessionTemplateId).isEqualTo(1)
-      assertThat(sessions[1].sessionTemplateId).isEqualTo(2)
+      assertThat(sessions).size().isEqualTo(5)
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp)
         .containsExactly( // ordered by start date time
-          LocalDateTime.parse("2021-01-01T11:30"),
-          LocalDateTime.parse("2021-01-01T16:00"),
+          LocalDateTime.parse("2021-01-02T16:00"),
+          LocalDateTime.parse("2021-01-03T16:00"),
+          LocalDateTime.parse("2021-01-04T16:00"),
+          LocalDateTime.parse("2021-01-05T16:00"),
+          LocalDateTime.parse("2021-02-01T11:30")
+        )
+      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp)
+        .containsExactly( // ordered by start date time
           LocalDateTime.parse("2021-01-02T16:00"),
           LocalDateTime.parse("2021-01-03T16:00"),
           LocalDateTime.parse("2021-01-04T16:00"),

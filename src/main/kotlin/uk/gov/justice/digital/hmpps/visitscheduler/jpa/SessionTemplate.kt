@@ -5,6 +5,8 @@ import java.time.LocalDate
 import java.time.LocalTime
 import javax.persistence.Column
 import javax.persistence.Entity
+import javax.persistence.EnumType
+import javax.persistence.Enumerated
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
@@ -23,8 +25,9 @@ data class SessionTemplate(
   @Column(nullable = false)
   val visitRoom: String,
 
-  @Column(nullable = false)
-  val visitType: String,
+  @Column
+  @Enumerated(EnumType.STRING)
+  val visitType: VisitType,
 
   @Column(nullable = false)
   val frequency: String,

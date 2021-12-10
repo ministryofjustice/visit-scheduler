@@ -257,6 +257,14 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectBody()
         .jsonPath("$.length()").isEqualTo(0)
     }
+
+    @Test
+    fun `get visits - invalid request, contact id should be a long`() {
+      webTestClient.get().uri("/visits?contactId=123LL")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isBadRequest
+    }
   }
 
   @DisplayName("DELETE /visits/{visitId}")
