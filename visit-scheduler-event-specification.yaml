@@ -1,7 +1,7 @@
 asyncapi: 2.2.0
 info:
   title: Visit Scheduler Microservice Events
-  version: 'v1'
+  version: '1'
   description: Events posted by the *Visit Scheduler* microservice
   contact:
     name: Visit Someone in Prison Team
@@ -22,11 +22,11 @@ servers:
     description: Test Environment
 
 channels:
-  prison-visit.created:
-    description: Prison Visit Created
+  prison-visit.booked:
+    description: Prison Visit Booked
     publish:
       message:
-        $ref: '#/components/messages/prison-visit-created-event'
+        $ref: '#/components/messages/visit-event'
       bindings:
         sns:
           is: notification service
@@ -34,7 +34,7 @@ channels:
     description: Prison Visit Amended
     publish:
       message:
-        $ref: '#/components/messages/prison-visit-revised-event'
+        $ref: '#/components/messages/visit-event'
       bindings:
         sns:
           is: notification service
@@ -42,47 +42,45 @@ channels:
     description: Prison Visit Cancelled
     publish:
       message:
-        $ref: '#/components/messages/prison-visit-cancelled-event'
+        $ref: '#/components/messages/visit-event'
       bindings:
         sns:
           is: notification service
-
 components:
   messages:
-    prison-visit-created-event:
+    visit-event:
       payload:
-        type: object
-        properties:
-          visitId:
-            type: string
-            description: Visit Reference Identifier
-          visitType:
-            $ref: '#/components/schemas/VisitType'
-            description: Type of Visit
-        example: {visitID: A1-23-45-6C, visitType: social}
-    prison-visit-revised-event:
-      payload:
-        type: object
-        properties:
-          visitId:
-            type: string
-            description: Visit Reference Identifier
-          visitType:
-            $ref: '#/components/schemas/VisitType'
-            description: Type of Visit
-        example: {visitID: A1-23-45-6C, visitType: social}
-    prison-visit-cancelled-event:
-      payload:
-        type: object
-        properties:
-          visitId:
-            type: string
-            description: Visit Reference Identifier
-          visitType:
-            $ref: '#/components/schemas/VisitType'
-            description: Type of Visit
-        example: {visitID: A1-23-45-6C, visitType: social}
+        $ref: '#/components/schemas/VisitEvent'
   schemas:
+    VisitEvent:
+      type: object
+      description: Visit Event Object
+      properties:
+          eventType:
+            $ref: '#/components/schemas/VisitEventType'
+          version:
+            type: integer
+            description: Event signature version
+          detailUrl:
+            type: string
+            description: Location of further details
+          occuredAt:
+            type: string
+            format: datetime
+          additionalInformation:
+            $ref: '#/components/schemas/AdditionalInformation'
+          prisonerId:
+            type: string
+            description: Id of prisoner being visited
+    AdditionalInformation:
+      type: object
+      description: Additional Information for this visit event
+      properties:
+          visitId:
+            type: string
+            description: Unique identifier for this visit
+          visitType:
+            $ref: '#/components/schemas/VisitType'
     VisitType:
       type: string
       description: Visit Type
@@ -91,3 +89,10 @@ components:
         - family
         - official
         - legal
+    VisitEventType:
+      type: string
+      description: Set of possible visit event types
+      enum:
+        - prison-visit.booked
+        - prison-visit.revised
+        - prison-visit.cancelled
