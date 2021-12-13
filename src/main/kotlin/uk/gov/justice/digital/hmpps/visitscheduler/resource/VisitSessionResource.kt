@@ -33,6 +33,11 @@ class VisitSessionResource(
         description = "Visit session information returned"
       ),
       ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
         responseCode = "400",
         description = "Incorrect request to Get visit sessions ",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
@@ -40,7 +45,7 @@ class VisitSessionResource(
     ]
   )
   fun getVisitSessions(
-    @Schema(description = "NOMIS Prison Identifier", example = "AD12345G", required = true)
+    @Schema(description = "NOMIS Prison Identifier", example = "MDI", required = true)
     @PathVariable prisonId: String
   ): List<VisitSession> =
     visitSchedulerService.getVisitSessions(prisonId)

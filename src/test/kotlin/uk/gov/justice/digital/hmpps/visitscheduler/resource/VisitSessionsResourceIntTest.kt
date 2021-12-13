@@ -44,7 +44,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(7)
+      .jsonPath("$.length()").isEqualTo(6)
       .jsonPath("$[0].visitRoomName").isEqualTo("1")
       .jsonPath("$[0].prisonId").isEqualTo("MDI")
       .jsonPath("$[0].restrictions").isEqualTo("Only B wing")
@@ -52,8 +52,8 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       .jsonPath("$[0].closedVisitCapacity").isEqualTo(5)
       .jsonPath("$[0].restrictions").isEqualTo("Only B wing")
       .jsonPath("$[0].endTimestamp").isEqualTo("2021-01-08T10:00:00")
-      // TODO type and description
-      .jsonPath("$[0].visitType").isEqualTo("SOCIAL")
+      .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
+      .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
           "2021-01-08T09:00:00",
@@ -61,8 +61,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
           "2021-01-22T09:00:00",
           "2021-01-29T09:00:00",
           "2021-02-05T09:00:00",
-          "2021-02-12T09:00:00",
-          "2021-02-19T09:00:00"
+          "2021-02-12T09:00:00" // 48 days maximum book ahead
         )
       )
   }
@@ -116,6 +115,6 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(44) // up to 20/2
+      .jsonPath("$.length()").isEqualTo(42) // up to 18/2
   }
 }

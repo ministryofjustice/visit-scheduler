@@ -110,6 +110,6 @@ fun defaultSessionTemplate(): SessionTemplate {
     closedCapacity = 1,
     visitRoom = "3B",
     restrictions = "Restricted to B wing",
-    visitType = "Social"
+    visitType = VisitType.STANDARD_SOCIAL
   )
 }
