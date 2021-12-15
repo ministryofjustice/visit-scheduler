@@ -293,7 +293,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
   }
 
-  @DisplayName("CREATE /visits/{visitId}")
+  @DisplayName("POST /visits")
   @Nested
   inner class CreateVisit {
     val createVisitRequest = CreateVisitRequest(

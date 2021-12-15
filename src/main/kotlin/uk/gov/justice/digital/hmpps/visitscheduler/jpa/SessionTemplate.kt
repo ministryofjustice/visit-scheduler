@@ -30,7 +30,8 @@ data class SessionTemplate(
   val visitType: VisitType,
 
   @Column(nullable = false)
-  val frequency: String,
+  @Enumerated(EnumType.STRING)
+  val frequency: SessionFrequency,
 
   @Column
   val restrictions: String?,

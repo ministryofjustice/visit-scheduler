@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepositor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitVisitorRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 class VisitBuilder(
   private val repository: VisitRepository,
@@ -82,8 +83,18 @@ class SessionTemplateBuilder(
   private val repository: SessionTemplateRepository,
   private var sessionTemplate: SessionTemplate,
 ) {
-  fun save() {
+
+  fun save(): SessionTemplate =
     repository.saveAndFlush(sessionTemplate)
+
+  fun withStartTime(startTime: LocalTime): SessionTemplateBuilder {
+    this.sessionTemplate = sessionTemplate.copy(startTime = startTime)
+    return this
+  }
+
+  fun withEndTime(endTime: LocalTime): SessionTemplateBuilder {
+    this.sessionTemplate = sessionTemplate.copy(endTime = endTime)
+    return this
   }
 }
 
@@ -105,7 +116,7 @@ fun defaultSessionTemplate(): SessionTemplate {
   return sessionTemplate(
     prisonId = "MDI",
     startDate = LocalDate.of(2021, 10, 23),
-    frequency = SessionFrequency.DAILY.name,
+    frequency = SessionFrequency.DAILY,
     openCapacity = 5,
     closedCapacity = 1,
     visitRoom = "3B",
