@@ -35,7 +35,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2021-01-01"),
-        frequency = SessionFrequency.WEEKLY.name,
+        frequency = SessionFrequency.WEEKLY,
         restrictions = "Only B wing"
       )
     ).save()
@@ -73,7 +73,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2020-01-01"),
         expiryDate = LocalDate.parse("2020-06-01"),
-        frequency = SessionFrequency.WEEKLY.name,
+        frequency = SessionFrequency.WEEKLY,
         restrictions = "Only B wing"
       )
     ).save()
@@ -92,7 +92,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2022-01-01"),
         expiryDate = LocalDate.parse("2022-06-01"),
-        frequency = SessionFrequency.WEEKLY.name,
+        frequency = SessionFrequency.WEEKLY,
         restrictions = "Only B wing"
       )
     ).save()

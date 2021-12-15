@@ -68,7 +68,7 @@ class VisitSchedulerServiceTest() {
         startDate = LocalDate.parse("2021-01-01"),
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30"), // future time
-        frequency = SessionFrequency.DAILY.name
+        frequency = SessionFrequency.DAILY
       )
       mockRepositoryResponse(listOf(dailySession))
 
@@ -94,7 +94,7 @@ class VisitSchedulerServiceTest() {
         openCapacity = 10,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
-        frequency = SessionFrequency.WEEKLY.name
+        frequency = SessionFrequency.WEEKLY
       )
       mockRepositoryResponse(listOf(weeklySession))
 
@@ -118,7 +118,7 @@ class VisitSchedulerServiceTest() {
         openCapacity = 10,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
-        frequency = SessionFrequency.WEEKLY.name
+        frequency = SessionFrequency.WEEKLY
       )
       mockRepositoryResponse(listOf(weeklySession))
 
@@ -139,7 +139,7 @@ class VisitSchedulerServiceTest() {
         startDate = LocalDate.parse("2021-02-01"),
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30"), // future time
-        frequency = SessionFrequency.SINGLE.name
+        frequency = SessionFrequency.SINGLE
       )
       mockRepositoryResponse(listOf(singleSession))
 
@@ -155,7 +155,7 @@ class VisitSchedulerServiceTest() {
       val dailySession = sessionTemplate(
         startDate = LocalDate.parse("2021-01-01").minusDays(8),
         expiryDate = LocalDate.parse("2021-01-01").minusDays(1),
-        frequency = SessionFrequency.DAILY.name
+        frequency = SessionFrequency.DAILY
       )
       mockRepositoryResponse(listOf(dailySession))
 
@@ -168,7 +168,7 @@ class VisitSchedulerServiceTest() {
       val monthlySession = sessionTemplate(
         startDate = LocalDate.parse("2021-01-01"),
         expiryDate = LocalDate.parse("2021-02-01"),
-        frequency = SessionFrequency.MONTHLY.name,
+        frequency = SessionFrequency.MONTHLY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("11:45"),
         id = 1
@@ -176,7 +176,7 @@ class VisitSchedulerServiceTest() {
       val dailySession = sessionTemplate(
         startDate = LocalDate.parse("2021-01-01"),
         expiryDate = LocalDate.parse("2021-01-05"),
-        frequency = SessionFrequency.DAILY.name,
+        frequency = SessionFrequency.DAILY,
         startTime = LocalTime.of(16, 0, 0),
         endTime = LocalTime.of(16, 30, 0),
         id = 2

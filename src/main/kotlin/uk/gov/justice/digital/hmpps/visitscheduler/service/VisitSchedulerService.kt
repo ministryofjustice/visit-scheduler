@@ -7,11 +7,12 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
+import uk.gov.justice.digital.hmpps.visitscheduler.data.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
 import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
@@ -67,7 +68,7 @@ class VisitSchedulerService(
     val lastBookableSessionDay =
       if (sessionTemplate.expiryDate == null || bookablePeriodEndDate.isBefore(sessionTemplate.expiryDate)) bookablePeriodEndDate else sessionTemplate.expiryDate
     val firstBookableSessionDay: LocalDate = if (bookablePeriodStartDate.isAfter(sessionTemplate.startDate)) bookablePeriodStartDate else sessionTemplate.startDate
-    return sessionTemplate.startDate.datesUntil(lastBookableSessionDay.plusDays(1), SessionFrequency.valueOf(sessionTemplate.frequency).frequencyPeriod)
+    return sessionTemplate.startDate.datesUntil(lastBookableSessionDay.plusDays(1), sessionTemplate.frequency.frequencyPeriod)
       .map { date ->
         VisitSession(
           sessionTemplateId = sessionTemplate.id,
@@ -86,6 +87,41 @@ class VisitSchedulerService(
       }
       .filter { session -> session.startTimestamp > LocalDateTime.of(firstBookableSessionDay, LocalTime.MIDNIGHT) } // remove sessions are before the bookable period
       .toList()
+  }
+
+  fun createSessionTemplate(createSessionTemplateRequest: CreateSessionTemplateRequest): SessionTemplateDto {
+    log.info("Creating session template for prison")
+    val sessionTemplateEntity = sessionTemplateRepository.saveAndFlush(
+      SessionTemplate(
+        prisonId = createSessionTemplateRequest.prisonId,
+        startTime = createSessionTemplateRequest.startTime,
+        endTime = createSessionTemplateRequest.endTime,
+        visitType = createSessionTemplateRequest.visitType,
+        startDate = createSessionTemplateRequest.startDate,
+        expiryDate = createSessionTemplateRequest.expiryDate,
+        frequency = createSessionTemplateRequest.frequency,
+        visitRoom = createSessionTemplateRequest.visitRoom,
+        closedCapacity = createSessionTemplateRequest.closedCapacity,
+        openCapacity = createSessionTemplateRequest.openCapacity,
+        restrictions = createSessionTemplateRequest.restrictions
+      )
+    )
+    return SessionTemplateDto(
+      sessionTemplateEntity
+    )
+  }
+
+  fun deleteSessionTemplate(sessionTemplateId: Long) {
+    val sessionTemplate = sessionTemplateRepository.findByIdOrNull(sessionTemplateId)
+    sessionTemplate?.let { sessionTemplateRepository.delete(it) }.also { log.info("Session template with id  $sessionTemplateId deleted") }
+      ?: run {
+        log.info("Session template with id  $sessionTemplateId not found")
+      }
+  }
+
+  // convenience method to retrieve all session templates to support development
+  fun getSessionTemplates(): List<SessionTemplateDto> {
+    return sessionTemplateRepository.findAll().sortedBy { it.startDate }.map { SessionTemplateDto(it) }
   }
 
   @Transactional(readOnly = true)
