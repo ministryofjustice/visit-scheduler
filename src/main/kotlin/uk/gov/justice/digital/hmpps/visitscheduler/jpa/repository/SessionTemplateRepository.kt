@@ -16,7 +16,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "and (u.expiryDate is null or u.expiryDate >= :firstBookableDay) " +
       "and (u.startDate <= :lastBookableDay)"
   )
-  fun findValidSessionsByPrisonId(
+  fun findValidSessionTemplatesByPrisonId(
     @Param("prisonId") prisonId: String,
     @Param("firstBookableDay") firstBookableDay: LocalDate,
     @Param("lastBookableDay") lastBookableDay: LocalDate
