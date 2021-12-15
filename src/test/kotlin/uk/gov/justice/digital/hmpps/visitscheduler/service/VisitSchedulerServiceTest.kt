@@ -53,7 +53,7 @@ class VisitSchedulerServiceTest() {
 
     fun mockRepositoryResponse(response: List<SessionTemplate>) {
       Mockito.`when`(
-        sessionTemplateRepository.findValidSessionsByPrisonId(
+        sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
           "MDI",
           LocalDate.parse("2021-01-01").plusDays(1),
           LocalDate.parse("2021-01-01").plusDays(100)
