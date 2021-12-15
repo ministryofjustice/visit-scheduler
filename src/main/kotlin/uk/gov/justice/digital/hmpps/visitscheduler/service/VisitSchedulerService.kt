@@ -47,19 +47,19 @@ class VisitSchedulerService(
   fun getVisitSessions(prisonId: String): List<VisitSession> {
     val bookablePeriodEndDate = LocalDate.now(clock).plusDays(maxBookingNoticeDays)
     val bookablePeriodStartDate = LocalDate.now(clock).plusDays(minBookingNoticeDays)
-    val sessions =
-      sessionTemplateRepository.findValidSessionsByPrisonId(
+    val sessionTemplates =
+      sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
         prisonId,
         bookablePeriodStartDate,
         bookablePeriodEndDate
       )
-    return sessions.map {
-      buildSessions(it, bookablePeriodStartDate, bookablePeriodEndDate)
+    return sessionTemplates.map {
+      buildVisitSessionsUsingTemplate(it, bookablePeriodStartDate, bookablePeriodEndDate)
     }.flatten().sortedWith(compareBy { it.startTimestamp })
   }
 
   // from the start date calculate the slots for based on chosen frequency  (expiry is inclusive)
-  private fun buildSessions(
+  private fun buildVisitSessionsUsingTemplate(
     sessionTemplate: SessionTemplate,
     bookablePeriodStartDate: LocalDate,
     bookablePeriodEndDate: LocalDate
