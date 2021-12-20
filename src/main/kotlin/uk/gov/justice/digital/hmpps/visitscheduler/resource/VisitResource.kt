@@ -122,11 +122,11 @@ class VisitResource(
       description = "Filter results by visits that start on or before the given timestamp",
       example = "2021-11-03T09:00:00"
     ) endTimestamp: LocalDateTime?,
-    @RequestParam(value = "contactId", required = false)
+    @RequestParam(value = "nomisPersonId", required = false)
     @Parameter(
       description = "Filter results by visitor (contact id)",
       example = "12322"
-    ) contactId: Long?
+    ) nomisPersonId: Long?
   ): List<VisitDto> =
     visitSchedulerService.findVisitsByFilter(
       VisitFilter(
@@ -134,7 +134,7 @@ class VisitResource(
         prisonId = prisonId,
         startDateTime = startTimestamp,
         endDateTime = endTimestamp,
-        contactId = contactId
+        nomisPersonId = nomisPersonId
       )
     )
 

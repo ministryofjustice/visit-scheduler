@@ -32,11 +32,11 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
       predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::visitStart.name), this))
     }
 
-    filter.contactId?.run {
+    filter.nomisPersonId?.run {
       predicates.add(
         criteriaBuilder.equal(
           root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitorPk>(VisitVisitor::id.name)
-            .get<Long>(VisitVisitorPk::contactId.name),
+            .get<Long>(VisitVisitorPk::nomisPersonId.name),
           this
         )
       )

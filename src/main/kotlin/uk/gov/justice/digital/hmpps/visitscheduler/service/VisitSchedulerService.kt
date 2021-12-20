@@ -158,7 +158,7 @@ class VisitSchedulerService(
         visitEntity.visitors.add(
           VisitVisitor(
             id = VisitVisitorPk(
-              contactId = it.contactId,
+              nomisPersonId = it.nomisPersonId,
               visitId = visitEntity.id
             ),
             leadVisitor = it.leadVisitor, visit = visitEntity

@@ -59,7 +59,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withPrisonId("LEI")
         .save()
-      visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id, visitCC)
+      visitVisitorCreator(repository = visitVisitorRepository, nomisPersonId = 123L, visitId = visitCC.id, visitCC)
       visitCreator(visitRepository)
         .withPrisonerId("GG0000BB")
         .withVisitStart(visitTime.plusHours(1))
@@ -180,7 +180,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     @Test
     fun `get visits by visitor`() {
 
-      webTestClient.get().uri("/visits?contactId=123")
+      webTestClient.get().uri("/visits?nomisPersonId=123")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isOk
@@ -260,7 +260,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `get visits - invalid request, contact id should be a long`() {
-      webTestClient.get().uri("/visits?contactId=123LL")
+      webTestClient.get().uri("/visits?nomisPersonId=123LL")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isBadRequest
@@ -279,7 +279,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withPrisonId("LEI")
         .save()
-      visitVisitorCreator(repository = visitVisitorRepository, contactId = 123L, visitId = visitCC.id, visitCC)
+      visitVisitorCreator(repository = visitVisitorRepository, nomisPersonId = 123L, visitId = visitCC.id, visitCC)
 
       webTestClient.delete().uri("/visits/${visitCC.id}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
@@ -339,7 +339,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].visitStatus").isEqualTo("RESERVED")
         .jsonPath("$[0].id").isNumber
         .jsonPath("$[0].visitors.length()").isEqualTo(1)
-        .jsonPath("$[0].visitors[0].contactId").isEqualTo(123)
+        .jsonPath("$[0].visitors[0].nomisPersonId").isEqualTo(123)
         .jsonPath("$[0].visitors[0].visitId").isNumber
         .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
     }

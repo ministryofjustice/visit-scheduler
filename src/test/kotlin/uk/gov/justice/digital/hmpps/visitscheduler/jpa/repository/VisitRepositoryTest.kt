@@ -40,7 +40,7 @@ class VisitRepositoryTest : IntegrationTestBase() {
     visitList[0] = visitList[0].copy(
       visitors = mutableListOf(
         VisitVisitor(
-          VisitVisitorPk(contactId = 123L, visitId = visitList[0].id),
+          VisitVisitorPk(nomisPersonId = 123L, visitId = visitList[0].id),
           leadVisitor = false,
           visit = visitList[0]
         )
@@ -60,7 +60,7 @@ class VisitRepositoryTest : IntegrationTestBase() {
       assertThat(this.prisonId).isEqualTo("MDI")
       assertThat(this.visitors).hasSize(1)
       assertThat(this.visitors[0].leadVisitor).isFalse()
-      assertThat(this.visitors[0].id.contactId).isEqualTo(123L)
+      assertThat(this.visitors[0].id.nomisPersonId).isEqualTo(123L)
       assertThat(this.visitors[0].id.visitId).isEqualTo(visitList[0].id)
     }
   }

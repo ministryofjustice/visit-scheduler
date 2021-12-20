@@ -175,7 +175,7 @@ paths:
           required: false
           schema:
             type: string
-        - name: contactId
+        - name: nomisPersonId
           in: query
           description: contact Id (currently NOMIS person id)
           required: false
@@ -383,7 +383,7 @@ components:
       type: object
       description: Identifies the contact
       properties:
-        nomisContactId:
+        nomisPersonId:
           type: string
           description: Unique Identifier for this contact (from NOMIS)
         leadVisitor:
