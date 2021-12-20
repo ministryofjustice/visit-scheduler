@@ -16,9 +16,9 @@ CREATE TABLE visit
 CREATE TABLE visit_visitor
 (
     visit_id        integer        NOT NULL,
-    contact_id      integer        NOT NULL,
+    nomis_Person_id      integer        NOT NULL,
     lead_visitor    BOOLEAN,
-    PRIMARY KEY (visit_id, contact_id)
+    PRIMARY KEY (visit_id, nomis_person_id)
 );
 
 CREATE TABLE session_template

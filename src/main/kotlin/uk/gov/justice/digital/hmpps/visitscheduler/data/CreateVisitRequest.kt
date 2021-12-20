@@ -29,6 +29,6 @@ data class CreateVisitRequest(
 )
 
 data class CreateVisitorOnVisit(
-  @Schema(description = "contact Id (personId NOMIS)", example = "1234556", required = true) @NotNull val contactId: Long,
+  @Schema(description = "NOMIS person ID", example = "1234556", required = true) @NotNull val nomisPersonId: Long,
   @Schema(description = "leadVisitor", example = "true", required = false, defaultValue = "false") val leadVisitor: Boolean = false
 )
