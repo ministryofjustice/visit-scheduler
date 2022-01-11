@@ -9,6 +9,8 @@ configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
 
+ext["log4j2.version"] = "2.17.1" // this can be removed once spring boot 2.5.8 is added to the dps gradle plugin
+
 dependencies {
   agentDeps("com.microsoft.azure:applicationinsights-agent:3.2.0-BETA.4")
   implementation("org.springframework.boot:spring-boot-starter-webflux")
