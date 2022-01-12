@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "3.3.16"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.0.1"
   kotlin("plugin.spring") version "1.5.31"
   kotlin("plugin.jpa") version "1.5.31"
   idea
@@ -8,8 +8,6 @@ plugins {
 configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
-
-ext["log4j2.version"] = "2.17.1" // this can be removed once spring boot 2.5.8 is added to the dps gradle plugin
 
 dependencies {
   agentDeps("com.microsoft.azure:applicationinsights-agent:3.2.0-BETA.4")
@@ -33,10 +31,10 @@ dependencies {
 
   implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.0")
 
-  implementation("org.springdoc:springdoc-openapi-webmvc-core:1.5.10")
-  implementation("org.springdoc:springdoc-openapi-ui:1.5.10")
-  implementation("org.springdoc:springdoc-openapi-kotlin:1.5.10")
-  implementation("org.springdoc:springdoc-openapi-data-rest:1.5.10")
+  implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.4")
+  implementation("org.springdoc:springdoc-openapi-ui:1.6.4")
+  implementation("org.springdoc:springdoc-openapi-kotlin:1.6.4")
+  implementation("org.springdoc:springdoc-openapi-data-rest:1.6.4")
 
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")

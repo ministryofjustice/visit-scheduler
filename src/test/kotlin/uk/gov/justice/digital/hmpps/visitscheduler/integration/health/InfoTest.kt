@@ -15,8 +15,6 @@ class InfoTest : IntegrationTestBase() {
       .exchange()
       .expectStatus()
       .isOk
-      .expectBody()
-      .jsonPath("app.name").isEqualTo("Visit Scheduler")
   }
 
   @Test
@@ -27,5 +25,14 @@ class InfoTest : IntegrationTestBase() {
       .expectBody().jsonPath("build.version").value<String> {
         assertThat(it).startsWith(LocalDateTime.now().format(DateTimeFormatter.ISO_DATE))
       }
+  }
+
+  @Test
+  fun `Info page reports name`() {
+    webTestClient.get().uri("/info")
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("build.name").isEqualTo("visit-scheduler")
   }
 }
