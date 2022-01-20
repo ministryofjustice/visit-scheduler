@@ -30,14 +30,6 @@ channels:
       bindings:
         sns:
           is: notification service
-  prison-visit.revised:
-    description: Prison Visit Amended
-    publish:
-      message:
-        $ref: '#/components/messages/visit-event'
-      bindings:
-        sns:
-          is: notification service
   prison-visit.cancelled:
     description: Prison Visit Cancelled
     publish:
@@ -67,20 +59,24 @@ components:
           occuredAt:
             type: string
             format: datetime
-          additionalInformation:
-            $ref: '#/components/schemas/AdditionalInformation'
+            description: Timestamp this event occurred
+          visitType:
+            $ref: '#/components/schemas/VisitType'
           prisonerId:
             type: string
             description: Id of prisoner being visited
+          additionalInformation:
+            $ref: '#/components/schemas/AdditionalInformation'
     AdditionalInformation:
       type: object
       description: Additional Information for this visit event
       properties:
-          visitId:
-            type: string
-            description: Unique identifier for this visit
-          visitType:
-            $ref: '#/components/schemas/VisitType'
+        visitId:
+          type: string
+          description: Unique identifier for this visit
+        NOMISvisitId:
+          type: string
+          description: NOMIS's identifier for this visit
     VisitType:
       type: string
       description: Visit Type
@@ -94,5 +90,4 @@ components:
       description: Set of possible visit event types
       enum:
         - prison-visit.booked
-        - prison-visit.revised
         - prison-visit.cancelled
