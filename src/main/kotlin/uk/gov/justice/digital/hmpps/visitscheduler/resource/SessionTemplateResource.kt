@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateRequest
-import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitSchedulerService
 import javax.validation.Valid
@@ -39,14 +38,14 @@ class SessionTemplateResource(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = CreateVisitRequest::class)
+          schema = Schema(implementation = CreateSessionTemplateRequest::class)
         )
       ]
     ),
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "Visit created"
+        description = "Session Template created"
       ),
       ApiResponse(
         responseCode = "400",

@@ -1,10 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.data
 
-import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Visit")
 data class VisitorDto(
   @Schema(description = "Visit id", example = "123", required = true) val visitId: Long,
