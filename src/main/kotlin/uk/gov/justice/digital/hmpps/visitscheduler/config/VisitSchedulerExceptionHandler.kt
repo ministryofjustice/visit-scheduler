@@ -2,11 +2,10 @@ package uk.gov.justice.digital.hmpps.visitscheduler.config
 
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatus.BAD_REQUEST
-import org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR
 import org.springframework.http.ResponseEntity
 import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.security.access.AccessDeniedException
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.MissingServletRequestParameterException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -23,7 +22,12 @@ class VisitSchedulerExceptionHandler {
     log.debug("Forbidden (403) returned with message {}", e.message)
     return ResponseEntity
       .status(HttpStatus.FORBIDDEN)
-      .body(ErrorResponse(status = (HttpStatus.FORBIDDEN.value())))
+      .body(
+        ErrorResponse(
+          status = HttpStatus.FORBIDDEN,
+          userMessage = "Access denied",
+        )
+      )
   }
 
   @ExceptionHandler(WebClientResponseException::class)
@@ -42,20 +46,39 @@ class VisitSchedulerExceptionHandler {
   fun handleWebClientException(e: WebClientException): ResponseEntity<ErrorResponse> {
     log.error("Unexpected exception", e)
     return ResponseEntity
-      .status(INTERNAL_SERVER_ERROR)
-      .body(ErrorResponse(status = (INTERNAL_SERVER_ERROR.value()), developerMessage = (e.message)))
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.INTERNAL_SERVER_ERROR,
+          developerMessage = e.message
+        )
+      )
   }
 
   @ExceptionHandler(ValidationException::class)
   fun handleValidationException(e: Exception): ResponseEntity<ErrorResponse> {
     log.info("Validation exception: {}", e.message)
     return ResponseEntity
-      .status(BAD_REQUEST)
+      .status(HttpStatus.BAD_REQUEST)
       .body(
         ErrorResponse(
-          status = BAD_REQUEST,
-          userMessage = "Validation failure: ${e.message}",
+          status = HttpStatus.BAD_REQUEST,
+          userMessage = "Validation failure: ${e.cause?.message}",
           developerMessage = e.message
+        )
+      )
+  }
+
+  @ExceptionHandler(MissingServletRequestParameterException::class)
+  fun handleValidationException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> {
+    log.debug("Bad Request (400) returned", e.message)
+    return ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = (HttpStatus.BAD_REQUEST),
+          userMessage = "Missing Request Parameter: ${e.cause?.message}",
+          developerMessage = (e.message)
         )
       )
   }
@@ -64,10 +87,10 @@ class VisitSchedulerExceptionHandler {
   fun handleJsonMappingValidationException(e: Exception): ResponseEntity<ErrorResponse> {
     log.info("Validation exception: {}", e.message)
     return ResponseEntity
-      .status(BAD_REQUEST)
+      .status(HttpStatus.BAD_REQUEST)
       .body(
         ErrorResponse(
-          status = BAD_REQUEST,
+          status = HttpStatus.BAD_REQUEST,
           userMessage = "Validation failure: ${e.message}",
           developerMessage = e.message
         )
@@ -78,22 +101,28 @@ class VisitSchedulerExceptionHandler {
   fun handleMethodArgumentTypeMismatchException(e: Exception): ResponseEntity<ErrorResponse> {
     log.info("Validation exception: {}", e.message)
     return ResponseEntity
-      .status(BAD_REQUEST)
+      .status(HttpStatus.BAD_REQUEST)
       .body(
         ErrorResponse(
-          status = BAD_REQUEST,
-          userMessage = "Validation failure: ${e.message}",
+          status = HttpStatus.BAD_REQUEST,
+          userMessage = "Invalid Argument: ${e.cause?.message}",
           developerMessage = e.message
         )
       )
   }
 
-  @ExceptionHandler(MissingServletRequestParameterException::class)
-  fun handleValidationException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> {
-    log.debug("Bad Request (400) returned", e.message)
+  @ExceptionHandler(MethodArgumentNotValidException::class)
+  fun handleMethodArgumentNotValidException(e: Exception): ResponseEntity<ErrorResponse> {
+    log.info("Validation exception: {}", e.message)
     return ResponseEntity
-      .status(BAD_REQUEST)
-      .body(ErrorResponse(status = (BAD_REQUEST.value()), developerMessage = (e.message)))
+      .status(HttpStatus.BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.BAD_REQUEST,
+          userMessage = "Invalid Argument: ${e.cause?.message}",
+          developerMessage = e.message
+        )
+      )
   }
 
   @ExceptionHandler(VisitNotFoundException::class)
@@ -104,7 +133,7 @@ class VisitSchedulerExceptionHandler {
       .body(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
-          userMessage = "Visit not found: ${e.message}",
+          userMessage = "Visit not found: ${e.cause?.message}",
           developerMessage = e.message
         )
       )
@@ -114,11 +143,10 @@ class VisitSchedulerExceptionHandler {
   fun handleException(e: java.lang.Exception): ResponseEntity<ErrorResponse?>? {
     log.error("Unexpected exception", e)
     return ResponseEntity
-      .status(INTERNAL_SERVER_ERROR)
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
       .body(
         ErrorResponse(
-          status = INTERNAL_SERVER_ERROR,
-          userMessage = "Unexpected error: ${e.message}",
+          status = HttpStatus.INTERNAL_SERVER_ERROR,
           developerMessage = e.message
         )
       )

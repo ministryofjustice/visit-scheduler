@@ -8,6 +8,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
+import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.config.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateRequest
@@ -110,6 +111,34 @@ class SessionTemplateResourceIntTest : IntegrationTestBase() {
         .body(
           BodyInserters.fromValue(
             mapOf("wrongProperty" to "wrongValue")
+          )
+        )
+        .exchange()
+        .expectStatus().isBadRequest
+    }
+
+    @Test
+    fun `create visit bad_request when blank required field`() {
+
+      val jsonString = """{
+        "prisonId":"",
+        "startTime":"14:30:00",
+        "endTime":"16:30:00",
+        "startDate":"2021-01-01",
+        "expiryDate":"2021-04-01",
+        "visitType":"STANDARD_SOCIAL",
+        "visitRoom":"A1",
+        "frequency": "WEEKLY",
+        "closedCapacity":2,
+        "openCapacity":5
+      }"""
+
+      webTestClient.post().uri("/session-templates")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .contentType(MediaType.APPLICATION_JSON)
+        .body(
+          BodyInserters.fromValue(
+            jsonString
           )
         )
         .exchange()

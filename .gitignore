@@ -69,3 +69,5 @@ ecr.repo
 
 #Helm
 **/Chart.lock
+
+.DS_Store

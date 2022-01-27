@@ -1,12 +1,10 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.data
 
-import com.fasterxml.jackson.annotation.JsonInclude
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import java.time.LocalDateTime
 import javax.validation.constraints.NotBlank
 
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(description = "Visit")
 data class VisitDto(
   @Schema(description = "Visit id", example = "123", required = true) val id: Long,
@@ -21,15 +19,15 @@ data class VisitDto(
     description = "The date and time of the visit",
     example = "2018-12-01T13:45:00",
     required = true
-  ) @NotBlank val startTimestamp: LocalDateTime,
+  ) @field:NotBlank val startTimestamp: LocalDateTime,
   @Schema(
     description = "The finishing date and time of the visit",
     example = "2018-12-01T13:45:00",
     required = true
-  ) @NotBlank val endTimestamp: LocalDateTime,
-  @Schema(description = "reasonable adjustments text", required = false) val reasonableAdjustments: String?,
+  ) @field:NotBlank val endTimestamp: LocalDateTime,
+  @Schema(description = "reasonable adjustments text", required = false) val reasonableAdjustments: String? = null,
   @Schema(description = "list of visitors associated with the visit", required = false) val visitors: List<VisitorDto> = listOf(),
-  @Schema(description = "The id of the session template associated with this visit", example = "123", required = false) val sessionId: Long?,
+  @Schema(description = "The id of the session template associated with this visit", example = "123", required = false) val sessionId: Long? = null,
 ) {
 
   constructor(visitEntity: Visit) : this(

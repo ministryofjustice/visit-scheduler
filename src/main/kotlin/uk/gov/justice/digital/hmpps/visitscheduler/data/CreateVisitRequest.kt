@@ -8,8 +8,8 @@ import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
 data class CreateVisitRequest(
-  @Schema(description = "prisonerId", example = "AF34567G", required = true) @NotBlank val prisonerId: String,
-  @Schema(description = "prisonId", example = "MDI", required = true) @NotBlank val prisonId: String,
+  @Schema(description = "prisonerId", example = "AF34567G", required = true) @field:NotBlank val prisonerId: String,
+  @Schema(description = "prisonId", example = "MDI", required = true) @field:NotBlank val prisonId: String,
   @Schema(
     description = "The date and time of the visit",
     example = "2018-12-01T13:45:00",
@@ -20,12 +20,12 @@ data class CreateVisitRequest(
     example = "2018-12-01T13:45:00",
     required = true
   ) @NotNull val endTimestamp: LocalDateTime,
-  @Schema(description = "visit type", example = "STANDARD_SOCIAL", required = true) @NotBlank val visitType: VisitType,
-  @Schema(description = "visit visitStatus", example = "RESERVED", required = true) @NotBlank val visitStatus: VisitStatus,
-  @Schema(description = "visit room", example = "A1", required = true) @NotBlank val visitRoom: String,
-  @Schema(description = "reasonable adjustments", required = false) val reasonableAdjustments: String?,
-  @Schema(description = "contact list", required = false) val contactList: List<CreateVisitorOnVisit>?,
-  @Schema(description = "sessionId identifying the visit session template", example = "MDI", required = false) val sessionId: Long?,
+  @Schema(description = "visit type", example = "STANDARD_SOCIAL", required = true) @NotNull val visitType: VisitType,
+  @Schema(description = "visit visitStatus", example = "RESERVED", required = true) @NotNull val visitStatus: VisitStatus,
+  @Schema(description = "visit room", example = "A1", required = true) @field:NotBlank val visitRoom: String,
+  @Schema(description = "reasonable adjustments", required = false) val reasonableAdjustments: String? = null,
+  @Schema(description = "contact list", required = false) val contactList: List<CreateVisitorOnVisit>? = listOf(),
+  @Schema(description = "sessionId identifying the visit session template", example = "123456", required = false) val sessionId: Long? = null,
 )
 
 data class CreateVisitorOnVisit(
