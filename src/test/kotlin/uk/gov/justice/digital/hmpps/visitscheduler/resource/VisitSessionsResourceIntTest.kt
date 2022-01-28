@@ -3,8 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.resource
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import uk.gov.justice.digital.hmpps.visitscheduler.config.TestClockConfiguration
@@ -21,10 +19,6 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sessionTemplateRepository: SessionTemplateRepository
-
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
-  }
 
   @AfterEach
   internal fun deleteAllSessionTemplates() = sessionTemplateDeleter(sessionTemplateRepository)

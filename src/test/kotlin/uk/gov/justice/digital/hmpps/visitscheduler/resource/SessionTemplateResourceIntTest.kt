@@ -4,8 +4,6 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
@@ -27,17 +25,13 @@ class SessionTemplateResourceIntTest : IntegrationTestBase() {
   @Autowired
   private lateinit var sessionTemplateRepository: SessionTemplateRepository
 
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
-  }
-
   @AfterEach
   internal fun deleteAllSessionTemplates() = sessionTemplateDeleter(sessionTemplateRepository)
 
   @DisplayName("POST /session-templates")
   @Nested
   inner class CreateSessionTemplate {
-    val createSessionTemplateRequest = CreateSessionTemplateRequest(
+    private val createSessionTemplateRequest = CreateSessionTemplateRequest(
       prisonId = "LEI",
       startTime = LocalTime.of(14, 30),
       endTime = LocalTime.of(16, 30),

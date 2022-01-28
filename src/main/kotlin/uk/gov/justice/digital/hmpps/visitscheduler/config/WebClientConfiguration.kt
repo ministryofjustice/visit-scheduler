@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.client.ClientRequest
 import org.springframework.web.reactive.function.client.ExchangeFilterFunction
 import org.springframework.web.reactive.function.client.ExchangeFunction
 import org.springframework.web.reactive.function.client.WebClient
-import uk.gov.justice.digital.hmpps.nomisuserrolesapi.utils.UserContext
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.UserContext
 
 @Configuration
 class WebClientConfiguration(@Value("\${oauth.endpoint.url}") val authbaseUri: String) {

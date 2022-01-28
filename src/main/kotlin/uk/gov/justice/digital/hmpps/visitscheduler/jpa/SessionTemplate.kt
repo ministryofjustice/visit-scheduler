@@ -45,7 +45,7 @@ data class SessionTemplate(
   @Column(nullable = false)
   val startDate: LocalDate,
 
-  @Column()
+  @Column
   val expiryDate: LocalDate?,
 
   @Column(nullable = false)

@@ -23,10 +23,9 @@ import java.time.LocalTime
 import java.time.ZoneId
 
 @ExtendWith(MockitoExtension::class)
-class VisitSchedulerServiceTest() {
+class VisitSchedulerServiceTest {
 
-  companion object {
-  }
+  companion object;
 
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val visitRepository = mock<VisitRepository>()
@@ -51,7 +50,7 @@ class VisitSchedulerServiceTest() {
   @DisplayName("simple session generation")
   inner class SlotGeneration {
 
-    fun mockRepositoryResponse(response: List<SessionTemplate>) {
+    private fun mockRepositoryResponse(response: List<SessionTemplate>) {
       Mockito.`when`(
         sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
           "MDI",

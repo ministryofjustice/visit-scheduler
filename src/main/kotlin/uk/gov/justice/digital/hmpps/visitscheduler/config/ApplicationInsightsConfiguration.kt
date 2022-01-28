@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.nomisuserrolesapi.config
+package uk.gov.justice.digital.hmpps.visitscheduler.config
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.LoggerFactory

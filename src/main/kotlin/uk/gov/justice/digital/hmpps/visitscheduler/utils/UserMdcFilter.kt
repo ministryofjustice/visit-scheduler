@@ -1,10 +1,10 @@
-package uk.gov.justice.digital.hmpps.nomisuserrolesapi.utils
+package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.slf4j.MDC
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.core.annotation.Order
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.nomisuserrolesapi.config.AuthenticationFacade
+import uk.gov.justice.digital.hmpps.visitscheduler.config.AuthenticationFacade
 import java.io.IOException
 import javax.servlet.Filter
 import javax.servlet.FilterChain

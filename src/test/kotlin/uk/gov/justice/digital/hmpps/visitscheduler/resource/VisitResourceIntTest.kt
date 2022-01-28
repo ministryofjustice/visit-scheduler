@@ -6,8 +6,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
@@ -30,7 +28,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
   private lateinit var visitVisitorRepository: VisitVisitorRepository
 
   companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
     val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
   }
 
@@ -296,7 +293,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
   @DisplayName("POST /visits")
   @Nested
   inner class CreateVisit {
-    val createVisitRequest = CreateVisitRequest(
+    private val createVisitRequest = CreateVisitRequest(
       prisonerId = "FF0000FF",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),

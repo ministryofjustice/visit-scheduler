@@ -1,3 +1,5 @@
+package uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification
+
 import org.springframework.data.jpa.domain.Specification
 import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit

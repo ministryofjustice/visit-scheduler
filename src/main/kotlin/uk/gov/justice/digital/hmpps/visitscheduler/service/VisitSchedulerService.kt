@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import VisitSpecification
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -19,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime

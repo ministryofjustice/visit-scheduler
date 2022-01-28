@@ -2,8 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
@@ -21,9 +19,8 @@ class VisitRepositoryTest : IntegrationTestBase() {
   lateinit var repository: VisitRepository
 
   companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
     val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30)
-    val testPrisonerId: String = "AA12345F"
+    const val testPrisonerId: String = "AA12345F"
   }
 
   @Test
@@ -59,7 +56,7 @@ class VisitRepositoryTest : IntegrationTestBase() {
       assertThat(this.visitStart).isEqualTo(visitTime)
       assertThat(this.prisonId).isEqualTo("MDI")
       assertThat(this.visitors).hasSize(1)
-      assertThat(this.visitors[0].leadVisitor).isFalse()
+      assertThat(this.visitors[0].leadVisitor).isFalse
       assertThat(this.visitors[0].id.nomisPersonId).isEqualTo(123L)
       assertThat(this.visitors[0].id.visitId).isEqualTo(visitList[0].id)
     }
