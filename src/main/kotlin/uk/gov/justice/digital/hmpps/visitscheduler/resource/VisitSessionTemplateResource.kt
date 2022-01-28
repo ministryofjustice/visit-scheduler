@@ -24,8 +24,8 @@ import javax.validation.Valid
 
 @RestController
 @Validated
-@RequestMapping(name = "Visit Resource", path = ["/session-templates"], produces = [MediaType.APPLICATION_JSON_VALUE])
-class SessionTemplateResource(
+@RequestMapping(name = "Visit Resource", path = ["/visit-session-templates"], produces = [MediaType.APPLICATION_JSON_VALUE])
+class VisitSessionTemplateResource(
   private val visitSchedulerService: VisitSchedulerService
 ) {
 
@@ -69,7 +69,58 @@ class SessionTemplateResource(
   ): SessionTemplateDto = visitSchedulerService.createSessionTemplate(createSessionTemplateRequest)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @DeleteMapping("/{sessionTemplateId}")
+  @GetMapping
+  @Operation(
+    summary = "Get session templates",
+    description = "Get all session templates",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session templates returned"
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to view session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun getSessionTemplates(): List<SessionTemplateDto> = visitSchedulerService.getSessionTemplates()
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping("/{templateId}")
+  @Operation(
+    summary = "Get session template",
+    description = "Get all session templates",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session templates returned"
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to view session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun getSessionTemplate(
+    @Schema(description = "Template id", example = "45645", required = true)
+    @PathVariable templateId: Long
+  ): SessionTemplateDto = visitSchedulerService.getSessionTemplates(templateId)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @DeleteMapping("/{templateId}")
   @Operation(
     summary = "Delete session template",
     description = "Delete a session template by id",
@@ -92,35 +143,8 @@ class SessionTemplateResource(
   )
   fun deleteSessionTemplate(
     @Schema(description = "session template id", example = "45645", required = true)
-    @PathVariable sessionTemplateId: Long
+    @PathVariable templateId: Long
   ) {
-    visitSchedulerService.deleteSessionTemplate(sessionTemplateId)
-  }
-
-  // convenience endpoint to retrieve all session templates to support development
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping
-  @Operation(
-    summary = "get session templates CONVENIENCE ENDPOINT TO SUPPORT DEV - WILL BE REPLACED",
-    description = "Get all session templates",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Session templates returned"
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to view session templates",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
-  )
-  fun getSessionTemplates(): List<SessionTemplateDto> {
-    return visitSchedulerService.getSessionTemplates()
+    visitSchedulerService.deleteSessionTemplate(templateId)
   }
 }

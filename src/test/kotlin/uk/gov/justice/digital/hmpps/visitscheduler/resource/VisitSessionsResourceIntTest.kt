@@ -33,7 +33,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
         restrictions = "Only B wing"
       )
     ).save()
-    webTestClient.get().uri("/visit-sessions/prison/MDI")
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
@@ -71,7 +71,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
         restrictions = "Only B wing"
       )
     ).save()
-    webTestClient.get().uri("/visit-sessions/prison/MDI")
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
@@ -90,7 +90,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
         restrictions = "Only B wing"
       )
     ).save()
-    webTestClient.get().uri("/visit-sessions/prison/MDI")
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
@@ -104,7 +104,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(startDate = LocalDate.parse("2021-01-08"))
     ).save()
-    webTestClient.get().uri("/visit-sessions/prison/MDI")
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
