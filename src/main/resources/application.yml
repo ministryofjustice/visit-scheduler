@@ -81,5 +81,5 @@ oauth:
   token.url: ${oauth.endpoint.url}/oauth/token
 
 policy:
-  minimum-booking-notice-period-days: 1
-  maximum-booking-notice-period-days: 48
+  minimum-booking-notice-period-days: 2
+  maximum-booking-notice-period-days: 28

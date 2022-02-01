@@ -41,8 +41,8 @@ class VisitSchedulerServiceTest {
       visitRepository,
       sessionTemplateRepository,
       clock,
-      100,
-      1
+      1,
+      100
     )
   }
 

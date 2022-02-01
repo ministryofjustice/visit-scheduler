@@ -32,8 +32,8 @@ class VisitSchedulerService(
   private val visitRepository: VisitRepository,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val clock: Clock,
-  @Value("\${policy.maximum-booking-notice-period-days}") private val maxBookingNoticeDays: Long,
-  @Value("\${policy.minimum-booking-notice-period-days}") private val minBookingNoticeDays: Long,
+  @Value("\${policy.minimum-booking-notice-period-days}") private val defaultNoticeDaysMin: Long,
+  @Value("\${policy.maximum-booking-notice-period-days}") private val defaultNoticeDaysMax: Long,
 ) {
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
@@ -47,9 +47,9 @@ class VisitSchedulerService(
   }
 
   @Transactional(readOnly = true)
-  fun getVisitSessions(prisonId: String): List<VisitSession> {
-    val bookablePeriodEndDate = LocalDate.now(clock).plusDays(maxBookingNoticeDays)
-    val bookablePeriodStartDate = LocalDate.now(clock).plusDays(minBookingNoticeDays)
+  fun getVisitSessions(prisonId: String, noticeDaysMin: Long? = null, noticeDaysMax: Long? = null): List<VisitSession> {
+    val bookablePeriodStartDate = LocalDate.now(clock).plusDays(noticeDaysMin ?: defaultNoticeDaysMin)
+    val bookablePeriodEndDate = LocalDate.now(clock).plusDays(noticeDaysMax ?: defaultNoticeDaysMax)
     val sessionTemplates =
       sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
         prisonId,

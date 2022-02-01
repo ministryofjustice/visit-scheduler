@@ -12,7 +12,7 @@ To list project dependencies, run:
 
 ```
 ./gradlew dependencies
-```
+``` 
 
 To check for dependency updates, run:
 ```

@@ -50,7 +50,17 @@ class VisitSessionResource(
     @Parameter(
       description = "Query by NOMIS Prison Identifier",
       example = "MDI"
-    ) prisonId: String
+    ) prisonId: String,
+    @RequestParam(value = "min", required = false)
+    @Parameter(
+      description = "Minimum number of days notice from the current date",
+      example = "2"
+    ) min: Long?,
+    @RequestParam(value = "max", required = false)
+    @Parameter(
+      description = "Maximum number of days to book-ahead from the current date",
+      example = "28"
+    ) max: Long?
   ): List<VisitSession> =
-    visitSchedulerService.getVisitSessions(prisonId)
+    visitSchedulerService.getVisitSessions(prisonId, min, max)
 }
