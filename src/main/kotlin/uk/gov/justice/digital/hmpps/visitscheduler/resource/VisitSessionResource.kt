@@ -53,12 +53,12 @@ class VisitSessionResource(
     ) prisonId: String,
     @RequestParam(value = "min", required = false)
     @Parameter(
-      description = "Minimum number of days notice from the current date",
+      description = "Override the default minimum number of days notice from the current date",
       example = "2"
     ) min: Long?,
     @RequestParam(value = "max", required = false)
     @Parameter(
-      description = "Maximum number of days to book-ahead from the current date",
+      description = "Override the default maximum number of days to book-ahead from the current date",
       example = "28"
     ) max: Long?
   ): List<VisitSession> =

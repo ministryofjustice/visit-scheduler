@@ -24,7 +24,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.function.Supplier
-import kotlin.jvm.Throws
 
 @Service
 @Transactional
@@ -40,7 +39,6 @@ class VisitSchedulerService(
   }
 
   @Transactional(readOnly = true)
-  @Throws(VisitNotFoundException::class)
   fun getVisitById(visitId: Long): VisitDto {
     return visitRepository.findById(visitId).map { VisitDto(it) }
       .orElseThrow(VisitNotFoundException("Visit id  $visitId not found"))
@@ -125,7 +123,6 @@ class VisitSchedulerService(
     return sessionTemplateRepository.findAll().sortedBy { it.startDate }.map { SessionTemplateDto(it) }
   }
 
-  @Throws(TemplateNotFoundException::class)
   fun getSessionTemplates(sessionTemplateId: Long): SessionTemplateDto {
     return sessionTemplateRepository.findById(sessionTemplateId).map { SessionTemplateDto(it) }
       .orElseThrow(TemplateNotFoundException("Template id $sessionTemplateId not found"))
