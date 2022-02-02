@@ -44,6 +44,18 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
       )
     }
 
+    filter.status?.run {
+      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::status.name), this))
+    }
+
+    filter.createTimestamp?.run {
+      predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::createTimestamp.name), this))
+    }
+
+    filter.modifyTimestamp?.run {
+      predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::modifyTimestamp.name), this))
+    }
+
     return criteriaBuilder.and(*predicates.toTypedArray())
   }
 }

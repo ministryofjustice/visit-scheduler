@@ -10,7 +10,9 @@ CREATE TABLE visit
     visit_start     timestamp with time zone NOT NULL,
     visit_end       timestamp with time zone NOT NULL,
     status          VARCHAR(80)   NOT NULL,
-    reasonable_adjustments    text
+    reasonable_adjustments    text,
+    create_timestamp timestamp default current_timestamp,
+    modify_timestamp timestamp default current_timestamp
 );
 
 CREATE TABLE visit_visitor

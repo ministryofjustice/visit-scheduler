@@ -83,3 +83,9 @@ oauth:
 policy:
   minimum-booking-notice-period-days: 2
   maximum-booking-notice-period-days: 28
+
+task:
+  expired-visit:
+    enabled: true
+    cron: 0 0/15 * * * ?
+    validity-minutes: 20
