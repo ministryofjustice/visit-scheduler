@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.resource
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -8,8 +9,8 @@ import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
@@ -23,7 +24,7 @@ class VisitSessionResource(
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping("/prison/{prisonId}")
+  @GetMapping
   @Operation(
     summary = "Returns all visit sessions which are within the reservable time period - whether or not they are full",
     description = "Retrieve all visits for a specified prisoner",
@@ -45,8 +46,21 @@ class VisitSessionResource(
     ]
   )
   fun getVisitSessions(
-    @Schema(description = "NOMIS Prison Identifier", example = "MDI", required = true)
-    @PathVariable prisonId: String
+    @RequestParam(value = "prisonId", required = true)
+    @Parameter(
+      description = "Query by NOMIS Prison Identifier",
+      example = "MDI"
+    ) prisonId: String,
+    @RequestParam(value = "min", required = false)
+    @Parameter(
+      description = "Override the default minimum number of days notice from the current date",
+      example = "2"
+    ) min: Long?,
+    @RequestParam(value = "max", required = false)
+    @Parameter(
+      description = "Override the default maximum number of days to book-ahead from the current date",
+      example = "28"
+    ) max: Long?
   ): List<VisitSession> =
-    visitSchedulerService.getVisitSessions(prisonId)
+    visitSchedulerService.getVisitSessions(prisonId, min, max)
 }

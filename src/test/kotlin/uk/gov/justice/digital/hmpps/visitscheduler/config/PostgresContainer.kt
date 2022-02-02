@@ -7,7 +7,7 @@ import java.net.ServerSocket
 
 object PostgresContainer {
   val instance: PostgreSQLContainer<Nothing>? by lazy { startPostgresqlContainer() }
-  fun startPostgresqlContainer(): PostgreSQLContainer<Nothing>? =
+  private fun startPostgresqlContainer(): PostgreSQLContainer<Nothing>? =
     if (checkPostgresRunning().not()) {
       PostgreSQLContainer<Nothing>("postgres:13.2").apply {
         withEnv("HOSTNAME_EXTERNAL", "localhost")

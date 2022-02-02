@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.nomisuserrolesapi.config
+package uk.gov.justice.digital.hmpps.visitscheduler.config
 
 import org.apache.commons.lang3.RegExUtils
 import org.springframework.security.core.Authentication

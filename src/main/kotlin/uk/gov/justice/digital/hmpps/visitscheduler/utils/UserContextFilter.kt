@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.nomisuserrolesapi.utils
+package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.core.annotation.Order
 import org.springframework.http.HttpHeaders

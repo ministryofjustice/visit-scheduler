@@ -3,8 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.resource
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import uk.gov.justice.digital.hmpps.visitscheduler.config.TestClockConfiguration
@@ -22,10 +20,6 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
   @Autowired
   private lateinit var sessionTemplateRepository: SessionTemplateRepository
 
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
-  }
-
   @AfterEach
   internal fun deleteAllSessionTemplates() = sessionTemplateDeleter(sessionTemplateRepository)
 
@@ -39,12 +33,12 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
         restrictions = "Only B wing"
       )
     ).save()
-    webTestClient.get().uri("/visit-sessions/prison/MDI")
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(6)
+      .jsonPath("$.length()").isEqualTo(4)
       .jsonPath("$[0].visitRoomName").isEqualTo("1")
       .jsonPath("$[0].prisonId").isEqualTo("MDI")
       .jsonPath("$[0].restrictions").isEqualTo("Only B wing")
@@ -59,9 +53,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
           "2021-01-08T09:00:00",
           "2021-01-15T09:00:00",
           "2021-01-22T09:00:00",
-          "2021-01-29T09:00:00",
-          "2021-02-05T09:00:00",
-          "2021-02-12T09:00:00" // 48 days maximum book ahead
+          "2021-01-29T09:00:00"
         )
       )
   }
@@ -77,7 +69,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
         restrictions = "Only B wing"
       )
     ).save()
-    webTestClient.get().uri("/visit-sessions/prison/MDI")
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
@@ -96,7 +88,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
         restrictions = "Only B wing"
       )
     ).save()
-    webTestClient.get().uri("/visit-sessions/prison/MDI")
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
@@ -110,11 +102,11 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(startDate = LocalDate.parse("2021-01-08"))
     ).save()
-    webTestClient.get().uri("/visit-sessions/prison/MDI")
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(42) // up to 18/2
+      .jsonPath("$.length()").isEqualTo(22)
   }
 }

@@ -32,7 +32,7 @@ data class SessionException(
   @Column(nullable = false)
   val startDate: LocalDate,
 
-  @Column()
+  @Column
   val endDate: LocalDate?,
 
   @Column(nullable = false)

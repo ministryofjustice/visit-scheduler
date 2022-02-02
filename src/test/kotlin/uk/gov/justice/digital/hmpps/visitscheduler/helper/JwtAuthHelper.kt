@@ -15,7 +15,7 @@ import java.util.Date
 import java.util.UUID
 
 @Component
-class JwtAuthHelper() {
+class JwtAuthHelper {
   private val keyPair: KeyPair
 
   init {

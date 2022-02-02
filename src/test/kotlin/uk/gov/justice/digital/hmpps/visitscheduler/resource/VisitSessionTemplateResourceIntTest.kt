@@ -4,14 +4,13 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.config.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateRequest
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -22,22 +21,18 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @Import(TestClockConfiguration::class)
-class SessionTemplateResourceIntTest : IntegrationTestBase() {
+class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sessionTemplateRepository: SessionTemplateRepository
 
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
-  }
-
   @AfterEach
   internal fun deleteAllSessionTemplates() = sessionTemplateDeleter(sessionTemplateRepository)
 
-  @DisplayName("POST /session-templates")
+  @DisplayName("POST /visit-session-templates")
   @Nested
   inner class CreateSessionTemplate {
-    val createSessionTemplateRequest = CreateSessionTemplateRequest(
+    private val createSessionTemplateRequest = CreateSessionTemplateRequest(
       prisonId = "LEI",
       startTime = LocalTime.of(14, 30),
       endTime = LocalTime.of(16, 30),
@@ -54,7 +49,7 @@ class SessionTemplateResourceIntTest : IntegrationTestBase() {
     @Test
     fun `create session template`() {
 
-      webTestClient.post().uri("/session-templates")
+      webTestClient.post().uri("/visit-session-templates")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(
@@ -80,7 +75,7 @@ class SessionTemplateResourceIntTest : IntegrationTestBase() {
     @Test
     fun `access forbidden when no role`() {
 
-      webTestClient.post().uri("/session-templates")
+      webTestClient.post().uri("/visit-session-templates")
         .headers(setAuthorisation(roles = listOf()))
         .body(
           BodyInserters.fromValue(
@@ -94,7 +89,7 @@ class SessionTemplateResourceIntTest : IntegrationTestBase() {
     @Test
     fun `unauthorised when no token`() {
 
-      webTestClient.post().uri("/session-templates")
+      webTestClient.post().uri("/visit-session-templates")
         .body(
           BodyInserters.fromValue(
             createSessionTemplateRequest
@@ -106,7 +101,7 @@ class SessionTemplateResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `create visit - invalid request`() {
-      webTestClient.post().uri("/session-templates")
+      webTestClient.post().uri("/visit-session-templates")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(
@@ -133,7 +128,7 @@ class SessionTemplateResourceIntTest : IntegrationTestBase() {
         "openCapacity":5
       }"""
 
-      webTestClient.post().uri("/session-templates")
+      webTestClient.post().uri("/visit-session-templates")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .contentType(MediaType.APPLICATION_JSON)
         .body(
@@ -146,7 +141,7 @@ class SessionTemplateResourceIntTest : IntegrationTestBase() {
     }
   }
 
-  @DisplayName("DELETE /session-templates/{sessionTemplateId}")
+  @DisplayName("DELETE /visit-session-templates/{sessionTemplateId}")
   @Nested
   inner class DeleteSessionTemplateById {
     @Test
@@ -166,6 +161,77 @@ class SessionTemplateResourceIntTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isNotFound
+    }
+  }
+
+  @DisplayName("Get /visit-session-templates")
+  @Nested
+  inner class GetSessionTemplate {
+    @Test
+    fun `all session templates are returned empty list`() {
+
+      webTestClient.get().uri("/visit-session-templates")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(0)
+    }
+
+    @Test
+    fun `all session templates are returned`() {
+      sessionTemplateCreator(
+        repository = sessionTemplateRepository,
+        sessionTemplate = sessionTemplate(
+          startDate = LocalDate.parse("2021-01-01"),
+          frequency = SessionFrequency.WEEKLY,
+          restrictions = "Only B wing"
+        )
+      ).save()
+      sessionTemplateCreator(
+        repository = sessionTemplateRepository,
+        sessionTemplate = sessionTemplate(
+          startDate = LocalDate.parse("2021-02-01"),
+          frequency = SessionFrequency.WEEKLY,
+          restrictions = "Only C wing"
+        )
+      ).save()
+      webTestClient.get().uri("/visit-session-templates")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(2)
+    }
+
+    @Test
+    fun `session templates are returned by id`() {
+      val sessionTemplate = sessionTemplateCreator(
+        repository = sessionTemplateRepository,
+        sessionTemplate = sessionTemplate(
+          startDate = LocalDate.parse("2021-01-01"),
+          frequency = SessionFrequency.WEEKLY,
+          restrictions = "Only A wing"
+        )
+      ).save()
+
+      webTestClient.get().uri("/visit-session-templates/${sessionTemplate.id}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(11)
+        .jsonPath("$.sessionTemplateId").isEqualTo(sessionTemplate.id)
+        .jsonPath("$.prisonId").isEqualTo("MDI")
+        .jsonPath("$.startTime").isEqualTo("09:00:00")
+        .jsonPath("$.endTime").isEqualTo("10:00:00")
+        .jsonPath("$.startDate").isEqualTo("2021-01-01")
+        .jsonPath("$.visitType").isEqualTo("STANDARD_SOCIAL")
+        .jsonPath("$.visitRoom").isEqualTo("1")
+        .jsonPath("$.restrictions").isEqualTo("Only A wing")
+        .jsonPath("$.frequency").isEqualTo("WEEKLY")
+        .jsonPath("$.closedCapacity").isEqualTo(5)
+        .jsonPath("$.openCapacity").isEqualTo(10)
     }
   }
 }

@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import VisitSpecification
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -19,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -31,8 +31,8 @@ class VisitSchedulerService(
   private val visitRepository: VisitRepository,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val clock: Clock,
-  @Value("\${policy.maximum-booking-notice-period-days}") private val maxBookingNoticeDays: Long,
-  @Value("\${policy.minimum-booking-notice-period-days}") private val minBookingNoticeDays: Long,
+  @Value("\${policy.minimum-booking-notice-period-days}") private val defaultNoticeDaysMin: Long,
+  @Value("\${policy.maximum-booking-notice-period-days}") private val defaultNoticeDaysMax: Long,
 ) {
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
@@ -45,9 +45,9 @@ class VisitSchedulerService(
   }
 
   @Transactional(readOnly = true)
-  fun getVisitSessions(prisonId: String): List<VisitSession> {
-    val bookablePeriodEndDate = LocalDate.now(clock).plusDays(maxBookingNoticeDays)
-    val bookablePeriodStartDate = LocalDate.now(clock).plusDays(minBookingNoticeDays)
+  fun getVisitSessions(prisonId: String, noticeDaysMin: Long? = null, noticeDaysMax: Long? = null): List<VisitSession> {
+    val bookablePeriodStartDate = LocalDate.now(clock).plusDays(noticeDaysMin ?: defaultNoticeDaysMin)
+    val bookablePeriodEndDate = LocalDate.now(clock).plusDays(noticeDaysMax ?: defaultNoticeDaysMax)
     val sessionTemplates =
       sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
         prisonId,
@@ -119,9 +119,13 @@ class VisitSchedulerService(
       }
   }
 
-  // convenience method to retrieve all session templates to support development
   fun getSessionTemplates(): List<SessionTemplateDto> {
     return sessionTemplateRepository.findAll().sortedBy { it.startDate }.map { SessionTemplateDto(it) }
+  }
+
+  fun getSessionTemplates(sessionTemplateId: Long): SessionTemplateDto {
+    return sessionTemplateRepository.findById(sessionTemplateId).map { SessionTemplateDto(it) }
+      .orElseThrow(TemplateNotFoundException("Template id $sessionTemplateId not found"))
   }
 
   @Transactional(readOnly = true)
@@ -173,10 +177,18 @@ class VisitSchedulerService(
   }
 }
 
-class VisitNotFoundException(message: String?) :
-  RuntimeException(message),
+class VisitNotFoundException(message: String? = null, cause: Throwable? = null) :
+  RuntimeException(message, cause),
   Supplier<VisitNotFoundException> {
   override fun get(): VisitNotFoundException {
-    return VisitNotFoundException(message)
+    return VisitNotFoundException(message, cause)
+  }
+}
+
+class TemplateNotFoundException(message: String? = null, cause: Throwable? = null) :
+  RuntimeException(message, cause),
+  Supplier<TemplateNotFoundException> {
+  override fun get(): TemplateNotFoundException {
+    return TemplateNotFoundException(message, cause)
   }
 }

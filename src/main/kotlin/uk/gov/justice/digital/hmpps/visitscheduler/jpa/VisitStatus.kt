@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
+@Suppress("unused", "unused")
 enum class VisitStatus(
   val description: String,
 ) {

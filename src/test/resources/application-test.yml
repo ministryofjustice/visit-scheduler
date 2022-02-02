@@ -25,4 +25,5 @@ spring:
           public-key-location: classpath:local-public-key.pub
 
 policy:
-  book-ahead-period: 50
+  minimum-booking-notice-period-days: 2
+  maximum-booking-notice-period-days: 28
