@@ -24,3 +24,9 @@ spring:
       resourceserver:
         jwt:
           public-key-location: classpath:local-public-key.pub
+
+task:
+  expired-visit:
+    enabled: true
+    cron: 0 0/5 * * * ?
+    validity-minutes: 20

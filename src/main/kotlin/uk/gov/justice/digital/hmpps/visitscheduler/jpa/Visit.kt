@@ -53,6 +53,12 @@ data class Visit(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   val visitors: MutableList<VisitVisitor> = mutableListOf(),
 
+  @Column
+  val createTimestamp: LocalDateTime? = LocalDateTime.now(),
+
+  @Column
+  val modifyTimestamp: LocalDateTime? = LocalDateTime.now()
+
 ) {
 
   override fun equals(other: Any?): Boolean {
