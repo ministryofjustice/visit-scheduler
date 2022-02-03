@@ -27,3 +27,9 @@ spring:
 policy:
   minimum-booking-notice-period-days: 2
   maximum-booking-notice-period-days: 28
+
+task:
+  expired-visit:
+    enabled: false
+    cron: 0/30 * * * * ?
+    validity-minutes: 3
