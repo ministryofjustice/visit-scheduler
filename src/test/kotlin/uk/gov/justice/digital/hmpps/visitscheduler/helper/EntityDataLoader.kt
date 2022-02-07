@@ -40,6 +40,11 @@ class VisitBuilder(
     this.visit = visit.copy(prisonId = prisonId)
     return this
   }
+
+  fun withStatus(status: VisitStatus): VisitBuilder {
+    this.visit = visit.copy(status = status)
+    return this
+  }
 }
 
 fun visitCreator(

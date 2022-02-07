@@ -48,7 +48,6 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `create session template`() {
-
       webTestClient.post().uri("/visit-session-templates")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
@@ -74,7 +73,6 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `access forbidden when no role`() {
-
       webTestClient.post().uri("/visit-session-templates")
         .headers(setAuthorisation(roles = listOf()))
         .body(
@@ -88,7 +86,6 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `unauthorised when no token`() {
-
       webTestClient.post().uri("/visit-session-templates")
         .body(
           BodyInserters.fromValue(
@@ -114,7 +111,6 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `create visit bad_request when blank required field`() {
-
       val jsonString = """{
         "prisonId":"",
         "startTime":"14:30:00",
@@ -146,21 +142,28 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
   inner class DeleteSessionTemplateById {
     @Test
     fun `delete session template by id`() {
-
       val sessionTemplate = sessionTemplateCreator(sessionTemplateRepository)
         .withStartTime(LocalTime.of(10, 0))
         .withEndTime(LocalTime.of(12, 0))
         .save()
 
-      webTestClient.delete().uri("/visits/${sessionTemplate.id}")
+      webTestClient.delete().uri("/visit-session-templates/${sessionTemplate.id}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isOk
 
-      webTestClient.get().uri("/visits/${sessionTemplate.id}")
+      webTestClient.get().uri("/visit-session-templates/${sessionTemplate.id}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isNotFound
+    }
+
+    @Test
+    fun `delete session template by id NOT FOUND`() {
+      webTestClient.delete().uri("/visit-session-templates/123456")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
     }
   }
 
@@ -169,7 +172,6 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
   inner class GetSessionTemplate {
     @Test
     fun `all session templates are returned empty list`() {
-
       webTestClient.get().uri("/visit-session-templates")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()

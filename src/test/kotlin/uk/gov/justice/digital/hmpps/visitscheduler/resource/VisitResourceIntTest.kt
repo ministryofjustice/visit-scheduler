@@ -79,7 +79,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `get visit by prisoner ID`() {
-
       webTestClient.get().uri("/visits?prisonerId=FF0000AA")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
@@ -93,7 +92,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `get visit by prison ID`() {
-
       webTestClient.get().uri("/visits?prisonId=LEI")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
@@ -116,7 +114,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `get visits by prison ID and starting on or after a specified date`() {
-
       webTestClient.get().uri("/visits?prisonId=LEI&startTimestamp=2021-11-03T09:00:00")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
@@ -128,7 +125,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `get visits by prisoner ID, prison ID and starting on or after a specified date and time`() {
-
       webTestClient.get().uri("/visits?prisonerId=GG0000BB&prisonId=BEI&startTimestamp=2021-11-01T13:30:45")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
@@ -157,7 +153,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `get visits starting before a specified date`() {
-
       webTestClient.get().uri("/visits?endTimestamp=2021-11-03T09:00:00")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
@@ -176,7 +171,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `get visits by visitor`() {
-
       webTestClient.get().uri("/visits?nomisPersonId=123")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
@@ -188,7 +182,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `get visits starting within a date range`() {
-
       webTestClient.get().uri("/visits?startTimestamp=2021-11-02T09:00:00&endTimestamp=2021-11-03T09:00:00")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
@@ -205,7 +198,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `get visit by visit id`() {
-
       val createdVisit = visitCreator(visitRepository)
         .withPrisonerId("FF0000AA")
         .withVisitStart(visitTime)
@@ -229,7 +221,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `access forbidden when no role`() {
-
       webTestClient.get().uri("/visits?prisonerId=FF0000AA")
         .headers(setAuthorisation(roles = listOf()))
         .exchange()
@@ -238,7 +229,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `unauthorised when no token`() {
-
       webTestClient.get().uri("/visits?prisonerId=FF0000AA")
         .exchange()
         .expectStatus().isUnauthorized
@@ -246,7 +236,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `no visits found for prisoner`() {
-
       webTestClient.get().uri("/visits?prisonerId=12345")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
@@ -269,7 +258,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
   inner class DeleteVisitById {
     @Test
     fun `delete visit by visit id`() {
-
       val visitCC = visitCreator(visitRepository)
         .withPrisonerId("FF0000CC")
         .withVisitStart(visitTime.plusDays(2))
@@ -287,6 +275,14 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isNotFound
+    }
+
+    @Test
+    fun `delete visit by visit id NOT Found`() {
+      webTestClient.delete().uri("/visits/123456")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
     }
   }
 
@@ -343,7 +339,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `access forbidden when no role`() {
-
       webTestClient.post().uri("/visits")
         .headers(setAuthorisation(roles = listOf()))
         .body(
@@ -357,7 +352,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
 
     @Test
     fun `unauthorised when no token`() {
-
       webTestClient.post().uri("/visits")
         .body(
           BodyInserters.fromValue(

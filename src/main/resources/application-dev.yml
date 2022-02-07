@@ -1,9 +1,6 @@
 server:
   shutdown: immediate
 
-oauth:
-  endpoint.url: http://localhost:8090/auth
-
 management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
@@ -30,3 +27,12 @@ task:
     enabled: true
     cron: 0 0/5 * * * ?
     validity-minutes: 20
+
+
+oauth:
+  endpoint.url: http://localhost:8090/auth
+
+prison:
+  api:
+    url: https://api-dev.prison.service.justice.gov.uk
+    timeout: 5s
