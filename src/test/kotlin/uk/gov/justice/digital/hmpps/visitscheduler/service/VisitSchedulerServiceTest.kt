@@ -12,6 +12,7 @@ import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
+import org.mockito.kotlin.whenever
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -66,7 +67,7 @@ class VisitSchedulerServiceTest {
   inner class SlotGeneration {
 
     private fun mockRepositoryResponse(response: List<SessionTemplate>) {
-      Mockito.`when`(
+      whenever(
         sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
           "MDI",
           LocalDate.parse("2021-01-01").plusDays(1),
@@ -232,7 +233,7 @@ class VisitSchedulerServiceTest {
       )
       mockRepositoryResponse(listOf(singleSession))
 
-      Mockito.`when`(
+      whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(OffenderNonAssociationDetails())
 
@@ -260,7 +261,7 @@ class VisitSchedulerServiceTest {
       )
       mockRepositoryResponse(listOf(singleSession))
 
-      Mockito.`when`(
+      whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(
         OffenderNonAssociationDetails(
@@ -274,7 +275,7 @@ class VisitSchedulerServiceTest {
         )
       )
 
-      Mockito.`when`(visitRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
 
       val sessions = visitSchedulerService.getVisitSessions(prisonId, prisonerId)
       assertThat(sessions).size().isEqualTo(1)
@@ -297,7 +298,7 @@ class VisitSchedulerServiceTest {
       )
       mockRepositoryResponse(listOf(singleSession))
 
-      Mockito.`when`(
+      whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(
         OffenderNonAssociationDetails(
@@ -311,7 +312,7 @@ class VisitSchedulerServiceTest {
         )
       )
 
-      Mockito.`when`(visitRepository.findAll(any(VisitSpecification::class.java)))
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
         .thenReturn(
           listOf(
             Visit(
@@ -348,7 +349,7 @@ class VisitSchedulerServiceTest {
       )
       mockRepositoryResponse(listOf(singleSession))
 
-      Mockito.`when`(
+      whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenThrow(
         WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
@@ -377,7 +378,7 @@ class VisitSchedulerServiceTest {
       )
       mockRepositoryResponse(listOf(singleSession))
 
-      Mockito.`when`(
+      whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenThrow(
         WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
