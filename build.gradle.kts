@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.0.3-beta"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.0.3"
   kotlin("plugin.spring") version "1.6.10"
   kotlin("plugin.jpa") version "1.6.10"
   idea
@@ -20,15 +20,15 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 
   // Swagger
-  implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.5")
-  implementation("org.springdoc:springdoc-openapi-ui:1.6.5")
-  implementation("org.springdoc:springdoc-openapi-kotlin:1.6.5")
-  implementation("org.springdoc:springdoc-openapi-data-rest:1.6.5")
+  implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.6")
+  implementation("org.springdoc:springdoc-openapi-ui:1.6.6")
+  implementation("org.springdoc:springdoc-openapi-kotlin:1.6.6")
+  implementation("org.springdoc:springdoc-openapi-data-rest:1.6.6")
 
   // AWS
 
   // Insights
-  agentDeps("com.microsoft.azure:applicationinsights-agent:3.2.4")
+  agentDeps("com.microsoft.azure:applicationinsights-agent:3.2.5")
 
   // DB
   implementation("org.flywaydb:flyway-core")
@@ -45,7 +45,7 @@ dependencies {
   // Test
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
-  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:2.28.0")
+  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:2.31.0")
   testImplementation("org.testcontainers:postgresql:1.16.3")
   testImplementation("io.jsonwebtoken:jjwt:0.9.1")
   testImplementation("org.mockito:mockito-inline:4.3.1")

@@ -80,9 +80,14 @@ management:
 oauth:
   token.url: ${oauth.endpoint.url}/oauth/token
 
+prison:
+  api:
+    timeout: 10s
+
 policy:
   minimum-booking-notice-period-days: 2
   maximum-booking-notice-period-days: 28
+  non-association-whole-day: true
 
 task:
   expired-visit:

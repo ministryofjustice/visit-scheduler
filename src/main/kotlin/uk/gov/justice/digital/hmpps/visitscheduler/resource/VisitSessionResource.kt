@@ -51,6 +51,11 @@ class VisitSessionResource(
       description = "Query by NOMIS Prison Identifier",
       example = "MDI"
     ) prisonId: String,
+    @RequestParam(value = "prisonerId", required = false)
+    @Parameter(
+      description = "Filter results by prisoner id",
+      example = "A12345DC"
+    ) prisonerId: String?,
     @RequestParam(value = "min", required = false)
     @Parameter(
       description = "Override the default minimum number of days notice from the current date",
@@ -62,5 +67,5 @@ class VisitSessionResource(
       example = "28"
     ) max: Long?
   ): List<VisitSession> =
-    visitSchedulerService.getVisitSessions(prisonId, min, max)
+    visitSchedulerService.getVisitSessions(prisonId, prisonerId, min, max)
 }

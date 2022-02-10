@@ -5,16 +5,31 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.whenever
+import org.springframework.http.HttpHeaders
+import org.springframework.http.HttpStatus
+import org.springframework.web.reactive.function.client.WebClientResponseException
+import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
+import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociation
+import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociationDetail
+import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociationDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -25,10 +40,9 @@ import java.time.ZoneId
 @ExtendWith(MockitoExtension::class)
 class VisitSchedulerServiceTest {
 
-  companion object;
-
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val visitRepository = mock<VisitRepository>()
+  private val prisonApiClient = mock<PrisonApiClient>()
 
   private lateinit var visitSchedulerService: VisitSchedulerService
 
@@ -38,11 +52,13 @@ class VisitSchedulerServiceTest {
   @BeforeEach
   fun setUp() {
     visitSchedulerService = VisitSchedulerService(
+      prisonApiClient,
       visitRepository,
       sessionTemplateRepository,
       clock,
       1,
-      100
+      100,
+      true
     )
   }
 
@@ -51,7 +67,7 @@ class VisitSchedulerServiceTest {
   inner class SlotGeneration {
 
     private fun mockRepositoryResponse(response: List<SessionTemplate>) {
-      Mockito.`when`(
+      whenever(
         sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
           "MDI",
           LocalDate.parse("2021-01-01").plusDays(1),
@@ -201,6 +217,178 @@ class VisitSchedulerServiceTest {
           LocalDateTime.parse("2021-01-05T16:00"),
           LocalDateTime.parse("2021-02-01T11:30")
         )
+    }
+
+    @Test
+    fun `all sessions are returned when an offender has no non-associations`() {
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val startDate = LocalDate.parse("2021-02-01")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SessionFrequency.SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenReturn(OffenderNonAssociationDetails())
+
+      val sessions = visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
+        LocalDateTime.parse("2021-02-01T11:30:00")
+      )
+
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+
+    @Test
+    fun `only available sessions are returned when an offender has a valid non-association without a booking`() {
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val associationId = "B1234BB"
+      val startDate = LocalDate.parse("2021-01-01")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate.plusDays(2),
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SessionFrequency.SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenReturn(
+        OffenderNonAssociationDetails(
+          listOf(
+            OffenderNonAssociationDetail(
+              effectiveDate = startDate.minusMonths(1),
+              expiryDate = startDate.plusMonths(1),
+              offenderNonAssociation = OffenderNonAssociation(offenderNo = associationId)
+            )
+          )
+        )
+      )
+
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
+
+      val sessions = visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+      assertThat(sessions).size().isEqualTo(1)
+
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+
+    @Test
+    fun `only available sessions are returned when an offender has a valid non-association with a booking`() {
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val associationId = "B1234BB"
+      val startDate = LocalDate.parse("2021-01-01")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate.plusDays(2),
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SessionFrequency.SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenReturn(
+        OffenderNonAssociationDetails(
+          listOf(
+            OffenderNonAssociationDetail(
+              effectiveDate = startDate.minusMonths(1),
+              expiryDate = startDate.plusMonths(1),
+              offenderNonAssociation = OffenderNonAssociation(offenderNo = associationId)
+            )
+          )
+        )
+      )
+
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+        .thenReturn(
+          listOf(
+            Visit(
+              prisonerId = associationId,
+              visitStart = startDate.plusDays(2).atTime(10, 30),
+              visitEnd = startDate.plusDays(2).atTime(11, 30),
+              visitType = VisitType.STANDARD_SOCIAL,
+              prisonId = prisonId,
+              status = VisitStatus.BOOKED,
+              visitRoom = "123c",
+              sessionTemplateId = null,
+              reasonableAdjustments = "some text"
+            )
+          )
+        )
+
+      val sessions = visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+      assertThat(sessions).size().isEqualTo(0)
+
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+
+    @Test
+    fun `all sessions are returned when an offender non-association NOT FOUND`() {
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val startDate = LocalDate.parse("2021-02-01")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SessionFrequency.SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenThrow(
+        WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      )
+
+      val sessions = visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
+        LocalDateTime.parse("2021-02-01T11:30:00")
+      )
+
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+
+    @Test
+    fun `get sessions throws WebClientResponseException for BAD REQUEST`() {
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val startDate = LocalDate.parse("2021-02-01")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SessionFrequency.SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenThrow(
+        WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      )
+
+      assertThrows<WebClientResponseException> {
+        visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+      }
+
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
   }
 }

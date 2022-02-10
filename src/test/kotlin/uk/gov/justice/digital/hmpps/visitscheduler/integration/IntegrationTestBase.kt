@@ -1,5 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.http.HttpHeaders
@@ -26,6 +29,11 @@ abstract class IntegrationTestBase {
     System.setProperty("http.keepAlive", "false")
   }
 
+  @BeforeEach
+  fun resetStubs() {
+    prisonApiMockServer.resetAll()
+  }
+
   internal fun setAuthorisation(
     user: String = "AUTH_ADM",
     roles: List<String> = listOf(),
@@ -33,6 +41,20 @@ abstract class IntegrationTestBase {
   ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, roles, scopes)
 
   companion object {
+    internal val prisonApiMockServer = PrisonApiMockServer()
+
+    @BeforeAll
+    @JvmStatic
+    fun startMocks() {
+      prisonApiMockServer.start()
+    }
+
+    @AfterAll
+    @JvmStatic
+    fun stopMocks() {
+      prisonApiMockServer.stop()
+    }
+
     private val pgContainer = PostgresContainer.instance
 
     @JvmStatic
