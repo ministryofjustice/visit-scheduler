@@ -1,6 +1,10 @@
 info.app:
   name: Visit Scheduler
   version: 1.0
+  description: API providing prison visit scheduling
+  contact:
+    name: HMPPS Digital Studio
+    email: feedback@digital.justice.gov.uk
 
 spring:
   application:

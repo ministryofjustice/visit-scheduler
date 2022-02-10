@@ -1,19 +1,20 @@
-version: "3"
+version: "3.8"
 services:
   visit-scheduler:
     build:
       context: .
-    network_mode: "host"
     container_name: visit-scheduler
+    networks:
+      - hmpps
     ports:
-      - "8081:8080"
+      - "8080:8080"
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/health/ping" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health" ]
     environment:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=dev
-      - OAUTH_ENDPOINT_URL=http://hmpps-auth:8090/auth
-      - PRISON_API_URL=http://prison-api:8082
+      - OAUTH_ENDPOINT_URL=http://hmpps-auth:8080/auth
+      - PRISON_API_URL=http://prison-api:8080
       - SYSTEM_CLIENT_ID=book-a-prison-visit-client-1
       - SYSTEM_CLIENT_SECRET=clientsecret
 
@@ -38,10 +39,11 @@ services:
     depends_on:
       - oauth
     ports:
-      - "8082:8080"
+      - "8091:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
     environment:
+      - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=nomis-hsqldb
 
   visit-scheduler-db:
