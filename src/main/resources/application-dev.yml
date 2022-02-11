@@ -22,15 +22,15 @@ spring:
         jwt:
           public-key-location: classpath:local-public-key.pub
 
-task:
-  expired-visit:
-    enabled: true
-    cron: 0 0/5 * * * ?
-    validity-minutes: 20
-
-oauth.endpoint.url: http://localhost:8090/auth
+hmpps.auth.url: http://localhost:8090/auth
 
 prison:
   api:
     url: http://localhost:8091
     timeout: 5s
+
+task:
+  expired-visit:
+    enabled: true
+    cron: 0 0/5 * * * ?
+    validity-minutes: 20

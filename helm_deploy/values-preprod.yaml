@@ -9,7 +9,7 @@ generic-service:
     contextColour: green
 
   env:
-    OAUTH_ENDPOINT_URL: "https://sign-in-preprod.hmpps.service.justice.gov.uk/auth"
+    HMPPS_AUTH_URL: https://sign-in-preprod.hmpps.service.justice.gov.uk/auth
     PRISON_API_URL: https://api-preprod.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
 
