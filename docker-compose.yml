@@ -13,16 +13,16 @@ services:
     environment:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=dev
-      - OAUTH_ENDPOINT_URL=http://hmpps-auth:8080/auth
+      - HMPPS_AUTH_URL=http://hmpps-auth:8080/auth
       - PRISON_API_URL=http://prison-api:8080
       - SYSTEM_CLIENT_ID=book-a-prison-visit-client-1
       - SYSTEM_CLIENT_SECRET=clientsecret
 
-  oauth:
+  hmpps-auth:
     image: quay.io/hmpps/hmpps-auth:latest
     networks:
       - hmpps
-    container_name: oauth
+    container_name: hmpps-auth
     ports:
       - "8090:8080"
     healthcheck:
@@ -37,7 +37,7 @@ services:
       - hmpps
     container_name: prison-api
     depends_on:
-      - oauth
+      - hmpps-auth
     ports:
       - "8091:8080"
     healthcheck:

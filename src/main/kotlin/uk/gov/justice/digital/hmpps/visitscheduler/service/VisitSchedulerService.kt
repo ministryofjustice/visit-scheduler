@@ -97,11 +97,11 @@ class VisitSchedulerService(
     // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
     return nonAssociations.any { it ->
       isDateWithinRange(session.startTimestamp.toLocalDate(), it.effectiveDate, it.expiryDate) &&
-        it.offenderNonAssociation.let { it ->
+        it.offenderNonAssociation.let { ona ->
           visitRepository.findAll(
             VisitSpecification(
               VisitFilter(
-                prisonerId = it.offenderNo,
+                prisonerId = ona.offenderNo,
                 prisonId = session.prisonId,
                 startDateTime =
                 if (wholeDay == true) session.startTimestamp.toLocalDate().atStartOfDay() else session.startTimestamp,

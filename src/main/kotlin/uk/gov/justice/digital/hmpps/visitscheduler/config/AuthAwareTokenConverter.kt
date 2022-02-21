@@ -20,23 +20,30 @@ class AuthAwareTokenConverter : Converter<Jwt, AbstractAuthenticationToken> {
   }
 
   private fun findPrincipal(claims: Map<String, Any?>): String {
-    return if (claims.containsKey("user_name")) {
-      claims["user_name"] as String
-    } else if (claims.containsKey("user_id")) {
-      claims["user_id"] as String
+    return if (claims.containsKey(CLAIM_USERNAME)) {
+      claims[CLAIM_USERNAME] as String
+    } else if (claims.containsKey(CLAIM_USER_ID)) {
+      claims[CLAIM_USER_ID] as String
     } else {
-      claims["client_id"] as String
+      claims[CLAIM_CLIENT_ID] as String
     }
   }
 
   private fun extractAuthorities(jwt: Jwt): Collection<GrantedAuthority> {
     val authorities = mutableListOf<GrantedAuthority>().apply { addAll(jwtGrantedAuthoritiesConverter.convert(jwt)!!) }
-    if (jwt.claims.containsKey("authorities")) {
+    if (jwt.claims.containsKey(CLAIM_AUTHORITY)) {
       @Suppress("UNCHECKED_CAST")
-      val claimAuthorities = (jwt.claims["authorities"] as Collection<String>).toList()
+      val claimAuthorities = (jwt.claims[CLAIM_AUTHORITY] as Collection<String>).toList()
       authorities.addAll(claimAuthorities.map(::SimpleGrantedAuthority))
     }
     return authorities.toSet()
+  }
+
+  companion object {
+    const val CLAIM_USERNAME = "user_name"
+    const val CLAIM_USER_ID = "user_id"
+    const val CLAIM_CLIENT_ID = "client_id"
+    const val CLAIM_AUTHORITY = "authorities"
   }
 }
 

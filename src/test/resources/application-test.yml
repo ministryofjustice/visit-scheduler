@@ -21,7 +21,7 @@ management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
 
-oauth.endpoint.url: http://localhost:8090/auth
+hmpps.auth.url: http://localhost:8090/auth
 
 prison:
   api:
