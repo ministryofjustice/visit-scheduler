@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.0.3"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.0.4"
   kotlin("plugin.spring") version "1.6.10"
   kotlin("plugin.jpa") version "1.6.10"
   idea
@@ -28,16 +28,16 @@ dependencies {
   // AWS
 
   // Insights
-  agentDeps("com.microsoft.azure:applicationinsights-agent:3.2.5")
+  agentDeps("com.microsoft.azure:applicationinsights-agent:3.2.7")
 
   // DB
-  implementation("org.flywaydb:flyway-core")
+  runtimeOnly("org.postgresql:postgresql:42.3.3")
+  runtimeOnly("org.flywaydb:flyway-core")
   implementation("com.vladmihalcea:hibernate-types-52:2.14.0")
-  runtimeOnly("org.postgresql:postgresql:42.3.2")
 
   implementation("javax.transaction:javax.transaction-api:1.3")
   implementation("javax.xml.bind:jaxb-api:2.3.1")
-  implementation("com.google.code.gson:gson:2.8.9")
+  implementation("com.google.code.gson:gson:2.9.0")
   implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.13.1")
 
   // HMPPS Libs
@@ -45,7 +45,7 @@ dependencies {
   // Test
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
-  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:2.31.0")
+  testImplementation("net.javacrumbs.json-unit:json-unit-assertj:2.32.0")
   testImplementation("org.testcontainers:postgresql:1.16.3")
   testImplementation("io.jsonwebtoken:jjwt:0.9.1")
   testImplementation("org.mockito:mockito-inline:4.3.1")
