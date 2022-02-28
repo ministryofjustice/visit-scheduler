@@ -12,6 +12,7 @@ import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.OneToMany
+import javax.persistence.OneToOne
 import javax.persistence.Table
 
 @Entity
@@ -22,42 +23,45 @@ data class Visit(
   val id: Long = 0,
 
   @Column(nullable = false)
-  val prisonerId: String,
+  var prisonerId: String,
 
   @Column(nullable = false)
-  val prisonId: String,
+  var prisonId: String,
 
   @Column(nullable = false)
-  val visitRoom: String,
+  var visitRoom: String,
 
   @Column(nullable = false)
-  val visitStart: LocalDateTime,
+  var visitStart: LocalDateTime,
 
   @Column(nullable = false)
-  val visitEnd: LocalDateTime,
-
-  @Column(nullable = false)
-  @Enumerated(EnumType.STRING)
-  val visitType: VisitType,
+  var visitEnd: LocalDateTime,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
-  val status: VisitStatus,
+  var visitType: VisitType,
+
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  var status: VisitStatus,
 
   @Column
-  val reasonableAdjustments: String?,
+  var reasonableAdjustments: String? = null,
 
   @Column
-  val sessionTemplateId: Long?,
+  var sessionTemplateId: Long? = null,
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  val visitors: MutableList<VisitVisitor> = mutableListOf(),
+  var visitors: MutableList<VisitVisitor> = mutableListOf(),
+
+  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  var mainContact: VisitContact? = null,
 
   @Column
   val createTimestamp: LocalDateTime? = LocalDateTime.now(),
 
   @Column
-  val modifyTimestamp: LocalDateTime? = LocalDateTime.now()
+  var modifyTimestamp: LocalDateTime? = LocalDateTime.now(),
 
 ) {
 

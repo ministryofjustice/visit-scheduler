@@ -218,6 +218,21 @@ class VisitSchedulerServiceTest {
           LocalDateTime.parse("2021-02-01T11:30")
         )
     }
+  }
+
+  @Nested
+  @DisplayName("Available slots including non-association")
+  inner class NonAssociations {
+
+    private fun mockRepositoryResponse(response: List<SessionTemplate>) {
+      whenever(
+        sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
+          "MDI",
+          LocalDate.parse("2021-01-01").plusDays(1),
+          LocalDate.parse("2021-01-01").plusDays(100)
+        )
+      ).thenReturn(response)
+    }
 
     @Test
     fun `all sessions are returned when an offender has no non-associations`() {

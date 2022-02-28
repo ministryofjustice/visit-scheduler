@@ -3,13 +3,13 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitVisitorRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -21,16 +21,6 @@ class VisitBuilder(
 
   fun save(): Visit = repository.saveAndFlush(visit)
 
-  fun withVisitStart(visitDateTime: LocalDateTime): VisitBuilder {
-    this.visit = visit.copy(visitStart = visitDateTime)
-    return this
-  }
-
-  fun withVisitEnd(visitDateTime: LocalDateTime): VisitBuilder {
-    this.visit = visit.copy(visitEnd = visitDateTime)
-    return this
-  }
-
   fun withPrisonerId(prisonerId: String): VisitBuilder {
     this.visit = visit.copy(prisonerId = prisonerId)
     return this
@@ -41,8 +31,38 @@ class VisitBuilder(
     return this
   }
 
+  fun withVisitRoom(room: String): VisitBuilder {
+    this.visit = visit.copy(visitRoom = room)
+    return this
+  }
+
+  fun withVisitStart(visitDateTime: LocalDateTime): VisitBuilder {
+    this.visit = visit.copy(visitStart = visitDateTime)
+    return this
+  }
+
+  fun withVisitEnd(visitDateTime: LocalDateTime): VisitBuilder {
+    this.visit = visit.copy(visitEnd = visitDateTime)
+    return this
+  }
+
+  fun withVisitType(type: VisitType): VisitBuilder {
+    this.visit = visit.copy(visitType = type)
+    return this
+  }
+
   fun withStatus(status: VisitStatus): VisitBuilder {
     this.visit = visit.copy(status = status)
+    return this
+  }
+
+  fun withReasonableAdjustments(support: String): VisitBuilder {
+    this.visit = visit.copy(reasonableAdjustments = support)
+    return this
+  }
+
+  fun withSessionTemplateId(id: Long): VisitBuilder {
+    this.visit = visit.copy(sessionTemplateId = id)
     return this
   }
 }
@@ -64,24 +84,43 @@ fun visitDeleter(
 fun defaultVisit(): Visit {
   return Visit(
     prisonerId = "AF12345G",
+    prisonId = "MDI",
+    visitRoom = "123c",
     visitStart = LocalDateTime.of(2021, 10, 23, 10, 30),
     visitEnd = LocalDateTime.of(2021, 10, 23, 11, 30),
     visitType = VisitType.STANDARD_SOCIAL,
-    prisonId = "MDI",
     status = VisitStatus.RESERVED,
-    visitRoom = "123c",
-    sessionTemplateId = null,
-    reasonableAdjustments = "some text"
   )
 }
 
 fun visitVisitorCreator(
-  repository: VisitVisitorRepository,
+  visit: Visit,
   nomisPersonId: Long,
-  visitId: Long,
-  visit: Visit
+  leadVisitor: Boolean = false,
 ) {
-  repository.saveAndFlush(VisitVisitor(VisitVisitorPk(nomisPersonId = nomisPersonId, visitId = visitId), visit = visit))
+  visit.visitors.add(
+    VisitVisitor(
+      id = VisitVisitorPk(
+        nomisPersonId = nomisPersonId,
+        visitId = visit.id
+      ),
+      leadVisitor = leadVisitor,
+      visit = visit
+    )
+  )
+}
+
+fun visitContactCreator(
+  visit: Visit,
+  name: String,
+  phone: String,
+) {
+  visit.mainContact = VisitContact(
+    id = visit.id,
+    contactName = name,
+    contactPhone = phone,
+    visit = visit
+  )
 }
 
 class SessionTemplateBuilder(

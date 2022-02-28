@@ -8,31 +8,121 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateContactOnVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
-import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitorOnVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitorOnVisitRequest
+import uk.gov.justice.digital.hmpps.visitscheduler.data.UpdateVisitRequest
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitVisitorRepository
 import java.time.LocalDateTime
 
 class VisitResourceIntTest : IntegrationTestBase() {
   @Autowired
   private lateinit var visitRepository: VisitRepository
 
-  @Autowired
-  private lateinit var visitVisitorRepository: VisitVisitorRepository
-
-  companion object {
-    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
-  }
-
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
+
+  @DisplayName("POST /visits")
+  @Nested
+  inner class CreateVisit {
+    private val createVisitRequest = CreateVisitRequest(
+      prisonId = "MDI",
+      prisonerId = "FF0000FF",
+      visitRoom = "A1",
+      visitType = VisitType.STANDARD_SOCIAL,
+      startTimestamp = visitTime,
+      endTimestamp = visitTime.plusHours(1),
+      visitStatus = VisitStatus.RESERVED,
+      mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+      contactList = listOf(CreateVisitorOnVisitRequest(123)),
+      reasonableAdjustments = "comment text",
+      sessionId = null,
+    )
+
+    @Test
+    fun `create visit`() {
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest
+          )
+        )
+        .exchange()
+        .expectStatus().isCreated
+
+      webTestClient.get().uri("/visits?prisonerId=FF0000FF")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(1)
+        .jsonPath("$[0].id").isNumber
+        .jsonPath("$[0].prisonId").isEqualTo("MDI")
+        .jsonPath("$[0].prisonerId").isEqualTo("FF0000FF")
+        .jsonPath("$[0].visitRoom").isEqualTo("A1")
+        .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
+        .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
+        .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.toString())
+        .jsonPath("$[0].endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
+        .jsonPath("$[0].visitStatus").isEqualTo("RESERVED")
+        .jsonPath("$[0].visitStatusDescription").isEqualTo("Reserved")
+        .jsonPath("$[0].mainContact.contactName").isNotEmpty
+        .jsonPath("$[0].mainContact.contactName").isEqualTo("John Smith")
+        .jsonPath("$[0].mainContact.contactPhone").isEqualTo("01234 567890")
+        .jsonPath("$[0].visitors.length()").isEqualTo(1)
+        .jsonPath("$[0].visitors[0].nomisPersonId").isEqualTo(123)
+        .jsonPath("$[0].visitors[0].visitId").isNumber
+        .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
+        .jsonPath("$[0].reasonableAdjustments").isEqualTo("comment text")
+    }
+
+    @Test
+    fun `create visit - invalid request`() {
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(
+            mapOf("wrongProperty" to "wrongValue")
+          )
+        )
+        .exchange()
+        .expectStatus().isBadRequest
+    }
+
+    @Test
+    fun `access forbidden when no role`() {
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf()))
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest
+          )
+        )
+        .exchange()
+        .expectStatus().isForbidden
+    }
+
+    @Test
+    fun `unauthorised when no token`() {
+      webTestClient.post().uri("/visits")
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest
+          )
+        )
+        .exchange()
+        .expectStatus().isUnauthorized
+    }
+  }
 
   @DisplayName("GET /visits")
   @Nested
@@ -56,7 +146,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withPrisonId("LEI")
         .save()
-      visitVisitorCreator(repository = visitVisitorRepository, nomisPersonId = 123L, visitId = visitCC.id, visitCC)
+      visitVisitorCreator(visit = visitCC, nomisPersonId = 123L)
+      visitRepository.saveAndFlush(visitCC)
+
       visitCreator(visitRepository)
         .withPrisonerId("GG0000BB")
         .withVisitStart(visitTime.plusHours(1))
@@ -220,21 +312,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `access forbidden when no role`() {
-      webTestClient.get().uri("/visits?prisonerId=FF0000AA")
-        .headers(setAuthorisation(roles = listOf()))
-        .exchange()
-        .expectStatus().isForbidden
-    }
-
-    @Test
-    fun `unauthorised when no token`() {
-      webTestClient.get().uri("/visits?prisonerId=FF0000AA")
-        .exchange()
-        .expectStatus().isUnauthorized
-    }
-
-    @Test
     fun `no visits found for prisoner`() {
       webTestClient.get().uri("/visits?prisonerId=12345")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
@@ -251,6 +328,222 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isBadRequest
     }
+
+    @Test
+    fun `access forbidden when no role`() {
+      webTestClient.get().uri("/visits?prisonerId=FF0000AA")
+        .headers(setAuthorisation(roles = listOf()))
+        .exchange()
+        .expectStatus().isForbidden
+    }
+
+    @Test
+    fun `unauthorised when no token`() {
+      webTestClient.get().uri("/visits?prisonerId=FF0000AA")
+        .exchange()
+        .expectStatus().isUnauthorized
+    }
+  }
+
+  @DisplayName("PUT /visits")
+  @Nested
+  inner class PutVisit {
+
+    private var visitMin: Visit? = null
+    private var visitFull: Visit? = null
+
+    @BeforeEach
+    internal fun createVisits() {
+      visitMin = visitCreator(visitRepository)
+        .withPrisonerId("FF0000AA")
+        .withPrisonId("AAA")
+        .withVisitRoom("A1")
+        .withVisitStart(visitTime)
+        .withVisitEnd(visitTime.plusHours(1))
+        .withVisitType(VisitType.STANDARD_SOCIAL)
+        .withStatus(VisitStatus.RESERVED)
+        .save()
+
+      visitFull = visitCreator(visitRepository)
+        .withPrisonerId("FF0000BB")
+        .withPrisonId("BBB")
+        .withVisitRoom("B1")
+        .withVisitStart(visitTime.plusDays(2))
+        .withVisitEnd(visitTime.plusDays(2).plusHours(1))
+        .withVisitType(VisitType.FAMILY)
+        .withStatus(VisitStatus.BOOKED)
+        .withReasonableAdjustments("Other: Some text")
+        .withSessionTemplateId(1234560)
+        .save()
+      visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, leadVisitor = true)
+      visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
+      visitRepository.saveAndFlush(visitFull!!)
+    }
+
+    @Test
+    fun `put visit by visit id - add booked details`() {
+
+      val updateRequest = UpdateVisitRequest(
+        prisonerId = "FF0000AB",
+        prisonId = "AAB",
+        visitRoom = "A2",
+        startTimestamp = visitTime.plusDays(2),
+        endTimestamp = visitTime.plusDays(2).plusHours(1),
+        visitType = VisitType.FAMILY,
+        visitStatus = VisitStatus.BOOKED,
+        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        contactList = listOf(CreateVisitorOnVisitRequest(123L)),
+        reasonableAdjustments = "comment text",
+        sessionId = 123L,
+      )
+
+      webTestClient.put().uri("/visits/${visitMin!!.id}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(updateRequest)
+        )
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.prisonerId").isEqualTo(updateRequest.prisonerId!!)
+        .jsonPath("$.prisonId").isEqualTo(updateRequest.prisonId!!)
+        .jsonPath("$.visitRoom").isEqualTo(updateRequest.visitRoom!!)
+        .jsonPath("$.startTimestamp").isEqualTo(updateRequest.startTimestamp.toString())
+        .jsonPath("$.endTimestamp").isEqualTo(updateRequest.endTimestamp.toString())
+        .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
+        .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
+        .jsonPath("$.mainContact.contactName").isNotEmpty
+        .jsonPath("$.mainContact.contactName").isEqualTo(updateRequest.mainContact!!.contactName)
+        .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)
+        .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
+        .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
+        .jsonPath("$.visitors[0].visitId").isNumber
+        .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
+        .jsonPath("$.reasonableAdjustments").isEqualTo(updateRequest.reasonableAdjustments!!)
+        .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
+    }
+
+    @Test
+    fun `put visit by visit id - amend booked details`() {
+
+      val updateRequest = UpdateVisitRequest(
+        prisonerId = "FF0000AB",
+        prisonId = "AAB",
+        visitRoom = "A2",
+        startTimestamp = visitTime.plusDays(2),
+        endTimestamp = visitTime.plusDays(2).plusHours(1),
+        visitType = VisitType.FAMILY,
+        visitStatus = VisitStatus.BOOKED,
+        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        contactList = listOf(CreateVisitorOnVisitRequest(123L)),
+        reasonableAdjustments = "comment text",
+        sessionId = 123L,
+      )
+
+      webTestClient.put().uri("/visits/${visitFull!!.id}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(updateRequest)
+        )
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.prisonerId").isEqualTo(updateRequest.prisonerId!!)
+        .jsonPath("$.prisonId").isEqualTo(updateRequest.prisonId!!)
+        .jsonPath("$.visitRoom").isEqualTo(updateRequest.visitRoom!!)
+        .jsonPath("$.startTimestamp").isEqualTo(updateRequest.startTimestamp.toString())
+        .jsonPath("$.endTimestamp").isEqualTo(updateRequest.endTimestamp.toString())
+        .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
+        .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
+        .jsonPath("$.mainContact.contactName").isNotEmpty
+        .jsonPath("$.mainContact.contactName").isEqualTo(updateRequest.mainContact!!.contactName)
+        .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)
+        .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
+        .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
+        .jsonPath("$.visitors[0].visitId").isNumber
+        .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
+        .jsonPath("$.reasonableAdjustments").isEqualTo(updateRequest.reasonableAdjustments!!)
+        .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
+    }
+
+    @Test
+    fun `put visit by visit id - amend contact`() {
+
+      val updateRequest = UpdateVisitRequest(
+        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+      )
+
+      webTestClient.put().uri("/visits/${visitFull!!.id}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(updateRequest)
+        )
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.mainContact.contactName").isNotEmpty
+        .jsonPath("$.mainContact.contactName").isEqualTo(updateRequest.mainContact!!.contactName)
+        .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)
+    }
+
+    @Test
+    fun `put visit by visit id - amend visitors`() {
+
+      val updateRequest = UpdateVisitRequest(
+        contactList = listOf(CreateVisitorOnVisitRequest(123L)),
+      )
+
+      webTestClient.put().uri("/visits/${visitFull!!.id}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(updateRequest)
+        )
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
+        .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
+        .jsonPath("$.visitors[0].visitId").isNumber
+        .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
+    }
+
+    @Test
+    fun `put visit by visit id - not found`() {
+      webTestClient.put().uri("/visits/12345")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(
+            UpdateVisitRequest()
+          )
+        )
+        .exchange()
+        .expectStatus().isNotFound
+    }
+
+    @Test
+    fun `access forbidden when no role`() {
+      webTestClient.put().uri("/visits/12345")
+        .headers(setAuthorisation(roles = listOf()))
+        .body(
+          BodyInserters.fromValue(
+            UpdateVisitRequest()
+          )
+        )
+        .exchange()
+        .expectStatus().isForbidden
+    }
+
+    @Test
+    fun `unauthorised when no token`() {
+      webTestClient.put().uri("/visits/12345")
+        .body(
+          BodyInserters.fromValue(
+            UpdateVisitRequest()
+          )
+        )
+        .exchange()
+        .expectStatus().isUnauthorized
+    }
   }
 
   @DisplayName("DELETE /visits/{visitId}")
@@ -264,7 +557,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withPrisonId("LEI")
         .save()
-      visitVisitorCreator(repository = visitVisitorRepository, nomisPersonId = 123L, visitId = visitCC.id, visitCC)
+      visitVisitorCreator(visit = visitCC, nomisPersonId = 123L)
+      visitRepository.saveAndFlush(visitCC)
 
       webTestClient.delete().uri("/visits/${visitCC.id}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
@@ -286,93 +580,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
   }
 
-  @DisplayName("POST /visits")
-  @Nested
-  inner class CreateVisit {
-    private val createVisitRequest = CreateVisitRequest(
-      prisonerId = "FF0000FF",
-      startTimestamp = visitTime,
-      endTimestamp = visitTime.plusHours(1),
-      visitRoom = "A1",
-      visitType = VisitType.STANDARD_SOCIAL,
-      visitStatus = VisitStatus.RESERVED,
-      prisonId = "MDI",
-      contactList = listOf(CreateVisitorOnVisit(123)),
-      sessionId = null,
-      reasonableAdjustments = "comment text"
-    )
-
-    @Test
-    fun `create visit`() {
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest
-          )
-        )
-        .exchange()
-        .expectStatus().isCreated
-
-      webTestClient.get().uri("/visits?prisonerId=FF0000FF")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[0].prisonerId").isEqualTo("FF0000FF")
-        .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.toString())
-        .jsonPath("$[0].endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
-        .jsonPath("$[0].visitRoom").isEqualTo("A1")
-        .jsonPath("$[0].prisonId").isEqualTo("MDI")
-        .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
-        .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
-        .jsonPath("$[0].visitStatusDescription").isEqualTo("Reserved")
-        .jsonPath("$[0].reasonableAdjustments").isEqualTo("comment text")
-        .jsonPath("$[0].visitStatus").isEqualTo("RESERVED")
-        .jsonPath("$[0].id").isNumber
-        .jsonPath("$[0].visitors.length()").isEqualTo(1)
-        .jsonPath("$[0].visitors[0].nomisPersonId").isEqualTo(123)
-        .jsonPath("$[0].visitors[0].visitId").isNumber
-        .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
-    }
-
-    @Test
-    fun `access forbidden when no role`() {
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf()))
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest
-          )
-        )
-        .exchange()
-        .expectStatus().isForbidden
-    }
-
-    @Test
-    fun `unauthorised when no token`() {
-      webTestClient.post().uri("/visits")
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest
-          )
-        )
-        .exchange()
-        .expectStatus().isUnauthorized
-    }
-
-    @Test
-    fun `create visit - invalid request`() {
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(
-            mapOf("wrongProperty" to "wrongValue")
-          )
-        )
-        .exchange()
-        .expectStatus().isBadRequest
-    }
+  companion object {
+    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
   }
 }

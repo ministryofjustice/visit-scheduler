@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.data
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
+@Schema(description = "Visit Session")
 data class VisitSession(
 
   @Schema(description = "session id", example = "123", required = true)

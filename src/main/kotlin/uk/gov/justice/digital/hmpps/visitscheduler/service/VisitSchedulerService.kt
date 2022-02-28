@@ -13,11 +13,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateReq
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociationDetail
 import uk.gov.justice.digital.hmpps.visitscheduler.data.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.data.UpdateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
 import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
@@ -208,14 +210,6 @@ class VisitSchedulerService(
     return visitRepository.findAll(VisitSpecification(visitFilter)).sortedBy { it.visitStart }.map { VisitDto(it) }
   }
 
-  fun deleteVisit(visitId: Long) {
-    val visit = visitRepository.findByIdOrNull(visitId)
-    visit?.let { visitRepository.delete(it) }.also { log.info("Visit with id  $visitId deleted") }
-      ?: run {
-        log.info("Visit id  $visitId not found")
-      }
-  }
-
   fun createVisit(createVisitRequest: CreateVisitRequest): VisitDto {
     log.info("Creating visit for ${createVisitRequest.prisonerId}")
     val visitEntity = visitRepository.saveAndFlush(
@@ -228,7 +222,7 @@ class VisitSchedulerService(
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp,
         sessionTemplateId = createVisitRequest.sessionId,
-        reasonableAdjustments = createVisitRequest.reasonableAdjustments
+        reasonableAdjustments = createVisitRequest.reasonableAdjustments,
       )
     )
 
@@ -246,7 +240,74 @@ class VisitSchedulerService(
       }
     }
 
+    createVisitRequest.mainContact?.let { mainContact ->
+      visitEntity.mainContact = VisitContact(
+        id = visitEntity.id,
+        contactName = mainContact.contactName,
+        contactPhone = mainContact.contactPhone,
+        visit = visitEntity
+      )
+    }
+
     return VisitDto(visitEntity)
+  }
+
+  fun updateVisit(visitId: Long, updateVisitRequest: UpdateVisitRequest): VisitDto {
+    log.info("Updating visit for ${updateVisitRequest.prisonerId}")
+
+    val visitEntity = visitRepository.findByIdOrNull(visitId) ?: throw VisitNotFoundException("Visit id  $visitId not found")
+
+    updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
+    updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
+    updateVisitRequest.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
+    updateVisitRequest.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
+    updateVisitRequest.visitType?.let { visitType -> visitEntity.visitType = visitType }
+    updateVisitRequest.visitStatus?.let { status -> visitEntity.status = status }
+    updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
+    updateVisitRequest.reasonableAdjustments?.let { reasonableAdjustments -> visitEntity.reasonableAdjustments = reasonableAdjustments }
+    updateVisitRequest.sessionId?.let { sessionId -> visitEntity.sessionTemplateId = sessionId }
+
+    updateVisitRequest.contactList?.let { contactList ->
+      visitEntity.visitors.clear()
+      contactList.forEach {
+        visitEntity.visitors.add(
+          VisitVisitor(
+            id = VisitVisitorPk(
+              nomisPersonId = it.nomisPersonId,
+              visitId = visitEntity.id
+            ),
+            leadVisitor = it.leadVisitor, visit = visitEntity
+          )
+        )
+      }
+    }
+
+    updateVisitRequest.mainContact?.let { updateContact ->
+      visitEntity.mainContact?.let { mainContact ->
+        mainContact.contactName = updateContact.contactName
+        mainContact.contactPhone = updateContact.contactPhone
+      } ?: run {
+        visitEntity.mainContact = VisitContact(
+          id = visitEntity.id,
+          contactName = updateContact.contactName,
+          contactPhone = updateContact.contactPhone,
+          visit = visitEntity
+        )
+      }
+    }
+
+    visitEntity.modifyTimestamp = LocalDateTime.now()
+    visitRepository.saveAndFlush(visitEntity)
+
+    return VisitDto(visitEntity)
+  }
+
+  fun deleteVisit(visitId: Long) {
+    val visit = visitRepository.findByIdOrNull(visitId)
+    visit?.let { visitRepository.delete(it) }.also { log.info("Visit with id  $visitId deleted") }
+      ?: run {
+        log.info("Visit id  $visitId not found")
+      }
   }
 
   companion object {
