@@ -44,6 +44,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
       mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
       contactList = listOf(CreateVisitorOnVisitRequest(123)),
       reasonableAdjustments = "comment text",
+      visitorConcerns = "comment more text",
       sessionId = null,
     )
 
@@ -83,6 +84,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].visitors[0].visitId").isNumber
         .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
         .jsonPath("$[0].reasonableAdjustments").isEqualTo("comment text")
+        .jsonPath("$[0].visitorConcerns").isEqualTo("comment more text")
     }
 
     @Test
@@ -373,6 +375,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitType(VisitType.FAMILY)
         .withStatus(VisitStatus.BOOKED)
         .withReasonableAdjustments("Other: Some text")
+        .withVisitorConcerns("Some text")
         .withSessionTemplateId(1234560)
         .save()
       visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, leadVisitor = true)
@@ -394,6 +397,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         contactList = listOf(CreateVisitorOnVisitRequest(123L)),
         reasonableAdjustments = "comment text",
+        visitorConcerns = "more comment text",
         sessionId = 123L,
       )
 
@@ -420,6 +424,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitors[0].visitId").isNumber
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
         .jsonPath("$.reasonableAdjustments").isEqualTo(updateRequest.reasonableAdjustments!!)
+        .jsonPath("$.visitorConcerns").isEqualTo(updateRequest.visitorConcerns!!)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
 
@@ -437,6 +442,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         contactList = listOf(CreateVisitorOnVisitRequest(123L)),
         reasonableAdjustments = "comment text",
+        visitorConcerns = "more comment text",
         sessionId = 123L,
       )
 
@@ -463,6 +469,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitors[0].visitId").isNumber
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
         .jsonPath("$.reasonableAdjustments").isEqualTo(updateRequest.reasonableAdjustments!!)
+        .jsonPath("$.visitorConcerns").isEqualTo(updateRequest.visitorConcerns!!)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
 

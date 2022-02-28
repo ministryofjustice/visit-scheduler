@@ -61,6 +61,11 @@ class VisitBuilder(
     return this
   }
 
+  fun withVisitorConcerns(concerns: String): VisitBuilder {
+    this.visit = visit.copy(visitorConcerns = concerns)
+    return this
+  }
+
   fun withSessionTemplateId(id: Long): VisitBuilder {
     this.visit = visit.copy(sessionTemplateId = id)
     return this
