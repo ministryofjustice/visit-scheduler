@@ -23,6 +23,7 @@ data class UpdateVisitRequest(
   @Schema(description = "Visit Status", example = "RESERVED", required = false) val visitStatus: VisitStatus? = null,
   @Schema(description = "Visit Room", example = "A1", required = false) val visitRoom: String? = null,
   @Schema(description = "Reasonable Adjustments", required = false) val reasonableAdjustments: String? = null,
+  @Schema(description = "Visitor Concerns", required = false) val visitorConcerns: String? = null,
   @Schema(description = "Main Contact associated with the visit", required = false) @field:Valid val mainContact: CreateContactOnVisitRequest? = null,
   @Schema(description = "List of visitors associated with the visit", required = false) val contactList: List<@Valid CreateVisitorOnVisitRequest>? = null,
   @Schema(description = "Session Id identifying the visit session template", example = "123456", required = false) val sessionId: Long? = null,

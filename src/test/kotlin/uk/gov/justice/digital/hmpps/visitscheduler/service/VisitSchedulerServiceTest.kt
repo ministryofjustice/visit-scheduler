@@ -338,8 +338,9 @@ class VisitSchedulerServiceTest {
               prisonId = prisonId,
               status = VisitStatus.BOOKED,
               visitRoom = "123c",
+              reasonableAdjustments = "some text",
+              visitorConcerns = "some more text",
               sessionTemplateId = null,
-              reasonableAdjustments = "some text"
             )
           )
         )

@@ -49,13 +49,16 @@ data class Visit(
   var reasonableAdjustments: String? = null,
 
   @Column
-  var sessionTemplateId: Long? = null,
+  var visitorConcerns: String? = null,
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var visitors: MutableList<VisitVisitor> = mutableListOf(),
 
   @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var mainContact: VisitContact? = null,
+
+  @Column
+  var sessionTemplateId: Long? = null,
 
   @Column
   val createTimestamp: LocalDateTime? = LocalDateTime.now(),

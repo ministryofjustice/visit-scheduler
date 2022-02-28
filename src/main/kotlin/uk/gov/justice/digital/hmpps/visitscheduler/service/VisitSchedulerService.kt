@@ -221,8 +221,9 @@ class VisitSchedulerService(
         visitRoom = createVisitRequest.visitRoom,
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp,
-        sessionTemplateId = createVisitRequest.sessionId,
         reasonableAdjustments = createVisitRequest.reasonableAdjustments,
+        visitorConcerns = createVisitRequest.visitorConcerns,
+        sessionTemplateId = createVisitRequest.sessionId,
       )
     )
 
@@ -265,6 +266,7 @@ class VisitSchedulerService(
     updateVisitRequest.visitStatus?.let { status -> visitEntity.status = status }
     updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
     updateVisitRequest.reasonableAdjustments?.let { reasonableAdjustments -> visitEntity.reasonableAdjustments = reasonableAdjustments }
+    updateVisitRequest.visitorConcerns?.let { visitorConcerns -> visitEntity.visitorConcerns = visitorConcerns }
     updateVisitRequest.sessionId?.let { sessionId -> visitEntity.sessionTemplateId = sessionId }
 
     updateVisitRequest.contactList?.let { contactList ->

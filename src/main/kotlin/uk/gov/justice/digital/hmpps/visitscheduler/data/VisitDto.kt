@@ -26,6 +26,7 @@ data class VisitDto(
     required = true
   ) @field:NotBlank val endTimestamp: LocalDateTime,
   @Schema(description = "Reasonable Adjustments", required = false) val reasonableAdjustments: String? = null,
+  @Schema(description = "Visitor Concerns", required = false) val visitorConcerns: String? = null,
   @Schema(description = "Main Contact associated with the visit", required = false) val mainContact: ContactDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false) val visitors: List<VisitorDto> = listOf(),
   @Schema(description = "Session Id identifying the visit session template", example = "123", required = false) val sessionId: Long? = null,
@@ -39,12 +40,13 @@ data class VisitDto(
     endTimestamp = visitEntity.visitEnd,
     visitStatus = visitEntity.status.name,
     visitStatusDescription = visitEntity.status.description,
-    visitRoom = visitEntity.visitRoom,
-    reasonableAdjustments = visitEntity.reasonableAdjustments,
-    mainContact = visitEntity.mainContact?.let { ContactDto(it) },
     visitType = visitEntity.visitType.name,
     visitTypeDescription = visitEntity.visitType.description,
+    visitRoom = visitEntity.visitRoom,
+    reasonableAdjustments = visitEntity.reasonableAdjustments,
+    visitorConcerns = visitEntity.visitorConcerns,
+    mainContact = visitEntity.mainContact?.let { ContactDto(it) },
+    visitors = visitEntity.visitors.map { VisitorDto(it) },
     sessionId = visitEntity.sessionTemplateId,
-    visitors = visitEntity.visitors.map { VisitorDto(it) }
   )
 }
