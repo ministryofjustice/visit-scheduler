@@ -1,6 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
 import org.hibernate.Hibernate
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
+import org.springframework.data.jpa.repository.Temporal
 import java.time.LocalDateTime
 import javax.persistence.CascadeType
 import javax.persistence.Column
@@ -14,6 +17,7 @@ import javax.persistence.Id
 import javax.persistence.OneToMany
 import javax.persistence.OneToOne
 import javax.persistence.Table
+import javax.persistence.TemporalType
 
 @Entity
 @Table(name = "VISIT")
@@ -60,11 +64,15 @@ data class Visit(
   @Column
   var sessionTemplateId: Long? = null,
 
+  @CreationTimestamp
+  @Temporal(TemporalType.TIMESTAMP)
   @Column
-  val createTimestamp: LocalDateTime? = LocalDateTime.now(),
+  val createTimestamp: LocalDateTime? = null,
 
+  @UpdateTimestamp
+  @Temporal(TemporalType.TIMESTAMP)
   @Column
-  var modifyTimestamp: LocalDateTime? = LocalDateTime.now(),
+  var modifyTimestamp: LocalDateTime? = null,
 
 ) {
 

@@ -298,7 +298,6 @@ class VisitSchedulerService(
       }
     }
 
-    visitEntity.modifyTimestamp = LocalDateTime.now()
     visitRepository.saveAndFlush(visitEntity)
 
     return VisitDto(visitEntity)
