@@ -66,7 +66,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectStatus().isOk
         .expectBody()
         .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[0].id").isNumber
+        .jsonPath("$[0].id").isNotEmpty
         .jsonPath("$[0].prisonId").isEqualTo("MDI")
         .jsonPath("$[0].prisonerId").isEqualTo("FF0000FF")
         .jsonPath("$[0].visitRoom").isEqualTo("A1")
@@ -81,7 +81,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].mainContact.contactPhone").isEqualTo("01234 567890")
         .jsonPath("$[0].visitors.length()").isEqualTo(1)
         .jsonPath("$[0].visitors[0].nomisPersonId").isEqualTo(123)
-        .jsonPath("$[0].visitors[0].visitId").isNumber
+        .jsonPath("$[0].visitors[0].visitId").isNotEmpty
         .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
         .jsonPath("$[0].reasonableAdjustments").isEqualTo("comment text")
         .jsonPath("$[0].visitorConcerns").isEqualTo("comment more text")
@@ -421,7 +421,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)
         .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
         .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
-        .jsonPath("$.visitors[0].visitId").isNumber
+        .jsonPath("$.visitors[0].visitId").isNotEmpty
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
         .jsonPath("$.reasonableAdjustments").isEqualTo(updateRequest.reasonableAdjustments!!)
         .jsonPath("$.visitorConcerns").isEqualTo(updateRequest.visitorConcerns!!)
@@ -466,7 +466,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)
         .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
         .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
-        .jsonPath("$.visitors[0].visitId").isNumber
+        .jsonPath("$.visitors[0].visitId").isNotEmpty
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
         .jsonPath("$.reasonableAdjustments").isEqualTo(updateRequest.reasonableAdjustments!!)
         .jsonPath("$.visitorConcerns").isEqualTo(updateRequest.visitorConcerns!!)
@@ -510,7 +510,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectBody()
         .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
         .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
-        .jsonPath("$.visitors[0].visitId").isNumber
+        .jsonPath("$.visitors[0].visitId").isNotEmpty
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
     }
 
