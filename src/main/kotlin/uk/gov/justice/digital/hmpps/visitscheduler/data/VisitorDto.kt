@@ -5,7 +5,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 
 @Schema(description = "Visitor")
 data class VisitorDto(
-  @Schema(description = "Visit id", example = "123", required = true) val visitId: String,
+  @Schema(description = "Visit id", example = "v9-d7-ed-7u", required = true) val visitId: String,
   @Schema(description = "person ID (nomis) of the visitor", example = "1234", required = true) val nomisPersonId: Long,
   @Schema(description = "indicates lead visitor for this visit", example = "true", required = true) val leadVisitor: Boolean,
 ) {
