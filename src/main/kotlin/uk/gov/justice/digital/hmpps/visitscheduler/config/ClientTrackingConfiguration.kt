@@ -4,6 +4,7 @@ import com.microsoft.applicationinsights.web.internal.ThreadContext
 import com.nimbusds.jwt.JWTClaimsSet
 import com.nimbusds.jwt.SignedJWT
 import org.apache.commons.lang3.StringUtils
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.context.annotation.Configuration
@@ -48,6 +49,6 @@ class ClientTrackingInterceptor : HandlerInterceptor {
     SignedJWT.parse(token.replace("Bearer ", "")).jwtClaimsSet
 
   companion object {
-    private val log = LoggerFactory.getLogger(ClientTrackingInterceptor::class.java)
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }

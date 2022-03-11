@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.health
 
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.context.event.ApplicationReadyEvent
 import org.springframework.boot.info.BuildProperties
@@ -16,6 +17,6 @@ class VersionOutputter(buildProperties: BuildProperties) {
   }
 
   companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }
