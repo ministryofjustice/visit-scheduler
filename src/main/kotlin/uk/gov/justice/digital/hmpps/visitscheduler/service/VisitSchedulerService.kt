@@ -45,7 +45,7 @@ class VisitSchedulerService(
 ) {
 
   @Transactional(readOnly = true)
-  fun getVisitById(visitId: Long): VisitDto {
+  fun getVisitById(visitId: String): VisitDto {
     return visitRepository.findById(visitId).map { VisitDto(it) }
       .orElseThrow(VisitNotFoundException("Visit id  $visitId not found"))
   }
@@ -253,7 +253,7 @@ class VisitSchedulerService(
     return VisitDto(visitEntity)
   }
 
-  fun updateVisit(visitId: Long, updateVisitRequest: UpdateVisitRequest): VisitDto {
+  fun updateVisit(visitId: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
     log.info("Updating visit for ${updateVisitRequest.prisonerId}")
 
     val visitEntity = visitRepository.findByIdOrNull(visitId) ?: throw VisitNotFoundException("Visit id  $visitId not found")
@@ -303,7 +303,7 @@ class VisitSchedulerService(
     return VisitDto(visitEntity)
   }
 
-  fun deleteVisit(visitId: Long) {
+  fun deleteVisit(visitId: String) {
     val visit = visitRepository.findByIdOrNull(visitId)
     visit?.let { visitRepository.delete(it) }.also { log.info("Visit with id  $visitId deleted") }
       ?: run {

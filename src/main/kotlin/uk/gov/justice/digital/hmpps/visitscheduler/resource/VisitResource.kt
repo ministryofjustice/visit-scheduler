@@ -175,7 +175,7 @@ class VisitResource(
   )
   fun getVisitById(
     @Schema(description = "visit id", example = "45645", required = true)
-    @PathVariable visitId: Long
+    @PathVariable visitId: String
   ): VisitDto =
     visitSchedulerService.getVisitById(visitId)
 
@@ -221,7 +221,7 @@ class VisitResource(
   )
   fun updateVisit(
     @Schema(description = "visit id", example = "45645", required = true)
-    @PathVariable visitId: Long,
+    @PathVariable visitId: String,
     @RequestBody @Valid updateVisitRequest: UpdateVisitRequest
   ): VisitDto = visitSchedulerService.updateVisit(visitId, updateVisitRequest)
 
@@ -249,7 +249,7 @@ class VisitResource(
   )
   fun deleteVisit(
     @Schema(description = "visit id", example = "45645", required = true)
-    @PathVariable visitId: Long
+    @PathVariable visitId: String
   ) {
     visitSchedulerService.deleteVisit(visitId)
   }

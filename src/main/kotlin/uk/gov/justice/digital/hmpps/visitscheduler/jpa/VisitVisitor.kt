@@ -15,7 +15,7 @@ data class VisitVisitorPk(
   @Column(name = "NOMIS_PERSON_ID", nullable = false)
   var nomisPersonId: Long,
   @Column(name = "VISIT_ID", nullable = false)
-  var visitId: Long,
+  var visitId: String,
 ) : Serializable
 
 @Entity

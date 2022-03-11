@@ -14,7 +14,7 @@ data class VisitContact(
 
   @Id
   @Column(name = "VISIT_ID")
-  var id: Long,
+  var id: String,
 
   @Column(name = "CONTACT_NAME", nullable = false)
   var contactName: String,
