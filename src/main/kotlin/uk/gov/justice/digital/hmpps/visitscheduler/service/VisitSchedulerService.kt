@@ -212,7 +212,7 @@ class VisitSchedulerService(
     return visitRepository.findAll(VisitSpecification(visitFilter)).sortedBy { it.visitStart }.map { VisitDto(it) }
   }
 
-  @Retryable(value = [DataIntegrityViolationException::class], maxAttempts = 2 )
+  @Retryable(value = [DataIntegrityViolationException::class], maxAttempts = 2)
   fun createVisit(createVisitRequest: CreateVisitRequest): VisitDto {
     log.info("Creating visit for ${createVisitRequest.prisonerId}")
     val visitEntity = visitRepository.saveAndFlush(

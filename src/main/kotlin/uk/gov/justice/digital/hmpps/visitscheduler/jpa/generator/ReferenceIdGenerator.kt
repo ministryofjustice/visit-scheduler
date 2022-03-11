@@ -13,12 +13,12 @@ import java.util.Properties
 class ReferenceIdGenerator : SequenceStyleGenerator() {
 
   val REF_DELIMITER_PARAMETER: String = "refDelimiter"
-  val REF_DELIMITER_DEFAULT : String = "-"
-  private var  refDelimiter: String? = REF_DELIMITER_DEFAULT
+  val REF_DELIMITER_DEFAULT: String = "-"
+  private var refDelimiter: String? = REF_DELIMITER_DEFAULT
 
   val REF_LENGTH_PARAMETER: String = "refLength"
-  val REF_LENGTH_DEFAULT : Int = 8
-  private var  refLength: Int? = REF_LENGTH_DEFAULT
+  val REF_LENGTH_DEFAULT: Int = 8
+  private var refLength: Int? = REF_LENGTH_DEFAULT
 
   override fun configure(type: Type?, params: Properties?, serviceRegistry: ServiceRegistry?) {
     super.configure(LongType.INSTANCE, params, serviceRegistry)
@@ -30,5 +30,4 @@ class ReferenceIdGenerator : SequenceStyleGenerator() {
     val id = super.generate(session, `object`)
     return QuotableEncoder(delimiter = refDelimiter, minLength = refLength).encode(id as Long)
   }
-
 }

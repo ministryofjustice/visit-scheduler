@@ -30,7 +30,7 @@ data class Visit(
     name = "visit_seq_generator",
     strategy = "uk.gov.justice.digital.hmpps.visitscheduler.jpa.generator.ReferenceIdGenerator",
     parameters = [
-      Parameter(name = org.hibernate.id.enhanced.SequenceStyleGenerator.SEQUENCE_PARAM, value="visit_seq"),
+      Parameter(name = org.hibernate.id.enhanced.SequenceStyleGenerator.SEQUENCE_PARAM, value = "visit_seq"),
     ]
   )
   val id: String = "",
