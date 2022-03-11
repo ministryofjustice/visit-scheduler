@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.task
 
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
@@ -39,6 +40,6 @@ class VisitTask(
   }
 
   companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }

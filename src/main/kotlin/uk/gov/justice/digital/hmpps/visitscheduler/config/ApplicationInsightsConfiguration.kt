@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
 import com.microsoft.applicationinsights.TelemetryClient
+import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.context.annotation.Bean
@@ -21,7 +22,7 @@ class ApplicationInsightsConfiguration {
   }
 
   companion object {
-    private val log = LoggerFactory.getLogger(this::class.java)
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }
 
