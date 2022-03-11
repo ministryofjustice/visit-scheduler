@@ -1,6 +1,6 @@
 CREATE TABLE visit
 (
-    id              serial        NOT NULL PRIMARY KEY,
+    id              text       NOT NULL PRIMARY KEY,
     session_template_id  integer,
     reference       VARCHAR(80),
     prisoner_id     VARCHAR(80)   NOT NULL,
@@ -14,10 +14,11 @@ CREATE TABLE visit
     create_timestamp timestamp default current_timestamp,
     modify_timestamp timestamp default current_timestamp
 );
+CREATE SEQUENCE visit_seq OWNED BY visit.id;
 
 CREATE TABLE visit_visitor
 (
-    visit_id        integer        NOT NULL,
+    visit_id        text        NOT NULL,
     nomis_Person_id      integer        NOT NULL,
     lead_visitor    BOOLEAN,
     PRIMARY KEY (visit_id, nomis_person_id)
