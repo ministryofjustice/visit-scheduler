@@ -10,14 +10,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.io.Serializable
 import java.util.Properties
 
+@Suppress("unused")
 class ReferenceIdGenerator : SequenceStyleGenerator() {
 
-  val REF_DELIMITER_PARAMETER: String = "refDelimiter"
-  val REF_DELIMITER_DEFAULT: String = "-"
   private var refDelimiter: String? = REF_DELIMITER_DEFAULT
-
-  val REF_LENGTH_PARAMETER: String = "refLength"
-  val REF_LENGTH_DEFAULT: Int = 8
   private var refLength: Int? = REF_LENGTH_DEFAULT
 
   override fun configure(type: Type?, params: Properties?, serviceRegistry: ServiceRegistry?) {
@@ -29,5 +25,12 @@ class ReferenceIdGenerator : SequenceStyleGenerator() {
   override fun generate(session: SharedSessionContractImplementor?, `object`: Any?): Serializable {
     val id = super.generate(session, `object`)
     return QuotableEncoder(delimiter = refDelimiter, minLength = refLength).encode(id as Long)
+  }
+
+  companion object {
+    const val REF_DELIMITER_PARAMETER = "refDelimiter"
+    const val REF_DELIMITER_DEFAULT = "-"
+    const val REF_LENGTH_PARAMETER = "refLength"
+    const val REF_LENGTH_DEFAULT = 8
   }
 }

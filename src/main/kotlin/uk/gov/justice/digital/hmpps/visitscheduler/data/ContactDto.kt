@@ -6,13 +6,11 @@ import javax.validation.constraints.NotBlank
 
 @Schema(description = "Contact")
 data class ContactDto(
-  @Schema(description = "Visit id", example = "v9-d7-ed-7u", required = true) val visitId: String,
   @Schema(description = "Main Contact Name", example = "John Smith", required = true) @field:NotBlank val contactName: String,
   @Schema(description = "Main Contact Phone", example = "01234 567890", required = true) @field:NotBlank val contactPhone: String,
 ) {
 
   constructor(visitContactEntity: VisitContact) : this(
-    visitId = visitContactEntity.id,
     contactName = visitContactEntity.contactName,
     contactPhone = visitContactEntity.contactPhone,
   )

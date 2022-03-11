@@ -2,7 +2,6 @@ CREATE TABLE visit
 (
     id                      text            NOT NULL PRIMARY KEY,
     session_template_id     integer,
-    reference               VARCHAR(80),
     prisoner_id             VARCHAR(80)     NOT NULL,
     visit_type              VARCHAR(80)     NOT NULL,
     prison_id               VARCHAR(6)      NOT NULL,
