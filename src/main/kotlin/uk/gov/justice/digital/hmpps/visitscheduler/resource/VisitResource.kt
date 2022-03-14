@@ -133,8 +133,8 @@ class VisitResource(
   ): List<VisitDto> =
     visitSchedulerService.findVisitsByFilter(
       VisitFilter(
-        prisonerId = prisonerId,
-        prisonId = prisonId,
+        prisonerId = prisonerId?.trim(),
+        prisonId = prisonId?.trim(),
         startDateTime = startTimestamp,
         endDateTime = endTimestamp,
         nomisPersonId = nomisPersonId
@@ -174,10 +174,10 @@ class VisitResource(
     ]
   )
   fun getVisitById(
-    @Schema(description = "visit id", example = "45645", required = true)
-    @PathVariable visitId: Long
+    @Schema(description = "visit id", example = "v9-d7-ed-7u", required = true)
+    @PathVariable visitId: String
   ): VisitDto =
-    visitSchedulerService.getVisitById(visitId)
+    visitSchedulerService.getVisitById(visitId.trim())
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping("/{visitId}")
@@ -220,10 +220,10 @@ class VisitResource(
     ]
   )
   fun updateVisit(
-    @Schema(description = "visit id", example = "45645", required = true)
-    @PathVariable visitId: Long,
+    @Schema(description = "visit id", example = "v9-d7-ed-7u", required = true)
+    @PathVariable visitId: String,
     @RequestBody @Valid updateVisitRequest: UpdateVisitRequest
-  ): VisitDto = visitSchedulerService.updateVisit(visitId, updateVisitRequest)
+  ): VisitDto = visitSchedulerService.updateVisit(visitId.trim(), updateVisitRequest)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @DeleteMapping("/{visitId}")
@@ -248,9 +248,9 @@ class VisitResource(
     ]
   )
   fun deleteVisit(
-    @Schema(description = "visit id", example = "45645", required = true)
-    @PathVariable visitId: Long
+    @Schema(description = "visit id", example = "v9-d7-ed-7u", required = true)
+    @PathVariable visitId: String
   ) {
-    visitSchedulerService.deleteVisit(visitId)
+    visitSchedulerService.deleteVisit(visitId.trim())
   }
 }

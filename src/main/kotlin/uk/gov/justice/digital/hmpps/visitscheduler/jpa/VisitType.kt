@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
-@Suppress("unused", "unused")
+@Suppress("unused")
 enum class VisitType(
   val description: String,
 ) {

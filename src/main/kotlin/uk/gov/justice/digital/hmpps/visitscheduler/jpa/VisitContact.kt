@@ -14,7 +14,7 @@ data class VisitContact(
 
   @Id
   @Column(name = "VISIT_ID")
-  var id: Long,
+  var id: String,
 
   @Column(name = "CONTACT_NAME", nullable = false)
   var contactName: String,
@@ -38,6 +38,6 @@ data class VisitContact(
   override fun hashCode(): Int = id.hashCode()
 
   override fun toString(): String {
-    return this::class.simpleName + id.toString()
+    return this::class.simpleName + id
   }
 }

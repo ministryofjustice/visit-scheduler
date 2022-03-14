@@ -53,7 +53,7 @@ class VisitRepositoryTest : IntegrationTestBase() {
     assertThat(visitList.size).isEqualTo(1)
     with(visitList[0]) {
       assertThat(this.prisonerId).isEqualTo(testPrisonerId)
-      assertThat(this.id).isNotNull.isGreaterThan(0L)
+      assertThat(this.id).isNotNull.isNotEmpty
       assertThat(this.visitStart).isEqualTo(visitTime)
       assertThat(this.visitType).isEqualTo(VisitType.STANDARD_SOCIAL)
       assertThat(this.status).isEqualTo(VisitStatus.RESERVED)
@@ -87,7 +87,7 @@ class VisitRepositoryTest : IntegrationTestBase() {
     val visits = repository.findByPrisonerId(testPrisonerId)
     assertThat(visits.size).isEqualTo(1)
     with(visits[0]) {
-      assertThat(this.id).isNotNull.isGreaterThan(0L)
+      assertThat(this.id).isNotNull.isNotEmpty
       assertThat(this.prisonId).isEqualTo(testPrison)
       assertThat(this.prisonerId).isEqualTo(testPrisonerId)
       assertThat(this.mainContact).isNotNull

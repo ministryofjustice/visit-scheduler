@@ -3,8 +3,10 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
+import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -45,7 +47,7 @@ class VisitSchedulerService(
 ) {
 
   @Transactional(readOnly = true)
-  fun getVisitById(visitId: Long): VisitDto {
+  fun getVisitById(visitId: String): VisitDto {
     return visitRepository.findById(visitId).map { VisitDto(it) }
       .orElseThrow(VisitNotFoundException("Visit id  $visitId not found"))
   }
@@ -210,6 +212,7 @@ class VisitSchedulerService(
     return visitRepository.findAll(VisitSpecification(visitFilter)).sortedBy { it.visitStart }.map { VisitDto(it) }
   }
 
+  @Retryable(value = [DataIntegrityViolationException::class], maxAttempts = 2)
   fun createVisit(createVisitRequest: CreateVisitRequest): VisitDto {
     log.info("Creating visit for ${createVisitRequest.prisonerId}")
     val visitEntity = visitRepository.saveAndFlush(
@@ -253,7 +256,7 @@ class VisitSchedulerService(
     return VisitDto(visitEntity)
   }
 
-  fun updateVisit(visitId: Long, updateVisitRequest: UpdateVisitRequest): VisitDto {
+  fun updateVisit(visitId: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
     log.info("Updating visit for ${updateVisitRequest.prisonerId}")
 
     val visitEntity = visitRepository.findByIdOrNull(visitId) ?: throw VisitNotFoundException("Visit id  $visitId not found")
@@ -303,7 +306,7 @@ class VisitSchedulerService(
     return VisitDto(visitEntity)
   }
 
-  fun deleteVisit(visitId: Long) {
+  fun deleteVisit(visitId: String) {
     val visit = visitRepository.findByIdOrNull(visitId)
     visit?.let { visitRepository.delete(it) }.also { log.info("Visit with id  $visitId deleted") }
       ?: run {
