@@ -13,8 +13,8 @@ import java.util.Properties
 @Suppress("unused")
 class ReferenceIdGenerator : SequenceStyleGenerator() {
 
-  private var refDelimiter: String? = REF_DELIMITER_DEFAULT
-  private var refLength: Int? = REF_LENGTH_DEFAULT
+  private var refDelimiter: String = REF_DELIMITER_DEFAULT
+  private var refLength: Int = REF_LENGTH_DEFAULT
 
   override fun configure(type: Type?, params: Properties?, serviceRegistry: ServiceRegistry?) {
     super.configure(LongType.INSTANCE, params, serviceRegistry)
