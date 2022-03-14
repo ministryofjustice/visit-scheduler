@@ -1,3 +1,4 @@
+-- noinspection SqlWithoutWhere
 DELETE FROM support;
 
 INSERT INTO support(code, name, description)

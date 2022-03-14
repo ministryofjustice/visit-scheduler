@@ -24,10 +24,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Support
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
 import java.time.Clock
@@ -40,9 +42,10 @@ import java.time.ZoneId
 @ExtendWith(MockitoExtension::class)
 class VisitSchedulerServiceTest {
 
-  private val sessionTemplateRepository = mock<SessionTemplateRepository>()
-  private val visitRepository = mock<VisitRepository>()
   private val prisonApiClient = mock<PrisonApiClient>()
+  private val visitRepository = mock<VisitRepository>()
+  private val sessionTemplateRepository = mock<SessionTemplateRepository>()
+  private val supportRepository = mock<SupportRepository>()
 
   private lateinit var visitSchedulerService: VisitSchedulerService
 
@@ -55,6 +58,7 @@ class VisitSchedulerServiceTest {
       prisonApiClient,
       visitRepository,
       sessionTemplateRepository,
+      supportRepository,
       clock,
       1,
       100,
@@ -405,6 +409,36 @@ class VisitSchedulerServiceTest {
       }
 
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+  }
+
+  @Nested
+  @DisplayName("Available support")
+  inner class AvailableSupport {
+
+    private fun mockRepositoryResponse(response: List<Support>) {
+      whenever(
+        supportRepository.findAll()
+      ).thenReturn(response)
+    }
+
+    @Test
+    fun `returns available support`() {
+
+      val availableSupport = Support(
+        code = 10001,
+        name = "TEST_NAME",
+        description = "This is the description"
+      )
+      mockRepositoryResponse(listOf(availableSupport))
+
+      val support = visitSchedulerService.getAvailableSupport()
+      assertThat(support).size().isEqualTo(1)
+      assertThat(support[0].code).isEqualTo(availableSupport.code)
+      assertThat(support[0].name).isEqualTo(availableSupport.name)
+      assertThat(support[0].description).isEqualTo(availableSupport.description)
+
+      Mockito.verify(supportRepository, times(1)).findAll()
     }
   }
 }

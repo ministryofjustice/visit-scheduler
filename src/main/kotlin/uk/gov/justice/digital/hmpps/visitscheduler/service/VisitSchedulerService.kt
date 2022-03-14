@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
+import uk.gov.justice.digital.hmpps.visitscheduler.data.AvailableSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociationDetail
@@ -26,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
 import java.time.Clock
@@ -40,6 +42,7 @@ class VisitSchedulerService(
   private val prisonApiClient: PrisonApiClient,
   private val visitRepository: VisitRepository,
   private val sessionTemplateRepository: SessionTemplateRepository,
+  private val supportRepository: SupportRepository,
   private val clock: Clock,
   @Value("\${policy.minimum-booking-notice-period-days:2}") private val defaultNoticeDaysMin: Long,
   @Value("\${policy.maximum-booking-notice-period-days:28}") private val defaultNoticeDaysMax: Long,
@@ -257,7 +260,7 @@ class VisitSchedulerService(
   }
 
   fun updateVisit(visitId: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
-    log.info("Updating visit for ${visitId}")
+    log.info("Updating visit for $visitId")
 
     val visitEntity = visitRepository.findByIdOrNull(visitId) ?: throw VisitNotFoundException("Visit id  $visitId not found")
 
@@ -312,6 +315,10 @@ class VisitSchedulerService(
       ?: run {
         log.info("Visit id  $visitId not found")
       }
+  }
+
+  fun getAvailableSupport(): List<AvailableSupport> {
+    return supportRepository.findAll().sortedBy { it.code }.map { AvailableSupport(it) }
   }
 
   companion object {
