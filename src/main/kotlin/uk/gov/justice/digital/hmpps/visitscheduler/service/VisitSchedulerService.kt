@@ -257,7 +257,7 @@ class VisitSchedulerService(
   }
 
   fun updateVisit(visitId: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
-    log.info("Updating visit for ${updateVisitRequest.prisonerId}")
+    log.info("Updating visit for ${visitId}")
 
     val visitEntity = visitRepository.findByIdOrNull(visitId) ?: throw VisitNotFoundException("Visit id  $visitId not found")
 
