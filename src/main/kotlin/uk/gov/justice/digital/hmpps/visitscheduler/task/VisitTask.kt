@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.task
 
+import org.hibernate.StaleStateException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -35,7 +36,11 @@ class VisitTask(
     }
 
     expired.forEach {
-      visitSchedulerService.deleteVisit(it.id)
+      try {
+        visitSchedulerService.deleteVisit(it.id)
+      } catch (e: StaleStateException) {
+        log.warn("Visit id ${it.id} is stale")
+      }
     }
   }
 

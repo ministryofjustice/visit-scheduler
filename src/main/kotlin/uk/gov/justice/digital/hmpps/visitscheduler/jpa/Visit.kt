@@ -59,16 +59,16 @@ data class Visit(
   var status: VisitStatus,
 
   @Column
-  var reasonableAdjustments: String? = null,
-
-  @Column
   var visitorConcerns: String? = null,
+
+  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  var mainContact: VisitContact? = null,
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var visitors: MutableList<VisitVisitor> = mutableListOf(),
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var mainContact: VisitContact? = null,
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  var support: MutableList<VisitSupport> = mutableListOf(),
 
   @Column
   var sessionTemplateId: Long? = null,

@@ -9,12 +9,14 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateContactOnVisitRequest
+import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSupportOnVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitorOnVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.UpdateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
@@ -43,7 +45,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
       visitStatus = VisitStatus.RESERVED,
       mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
       contactList = listOf(CreateVisitorOnVisitRequest(123)),
-      reasonableAdjustments = "comment text",
+      supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
       visitorConcerns = "comment more text",
       sessionId = null,
     )
@@ -82,8 +84,77 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].visitors.length()").isEqualTo(1)
         .jsonPath("$[0].visitors[0].nomisPersonId").isEqualTo(123)
         .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
-        .jsonPath("$[0].reasonableAdjustments").isEqualTo("comment text")
+        .jsonPath("$[0].support.length()").isEqualTo(1)
+        .jsonPath("$[0].support[0].supportName").isEqualTo("OTHER")
+        .jsonPath("$[0].support[0].supportDetails").isEqualTo("Some Text")
         .jsonPath("$[0].visitorConcerns").isEqualTo("comment more text")
+    }
+
+    @Test
+    fun `create visit - duplicates are ignored`() {
+      val createVisitRequest = CreateVisitRequest(
+        prisonerId = "FF0000FF",
+        prisonId = "MDI",
+        startTimestamp = visitTime,
+        endTimestamp = visitTime.plusHours(1),
+        visitType = VisitType.STANDARD_SOCIAL,
+        visitStatus = VisitStatus.RESERVED,
+        visitRoom = "A1",
+        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        contactList = listOf(
+          CreateVisitorOnVisitRequest(123),
+          CreateVisitorOnVisitRequest(123)
+        ),
+        supportList = listOf(
+          CreateSupportOnVisitRequest("OTHER", "Some Text"),
+          CreateSupportOnVisitRequest("OTHER", "Some Text")
+        ),
+      )
+
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest
+          )
+        )
+        .exchange()
+        .expectStatus().isCreated
+
+      webTestClient.get().uri("/visits?prisonerId=FF0000FF")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(1)
+        .jsonPath("$[0].visitors.length()").isEqualTo(1)
+        .jsonPath("$[0].support.length()").isEqualTo(1)
+    }
+
+    @Test
+    fun `create visit - invalid support`() {
+
+      val createVisitRequest = CreateVisitRequest(
+        prisonerId = "FF0000FF",
+        prisonId = "MDI",
+        startTimestamp = visitTime,
+        endTimestamp = visitTime.plusHours(1),
+        visitType = VisitType.STANDARD_SOCIAL,
+        visitStatus = VisitStatus.RESERVED,
+        visitRoom = "A1",
+        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        supportList = listOf(CreateSupportOnVisitRequest("ANYTHINGWILLDO")),
+      )
+
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest
+          )
+        )
+        .exchange()
+        .expectStatus().isBadRequest
     }
 
     @Test
@@ -147,7 +218,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withPrisonId("LEI")
         .save()
+      visitContactCreator(visit = visitCC, name = "Jane Doe", phone = "01234 098765")
       visitVisitorCreator(visit = visitCC, nomisPersonId = 123L)
+      visitSupportCreator(visit = visitCC, name = "OTHER", details = "Some Text")
       visitRepository.saveAndFlush(visitCC)
 
       visitCreator(visitRepository)
@@ -373,12 +446,12 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withVisitType(VisitType.FAMILY)
         .withStatus(VisitStatus.BOOKED)
-        .withReasonableAdjustments("Other: Some text")
         .withVisitorConcerns("Some text")
         .withSessionTemplateId(1234560)
         .save()
-      visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, leadVisitor = true)
       visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
+      visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, leadVisitor = true)
+      visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
       visitRepository.saveAndFlush(visitFull!!)
     }
 
@@ -395,7 +468,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         visitStatus = VisitStatus.BOOKED,
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         contactList = listOf(CreateVisitorOnVisitRequest(123L)),
-        reasonableAdjustments = "comment text",
+        supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
         visitorConcerns = "more comment text",
         sessionId = 123L,
       )
@@ -421,7 +494,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
         .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
-        .jsonPath("$.reasonableAdjustments").isEqualTo(updateRequest.reasonableAdjustments!!)
+        .jsonPath("$.support.length()").isEqualTo(updateRequest.supportList!!.size)
+        .jsonPath("$.support[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
+        .jsonPath("$.support[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
         .jsonPath("$.visitorConcerns").isEqualTo(updateRequest.visitorConcerns!!)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
@@ -439,7 +514,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         visitStatus = VisitStatus.BOOKED,
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         contactList = listOf(CreateVisitorOnVisitRequest(123L)),
-        reasonableAdjustments = "comment text",
+        supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
         visitorConcerns = "more comment text",
         sessionId = 123L,
       )
@@ -465,7 +540,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
         .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
-        .jsonPath("$.reasonableAdjustments").isEqualTo(updateRequest.reasonableAdjustments!!)
+        .jsonPath("$.support.length()").isEqualTo(updateRequest.supportList!!.size)
+        .jsonPath("$.support[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
+        .jsonPath("$.support[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
         .jsonPath("$.visitorConcerns").isEqualTo(updateRequest.visitorConcerns!!)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
@@ -508,6 +585,26 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
         .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
+    }
+
+    @Test
+    fun `put visit by visit id - amend support`() {
+
+      val updateRequest = UpdateVisitRequest(
+        supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
+      )
+
+      webTestClient.put().uri("/visits/${visitFull!!.id}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(updateRequest)
+        )
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.support.length()").isEqualTo(updateRequest.supportList!!.size)
+        .jsonPath("$.support[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
+        .jsonPath("$.support[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
     }
 
     @Test
@@ -560,7 +657,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withPrisonId("LEI")
         .save()
+      visitContactCreator(visit = visitCC, name = "Jane Doe", phone = "01234 098765")
       visitVisitorCreator(visit = visitCC, nomisPersonId = 123L)
+      visitSupportCreator(visit = visitCC, name = "OTHER", details = "Some Text")
       visitRepository.saveAndFlush(visitCC)
 
       webTestClient.delete().uri("/visits/${visitCC.id}")
