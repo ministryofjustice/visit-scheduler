@@ -4,9 +4,9 @@ import kotlin.random.Random
 
 class QuotableEncoder(private val delimiter: String = "-", private val minLength: Int = 1, private val chunkSize: Int = 2) {
 
-  private val seed = arrayOf("2", "a", "7", "1", "y", "x", "m", "q", "r", "b", "0", "l", "8", "d", "5", "n", "p", "6", "e", "g", "j", "v", "3", "w", "9", "k", "4")
+  private val seed = arrayOf("2", "a", "7", "1", "y", "x", "m", "q", "r", "b", "0", "8", "d", "5", "n", "p", "6", "e", "g", "j", "v", "3", "w", "9", "k", "4")
   private val separator = arrayOf("c", "s", "f", "h", "u", "i", "t")
-  // Exclude characters which are too similar to numbers "o","z"
+  // Exclude characters which are too similar to numbers "l","o","z"
 
   init {
     require(delimiter.length in 0..1) {
