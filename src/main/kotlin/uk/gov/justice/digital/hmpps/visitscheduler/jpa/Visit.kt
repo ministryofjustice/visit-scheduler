@@ -93,10 +93,10 @@ data class Visit(
     return id == other.id
   }
 
-  override fun hashCode(): Int = 0
+  override fun hashCode(): Int = id.hashCode()
 
   @Override
   override fun toString(): String {
-    return this::class.simpleName + "(id = $id )"
+    return this::class.simpleName + id
   }
 }
