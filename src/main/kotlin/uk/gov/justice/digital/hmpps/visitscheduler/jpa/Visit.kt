@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
-import org.hibernate.Hibernate
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.GenericGenerator
 import org.hibernate.annotations.Parameter
@@ -83,20 +82,4 @@ data class Visit(
   @Column
   var modifyTimestamp: LocalDateTime? = null,
 
-) {
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
-    other as Visit
-
-    return id == other.id
-  }
-
-  override fun hashCode(): Int = id.hashCode()
-
-  @Override
-  override fun toString(): String {
-    return this::class.simpleName + id
-  }
-}
+)

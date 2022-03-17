@@ -300,32 +300,32 @@ class VisitSchedulerService(
     return VisitDto(visitEntity)
   }
 
-  private fun createVisitContact(visit: Visit, name: String, phone: String): VisitContact {
+  private fun createVisitContact(visit: Visit, contactName: String, contactPhone: String): VisitContact {
     return VisitContact(
       id = visit.id,
-      contactName = name,
-      contactPhone = phone,
+      contactName = contactName,
+      contactPhone = contactPhone,
       visit = visit
     )
   }
 
-  private fun createVisitVisitor(visit: Visit, id: Long, lead: Boolean): VisitVisitor {
+  private fun createVisitVisitor(visit: Visit, personId: Long, leadVisitor: Boolean): VisitVisitor {
     return VisitVisitor(
       id = VisitVisitorPk(
-        nomisPersonId = id,
+        nomisPersonId = personId,
         visitId = visit.id
       ),
-      leadVisitor = lead, visit = visit
+      leadVisitor = leadVisitor, visit = visit
     )
   }
 
-  private fun createVisitSupport(visit: Visit, name: String, details: String?): VisitSupport {
+  private fun createVisitSupport(visit: Visit, supportName: String, supportDetails: String?): VisitSupport {
     return VisitSupport(
       id = VisitSupportPk(
-        supportName = name,
+        supportName = supportName,
         visitId = visit.id
       ),
-      supportDetails = details,
+      supportDetails = supportDetails,
       visit = visit
     )
   }

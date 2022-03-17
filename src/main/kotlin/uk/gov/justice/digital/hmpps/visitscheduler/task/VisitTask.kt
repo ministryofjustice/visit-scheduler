@@ -39,7 +39,7 @@ class VisitTask(
       try {
         visitSchedulerService.deleteVisit(it.id)
       } catch (e: StaleStateException) {
-        log.warn("Visit id ${it.id} is stale")
+        log.debug("Visit id ${it.id} is stale")
       }
     }
   }
