@@ -5,6 +5,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupportPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
@@ -56,11 +58,6 @@ class VisitBuilder(
     return this
   }
 
-  fun withReasonableAdjustments(support: String): VisitBuilder {
-    this.visit = visit.copy(reasonableAdjustments = support)
-    return this
-  }
-
   fun withVisitorConcerns(concerns: String): VisitBuilder {
     this.visit = visit.copy(visitorConcerns = concerns)
     return this
@@ -98,6 +95,19 @@ fun defaultVisit(): Visit {
   )
 }
 
+fun visitContactCreator(
+  visit: Visit,
+  name: String,
+  phone: String,
+) {
+  visit.mainContact = VisitContact(
+    id = visit.id,
+    contactName = name,
+    contactPhone = phone,
+    visit = visit
+  )
+}
+
 fun visitVisitorCreator(
   visit: Visit,
   nomisPersonId: Long,
@@ -115,16 +125,20 @@ fun visitVisitorCreator(
   )
 }
 
-fun visitContactCreator(
+fun visitSupportCreator(
   visit: Visit,
   name: String,
-  phone: String,
+  details: String?,
 ) {
-  visit.mainContact = VisitContact(
-    id = visit.id,
-    contactName = name,
-    contactPhone = phone,
-    visit = visit
+  visit.support.add(
+    VisitSupport(
+      id = VisitSupportPk(
+        supportName = name,
+        visitId = visit.id
+      ),
+      supportDetails = details,
+      visit = visit
+    )
   )
 }
 

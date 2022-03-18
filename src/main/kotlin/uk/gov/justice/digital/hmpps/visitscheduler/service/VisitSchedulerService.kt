@@ -24,6 +24,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupportPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
@@ -227,33 +229,26 @@ class VisitSchedulerService(
         visitRoom = createVisitRequest.visitRoom,
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp,
-        reasonableAdjustments = createVisitRequest.reasonableAdjustments,
         visitorConcerns = createVisitRequest.visitorConcerns,
         sessionTemplateId = createVisitRequest.sessionId,
       )
     )
 
+    createVisitRequest.mainContact?.let {
+      visitEntity.mainContact = createVisitContact(visitEntity, it.contactName, it.contactPhone)
+    }
+
     createVisitRequest.contactList?.let { contactList ->
-      contactList.forEach {
-        visitEntity.visitors.add(
-          VisitVisitor(
-            id = VisitVisitorPk(
-              nomisPersonId = it.nomisPersonId,
-              visitId = visitEntity.id
-            ),
-            leadVisitor = it.leadVisitor, visit = visitEntity
-          )
-        )
+      contactList.distinctBy { it.nomisPersonId }.forEach {
+        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.leadVisitor))
       }
     }
 
-    createVisitRequest.mainContact?.let { mainContact ->
-      visitEntity.mainContact = VisitContact(
-        id = visitEntity.id,
-        contactName = mainContact.contactName,
-        contactPhone = mainContact.contactPhone,
-        visit = visitEntity
-      )
+    createVisitRequest.supportList?.let { supportList ->
+      supportList.distinctBy { it.supportName }.forEach {
+        supportRepository.findByName(it.supportName) ?: throw SupportNotFoundException("Invalid support ${it.supportName} not found")
+        visitEntity.support.add(createVisitSupport(visitEntity, it.supportName, it.supportDetails))
+      }
     }
 
     return VisitDto(visitEntity)
@@ -271,36 +266,32 @@ class VisitSchedulerService(
     updateVisitRequest.visitType?.let { visitType -> visitEntity.visitType = visitType }
     updateVisitRequest.visitStatus?.let { status -> visitEntity.status = status }
     updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
-    updateVisitRequest.reasonableAdjustments?.let { reasonableAdjustments -> visitEntity.reasonableAdjustments = reasonableAdjustments }
     updateVisitRequest.visitorConcerns?.let { visitorConcerns -> visitEntity.visitorConcerns = visitorConcerns }
     updateVisitRequest.sessionId?.let { sessionId -> visitEntity.sessionTemplateId = sessionId }
-
-    updateVisitRequest.contactList?.let { contactList ->
-      visitEntity.visitors.clear()
-      contactList.forEach {
-        visitEntity.visitors.add(
-          VisitVisitor(
-            id = VisitVisitorPk(
-              nomisPersonId = it.nomisPersonId,
-              visitId = visitEntity.id
-            ),
-            leadVisitor = it.leadVisitor, visit = visitEntity
-          )
-        )
-      }
-    }
 
     updateVisitRequest.mainContact?.let { updateContact ->
       visitEntity.mainContact?.let { mainContact ->
         mainContact.contactName = updateContact.contactName
         mainContact.contactPhone = updateContact.contactPhone
       } ?: run {
-        visitEntity.mainContact = VisitContact(
-          id = visitEntity.id,
-          contactName = updateContact.contactName,
-          contactPhone = updateContact.contactPhone,
-          visit = visitEntity
-        )
+        visitEntity.mainContact = createVisitContact(visitEntity, updateContact.contactName, updateContact.contactPhone)
+      }
+    }
+
+    updateVisitRequest.contactList?.let { contactList ->
+      visitEntity.visitors.clear()
+      visitRepository.saveAndFlush(visitEntity)
+      contactList.distinctBy { it.nomisPersonId }.forEach {
+        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.leadVisitor))
+      }
+    }
+
+    updateVisitRequest.supportList?.let { supportList ->
+      visitEntity.support.clear()
+      visitRepository.saveAndFlush(visitEntity)
+      supportList.distinctBy { it.supportName }.forEach {
+        supportRepository.findByName(it.supportName) ?: throw SupportNotFoundException("Invalid support ${it.supportName} not found")
+        visitEntity.support.add(createVisitSupport(visitEntity, it.supportName, it.supportDetails))
       }
     }
 
@@ -309,11 +300,41 @@ class VisitSchedulerService(
     return VisitDto(visitEntity)
   }
 
+  private fun createVisitContact(visit: Visit, contactName: String, contactPhone: String): VisitContact {
+    return VisitContact(
+      id = visit.id,
+      contactName = contactName,
+      contactPhone = contactPhone,
+      visit = visit
+    )
+  }
+
+  private fun createVisitVisitor(visit: Visit, personId: Long, leadVisitor: Boolean): VisitVisitor {
+    return VisitVisitor(
+      id = VisitVisitorPk(
+        nomisPersonId = personId,
+        visitId = visit.id
+      ),
+      leadVisitor = leadVisitor, visit = visit
+    )
+  }
+
+  private fun createVisitSupport(visit: Visit, supportName: String, supportDetails: String?): VisitSupport {
+    return VisitSupport(
+      id = VisitSupportPk(
+        supportName = supportName,
+        visitId = visit.id
+      ),
+      supportDetails = supportDetails,
+      visit = visit
+    )
+  }
+
   fun deleteVisit(visitId: String) {
     val visit = visitRepository.findByIdOrNull(visitId)
     visit?.let { visitRepository.delete(it) }.also { log.info("Visit with id  $visitId deleted") }
       ?: run {
-        log.info("Visit id  $visitId not found")
+        log.info("Visit id $visitId not found")
       }
   }
 
@@ -339,5 +360,13 @@ class TemplateNotFoundException(message: String? = null, cause: Throwable? = nul
   Supplier<TemplateNotFoundException> {
   override fun get(): TemplateNotFoundException {
     return TemplateNotFoundException(message, cause)
+  }
+}
+
+class SupportNotFoundException(message: String? = null, cause: Throwable? = null) :
+  RuntimeException(message, cause),
+  Supplier<SupportNotFoundException> {
+  override fun get(): SupportNotFoundException {
+    return SupportNotFoundException(message, cause)
   }
 }

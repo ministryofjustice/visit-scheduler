@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TemplateNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotFoundException
 import javax.validation.ValidationException
@@ -150,6 +151,20 @@ class VisitSchedulerExceptionHandler {
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
           userMessage = "Template not found: ${e.cause?.message}",
+          developerMessage = e.message
+        )
+      )
+  }
+
+  @ExceptionHandler(SupportNotFoundException::class)
+  fun handleSupportNotFoundException(e: SupportNotFoundException): ResponseEntity<ErrorResponse?>? {
+    log.debug("Support not found exception caught: {}", e.message)
+    return ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.BAD_REQUEST,
+          userMessage = "Support not found: ${e.cause?.message}",
           developerMessage = e.message
         )
       )

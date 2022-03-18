@@ -10,11 +10,6 @@ spring:
     url: jdbc:postgresql://localhost:5432/visit_scheduler_db
     username: admin
     password: admin_password
-  h2:
-    console:
-      enabled: true
-  jpa:
-    show-sql: true
 
   security:
     oauth2:
@@ -32,5 +27,5 @@ prison:
 task:
   expired-visit:
     enabled: true
-    cron: 0 0/5 * * * ?
+    cron: 0 0/10 * * * ?
     validity-minutes: 20

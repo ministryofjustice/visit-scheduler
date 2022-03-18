@@ -10,22 +10,22 @@ import javax.persistence.ManyToOne
 import javax.persistence.Table
 
 @Embeddable
-data class VisitVisitorPk(
-  @Column(name = "NOMIS_PERSON_ID", nullable = false)
-  var nomisPersonId: Long,
+data class VisitSupportPk(
+  @Column(name = "SUPPORT_NAME", nullable = false)
+  var supportName: String,
   @Column(name = "VISIT_ID", nullable = false)
   var visitId: String,
 ) : Serializable
 
 @Entity
-@Table(name = "VISIT_VISITOR")
-data class VisitVisitor(
+@Table(name = "VISIT_SUPPORT")
+data class VisitSupport(
 
   @EmbeddedId
-  val id: VisitVisitorPk,
+  var id: VisitSupportPk,
 
-  @Column(name = "LEAD_VISITOR")
-  val leadVisitor: Boolean = true,
+  @Column(name = "SUPPORT_DETAILS", nullable = true)
+  var supportDetails: String? = null,
 
   @ManyToOne
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)

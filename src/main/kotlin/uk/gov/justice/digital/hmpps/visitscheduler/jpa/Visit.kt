@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
-import org.hibernate.Hibernate
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.GenericGenerator
 import org.hibernate.annotations.Parameter
@@ -59,16 +58,16 @@ data class Visit(
   var status: VisitStatus,
 
   @Column
-  var reasonableAdjustments: String? = null,
-
-  @Column
   var visitorConcerns: String? = null,
+
+  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  var mainContact: VisitContact? = null,
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var visitors: MutableList<VisitVisitor> = mutableListOf(),
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var mainContact: VisitContact? = null,
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  var support: MutableList<VisitSupport> = mutableListOf(),
 
   @Column
   var sessionTemplateId: Long? = null,
@@ -83,20 +82,4 @@ data class Visit(
   @Column
   var modifyTimestamp: LocalDateTime? = null,
 
-) {
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
-    other as Visit
-
-    return id == other.id
-  }
-
-  override fun hashCode(): Int = id.hashCode()
-
-  @Override
-  override fun toString(): String {
-    return this::class.simpleName + id
-  }
-}
+)

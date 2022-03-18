@@ -5,4 +5,6 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Support
 
 @Repository
-interface SupportRepository : JpaRepository<Support, Int>
+interface SupportRepository : JpaRepository<Support, Int> {
+  fun findByName(name: String): Support?
+}
