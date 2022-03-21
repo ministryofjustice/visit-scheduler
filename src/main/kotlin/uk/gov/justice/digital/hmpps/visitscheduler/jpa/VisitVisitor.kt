@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
+import org.hibernate.Hibernate
 import java.io.Serializable
 import javax.persistence.Column
 import javax.persistence.Embeddable
@@ -31,4 +32,18 @@ data class VisitVisitor(
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
   val visit: Visit,
 
-)
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
+    other as VisitVisitor
+
+    return id == other.id
+  }
+
+  override fun hashCode(): Int = id.hashCode()
+
+  override fun toString(): String {
+    return this::class.simpleName + "(id=$id, leadVisitor=$leadVisitor)"
+  }
+}
