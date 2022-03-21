@@ -38,17 +38,10 @@ data class VisitVisitor(
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
     other as VisitVisitor
 
-    if (id != other.id) return false
-    if (leadVisitor != other.leadVisitor) return false
-
-    return true
+    return id == other.id
   }
 
-  override fun hashCode(): Int {
-    var result = id.hashCode()
-    result = 31 * result + leadVisitor.hashCode()
-    return result
-  }
+  override fun hashCode(): Int = id.hashCode()
 
   override fun toString(): String {
     return this::class.simpleName + "(id=$id, leadVisitor=$leadVisitor)"

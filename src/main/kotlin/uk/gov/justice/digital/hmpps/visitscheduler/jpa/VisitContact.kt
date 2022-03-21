@@ -32,19 +32,10 @@ data class VisitContact(
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
     other as VisitContact
 
-    if (id != other.id) return false
-    if (contactName != other.contactName) return false
-    if (contactPhone != other.contactPhone) return false
-
-    return true
+    return id == other.id
   }
 
-  override fun hashCode(): Int {
-    var result = id.hashCode()
-    result = 31 * result + contactName.hashCode()
-    result = 31 * result + contactPhone.hashCode()
-    return result
-  }
+  override fun hashCode(): Int = id.hashCode()
 
   override fun toString(): String {
     return this::class.simpleName + "(id=$id, contactName=$contactName, contactPhone=$contactPhone)"
