@@ -6,8 +6,8 @@ import javax.persistence.Id
 import javax.persistence.Table
 
 @Entity
-@Table(name = "SUPPORT")
-data class Support(
+@Table(name = "SUPPORT_TYPE")
+data class SupportType(
   @Id
   @Column(name = "CODE")
   val code: Int,

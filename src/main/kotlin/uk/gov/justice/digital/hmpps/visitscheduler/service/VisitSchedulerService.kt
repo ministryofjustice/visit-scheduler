@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
-import uk.gov.justice.digital.hmpps.visitscheduler.data.AvailableSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.data.SupportTypeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociationDetail
@@ -29,7 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupportPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
 import java.time.Clock
@@ -44,7 +44,7 @@ class VisitSchedulerService(
   private val prisonApiClient: PrisonApiClient,
   private val visitRepository: VisitRepository,
   private val sessionTemplateRepository: SessionTemplateRepository,
-  private val supportRepository: SupportRepository,
+  private val supportTypeRepository: SupportTypeRepository,
   private val clock: Clock,
   @Value("\${policy.minimum-booking-notice-period-days:2}") private val defaultNoticeDaysMin: Long,
   @Value("\${policy.maximum-booking-notice-period-days:28}") private val defaultNoticeDaysMax: Long,
@@ -246,7 +246,7 @@ class VisitSchedulerService(
 
     createVisitRequest.supportList?.let { supportList ->
       supportList.distinctBy { it.supportName }.forEach {
-        supportRepository.findByName(it.supportName) ?: throw SupportNotFoundException("Invalid support ${it.supportName} not found")
+        supportTypeRepository.findByName(it.supportName) ?: throw SupportNotFoundException("Invalid support ${it.supportName} not found")
         visitEntity.support.add(createVisitSupport(visitEntity, it.supportName, it.supportDetails))
       }
     }
@@ -290,7 +290,7 @@ class VisitSchedulerService(
       visitEntity.support.clear()
       visitRepository.saveAndFlush(visitEntity)
       supportList.distinctBy { it.supportName }.forEach {
-        supportRepository.findByName(it.supportName) ?: throw SupportNotFoundException("Invalid support ${it.supportName} not found")
+        supportTypeRepository.findByName(it.supportName) ?: throw SupportNotFoundException("Invalid support ${it.supportName} not found")
         visitEntity.support.add(createVisitSupport(visitEntity, it.supportName, it.supportDetails))
       }
     }
@@ -338,8 +338,8 @@ class VisitSchedulerService(
       }
   }
 
-  fun getAvailableSupport(): List<AvailableSupport> {
-    return supportRepository.findAll().sortedBy { it.code }.map { AvailableSupport(it) }
+  fun getSupportTypes(): List<SupportTypeDto> {
+    return supportTypeRepository.findAll().sortedBy { it.code }.map { SupportTypeDto(it) }
   }
 
   companion object {

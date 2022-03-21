@@ -28,7 +28,7 @@ data class VisitDto(
   @Schema(description = "Visitor Concerns", required = false) val visitorConcerns: String? = null,
   @Schema(description = "Main Contact associated with the visit", required = false) val mainContact: ContactDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false) val visitors: List<VisitorDto> = listOf(),
-  @Schema(description = "List of additional support associated with the visit", required = false) val support: List<SupportDto> = listOf(),
+  @Schema(description = "List of additional support associated with the visit", required = false) val support: List<VisitorSupportDto> = listOf(),
   @Schema(description = "Session Id identifying the visit session template", example = "123", required = false) val sessionId: Long? = null,
 ) {
 
@@ -46,7 +46,7 @@ data class VisitDto(
     visitorConcerns = visitEntity.visitorConcerns,
     mainContact = visitEntity.mainContact?.let { ContactDto(it) },
     visitors = visitEntity.visitors.map { VisitorDto(it) },
-    support = visitEntity.support.map { SupportDto(it) },
+    support = visitEntity.support.map { VisitorSupportDto(it) },
     sessionId = visitEntity.sessionTemplateId,
   )
 }

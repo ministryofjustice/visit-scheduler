@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.data.AvailableSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.data.SupportTypeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitSchedulerService
 
 @RestController
@@ -25,7 +25,7 @@ class VisitSupportResource(
   @GetMapping
   @Operation(
     summary = "Available Support",
-    description = "Retrieve all available support",
+    description = "Retrieve all available support types",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -43,5 +43,5 @@ class VisitSupportResource(
       )
     ]
   )
-  fun getAvailableSupport(): List<AvailableSupport> = visitSchedulerService.getAvailableSupport()
+  fun getSupportTypes(): List<SupportTypeDto> = visitSchedulerService.getSupportTypes()
 }
