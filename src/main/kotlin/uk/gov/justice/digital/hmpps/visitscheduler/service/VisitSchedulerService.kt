@@ -11,11 +11,11 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
-import uk.gov.justice.digital.hmpps.visitscheduler.data.SupportTypeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociationDetail
 import uk.gov.justice.digital.hmpps.visitscheduler.data.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.data.SupportTypeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.UpdateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
