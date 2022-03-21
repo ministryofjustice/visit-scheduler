@@ -338,6 +338,10 @@ class VisitSchedulerService(
       }
   }
 
+  fun deleteAllVisits(expired: List<VisitDto>) {
+    visitRepository.deleteAllByIdIn(expired.map { it.id }.toList())
+  }
+
   fun getAvailableSupport(): List<AvailableSupport> {
     return supportRepository.findAll().sortedBy { it.code }.map { AvailableSupport(it) }
   }
