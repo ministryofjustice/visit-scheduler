@@ -350,7 +350,6 @@ class VisitSchedulerService(
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
-  
 }
 
 class VisitNotFoundException(message: String? = null, cause: Throwable? = null) :
