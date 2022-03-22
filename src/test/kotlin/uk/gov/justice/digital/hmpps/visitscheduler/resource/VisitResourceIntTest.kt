@@ -84,9 +84,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].visitors.length()").isEqualTo(1)
         .jsonPath("$[0].visitors[0].nomisPersonId").isEqualTo(123)
         .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
-        .jsonPath("$[0].support.length()").isEqualTo(1)
-        .jsonPath("$[0].support[0].supportName").isEqualTo("OTHER")
-        .jsonPath("$[0].support[0].supportDetails").isEqualTo("Some Text")
+        .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
+        .jsonPath("$[0].visitorSupport[0].supportName").isEqualTo("OTHER")
+        .jsonPath("$[0].visitorSupport[0].supportDetails").isEqualTo("Some Text")
         .jsonPath("$[0].visitorConcerns").isEqualTo("comment more text")
     }
 
@@ -128,7 +128,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectBody()
         .jsonPath("$.length()").isEqualTo(1)
         .jsonPath("$[0].visitors.length()").isEqualTo(1)
-        .jsonPath("$[0].support.length()").isEqualTo(1)
+        .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
     }
 
     @Test
@@ -494,9 +494,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
         .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
-        .jsonPath("$.support.length()").isEqualTo(updateRequest.supportList!!.size)
-        .jsonPath("$.support[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
-        .jsonPath("$.support[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
+        .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.supportList!!.size)
+        .jsonPath("$.visitorSupport[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
+        .jsonPath("$.visitorSupport[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
         .jsonPath("$.visitorConcerns").isEqualTo(updateRequest.visitorConcerns!!)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
@@ -540,9 +540,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
         .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
         .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
-        .jsonPath("$.support.length()").isEqualTo(updateRequest.supportList!!.size)
-        .jsonPath("$.support[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
-        .jsonPath("$.support[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
+        .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.supportList!!.size)
+        .jsonPath("$.visitorSupport[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
+        .jsonPath("$.visitorSupport[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
         .jsonPath("$.visitorConcerns").isEqualTo(updateRequest.visitorConcerns!!)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
@@ -602,9 +602,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.support.length()").isEqualTo(updateRequest.supportList!!.size)
-        .jsonPath("$.support[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
-        .jsonPath("$.support[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
+        .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.supportList!!.size)
+        .jsonPath("$.visitorSupport[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
+        .jsonPath("$.visitorSupport[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
     }
 
     @Test
