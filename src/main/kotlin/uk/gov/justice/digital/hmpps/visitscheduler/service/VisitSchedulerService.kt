@@ -338,13 +338,19 @@ class VisitSchedulerService(
       }
   }
 
+
   fun getSupportTypes(): List<SupportTypeDto> {
     return supportTypeRepository.findAll().sortedBy { it.code }.map { SupportTypeDto(it) }
+  }
+  
+  fun deleteAllVisits(expired: List<VisitDto>) {
+    visitRepository.deleteAllByIdIn(expired.map { it.id }.toList())
   }
 
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
+  
 }
 
 class VisitNotFoundException(message: String? = null, cause: Throwable? = null) :
