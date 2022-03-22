@@ -338,11 +338,10 @@ class VisitSchedulerService(
       }
   }
 
-
   fun getSupportTypes(): List<SupportTypeDto> {
     return supportTypeRepository.findAll().sortedBy { it.code }.map { SupportTypeDto(it) }
   }
-  
+
   fun deleteAllVisits(expired: List<VisitDto>) {
     visitRepository.deleteAllByIdIn(expired.map { it.id }.toList())
   }
