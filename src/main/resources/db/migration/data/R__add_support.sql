@@ -1,7 +1,7 @@
 -- noinspection SqlWithoutWhere
-DELETE FROM support;
+DELETE FROM support_type;
 
-INSERT INTO support(code, name, description)
+INSERT INTO support_type(code, name, description)
 VALUES
     (1010, 'WHEELCHAIR', 'Wheelchair ramp'),
     (1020, 'INDUCTION_LOOP','Portable induction loop for people with hearing aids'),
