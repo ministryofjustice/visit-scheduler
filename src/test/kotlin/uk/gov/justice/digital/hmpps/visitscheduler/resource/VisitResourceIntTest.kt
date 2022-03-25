@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
@@ -43,6 +44,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitStatus = VisitStatus.RESERVED,
+      visitRestriction = VisitRestriction.OPEN,
       mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
       contactList = listOf(CreateVisitorOnVisitRequest(123)),
       supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
@@ -78,6 +80,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
         .jsonPath("$[0].visitStatus").isEqualTo("RESERVED")
         .jsonPath("$[0].visitStatusDescription").isEqualTo("Reserved")
+        .jsonPath("$[0].visitRestriction").isEqualTo("OPEN")
+        .jsonPath("$[0].visitRestrictionDescription").isEqualTo("Open")
         .jsonPath("$[0].mainContact.contactName").isNotEmpty
         .jsonPath("$[0].mainContact.contactName").isEqualTo("John Smith")
         .jsonPath("$[0].mainContact.contactPhone").isEqualTo("01234 567890")
@@ -99,6 +103,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         endTimestamp = visitTime.plusHours(1),
         visitType = VisitType.STANDARD_SOCIAL,
         visitStatus = VisitStatus.RESERVED,
+        visitRestriction = VisitRestriction.OPEN,
         visitRoom = "A1",
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         contactList = listOf(
@@ -141,6 +146,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         endTimestamp = visitTime.plusHours(1),
         visitType = VisitType.STANDARD_SOCIAL,
         visitStatus = VisitStatus.RESERVED,
+        visitRestriction = VisitRestriction.OPEN,
         visitRoom = "A1",
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         supportList = listOf(CreateSupportOnVisitRequest("ANYTHINGWILLDO")),
@@ -466,6 +472,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         endTimestamp = visitTime.plusDays(2).plusHours(1),
         visitType = VisitType.FAMILY,
         visitStatus = VisitStatus.BOOKED,
+        visitRestriction = VisitRestriction.CLOSED,
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         contactList = listOf(CreateVisitorOnVisitRequest(123L)),
         supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
@@ -488,6 +495,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.endTimestamp").isEqualTo(updateRequest.endTimestamp.toString())
         .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
         .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
+        .jsonPath("$.visitRestriction").isEqualTo(updateRequest.visitRestriction!!.name)
         .jsonPath("$.mainContact.contactName").isNotEmpty
         .jsonPath("$.mainContact.contactName").isEqualTo(updateRequest.mainContact!!.contactName)
         .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)
@@ -512,6 +520,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         endTimestamp = visitTime.plusDays(2).plusHours(1),
         visitType = VisitType.FAMILY,
         visitStatus = VisitStatus.BOOKED,
+        visitRestriction = VisitRestriction.CLOSED,
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         contactList = listOf(CreateVisitorOnVisitRequest(123L)),
         supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
@@ -534,6 +543,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.endTimestamp").isEqualTo(updateRequest.endTimestamp.toString())
         .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
         .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
+        .jsonPath("$.visitRestriction").isEqualTo(updateRequest.visitRestriction!!.name)
         .jsonPath("$.mainContact.contactName").isNotEmpty
         .jsonPath("$.mainContact.contactName").isEqualTo(updateRequest.mainContact!!.contactName)
         .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)

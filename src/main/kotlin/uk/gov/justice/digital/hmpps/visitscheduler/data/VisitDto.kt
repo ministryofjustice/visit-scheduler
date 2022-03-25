@@ -23,6 +23,10 @@ data class VisitDto(
   val visitStatus: String,
   @Schema(description = "Visit Status Description", example = "Reserved", required = true)
   val visitStatusDescription: String,
+  @Schema(description = "Visit Restriction", example = "OPEN", required = true)
+  val visitRestriction: String,
+  @Schema(description = "Visit Restriction Description", example = "Open", required = true)
+  val visitRestrictionDescription: String,
   @Schema(
     description = "The date and time of the visit",
     example = "2018-12-01T13:45:00",
@@ -57,6 +61,8 @@ data class VisitDto(
     visitStatusDescription = visitEntity.status.description,
     visitType = visitEntity.visitType.name,
     visitTypeDescription = visitEntity.visitType.description,
+    visitRestriction = visitEntity.visitRestriction.name,
+    visitRestrictionDescription = visitEntity.visitRestriction.description,
     visitRoom = visitEntity.visitRoom,
     visitorConcerns = visitEntity.visitorConcerns,
     mainContact = visitEntity.mainContact?.let { ContactDto(it) },

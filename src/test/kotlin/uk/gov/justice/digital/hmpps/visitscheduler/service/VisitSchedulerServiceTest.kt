@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SupportType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
@@ -341,6 +342,7 @@ class VisitSchedulerServiceTest {
               visitType = VisitType.STANDARD_SOCIAL,
               prisonId = prisonId,
               status = VisitStatus.BOOKED,
+              visitRestriction = VisitRestriction.OPEN,
               visitRoom = "123c",
               visitorConcerns = "some more text",
               sessionTemplateId = null,

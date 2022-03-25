@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.data
 
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import java.time.LocalDateTime
@@ -23,6 +24,7 @@ data class CreateVisitRequest(
   ) @NotNull val endTimestamp: LocalDateTime,
   @Schema(description = "Visit Type", example = "STANDARD_SOCIAL", required = true) @NotNull val visitType: VisitType,
   @Schema(description = "Visit Status", example = "RESERVED", required = true) @NotNull val visitStatus: VisitStatus,
+  @Schema(description = "Visit Restriction", example = "OPEN", required = true) @NotNull val visitRestriction: VisitRestriction,
   @Schema(description = "Visit Room", example = "A1", required = true) @field:NotBlank val visitRoom: String,
   @Schema(description = "Visitor Concerns", required = false) val visitorConcerns: String? = null,
   @Schema(description = "Main Contact associated with the visit", required = false) @field:Valid val mainContact: CreateContactOnVisitRequest?,

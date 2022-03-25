@@ -220,6 +220,7 @@ class VisitSchedulerService(
         prisonerId = createVisitRequest.prisonerId,
         visitType = createVisitRequest.visitType,
         status = createVisitRequest.visitStatus,
+        visitRestriction = createVisitRequest.visitRestriction,
         visitRoom = createVisitRequest.visitRoom,
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp,
@@ -260,6 +261,7 @@ class VisitSchedulerService(
     updateVisitRequest.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
     updateVisitRequest.visitType?.let { visitType -> visitEntity.visitType = visitType }
     updateVisitRequest.visitStatus?.let { status -> visitEntity.status = status }
+    updateVisitRequest.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
     updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
     updateVisitRequest.visitorConcerns?.let { visitorConcerns -> visitEntity.visitorConcerns = visitorConcerns }
     updateVisitRequest.sessionId?.let { sessionId -> visitEntity.sessionTemplateId = sessionId }
