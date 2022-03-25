@@ -59,6 +59,11 @@ class VisitBuilder(
     return this
   }
 
+  fun withRestriction(restriction: VisitRestriction): VisitBuilder {
+    this.visit = visit.copy(visitRestriction = restriction)
+    return this
+  }
+
   fun withVisitorConcerns(concerns: String): VisitBuilder {
     this.visit = visit.copy(visitorConcerns = concerns)
     return this

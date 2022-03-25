@@ -257,9 +257,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectStatus().isOk
         .expectBody()
         .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[-1].prisonerId").isEqualTo("FF0000AA")
-        .jsonPath("$[-1].startTimestamp").isEqualTo(visitTime.toString())
-        .jsonPath("$[-1].reference").exists()
+        .jsonPath("$[0].prisonerId").isEqualTo("FF0000AA")
+        .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.toString())
+        .jsonPath("$[0].reference").exists()
     }
 
     @Test

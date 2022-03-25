@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
@@ -34,11 +35,60 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
   internal fun deleteAllVisitSessions() = visitDeleter(visitRepository)
 
   @Test
+  fun `visit sessions are returned for a prison for a single schedule`() {
+    sessionTemplateCreator(
+      repository = sessionTemplateRepository,
+      sessionTemplate = sessionTemplate(
+        startDate = LocalDate.parse("2021-01-08"),
+        frequency = SessionFrequency.SINGLE,
+        restrictions = "Only B wing"
+      )
+    ).save()
+
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].prisonId").isEqualTo("MDI")
+      .jsonPath("$[0].restrictions").isEqualTo("Only B wing")
+      .jsonPath("$[0].visitRoomName").isEqualTo("1")
+      .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
+      .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
+      .jsonPath("$[0].openVisitCapacity").isEqualTo(10)
+      .jsonPath("$[0].openVisitBookedCount").isEqualTo(0)
+      .jsonPath("$[0].closedVisitCapacity").isEqualTo(5)
+      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(0)
+      .jsonPath("$[0].startTimestamp").isEqualTo("2021-01-08T09:00:00")
+      .jsonPath("$[0].endTimestamp").isEqualTo("2021-01-08T10:00:00")
+  }
+
+  @Test
+  fun `visit sessions are returned for a prison for a daily schedule`() {
+    sessionTemplateCreator(
+      repository = sessionTemplateRepository,
+      sessionTemplate = sessionTemplate(
+        startDate = LocalDate.parse("2021-01-08"),
+        expiryDate = LocalDate.parse("2021-01-14"),
+        frequency = SessionFrequency.DAILY,
+      )
+    ).save()
+
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(7)
+  }
+
+  @Test
   fun `visit sessions are returned for a prison for a weekly schedule`() {
     sessionTemplateCreator(
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
-        startDate = LocalDate.parse("2021-01-01"),
+        startDate = LocalDate.parse("2021-01-08"),
         frequency = SessionFrequency.WEEKLY,
         restrictions = "Only B wing"
       )
@@ -50,15 +100,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.length()").isEqualTo(4)
-      .jsonPath("$[0].visitRoomName").isEqualTo("1")
-      .jsonPath("$[0].prisonId").isEqualTo("MDI")
-      .jsonPath("$[0].restrictions").isEqualTo("Only B wing")
-      .jsonPath("$[0].openVisitCapacity").isEqualTo(10)
-      .jsonPath("$[0].closedVisitCapacity").isEqualTo(5)
-      .jsonPath("$[0].restrictions").isEqualTo("Only B wing")
       .jsonPath("$[0].endTimestamp").isEqualTo("2021-01-08T10:00:00")
-      .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
-      .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
           "2021-01-08T09:00:00",
@@ -67,6 +109,26 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
           "2021-01-29T09:00:00"
         )
       )
+  }
+
+  @Test
+  fun `visit sessions are returned for a prison for a monthly schedule`() {
+    sessionTemplateCreator(
+      repository = sessionTemplateRepository,
+      sessionTemplate = sessionTemplate(
+        startDate = LocalDate.parse("2021-01-08"),
+        frequency = SessionFrequency.MONTHLY
+      )
+    ).save()
+
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].startTimestamp").isEqualTo("2021-01-08T09:00:00")
+      .jsonPath("$[0].endTimestamp").isEqualTo("2021-01-08T10:00:00")
   }
 
   @Test
@@ -110,18 +172,125 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions are returned for a prison for a daily schedule`() {
+  fun `visit sessions include reserved and booked open visit count`() {
+    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
     sessionTemplateCreator(
       repository = sessionTemplateRepository,
-      sessionTemplate = sessionTemplate(startDate = LocalDate.parse("2021-01-08"))
+      sessionTemplate = sessionTemplate(
+        startDate = dateTime.toLocalDate(),
+        startTime = dateTime.toLocalTime(),
+        endTime = dateTime.plusHours(1).toLocalTime(),
+        frequency = SessionFrequency.SINGLE
+      )
     ).save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime)
+      .withVisitEnd(dateTime.plusHours(1))
+      .withStatus(VisitStatus.RESERVED)
+      .save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime)
+      .withVisitEnd(dateTime.plusHours(1))
+      .withStatus(VisitStatus.BOOKED)
+      .save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime)
+      .withVisitEnd(dateTime.plusHours(1))
+      .withStatus(VisitStatus.CANCELLED_BY_PRISONER)
+      .save()
 
     webTestClient.get().uri("/visit-sessions?prisonId=MDI")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].openVisitBookedCount").isEqualTo(2)
+      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(0)
+  }
+
+  @Test
+  fun `visit sessions include reserved and booked closed visit count`() {
+    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
+    sessionTemplateCreator(
+      repository = sessionTemplateRepository,
+      sessionTemplate = sessionTemplate(
+        startDate = dateTime.toLocalDate(),
+        startTime = dateTime.toLocalTime(),
+        endTime = dateTime.plusHours(1).toLocalTime(),
+        frequency = SessionFrequency.SINGLE
+      )
+    ).save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime)
+      .withVisitEnd(dateTime.plusHours(1))
+      .withStatus(VisitStatus.RESERVED)
+      .withRestriction(VisitRestriction.CLOSED)
+      .save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime)
+      .withVisitEnd(dateTime.plusHours(1))
+      .withStatus(VisitStatus.BOOKED)
+      .withRestriction(VisitRestriction.CLOSED)
+      .save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime)
+      .withVisitEnd(dateTime.plusHours(1))
+      .withStatus(VisitStatus.CANCELLED_BY_PRISONER)
+      .withRestriction(VisitRestriction.CLOSED)
+      .save()
+
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].openVisitBookedCount").isEqualTo(0)
+      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(2)
+  }
+
+  @Test
+  fun `visit sessions visit count includes only visits within session period`() {
+    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
+    sessionTemplateCreator(
+      repository = sessionTemplateRepository,
+      sessionTemplate = sessionTemplate(
+        startDate = dateTime.toLocalDate(),
+        startTime = dateTime.toLocalTime(),
+        endTime = dateTime.plusHours(1).toLocalTime(),
+        frequency = SessionFrequency.SINGLE
+      )
+    ).save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime.minusHours(1))
+      .withVisitEnd(dateTime)
+      .withStatus(VisitStatus.BOOKED)
+      .save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime)
+      .withVisitEnd(dateTime.plusMinutes(30))
+      .withStatus(VisitStatus.BOOKED)
+      .save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime.plusMinutes(30))
+      .withVisitEnd(dateTime.plusHours(1))
+      .withStatus(VisitStatus.BOOKED)
+      .save()
+    visitCreator(visitRepository)
+      .withVisitStart(dateTime.plusHours(1))
+      .withVisitEnd(dateTime.plusHours(2))
+      .withStatus(VisitStatus.BOOKED)
+      .save()
+
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].openVisitBookedCount").isEqualTo(2)
+      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(0)
   }
 
   @Test

@@ -30,7 +30,7 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
     }
 
     filter.endDateTime?.run {
-      predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::visitStart.name), this))
+      predicates.add(criteriaBuilder.lessThan(root.get(Visit::visitStart.name), this))
     }
 
     filter.nomisPersonId?.run {
@@ -40,6 +40,10 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
 
     filter.status?.run {
       predicates.add(criteriaBuilder.equal(root.get<String>(Visit::status.name), this))
+    }
+
+    filter.visitRestriction?.run {
+      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::visitRestriction.name), this))
     }
 
     filter.createTimestamp?.run {
