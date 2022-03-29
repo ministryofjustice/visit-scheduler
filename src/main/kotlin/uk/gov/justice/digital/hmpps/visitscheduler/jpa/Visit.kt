@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDateTime
 import javax.persistence.CascadeType
 import javax.persistence.Column
@@ -15,6 +16,7 @@ import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.OneToMany
 import javax.persistence.OneToOne
+import javax.persistence.PostPersist
 import javax.persistence.Table
 import javax.persistence.TemporalType
 
@@ -77,4 +79,10 @@ data class Visit(
   @Temporal(TemporalType.TIMESTAMP)
   @Column
   var modifyTimestamp: LocalDateTime? = null,
-)
+) {
+
+  @PostPersist
+  fun createReference() {
+    reference = QuotableEncoder(minLength = 8).encode(id)
+  }
+}

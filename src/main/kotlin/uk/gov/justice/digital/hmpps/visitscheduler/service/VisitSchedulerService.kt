@@ -41,7 +41,6 @@ import java.util.function.Supplier
 class VisitSchedulerService(
   private val prisonApiClient: PrisonApiClient,
   private val visitRepository: VisitRepository,
-  private val referenceService: ReferenceService,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val supportTypeRepository: SupportTypeRepository,
   private val clock: Clock,
@@ -233,7 +232,7 @@ class VisitSchedulerService(
       )
     )
 
-    visitEntity.reference = referenceService.createReference(visitEntity.id)
+    // visitEntity.reference = referenceService.createReference(visitEntity.id)
 
     createVisitRequest.mainContact?.let {
       visitEntity.mainContact = createVisitContact(visitEntity, it.contactName, it.contactPhone)
