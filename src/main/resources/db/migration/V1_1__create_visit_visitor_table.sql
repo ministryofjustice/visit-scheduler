@@ -1,7 +1,7 @@
 CREATE TABLE visit_visitor
 (
-    visit_id                text            NOT NULL,
+    id                      serial          NOT NULL PRIMARY KEY,
+    visit_id                integer         NOT NULL,
     nomis_Person_id         integer         NOT NULL,
-    lead_visitor            BOOLEAN,
-    PRIMARY KEY (visit_id, nomis_person_id)
+    lead_visitor            BOOLEAN
 );

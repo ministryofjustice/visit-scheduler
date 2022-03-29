@@ -1,29 +1,29 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
 import org.hibernate.Hibernate
-import java.io.Serializable
 import javax.persistence.Column
-import javax.persistence.Embeddable
-import javax.persistence.EmbeddedId
 import javax.persistence.Entity
+import javax.persistence.GeneratedValue
+import javax.persistence.GenerationType
+import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.Table
-
-@Embeddable
-data class VisitVisitorPk(
-  @Column(name = "NOMIS_PERSON_ID", nullable = false)
-  var nomisPersonId: Long,
-  @Column(name = "VISIT_ID", nullable = false)
-  var visitId: String,
-) : Serializable
 
 @Entity
 @Table(name = "VISIT_VISITOR")
 data class VisitVisitor(
 
-  @EmbeddedId
-  val id: VisitVisitorPk,
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "ID")
+  val id: Long = 0,
+
+  @Column(name = "VISIT_ID", unique = true)
+  var visitId: Long,
+
+  @Column(name = "NOMIS_PERSON_ID", nullable = false)
+  var nomisPersonId: Long,
 
   @Column(name = "LEAD_VISITOR")
   val leadVisitor: Boolean = true,

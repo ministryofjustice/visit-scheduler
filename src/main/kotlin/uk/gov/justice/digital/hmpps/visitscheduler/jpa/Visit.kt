@@ -1,10 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
 import org.hibernate.annotations.CreationTimestamp
-import org.hibernate.annotations.GenericGenerator
-import org.hibernate.annotations.Parameter
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDateTime
 import javax.persistence.CascadeType
 import javax.persistence.Column
@@ -17,22 +16,21 @@ import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.OneToMany
 import javax.persistence.OneToOne
+import javax.persistence.PostPersist
 import javax.persistence.Table
 import javax.persistence.TemporalType
 
 @Entity
 @Table(name = "VISIT")
 data class Visit(
+
   @Id
-  @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "visit_seq_generator")
-  @GenericGenerator(
-    name = "visit_seq_generator",
-    strategy = "uk.gov.justice.digital.hmpps.visitscheduler.jpa.generator.ReferenceIdGenerator",
-    parameters = [
-      Parameter(name = org.hibernate.id.enhanced.SequenceStyleGenerator.SEQUENCE_PARAM, value = "visit_seq"),
-    ]
-  )
-  val id: String = "",
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "ID")
+  val id: Long = 0,
+
+  @Column(name = "REFERENCE")
+  var reference: String = "",
 
   @Column(nullable = false)
   var prisonerId: String,
@@ -81,5 +79,10 @@ data class Visit(
   @Temporal(TemporalType.TIMESTAMP)
   @Column
   var modifyTimestamp: LocalDateTime? = null,
+) {
 
-)
+  @PostPersist
+  fun createReference() {
+    reference = QuotableEncoder(minLength = 8).encode(id)
+  }
+}

@@ -3,10 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
-import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -25,9 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupportPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
@@ -52,9 +48,8 @@ class VisitSchedulerService(
 ) {
 
   @Transactional(readOnly = true)
-  fun getVisitById(visitId: String): VisitDto {
-    return visitRepository.findById(visitId).map { VisitDto(it) }
-      .orElseThrow(VisitNotFoundException("Visit id  $visitId not found"))
+  fun getVisitByReference(reference: String): VisitDto {
+    return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit id  $reference not found"))
   }
 
   @Transactional(readOnly = true)
@@ -217,7 +212,6 @@ class VisitSchedulerService(
     return visitRepository.findAll(VisitSpecification(visitFilter)).sortedBy { it.visitStart }.map { VisitDto(it) }
   }
 
-  @Retryable(value = [DataIntegrityViolationException::class], maxAttempts = 2)
   fun createVisit(createVisitRequest: CreateVisitRequest): VisitDto {
     log.info("Creating visit for ${createVisitRequest.prisonerId}")
     val visitEntity = visitRepository.saveAndFlush(
@@ -254,10 +248,11 @@ class VisitSchedulerService(
     return VisitDto(visitEntity)
   }
 
-  fun updateVisit(visitId: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
-    log.info("Updating visit for $visitId")
+  fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
+    log.info("Updating visit for $reference")
 
-    val visitEntity = visitRepository.findByIdOrNull(visitId) ?: throw VisitNotFoundException("Visit id  $visitId not found")
+    val visitEntity = visitRepository.findByReference(reference)
+    visitEntity ?: throw VisitNotFoundException("Visit id  $reference not found")
 
     updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
     updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
@@ -302,7 +297,7 @@ class VisitSchedulerService(
 
   private fun createVisitContact(visit: Visit, contactName: String, contactPhone: String): VisitContact {
     return VisitContact(
-      id = visit.id,
+      visitId = visit.id,
       contactName = contactName,
       contactPhone = contactPhone,
       visit = visit
@@ -311,30 +306,27 @@ class VisitSchedulerService(
 
   private fun createVisitVisitor(visit: Visit, personId: Long, leadVisitor: Boolean): VisitVisitor {
     return VisitVisitor(
-      id = VisitVisitorPk(
-        nomisPersonId = personId,
-        visitId = visit.id
-      ),
-      leadVisitor = leadVisitor, visit = visit
+      nomisPersonId = personId,
+      visitId = visit.id,
+      leadVisitor = leadVisitor,
+      visit = visit
     )
   }
 
   private fun createVisitSupport(visit: Visit, supportName: String, supportDetails: String?): VisitSupport {
     return VisitSupport(
-      id = VisitSupportPk(
-        supportName = supportName,
-        visitId = visit.id
-      ),
+      supportName = supportName,
+      visitId = visit.id,
       supportDetails = supportDetails,
       visit = visit
     )
   }
 
-  fun deleteVisit(visitId: String) {
-    val visit = visitRepository.findByIdOrNull(visitId)
-    visit?.let { visitRepository.delete(it) }.also { log.info("Visit with id  $visitId deleted") }
+  fun deleteVisit(reference: String) {
+    val visit = visitRepository.findByReference(reference)
+    visit?.let { visitRepository.delete(it) }.also { log.info("Visit with reference $reference deleted") }
       ?: run {
-        log.info("Visit id $visitId not found")
+        log.info("Visit reference $reference not found")
       }
   }
 
@@ -343,7 +335,7 @@ class VisitSchedulerService(
   }
 
   fun deleteAllVisits(expired: List<VisitDto>) {
-    visitRepository.deleteAllByIdIn(expired.map { it.id }.toList())
+    visitRepository.deleteAllByReferenceIn(expired.map { it.reference }.toList())
   }
 
   companion object {

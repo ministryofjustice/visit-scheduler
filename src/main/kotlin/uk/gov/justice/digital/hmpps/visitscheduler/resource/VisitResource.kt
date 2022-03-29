@@ -142,7 +142,7 @@ class VisitResource(
     )
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping("/{visitId}")
+  @GetMapping("/{reference}")
   @Operation(
     summary = "Get visit",
     description = "Retrieve visit by visit id",
@@ -174,13 +174,13 @@ class VisitResource(
     ]
   )
   fun getVisitById(
-    @Schema(description = "visit id", example = "v9-d7-ed-7u", required = true)
-    @PathVariable visitId: String
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String
   ): VisitDto =
-    visitSchedulerService.getVisitById(visitId.trim())
+    visitSchedulerService.getVisitByReference(reference.trim())
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PutMapping("/{visitId}")
+  @PutMapping("/{reference}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Update an existing visit",
@@ -220,13 +220,13 @@ class VisitResource(
     ]
   )
   fun updateVisit(
-    @Schema(description = "visit id", example = "v9-d7-ed-7u", required = true)
-    @PathVariable visitId: String,
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String,
     @RequestBody @Valid updateVisitRequest: UpdateVisitRequest
-  ): VisitDto = visitSchedulerService.updateVisit(visitId.trim(), updateVisitRequest)
+  ): VisitDto = visitSchedulerService.updateVisit(reference.trim(), updateVisitRequest)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @DeleteMapping("/{visitId}")
+  @DeleteMapping("/{reference}")
   @Operation(
     summary = "Delete visit",
     description = "Delete a visit by visit id",
@@ -248,9 +248,9 @@ class VisitResource(
     ]
   )
   fun deleteVisit(
-    @Schema(description = "visit id", example = "v9-d7-ed-7u", required = true)
-    @PathVariable visitId: String
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String
   ) {
-    visitSchedulerService.deleteVisit(visitId.trim())
+    visitSchedulerService.deleteVisit(reference.trim())
   }
 }

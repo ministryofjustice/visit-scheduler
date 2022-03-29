@@ -4,7 +4,6 @@ import org.springframework.data.jpa.domain.Specification
 import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import javax.persistence.criteria.CriteriaBuilder
 import javax.persistence.criteria.CriteriaQuery
 import javax.persistence.criteria.Predicate
@@ -35,13 +34,8 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
     }
 
     filter.nomisPersonId?.run {
-      predicates.add(
-        criteriaBuilder.equal(
-          root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitorPk>(VisitVisitor::id.name)
-            .get<Long>(VisitVisitorPk::nomisPersonId.name),
-          this
-        )
-      )
+      val innerJoinFromVisitToVisitors = root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitor>(VisitVisitor::nomisPersonId.name)
+      predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, this))
     }
 
     filter.status?.run {

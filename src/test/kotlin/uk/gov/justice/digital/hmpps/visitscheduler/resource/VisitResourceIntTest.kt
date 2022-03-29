@@ -68,7 +68,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .expectStatus().isOk
         .expectBody()
         .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[0].id").isNotEmpty
+        .jsonPath("$[0].reference").isNotEmpty
         .jsonPath("$[0].prisonId").isEqualTo("MDI")
         .jsonPath("$[0].prisonerId").isEqualTo("FF0000FF")
         .jsonPath("$[0].visitRoom").isEqualTo("A1")
@@ -253,7 +253,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.length()").isEqualTo(1)
         .jsonPath("$[-1].prisonerId").isEqualTo("FF0000AA")
         .jsonPath("$[-1].startTimestamp").isEqualTo(visitTime.toString())
-        .jsonPath("$[-1].id").exists()
+        .jsonPath("$[-1].reference").exists()
     }
 
     @Test
@@ -363,22 +363,22 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `get visit by visit id`() {
+    fun `get visit by reference`() {
       val createdVisit = visitCreator(visitRepository)
         .withPrisonerId("FF0000AA")
         .withVisitStart(visitTime)
         .save()
 
-      webTestClient.get().uri("/visits/${createdVisit.id}")
+      webTestClient.get().uri("/visits/${createdVisit.reference}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.id").isEqualTo(createdVisit.id)
+        .jsonPath("$.reference").isEqualTo(createdVisit.reference)
     }
 
     @Test
-    fun `get visit by visit id - not found`() {
+    fun `get visit by reference - not found`() {
       webTestClient.get().uri("/visits/12345")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
@@ -456,7 +456,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `put visit by visit id - add booked details`() {
+    fun `put visit by reference - add booked details`() {
 
       val updateRequest = UpdateVisitRequest(
         prisonerId = "FF0000AB",
@@ -473,7 +473,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         sessionId = 123L,
       )
 
-      webTestClient.put().uri("/visits/${visitMin!!.id}")
+      webTestClient.put().uri("/visits/${visitMin!!.reference}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(updateRequest)
@@ -502,7 +502,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `put visit by visit id - amend booked details`() {
+    fun `put visit by reference - amend booked details`() {
 
       val updateRequest = UpdateVisitRequest(
         prisonerId = "FF0000AB",
@@ -519,7 +519,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         sessionId = 123L,
       )
 
-      webTestClient.put().uri("/visits/${visitFull!!.id}")
+      webTestClient.put().uri("/visits/${visitFull!!.reference}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(updateRequest)
@@ -548,13 +548,13 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `put visit by visit id - amend contact`() {
+    fun `put visit by reference - amend contact`() {
 
       val updateRequest = UpdateVisitRequest(
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
       )
 
-      webTestClient.put().uri("/visits/${visitFull!!.id}")
+      webTestClient.put().uri("/visits/${visitFull!!.reference}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(updateRequest)
@@ -568,13 +568,13 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `put visit by visit id - amend visitors`() {
+    fun `put visit by reference - amend visitors`() {
 
       val updateRequest = UpdateVisitRequest(
         contactList = listOf(CreateVisitorOnVisitRequest(123L)),
       )
 
-      webTestClient.put().uri("/visits/${visitFull!!.id}")
+      webTestClient.put().uri("/visits/${visitFull!!.reference}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(updateRequest)
@@ -588,13 +588,13 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `put visit by visit id - amend support`() {
+    fun `put visit by reference - amend support`() {
 
       val updateRequest = UpdateVisitRequest(
         supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
       )
 
-      webTestClient.put().uri("/visits/${visitFull!!.id}")
+      webTestClient.put().uri("/visits/${visitFull!!.reference}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(updateRequest)
@@ -608,7 +608,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `put visit by visit id - not found`() {
+    fun `put visit by reference - not found`() {
       webTestClient.put().uri("/visits/12345")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
@@ -646,11 +646,11 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
   }
 
-  @DisplayName("DELETE /visits/{visitId}")
+  @DisplayName("DELETE /visits/{reference}")
   @Nested
-  inner class DeleteVisitById {
+  inner class DeleteVisitByReference {
     @Test
-    fun `delete visit by visit id`() {
+    fun `delete visit by reference`() {
       val visitCC = visitCreator(visitRepository)
         .withPrisonerId("FF0000CC")
         .withVisitStart(visitTime.plusDays(2))
@@ -662,19 +662,19 @@ class VisitResourceIntTest : IntegrationTestBase() {
       visitSupportCreator(visit = visitCC, name = "OTHER", details = "Some Text")
       visitRepository.saveAndFlush(visitCC)
 
-      webTestClient.delete().uri("/visits/${visitCC.id}")
+      webTestClient.delete().uri("/visits/${visitCC.reference}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isOk
 
-      webTestClient.get().uri("/visits/${visitCC.id}")
+      webTestClient.get().uri("/visits/${visitCC.reference}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isNotFound
     }
 
     @Test
-    fun `delete visit by visit id NOT Found`() {
+    fun `delete visit by reference NOT Found`() {
       webTestClient.delete().uri("/visits/123456")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()

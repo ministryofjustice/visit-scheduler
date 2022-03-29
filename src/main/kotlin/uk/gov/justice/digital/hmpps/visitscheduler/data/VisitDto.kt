@@ -7,8 +7,8 @@ import javax.validation.constraints.NotBlank
 
 @Schema(description = "Visit")
 data class VisitDto(
-  @Schema(description = "Visit id", example = "v9-d7-ed-7u", required = true)
-  val id: String,
+  @Schema(description = "Visit Reference", example = "v9-d7-ed-7u", required = true)
+  val reference: String,
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   val prisonerId: String,
   @Schema(description = "Prison Id", example = "MDI", required = true)
@@ -48,7 +48,7 @@ data class VisitDto(
 ) {
 
   constructor(visitEntity: Visit) : this(
-    id = visitEntity.id,
+    reference = visitEntity.reference,
     prisonerId = visitEntity.prisonerId,
     prisonId = visitEntity.prisonId,
     startTimestamp = visitEntity.visitStart,
