@@ -5,13 +5,16 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
+import java.util.Optional
 import javax.persistence.LockModeType
 
 @Repository
 interface VisitRepository : JpaRepository<Visit, String>, JpaSpecificationExecutor<Visit> {
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
-  fun deleteAllByIdIn(visitId: List<String>)
+  fun deleteAllByReferenceIn(reference: List<String>)
 
   fun findByPrisonerId(prisonerId: String): List<Visit>
+
+  fun findByReference(reference: String): Optional<Visit>
 }

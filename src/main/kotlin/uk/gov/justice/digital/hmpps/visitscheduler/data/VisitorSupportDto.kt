@@ -11,7 +11,7 @@ data class VisitorSupportDto(
 ) {
 
   constructor(visitSupportEntity: VisitSupport) : this(
-    supportName = visitSupportEntity.id.supportName,
+    supportName = visitSupportEntity.supportName,
     supportDetails = visitSupportEntity.supportDetails,
   )
 }

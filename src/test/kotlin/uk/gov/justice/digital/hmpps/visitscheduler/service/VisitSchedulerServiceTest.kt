@@ -44,6 +44,7 @@ class VisitSchedulerServiceTest {
 
   private val prisonApiClient = mock<PrisonApiClient>()
   private val visitRepository = mock<VisitRepository>()
+  private val referenceService = mock<ReferenceService>()
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val supportTypeRepository = mock<SupportTypeRepository>()
 
@@ -57,6 +58,7 @@ class VisitSchedulerServiceTest {
     visitSchedulerService = VisitSchedulerService(
       prisonApiClient,
       visitRepository,
+      referenceService,
       sessionTemplateRepository,
       supportTypeRepository,
       clock,

@@ -6,12 +6,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupportPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.ReferenceService
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -21,7 +21,11 @@ class VisitBuilder(
   private var visit: Visit,
 ) {
 
-  fun save(): Visit = repository.saveAndFlush(visit)
+  fun save(): Visit {
+    val visit = repository.saveAndFlush(visit)
+    visit.reference = QuotableEncoder(delimiter = ReferenceService.REF_DELIMITER_DEFAULT, minLength = ReferenceService.REF_LENGTH_DEFAULT).encode(visit.id)
+    return repository.saveAndFlush(visit)
+  }
 
   fun withPrisonerId(prisonerId: String): VisitBuilder {
     this.visit = visit.copy(prisonerId = prisonerId)
@@ -101,7 +105,7 @@ fun visitContactCreator(
   phone: String,
 ) {
   visit.mainContact = VisitContact(
-    id = visit.id,
+    visitId = visit.id,
     contactName = name,
     contactPhone = phone,
     visit = visit
@@ -115,10 +119,8 @@ fun visitVisitorCreator(
 ) {
   visit.visitors.add(
     VisitVisitor(
-      id = VisitVisitorPk(
-        nomisPersonId = nomisPersonId,
-        visitId = visit.id
-      ),
+      nomisPersonId = nomisPersonId,
+      visitId = visit.id,
       leadVisitor = leadVisitor,
       visit = visit
     )
@@ -132,10 +134,8 @@ fun visitSupportCreator(
 ) {
   visit.support.add(
     VisitSupport(
-      id = VisitSupportPk(
-        supportName = name,
-        visitId = visit.id
-      ),
+      supportName = name,
+      visitId = visit.id,
       supportDetails = details,
       visit = visit
     )

@@ -25,9 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupportPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
@@ -43,6 +41,7 @@ import java.util.function.Supplier
 class VisitSchedulerService(
   private val prisonApiClient: PrisonApiClient,
   private val visitRepository: VisitRepository,
+  private val referenceService: ReferenceService,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val supportTypeRepository: SupportTypeRepository,
   private val clock: Clock,
@@ -52,9 +51,9 @@ class VisitSchedulerService(
 ) {
 
   @Transactional(readOnly = true)
-  fun getVisitById(visitId: String): VisitDto {
-    return visitRepository.findById(visitId).map { VisitDto(it) }
-      .orElseThrow(VisitNotFoundException("Visit id  $visitId not found"))
+  fun getVisitByReference(reference: String): VisitDto {
+    return visitRepository.findByReference(reference).map { VisitDto(it) }
+      .orElseThrow(VisitNotFoundException("Visit id  $reference not found"))
   }
 
   @Transactional(readOnly = true)
@@ -234,6 +233,8 @@ class VisitSchedulerService(
       )
     )
 
+    visitEntity.reference = referenceService.createReference(visitEntity.id)
+
     createVisitRequest.mainContact?.let {
       visitEntity.mainContact = createVisitContact(visitEntity, it.contactName, it.contactPhone)
     }
@@ -254,10 +255,11 @@ class VisitSchedulerService(
     return VisitDto(visitEntity)
   }
 
-  fun updateVisit(visitId: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
-    log.info("Updating visit for $visitId")
+  fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
+    log.info("Updating visit for $reference")
 
-    val visitEntity = visitRepository.findByIdOrNull(visitId) ?: throw VisitNotFoundException("Visit id  $visitId not found")
+    val visitEntity = visitRepository.findByReference(reference).orElse(null)
+    visitEntity ?: throw VisitNotFoundException("Visit id  $reference not found")
 
     updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
     updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
@@ -302,7 +304,7 @@ class VisitSchedulerService(
 
   private fun createVisitContact(visit: Visit, contactName: String, contactPhone: String): VisitContact {
     return VisitContact(
-      id = visit.id,
+      visitId = visit.id,
       contactName = contactName,
       contactPhone = contactPhone,
       visit = visit
@@ -311,30 +313,27 @@ class VisitSchedulerService(
 
   private fun createVisitVisitor(visit: Visit, personId: Long, leadVisitor: Boolean): VisitVisitor {
     return VisitVisitor(
-      id = VisitVisitorPk(
-        nomisPersonId = personId,
-        visitId = visit.id
-      ),
-      leadVisitor = leadVisitor, visit = visit
+      nomisPersonId = personId,
+      visitId = visit.id,
+      leadVisitor = leadVisitor,
+      visit = visit
     )
   }
 
   private fun createVisitSupport(visit: Visit, supportName: String, supportDetails: String?): VisitSupport {
     return VisitSupport(
-      id = VisitSupportPk(
-        supportName = supportName,
-        visitId = visit.id
-      ),
+      supportName = supportName,
+      visitId = visit.id,
       supportDetails = supportDetails,
       visit = visit
     )
   }
 
-  fun deleteVisit(visitId: String) {
-    val visit = visitRepository.findByIdOrNull(visitId)
-    visit?.let { visitRepository.delete(it) }.also { log.info("Visit with id  $visitId deleted") }
+  fun deleteVisit(reference: String) {
+    val visit = visitRepository.findByReference(reference).orElse(null)
+    visit?.let { visitRepository.delete(it) }.also { log.info("Visit with reference $reference deleted") }
       ?: run {
-        log.info("Visit id $visitId not found")
+        log.info("Visit reference $reference not found")
       }
   }
 
@@ -343,7 +342,7 @@ class VisitSchedulerService(
   }
 
   fun deleteAllVisits(expired: List<VisitDto>) {
-    visitRepository.deleteAllByIdIn(expired.map { it.id }.toList())
+    visitRepository.deleteAllByReferenceIn(expired.map { it.reference }.toList())
   }
 
   companion object {

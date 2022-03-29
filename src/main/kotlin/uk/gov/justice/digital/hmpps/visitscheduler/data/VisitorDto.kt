@@ -10,7 +10,7 @@ data class VisitorDto(
 ) {
 
   constructor(visitVisitorEntity: VisitVisitor) : this(
-    nomisPersonId = visitVisitorEntity.id.nomisPersonId,
+    nomisPersonId = visitVisitorEntity.nomisPersonId,
     leadVisitor = visitVisitorEntity.leadVisitor,
   )
 }

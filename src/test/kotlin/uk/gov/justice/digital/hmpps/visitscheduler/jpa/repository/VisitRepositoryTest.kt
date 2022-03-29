@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitorPk
 import java.time.LocalDateTime
 
 // may need EntityManager injecting to clear session if read not hitting DB due to cache
@@ -41,7 +40,8 @@ class VisitRepositoryTest : IntegrationTestBase() {
     visitList[0] = visitList[0].copy(
       visitors = mutableListOf(
         VisitVisitor(
-          VisitVisitorPk(nomisPersonId = 123L, visitId = visitList[0].id),
+          nomisPersonId = 123L,
+          visitId = visitList[0].id,
           leadVisitor = false,
           visit = visitList[0]
         )
@@ -53,7 +53,7 @@ class VisitRepositoryTest : IntegrationTestBase() {
     assertThat(visitList.size).isEqualTo(1)
     with(visitList[0]) {
       assertThat(this.prisonerId).isEqualTo(testPrisonerId)
-      assertThat(this.id).isNotNull.isNotEmpty
+      assertThat(this.id).isNotNull.isGreaterThan(0)
       assertThat(this.visitStart).isEqualTo(visitTime)
       assertThat(this.visitType).isEqualTo(VisitType.STANDARD_SOCIAL)
       assertThat(this.status).isEqualTo(VisitStatus.RESERVED)
@@ -61,8 +61,8 @@ class VisitRepositoryTest : IntegrationTestBase() {
       assertThat(this.prisonId).isEqualTo(testPrison)
       assertThat(this.visitors).hasSize(1)
       assertThat(this.visitors[0].leadVisitor).isFalse
-      assertThat(this.visitors[0].id.nomisPersonId).isEqualTo(123L)
-      assertThat(this.visitors[0].id.visitId).isEqualTo(visitList[0].id)
+      assertThat(this.visitors[0].nomisPersonId).isEqualTo(123L)
+      assertThat(this.visitors[0].visitId).isEqualTo(visitList[0].id)
     }
   }
 
@@ -77,7 +77,7 @@ class VisitRepositoryTest : IntegrationTestBase() {
 
     val visitSavedList = repository.findByPrisonerId(testPrisonerId)
     visitSavedList[0].mainContact = VisitContact(
-      id = visitSavedList[0].id,
+      visitId = visitSavedList[0].id,
       contactName = testContactName,
       contactPhone = testContactPhone,
       visit = visitSavedList[0]
@@ -87,7 +87,7 @@ class VisitRepositoryTest : IntegrationTestBase() {
     val visits = repository.findByPrisonerId(testPrisonerId)
     assertThat(visits.size).isEqualTo(1)
     with(visits[0]) {
-      assertThat(this.id).isNotNull.isNotEmpty
+      assertThat(this.id).isNotNull.isGreaterThan(0)
       assertThat(this.prisonId).isEqualTo(testPrison)
       assertThat(this.prisonerId).isEqualTo(testPrisonerId)
       assertThat(this.mainContact).isNotNull
