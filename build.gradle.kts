@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.1.0"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.1.1"
   kotlin("plugin.spring") version "1.6.10"
   kotlin("plugin.jpa") version "1.6.10"
   idea
@@ -18,7 +18,6 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("org.springframework.retry:spring-retry")
 
   // Swagger
   implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.6")
@@ -29,12 +28,12 @@ dependencies {
   // AWS
 
   // Insights
-  agentDeps("com.microsoft.azure:applicationinsights-agent:3.2.7")
+  agentDeps("com.microsoft.azure:applicationinsights-agent")
 
   // DB
   runtimeOnly("org.postgresql:postgresql:42.3.3")
   runtimeOnly("org.flywaydb:flyway-core")
-  implementation("com.vladmihalcea:hibernate-types-52:2.14.0")
+  implementation("com.vladmihalcea:hibernate-types-52:2.14.1")
   implementation("javax.transaction:javax.transaction-api:1.3")
   implementation("javax.xml.bind:jaxb-api:2.3.1")
   implementation("com.google.code.gson:gson:2.9.0")
