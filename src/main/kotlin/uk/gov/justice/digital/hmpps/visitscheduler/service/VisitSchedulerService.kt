@@ -3,10 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
-import org.springframework.retry.annotation.Retryable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -51,8 +49,7 @@ class VisitSchedulerService(
 
   @Transactional(readOnly = true)
   fun getVisitByReference(reference: String): VisitDto {
-    return visitRepository.findByReference(reference).map { VisitDto(it) }
-      .orElseThrow(VisitNotFoundException("Visit id  $reference not found"))
+    return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit id  $reference not found"))
   }
 
   @Transactional(readOnly = true)
@@ -215,7 +212,6 @@ class VisitSchedulerService(
     return visitRepository.findAll(VisitSpecification(visitFilter)).sortedBy { it.visitStart }.map { VisitDto(it) }
   }
 
-  @Retryable(value = [DataIntegrityViolationException::class], maxAttempts = 2)
   fun createVisit(createVisitRequest: CreateVisitRequest): VisitDto {
     log.info("Creating visit for ${createVisitRequest.prisonerId}")
     val visitEntity = visitRepository.saveAndFlush(
@@ -231,8 +227,6 @@ class VisitSchedulerService(
         sessionTemplateId = createVisitRequest.sessionId,
       )
     )
-
-    // visitEntity.reference = referenceService.createReference(visitEntity.id)
 
     createVisitRequest.mainContact?.let {
       visitEntity.mainContact = createVisitContact(visitEntity, it.contactName, it.contactPhone)
@@ -257,7 +251,7 @@ class VisitSchedulerService(
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
     log.info("Updating visit for $reference")
 
-    val visitEntity = visitRepository.findByReference(reference).orElse(null)
+    val visitEntity = visitRepository.findByReference(reference)
     visitEntity ?: throw VisitNotFoundException("Visit id  $reference not found")
 
     updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
@@ -329,7 +323,7 @@ class VisitSchedulerService(
   }
 
   fun deleteVisit(reference: String) {
-    val visit = visitRepository.findByReference(reference).orElse(null)
+    val visit = visitRepository.findByReference(reference)
     visit?.let { visitRepository.delete(it) }.also { log.info("Visit with reference $reference deleted") }
       ?: run {
         log.info("Visit reference $reference not found")

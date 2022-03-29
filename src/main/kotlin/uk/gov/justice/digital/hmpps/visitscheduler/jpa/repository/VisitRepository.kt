@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
-import java.util.Optional
 import javax.persistence.LockModeType
 
 @Repository
@@ -16,5 +15,5 @@ interface VisitRepository : JpaRepository<Visit, String>, JpaSpecificationExecut
 
   fun findByPrisonerId(prisonerId: String): List<Visit>
 
-  fun findByReference(reference: String): Optional<Visit>
+  fun findByReference(reference: String): Visit?
 }
