@@ -4,6 +4,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
@@ -58,6 +59,11 @@ class VisitBuilder(
     return this
   }
 
+  fun withRestriction(restriction: VisitRestriction): VisitBuilder {
+    this.visit = visit.copy(visitRestriction = restriction)
+    return this
+  }
+
   fun withVisitorConcerns(concerns: String): VisitBuilder {
     this.visit = visit.copy(visitorConcerns = concerns)
     return this
@@ -92,6 +98,7 @@ fun defaultVisit(): Visit {
     visitEnd = LocalDateTime.of(2021, 10, 23, 11, 30),
     visitType = VisitType.STANDARD_SOCIAL,
     status = VisitStatus.RESERVED,
+    visitRestriction = VisitRestriction.OPEN,
   )
 }
 

@@ -27,14 +27,14 @@ data class VisitSession(
   @Schema(description = "The number of concurrent visits which may take place within this session", example = "1", required = true)
   val openVisitCapacity: Int,
 
-  @Schema(description = "The count of open visit bookings already reserved or booked for this session", example = "1", required = true)
-  val openVisitBookedCount: Int,
+  @Schema(description = "The count of open visit bookings already reserved or booked for this session", example = "1", required = false)
+  var openVisitBookedCount: Int? = 0,
 
   @Schema(description = "The number of closed visits which may take place within this session", example = "1", required = true)
   val closedVisitCapacity: Int,
 
-  @Schema(description = "The count of closed visit bookings already reserved or booked for this session", example = "1", required = true)
-  val closedVisitBookedCount: Int,
+  @Schema(description = "The count of closed visit bookings already reserved or booked for this session", example = "1", required = false)
+  var closedVisitBookedCount: Int? = 0,
 
   @Schema(description = "The start timestamp for this visit session", example = "1", required = true)
   val startTimestamp: LocalDateTime,

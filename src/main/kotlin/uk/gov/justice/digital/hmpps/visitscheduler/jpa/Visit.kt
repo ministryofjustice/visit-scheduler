@@ -55,6 +55,10 @@ data class Visit(
   @Enumerated(EnumType.STRING)
   var status: VisitStatus,
 
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  var visitRestriction: VisitRestriction,
+
   @Column
   var visitorConcerns: String? = null,
 

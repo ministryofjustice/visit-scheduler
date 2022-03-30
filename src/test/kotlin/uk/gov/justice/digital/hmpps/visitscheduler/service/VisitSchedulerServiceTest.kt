@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SupportType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
@@ -70,7 +71,7 @@ class VisitSchedulerServiceTest {
   @DisplayName("simple session generation")
   inner class SlotGeneration {
 
-    private fun mockRepositoryResponse(response: List<SessionTemplate>) {
+    private fun mockSessionRepositoryResponse(response: List<SessionTemplate>) {
       whenever(
         sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
           "MDI",
@@ -78,6 +79,11 @@ class VisitSchedulerServiceTest {
           LocalDate.parse("2021-01-01").plusDays(100)
         )
       ).thenReturn(response)
+    }
+
+    private fun mockVisitRepositoryResponse(response: List<Visit>) {
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+        .thenReturn(response)
     }
 
     @Test
@@ -89,7 +95,7 @@ class VisitSchedulerServiceTest {
         endTime = LocalTime.parse("12:30"), // future time
         frequency = SessionFrequency.DAILY
       )
-      mockRepositoryResponse(listOf(dailySession))
+      mockSessionRepositoryResponse(listOf(dailySession))
 
       val sessions = visitSchedulerService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(7) // expiry date is inclusive
@@ -115,7 +121,7 @@ class VisitSchedulerServiceTest {
         endTime = LocalTime.parse("12:30"),
         frequency = SessionFrequency.WEEKLY
       )
-      mockRepositoryResponse(listOf(weeklySession))
+      mockSessionRepositoryResponse(listOf(weeklySession))
 
       val sessions = visitSchedulerService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
@@ -139,7 +145,7 @@ class VisitSchedulerServiceTest {
         endTime = LocalTime.parse("12:30"),
         frequency = SessionFrequency.WEEKLY
       )
-      mockRepositoryResponse(listOf(weeklySession))
+      mockSessionRepositoryResponse(listOf(weeklySession))
 
       val sessions = visitSchedulerService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
@@ -160,7 +166,7 @@ class VisitSchedulerServiceTest {
         endTime = LocalTime.parse("12:30"), // future time
         frequency = SessionFrequency.SINGLE
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionRepositoryResponse(listOf(singleSession))
 
       val sessions = visitSchedulerService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(1)
@@ -176,7 +182,7 @@ class VisitSchedulerServiceTest {
         expiryDate = LocalDate.parse("2021-01-01").minusDays(1),
         frequency = SessionFrequency.DAILY
       )
-      mockRepositoryResponse(listOf(dailySession))
+      mockSessionRepositoryResponse(listOf(dailySession))
 
       val sessions = visitSchedulerService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(0)
@@ -201,7 +207,7 @@ class VisitSchedulerServiceTest {
         id = 2
       )
 
-      mockRepositoryResponse(listOf(monthlySession, dailySession))
+      mockSessionRepositoryResponse(listOf(monthlySession, dailySession))
 
       val sessions = visitSchedulerService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5)
@@ -221,6 +227,82 @@ class VisitSchedulerServiceTest {
           LocalDateTime.parse("2021-01-05T16:00"),
           LocalDateTime.parse("2021-02-01T11:30")
         )
+    }
+
+    @Test
+    fun `Single Session without Visit has zero Open and zero Closed slot count`() {
+      val singleSession = sessionTemplate(
+        startDate = LocalDate.parse("2021-02-01"),
+        startTime = LocalTime.parse("11:30"), // future time
+        endTime = LocalTime.parse("12:30"), // future time
+        frequency = SessionFrequency.SINGLE
+      )
+      mockSessionRepositoryResponse(listOf(singleSession))
+
+      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].openVisitBookedCount).isEqualTo(0)
+      assertThat(sessions[0].closedVisitBookedCount).isEqualTo(0)
+    }
+
+    @Test
+    fun `Single Session with BOOKED Visit has booked slot count`() {
+      val singleSession = sessionTemplate(
+        startDate = LocalDate.parse("2021-02-01"),
+        startTime = LocalTime.parse("11:30"), // future time
+        endTime = LocalTime.parse("12:30"), // future time
+        frequency = SessionFrequency.SINGLE
+      )
+      mockSessionRepositoryResponse(listOf(singleSession))
+
+      val visit = Visit(
+        prisonerId = "Anythingwilldo",
+        visitStart = LocalDate.parse("2021-02-01").atTime(11, 30),
+        visitEnd = LocalDate.parse("2021-02-01").atTime(12, 30),
+        visitType = VisitType.STANDARD_SOCIAL,
+        prisonId = "MDI",
+        status = VisitStatus.BOOKED,
+        visitRestriction = VisitRestriction.OPEN,
+        visitRoom = "123c",
+        visitorConcerns = "some more text",
+        sessionTemplateId = null,
+      )
+      mockVisitRepositoryResponse(listOf(visit))
+
+      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].openVisitBookedCount).isEqualTo(1)
+      assertThat(sessions[0].closedVisitBookedCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `Single Session with RESERVED Visit has booked slot count`() {
+      val singleSession = sessionTemplate(
+        startDate = LocalDate.parse("2021-02-01"),
+        startTime = LocalTime.parse("11:30"), // future time
+        endTime = LocalTime.parse("12:30"), // future time
+        frequency = SessionFrequency.SINGLE
+      )
+      mockSessionRepositoryResponse(listOf(singleSession))
+
+      val visit = Visit(
+        prisonerId = "Anythingwilldo",
+        visitStart = LocalDate.parse("2021-02-01").atTime(11, 30),
+        visitEnd = LocalDate.parse("2021-02-01").atTime(12, 30),
+        visitType = VisitType.STANDARD_SOCIAL,
+        prisonId = "MDI",
+        status = VisitStatus.RESERVED,
+        visitRestriction = VisitRestriction.OPEN,
+        visitRoom = "123c",
+        visitorConcerns = "some more text",
+        sessionTemplateId = null,
+      )
+      mockVisitRepositoryResponse(listOf(visit))
+
+      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].openVisitBookedCount).isEqualTo(1)
+      assertThat(sessions[0].closedVisitBookedCount).isEqualTo(1)
     }
   }
 
@@ -341,6 +423,7 @@ class VisitSchedulerServiceTest {
               visitType = VisitType.STANDARD_SOCIAL,
               prisonId = prisonId,
               status = VisitStatus.BOOKED,
+              visitRestriction = VisitRestriction.OPEN,
               visitRoom = "123c",
               visitorConcerns = "some more text",
               sessionTemplateId = null,

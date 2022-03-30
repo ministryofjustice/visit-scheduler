@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
@@ -76,7 +77,31 @@ class VisitSchedulerService(
       available = filterNonAssociationByPrisonerId(available, prisonerId)
     }
 
+    populateBookedCounts(available)
+
     return available.sortedWith(compareBy { it.startTimestamp })
+  }
+
+  private fun populateBookedCounts(available: List<VisitSession>) {
+    available.forEach {
+      it.openVisitBookedCount = visitBookedCount(it, VisitRestriction.OPEN)
+      it.closedVisitBookedCount = visitBookedCount(it, VisitRestriction.CLOSED)
+    }
+  }
+
+  fun visitBookedCount(session: VisitSession, restriction: VisitRestriction): Int {
+    return visitRepository.findAll(
+      VisitSpecification(
+        VisitFilter(
+          prisonId = session.prisonId,
+          startDateTime = session.startTimestamp,
+          endDateTime = session.endTimestamp,
+          visitRestriction = restriction
+        )
+      )
+    ).count {
+      it.status == VisitStatus.BOOKED || it.status == VisitStatus.RESERVED
+    }
   }
 
   private fun filterNonAssociationByPrisonerId(visitSessions: List<VisitSession>?, prisonerId: String): List<VisitSession> {
@@ -144,16 +169,17 @@ class VisitSchedulerService(
     else
       sessionTemplate.startDate
 
+    // Create a VisitSession for every date from the template start date in increments of
+    // frequency until the lastBookableSessionDay + 1
     return sessionTemplate.startDate.datesUntil(
       lastBookableSessionDay.plusDays(1), sessionTemplate.frequency.frequencyPeriod
     )
-      .map { date ->
+      .map {
+        date ->
         VisitSession(
           sessionTemplateId = sessionTemplate.id,
           prisonId = sessionTemplate.prisonId,
           startTimestamp = LocalDateTime.of(date, sessionTemplate.startTime),
-          closedVisitBookedCount = 0,
-          openVisitBookedCount = 0,
           openVisitCapacity = sessionTemplate.openCapacity,
           closedVisitCapacity = sessionTemplate.closedCapacity,
           endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
@@ -163,7 +189,7 @@ class VisitSchedulerService(
           restrictions = sessionTemplate.restrictions
         )
       }
-      // remove sessions are before the bookable period
+      // remove created VisitSessions which are before the bookable period
       .filter { session -> session.startTimestamp > LocalDateTime.of(firstBookableSessionDay, LocalTime.MIDNIGHT) }
       .toList()
   }
@@ -220,6 +246,7 @@ class VisitSchedulerService(
         prisonerId = createVisitRequest.prisonerId,
         visitType = createVisitRequest.visitType,
         status = createVisitRequest.visitStatus,
+        visitRestriction = createVisitRequest.visitRestriction,
         visitRoom = createVisitRequest.visitRoom,
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp,
@@ -251,8 +278,7 @@ class VisitSchedulerService(
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
     log.info("Updating visit for $reference")
 
-    val visitEntity = visitRepository.findByReference(reference)
-    visitEntity ?: throw VisitNotFoundException("Visit id  $reference not found")
+    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit id  $reference not found")
 
     updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
     updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
@@ -260,6 +286,7 @@ class VisitSchedulerService(
     updateVisitRequest.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
     updateVisitRequest.visitType?.let { visitType -> visitEntity.visitType = visitType }
     updateVisitRequest.visitStatus?.let { status -> visitEntity.status = status }
+    updateVisitRequest.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
     updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
     updateVisitRequest.visitorConcerns?.let { visitorConcerns -> visitEntity.visitorConcerns = visitorConcerns }
     updateVisitRequest.sessionId?.let { sessionId -> visitEntity.sessionTemplateId = sessionId }
