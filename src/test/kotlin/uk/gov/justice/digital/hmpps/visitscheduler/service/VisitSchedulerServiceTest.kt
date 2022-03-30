@@ -264,7 +264,6 @@ class VisitSchedulerServiceTest {
         status = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "123c",
-        visitorConcerns = "some more text",
         sessionTemplateId = null,
       )
       mockVisitRepositoryResponse(listOf(visit))
@@ -294,7 +293,6 @@ class VisitSchedulerServiceTest {
         status = VisitStatus.RESERVED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "123c",
-        visitorConcerns = "some more text",
         sessionTemplateId = null,
       )
       mockVisitRepositoryResponse(listOf(visit))
@@ -425,7 +423,6 @@ class VisitSchedulerServiceTest {
               status = VisitStatus.BOOKED,
               visitRestriction = VisitRestriction.OPEN,
               visitRoom = "123c",
-              visitorConcerns = "some more text",
               sessionTemplateId = null,
             )
           )

@@ -21,6 +21,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNotes
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
@@ -250,10 +252,17 @@ class VisitSchedulerService(
         visitRoom = createVisitRequest.visitRoom,
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp,
-        visitorConcerns = createVisitRequest.visitorConcerns,
         sessionTemplateId = createVisitRequest.sessionId,
       )
     )
+
+    createVisitRequest.visitorConcerns?.let {
+      visitEntity.visitorConcerns = createVisitNote(visitEntity, VisitNoteType.VISITOR_CONCERN, createVisitRequest.visitorConcerns)
+    }
+
+    createVisitRequest.visitorConcerns?.let {
+      visitEntity.visitorConcerns = createVisitNote(visitEntity, VisitNoteType.VISITOR_CONCERN, createVisitRequest.visitorConcerns)
+    }
 
     createVisitRequest.mainContact?.let {
       visitEntity.mainContact = createVisitContact(visitEntity, it.contactName, it.contactPhone)
@@ -278,7 +287,8 @@ class VisitSchedulerService(
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
     log.info("Updating visit for $reference")
 
-    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit id  $reference not found")
+    val visitEntity = visitRepository.findByReference(reference)
+    visitEntity ?: throw VisitNotFoundException("Visit id  $reference not found")
 
     updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
     updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
@@ -288,8 +298,15 @@ class VisitSchedulerService(
     updateVisitRequest.visitStatus?.let { status -> visitEntity.status = status }
     updateVisitRequest.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
     updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
-    updateVisitRequest.visitorConcerns?.let { visitorConcerns -> visitEntity.visitorConcerns = visitorConcerns }
     updateVisitRequest.sessionId?.let { sessionId -> visitEntity.sessionTemplateId = sessionId }
+
+    updateVisitRequest.visitorConcerns?.let { updateVisitorConcerns ->
+      visitEntity.visitorConcerns?.let { visitorConcerns ->
+        visitorConcerns.text = updateVisitorConcerns
+      } ?: run {
+        visitEntity.visitorConcerns = createVisitNote(visitEntity, VisitNoteType.VISITOR_CONCERN, updateVisitorConcerns)
+      }
+    }
 
     updateVisitRequest.mainContact?.let { updateContact ->
       visitEntity.mainContact?.let { mainContact ->
@@ -320,6 +337,15 @@ class VisitSchedulerService(
     visitRepository.saveAndFlush(visitEntity)
 
     return VisitDto(visitEntity)
+  }
+
+  private fun createVisitNote(visit: Visit, visitorConcern: VisitNoteType, visitorConcerns: String): VisitNotes {
+    return VisitNotes(
+      visitId = visit.id,
+      type = visitorConcern,
+      text = visitorConcerns,
+      visit = visit
+    )
   }
 
   private fun createVisitContact(visit: Visit, contactName: String, contactPhone: String): VisitContact {

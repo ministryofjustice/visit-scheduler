@@ -4,6 +4,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNotes
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
@@ -64,11 +66,6 @@ class VisitBuilder(
     return this
   }
 
-  fun withVisitorConcerns(concerns: String): VisitBuilder {
-    this.visit = visit.copy(visitorConcerns = concerns)
-    return this
-  }
-
   fun withSessionTemplateId(id: Long): VisitBuilder {
     this.visit = visit.copy(sessionTemplateId = id)
     return this
@@ -91,6 +88,7 @@ fun visitDeleter(
 
 fun defaultVisit(): Visit {
   return Visit(
+    reference = "test",
     prisonerId = "AF12345G",
     prisonId = "MDI",
     visitRoom = "123c",
@@ -111,6 +109,18 @@ fun visitContactCreator(
     visitId = visit.id,
     contactName = name,
     contactPhone = phone,
+    visit = visit
+  )
+}
+
+fun visitNoteCreator(
+  visit: Visit,
+  text: String,
+) {
+  visit.visitorConcerns = VisitNotes(
+    visitId = visit.id,
+    type = VisitNoteType.VISITOR_CONCERN,
+    text = text,
     visit = visit
   )
 }

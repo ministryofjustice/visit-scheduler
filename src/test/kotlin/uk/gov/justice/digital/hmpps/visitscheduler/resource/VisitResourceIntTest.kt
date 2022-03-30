@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.UpdateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -452,9 +453,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withVisitType(VisitType.FAMILY)
         .withStatus(VisitStatus.BOOKED)
-        .withVisitorConcerns("Some text")
         .withSessionTemplateId(1234560)
         .save()
+      visitNoteCreator(visit = visitFull!!, text = "Some text")
       visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
       visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, leadVisitor = true)
       visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
