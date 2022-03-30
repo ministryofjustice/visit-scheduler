@@ -64,7 +64,7 @@ data class VisitDto(
     visitRestriction = visitEntity.visitRestriction.name,
     visitRestrictionDescription = visitEntity.visitRestriction.description,
     visitRoom = visitEntity.visitRoom,
-    visitorConcerns = visitEntity.visitorConcerns,
+    visitorConcerns = visitEntity.visitorConcerns?.let { it.text },
     mainContact = visitEntity.mainContact?.let { ContactDto(it) },
     visitors = visitEntity.visitors.map { VisitorDto(it) },
     visitorSupport = visitEntity.support.map { VisitorSupportDto(it) },
