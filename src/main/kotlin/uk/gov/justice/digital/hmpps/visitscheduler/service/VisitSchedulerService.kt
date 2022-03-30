@@ -260,10 +260,6 @@ class VisitSchedulerService(
       visitEntity.visitorConcerns = createVisitNote(visitEntity, VisitNoteType.VISITOR_CONCERN, createVisitRequest.visitorConcerns)
     }
 
-    createVisitRequest.visitorConcerns?.let {
-      visitEntity.visitorConcerns = createVisitNote(visitEntity, VisitNoteType.VISITOR_CONCERN, createVisitRequest.visitorConcerns)
-    }
-
     createVisitRequest.mainContact?.let {
       visitEntity.mainContact = createVisitContact(visitEntity, it.contactName, it.contactPhone)
     }
