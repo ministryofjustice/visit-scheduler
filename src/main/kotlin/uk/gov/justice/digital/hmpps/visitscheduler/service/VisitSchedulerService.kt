@@ -21,8 +21,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNotes
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
@@ -256,8 +256,10 @@ class VisitSchedulerService(
       )
     )
 
-    createVisitRequest.visitorConcerns?.let {
-      visitEntity.visitorConcerns = createVisitNote(visitEntity, VisitNoteType.VISITOR_CONCERN, createVisitRequest.visitorConcerns)
+    createVisitRequest.visitNotes?.let { visitNotes ->
+      visitNotes.forEach {
+        visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
+      }
     }
 
     createVisitRequest.mainContact?.let {
@@ -296,13 +298,7 @@ class VisitSchedulerService(
     updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
     updateVisitRequest.sessionId?.let { sessionId -> visitEntity.sessionTemplateId = sessionId }
 
-    updateVisitRequest.visitorConcerns?.let { updateVisitorConcerns ->
-      visitEntity.visitorConcerns?.let { visitorConcerns ->
-        visitorConcerns.text = updateVisitorConcerns
-      } ?: run {
-        visitEntity.visitorConcerns = createVisitNote(visitEntity, VisitNoteType.VISITOR_CONCERN, updateVisitorConcerns)
-      }
-    }
+    updateNotes(updateVisitRequest, visitEntity)
 
     updateVisitRequest.mainContact?.let { updateContact ->
       visitEntity.mainContact?.let { mainContact ->
@@ -335,11 +331,27 @@ class VisitSchedulerService(
     return VisitDto(visitEntity)
   }
 
-  private fun createVisitNote(visit: Visit, visitorConcern: VisitNoteType, visitorConcerns: String): VisitNotes {
-    return VisitNotes(
+  private fun updateNotes(
+    updateVisitRequest: UpdateVisitRequest,
+    visitEntity: Visit
+  ) {
+    updateVisitRequest.visitNotes?.let { updateVisitNotes ->
+      visitEntity.visitNotes.clear()
+      visitRepository.saveAndFlush(visitEntity)
+      updateVisitNotes.forEach {
+        visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
+      }
+    } ?: run {
+      visitEntity.visitNotes.clear()
+      visitRepository.saveAndFlush(visitEntity)
+    }
+  }
+
+  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
+    return VisitNote(
       visitId = visit.id,
-      type = visitorConcern,
-      text = visitorConcerns,
+      type = type,
+      text = text,
       visit = visit
     )
   }

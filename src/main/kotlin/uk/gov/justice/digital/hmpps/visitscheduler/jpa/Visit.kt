@@ -59,8 +59,8 @@ data class Visit(
   @Enumerated(EnumType.STRING)
   var visitRestriction: VisitRestriction,
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitorConcerns: VisitNotes? = null,
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  var visitNotes: MutableList<VisitNote> = mutableListOf(),
 
   @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var mainContact: VisitContact? = null,

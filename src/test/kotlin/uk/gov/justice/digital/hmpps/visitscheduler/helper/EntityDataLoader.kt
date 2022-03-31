@@ -4,8 +4,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNotes
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
@@ -116,12 +116,15 @@ fun visitContactCreator(
 fun visitNoteCreator(
   visit: Visit,
   text: String,
+  type : VisitNoteType
 ) {
-  visit.visitorConcerns = VisitNotes(
-    visitId = visit.id,
-    type = VisitNoteType.VISITOR_CONCERN,
-    text = text,
-    visit = visit
+  visit.visitNotes.add(
+    VisitNote(
+      visitId = visit.id,
+      type = type,
+      text = text,
+      visit = visit
+    )
   )
 }
 
