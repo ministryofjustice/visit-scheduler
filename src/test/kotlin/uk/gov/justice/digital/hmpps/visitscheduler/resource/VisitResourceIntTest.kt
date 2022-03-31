@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType.VISITOR_CONCERN
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
@@ -54,7 +55,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
       supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
       visitNotes = listOf(
         VisitNoteDto(type = VISITOR_CONCERN, "My mother in-law is coming"),
-        VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again")
+        VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again"),
+        VisitNoteDto(type = VISIT_COMMENT, "Mother in-law should be watched at all times")
       ),
       sessionId = null,
     )
@@ -95,11 +97,13 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].visitors.length()").isEqualTo(1)
         .jsonPath("$[0].visitors[0].nomisPersonId").isEqualTo(123)
         .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
-        .jsonPath("$[0].visitNotes.length()").isEqualTo(2)
+        .jsonPath("$[0].visitNotes.length()").isEqualTo(3)
         .jsonPath("$[0].visitNotes[0].type").isEqualTo("VISITOR_CONCERN")
         .jsonPath("$[0].visitNotes[0].text").isEqualTo("My mother in-law is coming")
         .jsonPath("$[0].visitNotes[1].type").isEqualTo("VISIT_OUTCOMES")
         .jsonPath("$[0].visitNotes[1].text").isEqualTo("My mother wont visit again")
+        .jsonPath("$[0].visitNotes[2].type").isEqualTo("VISIT_COMMENT")
+        .jsonPath("$[0].visitNotes[2].text").isEqualTo("Mother in-law should be watched at all times")
         .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
         .jsonPath("$[0].visitorSupport[0].supportName").isEqualTo("OTHER")
         .jsonPath("$[0].visitorSupport[0].supportDetails").isEqualTo("Some Text")
@@ -467,6 +471,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .save()
       visitNoteCreator(visit = visitFull!!, text = "Some text outcomes", type = VISIT_OUTCOMES)
       visitNoteCreator(visit = visitFull!!, text = "Some text concerns", type = VISITOR_CONCERN)
+      visitNoteCreator(visit = visitFull!!, text = "Some text comment", type = VISIT_COMMENT)
       visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
       visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, leadVisitor = true)
       visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
@@ -490,7 +495,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
         supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
         visitNotes = listOf(
           VisitNoteDto(type = VISITOR_CONCERN, "My mother in-law is coming"),
-          VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again")
+          VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again"),
+          VisitNoteDto(type = VISIT_COMMENT, "The mother should be watched at all times")
         ),
         sessionId = 123L,
       )
@@ -520,11 +526,13 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.supportList!!.size)
         .jsonPath("$.visitorSupport[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
         .jsonPath("$.visitorSupport[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
-        .jsonPath("$.visitNotes.length()").isEqualTo(2)
+        .jsonPath("$.visitNotes.length()").isEqualTo(updateRequest.visitNotes!!.size)
         .jsonPath("$.visitNotes[0].type").isEqualTo(updateRequest.visitNotes!![0].type.name)
         .jsonPath("$.visitNotes[1].type").isEqualTo(updateRequest.visitNotes!![1].type.name)
+        .jsonPath("$.visitNotes[2].type").isEqualTo(updateRequest.visitNotes!![2].type.name)
         .jsonPath("$.visitNotes[0].text").isEqualTo(updateRequest.visitNotes!![0].text)
         .jsonPath("$.visitNotes[1].text").isEqualTo(updateRequest.visitNotes!![1].text)
+        .jsonPath("$.visitNotes[2].text").isEqualTo(updateRequest.visitNotes!![2].text)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
 
@@ -545,7 +553,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
         supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
         visitNotes = listOf(
           VisitNoteDto(type = VISITOR_CONCERN, "My mother in-law is coming"),
-          VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again")
+          VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again"),
+          VisitNoteDto(type = VISIT_COMMENT, "The mother should be watched at all times")
         ),
         sessionId = 123L,
       )
@@ -578,8 +587,10 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitNotes.length()").isEqualTo(updateRequest.visitNotes!!.size)
         .jsonPath("$.visitNotes[0].type").isEqualTo(updateRequest.visitNotes!![0].type.name)
         .jsonPath("$.visitNotes[1].type").isEqualTo(updateRequest.visitNotes!![1].type.name)
+        .jsonPath("$.visitNotes[2].type").isEqualTo(updateRequest.visitNotes!![2].type.name)
         .jsonPath("$.visitNotes[0].text").isEqualTo(updateRequest.visitNotes!![0].text)
         .jsonPath("$.visitNotes[1].text").isEqualTo(updateRequest.visitNotes!![1].text)
+        .jsonPath("$.visitNotes[2].text").isEqualTo(updateRequest.visitNotes!![2].text)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
 
