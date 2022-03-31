@@ -20,13 +20,23 @@ data class UpdateVisitRequest(
     example = "2018-12-01T13:45:00",
     required = false
   ) val endTimestamp: LocalDateTime? = null,
-  @Schema(description = "Visit Type", example = "STANDARD_SOCIAL", required = false) val visitType: VisitType? = null,
-  @Schema(description = "Visit Status", example = "RESERVED", required = false) val visitStatus: VisitStatus? = null,
-  @Schema(description = "Visit Restriction", example = "OPEN", required = true) val visitRestriction: VisitRestriction? = null,
-  @Schema(description = "Visit Room", example = "A1", required = false) val visitRoom: String? = null,
-  @Schema(description = "Visitor Concerns", required = false) val visitorConcerns: String? = null,
-  @Schema(description = "Main Contact associated with the visit", required = false) @field:Valid val mainContact: CreateContactOnVisitRequest? = null,
-  @Schema(description = "List of visitors associated with the visit", required = false) val contactList: List<@Valid CreateVisitorOnVisitRequest>? = null,
-  @Schema(description = "List of additional support associated with the visit", required = false) val supportList: List<@Valid CreateSupportOnVisitRequest>? = null,
-  @Schema(description = "Session Id identifying the visit session template", example = "123456", required = false) val sessionId: Long? = null,
+  @Schema(description = "Visit Type", example = "STANDARD_SOCIAL", required = false)
+  val visitType: VisitType? = null,
+  @Schema(description = "Visit Status", example = "RESERVED", required = false)
+  val visitStatus: VisitStatus? = null,
+  @Schema(description = "Visit Restriction", example = "OPEN", required = true)
+  val visitRestriction: VisitRestriction? = null,
+  @Schema(description = "Visit Room", example = "A1", required = false)
+  val visitRoom: String? = null,
+  @Schema(description = "Visit Notes", required = false)
+  val visitNotes: List<@Valid VisitNoteDto>? = null,
+  @Schema(description = "Main Contact associated with the visit", required = false)
+  @field:Valid
+  val mainContact: CreateContactOnVisitRequest? = null,
+  @Schema(description = "List of visitors associated with the visit", required = false)
+  val contactList: List<@Valid CreateVisitorOnVisitRequest>? = null,
+  @Schema(description = "List of additional support associated with the visit", required = false)
+  val supportList: List<@Valid CreateSupportOnVisitRequest>? = null,
+  @Schema(description = "Session Id identifying the visit session template", example = "123456", required = false)
+  val sessionId: Long? = null,
 )

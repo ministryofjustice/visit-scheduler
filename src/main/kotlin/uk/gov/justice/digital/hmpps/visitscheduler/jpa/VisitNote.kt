@@ -9,12 +9,12 @@ import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.JoinColumn
-import javax.persistence.OneToOne
+import javax.persistence.ManyToOne
 import javax.persistence.Table
 
 @Entity
 @Table(name = "VISIT_NOTES")
-data class VisitNotes(
+data class VisitNote(
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -31,7 +31,7 @@ data class VisitNotes(
   @Column(nullable = false)
   var text: String,
 
-  @OneToOne
+  @ManyToOne
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
   val visit: Visit,
 
@@ -39,7 +39,7 @@ data class VisitNotes(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
-    other as VisitNotes
+    other as VisitNote
 
     return id == other.id
   }

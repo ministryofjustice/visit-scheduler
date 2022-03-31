@@ -39,8 +39,8 @@ data class VisitDto(
     required = true
   ) @field:NotBlank
   val endTimestamp: LocalDateTime,
-  @Schema(description = "Visitor Concerns", required = false)
-  val visitorConcerns: String? = null,
+  @Schema(description = "Visit Notes", required = false)
+  val visitNotes: List<VisitNoteDto> = listOf(),
   @Schema(description = "Main Contact associated with the visit", required = false)
   val mainContact: ContactDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false)
@@ -64,7 +64,7 @@ data class VisitDto(
     visitRestriction = visitEntity.visitRestriction.name,
     visitRestrictionDescription = visitEntity.visitRestriction.description,
     visitRoom = visitEntity.visitRoom,
-    visitorConcerns = visitEntity.visitorConcerns?.let { it.text },
+    visitNotes = visitEntity.visitNotes.map { VisitNoteDto(it) },
     mainContact = visitEntity.mainContact?.let { ContactDto(it) },
     visitors = visitEntity.visitors.map { VisitorDto(it) },
     visitorSupport = visitEntity.support.map { VisitorSupportDto(it) },
