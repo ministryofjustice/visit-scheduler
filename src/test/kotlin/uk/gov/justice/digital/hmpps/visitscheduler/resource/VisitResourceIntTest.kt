@@ -523,6 +523,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitNotes.length()").isEqualTo(2)
         .jsonPath("$.visitNotes[0].type").isEqualTo(updateRequest.visitNotes!![0].type.name)
         .jsonPath("$.visitNotes[1].type").isEqualTo(updateRequest.visitNotes!![1].type.name)
+        .jsonPath("$.visitNotes[0].text").isEqualTo(updateRequest.visitNotes!![0].text)
+        .jsonPath("$.visitNotes[1].text").isEqualTo(updateRequest.visitNotes!![1].text)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
 
@@ -576,6 +578,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitNotes.length()").isEqualTo(updateRequest.visitNotes!!.size)
         .jsonPath("$.visitNotes[0].type").isEqualTo(updateRequest.visitNotes!![0].type.name)
         .jsonPath("$.visitNotes[1].type").isEqualTo(updateRequest.visitNotes!![1].type.name)
+        .jsonPath("$.visitNotes[0].text").isEqualTo(updateRequest.visitNotes!![0].text)
+        .jsonPath("$.visitNotes[1].text").isEqualTo(updateRequest.visitNotes!![1].text)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
 
