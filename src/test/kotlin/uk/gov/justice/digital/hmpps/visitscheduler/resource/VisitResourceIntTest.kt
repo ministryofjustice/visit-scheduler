@@ -608,7 +608,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitNotes").isEmpty
     }
 
-
     @Test
     fun `put visit by reference - amend contact`() {
 

@@ -116,7 +116,7 @@ fun visitContactCreator(
 fun visitNoteCreator(
   visit: Visit,
   text: String,
-  type : VisitNoteType
+  type: VisitNoteType
 ) {
   visit.visitNotes.add(
     VisitNote(
