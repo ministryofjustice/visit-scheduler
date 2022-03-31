@@ -27,17 +27,11 @@ data class VisitDto(
   val visitRestriction: String,
   @Schema(description = "Visit Restriction Description", example = "Open", required = true)
   val visitRestrictionDescription: String,
-  @Schema(
-    description = "The date and time of the visit",
-    example = "2018-12-01T13:45:00",
-    required = true
-  ) @field:NotBlank
+  @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
+  @field:NotBlank
   val startTimestamp: LocalDateTime,
-  @Schema(
-    description = "The finishing date and time of the visit",
-    example = "2018-12-01T13:45:00",
-    required = true
-  ) @field:NotBlank
+  @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = true)
+  @field:NotBlank
   val endTimestamp: LocalDateTime,
   @Schema(description = "Visit Notes", required = false)
   val visitNotes: List<VisitNoteDto> = listOf(),
@@ -50,7 +44,6 @@ data class VisitDto(
   @Schema(description = "Session Id identifying the visit session template", example = "123", required = false)
   val sessionId: Long? = null,
 ) {
-
   constructor(visitEntity: Visit) : this(
     reference = visitEntity.reference,
     prisonerId = visitEntity.prisonerId,

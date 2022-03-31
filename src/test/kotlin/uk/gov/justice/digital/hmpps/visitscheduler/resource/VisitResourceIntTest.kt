@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.resource
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -493,11 +494,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         contactList = listOf(CreateVisitorOnVisitRequest(123L)),
         supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
-        visitNotes = listOf(
-          VisitNoteDto(type = VISITOR_CONCERN, "My mother in-law is coming"),
-          VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again"),
-          VisitNoteDto(type = VISIT_COMMENT, "The mother should be watched at all times")
-        ),
         sessionId = 123L,
       )
 
@@ -526,13 +522,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.supportList!!.size)
         .jsonPath("$.visitorSupport[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
         .jsonPath("$.visitorSupport[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
-        .jsonPath("$.visitNotes.length()").isEqualTo(updateRequest.visitNotes!!.size)
-        .jsonPath("$.visitNotes[0].type").isEqualTo(updateRequest.visitNotes!![0].type.name)
-        .jsonPath("$.visitNotes[1].type").isEqualTo(updateRequest.visitNotes!![1].type.name)
-        .jsonPath("$.visitNotes[2].type").isEqualTo(updateRequest.visitNotes!![2].type.name)
-        .jsonPath("$.visitNotes[0].text").isEqualTo(updateRequest.visitNotes!![0].text)
-        .jsonPath("$.visitNotes[1].text").isEqualTo(updateRequest.visitNotes!![1].text)
-        .jsonPath("$.visitNotes[2].text").isEqualTo(updateRequest.visitNotes!![2].text)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
 
@@ -551,11 +540,6 @@ class VisitResourceIntTest : IntegrationTestBase() {
         mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
         contactList = listOf(CreateVisitorOnVisitRequest(123L)),
         supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
-        visitNotes = listOf(
-          VisitNoteDto(type = VISITOR_CONCERN, "My mother in-law is coming"),
-          VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again"),
-          VisitNoteDto(type = VISIT_COMMENT, "The mother should be watched at all times")
-        ),
         sessionId = 123L,
       )
 
@@ -584,16 +568,10 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.supportList!!.size)
         .jsonPath("$.visitorSupport[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
         .jsonPath("$.visitorSupport[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
-        .jsonPath("$.visitNotes.length()").isEqualTo(updateRequest.visitNotes!!.size)
-        .jsonPath("$.visitNotes[0].type").isEqualTo(updateRequest.visitNotes!![0].type.name)
-        .jsonPath("$.visitNotes[1].type").isEqualTo(updateRequest.visitNotes!![1].type.name)
-        .jsonPath("$.visitNotes[2].type").isEqualTo(updateRequest.visitNotes!![2].type.name)
-        .jsonPath("$.visitNotes[0].text").isEqualTo(updateRequest.visitNotes!![0].text)
-        .jsonPath("$.visitNotes[1].text").isEqualTo(updateRequest.visitNotes!![1].text)
-        .jsonPath("$.visitNotes[2].text").isEqualTo(updateRequest.visitNotes!![2].text)
         .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
     }
 
+    @Disabled("Re-enable for VB-600")
     @Test
     fun `put visit by reference - delete notes`() {
 

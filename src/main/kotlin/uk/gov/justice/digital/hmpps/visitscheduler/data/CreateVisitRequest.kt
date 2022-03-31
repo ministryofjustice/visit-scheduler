@@ -10,18 +10,18 @@ import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
 data class CreateVisitRequest(
-  @Schema(description = "Prisoner Id", example = "AF34567G", required = true) @field:NotBlank val prisonerId: String,
-  @Schema(description = "Prison Id", example = "MDI", required = true) @field:NotBlank val prisonId: String,
-  @Schema(
-    description = "The date and time of the visit",
-    example = "2018-12-01T13:45:00",
-    required = true
-  ) @NotNull val startTimestamp: LocalDateTime,
-  @Schema(
-    description = "The finishing date and time of the visit",
-    example = "2018-12-01T13:45:00",
-    required = true
-  ) @NotNull val endTimestamp: LocalDateTime,
+  @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
+  @field:NotBlank
+  val prisonerId: String,
+  @Schema(description = "Prison Id", example = "MDI", required = true)
+  @field:NotBlank
+  val prisonId: String,
+  @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
+  @NotNull
+  val startTimestamp: LocalDateTime,
+  @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = true)
+  @NotNull
+  val endTimestamp: LocalDateTime,
   @Schema(description = "Visit Type", example = "STANDARD_SOCIAL", required = true)
   @NotNull
   val visitType: VisitType,
