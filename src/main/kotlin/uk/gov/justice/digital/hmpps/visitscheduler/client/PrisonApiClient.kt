@@ -24,9 +24,6 @@ class PrisonApiClient(
       .retrieve()
       .bodyToMono(offenderNonAssociationDetails)
       .block(apiTimeout)
-      .also {
-        log.debug("Get offender non-association details for $offenderNo")
-      }
   }
 
   companion object {

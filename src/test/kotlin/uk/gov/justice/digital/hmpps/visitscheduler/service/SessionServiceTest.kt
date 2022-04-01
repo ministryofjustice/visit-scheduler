@@ -24,13 +24,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SupportType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
 import java.time.Clock
@@ -41,25 +39,23 @@ import java.time.LocalTime
 import java.time.ZoneId
 
 @ExtendWith(MockitoExtension::class)
-class VisitSchedulerServiceTest {
+class SessionServiceTest {
 
-  private val prisonApiClient = mock<PrisonApiClient>()
-  private val visitRepository = mock<VisitRepository>()
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
-  private val supportTypeRepository = mock<SupportTypeRepository>()
+  private val visitRepository = mock<VisitRepository>()
+  private val prisonApiClient = mock<PrisonApiClient>()
 
-  private lateinit var visitSchedulerService: VisitSchedulerService
+  private lateinit var sessionService: SessionService
 
   private val clock =
     Clock.fixed(Instant.parse("2021-01-01T11:15:00.00Z"), ZoneId.systemDefault()) // today is Friday Jan 1st
 
   @BeforeEach
   fun setUp() {
-    visitSchedulerService = VisitSchedulerService(
-      prisonApiClient,
-      visitRepository,
+    sessionService = SessionService(
       sessionTemplateRepository,
-      supportTypeRepository,
+      visitRepository,
+      prisonApiClient,
       clock,
       1,
       100,
@@ -97,7 +93,7 @@ class VisitSchedulerServiceTest {
       )
       mockSessionRepositoryResponse(listOf(dailySession))
 
-      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(7) // expiry date is inclusive
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-01-02T11:30:00"),
@@ -123,7 +119,7 @@ class VisitSchedulerServiceTest {
       )
       mockSessionRepositoryResponse(listOf(weeklySession))
 
-      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-01-08T11:30:00"),
@@ -147,7 +143,7 @@ class VisitSchedulerServiceTest {
       )
       mockSessionRepositoryResponse(listOf(weeklySession))
 
-      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-01-06T11:30:00"), // first wednesday after today (1/1/2021)
@@ -168,7 +164,7 @@ class VisitSchedulerServiceTest {
       )
       mockSessionRepositoryResponse(listOf(singleSession))
 
-      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-02-01T11:30:00")
@@ -184,7 +180,7 @@ class VisitSchedulerServiceTest {
       )
       mockSessionRepositoryResponse(listOf(dailySession))
 
-      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(0)
     }
 
@@ -209,7 +205,7 @@ class VisitSchedulerServiceTest {
 
       mockSessionRepositoryResponse(listOf(monthlySession, dailySession))
 
-      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5)
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp)
         .containsExactly( // ordered by start date time
@@ -239,7 +235,7 @@ class VisitSchedulerServiceTest {
       )
       mockSessionRepositoryResponse(listOf(singleSession))
 
-      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions[0].openVisitBookedCount).isEqualTo(0)
       assertThat(sessions[0].closedVisitBookedCount).isEqualTo(0)
@@ -268,7 +264,7 @@ class VisitSchedulerServiceTest {
       )
       mockVisitRepositoryResponse(listOf(visit))
 
-      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions[0].openVisitBookedCount).isEqualTo(1)
       assertThat(sessions[0].closedVisitBookedCount).isEqualTo(1)
@@ -297,7 +293,7 @@ class VisitSchedulerServiceTest {
       )
       mockVisitRepositoryResponse(listOf(visit))
 
-      val sessions = visitSchedulerService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions[0].openVisitBookedCount).isEqualTo(1)
       assertThat(sessions[0].closedVisitBookedCount).isEqualTo(1)
@@ -336,7 +332,7 @@ class VisitSchedulerServiceTest {
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(OffenderNonAssociationDetails())
 
-      val sessions = visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-02-01T11:30:00")
@@ -376,7 +372,7 @@ class VisitSchedulerServiceTest {
 
       whenever(visitRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
 
-      val sessions = visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
       assertThat(sessions).size().isEqualTo(1)
 
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
@@ -428,7 +424,7 @@ class VisitSchedulerServiceTest {
           )
         )
 
-      val sessions = visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
       assertThat(sessions).size().isEqualTo(0)
 
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
@@ -454,7 +450,7 @@ class VisitSchedulerServiceTest {
         WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
       )
 
-      val sessions = visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
       assertThat(sessions).size().isEqualTo(1)
       assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-02-01T11:30:00")
@@ -484,40 +480,10 @@ class VisitSchedulerServiceTest {
       )
 
       assertThrows<WebClientResponseException> {
-        visitSchedulerService.getVisitSessions(prisonId, prisonerId)
+        sessionService.getVisitSessions(prisonId, prisonerId)
       }
 
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
-    }
-  }
-
-  @Nested
-  @DisplayName("Available support")
-  inner class AvailableSupport {
-
-    private fun mockRepositoryResponse(supportTypes: List<SupportType>) {
-      whenever(
-        supportTypeRepository.findAll()
-      ).thenReturn(supportTypes)
-    }
-
-    @Test
-    fun `returns available support`() {
-
-      val supportType = SupportType(
-        code = 10001,
-        name = "TEST_NAME",
-        description = "This is the description"
-      )
-      mockRepositoryResponse(listOf(supportType))
-
-      val supportTypes = visitSchedulerService.getSupportTypes()
-      assertThat(supportTypes).size().isEqualTo(1)
-      assertThat(supportTypes[0].code).isEqualTo(supportType.code)
-      assertThat(supportTypes[0].name).isEqualTo(supportType.name)
-      assertThat(supportTypes[0].description).isEqualTo(supportType.description)
-
-      Mockito.verify(supportTypeRepository, times(1)).findAll()
     }
   }
 }

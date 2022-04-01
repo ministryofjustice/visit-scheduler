@@ -7,12 +7,12 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitSchedulerService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 
 @Component
 class VisitTask(
-  private val visitSchedulerService: VisitSchedulerService,
+  private val visitService: VisitService,
   @Value("\${task.expired-visit.enabled:false}") private val enabled: Boolean,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriod: Long
 ) {
@@ -23,7 +23,7 @@ class VisitTask(
       return
     }
 
-    val expired = visitSchedulerService.findVisitsByFilter(
+    val expired = visitService.findVisitsByFilter(
       VisitFilter(
         status = VisitStatus.RESERVED,
         modifyTimestamp = LocalDateTime.now().minusMinutes(expiredPeriod)
@@ -34,7 +34,7 @@ class VisitTask(
       log.debug("Expired visits: ${expired.count()}")
     }
 
-    visitSchedulerService.deleteAllVisits(expired)
+    visitService.deleteAllVisits(expired)
   }
 
   companion object {

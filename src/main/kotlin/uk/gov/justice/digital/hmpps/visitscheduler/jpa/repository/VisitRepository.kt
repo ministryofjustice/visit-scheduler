@@ -13,7 +13,5 @@ interface VisitRepository : JpaRepository<Visit, String>, JpaSpecificationExecut
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   fun deleteAllByReferenceIn(reference: List<String>)
 
-  fun findByPrisonerId(prisonerId: String): List<Visit>
-
   fun findByReference(reference: String): Visit?
 }
