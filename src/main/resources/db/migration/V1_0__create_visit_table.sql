@@ -1,7 +1,7 @@
 CREATE TABLE visit
 (
-    id                      serial         NOT NULL PRIMARY KEY,
-    reference               text,
+    id                      serial          NOT NULL PRIMARY KEY,
+    reference               text            UNIQUE,
     session_template_id     integer,
     prisoner_id             VARCHAR(80)     NOT NULL,
     visit_type              VARCHAR(80)     NOT NULL,
