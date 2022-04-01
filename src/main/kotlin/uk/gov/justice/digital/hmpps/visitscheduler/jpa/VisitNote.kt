@@ -32,7 +32,7 @@ data class VisitNote(
   var text: String,
 
   @ManyToOne
-  @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
+  @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false, nullable = false)
   val visit: Visit,
 
 ) {
