@@ -298,8 +298,6 @@ class VisitSchedulerService(
     updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
     updateVisitRequest.sessionId?.let { sessionId -> visitEntity.sessionTemplateId = sessionId }
 
-    updateNotes(updateVisitRequest, visitEntity)
-
     updateVisitRequest.mainContact?.let { updateContact ->
       visitEntity.mainContact?.let { mainContact ->
         mainContact.contactName = updateContact.contactName
@@ -329,22 +327,6 @@ class VisitSchedulerService(
     visitRepository.saveAndFlush(visitEntity)
 
     return VisitDto(visitEntity)
-  }
-
-  private fun updateNotes(
-    updateVisitRequest: UpdateVisitRequest,
-    visitEntity: Visit
-  ) {
-    updateVisitRequest.visitNotes?.let { updateVisitNotes ->
-      visitEntity.visitNotes.clear()
-      visitRepository.saveAndFlush(visitEntity)
-      updateVisitNotes.forEach {
-        visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
-      }
-    } ?: run {
-      visitEntity.visitNotes.clear()
-      visitRepository.saveAndFlush(visitEntity)
-    }
   }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {

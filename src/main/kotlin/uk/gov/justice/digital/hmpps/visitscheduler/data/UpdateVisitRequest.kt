@@ -8,28 +8,22 @@ import java.time.LocalDateTime
 import javax.validation.Valid
 
 data class UpdateVisitRequest(
-  @Schema(description = "Prisoner Id", example = "AF34567G", required = false) val prisonerId: String? = null,
-  @Schema(description = "Prison Id", example = "MDI", required = false) val prisonId: String? = null,
-  @Schema(
-    description = "The date and time of the visit",
-    example = "2018-12-01T13:45:00",
-    required = false
-  ) val startTimestamp: LocalDateTime? = null,
-  @Schema(
-    description = "The finishing date and time of the visit",
-    example = "2018-12-01T13:45:00",
-    required = false
-  ) val endTimestamp: LocalDateTime? = null,
+  @Schema(description = "Prisoner Id", example = "AF34567G", required = false)
+  val prisonerId: String? = null,
+  @Schema(description = "Prison Id", example = "MDI", required = false)
+  val prisonId: String? = null,
+  @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = false)
+  val startTimestamp: LocalDateTime? = null,
+  @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = false)
+  val endTimestamp: LocalDateTime? = null,
   @Schema(description = "Visit Type", example = "STANDARD_SOCIAL", required = false)
   val visitType: VisitType? = null,
   @Schema(description = "Visit Status", example = "RESERVED", required = false)
   val visitStatus: VisitStatus? = null,
-  @Schema(description = "Visit Restriction", example = "OPEN", required = true)
+  @Schema(description = "Visit Restriction", example = "OPEN", required = false)
   val visitRestriction: VisitRestriction? = null,
   @Schema(description = "Visit Room", example = "A1", required = false)
   val visitRoom: String? = null,
-  @Schema(description = "Visit Notes", required = false)
-  val visitNotes: List<@Valid VisitNoteDto>? = null,
   @Schema(description = "Main Contact associated with the visit", required = false)
   @field:Valid
   val mainContact: CreateContactOnVisitRequest? = null,
