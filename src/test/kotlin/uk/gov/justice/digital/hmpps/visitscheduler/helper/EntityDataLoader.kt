@@ -88,7 +88,6 @@ fun visitDeleter(
 
 fun defaultVisit(): Visit {
   return Visit(
-    reference = "test",
     prisonerId = "AF12345G",
     prisonId = "MDI",
     visitRoom = "123c",
