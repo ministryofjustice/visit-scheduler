@@ -5,3 +5,5 @@ CREATE TABLE visit_visitor
     nomis_Person_id         integer         NOT NULL,
     lead_visitor            BOOLEAN
 );
+
+CREATE INDEX idx_visit_visitor_visit_id ON visit_visitor(visit_id);
