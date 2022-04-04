@@ -5,3 +5,5 @@ CREATE TABLE visit_notes
     type               VARCHAR(80)      NOT NULL,
     text               text             NOT NULL
 );
+
+CREATE INDEX idx_visit_notes_visit_id ON visit_notes(visit_id);
