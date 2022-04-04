@@ -7,5 +7,6 @@ enum class VisitStatus(
   RESERVED("Reserved"),
   BOOKED("Booked"),
   CANCELLED("Cancelled"),
-  ATTENDED("Attended")
+  ATTENDED("Attended"),
+  NOT_ATTENDED("Not Attended")
 }
