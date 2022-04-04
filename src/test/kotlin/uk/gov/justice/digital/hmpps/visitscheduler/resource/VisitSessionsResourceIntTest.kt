@@ -196,7 +196,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
     visitCreator(visitRepository)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
-      .withStatus(VisitStatus.CANCELLED_BY_PRISONER)
+      .withStatus(VisitStatus.CANCELLED)
       .save()
 
     webTestClient.get().uri("/visit-sessions?prisonId=MDI")
@@ -236,7 +236,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
     visitCreator(visitRepository)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
-      .withStatus(VisitStatus.CANCELLED_BY_PRISONER)
+      .withStatus(VisitStatus.CANCELLED)
       .withRestriction(VisitRestriction.CLOSED)
       .save()
 
@@ -465,7 +465,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions are returned for a prisoner with a valid non-association with a booking CANCELLED_BY_PRISONER`() {
+  fun `visit sessions are returned for a prisoner with a valid non-association with a booking CANCELLED`() {
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
@@ -479,73 +479,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       .withVisitStart(startDate.atTime(9, 0))
       .withVisitEnd(startDate.atTime(9, 30))
       .withPrisonId(prisonId)
-      .withStatus(VisitStatus.CANCELLED_BY_PRISONER)
-      .save()
-
-    prisonApiMockServer.stubGetOffenderNonAssociation(
-      prisonerId,
-      associationId,
-      startDate.minusMonths(6).toString(),
-      startDate.plusMonths(1).toString()
-    )
-
-    webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-      .exchange()
-      .expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
-  }
-
-  @Test
-  fun `visit sessions are returned for a prisoner with a valid non-association with a booking CANCELLED_BY_VISITOR`() {
-    val prisonId = "MDI"
-    val prisonerId = "A1234AA"
-    val associationId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
-    sessionTemplateCreator(
-      repository = sessionTemplateRepository,
-      sessionTemplate = sessionTemplate(startDate = startDate)
-    ).save()
-    visitCreator(visitRepository)
-      .withPrisonerId(associationId)
-      .withVisitStart(startDate.atTime(9, 0))
-      .withVisitEnd(startDate.atTime(9, 30))
-      .withPrisonId(prisonId)
-      .withStatus(VisitStatus.CANCELLED_BY_VISITOR)
-      .save()
-
-    prisonApiMockServer.stubGetOffenderNonAssociation(
-      prisonerId,
-      associationId,
-      startDate.minusMonths(6).toString(),
-      startDate.plusMonths(1).toString()
-    )
-
-    webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-      .exchange()
-      .expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
-  }
-
-  @Test
-  fun `visit sessions are returned for a prisoner with a valid non-association with a booking CANCELLED_BY_PRISON`() {
-    val prisonId = "MDI"
-    val prisonerId = "A1234AA"
-    val associationId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
-    sessionTemplateCreator(
-      repository = sessionTemplateRepository,
-      sessionTemplate = sessionTemplate(startDate = startDate)
-    ).save()
-    visitCreator(visitRepository)
-      .withPrisonerId(associationId)
-      .withVisitStart(startDate.atTime(9, 0))
-      .withVisitEnd(startDate.atTime(9, 30))
-      .withPrisonId(prisonId)
-      .withStatus(VisitStatus.CANCELLED_BY_PRISON)
+      .withStatus(VisitStatus.CANCELLED)
       .save()
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
