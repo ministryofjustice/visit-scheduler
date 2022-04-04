@@ -15,9 +15,6 @@ data class VisitSession(
   @Schema(description = "The type of visits taking place within this session - code", example = "STANDARD_SOCIAL", required = true)
   val visitType: String,
 
-  @Schema(description = "The type of visits taking place within this session - description", example = "Standard social", required = true)
-  val visitTypeDescription: String,
-
   @Schema(description = "The prison id", example = "LEI", required = true)
   val prisonId: String,
 

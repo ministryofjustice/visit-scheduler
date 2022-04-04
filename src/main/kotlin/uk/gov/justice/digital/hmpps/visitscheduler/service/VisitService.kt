@@ -30,38 +30,37 @@ class VisitService(
     log.info("Creating visit for prisoner")
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
-        prisonId = createVisitRequest.prisonId,
         prisonerId = createVisitRequest.prisonerId,
-        visitType = createVisitRequest.visitType,
-        status = createVisitRequest.visitStatus,
-        visitRestriction = createVisitRequest.visitRestriction,
+        prisonId = createVisitRequest.prisonId,
         visitRoom = createVisitRequest.visitRoom,
+        visitType = createVisitRequest.visitType,
+        visitStatus = createVisitRequest.visitStatus,
+        visitRestriction = createVisitRequest.visitRestriction,
         visitStart = createVisitRequest.startTimestamp,
-        visitEnd = createVisitRequest.endTimestamp,
-        sessionTemplateId = createVisitRequest.sessionId,
+        visitEnd = createVisitRequest.endTimestamp
       )
     )
 
-    createVisitRequest.visitNotes?.let { visitNotes ->
-      visitNotes.forEach {
-        visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
-      }
+    createVisitRequest.visitContact?.let {
+      visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
     }
 
-    createVisitRequest.mainContact?.let {
-      visitEntity.mainContact = createVisitContact(visitEntity, it.contactName, it.contactPhone)
-    }
-
-    createVisitRequest.contactList?.let { contactList ->
+    createVisitRequest.visitors?.let { contactList ->
       contactList.distinctBy { it.nomisPersonId }.forEach {
-        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.leadVisitor))
+        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
       }
     }
 
-    createVisitRequest.supportList?.let { supportList ->
-      supportList.distinctBy { it.supportName }.forEach {
-        supportTypeRepository.findByName(it.supportName) ?: throw SupportNotFoundException("Invalid support ${it.supportName} not found")
-        visitEntity.support.add(createVisitSupport(visitEntity, it.supportName, it.supportDetails))
+    createVisitRequest.visitorSupport?.let { supportList ->
+      supportList.distinctBy { it.type }.forEach {
+        supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
+        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
+      }
+    }
+
+    createVisitRequest.visitNotes?.let { visitNotes ->
+      visitNotes.distinctBy { it.type }.forEach {
+        visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
       }
     }
 
@@ -86,41 +85,43 @@ class VisitService(
 
     updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
     updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
+    updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
+    updateVisitRequest.visitType?.let { visitType -> visitEntity.visitType = visitType }
+    updateVisitRequest.visitStatus?.let { status -> visitEntity.visitStatus = status }
+    updateVisitRequest.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
     updateVisitRequest.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
     updateVisitRequest.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
-    updateVisitRequest.visitType?.let { visitType -> visitEntity.visitType = visitType }
-    updateVisitRequest.visitStatus?.let { status -> visitEntity.status = status }
-    updateVisitRequest.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
-    updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
-    updateVisitRequest.sessionId?.let { sessionId -> visitEntity.sessionTemplateId = sessionId }
 
-    updateVisitRequest.mainContact?.let { updateContact ->
-      visitEntity.mainContact?.let { mainContact ->
-        mainContact.contactName = updateContact.contactName
-        mainContact.contactPhone = updateContact.contactPhone
+    // Update existing or add new
+    updateVisitRequest.visitContact?.let { visitContactUpdate ->
+      visitEntity.visitContact?.let { visitContact ->
+        visitContact.name = visitContactUpdate.name
+        visitContact.telephone = visitContactUpdate.telephone
       } ?: run {
-        visitEntity.mainContact = createVisitContact(visitEntity, updateContact.contactName, updateContact.contactPhone)
+        visitEntity.visitContact = createVisitContact(visitEntity, visitContactUpdate.name, visitContactUpdate.telephone)
       }
     }
 
-    updateVisitRequest.contactList?.let { contactList ->
+    // Replace existing list
+    updateVisitRequest.visitors?.let { visitorsUpdate ->
       visitEntity.visitors.clear()
       visitRepository.saveAndFlush(visitEntity)
-      contactList.distinctBy { it.nomisPersonId }.forEach {
-        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.leadVisitor))
+      visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
+        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
       }
     }
 
-    updateVisitRequest.supportList?.let { supportList ->
+    // Replace existing list
+    updateVisitRequest.visitorSupport?.let { visitSupportUpdate ->
       visitEntity.support.clear()
       visitRepository.saveAndFlush(visitEntity)
-      supportList.distinctBy { it.supportName }.forEach {
-        supportTypeRepository.findByName(it.supportName) ?: throw SupportNotFoundException("Invalid support ${it.supportName} not found")
-        visitEntity.support.add(createVisitSupport(visitEntity, it.supportName, it.supportDetails))
+      visitSupportUpdate.distinctBy { it.type }.forEach {
+        supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
+        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
       }
     }
 
-    visitRepository.saveAndFlush(visitEntity)
+    // visitRepository.saveAndFlush(visitEntity)
 
     return VisitDto(visitEntity)
   }
@@ -146,29 +147,28 @@ class VisitService(
     )
   }
 
-  private fun createVisitContact(visit: Visit, contactName: String, contactPhone: String): VisitContact {
+  private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {
     return VisitContact(
       visitId = visit.id,
-      contactName = contactName,
-      contactPhone = contactPhone,
+      name = name,
+      telephone = telephone,
       visit = visit
     )
   }
 
-  private fun createVisitVisitor(visit: Visit, personId: Long, leadVisitor: Boolean): VisitVisitor {
+  private fun createVisitVisitor(visit: Visit, personId: Long): VisitVisitor {
     return VisitVisitor(
       nomisPersonId = personId,
       visitId = visit.id,
-      leadVisitor = leadVisitor,
       visit = visit
     )
   }
 
-  private fun createVisitSupport(visit: Visit, supportName: String, supportDetails: String?): VisitSupport {
+  private fun createVisitSupport(visit: Visit, type: String, text: String?): VisitSupport {
     return VisitSupport(
-      supportName = supportName,
+      type = type,
       visitId = visit.id,
-      supportDetails = supportDetails,
+      text = text,
       visit = visit
     )
   }

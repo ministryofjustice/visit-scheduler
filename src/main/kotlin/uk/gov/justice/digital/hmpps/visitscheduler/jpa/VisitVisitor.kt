@@ -9,9 +9,15 @@ import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.Table
+import javax.persistence.UniqueConstraint
 
 @Entity
-@Table(name = "VISIT_VISITOR")
+@Table(
+  name = "VISIT_VISITOR",
+  uniqueConstraints = [
+    UniqueConstraint(columnNames = ["VISIT_ID", "NOMIS_PERSON_ID"])
+  ]
+)
 data class VisitVisitor(
 
   @Id
@@ -19,14 +25,11 @@ data class VisitVisitor(
   @Column(name = "ID")
   val id: Long = 0,
 
-  @Column(name = "VISIT_ID", unique = true)
+  @Column(name = "VISIT_ID", nullable = false)
   var visitId: Long,
 
   @Column(name = "NOMIS_PERSON_ID", nullable = false)
   var nomisPersonId: Long,
-
-  @Column(name = "LEAD_VISITOR")
-  val leadVisitor: Boolean = true,
 
   @ManyToOne
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
@@ -44,6 +47,6 @@ data class VisitVisitor(
   override fun hashCode(): Int = id.hashCode()
 
   override fun toString(): String {
-    return this::class.simpleName + "(id=$id, leadVisitor=$leadVisitor)"
+    return this::class.simpleName + "(id=$id)"
   }
 }

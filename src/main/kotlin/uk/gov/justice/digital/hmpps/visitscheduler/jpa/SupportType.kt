@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.jpa
 
+import org.hibernate.annotations.NaturalId
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.Id
@@ -8,11 +9,13 @@ import javax.persistence.Table
 @Entity
 @Table(name = "SUPPORT_TYPE")
 data class SupportType(
+
   @Id
   @Column(name = "CODE")
   val code: Int,
 
-  @Column(name = "NAME", nullable = false)
+  @NaturalId
+  @Column(name = "NAME", nullable = false, unique = true)
   val name: String,
 
   @Column(name = "DESCRIPTION", nullable = false)

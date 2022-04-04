@@ -95,7 +95,6 @@ class SessionService(
           endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
           visitRoomName = sessionTemplate.visitRoom,
           visitType = sessionTemplate.visitType.name,
-          visitTypeDescription = sessionTemplate.visitType.description,
           restrictions = sessionTemplate.restrictions
         )
       }
@@ -139,7 +138,7 @@ class SessionService(
               )
             )
           ).any {
-            it.status == VisitStatus.BOOKED || it.status == VisitStatus.RESERVED
+            it.visitStatus == VisitStatus.BOOKED || it.visitStatus == VisitStatus.RESERVED
           }
         }
     }
@@ -169,7 +168,7 @@ class SessionService(
         )
       )
     ).count {
-      it.status == VisitStatus.BOOKED || it.status == VisitStatus.RESERVED
+      it.visitStatus == VisitStatus.BOOKED || it.visitStatus == VisitStatus.RESERVED
     }
   }
 }

@@ -6,8 +6,8 @@ import javax.validation.constraints.NotBlank
 data class CreateContactOnVisitRequest(
   @Schema(description = "Contact Name", example = "John Smith", required = true)
   @field:NotBlank
-  val contactName: String,
-  @Schema(description = "Contact Phone", example = "01234 567890", required = true)
+  val name: String,
+  @Schema(description = "Contact Phone Number", example = "01234 567890", required = true)
   @field:NotBlank
-  val contactPhone: String
+  val telephone: String
 )

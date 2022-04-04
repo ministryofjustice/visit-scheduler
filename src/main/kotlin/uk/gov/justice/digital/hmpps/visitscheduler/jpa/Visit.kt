@@ -46,17 +46,14 @@ data class Visit(
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
-  var status: VisitStatus,
+  var visitStatus: VisitStatus,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   var visitRestriction: VisitRestriction,
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitNotes: MutableList<VisitNote> = mutableListOf(),
-
   @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var mainContact: VisitContact? = null,
+  var visitContact: VisitContact? = null,
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var visitors: MutableList<VisitVisitor> = mutableListOf(),
@@ -64,8 +61,8 @@ data class Visit(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var support: MutableList<VisitSupport> = mutableListOf(),
 
-  @Column
-  var sessionTemplateId: Long? = null,
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  var visitNotes: MutableList<VisitNote> = mutableListOf(),
 
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)

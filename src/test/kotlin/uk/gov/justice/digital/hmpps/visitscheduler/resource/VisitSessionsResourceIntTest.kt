@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import java.time.LocalDate
@@ -54,8 +55,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       .jsonPath("$[0].prisonId").isEqualTo("MDI")
       .jsonPath("$[0].restrictions").isEqualTo("Only B wing")
       .jsonPath("$[0].visitRoomName").isEqualTo("1")
-      .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
-      .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
+      .jsonPath("$[0].visitType").isEqualTo(VisitType.STANDARD_SOCIAL.name)
       .jsonPath("$[0].openVisitCapacity").isEqualTo(10)
       .jsonPath("$[0].openVisitBookedCount").isEqualTo(0)
       .jsonPath("$[0].closedVisitCapacity").isEqualTo(5)
@@ -186,17 +186,17 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
     visitCreator(visitRepository)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
-      .withStatus(VisitStatus.RESERVED)
+      .withVisitStatus(VisitStatus.RESERVED)
       .save()
     visitCreator(visitRepository)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
-      .withStatus(VisitStatus.BOOKED)
+      .withVisitStatus(VisitStatus.BOOKED)
       .save()
     visitCreator(visitRepository)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
-      .withStatus(VisitStatus.CANCELLED)
+      .withVisitStatus(VisitStatus.CANCELLED)
       .save()
 
     webTestClient.get().uri("/visit-sessions?prisonId=MDI")
@@ -224,19 +224,19 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
     visitCreator(visitRepository)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
-      .withStatus(VisitStatus.RESERVED)
+      .withVisitStatus(VisitStatus.RESERVED)
       .withRestriction(VisitRestriction.CLOSED)
       .save()
     visitCreator(visitRepository)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
-      .withStatus(VisitStatus.BOOKED)
+      .withVisitStatus(VisitStatus.BOOKED)
       .withRestriction(VisitRestriction.CLOSED)
       .save()
     visitCreator(visitRepository)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
-      .withStatus(VisitStatus.CANCELLED)
+      .withVisitStatus(VisitStatus.CANCELLED)
       .withRestriction(VisitRestriction.CLOSED)
       .save()
 
@@ -265,22 +265,22 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
     visitCreator(visitRepository)
       .withVisitStart(dateTime.minusHours(1))
       .withVisitEnd(dateTime)
-      .withStatus(VisitStatus.BOOKED)
+      .withVisitStatus(VisitStatus.BOOKED)
       .save()
     visitCreator(visitRepository)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusMinutes(30))
-      .withStatus(VisitStatus.BOOKED)
+      .withVisitStatus(VisitStatus.BOOKED)
       .save()
     visitCreator(visitRepository)
       .withVisitStart(dateTime.plusMinutes(30))
       .withVisitEnd(dateTime.plusHours(1))
-      .withStatus(VisitStatus.BOOKED)
+      .withVisitStatus(VisitStatus.BOOKED)
       .save()
     visitCreator(visitRepository)
       .withVisitStart(dateTime.plusHours(1))
       .withVisitEnd(dateTime.plusHours(2))
-      .withStatus(VisitStatus.BOOKED)
+      .withVisitStatus(VisitStatus.BOOKED)
       .save()
 
     webTestClient.get().uri("/visit-sessions?prisonId=MDI")
@@ -402,37 +402,6 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions are returned for a prisoner with a valid open non-association with a booking`() {
-    val prisonId = "MDI"
-    val prisonerId = "A1234AA"
-    val associationId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
-    sessionTemplateCreator(
-      repository = sessionTemplateRepository,
-      sessionTemplate = sessionTemplate(startDate = startDate)
-    ).save()
-    visitCreator(visitRepository)
-      .withPrisonerId(associationId)
-      .withVisitStart(startDate.atTime(9, 0))
-      .withVisitEnd(startDate.atTime(9, 30))
-      .withPrisonId(prisonId)
-      .save()
-
-    prisonApiMockServer.stubGetOffenderNonAssociation(
-      prisonerId,
-      associationId,
-      startDate.minusMonths(6).toString()
-    )
-
-    webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-      .exchange()
-      .expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(21)
-  }
-
-  @Test
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking`() {
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
@@ -479,7 +448,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       .withVisitStart(startDate.atTime(9, 0))
       .withVisitEnd(startDate.atTime(9, 30))
       .withPrisonId(prisonId)
-      .withStatus(VisitStatus.CANCELLED)
+      .withVisitStatus(VisitStatus.CANCELLED)
       .save()
 
     prisonApiMockServer.stubGetOffenderNonAssociation(

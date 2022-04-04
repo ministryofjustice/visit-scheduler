@@ -10,7 +10,7 @@ data class VisitFilter(
   val nomisPersonId: Long? = null,
   val startDateTime: LocalDateTime? = null,
   val endDateTime: LocalDateTime? = null,
-  val status: VisitStatus? = null,
+  val visitStatus: VisitStatus? = null,
   val visitRestriction: VisitRestriction? = null,
   val createTimestamp: LocalDateTime? = null,
   val modifyTimestamp: LocalDateTime? = null,

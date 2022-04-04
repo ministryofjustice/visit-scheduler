@@ -23,10 +23,10 @@ data class VisitContact(
   var visitId: Long,
 
   @Column(name = "CONTACT_NAME", nullable = false)
-  var contactName: String,
+  var name: String,
 
   @Column(name = "CONTACT_PHONE", nullable = false)
-  var contactPhone: String,
+  var telephone: String,
 
   @OneToOne
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
@@ -44,6 +44,6 @@ data class VisitContact(
   override fun hashCode(): Int = id.hashCode()
 
   override fun toString(): String {
-    return this::class.simpleName + "(id=$id, contactName=$contactName, contactPhone=$contactPhone)"
+    return this::class.simpleName + "(id=$id, name=$name, telephone=$telephone)"
   }
 }

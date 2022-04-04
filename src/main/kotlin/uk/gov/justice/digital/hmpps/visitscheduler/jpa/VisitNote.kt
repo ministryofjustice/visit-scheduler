@@ -11,9 +11,15 @@ import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.Table
+import javax.persistence.UniqueConstraint
 
 @Entity
-@Table(name = "VISIT_NOTES")
+@Table(
+  name = "VISIT_NOTES",
+  uniqueConstraints = [
+    UniqueConstraint(columnNames = ["VISIT_ID", "TYPE"])
+  ]
+)
 data class VisitNote(
 
   @Id
@@ -21,7 +27,7 @@ data class VisitNote(
   @Column(name = "ID")
   val id: Long = 0,
 
-  @Column(name = "VISIT_ID", unique = true)
+  @Column(name = "VISIT_ID", nullable = false)
   var visitId: Long,
 
   @Column(nullable = false)

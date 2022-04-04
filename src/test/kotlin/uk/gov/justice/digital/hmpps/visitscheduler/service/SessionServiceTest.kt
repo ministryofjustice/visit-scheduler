@@ -257,10 +257,9 @@ class SessionServiceTest {
         visitEnd = LocalDate.parse("2021-02-01").atTime(12, 30),
         visitType = VisitType.STANDARD_SOCIAL,
         prisonId = "MDI",
-        status = VisitStatus.BOOKED,
+        visitStatus = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "123c",
-        sessionTemplateId = null,
       )
       mockVisitRepositoryResponse(listOf(visit))
 
@@ -286,10 +285,9 @@ class SessionServiceTest {
         visitEnd = LocalDate.parse("2021-02-01").atTime(12, 30),
         visitType = VisitType.STANDARD_SOCIAL,
         prisonId = "MDI",
-        status = VisitStatus.RESERVED,
+        visitStatus = VisitStatus.RESERVED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "123c",
-        sessionTemplateId = null,
       )
       mockVisitRepositoryResponse(listOf(visit))
 
@@ -416,10 +414,9 @@ class SessionServiceTest {
               visitEnd = startDate.plusDays(2).atTime(11, 30),
               visitType = VisitType.STANDARD_SOCIAL,
               prisonId = prisonId,
-              status = VisitStatus.BOOKED,
+              visitStatus = VisitStatus.BOOKED,
               visitRestriction = VisitRestriction.OPEN,
               visitRoom = "123c",
-              sessionTemplateId = null,
             )
           )
         )

@@ -62,12 +62,12 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.prisonId").isEqualTo("LEI")
         .jsonPath("$.startTime").isEqualTo("14:30:00")
         .jsonPath("$.endTime").isEqualTo("16:30:00")
-        .jsonPath("$.frequency").isEqualTo("WEEKLY")
+        .jsonPath("$.frequency").isEqualTo(SessionFrequency.WEEKLY.name)
         .jsonPath("$.restrictions").isEqualTo("restrictions text")
         .jsonPath("$.openCapacity").isEqualTo(5)
         .jsonPath("$.closedCapacity").isEqualTo(2)
         .jsonPath("$.visitRoom").isEqualTo("A1")
-        .jsonPath("$.visitType").isEqualTo("STANDARD_SOCIAL")
+        .jsonPath("$.visitType").isEqualTo(VisitType.STANDARD_SOCIAL.name)
         .jsonPath("$.sessionTemplateId").isNumber
     }
 
@@ -228,10 +228,10 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.startTime").isEqualTo("09:00:00")
         .jsonPath("$.endTime").isEqualTo("10:00:00")
         .jsonPath("$.startDate").isEqualTo("2021-01-01")
-        .jsonPath("$.visitType").isEqualTo("STANDARD_SOCIAL")
+        .jsonPath("$.visitType").isEqualTo(VisitType.STANDARD_SOCIAL.name)
         .jsonPath("$.visitRoom").isEqualTo("1")
         .jsonPath("$.restrictions").isEqualTo("Only A wing")
-        .jsonPath("$.frequency").isEqualTo("WEEKLY")
+        .jsonPath("$.frequency").isEqualTo(SessionFrequency.WEEKLY.name)
         .jsonPath("$.closedCapacity").isEqualTo(5)
         .jsonPath("$.openCapacity").isEqualTo(10)
     }

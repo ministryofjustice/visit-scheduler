@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.resource
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
-import org.junit.jupiter.api.Disabled
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -51,15 +50,14 @@ class VisitResourceIntTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitStatus = VisitStatus.RESERVED,
       visitRestriction = VisitRestriction.OPEN,
-      mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
-      contactList = listOf(CreateVisitorOnVisitRequest(123)),
-      supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
+      visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+      visitors = listOf(CreateVisitorOnVisitRequest(123)),
+      visitorSupport = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
       visitNotes = listOf(
         VisitNoteDto(type = VISITOR_CONCERN, "My mother in-law is coming"),
         VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again"),
         VisitNoteDto(type = VISIT_COMMENT, "Mother in-law should be watched at all times")
-      ),
-      sessionId = null,
+      )
     )
 
     @Test
@@ -84,30 +82,41 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].prisonId").isEqualTo("MDI")
         .jsonPath("$[0].prisonerId").isEqualTo("FF0000FF")
         .jsonPath("$[0].visitRoom").isEqualTo("A1")
-        .jsonPath("$[0].visitType").isEqualTo("STANDARD_SOCIAL")
-        .jsonPath("$[0].visitTypeDescription").isEqualTo("Standard Social")
+        .jsonPath("$[0].visitType").isEqualTo(VisitType.STANDARD_SOCIAL.name)
         .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.toString())
         .jsonPath("$[0].endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
-        .jsonPath("$[0].visitStatus").isEqualTo("RESERVED")
-        .jsonPath("$[0].visitStatusDescription").isEqualTo("Reserved")
-        .jsonPath("$[0].visitRestriction").isEqualTo("OPEN")
-        .jsonPath("$[0].visitRestrictionDescription").isEqualTo("Open")
-        .jsonPath("$[0].mainContact.contactName").isNotEmpty
-        .jsonPath("$[0].mainContact.contactName").isEqualTo("John Smith")
-        .jsonPath("$[0].mainContact.contactPhone").isEqualTo("01234 567890")
+        .jsonPath("$[0].visitStatus").isEqualTo(VisitStatus.RESERVED.name)
+        .jsonPath("$[0].visitRestriction").isEqualTo(VisitRestriction.OPEN.name)
+        .jsonPath("$[0].visitContact.name").isNotEmpty
+        .jsonPath("$[0].visitContact.name").isEqualTo("John Smith")
+        .jsonPath("$[0].visitContact.telephone").isEqualTo("01234 567890")
         .jsonPath("$[0].visitors.length()").isEqualTo(1)
         .jsonPath("$[0].visitors[0].nomisPersonId").isEqualTo(123)
-        .jsonPath("$[0].visitors[0].leadVisitor").isEqualTo(false)
-        .jsonPath("$[0].visitNotes.length()").isEqualTo(3)
-        .jsonPath("$[0].visitNotes[0].type").isEqualTo("VISITOR_CONCERN")
-        .jsonPath("$[0].visitNotes[0].text").isEqualTo("My mother in-law is coming")
-        .jsonPath("$[0].visitNotes[1].type").isEqualTo("VISIT_OUTCOMES")
-        .jsonPath("$[0].visitNotes[1].text").isEqualTo("My mother wont visit again")
-        .jsonPath("$[0].visitNotes[2].type").isEqualTo("VISIT_COMMENT")
-        .jsonPath("$[0].visitNotes[2].text").isEqualTo("Mother in-law should be watched at all times")
         .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
-        .jsonPath("$[0].visitorSupport[0].supportName").isEqualTo("OTHER")
-        .jsonPath("$[0].visitorSupport[0].supportDetails").isEqualTo("Some Text")
+        .jsonPath("$[0].visitorSupport[0].type").isEqualTo("OTHER")
+        .jsonPath("$[0].visitorSupport[0].text").isEqualTo("Some Text")
+    }
+
+    @Test
+    fun `create visit response does not contain legacy data`() {
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest
+          )
+        )
+        .exchange()
+        .expectStatus().isCreated
+
+      webTestClient.get().uri("/visits?prisonerId=FF0000FF")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(1)
+        .jsonPath("$[0].reference").isNotEmpty
+        .jsonPath("$[0].visitNotes").doesNotExist()
     }
 
     @Test
@@ -121,12 +130,12 @@ class VisitResourceIntTest : IntegrationTestBase() {
         visitStatus = VisitStatus.RESERVED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "A1",
-        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
-        contactList = listOf(
+        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitors = listOf(
           CreateVisitorOnVisitRequest(123),
           CreateVisitorOnVisitRequest(123)
         ),
-        supportList = listOf(
+        visitorSupport = listOf(
           CreateSupportOnVisitRequest("OTHER", "Some Text"),
           CreateSupportOnVisitRequest("OTHER", "Some Text")
         ),
@@ -164,8 +173,8 @@ class VisitResourceIntTest : IntegrationTestBase() {
         visitStatus = VisitStatus.RESERVED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "A1",
-        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
-        supportList = listOf(CreateSupportOnVisitRequest("ANYTHINGWILLDO")),
+        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitorSupport = listOf(CreateSupportOnVisitRequest("ANYTHINGWILLDO")),
       )
 
       webTestClient.post().uri("/visits")
@@ -457,7 +466,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitStart(visitTime)
         .withVisitEnd(visitTime.plusHours(1))
         .withVisitType(VisitType.STANDARD_SOCIAL)
-        .withStatus(VisitStatus.RESERVED)
+        .withVisitStatus(VisitStatus.RESERVED)
         .save()
 
       visitFull = visitCreator(visitRepository)
@@ -467,14 +476,13 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitStart(visitTime.plusDays(2))
         .withVisitEnd(visitTime.plusDays(2).plusHours(1))
         .withVisitType(VisitType.FAMILY)
-        .withStatus(VisitStatus.BOOKED)
-        .withSessionTemplateId(1234560)
+        .withVisitStatus(VisitStatus.BOOKED)
         .save()
       visitNoteCreator(visit = visitFull!!, text = "Some text outcomes", type = VISIT_OUTCOMES)
       visitNoteCreator(visit = visitFull!!, text = "Some text concerns", type = VISITOR_CONCERN)
       visitNoteCreator(visit = visitFull!!, text = "Some text comment", type = VISIT_COMMENT)
       visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
-      visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, leadVisitor = true)
+      visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L)
       visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
       visitRepository.saveAndFlush(visitFull!!)
     }
@@ -491,10 +499,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         visitType = VisitType.FAMILY,
         visitStatus = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.CLOSED,
-        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
-        contactList = listOf(CreateVisitorOnVisitRequest(123L)),
-        supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
-        sessionId = 123L,
+        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitors = listOf(CreateVisitorOnVisitRequest(123L)),
+        visitorSupport = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
       )
 
       webTestClient.put().uri("/visits/${visitMin!!.reference}")
@@ -513,16 +520,14 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
         .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
         .jsonPath("$.visitRestriction").isEqualTo(updateRequest.visitRestriction!!.name)
-        .jsonPath("$.mainContact.contactName").isNotEmpty
-        .jsonPath("$.mainContact.contactName").isEqualTo(updateRequest.mainContact!!.contactName)
-        .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)
-        .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
-        .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
-        .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
-        .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.supportList!!.size)
-        .jsonPath("$.visitorSupport[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
-        .jsonPath("$.visitorSupport[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
-        .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
+        .jsonPath("$.visitContact.name").isNotEmpty
+        .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
+        .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
+        .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
+        .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!![0].nomisPersonId)
+        .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
+        .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!![0].type)
+        .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!![0].text!!)
     }
 
     @Test
@@ -537,10 +542,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         visitType = VisitType.FAMILY,
         visitStatus = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.CLOSED,
-        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
-        contactList = listOf(CreateVisitorOnVisitRequest(123L)),
-        supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
-        sessionId = 123L,
+        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitors = listOf(CreateVisitorOnVisitRequest(123L)),
+        visitorSupport = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
       )
 
       webTestClient.put().uri("/visits/${visitFull!!.reference}")
@@ -559,53 +563,21 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
         .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
         .jsonPath("$.visitRestriction").isEqualTo(updateRequest.visitRestriction!!.name)
-        .jsonPath("$.mainContact.contactName").isNotEmpty
-        .jsonPath("$.mainContact.contactName").isEqualTo(updateRequest.mainContact!!.contactName)
-        .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)
-        .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
-        .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
-        .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
-        .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.supportList!!.size)
-        .jsonPath("$.visitorSupport[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
-        .jsonPath("$.visitorSupport[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
-        .jsonPath("$.sessionId").isEqualTo(updateRequest.sessionId!!)
-    }
-
-    @Disabled("Re-enable for VB-600")
-    @Test
-    fun `put visit by reference - delete notes`() {
-
-      val updateRequest = UpdateVisitRequest(
-        prisonerId = "FF0000AB",
-        prisonId = "AAB",
-        visitRoom = "A2",
-        startTimestamp = visitTime.plusDays(2),
-        endTimestamp = visitTime.plusDays(2).plusHours(1),
-        visitType = VisitType.FAMILY,
-        visitStatus = VisitStatus.BOOKED,
-        visitRestriction = VisitRestriction.CLOSED,
-        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
-        contactList = listOf(CreateVisitorOnVisitRequest(123L)),
-        supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
-        sessionId = 123L,
-      )
-
-      webTestClient.put().uri("/visits/${visitFull!!.reference}")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(updateRequest)
-        )
-        .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .jsonPath("$.visitNotes").isEmpty
+        .jsonPath("$.visitContact.name").isNotEmpty
+        .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
+        .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
+        .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
+        .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!![0].nomisPersonId)
+        .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
+        .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!![0].type)
+        .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!![0].text!!)
     }
 
     @Test
     fun `put visit by reference - amend contact`() {
 
       val updateRequest = UpdateVisitRequest(
-        mainContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
       )
 
       webTestClient.put().uri("/visits/${visitFull!!.reference}")
@@ -616,16 +588,16 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.mainContact.contactName").isNotEmpty
-        .jsonPath("$.mainContact.contactName").isEqualTo(updateRequest.mainContact!!.contactName)
-        .jsonPath("$.mainContact.contactPhone").isEqualTo(updateRequest.mainContact!!.contactPhone)
+        .jsonPath("$.visitContact.name").isNotEmpty
+        .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
+        .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
     }
 
     @Test
     fun `put visit by reference - amend visitors`() {
 
       val updateRequest = UpdateVisitRequest(
-        contactList = listOf(CreateVisitorOnVisitRequest(123L)),
+        visitors = listOf(CreateVisitorOnVisitRequest(123L)),
       )
 
       webTestClient.put().uri("/visits/${visitFull!!.reference}")
@@ -636,16 +608,15 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.visitors.length()").isEqualTo(updateRequest.contactList!!.size)
-        .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.contactList!![0].nomisPersonId)
-        .jsonPath("$.visitors[0].leadVisitor").isEqualTo(updateRequest.contactList!![0].leadVisitor)
+        .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
+        .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!![0].nomisPersonId)
     }
 
     @Test
     fun `put visit by reference - amend support`() {
 
       val updateRequest = UpdateVisitRequest(
-        supportList = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
+        visitorSupport = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
       )
 
       webTestClient.put().uri("/visits/${visitFull!!.reference}")
@@ -656,9 +627,9 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.supportList!!.size)
-        .jsonPath("$.visitorSupport[0].supportName").isEqualTo(updateRequest.supportList!![0].supportName)
-        .jsonPath("$.visitorSupport[0].supportDetails").isEqualTo(updateRequest.supportList!![0].supportDetails!!)
+        .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
+        .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!![0].type)
+        .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!![0].text!!)
     }
 
     @Test

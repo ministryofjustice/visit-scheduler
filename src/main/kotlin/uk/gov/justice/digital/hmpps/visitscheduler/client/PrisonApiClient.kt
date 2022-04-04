@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.client
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
@@ -24,9 +22,5 @@ class PrisonApiClient(
       .retrieve()
       .bodyToMono(offenderNonAssociationDetails)
       .block(apiTimeout)
-  }
-
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }
