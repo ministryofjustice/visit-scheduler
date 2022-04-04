@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.UpdateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitSchedulerService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 import javax.validation.Valid
 
@@ -33,7 +33,7 @@ import javax.validation.Valid
 @Validated
 @RequestMapping(name = "Visit Resource", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitResource(
-  private val visitSchedulerService: VisitSchedulerService
+  private val visitService: VisitService
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -73,7 +73,7 @@ class VisitResource(
   )
   fun createVisit(
     @RequestBody @Valid createVisitRequest: CreateVisitRequest
-  ): VisitDto = visitSchedulerService.createVisit(createVisitRequest)
+  ): VisitDto = visitService.createVisit(createVisitRequest)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping
@@ -131,7 +131,7 @@ class VisitResource(
       example = "12322"
     ) nomisPersonId: Long?
   ): List<VisitDto> =
-    visitSchedulerService.findVisitsByFilter(
+    visitService.findVisitsByFilter(
       VisitFilter(
         prisonerId = prisonerId?.trim(),
         prisonId = prisonId?.trim(),
@@ -145,7 +145,7 @@ class VisitResource(
   @GetMapping("/{reference}")
   @Operation(
     summary = "Get visit",
-    description = "Retrieve visit by visit id",
+    description = "Retrieve visit by visit reference",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -173,11 +173,10 @@ class VisitResource(
       ),
     ]
   )
-  fun getVisitById(
+  fun getVisitByReference(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String
-  ): VisitDto =
-    visitSchedulerService.getVisitByReference(reference.trim())
+  ): VisitDto = visitService.getVisitByReference(reference.trim())
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping("/{reference}")
@@ -223,13 +222,13 @@ class VisitResource(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String,
     @RequestBody @Valid updateVisitRequest: UpdateVisitRequest
-  ): VisitDto = visitSchedulerService.updateVisit(reference.trim(), updateVisitRequest)
+  ): VisitDto = visitService.updateVisit(reference.trim(), updateVisitRequest)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @DeleteMapping("/{reference}")
   @Operation(
     summary = "Delete visit",
-    description = "Delete a visit by visit id",
+    description = "Delete a visit by visit reference",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -251,6 +250,6 @@ class VisitResource(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String
   ) {
-    visitSchedulerService.deleteVisit(reference.trim())
+    visitService.deleteVisit(reference.trim())
   }
 }

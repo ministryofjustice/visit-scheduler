@@ -12,13 +12,13 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.data.SupportTypeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitSchedulerService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SupportService
 
 @RestController
 @Validated
 @RequestMapping(name = "Support Resource", path = ["/visit-support"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitSupportResource(
-  private val visitSchedulerService: VisitSchedulerService
+  private val supportService: SupportService
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -43,5 +43,5 @@ class VisitSupportResource(
       )
     ]
   )
-  fun getSupportTypes(): List<SupportTypeDto> = visitSchedulerService.getSupportTypes()
+  fun getSupportTypes(): List<SupportTypeDto> = supportService.getSupportTypes()
 }

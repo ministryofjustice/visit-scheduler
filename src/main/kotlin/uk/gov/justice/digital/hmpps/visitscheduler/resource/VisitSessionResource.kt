@@ -14,13 +14,13 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitSchedulerService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 
 @RestController
 @Validated
-@RequestMapping(name = "Visit Resource", path = ["/visit-sessions"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(name = "Session Resource", path = ["/visit-sessions"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitSessionResource(
-  private val visitSchedulerService: VisitSchedulerService
+  private val sessionService: SessionService
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -67,5 +67,5 @@ class VisitSessionResource(
       example = "28"
     ) max: Long?
   ): List<VisitSession> =
-    visitSchedulerService.getVisitSessions(prisonId, prisonerId, min, max)
+    sessionService.getVisitSessions(prisonId, prisonerId, min, max)
 }

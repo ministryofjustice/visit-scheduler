@@ -19,14 +19,14 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.SessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitSchedulerService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import javax.validation.Valid
 
 @RestController
 @Validated
-@RequestMapping(name = "Visit Resource", path = ["/visit-session-templates"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(name = "Session Resource", path = ["/visit-session-templates"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitSessionTemplateResource(
-  private val visitSchedulerService: VisitSchedulerService
+  private val sessionTemplateService: SessionTemplateService
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -66,7 +66,7 @@ class VisitSessionTemplateResource(
   )
   fun createSessionTemplate(
     @RequestBody @Valid createSessionTemplateRequest: CreateSessionTemplateRequest
-  ): SessionTemplateDto = visitSchedulerService.createSessionTemplate(createSessionTemplateRequest)
+  ): SessionTemplateDto = sessionTemplateService.createSessionTemplate(createSessionTemplateRequest)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping
@@ -90,7 +90,7 @@ class VisitSessionTemplateResource(
       )
     ]
   )
-  fun getSessionTemplates(): List<SessionTemplateDto> = visitSchedulerService.getSessionTemplates()
+  fun getSessionTemplates(): List<SessionTemplateDto> = sessionTemplateService.getSessionTemplates()
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping("/{templateId}")
@@ -117,7 +117,7 @@ class VisitSessionTemplateResource(
   fun getSessionTemplate(
     @Schema(description = "Template id", example = "45645", required = true)
     @PathVariable templateId: Long
-  ): SessionTemplateDto = visitSchedulerService.getSessionTemplates(templateId)
+  ): SessionTemplateDto = sessionTemplateService.getSessionTemplates(templateId)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @DeleteMapping("/{templateId}")
@@ -145,6 +145,6 @@ class VisitSessionTemplateResource(
     @Schema(description = "session template id", example = "45645", required = true)
     @PathVariable templateId: Long
   ) {
-    visitSchedulerService.deleteSessionTemplate(templateId)
+    sessionTemplateService.deleteSessionTemplate(templateId)
   }
 }

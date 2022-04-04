@@ -26,4 +26,5 @@ class ApplicationInsightsConfiguration {
   }
 }
 
+@Suppress("unused")
 fun TelemetryClient.trackEvent(name: String, properties: Map<String, String>) = this.trackEvent(name, properties, null)
