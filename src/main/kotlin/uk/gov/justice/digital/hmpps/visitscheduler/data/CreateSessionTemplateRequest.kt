@@ -23,7 +23,7 @@ data class CreateSessionTemplateRequest(
   val startDate: LocalDate,
   @Schema(description = "The expiry date of the session template", example = "2019-12-02", required = true)
   val expiryDate: LocalDate?,
-  @Schema(description = "visit type", example = "STANDARD_SOCIAL", required = true)
+  @Schema(description = "visit type", example = "SOCIAL", required = true)
   @NotNull
   val visitType: VisitType,
   @Schema(description = "visit room", example = "A1", required = true)
@@ -34,10 +34,10 @@ data class CreateSessionTemplateRequest(
   @Schema(description = "frequency", required = true)
   @NotNull
   val frequency: SessionFrequency,
-  @Schema(description = "closed capacity", example = "STANDARD_SOCIAL", required = true)
+  @Schema(description = "closed capacity", example = "10", required = true)
   @NotNull
   val closedCapacity: Int,
-  @Schema(description = "open capacity", example = "STANDARD_SOCIAL", required = true)
+  @Schema(description = "open capacity", example = "50", required = true)
   @NotNull
   val openCapacity: Int,
 )

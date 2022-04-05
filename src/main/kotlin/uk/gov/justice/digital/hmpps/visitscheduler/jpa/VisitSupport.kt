@@ -9,9 +9,15 @@ import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.Table
+import javax.persistence.UniqueConstraint
 
 @Entity
-@Table(name = "VISIT_SUPPORT")
+@Table(
+  name = "VISIT_SUPPORT",
+  uniqueConstraints = [
+    UniqueConstraint(columnNames = ["VISIT_ID", "TYPE"])
+  ]
+)
 data class VisitSupport(
 
   @Id
@@ -19,14 +25,14 @@ data class VisitSupport(
   @Column(name = "ID")
   val id: Long = 0,
 
-  @Column(name = "VISIT_ID", unique = true)
+  @Column(name = "VISIT_ID", nullable = false)
   var visitId: Long,
 
-  @Column(name = "SUPPORT_NAME", nullable = false)
-  var supportName: String,
+  @Column(name = "TYPE", nullable = false)
+  var type: String,
 
-  @Column(name = "SUPPORT_DETAILS", nullable = true)
-  var supportDetails: String? = null,
+  @Column(name = "TEXT", nullable = true)
+  var text: String? = null,
 
   @ManyToOne
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
@@ -44,6 +50,6 @@ data class VisitSupport(
   override fun hashCode(): Int = id.hashCode()
 
   override fun toString(): String {
-    return this::class.simpleName + "(id=$id, supportDetails=$supportDetails)"
+    return this::class.simpleName + "(id=$id, text=$text)"
   }
 }

@@ -41,23 +41,13 @@ class VisitBuilder(
     return this
   }
 
-  fun withVisitStart(visitDateTime: LocalDateTime): VisitBuilder {
-    this.visit = visit.copy(visitStart = visitDateTime)
-    return this
-  }
-
-  fun withVisitEnd(visitDateTime: LocalDateTime): VisitBuilder {
-    this.visit = visit.copy(visitEnd = visitDateTime)
-    return this
-  }
-
   fun withVisitType(type: VisitType): VisitBuilder {
     this.visit = visit.copy(visitType = type)
     return this
   }
 
-  fun withStatus(status: VisitStatus): VisitBuilder {
-    this.visit = visit.copy(status = status)
+  fun withVisitStatus(status: VisitStatus): VisitBuilder {
+    this.visit = visit.copy(visitStatus = status)
     return this
   }
 
@@ -66,8 +56,13 @@ class VisitBuilder(
     return this
   }
 
-  fun withSessionTemplateId(id: Long): VisitBuilder {
-    this.visit = visit.copy(sessionTemplateId = id)
+  fun withVisitStart(visitDateTime: LocalDateTime): VisitBuilder {
+    this.visit = visit.copy(visitStart = visitDateTime)
+    return this
+  }
+
+  fun withVisitEnd(visitDateTime: LocalDateTime): VisitBuilder {
+    this.visit = visit.copy(visitEnd = visitDateTime)
     return this
   }
 }
@@ -93,8 +88,8 @@ fun defaultVisit(): Visit {
     visitRoom = "123c",
     visitStart = LocalDateTime.of(2021, 10, 23, 10, 30),
     visitEnd = LocalDateTime.of(2021, 10, 23, 11, 30),
-    visitType = VisitType.STANDARD_SOCIAL,
-    status = VisitStatus.RESERVED,
+    visitType = VisitType.SOCIAL,
+    visitStatus = VisitStatus.RESERVED,
     visitRestriction = VisitRestriction.OPEN,
   )
 }
@@ -104,11 +99,39 @@ fun visitContactCreator(
   name: String,
   phone: String,
 ) {
-  visit.mainContact = VisitContact(
+  visit.visitContact = VisitContact(
     visitId = visit.id,
-    contactName = name,
-    contactPhone = phone,
+    name = name,
+    telephone = phone,
     visit = visit
+  )
+}
+
+fun visitVisitorCreator(
+  visit: Visit,
+  nomisPersonId: Long,
+) {
+  visit.visitors.add(
+    VisitVisitor(
+      nomisPersonId = nomisPersonId,
+      visitId = visit.id,
+      visit = visit
+    )
+  )
+}
+
+fun visitSupportCreator(
+  visit: Visit,
+  name: String,
+  details: String?,
+) {
+  visit.support.add(
+    VisitSupport(
+      type = name,
+      visitId = visit.id,
+      text = details,
+      visit = visit
+    )
   )
 }
 
@@ -122,36 +145,6 @@ fun visitNoteCreator(
       visitId = visit.id,
       type = type,
       text = text,
-      visit = visit
-    )
-  )
-}
-
-fun visitVisitorCreator(
-  visit: Visit,
-  nomisPersonId: Long,
-  leadVisitor: Boolean = false,
-) {
-  visit.visitors.add(
-    VisitVisitor(
-      nomisPersonId = nomisPersonId,
-      visitId = visit.id,
-      leadVisitor = leadVisitor,
-      visit = visit
-    )
-  )
-}
-
-fun visitSupportCreator(
-  visit: Visit,
-  name: String,
-  details: String?,
-) {
-  visit.support.add(
-    VisitSupport(
-      supportName = name,
-      visitId = visit.id,
-      supportDetails = details,
       visit = visit
     )
   )
@@ -199,6 +192,6 @@ fun defaultSessionTemplate(): SessionTemplate {
     closedCapacity = 1,
     visitRoom = "3B",
     restrictions = "Restricted to B wing",
-    visitType = VisitType.STANDARD_SOCIAL
+    visitType = VisitType.SOCIAL
   )
 }

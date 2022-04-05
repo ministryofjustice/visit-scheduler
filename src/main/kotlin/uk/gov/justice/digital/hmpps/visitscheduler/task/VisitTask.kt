@@ -25,7 +25,7 @@ class VisitTask(
 
     val expired = visitService.findVisitsByFilter(
       VisitFilter(
-        status = VisitStatus.RESERVED,
+        visitStatus = VisitStatus.RESERVED,
         modifyTimestamp = LocalDateTime.now().minusMinutes(expiredPeriod)
       )
     )

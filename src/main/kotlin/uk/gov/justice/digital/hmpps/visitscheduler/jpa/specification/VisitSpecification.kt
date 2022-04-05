@@ -38,8 +38,8 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
       predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, this))
     }
 
-    filter.status?.run {
-      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::status.name), this))
+    filter.visitStatus?.run {
+      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::visitStatus.name), this))
     }
 
     filter.visitRestriction?.run {

@@ -10,6 +10,7 @@ class SupportService(
 ) {
 
   fun getSupportTypes(): List<SupportTypeDto> {
+    // Revisit externalising support types and content management
     return supportTypeRepository.findAll().sortedBy { it.code }.map { SupportTypeDto(it) }
   }
 }

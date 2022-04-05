@@ -50,8 +50,7 @@ class SupportServiceTest {
 
       val supportTypes = supportService.getSupportTypes()
       assertThat(supportTypes).size().isEqualTo(1)
-      assertThat(supportTypes[0].code).isEqualTo(supportType.code)
-      assertThat(supportTypes[0].name).isEqualTo(supportType.name)
+      assertThat(supportTypes[0].type).isEqualTo(supportType.name)
       assertThat(supportTypes[0].description).isEqualTo(supportType.description)
 
       Mockito.verify(supportTypeRepository, times(1)).findAll()

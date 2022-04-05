@@ -61,6 +61,19 @@ class SessionService(
     return available.sortedWith(compareBy { it.startTimestamp })
   }
 
+  fun visitBookedCount(session: VisitSession, restriction: VisitRestriction): Int {
+    return visitRepository.findAll(
+      VisitSpecification(
+        VisitFilter(
+          prisonId = session.prisonId,
+          startDateTime = session.startTimestamp,
+          endDateTime = session.endTimestamp,
+          visitRestriction = restriction
+        )
+      )
+    ).count { isActiveStatus(it.visitStatus) }
+  }
+
   // from the start date calculate the slots for based on chosen frequency  (expiry is inclusive)
   private fun buildVisitSessionsUsingTemplate(
     sessionTemplate: SessionTemplate,
@@ -94,8 +107,7 @@ class SessionService(
           closedVisitCapacity = sessionTemplate.closedCapacity,
           endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
           visitRoomName = sessionTemplate.visitRoom,
-          visitType = sessionTemplate.visitType.name,
-          visitTypeDescription = sessionTemplate.visitType.description,
+          visitType = sessionTemplate.visitType,
           restrictions = sessionTemplate.restrictions
         )
       }
@@ -138,9 +150,7 @@ class SessionService(
                 if (wholeDay == true) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
               )
             )
-          ).any {
-            it.status == VisitStatus.BOOKED || it.status == VisitStatus.RESERVED
-          }
+          ).any { isActiveStatus(it.visitStatus) }
         }
     }
   }
@@ -158,18 +168,6 @@ class SessionService(
     }
   }
 
-  fun visitBookedCount(session: VisitSession, restriction: VisitRestriction): Int {
-    return visitRepository.findAll(
-      VisitSpecification(
-        VisitFilter(
-          prisonId = session.prisonId,
-          startDateTime = session.startTimestamp,
-          endDateTime = session.endTimestamp,
-          visitRestriction = restriction
-        )
-      )
-    ).count {
-      it.status == VisitStatus.BOOKED || it.status == VisitStatus.RESERVED
-    }
-  }
+  private fun isActiveStatus(status: VisitStatus) =
+    status == VisitStatus.BOOKED || status == VisitStatus.RESERVED
 }
