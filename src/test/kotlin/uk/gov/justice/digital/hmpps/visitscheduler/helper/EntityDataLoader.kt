@@ -88,7 +88,7 @@ fun defaultVisit(): Visit {
     visitRoom = "123c",
     visitStart = LocalDateTime.of(2021, 10, 23, 10, 30),
     visitEnd = LocalDateTime.of(2021, 10, 23, 11, 30),
-    visitType = VisitType.STANDARD_SOCIAL,
+    visitType = VisitType.SOCIAL,
     visitStatus = VisitStatus.RESERVED,
     visitRestriction = VisitRestriction.OPEN,
   )
@@ -192,6 +192,6 @@ fun defaultSessionTemplate(): SessionTemplate {
     closedCapacity = 1,
     visitRoom = "3B",
     restrictions = "Restricted to B wing",
-    visitType = VisitType.STANDARD_SOCIAL
+    visitType = VisitType.SOCIAL
   )
 }

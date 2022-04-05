@@ -45,7 +45,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
       prisonId = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
-      visitType = VisitType.STANDARD_SOCIAL,
+      visitType = VisitType.SOCIAL,
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitStatus = VisitStatus.RESERVED,
@@ -82,7 +82,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .jsonPath("$[0].prisonId").isEqualTo("MDI")
         .jsonPath("$[0].prisonerId").isEqualTo("FF0000FF")
         .jsonPath("$[0].visitRoom").isEqualTo("A1")
-        .jsonPath("$[0].visitType").isEqualTo(VisitType.STANDARD_SOCIAL.name)
+        .jsonPath("$[0].visitType").isEqualTo(VisitType.SOCIAL.name)
         .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.toString())
         .jsonPath("$[0].endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
         .jsonPath("$[0].visitStatus").isEqualTo(VisitStatus.RESERVED.name)
@@ -126,7 +126,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         prisonId = "MDI",
         startTimestamp = visitTime,
         endTimestamp = visitTime.plusHours(1),
-        visitType = VisitType.STANDARD_SOCIAL,
+        visitType = VisitType.SOCIAL,
         visitStatus = VisitStatus.RESERVED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "A1",
@@ -169,7 +169,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         prisonId = "MDI",
         startTimestamp = visitTime,
         endTimestamp = visitTime.plusHours(1),
-        visitType = VisitType.STANDARD_SOCIAL,
+        visitType = VisitType.SOCIAL,
         visitStatus = VisitStatus.RESERVED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "A1",
@@ -465,7 +465,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .withVisitRoom("A1")
         .withVisitStart(visitTime)
         .withVisitEnd(visitTime.plusHours(1))
-        .withVisitType(VisitType.STANDARD_SOCIAL)
+        .withVisitType(VisitType.SOCIAL)
         .withVisitStatus(VisitStatus.RESERVED)
         .save()
 

@@ -14,7 +14,7 @@ fun sessionTemplate(
   openCapacity: Int = 10,
   prisonId: String = "MDI",
   visitRoom: String = "1",
-  visitType: VisitType = VisitType.STANDARD_SOCIAL,
+  visitType: VisitType = VisitType.SOCIAL,
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
   frequency: SessionFrequency = SessionFrequency.DAILY,

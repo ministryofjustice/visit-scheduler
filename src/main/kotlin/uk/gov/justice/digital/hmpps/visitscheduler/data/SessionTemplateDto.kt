@@ -22,7 +22,7 @@ data class SessionTemplateDto(
   val startDate: LocalDate,
   @Schema(description = "The expiry date of the session template", example = "2019-12-02", required = false)
   val expiryDate: LocalDate? = null,
-  @Schema(description = "visit type", example = "STANDARD_SOCIAL", required = true)
+  @Schema(description = "visit type", example = "SOCIAL", required = true)
   val visitType: VisitType,
   @Schema(description = "visit room", example = "A1", required = true)
   val visitRoom: String,
@@ -30,9 +30,9 @@ data class SessionTemplateDto(
   val restrictions: String? = null,
   @Schema(description = "frequency", example = "A1", required = true)
   val frequency: SessionFrequency,
-  @Schema(description = "closed capacity", example = "STANDARD_SOCIAL", required = true)
+  @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
-  @Schema(description = "open capacity", example = "STANDARD_SOCIAL", required = true)
+  @Schema(description = "open capacity", example = "50", required = true)
   val openCapacity: Int,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(

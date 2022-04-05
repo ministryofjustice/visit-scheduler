@@ -55,7 +55,7 @@ class VisitSessionsResourceIntTest : IntegrationTestBase() {
       .jsonPath("$[0].prisonId").isEqualTo("MDI")
       .jsonPath("$[0].restrictions").isEqualTo("Only B wing")
       .jsonPath("$[0].visitRoomName").isEqualTo("1")
-      .jsonPath("$[0].visitType").isEqualTo(VisitType.STANDARD_SOCIAL.name)
+      .jsonPath("$[0].visitType").isEqualTo(VisitType.SOCIAL.name)
       .jsonPath("$[0].openVisitCapacity").isEqualTo(10)
       .jsonPath("$[0].openVisitBookedCount").isEqualTo(0)
       .jsonPath("$[0].closedVisitCapacity").isEqualTo(5)

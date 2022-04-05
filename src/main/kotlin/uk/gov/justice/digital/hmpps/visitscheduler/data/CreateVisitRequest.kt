@@ -19,7 +19,7 @@ data class CreateVisitRequest(
   @Schema(description = "Visit Room", example = "A1", required = true)
   @field:NotBlank
   val visitRoom: String,
-  @Schema(description = "Visit Type", example = "STANDARD_SOCIAL", required = true)
+  @Schema(description = "Visit Type", example = "SOCIAL", required = true)
   @NotNull
   val visitType: VisitType,
   @Schema(description = "Visit Status", example = "RESERVED", required = true)

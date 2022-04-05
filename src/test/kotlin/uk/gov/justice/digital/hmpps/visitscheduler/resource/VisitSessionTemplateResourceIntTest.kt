@@ -39,7 +39,7 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
       startDate = LocalDate.of(2021, 1, 1),
       expiryDate = LocalDate.of(2021, 4, 1),
       visitRoom = "A1",
-      visitType = VisitType.STANDARD_SOCIAL,
+      visitType = VisitType.SOCIAL,
       frequency = SessionFrequency.WEEKLY,
       openCapacity = 5,
       closedCapacity = 2,
@@ -67,7 +67,7 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.openCapacity").isEqualTo(5)
         .jsonPath("$.closedCapacity").isEqualTo(2)
         .jsonPath("$.visitRoom").isEqualTo("A1")
-        .jsonPath("$.visitType").isEqualTo(VisitType.STANDARD_SOCIAL.name)
+        .jsonPath("$.visitType").isEqualTo(VisitType.SOCIAL.name)
         .jsonPath("$.sessionTemplateId").isNumber
     }
 
@@ -117,7 +117,7 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
         "endTime":"16:30:00",
         "startDate":"2021-01-01",
         "expiryDate":"2021-04-01",
-        "visitType":"STANDARD_SOCIAL",
+        "visitType":"SOCIAL",
         "visitRoom":"A1",
         "frequency": "WEEKLY",
         "closedCapacity":2,
@@ -228,7 +228,7 @@ class VisitSessionTemplateResourceIntTest : IntegrationTestBase() {
         .jsonPath("$.startTime").isEqualTo("09:00:00")
         .jsonPath("$.endTime").isEqualTo("10:00:00")
         .jsonPath("$.startDate").isEqualTo("2021-01-01")
-        .jsonPath("$.visitType").isEqualTo(VisitType.STANDARD_SOCIAL.name)
+        .jsonPath("$.visitType").isEqualTo(VisitType.SOCIAL.name)
         .jsonPath("$.visitRoom").isEqualTo("1")
         .jsonPath("$.restrictions").isEqualTo("Only A wing")
         .jsonPath("$.frequency").isEqualTo(SessionFrequency.WEEKLY.name)

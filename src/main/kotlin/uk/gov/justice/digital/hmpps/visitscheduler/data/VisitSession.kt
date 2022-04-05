@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.data
 
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
 import java.time.LocalDateTime
 
 @Schema(description = "Visit Session")
@@ -12,8 +13,8 @@ data class VisitSession(
   @Schema(description = "The Name of the visit room in which this visit session takes place", example = "Visit room 1", required = true)
   val visitRoomName: String,
 
-  @Schema(description = "The type of visits taking place within this session - code", example = "STANDARD_SOCIAL", required = true)
-  val visitType: String,
+  @Schema(description = "The type of visits taking place within this session", example = "SOCIAL", required = true)
+  val visitType: VisitType,
 
   @Schema(description = "The prison id", example = "LEI", required = true)
   val prisonId: String,

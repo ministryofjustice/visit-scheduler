@@ -14,7 +14,7 @@ data class UpdateVisitRequest(
   val prisonId: String? = null,
   @Schema(description = "Visit Room", example = "A1", required = false)
   val visitRoom: String? = null,
-  @Schema(description = "Visit Type", example = "STANDARD_SOCIAL", required = false)
+  @Schema(description = "Visit Type", example = "SOCIAL", required = false)
   val visitType: VisitType? = null,
   @Schema(description = "Visit Status", example = "RESERVED", required = false)
   val visitStatus: VisitStatus? = null,

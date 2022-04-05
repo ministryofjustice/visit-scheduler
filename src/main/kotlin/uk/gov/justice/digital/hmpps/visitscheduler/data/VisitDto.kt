@@ -18,7 +18,7 @@ data class VisitDto(
   val prisonId: String,
   @Schema(description = "Visit Room", example = "A1 L3", required = true)
   val visitRoom: String,
-  @Schema(description = "Visit Type", example = "STANDARD_SOCIAL", required = true)
+  @Schema(description = "Visit Type", example = "SOCIAL", required = true)
   val visitType: VisitType,
   @Schema(description = "Visit Status", example = "RESERVED", required = true)
   val visitStatus: VisitStatus,
