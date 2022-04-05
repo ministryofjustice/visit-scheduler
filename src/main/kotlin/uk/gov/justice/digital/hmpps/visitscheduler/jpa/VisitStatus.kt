@@ -6,8 +6,5 @@ enum class VisitStatus(
 ) {
   RESERVED("Reserved"),
   BOOKED("Booked"),
-  CANCELLED_BY_PRISONER("Cancelled by Prisoner"),
-  CANCELLED_BY_VISITOR("Cancelled by Visitor"),
-  CANCELLED_BY_PRISON("Cancelled by Prison"),
-  ATTENDED("Attended")
+  CANCELLED("Cancelled")
 }
