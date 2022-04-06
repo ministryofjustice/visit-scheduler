@@ -6,15 +6,15 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
-import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociationDetail
-import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
-import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -38,7 +38,7 @@ class SessionService(
     prisonerId: String? = null,
     noticeDaysMin: Long? = null,
     noticeDaysMax: Long? = null
-  ): List<VisitSession> {
+  ): List<VisitSessionDto> {
     val bookablePeriodStartDate = LocalDate.now(clock).plusDays(noticeDaysMin ?: defaultNoticeDaysMin)
     val bookablePeriodEndDate = LocalDate.now(clock).plusDays(noticeDaysMax ?: defaultNoticeDaysMax)
 
@@ -61,7 +61,7 @@ class SessionService(
     return available.sortedWith(compareBy { it.startTimestamp })
   }
 
-  fun visitBookedCount(session: VisitSession, restriction: VisitRestriction): Int {
+  fun visitBookedCount(session: VisitSessionDto, restriction: VisitRestriction): Int {
     return visitRepository.findAll(
       VisitSpecification(
         VisitFilter(
@@ -79,7 +79,7 @@ class SessionService(
     sessionTemplate: SessionTemplate,
     bookablePeriodStartDate: LocalDate,
     bookablePeriodEndDate: LocalDate
-  ): List<VisitSession> {
+  ): List<VisitSessionDto> {
 
     val lastBookableSessionDay =
       if (sessionTemplate.expiryDate == null || bookablePeriodEndDate.isBefore(sessionTemplate.expiryDate))
@@ -99,7 +99,7 @@ class SessionService(
     )
       .map {
         date ->
-        VisitSession(
+        VisitSessionDto(
           sessionTemplateId = sessionTemplate.id,
           prisonId = sessionTemplate.prisonId,
           startTimestamp = LocalDateTime.of(date, sessionTemplate.startTime),
@@ -116,14 +116,14 @@ class SessionService(
       .toList()
   }
 
-  private fun filterNonAssociationByPrisonerId(visitSessions: List<VisitSession>?, prisonerId: String): List<VisitSession> {
+  private fun filterNonAssociationByPrisonerId(visitSessions: List<VisitSessionDto>?, prisonerId: String): List<VisitSessionDto> {
     val nonAssociations = getNonAssociation(prisonerId)
     return visitSessions?.filterNot {
       sessionHasNonAssociation(it, nonAssociations, defaultNonAssociationWholeDay)
     } ?: emptyList()
   }
 
-  private fun getNonAssociation(prisonerId: String): List<OffenderNonAssociationDetail> {
+  private fun getNonAssociation(prisonerId: String): List<OffenderNonAssociationDetailDto> {
     try {
       return prisonApiClient.getOffenderNonAssociation(prisonerId)!!.nonAssociations
     } catch (e: WebClientResponseException) {
@@ -133,7 +133,7 @@ class SessionService(
     return emptyList()
   }
 
-  private fun sessionHasNonAssociation(session: VisitSession, nonAssociations: List<OffenderNonAssociationDetail>, wholeDay: Boolean? = true): Boolean {
+  private fun sessionHasNonAssociation(session: VisitSessionDto, nonAssociations: List<OffenderNonAssociationDetailDto>, wholeDay: Boolean? = true): Boolean {
     // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
     // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
     return nonAssociations.any { it ->
@@ -161,7 +161,7 @@ class SessionService(
     naEndDate: LocalDate? = null
   ): Boolean = sessionDate >= naStartDate && (naEndDate == null || sessionDate <= naEndDate)
 
-  private fun populateBookedCounts(available: List<VisitSession>) {
+  private fun populateBookedCounts(available: List<VisitSessionDto>) {
     available.forEach {
       it.openVisitBookedCount = visitBookedCount(it, VisitRestriction.OPEN)
       it.closedVisitBookedCount = visitBookedCount(it, VisitRestriction.CLOSED)

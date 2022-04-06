@@ -4,21 +4,21 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
-import uk.gov.justice.digital.hmpps.visitscheduler.data.UpdateVisitRequest
-import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.LegacyData
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNote
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.LegacyDataRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportTypeRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.util.function.Supplier
 
 @Service
@@ -29,7 +29,7 @@ class VisitService(
   private val supportTypeRepository: SupportTypeRepository,
 ) {
 
-  fun createVisit(createVisitRequest: CreateVisitRequest): VisitDto {
+  fun createVisit(createVisitRequest: CreateVisitRequestDto): VisitDto {
     log.info("Creating visit for prisoner")
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
@@ -84,7 +84,7 @@ class VisitService(
     return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
   }
 
-  fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequest): VisitDto {
+  fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
     log.info("Updating visit for $reference")
 
     val visitEntity = visitRepository.findByReference(reference)

@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 
@@ -25,7 +25,7 @@ class VisitTask(
 
     val expired = visitService.findVisitsByFilter(
       VisitFilter(
-        visitStatus = VisitStatus.RESERVED,
+        visitStatus = RESERVED,
         modifyTimestamp = LocalDateTime.now().minusMinutes(expiredPeriod)
       )
     )

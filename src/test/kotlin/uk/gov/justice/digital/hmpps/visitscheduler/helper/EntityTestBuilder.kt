@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
 import java.time.LocalDate
 import java.time.LocalTime
 

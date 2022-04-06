@@ -5,10 +5,10 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSessionTemplateRequest
-import uk.gov.justice.digital.hmpps.visitscheduler.data.SessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSessionTemplateRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import java.util.function.Supplier
 
 @Service
@@ -17,7 +17,7 @@ class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
 ) {
 
-  fun createSessionTemplate(createSessionTemplateRequest: CreateSessionTemplateRequest): SessionTemplateDto {
+  fun createSessionTemplate(createSessionTemplateRequest: CreateSessionTemplateRequestDto): SessionTemplateDto {
     log.info("Creating session template for prison")
     val sessionTemplateEntity = sessionTemplateRepository.saveAndFlush(
       SessionTemplate(
