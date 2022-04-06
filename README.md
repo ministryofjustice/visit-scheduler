@@ -105,3 +105,9 @@ To register pre-commit check to run Ktlint format:
 ./gradlew ktlintApplyToIdea addKtlintCheckGitPreCommitHook
 ```
 
+#### Build checks
+
+To run the CircleCI trivy scan locally download and install trivy, build the visit-scheduler docker image and run:
+```
+trivy image visit-scheduler_visit-scheduler
+```
