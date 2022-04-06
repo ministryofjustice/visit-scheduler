@@ -5,7 +5,7 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.LegacyData
 
 @Repository
-interface LegacyDataRepository : JpaRepository<LegacyData, Long>{
+interface LegacyDataRepository : JpaRepository<LegacyData, Long> {
 
   fun findByVisitId(visitId: Long): LegacyData?
 }
