@@ -49,7 +49,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
   @Nested
   inner class CreateVisit {
 
-    fun createVisitRequest(leadPersonId: Long?): CreateVisitRequest {
+    fun createVisitRequest(leadPersonId: Long? = null): CreateVisitRequest {
       return CreateVisitRequest(
         prisonId = "MDI",
         prisonerId = "FF0000FF",
@@ -77,7 +77,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(
-            createVisitRequest(leadPersonId = null)
+            createVisitRequest()
           )
         )
         .exchange()
@@ -154,7 +154,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(
-            createVisitRequest(leadPersonId = null)
+            createVisitRequest()
           )
         )
         .exchange()
