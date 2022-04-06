@@ -46,4 +46,4 @@ data class CreateVisitRequestDto(
   @Schema(description = "Visit notes", required = false)
   val visitNotes: List<@Valid VisitNoteDto>? = listOf(),
 
-  )
+)
