@@ -26,7 +26,7 @@ data class UpdateVisitRequestDto(
   val endTimestamp: LocalDateTime? = null,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
-  val visitContact: CreateContactOnVisitRequest? = null,
+  val visitContact: CreateContactOnVisitRequestDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false)
   val visitors: List<@Valid CreateVisitorOnVisitRequestDto>? = null,
   @Schema(description = "List of additional support associated with the visit", required = false)

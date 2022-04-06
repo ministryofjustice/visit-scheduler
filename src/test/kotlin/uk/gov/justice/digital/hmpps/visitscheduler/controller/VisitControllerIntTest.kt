@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitRequest
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
@@ -59,7 +59,7 @@ class VisitControllerIntTest : IntegrationTestBase() {
         endTimestamp = visitTime.plusHours(1),
         visitStatus = VisitStatus.RESERVED,
         visitRestriction = VisitRestriction.OPEN,
-        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
         visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
         visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
         visitNotes = listOf(
@@ -181,7 +181,7 @@ class VisitControllerIntTest : IntegrationTestBase() {
         visitStatus = VisitStatus.RESERVED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "A1",
-        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
         visitors = listOf(
           CreateVisitorOnVisitRequestDto(123),
           CreateVisitorOnVisitRequestDto(123)
@@ -224,7 +224,7 @@ class VisitControllerIntTest : IntegrationTestBase() {
         visitStatus = VisitStatus.RESERVED,
         visitRestriction = VisitRestriction.OPEN,
         visitRoom = "A1",
-        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
         visitorSupport = listOf(CreateSupportOnVisitRequestDto("ANYTHINGWILLDO")),
       )
 
@@ -550,7 +550,7 @@ class VisitControllerIntTest : IntegrationTestBase() {
         visitType = VisitType.FAMILY,
         visitStatus = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.CLOSED,
-        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
         visitors = listOf(CreateVisitorOnVisitRequestDto(123L)),
         visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
       )
@@ -593,7 +593,7 @@ class VisitControllerIntTest : IntegrationTestBase() {
         visitType = VisitType.FAMILY,
         visitStatus = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.CLOSED,
-        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
         visitors = listOf(CreateVisitorOnVisitRequestDto(123L)),
         visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
       )
@@ -628,7 +628,7 @@ class VisitControllerIntTest : IntegrationTestBase() {
     fun `put visit by reference - amend contact`() {
 
       val updateRequest = UpdateVisitRequestDto(
-        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
       )
 
       webTestClient.put().uri("/visits/${visitFull!!.reference}")

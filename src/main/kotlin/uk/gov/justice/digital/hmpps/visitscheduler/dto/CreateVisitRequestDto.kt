@@ -38,7 +38,7 @@ data class CreateVisitRequestDto(
   val legacyData: CreateLegacyDataRequestDto? = null,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
-  val visitContact: CreateContactOnVisitRequest?,
+  val visitContact: CreateContactOnVisitRequestDto?,
   @Schema(description = "List of visitors associated with the visit", required = false)
   val visitors: List<@Valid CreateVisitorOnVisitRequestDto>? = listOf(),
   @Schema(description = "List of additional support associated with the visit", required = false)
@@ -46,4 +46,4 @@ data class CreateVisitRequestDto(
   @Schema(description = "Visit notes", required = false)
   val visitNotes: List<@Valid VisitNoteDto>? = listOf(),
 
-)
+  )
