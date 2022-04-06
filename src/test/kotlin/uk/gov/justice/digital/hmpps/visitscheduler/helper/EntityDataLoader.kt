@@ -1,18 +1,21 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNote
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -88,9 +91,9 @@ fun defaultVisit(): Visit {
     visitRoom = "123c",
     visitStart = LocalDateTime.of(2021, 10, 23, 10, 30),
     visitEnd = LocalDateTime.of(2021, 10, 23, 11, 30),
-    visitType = VisitType.SOCIAL,
-    visitStatus = VisitStatus.RESERVED,
-    visitRestriction = VisitRestriction.OPEN,
+    visitType = SOCIAL,
+    visitStatus = RESERVED,
+    visitRestriction = OPEN,
   )
 }
 

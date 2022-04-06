@@ -17,20 +17,21 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
-import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociation
-import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociationDetail
-import uk.gov.justice.digital.hmpps.visitscheduler.data.OffenderNonAssociationDetails
-import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitSession
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionFrequency
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SessionTemplateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
@@ -95,7 +96,7 @@ class SessionServiceTest {
 
       val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(7) // expiry date is inclusive
-      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
+      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-01-02T11:30:00"),
         LocalDateTime.parse("2021-01-03T11:30:00"),
         LocalDateTime.parse("2021-01-04T11:30:00"),
@@ -121,7 +122,7 @@ class SessionServiceTest {
 
       val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
-      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
+      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-01-08T11:30:00"),
         LocalDateTime.parse("2021-01-15T11:30:00"),
         LocalDateTime.parse("2021-01-22T11:30:00"),
@@ -145,7 +146,7 @@ class SessionServiceTest {
 
       val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
-      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
+      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-01-06T11:30:00"), // first wednesday after today (1/1/2021)
         LocalDateTime.parse("2021-01-13T11:30:00"),
         LocalDateTime.parse("2021-01-20T11:30:00"),
@@ -166,7 +167,7 @@ class SessionServiceTest {
 
       val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(1)
-      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
+      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-02-01T11:30:00")
       )
     }
@@ -207,7 +208,7 @@ class SessionServiceTest {
 
       val sessions = sessionService.getVisitSessions("MDI")
       assertThat(sessions).size().isEqualTo(5)
-      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp)
+      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp)
         .containsExactly( // ordered by start date time
           LocalDateTime.parse("2021-01-02T16:00"),
           LocalDateTime.parse("2021-01-03T16:00"),
@@ -215,7 +216,7 @@ class SessionServiceTest {
           LocalDateTime.parse("2021-01-05T16:00"),
           LocalDateTime.parse("2021-02-01T11:30")
         )
-      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp)
+      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp)
         .containsExactly( // ordered by start date time
           LocalDateTime.parse("2021-01-02T16:00"),
           LocalDateTime.parse("2021-01-03T16:00"),
@@ -255,10 +256,10 @@ class SessionServiceTest {
         prisonerId = "Anythingwilldo",
         visitStart = LocalDate.parse("2021-02-01").atTime(11, 30),
         visitEnd = LocalDate.parse("2021-02-01").atTime(12, 30),
-        visitType = VisitType.SOCIAL,
+        visitType = SOCIAL,
         prisonId = "MDI",
-        visitStatus = VisitStatus.BOOKED,
-        visitRestriction = VisitRestriction.OPEN,
+        visitStatus = BOOKED,
+        visitRestriction = OPEN,
         visitRoom = "123c",
       )
       mockVisitRepositoryResponse(listOf(visit))
@@ -283,10 +284,10 @@ class SessionServiceTest {
         prisonerId = "Anythingwilldo",
         visitStart = LocalDate.parse("2021-02-01").atTime(11, 30),
         visitEnd = LocalDate.parse("2021-02-01").atTime(12, 30),
-        visitType = VisitType.SOCIAL,
+        visitType = SOCIAL,
         prisonId = "MDI",
-        visitStatus = VisitStatus.RESERVED,
-        visitRestriction = VisitRestriction.OPEN,
+        visitStatus = RESERVED,
+        visitRestriction = OPEN,
         visitRoom = "123c",
       )
       mockVisitRepositoryResponse(listOf(visit))
@@ -328,11 +329,11 @@ class SessionServiceTest {
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
-      ).thenReturn(OffenderNonAssociationDetails())
+      ).thenReturn(OffenderNonAssociationDetailsDto())
 
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
       assertThat(sessions).size().isEqualTo(1)
-      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
+      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-02-01T11:30:00")
       )
 
@@ -357,12 +358,12 @@ class SessionServiceTest {
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(
-        OffenderNonAssociationDetails(
+        OffenderNonAssociationDetailsDto(
           listOf(
-            OffenderNonAssociationDetail(
+            OffenderNonAssociationDetailDto(
               effectiveDate = startDate.minusMonths(1),
               expiryDate = startDate.plusMonths(1),
-              offenderNonAssociation = OffenderNonAssociation(offenderNo = associationId)
+              offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId)
             )
           )
         )
@@ -394,12 +395,12 @@ class SessionServiceTest {
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(
-        OffenderNonAssociationDetails(
+        OffenderNonAssociationDetailsDto(
           listOf(
-            OffenderNonAssociationDetail(
+            OffenderNonAssociationDetailDto(
               effectiveDate = startDate.minusMonths(1),
               expiryDate = startDate.plusMonths(1),
-              offenderNonAssociation = OffenderNonAssociation(offenderNo = associationId)
+              offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId)
             )
           )
         )
@@ -412,10 +413,10 @@ class SessionServiceTest {
               prisonerId = associationId,
               visitStart = startDate.plusDays(2).atTime(10, 30),
               visitEnd = startDate.plusDays(2).atTime(11, 30),
-              visitType = VisitType.SOCIAL,
+              visitType = SOCIAL,
               prisonId = prisonId,
-              visitStatus = VisitStatus.BOOKED,
-              visitRestriction = VisitRestriction.OPEN,
+              visitStatus = BOOKED,
+              visitRestriction = OPEN,
               visitRoom = "123c",
             )
           )
@@ -449,7 +450,7 @@ class SessionServiceTest {
 
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
       assertThat(sessions).size().isEqualTo(1)
-      assertThat(sessions).extracting<LocalDateTime>(VisitSession::startTimestamp).containsExactly(
+      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
         LocalDateTime.parse("2021-02-01T11:30:00")
       )
 

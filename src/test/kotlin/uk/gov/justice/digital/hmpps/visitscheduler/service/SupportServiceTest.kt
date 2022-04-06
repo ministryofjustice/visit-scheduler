@@ -11,8 +11,8 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.SupportType
-import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportTypeRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SupportType
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 
 @ExtendWith(MockitoExtension::class)
 class SupportServiceTest {
