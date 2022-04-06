@@ -34,6 +34,8 @@ data class CreateVisitRequest(
   @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = true)
   @NotNull
   val endTimestamp: LocalDateTime,
+  @Schema(description = "Create legacy data", required = false)
+  val legacyData: CreateLegacyDataRequest? = null,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
   val visitContact: CreateContactOnVisitRequest?,
@@ -43,4 +45,5 @@ data class CreateVisitRequest(
   val visitorSupport: List<@Valid CreateSupportOnVisitRequest>? = listOf(),
   @Schema(description = "Visit notes", required = false)
   val visitNotes: List<@Valid VisitNoteDto>? = listOf(),
+
 )

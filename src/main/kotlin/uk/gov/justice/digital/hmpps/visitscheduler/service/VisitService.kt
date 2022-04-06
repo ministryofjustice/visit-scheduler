@@ -8,12 +8,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.UpdateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.data.filter.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.specification.VisitSpecification
@@ -22,6 +24,7 @@ import java.util.function.Supplier
 @Service
 @Transactional
 class VisitService(
+  private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
   private val supportTypeRepository: SupportTypeRepository,
 ) {
@@ -62,6 +65,10 @@ class VisitService(
       visitNotes.distinctBy { it.type }.forEach {
         visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
       }
+    }
+
+    createVisitRequest.legacyData?.let {
+      saveLegacyData(visitEntity, it.leadVisitorId)
     }
 
     return VisitDto(visitEntity)
@@ -145,6 +152,15 @@ class VisitService(
       text = text,
       visit = visit
     )
+  }
+
+  private fun saveLegacyData(visit: Visit, leadPersonId: Long) {
+    val legacyData = LegacyData(
+      visitId = visit.id,
+      leadPersonId = leadPersonId
+    )
+
+    legacyDataRepository.saveAndFlush(legacyData)
   }
 
   private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {

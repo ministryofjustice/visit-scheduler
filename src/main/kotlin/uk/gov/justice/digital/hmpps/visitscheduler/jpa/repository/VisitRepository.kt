@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import javax.persistence.LockModeType
 
 @Repository
-interface VisitRepository : JpaRepository<Visit, String>, JpaSpecificationExecutor<Visit> {
+interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   fun deleteAllByReferenceIn(reference: List<String>)
