@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.resource
 
+import org.assertj.core.api.Assertions
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -9,6 +10,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateContactOnVisitRequest
+import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateLegacyDataRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateSupportOnVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.data.CreateVisitorOnVisitRequest
@@ -21,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType.VISIT_COMMENT
@@ -28,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitNoteType.VISIT_OUTCO
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.jpa.repository.VisitRepository
 import java.time.LocalDateTime
 
@@ -35,30 +39,37 @@ class VisitResourceIntTest : IntegrationTestBase() {
   @Autowired
   private lateinit var visitRepository: VisitRepository
 
+  @Autowired
+  private lateinit var legacyDataRepository: LegacyDataRepository
+
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
   @DisplayName("POST /visits")
   @Nested
   inner class CreateVisit {
-    private val createVisitRequest = CreateVisitRequest(
-      prisonId = "MDI",
-      prisonerId = "FF0000FF",
-      visitRoom = "A1",
-      visitType = VisitType.SOCIAL,
-      startTimestamp = visitTime,
-      endTimestamp = visitTime.plusHours(1),
-      visitStatus = VisitStatus.RESERVED,
-      visitRestriction = VisitRestriction.OPEN,
-      visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
-      visitors = listOf(CreateVisitorOnVisitRequest(123)),
-      visitorSupport = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
-      visitNotes = listOf(
-        VisitNoteDto(type = VISITOR_CONCERN, "My mother in-law is coming"),
-        VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again"),
-        VisitNoteDto(type = VISIT_COMMENT, "Mother in-law should be watched at all times")
+
+    fun createVisitRequest(leadPersonId: Long? = null): CreateVisitRequest {
+      return CreateVisitRequest(
+        prisonId = "MDI",
+        prisonerId = "FF0000FF",
+        visitRoom = "A1",
+        visitType = VisitType.SOCIAL,
+        startTimestamp = visitTime,
+        endTimestamp = visitTime.plusHours(1),
+        visitStatus = VisitStatus.RESERVED,
+        visitRestriction = VisitRestriction.OPEN,
+        visitContact = CreateContactOnVisitRequest("John Smith", "01234 567890"),
+        visitors = listOf(CreateVisitorOnVisitRequest(123)),
+        visitorSupport = listOf(CreateSupportOnVisitRequest("OTHER", "Some Text")),
+        visitNotes = listOf(
+          VisitNoteDto(type = VISITOR_CONCERN, "My mother in-law is coming"),
+          VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again"),
+          VisitNoteDto(type = VISIT_COMMENT, "Mother in-law should be watched at all times")
+        ),
+        legacyData = leadPersonId?.let { CreateLegacyDataRequest(leadPersonId) }
       )
-    )
+    }
 
     @Test
     fun `create visit`() {
@@ -66,7 +77,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(
-            createVisitRequest
+            createVisitRequest()
           )
         )
         .exchange()
@@ -98,12 +109,52 @@ class VisitResourceIntTest : IntegrationTestBase() {
     }
 
     @Test
+    fun `create visit with legacy data`() {
+
+      // Arrange
+      webTestClient.post().uri("/visits")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(
+            createVisitRequest(leadPersonId = 123)
+          )
+        )
+        .exchange()
+        .expectStatus().isCreated
+
+      // Act
+      val webResponse = webTestClient.get().uri("/visits?prisonerId=FF0000FF")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+
+      // Assert
+
+      var reference = ""
+
+      webResponse
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$[0].reference")
+        .value<String> { json -> reference = json }
+
+      var legacyData: LegacyData? = null
+      val visit = visitRepository.findByReference(reference)
+      visit?.let {
+        legacyData = legacyDataRepository.findByVisitId(visit.id)
+      }
+
+      Assertions.assertThat(visit).isNotNull
+      Assertions.assertThat(legacyData).isNotNull
+      Assertions.assertThat(legacyData!!.visitId).isEqualTo(visit!!.id)
+    }
+
+    @Test
     fun `create visit response does not contain legacy data`() {
       webTestClient.post().uri("/visits")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(
-            createVisitRequest
+            createVisitRequest()
           )
         )
         .exchange()
@@ -138,7 +189,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         visitorSupport = listOf(
           CreateSupportOnVisitRequest("OTHER", "Some Text"),
           CreateSupportOnVisitRequest("OTHER", "Some Text")
-        ),
+        )
       )
 
       webTestClient.post().uri("/visits")
@@ -207,7 +258,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf()))
         .body(
           BodyInserters.fromValue(
-            createVisitRequest
+            createVisitRequest(leadPersonId = null)
           )
         )
         .exchange()
@@ -219,7 +270,7 @@ class VisitResourceIntTest : IntegrationTestBase() {
       webTestClient.post().uri("/visits")
         .body(
           BodyInserters.fromValue(
-            createVisitRequest
+            createVisitRequest(leadPersonId = null)
           )
         )
         .exchange()
