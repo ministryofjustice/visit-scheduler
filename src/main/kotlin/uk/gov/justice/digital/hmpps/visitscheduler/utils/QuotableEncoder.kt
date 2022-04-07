@@ -4,9 +4,10 @@ import kotlin.random.Random
 
 class QuotableEncoder(private val delimiter: String = "-", private val minLength: Int = 1, private val chunkSize: Int = 2) {
 
-  private val seed = arrayOf("2", "a", "7", "1", "y", "x", "m", "q", "r", "b", "0", "8", "d", "5", "n", "p", "6", "e", "g", "j", "v", "3", "w", "9", "k", "4")
-  private val separator = arrayOf("c", "f", "h", "u", "i", "t")
-  // Exclude characters which are too similar to numbers "l","o","s","z"
+  companion object {
+    private val SEPARATOR = arrayOf("c", "f", "h", "u", "i", "t")
+    private val SEED = arrayOf("z", "a", "l", "y", "x", "m", "q", "r", "b", "o", "d", "s", "n", "p", "e", "g", "j", "v", "w", "k")
+  }
 
   init {
     require(delimiter.length in 0..1) {
@@ -25,32 +26,33 @@ class QuotableEncoder(private val delimiter: String = "-", private val minLength
 
   fun encode(value: Long): String {
     var hash = ""
-    value.toString(seed.size).toCharArray().forEach {
-      hash += seed[it.digitToInt(seed.size)]
+    value.toString(Companion.SEED.size).toCharArray().forEach {
+      hash += Companion.SEED[it.digitToInt(Companion.SEED.size)]
     }
 
     var hashPadded = hash.reversed()
     if (hashPadded.length < minLength || hashPadded.length < chunkSize || hashPadded.length % chunkSize > 0) {
-      hashPadded += separator[Random.nextInt(0, separator.size - 1)]
-      while (hashPadded.length < minLength || hashPadded.length < chunkSize || hashPadded.length % chunkSize > 0) {
-        hashPadded += seed[Random.nextInt(0, seed.size - 1)]
-      }
+      do {
+        hashPadded += getHasPadding()
+      } while (hashPadded.length < minLength || hashPadded.length < chunkSize || hashPadded.length % chunkSize > 0)
     }
 
-    return hashPadded.chunked(chunkSize).reversed().joinToString(delimiter)
+    return hashPadded.chunked(chunkSize).joinToString(delimiter)
   }
 
+  private fun getHasPadding() = SEPARATOR[Random.nextInt(0, SEPARATOR.size - 1)]
+
   fun decode(encoded: String): Long {
-    var hashPadded = encoded.split(delimiter).reversed().joinToString("")
-    separator.forEach {
+    var hashPadded = encoded.split(delimiter).joinToString("")
+    Companion.SEPARATOR.forEach {
       hashPadded = hashPadded.split(it)[0]
     }
 
     var convertedValue = ""
     hashPadded.reversed().toCharArray().forEach {
-      convertedValue += seed.indexOf(it.toString()).toString(seed.size)
+      convertedValue += Companion.SEED.indexOf(it.toString()).toString(Companion.SEED.size)
     }
 
-    return convertedValue.toLong(seed.size)
+    return convertedValue.toLong(Companion.SEED.size)
   }
 }
