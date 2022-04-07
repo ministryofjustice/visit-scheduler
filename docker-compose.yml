@@ -15,8 +15,9 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - HMPPS_AUTH_URL=http://hmpps-auth:8080/auth
       - PRISON_API_URL=http://prison-api:8080
-      - SYSTEM_CLIENT_ID=book-a-prison-visit-client-1
+      - SYSTEM_CLIENT_ID=book-a-prison-visit-client
       - SYSTEM_CLIENT_SECRET=clientsecret
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://visit-scheduler-db:5432/visit_scheduler_db
 
   hmpps-auth:
     image: quay.io/hmpps/hmpps-auth:latest

@@ -24,10 +24,19 @@ Run:
 
 Create a Spring Boot run configuration with active profile of dev, to run against te development environment.
 
-Alternatively the service can be run using docker-compose.
+Alternatively the service can be run using docker-compose with client 'book-a-prison-visit-client' and the usual dev secret.
 ```
 docker-compose up
 ```
+
+Ports
+
+Service | Port |  
+--- |------
+visit-scheduler | 8080
+visit-scheduler-db | 5432
+hmpps-auth | 8090
+prison-api | 8091
 
 To create a Token (local):
 ```

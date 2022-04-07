@@ -2,6 +2,11 @@ spring:
   main:
     allow-bean-definition-overriding: true
 
+  datasource:
+    url: jdbc:postgresql://localhost:5432/visit_scheduler_db
+    username: admin
+    password: admin_password
+
   jpa:
     show-sql: true
 
