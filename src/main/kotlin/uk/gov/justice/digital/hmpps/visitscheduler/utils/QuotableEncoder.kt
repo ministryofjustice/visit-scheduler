@@ -4,9 +4,8 @@ import kotlin.random.Random
 
 class QuotableEncoder(private val delimiter: String = "-", private val minLength: Int = 1, private val chunkSize: Int = 2) {
 
-  private val seed = arrayOf("2", "a", "7", "1", "y", "x", "m", "q", "r", "b", "0", "8", "d", "5", "n", "p", "6", "e", "g", "j", "v", "3", "w", "9", "k", "4")
+  private val seed = arrayOf("z", "a", "l", "y", "x", "m", "q", "r", "b", "o", "d", "s", "n", "p", "e", "g", "j", "v", "w", "k")
   private val separator = arrayOf("c", "f", "h", "u", "i", "t")
-  // Exclude characters which are too similar to numbers "l","o","s","z"
 
   init {
     require(delimiter.length in 0..1) {
@@ -37,11 +36,11 @@ class QuotableEncoder(private val delimiter: String = "-", private val minLength
       }
     }
 
-    return hashPadded.chunked(chunkSize).reversed().joinToString(delimiter)
+    return hashPadded.chunked(chunkSize).joinToString(delimiter)
   }
 
   fun decode(encoded: String): Long {
-    var hashPadded = encoded.split(delimiter).reversed().joinToString("")
+    var hashPadded = encoded.split(delimiter).joinToString("")
     separator.forEach {
       hashPadded = hashPadded.split(it)[0]
     }

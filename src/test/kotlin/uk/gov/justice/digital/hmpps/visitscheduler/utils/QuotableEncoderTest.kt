@@ -17,7 +17,7 @@ internal class QuotableEncoderTest {
     @Test
     fun `Default encoder produces known encoding`() {
       val input = 123456L
-      val knownEncoding = "2q-r6"
+      val knownEncoding = "jn-bg"
 
       val encoded = encoderDefault.encode(input)
 
@@ -27,7 +27,7 @@ internal class QuotableEncoderTest {
 
     @Test
     fun `Default encoder produces known decoding`() {
-      val input = "2q-r6"
+      val input = "jn-bg"
       val knownDecoding = 123456L
 
       val decoded = encoderDefault.decode(input)
