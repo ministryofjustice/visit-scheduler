@@ -36,6 +36,10 @@ generic-service:
       SPRING_DATASOURCE_PASSWORD: "database_password"
       DATABASE_NAME: "database_name"
       DATABASE_ENDPOINT: "rds_instance_endpoint"
+    hmpps-domain-events-topic:
+      HMPPS_SQS_TOPICS_DOMAINEVENTS_ACCESS_KEY_ID: "access_key_id"
+      HMPPS_SQS_TOPICS_DOMAINEVENTS_SECRET_ACCESS_KEY: "secret_access_key"
+      HMPPS_SQS_TOPICS_DOMAINEVENTS_ARN: "topic_arn"
 
   allowlist:
     office: "217.33.148.210/32"

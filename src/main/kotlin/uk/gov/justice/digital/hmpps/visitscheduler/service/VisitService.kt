@@ -128,8 +128,6 @@ class VisitService(
       }
     }
 
-    // visitRepository.saveAndFlush(visitEntity)
-
     return VisitDto(visitEntity)
   }
 

@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 import javax.validation.Valid
@@ -33,7 +34,8 @@ import javax.validation.Valid
 @Validated
 @RequestMapping(name = "Visit Resource", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitController(
-  private val visitService: VisitService
+  private val visitService: VisitService,
+  private val snsService: SnsService,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -73,7 +75,9 @@ class VisitController(
   )
   fun createVisit(
     @RequestBody @Valid createVisitRequest: CreateVisitRequestDto
-  ): VisitDto = visitService.createVisit(createVisitRequest)
+  ): VisitDto = visitService.createVisit(createVisitRequest).also {
+    snsService.sendVisitBookedEvent(it)
+  }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping
