@@ -16,33 +16,42 @@ internal class QuotableEncoderTest {
 
     @Test
     fun `Default encoder produces known encoding`() {
+      // Given
       val input = 123456L
       val knownEncoding = "jn-bg"
 
+      // When
       val encoded = encoderDefault.encode(input)
 
+      // Then
       assertThat(input).isNotEqualTo(encoded)
       assertThat(encoded).isEqualTo(knownEncoding)
     }
 
     @Test
     fun `Default encoder produces known decoding`() {
+      // Given
       val input = "jn-bg"
       val knownDecoding = 123456L
 
+      // When
       val decoded = encoderDefault.decode(input)
 
+      // Then
       assertThat(input).isNotEqualTo(decoded)
       assertThat(decoded).isEqualTo(knownDecoding)
     }
 
     @Test
     fun `encoded values are decoded`() {
+      // Given
       val input = 654321L
 
+      // When
       val encoded = encoderDefault.encode(input)
       val decoded = encoderDefault.decode(encoded)
 
+      // Then
       assertThat(input).isNotEqualTo(encoded)
       assertThat(encoded).isNotEqualTo(decoded)
       assertThat(input).isEqualTo(decoded)
@@ -55,32 +64,44 @@ internal class QuotableEncoderTest {
 
     @Test
     fun `empty delimiters are permitted`() {
+      // Given
       val encoder = QuotableEncoder(delimiter = "", minLength = 2, chunkSize = 1)
 
       val input = 1L
+      // When
       val encoded = encoder.encode(input)
 
+      // Then
       assertThat(encoded.length).isEqualTo(2)
     }
 
     @Test
     fun `encoded length is at least one chunk size`() {
+      // Given
       val encoder = QuotableEncoder(minLength = 3, chunkSize = 10)
 
       val input = 1L
+
+      // When
       val encoded = encoder.encode(input)
 
+      // Then
       assertThat(encoded.length).isEqualTo(10)
     }
 
     @Test
     fun `encoded length is multiple of chunk size`() {
+
+      // Given
       val encoder = QuotableEncoder(minLength = 5, chunkSize = 2)
 
       val input = 1L
-      val encoded = encoder.encode(input)
-      println(encoded)
 
+      // When
+      val encoded = encoder.encode(input)
+
+      // Then
+      println(encoded)
       assertThat(encoded.length % 2).isEqualTo(0)
     }
 
@@ -126,16 +147,20 @@ internal class QuotableEncoderTest {
 
     @Test
     fun `One million hashes has no collisions`() {
+      // Given
       // Not designed for testing extremely large values.
       val encoder = QuotableEncoder(minLength = 8)
 
       val hashes = mutableListOf<String>()
       for (n in 0..1000000) {
+
+        // When
         val hash = encoder.encode(n.toLong())
         hashes.add(hash)
       }
-      val collisions = hashes.groupingBy { it }.eachCount().filter { it.value > 1 }
 
+      // Then
+      val collisions = hashes.groupingBy { it }.eachCount().filter { it.value > 1 }
       assert(collisions.isEmpty())
     }
   }

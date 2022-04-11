@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.assertj.core.api.Assertions
 import org.hamcrest.Matchers
@@ -16,13 +16,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
@@ -33,9 +26,16 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitContactCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitNoteCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitSupportCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitVisitorCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.integration.IntegrationTestBase
 import java.time.LocalDateTime
 
-class VisitControllerIntTest : IntegrationTestBase() {
+class VisitControllerTest : IntegrationTestBase() {
   @Autowired
   private lateinit var visitRepository: VisitRepository
 

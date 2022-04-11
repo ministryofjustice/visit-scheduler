@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.config
+package uk.gov.justice.digital.hmpps.visitscheduler.test_setup
 
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.context.annotation.Bean

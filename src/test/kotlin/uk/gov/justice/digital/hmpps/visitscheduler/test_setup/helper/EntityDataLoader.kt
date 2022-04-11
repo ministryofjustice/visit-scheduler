@@ -1,6 +1,6 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.helper
+package uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper
 
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
@@ -190,11 +190,11 @@ fun defaultSessionTemplate(): SessionTemplate {
   return sessionTemplate(
     prisonId = "MDI",
     startDate = LocalDate.of(2021, 10, 23),
-    frequency = SessionFrequency.DAILY,
+    frequency = DAILY,
     openCapacity = 5,
     closedCapacity = 1,
     visitRoom = "3B",
     restrictions = "Restricted to B wing",
-    visitType = VisitType.SOCIAL
+    visitType = SOCIAL
   )
 }

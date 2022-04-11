@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
@@ -8,20 +8,21 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.config.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSessionTemplateRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.TestClockConfiguration
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.sessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.sessionTemplateCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.sessionTemplateDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.integration.IntegrationTestBase
 import java.time.LocalDate
 import java.time.LocalTime
 
 @Import(TestClockConfiguration::class)
-class VisitSessionTemplateControllerIntTest : IntegrationTestBase() {
+class VisitSessionTemplateControllerTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sessionTemplateRepository: SessionTemplateRepository
@@ -186,7 +187,7 @@ class VisitSessionTemplateControllerIntTest : IntegrationTestBase() {
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
           startDate = LocalDate.parse("2021-01-01"),
-          frequency = SessionFrequency.WEEKLY,
+          frequency = WEEKLY,
           restrictions = "Only B wing"
         )
       ).save()
@@ -194,7 +195,7 @@ class VisitSessionTemplateControllerIntTest : IntegrationTestBase() {
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
           startDate = LocalDate.parse("2021-02-01"),
-          frequency = SessionFrequency.WEEKLY,
+          frequency = WEEKLY,
           restrictions = "Only C wing"
         )
       ).save()
@@ -212,7 +213,7 @@ class VisitSessionTemplateControllerIntTest : IntegrationTestBase() {
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
           startDate = LocalDate.parse("2021-01-01"),
-          frequency = SessionFrequency.WEEKLY,
+          frequency = WEEKLY,
           restrictions = "Only A wing"
         )
       ).save()

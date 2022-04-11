@@ -8,9 +8,15 @@ import java.util.Properties
 class HealthInfoTest {
   @Test
   fun `should include version info`() {
+    // Given
     val properties = Properties()
     properties.setProperty("version", "somever")
-    Assertions.assertThat(HealthInfo(BuildProperties(properties)).health().details)
+
+    // When
+    val health = HealthInfo(BuildProperties(properties)).health()
+
+    // Then
+    Assertions.assertThat(health.details)
       .isEqualTo(mapOf("version" to "somever"))
   }
 }

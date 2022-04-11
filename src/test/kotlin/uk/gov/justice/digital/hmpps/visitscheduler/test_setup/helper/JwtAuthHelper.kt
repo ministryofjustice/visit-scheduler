@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.helper
+package uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper
 
 import io.jsonwebtoken.Jwts
 import io.jsonwebtoken.SignatureAlgorithm

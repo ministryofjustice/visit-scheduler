@@ -41,6 +41,7 @@ class SupportServiceTest {
     @Test
     fun `returns available support`() {
 
+      // Given
       val supportType = SupportType(
         code = 10001,
         name = "TEST_NAME",
@@ -48,7 +49,10 @@ class SupportServiceTest {
       )
       mockRepositoryResponse(listOf(supportType))
 
+      // When
       val supportTypes = supportService.getSupportTypes()
+
+      // Then
       assertThat(supportTypes).size().isEqualTo(1)
       assertThat(supportTypes[0].type).isEqualTo(supportType.name)
       assertThat(supportTypes[0].description).isEqualTo(supportType.description)
