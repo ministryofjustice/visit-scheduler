@@ -26,33 +26,32 @@ class QuotableEncoder(private val delimiter: String = "-", private val minLength
 
   fun encode(value: Long): String {
     var hash = ""
-    value.toString(Companion.SEED.size).toCharArray().forEach {
-      hash += Companion.SEED[it.digitToInt(Companion.SEED.size)]
+    value.toString(SEED.size).toCharArray().forEach {
+      hash += SEED[it.digitToInt(SEED.size)]
     }
 
     var hashPadded = hash.reversed()
     if (hashPadded.length < minLength || hashPadded.length < chunkSize || hashPadded.length % chunkSize > 0) {
-      do {
-        hashPadded += getHasPadding()
-      } while (hashPadded.length < minLength || hashPadded.length < chunkSize || hashPadded.length % chunkSize > 0)
+      hashPadded += SEPARATOR[Random.nextInt(0, SEPARATOR.size - 1)]
+      while (hashPadded.length < minLength || hashPadded.length < chunkSize || hashPadded.length % chunkSize > 0) {
+        hashPadded += SEED[Random.nextInt(0, SEED.size - 1)]
+      }
     }
 
     return hashPadded.chunked(chunkSize).joinToString(delimiter)
   }
 
-  private fun getHasPadding() = SEPARATOR[Random.nextInt(0, SEPARATOR.size - 1)]
-
   fun decode(encoded: String): Long {
     var hashPadded = encoded.split(delimiter).joinToString("")
-    Companion.SEPARATOR.forEach {
+    SEPARATOR.forEach {
       hashPadded = hashPadded.split(it)[0]
     }
 
     var convertedValue = ""
     hashPadded.reversed().toCharArray().forEach {
-      convertedValue += Companion.SEED.indexOf(it.toString()).toString(Companion.SEED.size)
+      convertedValue += SEED.indexOf(it.toString()).toString(SEED.size)
     }
 
-    return convertedValue.toLong(Companion.SEED.size)
+    return convertedValue.toLong(SEED.size)
   }
 }
