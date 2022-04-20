@@ -4,9 +4,6 @@ orbs:
   hmpps: ministryofjustice/hmpps@3.14
 
 parameters:
-  docker-image-name:
-    type: string
-    default: 'quay.io/hmpps/visit-scheduler'
   alerts-slack-channel:
     type: string
     default: dps_alerts_security
@@ -67,7 +64,6 @@ workflows:
           name: helm_lint
       - hmpps/build_docker:
           name: build_docker
-          image_name: << pipeline.parameters.docker-image-name >>
           filters:
             branches:
               only:
