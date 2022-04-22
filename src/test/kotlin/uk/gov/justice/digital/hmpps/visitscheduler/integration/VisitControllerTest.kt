@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
@@ -62,9 +63,10 @@ class VisitControllerTest : IntegrationTestBase() {
         visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
         visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
         visitNotes = listOf(
-          VisitNoteDto(type = VISITOR_CONCERN, "My mother in-law is coming"),
-          VisitNoteDto(type = VISIT_OUTCOMES, "My mother wont visit again"),
-          VisitNoteDto(type = VISIT_COMMENT, "Mother in-law should be watched at all times")
+          VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
+          VisitNoteDto(type = VISIT_OUTCOMES, "A visit outcome"),
+          VisitNoteDto(type = VISIT_COMMENT, "A visit comment"),
+          VisitNoteDto(type = STATUS_CHANGED_REASON, "Status has changed")
         ),
         legacyData = leadPersonId?.let { CreateLegacyDataRequestDto(leadPersonId) }
       )
@@ -105,6 +107,15 @@ class VisitControllerTest : IntegrationTestBase() {
         .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
         .jsonPath("$[0].visitorSupport[0].type").isEqualTo("OTHER")
         .jsonPath("$[0].visitorSupport[0].text").isEqualTo("Some Text")
+        .jsonPath("$[0].visitNotes.length()").isEqualTo(4)
+        .jsonPath("$[0].visitNotes[0].type").isEqualTo("VISITOR_CONCERN")
+        .jsonPath("$[0].visitNotes[1].type").isEqualTo("VISIT_OUTCOMES")
+        .jsonPath("$[0].visitNotes[2].type").isEqualTo("VISIT_COMMENT")
+        .jsonPath("$[0].visitNotes[3].type").isEqualTo("STATUS_CHANGED_REASON")
+        .jsonPath("$[0].visitNotes[0].text").isEqualTo("A visit concern")
+        .jsonPath("$[0].visitNotes[1].text").isEqualTo("A visit outcome")
+        .jsonPath("$[0].visitNotes[2].text").isEqualTo("A visit comment")
+        .jsonPath("$[0].visitNotes[3].text").isEqualTo("Status has changed")
     }
 
     @Test
@@ -145,28 +156,6 @@ class VisitControllerTest : IntegrationTestBase() {
       Assertions.assertThat(visit).isNotNull
       Assertions.assertThat(legacyData).isNotNull
       Assertions.assertThat(legacyData!!.visitId).isEqualTo(visit!!.id)
-    }
-
-    @Test
-    fun `create visit response does not contain legacy data`() {
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest()
-          )
-        )
-        .exchange()
-        .expectStatus().isCreated
-
-      webTestClient.get().uri("/visits?prisonerId=FF0000FF")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[0].reference").isNotEmpty
-        .jsonPath("$[0].visitNotes").doesNotExist()
     }
 
     @Test
@@ -280,19 +269,33 @@ class VisitControllerTest : IntegrationTestBase() {
   @DisplayName("GET /visits")
   @Nested
   inner class GetVisitsByFilter {
+
+    private var visitMin: Visit? = null
+    private var visitFull: Visit? = null
+
     @BeforeEach
     internal fun createVisits() {
-      visitCreator(visitRepository)
+
+      visitMin = visitCreator(visitRepository)
         .withPrisonerId("FF0000AA")
         .withVisitStart(visitTime)
         .withPrisonId("MDI")
         .save()
-      visitCreator(visitRepository)
+
+      visitFull = visitCreator(visitRepository)
         .withPrisonerId("FF0000BB")
         .withVisitStart(visitTime.plusDays(1))
         .withVisitEnd(visitTime.plusDays(1).plusHours(1))
         .withPrisonId("LEI")
         .save()
+
+      visitNoteCreator(visit = visitFull!!, text = "A visit concern", type = VISITOR_CONCERN)
+      visitNoteCreator(visit = visitFull!!, text = "A visit outcome", type = VISIT_OUTCOMES)
+      visitNoteCreator(visit = visitFull!!, text = "A visit comment", type = VISIT_COMMENT)
+      visitNoteCreator(visit = visitFull!!, text = "Status has changed", type = STATUS_CHANGED_REASON)
+
+      visitRepository.saveAndFlush(visitFull!!)
+
       val visitCC = visitCreator(visitRepository)
         .withPrisonerId("FF0000CC")
         .withVisitStart(visitTime.plusDays(2))
@@ -302,6 +305,7 @@ class VisitControllerTest : IntegrationTestBase() {
       visitContactCreator(visit = visitCC, name = "Jane Doe", phone = "01234 098765")
       visitVisitorCreator(visit = visitCC, nomisPersonId = 123L)
       visitSupportCreator(visit = visitCC, name = "OTHER", details = "Some Text")
+
       visitRepository.saveAndFlush(visitCC)
 
       visitCreator(visitRepository)
@@ -310,12 +314,14 @@ class VisitControllerTest : IntegrationTestBase() {
         .withVisitEnd(visitTime.plusHours(2))
         .withPrisonId("BEI")
         .save()
+
       visitCreator(visitRepository)
         .withPrisonerId("GG0000BB")
         .withVisitStart(visitTime.plusDays(1).plusHours(1))
         .withVisitEnd(visitTime.plusDays(1).plusHours(2))
         .withPrisonId("BEI")
         .save()
+
       visitCreator(visitRepository)
         .withPrisonerId("GG0000BB")
         .withVisitStart(visitTime.plusDays(2).plusHours(1))
@@ -326,15 +332,23 @@ class VisitControllerTest : IntegrationTestBase() {
 
     @Test
     fun `get visit by prisoner ID`() {
-      webTestClient.get().uri("/visits?prisonerId=FF0000AA")
+      webTestClient.get().uri("/visits?prisonerId=FF0000BB")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isOk
         .expectBody()
         .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[0].prisonerId").isEqualTo("FF0000AA")
-        .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.toString())
+        .jsonPath("$[0].prisonerId").isEqualTo("FF0000BB")
+        .jsonPath("$[0].startTimestamp").isEqualTo(visitFull?.visitStart.toString())
         .jsonPath("$[0].reference").exists()
+        .jsonPath("$[0].visitNotes[0].type").isEqualTo("VISITOR_CONCERN")
+        .jsonPath("$[0].visitNotes[1].type").isEqualTo("VISIT_OUTCOMES")
+        .jsonPath("$[0].visitNotes[2].type").isEqualTo("VISIT_COMMENT")
+        .jsonPath("$[0].visitNotes[3].type").isEqualTo("STATUS_CHANGED_REASON")
+        .jsonPath("$[0].visitNotes[0].text").isEqualTo("A visit concern")
+        .jsonPath("$[0].visitNotes[1].text").isEqualTo("A visit outcome")
+        .jsonPath("$[0].visitNotes[2].text").isEqualTo("A visit comment")
+        .jsonPath("$[0].visitNotes[3].text").isEqualTo("Status has changed")
     }
 
     @Test
