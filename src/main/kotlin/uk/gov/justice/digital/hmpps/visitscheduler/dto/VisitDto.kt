@@ -36,6 +36,10 @@ data class VisitDto(
   val visitors: List<VisitorDto> = listOf(),
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: List<VisitorSupportDto> = listOf(),
+  @Schema(description = "The visit created date and time", example = "2018-12-01T13:45:00", required = true)
+  @field:NotBlank
+  val createdTimestamp: LocalDateTime,
+
 ) {
   constructor(visitEntity: Visit) : this(
     reference = visitEntity.reference,
@@ -49,6 +53,7 @@ data class VisitDto(
     endTimestamp = visitEntity.visitEnd,
     visitContact = visitEntity.visitContact?.let { ContactDto(it) },
     visitors = visitEntity.visitors.map { VisitorDto(it) },
-    visitorSupport = visitEntity.support.map { VisitorSupportDto(it) }
+    visitorSupport = visitEntity.support.map { VisitorSupportDto(it) },
+    createdTimestamp = visitEntity.createTimestamp!!
   )
 }

@@ -105,6 +105,7 @@ class VisitControllerTest : IntegrationTestBase() {
         .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
         .jsonPath("$[0].visitorSupport[0].type").isEqualTo("OTHER")
         .jsonPath("$[0].visitorSupport[0].text").isEqualTo("Some Text")
+        .jsonPath("$[0].createdTimestamp").isNotEmpty
     }
 
     @Test
@@ -444,29 +445,6 @@ class VisitControllerTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `get visit by reference`() {
-      val createdVisit = visitCreator(visitRepository)
-        .withPrisonerId("FF0000AA")
-        .withVisitStart(visitTime)
-        .save()
-
-      webTestClient.get().uri("/visits/${createdVisit.reference}")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .jsonPath("$.reference").isEqualTo(createdVisit.reference)
-    }
-
-    @Test
-    fun `get visit by reference - not found`() {
-      webTestClient.get().uri("/visits/12345")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .exchange()
-        .expectStatus().isNotFound
-    }
-
-    @Test
     fun `no visits found for prisoner`() {
       webTestClient.get().uri("/visits?prisonerId=12345")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
@@ -497,6 +475,41 @@ class VisitControllerTest : IntegrationTestBase() {
       webTestClient.get().uri("/visits?prisonerId=FF0000AA")
         .exchange()
         .expectStatus().isUnauthorized
+    }
+  }
+
+  @DisplayName("GET /visits/{reference}")
+  @Nested
+  inner class GetVisitsByReference {
+    @BeforeEach
+    internal fun createVisits() {
+      visitCreator(visitRepository)
+        .withPrisonerId("FF0000AA")
+        .withVisitStart(visitTime)
+        .withPrisonId("MDI")
+        .save()
+    }
+    @Test
+    fun `get visit by reference`() {
+      val createdVisit = visitCreator(visitRepository)
+        .withPrisonerId("FF0000AA")
+        .withVisitStart(visitTime)
+        .save()
+
+      webTestClient.get().uri("/visits/${createdVisit.reference}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.reference").isEqualTo(createdVisit.reference)
+    }
+
+    @Test
+    fun `get visit by reference - not found`() {
+      webTestClient.get().uri("/visits/12345")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isNotFound
     }
   }
 
