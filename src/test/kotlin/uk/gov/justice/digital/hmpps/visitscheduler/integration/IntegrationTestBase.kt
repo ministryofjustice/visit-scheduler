@@ -10,7 +10,6 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.visitscheduler.config.PostgresContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")

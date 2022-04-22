@@ -1,14 +1,13 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.Import
-import uk.gov.justice.digital.hmpps.visitscheduler.config.TestClockConfiguration
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 
 @Import(TestClockConfiguration::class)
-class VisitSupportControllerIntTest : IntegrationTestBase() {
+class VisitSupportControllerTest : IntegrationTestBase() {
 
   @DisplayName("Get /visit-support")
   @Nested

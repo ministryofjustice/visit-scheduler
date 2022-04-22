@@ -1,18 +1,20 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
-import uk.gov.justice.digital.hmpps.visitscheduler.config.TestClockConfiguration
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.MONTHLY
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.SINGLE
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -21,7 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
 
 @Import(TestClockConfiguration::class)
-class VisitSessionsControllerIntTest : IntegrationTestBase() {
+class VisitSessionsControllerTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sessionTemplateRepository: SessionTemplateRepository
@@ -41,7 +43,7 @@ class VisitSessionsControllerIntTest : IntegrationTestBase() {
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2021-01-08"),
-        frequency = SessionFrequency.SINGLE,
+        frequency = SINGLE,
         restrictions = "Only B wing"
       )
     ).save()
@@ -71,7 +73,7 @@ class VisitSessionsControllerIntTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2021-01-08"),
         expiryDate = LocalDate.parse("2021-01-14"),
-        frequency = SessionFrequency.DAILY,
+        frequency = DAILY,
       )
     ).save()
 
@@ -89,7 +91,7 @@ class VisitSessionsControllerIntTest : IntegrationTestBase() {
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2021-01-08"),
-        frequency = SessionFrequency.WEEKLY,
+        frequency = WEEKLY,
         restrictions = "Only B wing"
       )
     ).save()
@@ -117,7 +119,7 @@ class VisitSessionsControllerIntTest : IntegrationTestBase() {
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2021-01-08"),
-        frequency = SessionFrequency.MONTHLY
+        frequency = MONTHLY
       )
     ).save()
 
@@ -138,7 +140,7 @@ class VisitSessionsControllerIntTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2020-01-01"),
         expiryDate = LocalDate.parse("2020-06-01"),
-        frequency = SessionFrequency.WEEKLY,
+        frequency = WEEKLY,
         restrictions = "Only B wing"
       )
     ).save()
@@ -158,7 +160,7 @@ class VisitSessionsControllerIntTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2022-01-01"),
         expiryDate = LocalDate.parse("2022-06-01"),
-        frequency = SessionFrequency.WEEKLY,
+        frequency = WEEKLY,
         restrictions = "Only B wing"
       )
     ).save()
@@ -180,7 +182,7 @@ class VisitSessionsControllerIntTest : IntegrationTestBase() {
         startDate = dateTime.toLocalDate(),
         startTime = dateTime.toLocalTime(),
         endTime = dateTime.plusHours(1).toLocalTime(),
-        frequency = SessionFrequency.SINGLE
+        frequency = SINGLE
       )
     ).save()
     visitCreator(visitRepository)
@@ -218,7 +220,7 @@ class VisitSessionsControllerIntTest : IntegrationTestBase() {
         startDate = dateTime.toLocalDate(),
         startTime = dateTime.toLocalTime(),
         endTime = dateTime.plusHours(1).toLocalTime(),
-        frequency = SessionFrequency.SINGLE
+        frequency = SINGLE
       )
     ).save()
     visitCreator(visitRepository)
@@ -259,7 +261,7 @@ class VisitSessionsControllerIntTest : IntegrationTestBase() {
         startDate = dateTime.toLocalDate(),
         startTime = dateTime.toLocalTime(),
         endTime = dateTime.plusHours(1).toLocalTime(),
-        frequency = SessionFrequency.SINGLE
+        frequency = SINGLE
       )
     ).save()
     visitCreator(visitRepository)

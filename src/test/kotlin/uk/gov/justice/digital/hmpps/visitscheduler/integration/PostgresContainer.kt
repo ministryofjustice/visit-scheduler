@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.config
+package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.containers.wait.strategy.Wait
