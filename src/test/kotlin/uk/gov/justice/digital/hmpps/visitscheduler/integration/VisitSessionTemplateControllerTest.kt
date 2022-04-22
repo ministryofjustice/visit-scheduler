@@ -9,14 +9,14 @@ import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSessionTemplateRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import java.time.LocalDate
 import java.time.LocalTime
 

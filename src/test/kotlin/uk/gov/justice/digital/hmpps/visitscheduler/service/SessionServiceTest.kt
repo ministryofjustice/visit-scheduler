@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDet
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.MONTHLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.SINGLE
@@ -34,7 +35,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate

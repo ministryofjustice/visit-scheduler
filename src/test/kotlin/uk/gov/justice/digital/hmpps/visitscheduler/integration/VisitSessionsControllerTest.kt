@@ -5,6 +5,12 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.MONTHLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.SINGLE
@@ -14,12 +20,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import java.time.LocalDate
 
 @Import(TestClockConfiguration::class)
