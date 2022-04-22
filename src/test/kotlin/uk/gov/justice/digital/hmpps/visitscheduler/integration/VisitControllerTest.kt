@@ -309,18 +309,21 @@ class VisitControllerTest : IntegrationTestBase() {
         .withVisitStart(visitTime.plusHours(1))
         .withVisitEnd(visitTime.plusHours(2))
         .withPrisonId("BEI")
+        .withVisitStatus(VisitStatus.RESERVED)
         .save()
       visitCreator(visitRepository)
         .withPrisonerId("GG0000BB")
         .withVisitStart(visitTime.plusDays(1).plusHours(1))
         .withVisitEnd(visitTime.plusDays(1).plusHours(2))
         .withPrisonId("BEI")
+        .withVisitStatus(VisitStatus.BOOKED)
         .save()
       visitCreator(visitRepository)
         .withPrisonerId("GG0000BB")
         .withVisitStart(visitTime.plusDays(2).plusHours(1))
         .withVisitEnd(visitTime.plusDays(2).plusHours(2))
         .withPrisonId("BEI")
+        .withVisitStatus(VisitStatus.CANCELLED)
         .save()
     }
 
@@ -417,17 +420,6 @@ class VisitControllerTest : IntegrationTestBase() {
     }
 
     @Test
-    fun `get visits by visitor`() {
-      webTestClient.get().uri("/visits?nomisPersonId=123")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[0].prisonerId").isEqualTo("FF0000CC")
-    }
-
-    @Test
     fun `get visits starting within a date range`() {
       webTestClient.get().uri("/visits?startTimestamp=2021-11-02T09:00:00&endTimestamp=2021-11-03T09:00:00")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
@@ -441,6 +433,28 @@ class VisitControllerTest : IntegrationTestBase() {
             "2021-11-02T13:30:44"
           )
         )
+    }
+
+    @Test
+    fun `get visits by visitor`() {
+      webTestClient.get().uri("/visits?nomisPersonId=123")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(1)
+        .jsonPath("$[0].prisonerId").isEqualTo("FF0000CC")
+    }
+
+    @Test
+    fun `get visits by status`() {
+      webTestClient.get().uri("/visits?visitStatus=BOOKED")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .jsonPath("$.length()").isEqualTo(1)
+        .jsonPath("$[0].prisonerId").isEqualTo("GG0000BB")
     }
 
     @Test
@@ -479,6 +493,14 @@ class VisitControllerTest : IntegrationTestBase() {
     @Test
     fun `get visits - invalid request, contact id should be a long`() {
       webTestClient.get().uri("/visits?nomisPersonId=123LL")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .exchange()
+        .expectStatus().isBadRequest
+    }
+
+    @Test
+    fun `get visits by invalid status`() {
+      webTestClient.get().uri("/visits?visitStatus=AnythingWillDo")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isBadRequest

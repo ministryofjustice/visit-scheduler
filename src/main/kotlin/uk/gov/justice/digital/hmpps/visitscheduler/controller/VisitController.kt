@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 import javax.validation.Valid
@@ -129,7 +130,12 @@ class VisitController(
     @Parameter(
       description = "Filter results by visitor (contact id)",
       example = "12322"
-    ) nomisPersonId: Long?
+    ) nomisPersonId: Long?,
+    @RequestParam(value = "visitStatus", required = false)
+    @Parameter(
+      description = "Filter results by visit status",
+      example = "BOOKED"
+    ) visitStatus: VisitStatus?
   ): List<VisitDto> =
     visitService.findVisitsByFilter(
       VisitFilter(
@@ -137,7 +143,8 @@ class VisitController(
         prisonId = prisonId?.trim(),
         startDateTime = startTimestamp,
         endDateTime = endTimestamp,
-        nomisPersonId = nomisPersonId
+        nomisPersonId = nomisPersonId,
+        visitStatus = visitStatus
       )
     )
 
