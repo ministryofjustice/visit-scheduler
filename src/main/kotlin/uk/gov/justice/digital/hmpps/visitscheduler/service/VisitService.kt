@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -141,6 +142,19 @@ class VisitService(
 
   fun deleteAllVisits(visits: List<VisitDto>) {
     visitRepository.deleteAllByReferenceIn(visits.map { it.reference }.toList())
+  }
+
+  fun cancelVisit(reference: String): VisitDto {
+    log.info("Updating visit for $reference")
+
+    val visitEntity = visitRepository.findByReference(reference)
+    visitEntity ?: throw VisitNotFoundException("Visit reference $reference not found")
+
+    visitEntity.visitStatus = VisitStatus.CANCELLED
+
+    // TODO: VB-667 Set Reason [VISIT_OUTCOMES, STATUS_CHANGED_REASON]
+
+    return VisitDto(visitEntity)
   }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
