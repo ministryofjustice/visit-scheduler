@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 import javax.validation.Valid
@@ -129,7 +130,12 @@ class VisitController(
     @Parameter(
       description = "Filter results by visitor (contact id)",
       example = "12322"
-    ) nomisPersonId: Long?
+    ) nomisPersonId: Long?,
+    @RequestParam(value = "visitStatus", required = false)
+    @Parameter(
+      description = "Filter results by visit status",
+      example = "BOOKED"
+    ) visitStatus: VisitStatus?
   ): List<VisitDto> =
     visitService.findVisitsByFilter(
       VisitFilter(
@@ -137,7 +143,8 @@ class VisitController(
         prisonId = prisonId?.trim(),
         startDateTime = startTimestamp,
         endDateTime = endTimestamp,
-        nomisPersonId = nomisPersonId
+        nomisPersonId = nomisPersonId,
+        visitStatus = visitStatus
       )
     )
 
@@ -252,4 +259,49 @@ class VisitController(
   ) {
     visitService.deleteVisit(reference.trim())
   }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping("/{reference}/cancel")
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Cancel an existing visit",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = UpdateVisitRequestDto::class)
+        )
+      ]
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit cancelled"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to cancel a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to cancel a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Visit not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+    ]
+  )
+  fun cancelVisit(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String
+  ): VisitDto = visitService.cancelVisit(reference.trim())
 }
