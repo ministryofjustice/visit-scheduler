@@ -26,13 +26,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitContactCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitNoteCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitSupportCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitVisitorCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import java.time.LocalDateTime
 
 class VisitControllerTest : IntegrationTestBase() {

@@ -34,7 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.sessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate

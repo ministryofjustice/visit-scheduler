@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.test_setup.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -10,7 +10,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.JwtAuthHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)

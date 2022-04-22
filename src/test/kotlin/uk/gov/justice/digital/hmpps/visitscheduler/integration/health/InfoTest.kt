@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.health
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Test
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 

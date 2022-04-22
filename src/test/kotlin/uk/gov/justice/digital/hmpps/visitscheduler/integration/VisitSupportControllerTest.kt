@@ -4,8 +4,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.springframework.context.annotation.Import
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.TestClockConfiguration
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 
 @Import(TestClockConfiguration::class)
 class VisitSupportControllerTest : IntegrationTestBase() {

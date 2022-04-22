@@ -14,13 +14,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.TestClockConfiguration
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.sessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.sessionTemplateCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.sessionTemplateDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.test_setup.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import java.time.LocalDate
 
 @Import(TestClockConfiguration::class)

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.test_setup.helper
+package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
