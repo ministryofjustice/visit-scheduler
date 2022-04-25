@@ -155,12 +155,12 @@ class VisitService(
 
     visitEntity.visitStatus = VisitStatus.CANCELLED
 
-    val statusChangeReason = createVisitNote(visitEntity, VISIT_OUTCOMES, cancelOutcome.outcome.name)
-    visitEntity.visitNotes.add(statusChangeReason)
+    val visitOutCome = createVisitNote(visitEntity, VISIT_OUTCOMES, cancelOutcome.outcome.name)
+    visitEntity.visitNotes.add(visitOutCome)
 
     cancelOutcome.text?.let {
-      val visitOutCome = createVisitNote(visitEntity, STATUS_CHANGED_REASON, cancelOutcome.text)
-      visitEntity.visitNotes.add(visitOutCome)
+      val statusChangeReason = createVisitNote(visitEntity, STATUS_CHANGED_REASON, cancelOutcome.text)
+      visitEntity.visitNotes.add(statusChangeReason)
     }
 
     visitRepository.saveAndFlush(visitEntity)
