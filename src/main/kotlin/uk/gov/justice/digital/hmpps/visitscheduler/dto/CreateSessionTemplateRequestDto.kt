@@ -13,18 +13,18 @@ data class CreateSessionTemplateRequestDto(
   @field:NotBlank
   val prisonId: String,
   @Schema(description = "The start time of the generated visit session(s)", example = "13:45", required = true)
-  @NotNull
+  @field:NotNull
   val startTime: LocalTime,
   @Schema(description = "The end time of the generated visit session(s)", example = "13:45", required = true)
-  @NotNull
+  @field:NotNull
   val endTime: LocalTime,
   @Schema(description = "The start date of the session template", example = "2019-12-02", required = true)
-  @NotNull
+  @field:NotNull
   val startDate: LocalDate,
   @Schema(description = "The expiry date of the session template", example = "2019-12-02", required = true)
   val expiryDate: LocalDate?,
   @Schema(description = "visit type", example = "SOCIAL", required = true)
-  @NotNull
+  @field:NotNull
   val visitType: VisitType,
   @Schema(description = "visit room", example = "A1", required = true)
   @field:NotBlank
@@ -32,12 +32,12 @@ data class CreateSessionTemplateRequestDto(
   @Schema(description = "restrictions", required = false)
   val restrictions: String? = null,
   @Schema(description = "frequency", required = true)
-  @NotNull
+  @field:NotNull
   val frequency: SessionFrequency,
   @Schema(description = "closed capacity", example = "10", required = true)
-  @NotNull
+  @field:NotNull
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
-  @NotNull
+  @field:NotNull
   val openCapacity: Int,
 )

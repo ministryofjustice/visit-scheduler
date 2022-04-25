@@ -20,19 +20,19 @@ data class CreateVisitRequestDto(
   @field:NotBlank
   val visitRoom: String,
   @Schema(description = "Visit Type", example = "SOCIAL", required = true)
-  @NotNull
+  @field:NotNull
   val visitType: VisitType,
   @Schema(description = "Visit Status", example = "RESERVED", required = true)
-  @NotNull
+  @field:NotNull
   val visitStatus: VisitStatus,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
-  @NotNull
+  @field:NotNull
   val visitRestriction: VisitRestriction,
   @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
-  @NotNull
+  @field:NotNull
   val startTimestamp: LocalDateTime,
   @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = true)
-  @NotNull
+  @field:NotNull
   val endTimestamp: LocalDateTime,
   @Schema(description = "Create legacy data", required = false)
   val legacyData: CreateLegacyDataRequestDto? = null,

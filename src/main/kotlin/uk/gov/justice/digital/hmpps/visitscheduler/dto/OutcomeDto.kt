@@ -7,7 +7,7 @@ import javax.validation.constraints.NotNull
 @Schema(description = "Visit Outcome")
 class OutcomeDto(
   @Schema(description = "Outcome type", example = "VISITOR_CANCELLED", required = true)
-  @NotNull
+  @field:NotNull
   val outcome: OutcomeType,
   @Schema(description = "Outcome text", example = "Because he got covid", required = false)
   val text: String? = null
