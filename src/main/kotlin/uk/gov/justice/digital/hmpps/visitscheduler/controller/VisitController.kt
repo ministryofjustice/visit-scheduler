@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
@@ -269,7 +270,7 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = UpdateVisitRequestDto::class)
+          schema = Schema(implementation = OutcomeDto::class)
         )
       ]
     ),
@@ -302,6 +303,9 @@ class VisitController(
   )
   fun cancelVisit(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String
-  ): VisitDto = visitService.cancelVisit(reference.trim())
+    @PathVariable reference: String,
+    @RequestBody @Valid cancelOutcome: OutcomeDto
+  ): VisitDto {
+    return visitService.cancelVisit(reference.trim(), cancelOutcome)
+  }
 }
