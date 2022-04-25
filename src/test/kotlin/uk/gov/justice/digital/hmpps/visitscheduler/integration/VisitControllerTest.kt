@@ -806,63 +806,6 @@ class VisitControllerTest : IntegrationTestBase() {
     }
   }
 
-  @DisplayName("Put /visits/{reference}/cancel")
-  @Nested
-  inner class CancelVisitByReference {
-    @Test
-    fun `cancel visit by reference`() {
-      val visit = visitCreator(visitRepository)
-        .withVisitStatus(VisitStatus.BOOKED)
-        .save()
-      visitRepository.saveAndFlush(visit)
-
-      webTestClient.put().uri("/visits/${visit.reference}/cancel")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .jsonPath("$.visitStatus").isEqualTo(VisitStatus.CANCELLED.name)
-    }
-
-    @Test
-    fun `put visit by reference - not found`() {
-      webTestClient.put().uri("/visits/12345/cancel")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(
-            UpdateVisitRequestDto()
-          )
-        )
-        .exchange()
-        .expectStatus().isNotFound
-    }
-
-    @Test
-    fun `access forbidden when no role`() {
-      webTestClient.put().uri("/visits/12345/cancel")
-        .headers(setAuthorisation(roles = listOf()))
-        .body(
-          BodyInserters.fromValue(
-            UpdateVisitRequestDto()
-          )
-        )
-        .exchange()
-        .expectStatus().isForbidden
-    }
-
-    @Test
-    fun `unauthorised when no token`() {
-      webTestClient.put().uri("/visits/12345/cancel")
-        .body(
-          BodyInserters.fromValue(
-            UpdateVisitRequestDto()
-          )
-        )
-        .exchange()
-        .expectStatus().isUnauthorized
-    }
-  }
-
   companion object {
     val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
   }

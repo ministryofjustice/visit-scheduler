@@ -5,10 +5,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -144,16 +147,23 @@ class VisitService(
     visitRepository.deleteAllByReferenceIn(visits.map { it.reference }.toList())
   }
 
-  fun cancelVisit(reference: String): VisitDto {
-    log.info("Updating visit for $reference")
+  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
+    log.info("Canceling visit for $reference with $cancelOutcome")
 
     val visitEntity = visitRepository.findByReference(reference)
     visitEntity ?: throw VisitNotFoundException("Visit reference $reference not found")
 
     visitEntity.visitStatus = VisitStatus.CANCELLED
 
-    // TODO: VB-667 Set Reason [VISIT_OUTCOMES, STATUS_CHANGED_REASON]
+    val visitOutCome = createVisitNote(visitEntity, VISIT_OUTCOMES, cancelOutcome.outcome.name)
+    visitEntity.visitNotes.add(visitOutCome)
 
+    cancelOutcome.text?.let {
+      val statusChangeReason = createVisitNote(visitEntity, STATUS_CHANGED_REASON, cancelOutcome.text)
+      visitEntity.visitNotes.add(statusChangeReason)
+    }
+
+    visitRepository.saveAndFlush(visitEntity)
     return VisitDto(visitEntity)
   }
 
