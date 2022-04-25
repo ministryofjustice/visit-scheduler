@@ -148,7 +148,7 @@ class VisitService(
   }
 
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
-    log.info("Updating visit for $reference with $cancelOutcome")
+    log.info("Canceling visit for $reference with $cancelOutcome")
 
     val visitEntity = visitRepository.findByReference(reference)
     visitEntity ?: throw VisitNotFoundException("Visit reference $reference not found")

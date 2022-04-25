@@ -12,6 +12,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -262,7 +263,7 @@ class VisitController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PutMapping("/{reference}/cancel")
+  @PatchMapping("/{reference}/cancel")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Cancel an existing visit",

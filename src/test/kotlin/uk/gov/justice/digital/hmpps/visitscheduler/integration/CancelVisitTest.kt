@@ -34,7 +34,7 @@ class CancelVisitTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.put().uri("/visits/${visit.reference}/cancel")
+    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
         BodyInserters.fromValue(outcomeDto)
@@ -63,7 +63,7 @@ class CancelVisitTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.put().uri("/visits/${visit.reference}/cancel")
+    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
         BodyInserters.fromValue(outcomeDto)
@@ -85,7 +85,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val visit = createVisitAndSave()
 
     // When
-    val responseSpec = webTestClient.put().uri("/visits/${visit.reference}/cancel")
+    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
 
@@ -104,7 +104,7 @@ class CancelVisitTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.put().uri("/visits/$reference/cancel")
+    val responseSpec = webTestClient.patch().uri("/visits/$reference/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
         BodyInserters.fromValue(
@@ -128,7 +128,7 @@ class CancelVisitTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.put().uri("/visits/$reference/cancel")
+    val responseSpec = webTestClient.patch().uri("/visits/$reference/cancel")
       .headers(setAuthorisation(roles = listOf()))
       .body(
         BodyInserters.fromValue(
