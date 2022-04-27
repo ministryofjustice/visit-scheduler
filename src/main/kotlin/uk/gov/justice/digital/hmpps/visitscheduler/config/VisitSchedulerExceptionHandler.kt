@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TemplateNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotFoundException
@@ -74,7 +75,7 @@ class VisitSchedulerExceptionHandler {
 
   @ExceptionHandler(MissingServletRequestParameterException::class)
   fun handleValidationException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> {
-    log.debug("Bad Request (400) returned", e.message)
+    log.debug("Bad Request (400) returned {}", e.message)
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
       .body(
@@ -165,6 +166,20 @@ class VisitSchedulerExceptionHandler {
         ErrorResponse(
           status = HttpStatus.BAD_REQUEST,
           userMessage = "Support not found: ${e.cause?.message}",
+          developerMessage = e.message
+        )
+      )
+  }
+
+  @ExceptionHandler(PublishEventException::class)
+  fun handlePublishEventException(e: PublishEventException): ResponseEntity<ErrorResponse?>? {
+    log.debug("Publish event exception caught: {}", e.message)
+    return ResponseEntity
+      .status(HttpStatus.INTERNAL_SERVER_ERROR)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.INTERNAL_SERVER_ERROR,
+          userMessage = "Failed to publish event: ${e.cause?.message}",
           developerMessage = e.message
         )
       )

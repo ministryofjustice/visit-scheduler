@@ -3,9 +3,9 @@ spring:
     allow-bean-definition-overriding: true
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/visit_scheduler_db
-    username: admin
-    password: admin_password
+    url: jdbc:postgresql://localhost:5432/visit_scheduler
+    username: visit_scheduler
+    password: visit_scheduler
 
   jpa:
     show-sql: true
@@ -19,9 +19,6 @@ spring:
 server:
   shutdown: immediate
 
-aws:
-  provider: localstack
-
 management.endpoint:
   health.cache.time-to-live: 0
   info.cache.time-to-live: 0
@@ -30,7 +27,7 @@ hmpps.auth.url: http://localhost:8090/auth
 
 prison:
   api:
-    url: http://localhost:8091
+    url: http://localhost:8092
     timeout: 5s
 
 policy:
@@ -43,3 +40,13 @@ task:
     enabled: false
     cron: 0/30 * * * * ?
     validity-minutes: 3
+
+hmpps.sqs:
+  provider: localstack
+  queues:
+    domaineventsqueue:
+      queueName: ${random.uuid}
+      subscribeTopicId: domainevents
+  topics:
+    domainevents:
+      arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}

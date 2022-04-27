@@ -24,13 +24,20 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-kotlin:1.6.7")
   implementation("org.springdoc:springdoc-openapi-data-rest:1.6.7")
 
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:1.1.3")
+
   runtimeOnly("org.postgresql:postgresql")
   runtimeOnly("org.flywaydb:flyway-core")
 
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("io.jsonwebtoken:jjwt:0.9.1")
+
+  testImplementation("org.mockito:mockito-inline:4.5.1")
+  testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
+
   testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
   testImplementation("org.testcontainers:postgresql:1.17.1")
+  testImplementation("org.testcontainers:localstack:1.17.1")
 }
 
 java {

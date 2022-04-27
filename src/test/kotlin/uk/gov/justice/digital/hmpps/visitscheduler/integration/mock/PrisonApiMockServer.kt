@@ -1,11 +1,11 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.mock
 
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import org.springframework.http.MediaType
 
-class PrisonApiMockServer : WireMockServer(8091) {
+class PrisonApiMockServer : WireMockServer(8092) {
 
   fun stubGetOffenderNonAssociation(offenderNo: String, nonAssociationId: String, effectiveDate: String, expiryDate: String? = null) {
     stubFor(

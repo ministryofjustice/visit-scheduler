@@ -11,22 +11,16 @@ parameters:
     type: string
     default: dps-releases
 
-executors:
-  validator:
-    docker:
-      - image: cimg/openjdk:17.0-browsers
-      - image: circleci/postgres:13.2
-        environment:
-          - POSTGRES_PASSWORD=admin_password
-          - POSTGRES_USER=admin
-          - POSTGRES_DB=visit_scheduler_db
-    environment:
-      _JAVA_OPTIONS: -Xmx256m -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2 -Dorg.gradle.daemon=false -Dkotlin.compiler.execution.strategy=in-process -Dorg.gradle.workers.max=1
-    working_directory: ~/app
-
 jobs:
   validate:
-    executor: validator
+    executor:
+      name: hmpps/java_localstack_postgres
+      jdk_tag: "17.0"
+      localstack_tag: "0.14.0"
+      services: "sns,sqs"
+      postgres_tag: "14"
+      postgres_username: "visit_scheduler"
+      postgres_password: "visit_scheduler"
     steps:
       - checkout
       - run:
@@ -36,6 +30,7 @@ jobs:
           keys:
             - gradle-{{ checksum "build.gradle.kts" }}
             - gradle-
+      - hmpps/wait_till_ready_postgres
       - run:
           command: ./gradlew check
       - save_cache:
