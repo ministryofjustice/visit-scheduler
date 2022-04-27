@@ -6,7 +6,7 @@ generic-service:
 
   ingress:
     host: visit-scheduler-staging.hmpps.service.justice.gov.uk
-    contextColour: blue
+    contextColour: green
 
   env:
     SPRING_PROFILES_ACTIVE: "stdout"
