@@ -6,6 +6,7 @@ generic-service:
 
   ingress:
     host: visit-scheduler-staging.hmpps.service.justice.gov.uk
+
     contextColour: green
 
   env:
