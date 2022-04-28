@@ -102,7 +102,7 @@ internal data class HMPPSDomainEvent(
   val eventType: String,
   val version: Int,
   val description: String,
-  @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSXXX")
+  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSXXX", locale = "en_GB", timezone = "GMT")
   val occurredAt: OffsetDateTime,
   val prisonerId: String,
   val additionalInformation: AdditionalInformation,
