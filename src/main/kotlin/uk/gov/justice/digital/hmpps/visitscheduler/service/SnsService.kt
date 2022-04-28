@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import com.amazonaws.services.sns.model.MessageAttributeValue
 import com.amazonaws.services.sns.model.PublishRequest
-import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -10,8 +9,8 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import java.time.LocalDateTime
-import java.time.OffsetDateTime
 import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import java.util.function.Supplier
 
 /**
@@ -58,8 +57,8 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
     )
   }
 
-  private fun convertToOffsetDateAndTime(localDateTime: LocalDateTime): OffsetDateTime {
-    return localDateTime.atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime()
+  private fun convertToOffsetDateAndTime(localDateTime: LocalDateTime): String {
+    return localDateTime.atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
   }
 
   private fun publishToDomainEventsTopic(eventPayload: HMPPSDomainEvent) {
@@ -102,8 +101,7 @@ internal data class HMPPSDomainEvent(
   val eventType: String,
   val version: Int,
   val description: String,
-  @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss.SSSSSSSXXX")
-  val occurredAt: OffsetDateTime,
+  val occurredAt: String,
   val prisonerId: String,
   val additionalInformation: AdditionalInformation,
 )
