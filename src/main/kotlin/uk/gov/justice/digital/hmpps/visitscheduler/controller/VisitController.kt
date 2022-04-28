@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 import javax.validation.Valid
@@ -36,7 +37,8 @@ import javax.validation.Valid
 @Validated
 @RequestMapping(name = "Visit Resource", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitController(
-  private val visitService: VisitService
+  private val visitService: VisitService,
+  private val snsService: SnsService,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -76,7 +78,9 @@ class VisitController(
   )
   fun createVisit(
     @RequestBody @Valid createVisitRequest: CreateVisitRequestDto
-  ): VisitDto = visitService.createVisit(createVisitRequest)
+  ): VisitDto = visitService.createVisit(createVisitRequest).also {
+    snsService.sendVisitBookedEvent(it)
+  }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping
@@ -306,7 +310,7 @@ class VisitController(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String,
     @RequestBody @Valid cancelOutcome: OutcomeDto
-  ): VisitDto {
-    return visitService.cancelVisit(reference.trim(), cancelOutcome)
+  ): VisitDto = visitService.cancelVisit(reference.trim(), cancelOutcome).also {
+    snsService.sendVisitCancelledEvent(it)
   }
 }

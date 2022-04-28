@@ -17,7 +17,7 @@ services:
       - PRISON_API_URL=http://prison-api:8080
       - SYSTEM_CLIENT_ID=book-a-prison-visit-client
       - SYSTEM_CLIENT_SECRET=clientsecret
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://visit-scheduler-db:5432/visit_scheduler_db
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://visit-scheduler-db:5432/visit_scheduler
 
   hmpps-auth:
     image: quay.io/hmpps/hmpps-auth:latest
@@ -56,9 +56,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_PASSWORD=admin_password
-      - POSTGRES_USER=admin
-      - POSTGRES_DB=visit_scheduler_db
+      - POSTGRES_PASSWORD=visit_scheduler
+      - POSTGRES_USER=visit_scheduler
+      - POSTGRES_DB=visit_scheduler
 
 networks:
   hmpps:

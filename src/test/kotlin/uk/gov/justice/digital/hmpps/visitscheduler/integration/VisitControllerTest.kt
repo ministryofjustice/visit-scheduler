@@ -49,7 +49,7 @@ class VisitControllerTest : IntegrationTestBase() {
   @Nested
   inner class CreateVisit {
 
-    fun createVisitRequest(leadPersonId: Long? = null): CreateVisitRequestDto {
+    private fun createVisitRequest(leadPersonId: Long? = null): CreateVisitRequestDto {
       return CreateVisitRequestDto(
         prisonId = "MDI",
         prisonerId = "FF0000FF",

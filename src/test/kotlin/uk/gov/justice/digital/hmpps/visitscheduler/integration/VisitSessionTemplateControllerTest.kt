@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
@@ -40,7 +39,7 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
       expiryDate = LocalDate.of(2021, 4, 1),
       visitRoom = "A1",
       visitType = VisitType.SOCIAL,
-      frequency = SessionFrequency.WEEKLY,
+      frequency = WEEKLY,
       openCapacity = 5,
       closedCapacity = 2,
       restrictions = "restrictions text"
@@ -62,7 +61,7 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
         .jsonPath("$.prisonId").isEqualTo("LEI")
         .jsonPath("$.startTime").isEqualTo("14:30:00")
         .jsonPath("$.endTime").isEqualTo("16:30:00")
-        .jsonPath("$.frequency").isEqualTo(SessionFrequency.WEEKLY.name)
+        .jsonPath("$.frequency").isEqualTo(WEEKLY.name)
         .jsonPath("$.restrictions").isEqualTo("restrictions text")
         .jsonPath("$.openCapacity").isEqualTo(5)
         .jsonPath("$.closedCapacity").isEqualTo(2)
@@ -231,7 +230,7 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
         .jsonPath("$.visitType").isEqualTo(VisitType.SOCIAL.name)
         .jsonPath("$.visitRoom").isEqualTo("1")
         .jsonPath("$.restrictions").isEqualTo("Only A wing")
-        .jsonPath("$.frequency").isEqualTo(SessionFrequency.WEEKLY.name)
+        .jsonPath("$.frequency").isEqualTo(WEEKLY.name)
         .jsonPath("$.closedCapacity").isEqualTo(5)
         .jsonPath("$.openCapacity").isEqualTo(10)
     }

@@ -7,9 +7,9 @@ management.endpoint:
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/visit_scheduler_db
-    username: admin
-    password: admin_password
+    url: jdbc:postgresql://localhost:5432/visit_scheduler
+    username: visit_scheduler
+    password: visit_scheduler
 
   security:
     oauth2:

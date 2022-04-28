@@ -5,15 +5,19 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
   @Suppress("unused")
@@ -55,6 +59,7 @@ abstract class IntegrationTestBase {
     }
 
     private val pgContainer = PostgresContainer.instance
+    private val lsContainer = LocalStackContainer.instance
 
     @JvmStatic
     @DynamicPropertySource
@@ -68,6 +73,15 @@ abstract class IntegrationTestBase {
         registry.add("spring.flyway.url", pgContainer::getJdbcUrl)
         registry.add("spring.flyway.user", pgContainer::getUsername)
         registry.add("spring.flyway.password", pgContainer::getPassword)
+      }
+
+      lsContainer?.run {
+        lsContainer.getEndpointConfiguration(org.testcontainers.containers.localstack.LocalStackContainer.Service.SNS)
+          .let { it.serviceEndpoint to it.signingRegion }
+          .also {
+            registry.add("hmpps.sqs.localstackUrl") { it.first }
+            registry.add("hmpps.sqs.region") { it.second }
+          }
       }
     }
   }

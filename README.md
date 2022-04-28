@@ -31,12 +31,12 @@ docker-compose up
 
 Ports
 
-Service | Port |  
---- |------
-visit-scheduler | 8080
-visit-scheduler-db | 5432
-hmpps-auth | 8090
-prison-api | 8091
+| Service            | Port |  
+|--------------------|------|
+| visit-scheduler    | 8080 |
+| visit-scheduler-db | 5432 |
+| hmpps-auth         | 8090 |
+| prison-api         | 8091 |
 
 To create a Token (local):
 ```

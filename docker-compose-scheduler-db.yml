@@ -1,0 +1,17 @@
+version: "3.8"
+services:
+  visit-scheduler-db:
+    image: postgres:13.2
+    networks:
+      - hmpps
+    container_name: visit-scheduler-db
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=visit_scheduler
+      - POSTGRES_USER=visit_scheduler
+      - POSTGRES_DB=visit_scheduler
+
+networks:
+  hmpps:
