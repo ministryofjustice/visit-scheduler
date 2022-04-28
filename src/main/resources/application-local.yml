@@ -1,0 +1,53 @@
+server:
+  shutdown: immediate
+
+management.endpoint:
+  health.cache.time-to-live: 0
+  info.cache.time-to-live: 0
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/visit_scheduler
+    username: visit_scheduler
+    password: visit_scheduler
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: classpath:local-public-key.pub
+
+hmpps.auth.url: http://localhost:8090/auth
+
+prison:
+  api:
+    url: http://localhost:8091
+    timeout: 10s
+
+task:
+  expired-visit:
+    enabled: true
+    cron: 0 0/10 * * * ?
+    validity-minutes: 20
+
+
+local-stack-aws:
+  image: localstack/localstack:0.14.0
+  networks:
+    - hmpps
+  container_name: local-stack-aws
+  ports:
+    - "4566:4566"
+  environment:
+    - SERVICES=sns,sqs
+    - DEBUG=${DEBUG- }
+
+hmpps.sqs:
+  provider: localstack
+  queues:
+    domaineventsqueue:
+      queueName: ${random.uuid}
+      subscribeTopicId: domainevents
+  topics:
+    domainevents:
+      arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
