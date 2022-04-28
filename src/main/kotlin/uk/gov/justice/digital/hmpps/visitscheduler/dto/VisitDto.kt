@@ -41,6 +41,9 @@ data class VisitDto(
   @Schema(description = "The visit created date and time", example = "2018-12-01T13:45:00", required = true)
   @field:NotBlank
   val createdTimestamp: LocalDateTime,
+  @Schema(description = "The visit modified date and time", example = "2018-12-01T13:45:00", required = true)
+  @field:NotBlank
+  val modifiedTimestamp: LocalDateTime,
 
 ) {
   constructor(visitEntity: Visit) : this(
@@ -57,6 +60,7 @@ data class VisitDto(
     visitContact = visitEntity.visitContact?.let { ContactDto(it) },
     visitors = visitEntity.visitors.map { VisitorDto(it) },
     visitorSupport = visitEntity.support.map { VisitorSupportDto(it) },
-    createdTimestamp = visitEntity.createTimestamp!!
+    createdTimestamp = visitEntity.createTimestamp!!,
+    modifiedTimestamp = visitEntity.modifyTimestamp!!
   )
 }

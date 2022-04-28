@@ -7,9 +7,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_ZONE_ID
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
-import java.time.Instant
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.function.Supplier
@@ -25,14 +24,18 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
   private val domaineventsTopic by lazy { hmppsQueueService.findByTopicId(TOPIC_ID) ?: throw RuntimeException("Topic with name $TOPIC_ID doesn't exist") }
   private val domaineventsTopicClient by lazy { domaineventsTopic.snsClient }
 
+  fun LocalDateTime.toOffsetDateFormat(): String =
+    atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
   fun sendVisitBookedEvent(visit: VisitDto) {
     log.debug("Sending visit booked event")
+
     publishToDomainEventsTopic(
       HMPPSDomainEvent(
         eventType = EVENT_PRISON_VISIT_BOOKED,
         version = EVENT_PRISON_VISIT_VERSION,
         description = EVENT_PRISON_VISIT_BOOKED_DESC,
-        occurredAt = Instant.now().toString(),
+        occurredAt = visit.createdTimestamp.toOffsetDateFormat(),
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
@@ -48,7 +51,7 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
         eventType = EVENT_PRISON_VISIT_CANCELLED,
         version = EVENT_PRISON_VISIT_VERSION,
         description = EVENT_PRISON_VISIT_CANCELLED_DESC,
-        occurredAt = Instant.now().toString(),
+        occurredAt = visit.modifiedTimestamp.toOffsetDateFormat(),
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
           reference = visit.reference
@@ -90,37 +93,18 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
   }
 }
 
-data class AdditionalInformation(
+internal data class AdditionalInformation(
   val reference: String,
 )
 
-@Suppress("unused")
-data class HMPPSDomainEvent(
+internal data class HMPPSDomainEvent(
   val eventType: String,
   val version: Int,
   val description: String,
   val occurredAt: String,
   val prisonerId: String,
   val additionalInformation: AdditionalInformation,
-) {
-  constructor(
-    eventType: String,
-    description: String,
-    occurredAt: Instant,
-    prisonerId: String,
-    additionalInformation: AdditionalInformation
-  ) : this(
-    eventType,
-    1,
-    description,
-    occurredAt.toOffsetDateFormat(),
-    prisonerId,
-    additionalInformation
-  )
-}
-
-fun Instant.toOffsetDateFormat(): String =
-  atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+)
 
 @Suppress("unused")
 class PublishEventException(message: String? = null, cause: Throwable? = null) :

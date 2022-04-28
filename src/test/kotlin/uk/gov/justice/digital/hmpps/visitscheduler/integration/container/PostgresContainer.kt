@@ -8,7 +8,7 @@ import java.io.IOException
 import java.net.ServerSocket
 
 object PostgresContainer {
-  val log = LoggerFactory.getLogger(this::class.java)
+  private val log = LoggerFactory.getLogger(this::class.java)
   val instance: PostgreSQLContainer<Nothing>? by lazy { startPostgresqlIfNotRunning() }
   private fun startPostgresqlIfNotRunning(): PostgreSQLContainer<Nothing>? {
     if (isPostgresRunning())

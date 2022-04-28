@@ -9,7 +9,7 @@ import java.io.IOException
 import java.net.ServerSocket
 
 object LocalStackContainer {
-  val log = LoggerFactory.getLogger(this::class.java)
+  private val log = LoggerFactory.getLogger(this::class.java)
   val instance by lazy { startLocalstackIfNotRunning() }
 
   private fun startLocalstackIfNotRunning(): LocalStackContainer? {
