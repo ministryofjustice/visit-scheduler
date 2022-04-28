@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitReque
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -70,7 +71,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
         visitType = VisitType.SOCIAL,
         startTimestamp = VisitControllerTest.visitTime,
         endTimestamp = VisitControllerTest.visitTime.plusHours(1),
-        visitStatus = VisitStatus.RESERVED,
+        visitStatus = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.OPEN,
         visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
         visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
@@ -78,17 +79,16 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       )
     }
 
-    private fun createVisitAndSave(): Visit {
+    private fun createVisitAndSave(visitStatus: VisitStatus): Visit {
       val visit = visitCreator(visitRepository)
-        .withVisitStatus(VisitStatus.BOOKED)
+        .withVisitStatus(visitStatus)
         .save()
-
       visitRepository.saveAndFlush(visit)
       return visit
     }
 
     @Test
-    fun `send visit booked event`() {
+    fun `send visit booked event on create`() {
 
       // Given
       val requestDto = createVisitRequest()
@@ -122,9 +122,43 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
     }
 
     @Test
+    fun `send visit booked event on update`() {
+
+      // Given
+      val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
+
+      // When
+      val returnResult = webTestClient.put().uri("/visits/${visitEntity.reference}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(UpdateVisitRequestDto(visitStatus = VisitStatus.BOOKED))
+        )
+        .exchange()
+        .expectStatus().isOk
+        .expectBody()
+        .returnResult()
+
+      await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
+
+      // Then
+      val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+      val requestJson = testSqsClient.receiveMessage(testQueueUrl).messages[0].body
+      val (message, messageAttributes) = objectMapper.readValue(requestJson, HMPPSMessage::class.java)
+      assertThat(messageAttributes.eventType.Value).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
+      val (eventType, version, description, occurredAt, prisonerId, additionalInformation) = objectMapper.readValue(message, HMPPSDomainEvent::class.java)
+      assertThat(eventType).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
+      assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
+      assertThat(description).isEqualTo(EVENT_PRISON_VISIT_BOOKED_DESC)
+      assertThat(occurredAt).isNotEmpty
+      assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.createdTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
+      assertThat(prisonerId).isEqualTo(visit.prisonerId)
+      assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+    }
+
+    @Test
     fun `send visit cancelled event`() {
       // Given
-      val visitEntity = createVisitAndSave()
+      val visitEntity = createVisitAndSave(VisitStatus.BOOKED)
 
       // When
       val returnResult = webTestClient.patch().uri("/visits/${visitEntity.reference}/cancel")

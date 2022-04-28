@@ -78,8 +78,14 @@ class VisitController(
   )
   fun createVisit(
     @RequestBody @Valid createVisitRequest: CreateVisitRequestDto
-  ): VisitDto = visitService.createVisit(createVisitRequest).also {
-    snsService.sendVisitBookedEvent(it)
+  ): VisitDto {
+    val visit = visitService.createVisit(createVisitRequest)
+
+    // Required until VB-501 is implemented
+    if (visit.visitStatus == VisitStatus.BOOKED) {
+      snsService.sendVisitBookedEvent(visit)
+    }
+    return visit
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -235,7 +241,17 @@ class VisitController(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String,
     @RequestBody @Valid updateVisitRequest: UpdateVisitRequestDto
-  ): VisitDto = visitService.updateVisit(reference.trim(), updateVisitRequest)
+  ): VisitDto {
+    val visit = visitService.updateVisit(reference.trim(), updateVisitRequest)
+
+    // Required until VB-501 is implemented
+    updateVisitRequest.visitStatus?.run {
+      if (visit.visitStatus == VisitStatus.BOOKED) {
+        snsService.sendVisitBookedEvent(visit)
+      }
+    }
+    return visit
+  }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @DeleteMapping("/{reference}")
