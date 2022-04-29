@@ -75,10 +75,6 @@ workflows:
             - validate
             - build_docker
             - helm_lint
-      - request-staging-approval:
-          type: approval
-          requires:
-            - deploy_dev
       - hmpps/deploy_env:
           name: deploy_staging
           env: "staging"
@@ -87,7 +83,6 @@ workflows:
             - visit-scheduler-staging
           requires:
             - deploy_dev
-            - request-staging-approval
       - request-preprod-approval:
           type: approval
           requires:
