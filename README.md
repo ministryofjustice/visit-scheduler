@@ -22,13 +22,16 @@ Run:
 
 ## Running
 
-Create a Spring Boot run configuration with active profile of dev, to run against te development environment.
+Create a Spring Boot run configuration with active profile of dev/local, to run against te development environment.
 
 Alternatively the service can be run using docker-compose with client 'book-a-prison-visit-client' and the usual dev secret.
 ```
-docker-compose up
+docker-compose up -d
 ```
-
+or for particular compose files
+```
+docker-compose -f docker-compose-local.yml up -d
+```
 Ports
 
 | Service            | Port |  
