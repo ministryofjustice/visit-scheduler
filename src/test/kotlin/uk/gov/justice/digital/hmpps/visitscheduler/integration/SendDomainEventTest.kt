@@ -1,9 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import com.amazonaws.services.sqs.model.PurgeQueueRequest
-import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.fasterxml.jackson.databind.SerializationFeature
 import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
@@ -54,12 +52,6 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
-
-  @BeforeEach
-  fun `set up for all `() {
-    objectMapper.configure(DeserializationFeature.ADJUST_DATES_TO_CONTEXT_TIME_ZONE, false)
-    objectMapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false)
-  }
 
   @DisplayName("Publish Domain Event")
   @Nested

@@ -24,6 +24,9 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
   private val domaineventsTopic by lazy { hmppsQueueService.findByTopicId(TOPIC_ID) ?: throw RuntimeException("Topic with name $TOPIC_ID doesn't exist") }
   private val domaineventsTopicClient by lazy { domaineventsTopic.snsClient }
 
+  fun LocalDateTime.toOffsetDateFormat(): String =
+    atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+
   fun sendVisitBookedEvent(visit: VisitDto) {
     log.debug("Sending visit booked event")
 
@@ -32,7 +35,7 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
         eventType = EVENT_PRISON_VISIT_BOOKED,
         version = EVENT_PRISON_VISIT_VERSION,
         description = EVENT_PRISON_VISIT_BOOKED_DESC,
-        occurredAt = convertToOffsetDateAndTime(visit.createdTimestamp),
+        occurredAt = visit.createdTimestamp.toOffsetDateFormat(),
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
@@ -48,7 +51,7 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
         eventType = EVENT_PRISON_VISIT_CANCELLED,
         version = EVENT_PRISON_VISIT_VERSION,
         description = EVENT_PRISON_VISIT_CANCELLED_DESC,
-        occurredAt = convertToOffsetDateAndTime(visit.modifiedTimestamp),
+        occurredAt = visit.modifiedTimestamp.toOffsetDateFormat(),
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
           reference = visit.reference
@@ -57,26 +60,23 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
     )
   }
 
-  private fun convertToOffsetDateAndTime(localDateTime: LocalDateTime): String {
-    return localDateTime.atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-  }
-
-  private fun publishToDomainEventsTopic(eventPayload: HMPPSDomainEvent) {
-    log.debug("Entered publishToDomainEventsTopic Event ${eventPayload.eventType} for id ${eventPayload.additionalInformation.reference}")
+  private fun publishToDomainEventsTopic(payload: HMPPSDomainEvent) {
+    log.debug("Event ${payload.eventType} for id ${payload.additionalInformation.reference}")
 
     try {
       domaineventsTopicClient.publish(
-        PublishRequest(domaineventsTopic.arn, objectMapper.writeValueAsString(eventPayload))
+        PublishRequest(domaineventsTopic.arn, objectMapper.writeValueAsString(payload))
           .withMessageAttributes(
             mapOf(
-              "eventType" to MessageAttributeValue().withDataType("String").withStringValue(eventPayload.eventType)
+              "eventType" to MessageAttributeValue().withDataType("String").withStringValue(payload.eventType)
             )
-          ).also { log.info("Published event $eventPayload to outbound topic") }
+          ).also { log.info("Published event $payload to outbound topic") }
       )
     } catch (e: Throwable) {
       // throw PublishEventException("Failed to publish Event $payload.eventType to $TOPIC_ID", e)
+
       // Note: Silently fail until VB-671 is implemented
-      log.debug("Failed to publish Event $eventPayload.eventType to $TOPIC_ID", e)
+      log.debug("Failed to publish Event $payload.eventType to $TOPIC_ID", e)
     }
   }
 
