@@ -56,7 +56,7 @@ class CreateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `migrate visit`() {
+  fun `created visit`() {
 
     // Given
     val jsonBody = BodyInserters.fromValue(
@@ -90,7 +90,7 @@ class CreateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when migrate visit has no visitors then bad request is returned`() {
+  fun `when visit has no visitors then bad request is returned`() {
 
     // Given
     val createVisitRequest = CreateVisitRequestDto(
@@ -115,7 +115,7 @@ class CreateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `migrate visit - duplicates are ignored`() {
+  fun `created visit - duplicates are ignored`() {
 
     // Given
 
@@ -154,7 +154,7 @@ class CreateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `migrate visit - invalid support`() {
+  fun `created visit - invalid support`() {
 
     // Given
 
@@ -181,7 +181,7 @@ class CreateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `migrate visit - invalid request`() {
+  fun `created visit - invalid request`() {
 
     // Given
     val jsonBody = BodyInserters.fromValue(
