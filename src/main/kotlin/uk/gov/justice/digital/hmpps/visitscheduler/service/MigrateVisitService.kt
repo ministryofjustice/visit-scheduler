@@ -5,16 +5,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @Service
@@ -22,11 +19,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
-  private val supportTypeRepository: SupportTypeRepository,
+
 ) {
 
-  fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): VisitDto {
+  fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
     log.info("Entered migrateVisit create migrated visit for prisoner ${migrateVisitRequest.prisonerId}")
+
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
@@ -45,30 +43,20 @@ class MigrateVisitService(
     }
 
     migrateVisitRequest.visitors?.let { contactList ->
-      contactList.distinctBy { it.nomisPersonId }.forEach {
+      contactList.forEach {
         visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
       }
     }
 
-    migrateVisitRequest.visitorSupport?.let { supportList ->
-      supportList.distinctBy { it.type }.forEach {
-        supportTypeRepository.findByName(it.type)
-          ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
-        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
-      }
-    }
-
     migrateVisitRequest.visitNotes?.let { visitNotes ->
-      visitNotes.distinctBy { it.type }.forEach {
+      visitNotes.forEach {
         visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
       }
     }
 
-    migrateVisitRequest.legacyData?.let {
-      saveLegacyData(visitEntity, it.leadVisitorId)
-    }
+    saveLegacyData(visitEntity, migrateVisitRequest.legacyData.leadVisitorId)
 
-    return VisitDto(visitEntity)
+    return visitEntity.reference
   }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
@@ -102,15 +90,6 @@ class MigrateVisitService(
     return VisitVisitor(
       nomisPersonId = personId,
       visitId = visit.id,
-      visit = visit
-    )
-  }
-
-  private fun createVisitSupport(visit: Visit, type: String, text: String?): VisitSupport {
-    return VisitSupport(
-      type = type,
-      visitId = visit.id,
-      text = text,
       visit = visit
     )
   }

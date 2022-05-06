@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.MigrateVisitService
 import javax.validation.Valid
 
@@ -63,7 +62,7 @@ class MigrateController(
   )
   fun migrateVisit(
     @RequestBody @Valid migrateVisitRequest: MigrateVisitRequestDto
-  ): VisitDto {
+  ): String {
     return migrateVisitService.migrateVisit(migrateVisitRequest)
   }
 }
