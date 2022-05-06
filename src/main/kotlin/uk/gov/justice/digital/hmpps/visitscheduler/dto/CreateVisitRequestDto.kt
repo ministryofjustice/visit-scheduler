@@ -37,8 +37,9 @@ data class CreateVisitRequestDto(
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
   val visitContact: CreateContactOnVisitRequestDto?,
-  @Schema(description = "List of visitors associated with the visit", required = false)
-  val visitors: List<@Valid CreateVisitorOnVisitRequestDto>? = listOf(),
+  @Schema(description = "List of visitors associated with the visit", required = true)
+  @field:NotNull
+  val visitors: List<@Valid CreateVisitorOnVisitRequestDto>? = null,
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: List<@Valid CreateSupportOnVisitRequestDto>? = listOf(),
 )

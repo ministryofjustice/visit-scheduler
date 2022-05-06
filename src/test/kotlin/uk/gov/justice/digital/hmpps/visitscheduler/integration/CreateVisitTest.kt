@@ -90,6 +90,31 @@ class CreateVisitTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when migrate visit has no visitors then bad request is returned`() {
+
+    // Given
+    val createVisitRequest = CreateVisitRequestDto(
+      prisonerId = "FF0000FF",
+      prisonId = "MDI",
+      startTimestamp = visitTime,
+      endTimestamp = visitTime.plusHours(1),
+      visitType = VisitType.SOCIAL,
+      visitStatus = VisitStatus.RESERVED,
+      visitRestriction = VisitRestriction.OPEN,
+      visitRoom = "A1",
+      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890")
+    )
+
+    val jsonBody = BodyInserters.fromValue(createVisitRequest)
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+  }
+
+  @Test
   fun `migrate visit - duplicates are ignored`() {
 
     // Given
