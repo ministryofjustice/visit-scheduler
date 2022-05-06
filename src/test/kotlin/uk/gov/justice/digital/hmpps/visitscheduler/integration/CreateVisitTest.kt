@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
-import org.springframework.http.ReactiveHttpOutputMessage
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserter
@@ -201,7 +200,6 @@ class CreateVisitTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isUnauthorized
   }
-
 
   private fun callMigrateVisit(
     authHttpHeaders: (HttpHeaders) -> Unit,
