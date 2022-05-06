@@ -107,7 +107,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.visitRestriction).isEqualTo(OPEN)
       assertThat(visit.visitContact!!.name).isNotEmpty
       assertThat(visit.visitContact!!.name).isEqualTo("John Smith")
-      assertThat(visit.visitContact!!.telephone).isEqualTo("01234 567890")
+      assertThat(visit.visitContact!!.telephone).isEqualTo("013448811538")
       assertThat(visit.createTimestamp).isNotNull()
       assertThat(visit.visitors.size).isEqualTo(1)
       assertThat(visit.visitors[0].nomisPersonId).isEqualTo(123)
