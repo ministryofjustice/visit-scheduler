@@ -49,7 +49,7 @@ class VisitService(
       visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
     }
 
-    createVisitRequest.visitors?.let { contactList ->
+    createVisitRequest.visitors.let { contactList ->
       contactList.distinctBy { it.nomisPersonId }.forEach {
         visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
       }

@@ -102,7 +102,8 @@ class CreateVisitTest : IntegrationTestBase() {
       visitStatus = VisitStatus.RESERVED,
       visitRestriction = VisitRestriction.OPEN,
       visitRoom = "A1",
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890")
+      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
+      visitors = listOf(),
     )
 
     val jsonBody = BodyInserters.fromValue(createVisitRequest)
@@ -168,6 +169,7 @@ class CreateVisitTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.OPEN,
       visitRoom = "A1",
       visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
+      visitors = listOf(CreateVisitorOnVisitRequestDto(123L)),
       visitorSupport = listOf(CreateSupportOnVisitRequestDto("ANYTHINGWILLDO")),
     )
 

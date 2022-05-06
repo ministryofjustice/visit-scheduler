@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDateTime
 import javax.validation.Valid
 import javax.validation.constraints.NotBlank
+import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.NotNull
 
 data class CreateVisitRequestDto(
@@ -38,8 +39,8 @@ data class CreateVisitRequestDto(
   @field:Valid
   val visitContact: CreateContactOnVisitRequestDto?,
   @Schema(description = "List of visitors associated with the visit", required = true)
-  @field:NotNull
-  val visitors: List<@Valid CreateVisitorOnVisitRequestDto>? = null,
+  @field:NotEmpty
+  val visitors: List<@Valid CreateVisitorOnVisitRequestDto>,
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: List<@Valid CreateSupportOnVisitRequestDto>? = listOf(),
 )
