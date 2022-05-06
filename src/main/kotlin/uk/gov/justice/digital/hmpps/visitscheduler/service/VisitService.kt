@@ -13,14 +13,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.util.function.Supplier
@@ -28,7 +26,6 @@ import java.util.function.Supplier
 @Service
 @Transactional
 class VisitService(
-  private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
   private val supportTypeRepository: SupportTypeRepository,
 ) {
@@ -63,16 +60,6 @@ class VisitService(
         supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
         visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
       }
-    }
-
-    createVisitRequest.visitNotes?.let { visitNotes ->
-      visitNotes.distinctBy { it.type }.forEach {
-        visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
-      }
-    }
-
-    createVisitRequest.legacyData?.let {
-      saveLegacyData(visitEntity, it.leadVisitorId)
     }
 
     return VisitDto(visitEntity)
@@ -174,15 +161,6 @@ class VisitService(
       text = text,
       visit = visit
     )
-  }
-
-  private fun saveLegacyData(visit: Visit, leadPersonId: Long) {
-    val legacyData = LegacyData(
-      visitId = visit.id,
-      leadPersonId = leadPersonId
-    )
-
-    legacyDataRepository.saveAndFlush(legacyData)
   }
 
   private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {

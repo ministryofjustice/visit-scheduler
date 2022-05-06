@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
-import org.assertj.core.api.Assertions
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -10,12 +9,9 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -29,9 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
@@ -39,233 +33,8 @@ class VisitControllerTest : IntegrationTestBase() {
   @Autowired
   private lateinit var visitRepository: VisitRepository
 
-  @Autowired
-  private lateinit var legacyDataRepository: LegacyDataRepository
-
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
-
-  @DisplayName("POST /visits")
-  @Nested
-  inner class CreateVisit {
-
-    private fun createVisitRequest(leadPersonId: Long? = null): CreateVisitRequestDto {
-      return CreateVisitRequestDto(
-        prisonId = "MDI",
-        prisonerId = "FF0000FF",
-        visitRoom = "A1",
-        visitType = VisitType.SOCIAL,
-        startTimestamp = visitTime,
-        endTimestamp = visitTime.plusHours(1),
-        visitStatus = VisitStatus.RESERVED,
-        visitRestriction = VisitRestriction.OPEN,
-        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-        visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
-        visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
-        visitNotes = listOf(
-          VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
-          VisitNoteDto(type = VISIT_OUTCOMES, "A visit outcome"),
-          VisitNoteDto(type = VISIT_COMMENT, "A visit comment"),
-          VisitNoteDto(type = STATUS_CHANGED_REASON, "Status has changed")
-        ),
-        legacyData = leadPersonId?.let { CreateLegacyDataRequestDto(leadPersonId) }
-      )
-    }
-
-    @Test
-    fun `create visit`() {
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest()
-          )
-        )
-        .exchange()
-        .expectStatus().isCreated
-
-      webTestClient.get().uri("/visits?prisonerId=FF0000FF")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[0].reference").isNotEmpty
-        .jsonPath("$[0].prisonId").isEqualTo("MDI")
-        .jsonPath("$[0].prisonerId").isEqualTo("FF0000FF")
-        .jsonPath("$[0].visitRoom").isEqualTo("A1")
-        .jsonPath("$[0].visitType").isEqualTo(VisitType.SOCIAL.name)
-        .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.toString())
-        .jsonPath("$[0].endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
-        .jsonPath("$[0].visitStatus").isEqualTo(VisitStatus.RESERVED.name)
-        .jsonPath("$[0].visitRestriction").isEqualTo(VisitRestriction.OPEN.name)
-        .jsonPath("$[0].visitContact.name").isNotEmpty
-        .jsonPath("$[0].visitContact.name").isEqualTo("John Smith")
-        .jsonPath("$[0].visitContact.telephone").isEqualTo("01234 567890")
-        .jsonPath("$[0].visitors.length()").isEqualTo(1)
-        .jsonPath("$[0].visitors[0].nomisPersonId").isEqualTo(123)
-        .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
-        .jsonPath("$[0].visitorSupport[0].type").isEqualTo("OTHER")
-        .jsonPath("$[0].visitorSupport[0].text").isEqualTo("Some Text")
-        .jsonPath("$[0].createdTimestamp").isNotEmpty
-        .jsonPath("$[0].visitNotes.length()").isEqualTo(4)
-        .jsonPath("$[0].visitNotes[0].type").isEqualTo("VISITOR_CONCERN")
-        .jsonPath("$[0].visitNotes[1].type").isEqualTo("VISIT_OUTCOMES")
-        .jsonPath("$[0].visitNotes[2].type").isEqualTo("VISIT_COMMENT")
-        .jsonPath("$[0].visitNotes[3].type").isEqualTo("STATUS_CHANGED_REASON")
-        .jsonPath("$[0].visitNotes[0].text").isEqualTo("A visit concern")
-        .jsonPath("$[0].visitNotes[1].text").isEqualTo("A visit outcome")
-        .jsonPath("$[0].visitNotes[2].text").isEqualTo("A visit comment")
-        .jsonPath("$[0].visitNotes[3].text").isEqualTo("Status has changed")
-    }
-
-    @Test
-    fun `create visit with legacy data`() {
-
-      // Arrange
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest(leadPersonId = 123)
-          )
-        )
-        .exchange()
-        .expectStatus().isCreated
-
-      // Act
-      val webResponse = webTestClient.get().uri("/visits?prisonerId=FF0000FF")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .exchange()
-
-      // Assert
-
-      var reference = ""
-
-      webResponse
-        .expectStatus().isOk
-        .expectBody()
-        .jsonPath("$[0].reference")
-        .value<String> { json -> reference = json }
-
-      var legacyData: LegacyData? = null
-      val visit = visitRepository.findByReference(reference)
-      visit?.let {
-        legacyData = legacyDataRepository.findByVisitId(visit.id)
-      }
-
-      Assertions.assertThat(visit).isNotNull
-      Assertions.assertThat(legacyData).isNotNull
-      Assertions.assertThat(legacyData!!.visitId).isEqualTo(visit!!.id)
-    }
-
-    @Test
-    fun `create visit - duplicates are ignored`() {
-      val createVisitRequest = CreateVisitRequestDto(
-        prisonerId = "FF0000FF",
-        prisonId = "MDI",
-        startTimestamp = visitTime,
-        endTimestamp = visitTime.plusHours(1),
-        visitType = VisitType.SOCIAL,
-        visitStatus = VisitStatus.RESERVED,
-        visitRestriction = VisitRestriction.OPEN,
-        visitRoom = "A1",
-        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-        visitors = listOf(
-          CreateVisitorOnVisitRequestDto(123),
-          CreateVisitorOnVisitRequestDto(123)
-        ),
-        visitorSupport = listOf(
-          CreateSupportOnVisitRequestDto("OTHER", "Some Text"),
-          CreateSupportOnVisitRequestDto("OTHER", "Some Text")
-        )
-      )
-
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest
-          )
-        )
-        .exchange()
-        .expectStatus().isCreated
-
-      webTestClient.get().uri("/visits?prisonerId=FF0000FF")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .jsonPath("$.length()").isEqualTo(1)
-        .jsonPath("$[0].visitors.length()").isEqualTo(1)
-        .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
-    }
-
-    @Test
-    fun `create visit - invalid support`() {
-
-      val createVisitRequest = CreateVisitRequestDto(
-        prisonerId = "FF0000FF",
-        prisonId = "MDI",
-        startTimestamp = visitTime,
-        endTimestamp = visitTime.plusHours(1),
-        visitType = VisitType.SOCIAL,
-        visitStatus = VisitStatus.RESERVED,
-        visitRestriction = VisitRestriction.OPEN,
-        visitRoom = "A1",
-        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-        visitorSupport = listOf(CreateSupportOnVisitRequestDto("ANYTHINGWILLDO")),
-      )
-
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest
-          )
-        )
-        .exchange()
-        .expectStatus().isBadRequest
-    }
-
-    @Test
-    fun `create visit - invalid request`() {
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(
-            mapOf("wrongProperty" to "wrongValue")
-          )
-        )
-        .exchange()
-        .expectStatus().isBadRequest
-    }
-
-    @Test
-    fun `access forbidden when no role`() {
-      webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf()))
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest(leadPersonId = null)
-          )
-        )
-        .exchange()
-        .expectStatus().isForbidden
-    }
-
-    @Test
-    fun `unauthorised when no token`() {
-      webTestClient.post().uri("/visits")
-        .body(
-          BodyInserters.fromValue(
-            createVisitRequest(leadPersonId = null)
-          )
-        )
-        .exchange()
-        .expectStatus().isUnauthorized
-    }
-  }
 
   @DisplayName("GET /visits")
   @Nested
