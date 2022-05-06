@@ -77,11 +77,11 @@ class MigrateVisitService(
     legacyDataRepository.saveAndFlush(legacyData)
   }
 
-  private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {
+  private fun createVisitContact(visit: Visit, name: String, telephone: String?): VisitContact {
     return VisitContact(
       visitId = visit.id,
       name = name,
-      telephone = telephone,
+      telephone = telephone ?: "",
       visit = visit
     )
   }

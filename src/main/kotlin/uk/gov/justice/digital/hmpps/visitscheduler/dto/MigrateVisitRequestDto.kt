@@ -37,9 +37,9 @@ data class MigrateVisitRequestDto(
   val endTimestamp: LocalDateTime,
   @Schema(description = "Create legacy data", required = true)
   val legacyData: CreateLegacyDataRequestDto,
-  @Schema(description = "Contact associated with the visit", required = false)
+  @Schema(description = "Contact associated with the visit", required = true)
   @field:Valid
-  val visitContact: CreateContactOnVisitRequestDto?,
+  val visitContact: CreateLegacyContactOnVisitRequestDto?,
   @Schema(description = "List of visitors associated with the visit", required = false)
   val visitors: List<@Valid CreateVisitorOnVisitRequestDto>? = listOf(),
   @Schema(description = "Visit notes", required = false)

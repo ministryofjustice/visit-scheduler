@@ -12,7 +12,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
@@ -50,7 +50,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
-  private fun createVisitRequest(): MigrateVisitRequestDto {
+  private fun createVisitRequest(telephone: String? = null): MigrateVisitRequestDto {
     return MigrateVisitRequestDto(
       prisonId = "MDI",
       prisonerId = "FF0000FF",
@@ -60,7 +60,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
       visitRestriction = OPEN,
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
+      visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", telephone?.let { telephone }),
       visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
       visitNotes = listOf(
         VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
@@ -78,7 +78,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Given
     val jsonBody = BodyInserters.fromValue(
-      createVisitRequest()
+      createVisitRequest("013448811538")
     )
 
     // When
@@ -124,6 +124,33 @@ class MigrateVisitTest : IntegrationTestBase() {
       val legacyData = legacyDataRepository.findByVisitId(visit.id)
       assertThat(legacyData).isNotNull
       assertThat(legacyData!!.visitId).isEqualTo(visit.id)
+    }
+  }
+
+  @Test
+  @Transactional
+  fun `when telephone number is not given then an empty string will be migrated  `() {
+
+    // Given
+    val jsonBody = BodyInserters.fromValue(
+      createVisitRequest()
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+
+    // Then
+    var reference = ""
+
+    responseSpec.expectStatus().isCreated
+      .expectBody()
+      .jsonPath("$")
+      .value<String> { json -> reference = json }
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitContact!!.telephone).isEqualTo("")
     }
   }
 
