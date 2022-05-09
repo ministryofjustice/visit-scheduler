@@ -36,10 +36,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_VERSION
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_ZONE_ID
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
+import java.time.LocalDateTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+
+  fun LocalDateTime.toOffsetDateFormat(): String =
+    atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -120,7 +124,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
       assertThat(description).isEqualTo(EVENT_PRISON_VISIT_BOOKED_DESC)
       assertThat(occurredAt).isNotEmpty
-      assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit?.createTimestamp?.atZone(ZoneId.of(EVENT_ZONE_ID)))
+      assertThat(occurredAt).isEqualTo(visit?.createTimestamp?.toOffsetDateFormat())
       assertThat(prisonerId).isEqualTo(visit?.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(reference)
     }
@@ -159,7 +163,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
       assertThat(description).isEqualTo(EVENT_PRISON_VISIT_BOOKED_DESC)
       assertThat(occurredAt).isNotEmpty
-      assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit?.createTimestamp?.atZone(ZoneId.of(EVENT_ZONE_ID)))
+      assertThat(occurredAt).isEqualTo(visit?.createTimestamp?.toOffsetDateFormat())
       assertThat(prisonerId).isEqualTo(visit?.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(reference)
     }
@@ -193,7 +197,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
       assertThat(description).isEqualTo(EVENT_PRISON_VISIT_CANCELLED_DESC)
       assertThat(occurredAt).isNotEmpty
-      assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.modifiedTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
+      assertThat(occurredAt).isEqualTo(visit?.modifiedTimestamp?.toOffsetDateFormat())
       assertThat(prisonerId).isEqualTo(visit.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
     }
