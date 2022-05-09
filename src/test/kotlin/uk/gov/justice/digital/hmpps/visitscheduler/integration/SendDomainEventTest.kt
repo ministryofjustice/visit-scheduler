@@ -123,8 +123,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(eventType).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
       assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
       assertThat(description).isEqualTo(EVENT_PRISON_VISIT_BOOKED_DESC)
-      assertThat(occurredAt).isNotEmpty
-      assertThat(occurredAt.toEventOffsetDateTime()).isEqualTo(visit?.createTimestamp?.toEventOffsetDateTime())
+      assertOffsetDate(occurredAt, visit?.createTimestamp)
       assertThat(prisonerId).isEqualTo(visit?.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(reference)
     }
@@ -162,8 +161,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(eventType).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
       assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
       assertThat(description).isEqualTo(EVENT_PRISON_VISIT_BOOKED_DESC)
-      assertThat(occurredAt).isNotEmpty
-      assertThat(occurredAt.toEventOffsetDateTime()).isEqualTo(visit?.createTimestamp?.toEventOffsetDateTime())
+      assertOffsetDate(occurredAt, visit?.createTimestamp)
       assertThat(prisonerId).isEqualTo(visit?.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(reference)
     }
@@ -196,10 +194,20 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(eventType).isEqualTo(EVENT_PRISON_VISIT_CANCELLED)
       assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
       assertThat(description).isEqualTo(EVENT_PRISON_VISIT_CANCELLED_DESC)
-      assertThat(occurredAt).isNotEmpty
-      assertThat(occurredAt.toEventOffsetDateTime()).isEqualTo(visit?.modifiedTimestamp?.toEventOffsetDateTime())
+      assertOffsetDate(occurredAt, visit.modifiedTimestamp)
       assertThat(prisonerId).isEqualTo(visit.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+    }
+
+    private fun assertOffsetDate(
+      occurredAt: String,
+      localDateTime: LocalDateTime?
+    ) {
+      assertThat(occurredAt).isNotEmpty
+      assertThat(occurredAt.toEventOffsetDateTime().month).isEqualTo(localDateTime?.toEventOffsetDateTime()?.month)
+      assertThat(occurredAt.toEventOffsetDateTime().dayOfMonth).isEqualTo(localDateTime?.toEventOffsetDateTime()?.dayOfMonth)
+      assertThat(occurredAt.toEventOffsetDateTime().hour).isEqualTo(localDateTime?.toEventOffsetDateTime()?.hour)
+      assertThat(occurredAt.toEventOffsetDateTime().minute).isEqualTo(localDateTime?.toEventOffsetDateTime()?.minute)
     }
   }
 
