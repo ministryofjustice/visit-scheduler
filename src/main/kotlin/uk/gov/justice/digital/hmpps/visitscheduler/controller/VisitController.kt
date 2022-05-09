@@ -50,7 +50,7 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = CreateVisitRequestDto::class)
+          schema = Schema(implementation = String::class)
         )
       ]
     ),
@@ -78,14 +78,14 @@ class VisitController(
   )
   fun createVisit(
     @RequestBody @Valid createVisitRequest: CreateVisitRequestDto
-  ): VisitDto {
+  ): String {
     val visit = visitService.createVisit(createVisitRequest)
 
     // Required until VB-501 is implemented
     if (visit.visitStatus == VisitStatus.BOOKED) {
       snsService.sendVisitBookedEvent(visit)
     }
-    return visit
+    return visit.reference
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -206,7 +206,7 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = UpdateVisitRequestDto::class)
+          schema = Schema(implementation = String::class)
         )
       ]
     ),
@@ -241,7 +241,7 @@ class VisitController(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String,
     @RequestBody @Valid updateVisitRequest: UpdateVisitRequestDto
-  ): VisitDto {
+  ): String {
     val visit = visitService.updateVisit(reference.trim(), updateVisitRequest)
 
     // Required until VB-501 is implemented
@@ -250,7 +250,7 @@ class VisitController(
         snsService.sendVisitBookedEvent(visit)
       }
     }
-    return visit
+    return visit.reference
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
