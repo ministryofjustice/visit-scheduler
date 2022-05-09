@@ -208,6 +208,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(occurredAt.toEventOffsetDateTime().dayOfMonth).isEqualTo(expected?.toEventOffsetDateTime()?.dayOfMonth)
       assertThat(occurredAt.toEventOffsetDateTime().hour).isEqualTo(expected?.toEventOffsetDateTime()?.hour)
       assertThat(occurredAt.toEventOffsetDateTime().minute).isEqualTo(expected?.toEventOffsetDateTime()?.minute)
+      assertThat(occurredAt.toEventOffsetDateTime().second).isEqualTo(expected?.toEventOffsetDateTime()?.second)
     }
   }
 
