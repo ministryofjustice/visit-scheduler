@@ -201,13 +201,13 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
     private fun assertOffsetDate(
       occurredAt: String,
-      localDateTime: LocalDateTime?
+      expected: LocalDateTime?
     ) {
       assertThat(occurredAt).isNotEmpty
-      assertThat(occurredAt.toEventOffsetDateTime().month).isEqualTo(localDateTime?.toEventOffsetDateTime()?.month)
-      assertThat(occurredAt.toEventOffsetDateTime().dayOfMonth).isEqualTo(localDateTime?.toEventOffsetDateTime()?.dayOfMonth)
-      assertThat(occurredAt.toEventOffsetDateTime().hour).isEqualTo(localDateTime?.toEventOffsetDateTime()?.hour)
-      assertThat(occurredAt.toEventOffsetDateTime().minute).isEqualTo(localDateTime?.toEventOffsetDateTime()?.minute)
+      assertThat(occurredAt.toEventOffsetDateTime().month).isEqualTo(expected?.toEventOffsetDateTime()?.month)
+      assertThat(occurredAt.toEventOffsetDateTime().dayOfMonth).isEqualTo(expected?.toEventOffsetDateTime()?.dayOfMonth)
+      assertThat(occurredAt.toEventOffsetDateTime().hour).isEqualTo(expected?.toEventOffsetDateTime()?.hour)
+      assertThat(occurredAt.toEventOffsetDateTime().minute).isEqualTo(expected?.toEventOffsetDateTime()?.minute)
     }
   }
 
