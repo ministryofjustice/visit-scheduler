@@ -5,7 +5,7 @@ generic-service:
   replicaCount: 4
 
   ingress:
-    host: visit-scheduler.hmpps.service.justice.gov.uk
+    host: visit-scheduler.prison.service.justice.gov.uk
 
   env:
     HMPPS_AUTH_URL: https://sign-in.hmpps.service.justice.gov.uk/auth
