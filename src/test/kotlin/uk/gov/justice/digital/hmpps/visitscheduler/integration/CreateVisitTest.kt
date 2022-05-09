@@ -101,6 +101,7 @@ class CreateVisitTest : IntegrationTestBase() {
       visitType = VisitType.SOCIAL,
       visitStatus = VisitStatus.RESERVED,
       visitRestriction = VisitRestriction.OPEN,
+      visitors = listOf(),
       visitRoom = "A1",
       visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890")
     )
@@ -168,6 +169,7 @@ class CreateVisitTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.OPEN,
       visitRoom = "A1",
       visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
+      visitors = listOf(),
       visitorSupport = listOf(CreateSupportOnVisitRequestDto("ANYTHINGWILLDO")),
     )
 
