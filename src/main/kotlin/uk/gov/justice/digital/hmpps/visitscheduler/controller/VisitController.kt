@@ -50,7 +50,7 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = String::class)
+          schema = Schema(implementation = CreateVisitRequestDto::class)
         )
       ]
     ),
@@ -206,7 +206,7 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = String::class)
+          schema = Schema(implementation = UpdateVisitRequestDto::class)
         )
       ]
     ),
