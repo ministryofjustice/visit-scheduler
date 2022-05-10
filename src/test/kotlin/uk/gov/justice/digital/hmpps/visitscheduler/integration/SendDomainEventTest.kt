@@ -36,10 +36,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_VERSION
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_ZONE_ID
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
 import java.time.ZoneId
-import java.time.ZonedDateTime
 
 class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+
+  fun LocalDateTime.toEventOffsetDateTime(): OffsetDateTime = atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime()
+  fun String.toEventOffsetDateTime(): OffsetDateTime = OffsetDateTime.parse(this)
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -94,20 +98,24 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       val requestDto = createVisitRequest()
 
       // When
-      val returnResult = webTestClient.post().uri("/visits")
+      val responseSpec = webTestClient.post().uri("/visits")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(requestDto)
         )
         .exchange()
-        .expectStatus().isCreated
-        .expectBody()
-        .returnResult()
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 
       // Then
-      val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+      var reference = ""
+
+      responseSpec.expectStatus().isCreated
+        .expectBody()
+        .jsonPath("$")
+        .value<String> { json -> reference = json }
+
+      val visit = visitRepository.findByReference(reference)
       val requestJson = testSqsClient.receiveMessage(testQueueUrl).messages[0].body
       val (message, messageAttributes) = objectMapper.readValue(requestJson, HMPPSMessage::class.java)
       assertThat(messageAttributes.eventType.Value).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
@@ -115,10 +123,9 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(eventType).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
       assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
       assertThat(description).isEqualTo(EVENT_PRISON_VISIT_BOOKED_DESC)
-      assertThat(occurredAt).isNotEmpty
-      assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.createdTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
-      assertThat(prisonerId).isEqualTo(visit.prisonerId)
-      assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+      assertOffsetDate(occurredAt, visit?.createTimestamp)
+      assertThat(prisonerId).isEqualTo(visit?.prisonerId)
+      assertThat(additionalInformation.reference).isEqualTo(reference)
     }
 
     @Test
@@ -128,20 +135,25 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
 
       // When
-      val returnResult = webTestClient.put().uri("/visits/${visitEntity.reference}")
+      val responseSpec = webTestClient.put().uri("/visits/${visitEntity.reference}")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(UpdateVisitRequestDto(visitStatus = VisitStatus.BOOKED))
         )
         .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .returnResult()
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 
       // Then
-      val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+      var reference = ""
+
+      responseSpec.expectStatus().isOk
+        .expectBody()
+        .jsonPath("$")
+        .value<String> { json -> reference = json }
+
+      val visit = visitRepository.findByReference(reference)
+
       val requestJson = testSqsClient.receiveMessage(testQueueUrl).messages[0].body
       val (message, messageAttributes) = objectMapper.readValue(requestJson, HMPPSMessage::class.java)
       assertThat(messageAttributes.eventType.Value).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
@@ -149,10 +161,9 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(eventType).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
       assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
       assertThat(description).isEqualTo(EVENT_PRISON_VISIT_BOOKED_DESC)
-      assertThat(occurredAt).isNotEmpty
-      assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.createdTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
-      assertThat(prisonerId).isEqualTo(visit.prisonerId)
-      assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+      assertOffsetDate(occurredAt, visit?.createTimestamp)
+      assertThat(prisonerId).isEqualTo(visit?.prisonerId)
+      assertThat(additionalInformation.reference).isEqualTo(reference)
     }
 
     @Test
@@ -161,19 +172,20 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       val visitEntity = createVisitAndSave(VisitStatus.BOOKED)
 
       // When
-      val returnResult = webTestClient.patch().uri("/visits/${visitEntity.reference}/cancel")
+      val responseSpec = webTestClient.patch().uri("/visits/${visitEntity.reference}/cancel")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(OutcomeDto(OutcomeType.PRISONER_CANCELLED, "AnyThingWillDo"))
         )
         .exchange()
-        .expectStatus().isOk
-        .expectBody()
-        .returnResult()
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 
       // Then
+      val returnResult = responseSpec.expectStatus().isOk
+        .expectBody()
+        .returnResult()
+
       val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
       val requestJson = testSqsClient.receiveMessage(testQueueUrl).messages[0].body
       val (message, messageAttributes) = objectMapper.readValue(requestJson, HMPPSMessage::class.java)
@@ -182,10 +194,21 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(eventType).isEqualTo(EVENT_PRISON_VISIT_CANCELLED)
       assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
       assertThat(description).isEqualTo(EVENT_PRISON_VISIT_CANCELLED_DESC)
-      assertThat(occurredAt).isNotEmpty
-      assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.modifiedTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
+      assertOffsetDate(occurredAt, visit.modifiedTimestamp)
       assertThat(prisonerId).isEqualTo(visit.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+    }
+
+    private fun assertOffsetDate(
+      occurredAt: String,
+      expected: LocalDateTime?
+    ) {
+      assertThat(occurredAt).isNotEmpty
+      assertThat(occurredAt.toEventOffsetDateTime().month).isEqualTo(expected?.toEventOffsetDateTime()?.month)
+      assertThat(occurredAt.toEventOffsetDateTime().dayOfMonth).isEqualTo(expected?.toEventOffsetDateTime()?.dayOfMonth)
+      assertThat(occurredAt.toEventOffsetDateTime().hour).isEqualTo(expected?.toEventOffsetDateTime()?.hour)
+      assertThat(occurredAt.toEventOffsetDateTime().minute).isEqualTo(expected?.toEventOffsetDateTime()?.minute)
+      assertThat(occurredAt.toEventOffsetDateTime().second).isEqualTo(expected?.toEventOffsetDateTime()?.second)
     }
   }
 

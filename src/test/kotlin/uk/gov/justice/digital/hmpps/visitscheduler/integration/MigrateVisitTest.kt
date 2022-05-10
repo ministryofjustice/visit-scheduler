@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
@@ -31,6 +32,7 @@ import java.time.LocalDateTime
 
 private const val TEST_END_POINT = "/migrate-visits"
 
+@Transactional(propagation = SUPPORTS)
 @DisplayName("Migrate POST /visits")
 class MigrateVisitTest : IntegrationTestBase() {
 
@@ -73,7 +75,6 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  @Transactional
   fun `migrate visit`() {
 
     // Given
@@ -128,7 +129,6 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  @Transactional
   fun `when telephone number is not given then an empty string will be migrated  `() {
 
     // Given
