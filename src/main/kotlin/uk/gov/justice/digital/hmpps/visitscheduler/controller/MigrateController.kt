@@ -34,7 +34,7 @@ class MigrateController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = String::class)
+          schema = Schema(implementation = MigrateVisitRequestDto::class)
         )
       ]
     ),
