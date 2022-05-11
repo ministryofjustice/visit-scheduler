@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -22,6 +23,8 @@ data class VisitDto(
   val visitType: VisitType,
   @Schema(description = "Visit Status", example = "RESERVED", required = true)
   val visitStatus: VisitStatus,
+  @Schema(description = "Outcome Status", example = "VISITOR_CANCELLED", required = false)
+  val outcomeStatus: OutcomeStatus? = null,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   val visitRestriction: VisitRestriction,
   @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
@@ -52,6 +55,7 @@ data class VisitDto(
     prisonId = visitEntity.prisonId,
     visitRoom = visitEntity.visitRoom,
     visitStatus = visitEntity.visitStatus,
+    outcomeStatus = visitEntity.outcomeStatus,
     visitType = visitEntity.visitType,
     visitRestriction = visitEntity.visitRestriction,
     startTimestamp = visitEntity.visitStart,

@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -29,7 +29,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val visit = createVisitAndSave()
 
     val outcomeDto = OutcomeDto(
-      OutcomeType.PRISONER_CANCELLED,
+      OutcomeStatus.PRISONER_CANCELLED,
       "Prisoner got covid"
     )
 
@@ -45,11 +45,10 @@ class CancelVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitStatus").isEqualTo(VisitStatus.CANCELLED.name)
-      .jsonPath("$.visitNotes.length()").isEqualTo(2)
+      .jsonPath("$.outcomeStatus").isEqualTo(OutcomeStatus.PRISONER_CANCELLED.name)
+      .jsonPath("$.visitNotes.length()").isEqualTo(1)
       .jsonPath("$.visitNotes[0].type").isEqualTo("VISIT_OUTCOMES")
-      .jsonPath("$.visitNotes[1].type").isEqualTo("STATUS_CHANGED_REASON")
-      .jsonPath("$.visitNotes[0].text").isEqualTo("PRISONER_CANCELLED")
-      .jsonPath("$.visitNotes[1].text").isEqualTo("Prisoner got covid")
+      .jsonPath("$.visitNotes[0].text").isEqualTo("Prisoner got covid")
   }
 
   @Test
@@ -59,7 +58,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val visit = createVisitAndSave()
 
     val outcomeDto = OutcomeDto(
-      outcome = OutcomeType.VISITOR_CANCELLED
+      outcomeStatus = OutcomeStatus.VISITOR_CANCELLED
     )
 
     // When
@@ -73,9 +72,8 @@ class CancelVisitTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.visitNotes.length()").isEqualTo(1)
-      .jsonPath("$.visitNotes[0].type").isEqualTo("VISIT_OUTCOMES")
-      .jsonPath("$.visitNotes[0].text").isEqualTo("VISITOR_CANCELLED")
+      .jsonPath("$.visitNotes").isEmpty
+      .jsonPath("$.outcomeStatus").isEqualTo(OutcomeStatus.VISITOR_CANCELLED.name)
   }
 
   @Test
@@ -99,7 +97,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val reference = "12345"
 
     val outcomeDto = OutcomeDto(
-      OutcomeType.ADMINISTRATIVE_ERROR,
+      OutcomeStatus.ADMINISTRATIVE_ERROR,
       "Visit does not exist"
     )
 
@@ -123,7 +121,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val reference = "12345"
 
     val outcomeDto = OutcomeDto(
-      OutcomeType.ESTABLISHMENT_CANCELLED,
+      OutcomeStatus.ESTABLISHMENT_CANCELLED,
       "Prisoner got covid"
     )
 
@@ -147,7 +145,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val reference = "12345"
 
     val outcomeDto = OutcomeDto(
-      OutcomeType.PRISONER_CANCELLED,
+      OutcomeStatus.PRISONER_CANCELLED,
       "Prisoner got covid"
     )
 

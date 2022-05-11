@@ -10,8 +10,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -139,13 +137,11 @@ class VisitService(
     visitEntity ?: throw VisitNotFoundException("Visit reference $reference not found")
 
     visitEntity.visitStatus = VisitStatus.CANCELLED
-
-    val visitOutCome = createVisitNote(visitEntity, VISIT_OUTCOMES, cancelOutcome.outcome.name)
-    visitEntity.visitNotes.add(visitOutCome)
+    visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {
-      val statusChangeReason = createVisitNote(visitEntity, STATUS_CHANGED_REASON, cancelOutcome.text)
-      visitEntity.visitNotes.add(statusChangeReason)
+      val outcomeNote = createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text)
+      visitEntity.visitNotes.add(outcomeNote)
     }
 
     visitRepository.saveAndFlush(visitEntity)

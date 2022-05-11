@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -26,6 +27,8 @@ data class MigrateVisitRequestDto(
   @Schema(description = "Visit Status", example = "RESERVED", required = true)
   @field:NotNull
   val visitStatus: VisitStatus,
+  @Schema(description = "Outcome Status", defaultValue = "NOT_RECORDED", required = false)
+  val outcomeStatus: OutcomeStatus? = OutcomeStatus.NOT_RECORDED,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   @field:NotNull
   val visitRestriction: VisitRestriction,

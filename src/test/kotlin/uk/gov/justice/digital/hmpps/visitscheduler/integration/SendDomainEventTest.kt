@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -175,7 +175,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       val responseSpec = webTestClient.patch().uri("/visits/${visitEntity.reference}/cancel")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
-          BodyInserters.fromValue(OutcomeDto(OutcomeType.PRISONER_CANCELLED, "AnyThingWillDo"))
+          BodyInserters.fromValue(OutcomeDto(OutcomeStatus.PRISONER_CANCELLED, "AnyThingWillDo"))
         )
         .exchange()
 
