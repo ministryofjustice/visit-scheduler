@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import com.amazonaws.services.sqs.model.PurgeQueueRequest
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
@@ -11,7 +12,13 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitRequestDto
@@ -46,6 +53,9 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
   @Autowired
   protected lateinit var hmppsQueueService: HmppsQueueService
+
+  @SpyBean
+  private lateinit var telemetryClient: TelemetryClient
 
   internal val testQueue by lazy { hmppsQueueService.findByQueueId("domaineventsqueue") ?: throw RuntimeException("Queue with name domaineventstestqueue doesn't exist") }
   internal val testSqsClient by lazy { testQueue.sqsClient }
@@ -119,6 +129,32 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.createdTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
       assertThat(prisonerId).isEqualTo(visit?.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+
+      // And
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-visit-created"),
+        org.mockito.kotlin.check {
+          assertThat(it["reference"]).isEqualTo(visit.reference)
+          assertThat(it["prisonerId"]).isEqualTo("FF0000FF")
+          assertThat(it["prisonId"]).isEqualTo("MDI")
+          assertThat(it["visitType"]).isEqualTo(VisitType.SOCIAL.name)
+          assertThat(it["visitRoom"]).isEqualTo("A1")
+          assertThat(it["visitRestriction"]).isEqualTo(VisitRestriction.OPEN.name)
+          assertThat(it["visitStart"]).isEqualTo(MigrateVisitTest.visitTime.toString())
+          assertThat(it["visitStatus"]).isEqualTo(VisitStatus.BOOKED.name)
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-visit.booked-event"),
+        org.mockito.kotlin.check {
+          assertThat(it["reference"]).isEqualTo(visit.reference)
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
     }
 
     @Test
@@ -154,6 +190,26 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.createdTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
       assertThat(prisonerId).isEqualTo(visit?.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+
+      // And
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-visit-updated"),
+        org.mockito.kotlin.check {
+          assertThat(it["reference"]).isEqualTo(visit.reference)
+          assertThat(it["visitStatus"]).isEqualTo(VisitStatus.BOOKED.name)
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-visit.booked-event"),
+        org.mockito.kotlin.check {
+          assertThat(it["reference"]).isEqualTo(visit.reference)
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
     }
 
     @Test
@@ -187,6 +243,27 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.modifiedTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
       assertThat(prisonerId).isEqualTo(visit.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+
+      // And
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-visit-cancelled"),
+        org.mockito.kotlin.check {
+          assertThat(it["reference"]).isEqualTo(visit.reference)
+          assertThat(it["visitStatus"]).isEqualTo(VisitStatus.CANCELLED.name)
+          assertThat(it["outcomeStatus"]).isEqualTo(OutcomeStatus.PRISONER_CANCELLED.name)
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-cancelled"), any(), isNull())
+
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-visit.cancelled-event"),
+        org.mockito.kotlin.check {
+          assertThat(it["reference"]).isEqualTo(visit.reference)
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.cancelled-event"), any(), isNull())
     }
   }
 

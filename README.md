@@ -62,6 +62,72 @@ Export Spec
 http://localhost:8080/v3/api-docs?group=full-api
 ```
 
+## Application Tracing
+The application sends telemetry information to Azure Application Insights which allows log queries and end-to-end request tracing across services
+
+##### Application Insights Events
+
+Show all significant prison visit events
+```azure
+customEvents 
+| where cloud_RoleName == 'visit-scheduler' 
+| where name startswith "visit-scheduler-prison" 
+| summarize count() by name
+```
+
+Available custom events
+- `visit-scheduler-prison-session-template-created` - a session template was created. It will contain the template id
+- `visit-scheduler-prison-session-template-deleted` - a session template was deleted. It will contain the template id
+
+- `visit-scheduler-prison-visit-created` - a visit was created. It will contain the visit reference and basic information about the visit
+- `visit-scheduler-prison-visit-updated` - a visit was updated. It will contain the visit reference and basic updated information about the visit
+- `visit-scheduler-prison-visit-deleted` - a visit was deleted. It will contain the visit reference
+- `visit-scheduler-prison-visit-cancelled` - a visit was cancelled. It will contain the visit reference, status and outcome status
+- `visit-scheduler-prison-visit-migrated` - a visit was migrated. It will contain the visit reference and basic information about the visit
+
+- `visit-scheduler-prison-visit.booked-event` - indicates a visit booked event was published. It will contain the message id and visit reference
+- `visit-scheduler-prison-visit.cancelled-event` - indicates a visit cancelled event was published. It will contain the message id and visit reference
+
+- `visit-scheduler-prison-visit-publish-event-error` - indicates publish visit event failed. It will contain the available exception message and cause
+- `visit-scheduler-prison-visit-access-denied-error` - Access Denied Error. It will contain the available exception message and cause
+- `visit-scheduler-prison-visit-bad-request-error` - Bad Request Error. It will contain the available exception message and cause
+- `visit-scheduler-prison-visit-internal-server-error` - Internal Error. It will contain the available exception message and cause
+
+```azure
+customEvents 
+| where cloud_RoleName == 'visit-scheduler' 
+| where name == 'visit-scheduler-prison-visit-migrated'
+| extend reference_ = tostring(customDimensions.reference)
+| extend prisonerId_ = tostring(customDimensions.prisonerId)
+| extend visitStatus_ = tostring(customDimensions.visitStatus)
+```
+
+##### Example queries
+
+Requests
+```azure
+requests 
+| where cloud_RoleName == 'visit-scheduler' 
+| summarize count() by name
+```
+
+Performance
+```azure
+requests
+| where cloud_RoleName == 'visit-scheduler' 
+| summarize RequestsCount=sum(itemCount), AverageDuration=avg(duration), percentiles(duration, 50, 95, 99) by operation_Name // you can replace 'operation_Name' with another value to segment by a different property
+| order by RequestsCount desc // order from highest to lower (descending)
+```
+
+Charts
+```azure
+requests
+| where cloud_RoleName == 'visit-scheduler' 
+| where timestamp > ago(12h) 
+| summarize avgRequestDuration=avg(duration) by bin(timestamp, 10m) // use a time grain of 10 minutes
+| render timechart
+```
+    
 ## Common gradle tasks
 
 To list project dependencies, run:

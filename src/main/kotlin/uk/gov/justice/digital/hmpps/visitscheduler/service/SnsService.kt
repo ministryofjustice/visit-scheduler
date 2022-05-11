@@ -3,8 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import com.amazonaws.services.sns.model.MessageAttributeValue
 import com.amazonaws.services.sns.model.PublishRequest
 import com.fasterxml.jackson.databind.ObjectMapper
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -19,7 +18,11 @@ import java.util.function.Supplier
  */
 
 @Service
-class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper: ObjectMapper) {
+class SnsService(
+  private val hmppsQueueService: HmppsQueueService,
+  private val telemetryClient: TelemetryClient,
+  private val objectMapper: ObjectMapper
+) {
 
   private val domaineventsTopic by lazy { hmppsQueueService.findByTopicId(TOPIC_ID) ?: throw RuntimeException("Topic with name $TOPIC_ID doesn't exist") }
   private val domaineventsTopicClient by lazy { domaineventsTopic.snsClient }
@@ -28,8 +31,6 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
     atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
   fun sendVisitBookedEvent(visit: VisitDto) {
-    log.debug("Sending visit booked event")
-
     publishToDomainEventsTopic(
       HMPPSDomainEvent(
         eventType = EVENT_PRISON_VISIT_BOOKED,
@@ -45,7 +46,6 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
   }
 
   fun sendVisitCancelledEvent(visit: VisitDto) {
-    log.debug("Sending visit cancelled event")
     publishToDomainEventsTopic(
       HMPPSDomainEvent(
         eventType = EVENT_PRISON_VISIT_CANCELLED,
@@ -61,16 +61,20 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
   }
 
   private fun publishToDomainEventsTopic(payload: HMPPSDomainEvent) {
-    log.debug("Event ${payload.eventType} for id ${payload.additionalInformation.reference}")
-
     try {
-      domaineventsTopicClient.publish(
+      val result = domaineventsTopicClient.publish(
         PublishRequest(domaineventsTopic.arn, objectMapper.writeValueAsString(payload))
           .withMessageAttributes(
             mapOf(
               "eventType" to MessageAttributeValue().withDataType("String").withStringValue(payload.eventType)
             )
-          ).also { log.info("Published event $payload to outbound topic") }
+          )
+      )
+
+      telemetryClient.trackEvent(
+        "visit-scheduler-${payload.eventType}-event",
+        mapOf("messageId" to result.messageId, "reference" to payload.additionalInformation.reference),
+        null
       )
     } catch (e: Throwable) {
       throw PublishEventException("Failed to publish Event $payload.eventType to $TOPIC_ID", e)
@@ -85,8 +89,6 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
     const val EVENT_PRISON_VISIT_BOOKED_DESC = "Prison Visit Booked"
     const val EVENT_PRISON_VISIT_CANCELLED = "prison-visit.cancelled"
     const val EVENT_PRISON_VISIT_CANCELLED_DESC = "Prison Visit Cancelled"
-
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }
 
@@ -105,8 +107,8 @@ internal data class HMPPSDomainEvent(
 
 class PublishEventException(message: String? = null, cause: Throwable? = null) :
   RuntimeException(message, cause),
-  Supplier<SupportNotFoundException> {
-  override fun get(): SupportNotFoundException {
-    return SupportNotFoundException(message, cause)
+  Supplier<PublishEventException> {
+  override fun get(): PublishEventException {
+    return PublishEventException(message, cause)
   }
 }

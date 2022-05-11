@@ -1,14 +1,24 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.microsoft.applicationinsights.TelemetryClient
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSessionTemplateRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
@@ -20,10 +30,13 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @Import(TestClockConfiguration::class)
-class VisitSessionTemplateControllerTest : IntegrationTestBase() {
+class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sessionTemplateRepository: SessionTemplateRepository
+
+  @SpyBean
+  private lateinit var telemetryClient: TelemetryClient
 
   @AfterEach
   internal fun deleteAllSessionTemplates() = sessionTemplateDeleter(sessionTemplateRepository)
@@ -47,7 +60,9 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
 
     @Test
     fun `create session template`() {
-      webTestClient.post().uri("/visit-session-templates")
+
+      // When
+      val responseSpec = webTestClient.post().uri("/visit-session-templates")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
           BodyInserters.fromValue(
@@ -55,7 +70,9 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
           )
         )
         .exchange()
-        .expectStatus().isCreated
+
+      // Then
+      val returnResult = responseSpec.expectStatus().isCreated
         .expectBody()
         .jsonPath("$.sessionTemplateId").isNumber
         .jsonPath("$.prisonId").isEqualTo("LEI")
@@ -68,6 +85,18 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
         .jsonPath("$.visitRoom").isEqualTo("A1")
         .jsonPath("$.visitType").isEqualTo(VisitType.SOCIAL.name)
         .jsonPath("$.sessionTemplateId").isNumber
+        .returnResult()
+
+      // And
+      val template = objectMapper.readValue(returnResult.responseBody, SessionTemplateDto::class.java)
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-session-template-created"),
+        org.mockito.kotlin.check {
+          Assertions.assertThat(it["id"]).isEqualTo(template.sessionTemplateId.toString())
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-session-template-created"), any(), isNull())
     }
 
     @Test
@@ -81,6 +110,8 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
         )
         .exchange()
         .expectStatus().isForbidden
+
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
     }
 
     @Test
@@ -106,6 +137,8 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
         )
         .exchange()
         .expectStatus().isBadRequest
+
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
     }
 
     @Test
@@ -133,6 +166,8 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
         )
         .exchange()
         .expectStatus().isBadRequest
+
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
     }
   }
 
@@ -155,14 +190,25 @@ class VisitSessionTemplateControllerTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isNotFound
+
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-session-template-deleted"),
+        org.mockito.kotlin.check {
+          Assertions.assertThat(it["id"]).isEqualTo(sessionTemplate.id.toString())
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-session-template-deleted"), any(), isNull())
     }
 
     @Test
     fun `delete session template by id NOT FOUND`() {
-      webTestClient.delete().uri("/visit-session-templates/123456")
+      webTestClient.delete().uri("/visit-session-templates/1234569999999999")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isOk
+
+      verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-session-template-deleted"), any(), isNull())
     }
   }
 

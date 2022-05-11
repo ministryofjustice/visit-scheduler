@@ -1,12 +1,19 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
@@ -47,6 +54,9 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var legacyDataRepository: LegacyDataRepository
+
+  @SpyBean
+  private lateinit var telemetryClient: TelemetryClient
 
   @BeforeEach
   internal fun setUp() {
@@ -108,7 +118,6 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.visitStatus).isEqualTo(RESERVED)
       assertThat(visit.outcomeStatus).isEqualTo(COMPLETED_NORMALLY)
       assertThat(visit.visitRestriction).isEqualTo(OPEN)
-      assertThat(visit.visitContact!!.name).isNotEmpty
       assertThat(visit.visitContact!!.name).isEqualTo("John Smith")
       assertThat(visit.visitContact!!.telephone).isEqualTo("013448811538")
       assertThat(visit.createTimestamp).isNotNull
@@ -128,6 +137,24 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(legacyData).isNotNull
       assertThat(legacyData!!.visitId).isEqualTo(visit.id)
     }
+
+    // And
+    verify(telemetryClient).trackEvent(
+      eq("visit-scheduler-prison-visit-migrated"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(reference)
+        assertThat(it["prisonerId"]).isEqualTo("FF0000FF")
+        assertThat(it["prisonId"]).isEqualTo("MDI")
+        assertThat(it["visitType"]).isEqualTo(SOCIAL.name)
+        assertThat(it["visitRoom"]).isEqualTo("A1")
+        assertThat(it["visitRestriction"]).isEqualTo(OPEN.name)
+        assertThat(it["visitStart"]).isEqualTo(visitTime.toString())
+        assertThat(it["visitStatus"]).isEqualTo(RESERVED.name)
+        assertThat(it["outcomeStatus"]).isEqualTo(COMPLETED_NORMALLY.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -194,6 +221,17 @@ class MigrateVisitTest : IntegrationTestBase() {
     visit?.let {
       assertThat(visit.outcomeStatus).isEqualTo(NOT_RECORDED)
     }
+
+    // And
+    verify(telemetryClient).trackEvent(
+      eq("visit-scheduler-prison-visit-migrated"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(reference)
+        assertThat(it["outcomeStatus"]).isEqualTo(NOT_RECORDED.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -258,6 +296,9 @@ class MigrateVisitTest : IntegrationTestBase() {
     visit?.let {
       assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
     }
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -276,6 +317,9 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
   }
 
   @Test
@@ -290,6 +334,9 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isForbidden
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
   }
 
   @Test

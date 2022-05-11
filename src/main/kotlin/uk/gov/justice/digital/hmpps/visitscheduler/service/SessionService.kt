@@ -61,19 +61,6 @@ class SessionService(
     return available.sortedWith(compareBy { it.startTimestamp })
   }
 
-  fun visitBookedCount(session: VisitSessionDto, restriction: VisitRestriction): Int {
-    return visitRepository.findAll(
-      VisitSpecification(
-        VisitFilter(
-          prisonId = session.prisonId,
-          startDateTime = session.startTimestamp,
-          endDateTime = session.endTimestamp,
-          visitRestriction = restriction
-        )
-      )
-    ).count { isActiveStatus(it.visitStatus) }
-  }
-
   // from the start date calculate the slots for based on chosen frequency  (expiry is inclusive)
   private fun buildVisitSessionsUsingTemplate(
     sessionTemplate: SessionTemplate,
@@ -166,6 +153,19 @@ class SessionService(
       it.openVisitBookedCount = visitBookedCount(it, VisitRestriction.OPEN)
       it.closedVisitBookedCount = visitBookedCount(it, VisitRestriction.CLOSED)
     }
+  }
+
+  private fun visitBookedCount(session: VisitSessionDto, restriction: VisitRestriction): Int {
+    return visitRepository.findAll(
+      VisitSpecification(
+        VisitFilter(
+          prisonId = session.prisonId,
+          startDateTime = session.startTimestamp,
+          endDateTime = session.endTimestamp,
+          visitRestriction = restriction
+        )
+      )
+    ).count { isActiveStatus(it.visitStatus) }
   }
 
   private fun isActiveStatus(status: VisitStatus) =

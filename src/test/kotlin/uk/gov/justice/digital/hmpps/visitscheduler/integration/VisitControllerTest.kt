@@ -1,12 +1,20 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import com.microsoft.applicationinsights.TelemetryClient
+import org.assertj.core.api.Assertions
 import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.SpyBean
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -25,6 +33,9 @@ import java.time.LocalDateTime
 class VisitControllerTest : IntegrationTestBase() {
   @Autowired
   private lateinit var visitRepository: VisitRepository
+
+  @SpyBean
+  private lateinit var telemetryClient: TelemetryClient
 
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
@@ -246,6 +257,8 @@ class VisitControllerTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isBadRequest
+
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
     }
 
     @Test
@@ -254,6 +267,8 @@ class VisitControllerTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isBadRequest
+
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
     }
 
     @Test
@@ -262,6 +277,8 @@ class VisitControllerTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf()))
         .exchange()
         .expectStatus().isForbidden
+
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
     }
 
     @Test
@@ -332,6 +349,15 @@ class VisitControllerTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isNotFound
+
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-visit-deleted"),
+        org.mockito.kotlin.check {
+          Assertions.assertThat(it["reference"]).isEqualTo(visitCC.reference)
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-deleted"), any(), isNull())
     }
 
     @Test
@@ -340,6 +366,8 @@ class VisitControllerTest : IntegrationTestBase() {
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .exchange()
         .expectStatus().isOk
+
+      verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-visit-deleted"), any(), isNull())
     }
   }
 

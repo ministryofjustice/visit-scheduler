@@ -19,8 +19,7 @@ internal class NullableNotEmptyValidatorTest {
   }
 
   @Test
-  fun `should find no validation error, if value contains at least one element`(){
-    assertTrue(validator.isValid(value = listOf(1,2,3), context = null))
+  fun `should find no validation error, if value contains at least one element`() {
+    assertTrue(validator.isValid(value = listOf(1, 2, 3), context = null))
   }
-
 }

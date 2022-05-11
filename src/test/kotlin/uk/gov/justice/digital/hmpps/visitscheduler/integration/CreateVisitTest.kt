@@ -1,10 +1,19 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.microsoft.applicationinsights.TelemetryClient
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
@@ -16,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitReque
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
@@ -27,12 +37,15 @@ private const val TEST_END_POINT = "/visits"
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST /visits")
-class CreateVisitTest : IntegrationTestBase() {
+class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
+
+  @SpyBean
+  private lateinit var telemetryClient: TelemetryClient
 
   @BeforeEach
   internal fun setUp() {
@@ -70,7 +83,7 @@ class CreateVisitTest : IntegrationTestBase() {
     val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
-    responseSpec.expectStatus().isCreated
+    val returnResult = responseSpec.expectStatus().isCreated
       .expectBody()
       .jsonPath("$.reference").isNotEmpty
       .jsonPath("$.prisonId").isEqualTo("MDI")
@@ -81,7 +94,6 @@ class CreateVisitTest : IntegrationTestBase() {
       .jsonPath("$.endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
       .jsonPath("$.visitStatus").isEqualTo(RESERVED.name)
       .jsonPath("$.visitRestriction").isEqualTo(OPEN.name)
-      .jsonPath("$.visitContact.name").isNotEmpty
       .jsonPath("$.visitContact.name").isEqualTo("John Smith")
       .jsonPath("$.visitContact.telephone").isEqualTo("013448811538")
       .jsonPath("$.visitors.length()").isEqualTo(1)
@@ -90,6 +102,25 @@ class CreateVisitTest : IntegrationTestBase() {
       .jsonPath("$.visitorSupport[0].type").isEqualTo("OTHER")
       .jsonPath("$.visitorSupport[0].text").isEqualTo("Some Text")
       .jsonPath("$.createdTimestamp").isNotEmpty
+      .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-scheduler-prison-visit-created"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+        Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
   }
 
   @Test
@@ -116,6 +147,10 @@ class CreateVisitTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
   }
 
   @Test
@@ -151,17 +186,36 @@ class CreateVisitTest : IntegrationTestBase() {
     val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
-    responseSpec.expectStatus().isCreated
+    val returnResult = responseSpec.expectStatus().isCreated
       .expectBody()
       .jsonPath("$.visitors.length()").isEqualTo(1)
       .jsonPath("$.visitorSupport.length()").isEqualTo(1)
+      .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-scheduler-prison-visit-created"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+        Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
   }
 
   @Test
   fun `created visit - invalid support`() {
 
     // Given
-    val migratedVisitRequestDto = CreateVisitRequestDto(
+    val createVisitRequest = CreateVisitRequestDto(
       prisonerId = "FF0000FF",
       prisonId = "MDI",
       startTimestamp = visitTime,
@@ -175,13 +229,17 @@ class CreateVisitTest : IntegrationTestBase() {
       visitorSupport = setOf(CreateSupportOnVisitRequestDto("ANYTHINGWILLDO")),
     )
 
-    val jsonBody = BodyInserters.fromValue(migratedVisitRequestDto)
+    val jsonBody = BodyInserters.fromValue(createVisitRequest)
 
     // When
     val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
     responseSpec.expectStatus().isBadRequest
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
   }
 
   @Test
@@ -200,6 +258,10 @@ class CreateVisitTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
   }
 
   @Test
@@ -214,6 +276,9 @@ class CreateVisitTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isForbidden
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
   }
 
   @Test
