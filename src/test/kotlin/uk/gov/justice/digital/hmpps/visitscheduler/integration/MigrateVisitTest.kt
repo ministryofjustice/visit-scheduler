@@ -19,6 +19,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitReque
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
@@ -52,7 +54,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
-  private fun createVisitRequest(telephone: String? = null): MigrateVisitRequestDto {
+  private fun createMigrateVisitRequestDto(telephone: String? = null): MigrateVisitRequestDto {
     return MigrateVisitRequestDto(
       prisonId = "MDI",
       prisonerId = "FF0000FF",
@@ -61,6 +63,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
+      outcomeStatus = COMPLETED_NORMALLY,
       visitRestriction = OPEN,
       visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", telephone?.let { telephone }),
       visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
@@ -79,7 +82,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Given
     val jsonBody = BodyInserters.fromValue(
-      createVisitRequest("013448811538")
+      createMigrateVisitRequestDto("013448811538")
     )
 
     // When
@@ -105,6 +108,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.visitStart).isEqualTo(visitTime.toString())
       assertThat(visit.visitEnd).isEqualTo(visitTime.plusHours(1).toString())
       assertThat(visit.visitStatus).isEqualTo(RESERVED)
+      assertThat(visit.outcomeStatus).isEqualTo(COMPLETED_NORMALLY)
       assertThat(visit.visitRestriction).isEqualTo(OPEN)
       assertThat(visit.visitContact!!.name).isNotEmpty
       assertThat(visit.visitContact!!.name).isEqualTo("John Smith")
@@ -129,11 +133,49 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `migrate visit when outcome status not given`() {
+
+    // Given
+    val migrateVisitRequestDto = MigrateVisitRequestDto(
+      prisonId = "MDI",
+      prisonerId = "FF0000FF",
+      visitRoom = "A1",
+      visitType = SOCIAL,
+      startTimestamp = visitTime,
+      endTimestamp = visitTime.plusHours(1),
+      visitStatus = RESERVED,
+      visitRestriction = OPEN,
+      visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", "01348811538"),
+      visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
+      legacyData = CreateLegacyDataRequestDto(123)
+    )
+
+    val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+
+    // Then
+    var reference = ""
+
+    responseSpec.expectStatus().isCreated
+      .expectBody()
+      .jsonPath("$")
+      .value<String> { json -> reference = json }
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.outcomeStatus).isEqualTo(NOT_RECORDED)
+    }
+  }
+
+  @Test
   fun `when telephone number is not given then an empty string will be migrated  `() {
 
     // Given
     val jsonBody = BodyInserters.fromValue(
-      createVisitRequest()
+      createMigrateVisitRequestDto()
     )
 
     // When
@@ -177,7 +219,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val jsonBody = BodyInserters.fromValue(createVisitRequest())
+    val jsonBody = BodyInserters.fromValue(createMigrateVisitRequestDto())
 
     // When
     val responseSpec = callMigrateVisit(authHttpHeaders, jsonBody)
@@ -189,7 +231,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   @Test
   fun `unauthorised when no token`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(createVisitRequest())
+    val jsonBody = BodyInserters.fromValue(createMigrateVisitRequestDto())
 
     // When
     val responseSpec = webTestClient.post().uri(TEST_END_POINT)

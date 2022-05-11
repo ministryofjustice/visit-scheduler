@@ -32,6 +32,7 @@ class MigrateVisitService(
         visitRoom = migrateVisitRequest.visitRoom,
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
+        outcomeStatus = migrateVisitRequest.outcomeStatus,
         visitRestriction = migrateVisitRequest.visitRestriction,
         visitStart = migrateVisitRequest.startTimestamp,
         visitEnd = migrateVisitRequest.endTimestamp
