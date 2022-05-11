@@ -5,7 +5,6 @@ import org.hibernate.annotations.NaturalId
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -55,7 +54,7 @@ data class Visit(
 
   @Column(nullable = true)
   @Enumerated(EnumType.STRING)
-  var outcomeStatus: OutcomeStatus ? = NOT_RECORDED,
+  var outcomeStatus: OutcomeStatus? = null,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)

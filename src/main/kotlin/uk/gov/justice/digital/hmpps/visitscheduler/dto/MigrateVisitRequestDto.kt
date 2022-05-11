@@ -27,9 +27,8 @@ data class MigrateVisitRequestDto(
   @Schema(description = "Visit Status", example = "RESERVED", required = true)
   @field:NotNull
   val visitStatus: VisitStatus,
-  @Schema(description = "Outcome Status", example = "RESERVED", required = true)
-  @field:NotNull
-  val outcomeStatus: OutcomeStatus ? = OutcomeStatus.NOT_RECORDED,
+  @Schema(description = "Outcome Status", example = "NOT_RECORDED", required = false)
+  val outcomeStatus: OutcomeStatus? = OutcomeStatus.NOT_RECORDED,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   @field:NotNull
   val visitRestriction: VisitRestriction,

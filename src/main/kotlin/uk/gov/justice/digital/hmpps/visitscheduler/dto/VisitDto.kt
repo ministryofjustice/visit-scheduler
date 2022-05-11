@@ -24,7 +24,7 @@ data class VisitDto(
   @Schema(description = "Visit Status", example = "RESERVED", required = true)
   val visitStatus: VisitStatus,
   @Schema(description = "Outcome Status", example = "VISITOR_CANCELLED", required = false)
-  val outcomeStatus: OutcomeStatus?,
+  val outcomeStatus: OutcomeStatus? = null,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   val visitRestriction: VisitRestriction,
   @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
