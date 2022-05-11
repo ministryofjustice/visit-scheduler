@@ -17,6 +17,9 @@ spring:
         jwt:
           public-key-location: classpath:local-public-key.pub
 
+  jpa:
+    show-sql: true
+
 hmpps.auth.url: http://localhost:8090/auth
 
 prison:

@@ -47,12 +47,12 @@ class VisitService(
       visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
     }
 
-    createVisitRequest.visitors.distinctBy { it.nomisPersonId }.forEach {
+    createVisitRequest.visitors.forEach {
       visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
     }
 
     createVisitRequest.visitorSupport?.let { supportList ->
-      supportList.distinctBy { it.type }.forEach {
+      supportList.forEach {
         supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
         visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
       }
@@ -109,7 +109,7 @@ class VisitService(
     updateVisitRequest.visitorSupport?.let { visitSupportUpdate ->
       visitEntity.support.clear()
       visitRepository.saveAndFlush(visitEntity)
-      visitSupportUpdate.distinctBy { it.type }.forEach {
+      visitSupportUpdate.forEach {
         supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
         visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
       }
@@ -119,10 +119,12 @@ class VisitService(
   }
 
   fun deleteVisit(reference: String) {
+    log.info("Deleting visit for $reference")
+
     val visit = visitRepository.findByReference(reference)
-    visit?.let { visitRepository.delete(it) }.also { log.info("Visit with reference $reference deleted") }
+    visit?.let { visitRepository.delete(it) }.also { log.debug("Visit with reference $reference deleted") }
       ?: run {
-        log.info("Visit reference $reference not found")
+        log.debug("Visit reference $reference not found")
       }
   }
 

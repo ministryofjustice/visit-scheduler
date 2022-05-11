@@ -107,14 +107,10 @@ class VisitControllerTest : IntegrationTestBase() {
         .jsonPath("$[0].prisonerId").isEqualTo("FF0000BB")
         .jsonPath("$[0].startTimestamp").isEqualTo(visitFull?.visitStart.toString())
         .jsonPath("$[0].reference").exists()
-        .jsonPath("$[0].visitNotes[0].type").isEqualTo("VISITOR_CONCERN")
-        .jsonPath("$[0].visitNotes[1].type").isEqualTo("VISIT_OUTCOMES")
-        .jsonPath("$[0].visitNotes[2].type").isEqualTo("VISIT_COMMENT")
-        .jsonPath("$[0].visitNotes[3].type").isEqualTo("STATUS_CHANGED_REASON")
-        .jsonPath("$[0].visitNotes[0].text").isEqualTo("A visit concern")
-        .jsonPath("$[0].visitNotes[1].text").isEqualTo("A visit outcome")
-        .jsonPath("$[0].visitNotes[2].text").isEqualTo("A visit comment")
-        .jsonPath("$[0].visitNotes[3].text").isEqualTo("Status has changed")
+        .jsonPath("$[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
+        .jsonPath("$[0].visitNotes[?(@.type=='VISIT_COMMENT')].text").isEqualTo("A visit comment")
+        .jsonPath("$[0].visitNotes[?(@.type=='VISIT_OUTCOMES')].text").isEqualTo("A visit outcome")
+        .jsonPath("$[0].visitNotes[?(@.type=='STATUS_CHANGED_REASON')].text").isEqualTo("Status has changed")
     }
 
     @Test

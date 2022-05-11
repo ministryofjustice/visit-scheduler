@@ -81,7 +81,7 @@ class VisitController(
   ): VisitDto {
     val visit = visitService.createVisit(createVisitRequest)
 
-    // Required until VB-501 is implemented
+    // Created with BOOKED status - review if POST & PUT are replaced with Reserve, Book & Amend endpoints
     if (visit.visitStatus == VisitStatus.BOOKED) {
       snsService.sendVisitBookedEvent(visit)
     }
@@ -244,7 +244,7 @@ class VisitController(
   ): VisitDto {
     val visit = visitService.updateVisit(reference.trim(), updateVisitRequest)
 
-    // Required until VB-501 is implemented
+    // Updated to BOOKED status - review if POST & PUT are replaced with Reserve, Book & Amend endpoints
     updateVisitRequest.visitStatus?.run {
       if (visit.visitStatus == VisitStatus.BOOKED) {
         snsService.sendVisitBookedEvent(visit)

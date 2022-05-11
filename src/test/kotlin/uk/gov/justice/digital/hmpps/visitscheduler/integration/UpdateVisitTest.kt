@@ -97,8 +97,8 @@ class UpdateVisitTest : IntegrationTestBase() {
       visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-      visitors = listOf(CreateVisitorOnVisitRequestDto(123L)),
-      visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitors = setOf(CreateVisitorOnVisitRequestDto(123L)),
+      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
@@ -124,10 +124,10 @@ class UpdateVisitTest : IntegrationTestBase() {
       .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
       .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
       .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
-      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!![0].nomisPersonId)
+      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!!.first().nomisPersonId)
       .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
-      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!![0].type)
-      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!![0].text!!)
+      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!!.first().type)
+      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!!.first().text!!)
       .jsonPath("$.createdTimestamp").isNotEmpty
   }
 
@@ -158,7 +158,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitors = listOf(CreateVisitorOnVisitRequestDto(123L)),
+      visitors = setOf(CreateVisitorOnVisitRequestDto(123L)),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
@@ -170,7 +170,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
-      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!![0].nomisPersonId)
+      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!!.first().nomisPersonId)
   }
 
   @Test
@@ -178,7 +178,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
@@ -190,8 +190,8 @@ class UpdateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
-      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!![0].type)
-      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!![0].text!!)
+      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!!.first().type)
+      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!!.first().text!!)
   }
 
   @Test

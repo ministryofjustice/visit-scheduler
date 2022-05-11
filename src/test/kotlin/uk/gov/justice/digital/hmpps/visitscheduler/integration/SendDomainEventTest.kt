@@ -74,8 +74,8 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
         visitStatus = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.OPEN,
         visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-        visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
-        visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text"))
+        visitors = setOf(CreateVisitorOnVisitRequestDto(123)),
+        visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text"))
       )
     }
 

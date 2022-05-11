@@ -47,8 +47,7 @@ class CancelVisitTest : IntegrationTestBase() {
       .jsonPath("$.visitStatus").isEqualTo(VisitStatus.CANCELLED.name)
       .jsonPath("$.outcomeStatus").isEqualTo(OutcomeStatus.PRISONER_CANCELLED.name)
       .jsonPath("$.visitNotes.length()").isEqualTo(1)
-      .jsonPath("$.visitNotes[0].type").isEqualTo("VISIT_OUTCOMES")
-      .jsonPath("$.visitNotes[0].text").isEqualTo("Prisoner got covid")
+      .jsonPath("$.visitNotes[?(@.type=='VISIT_OUTCOMES')].text").isEqualTo("Prisoner got covid")
   }
 
   @Test

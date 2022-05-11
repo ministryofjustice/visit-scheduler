@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -28,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
@@ -66,8 +68,8 @@ class MigrateVisitTest : IntegrationTestBase() {
       outcomeStatus = COMPLETED_NORMALLY,
       visitRestriction = OPEN,
       visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", "013448811538"),
-      visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
-      visitNotes = listOf(
+      visitors = setOf(CreateVisitorOnVisitRequestDto(123)),
+      visitNotes = setOf(
         VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
         VisitNoteDto(type = VISIT_OUTCOMES, "A visit outcome"),
         VisitNoteDto(type = VISIT_COMMENT, "A visit comment"),
@@ -109,18 +111,18 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.visitContact!!.name).isNotEmpty
       assertThat(visit.visitContact!!.name).isEqualTo("John Smith")
       assertThat(visit.visitContact!!.telephone).isEqualTo("013448811538")
-      assertThat(visit.createTimestamp).isNotNull()
+      assertThat(visit.createTimestamp).isNotNull
       assertThat(visit.visitors.size).isEqualTo(1)
       assertThat(visit.visitors[0].nomisPersonId).isEqualTo(123)
-      assertThat(visit.visitNotes.size).isEqualTo(4)
-      assertThat(visit.visitNotes[0].type).isEqualTo(VISITOR_CONCERN)
-      assertThat(visit.visitNotes[1].type).isEqualTo(VISIT_OUTCOMES)
-      assertThat(visit.visitNotes[2].type).isEqualTo(VISIT_COMMENT)
-      assertThat(visit.visitNotes[3].type).isEqualTo(STATUS_CHANGED_REASON)
-      assertThat(visit.visitNotes[0].text).isEqualTo("A visit concern")
-      assertThat(visit.visitNotes[1].text).isEqualTo("A visit outcome")
-      assertThat(visit.visitNotes[2].text).isEqualTo("A visit comment")
-      assertThat(visit.visitNotes[3].text).isEqualTo("Status has changed")
+      assertThat(visit.visitNotes)
+        .hasSize(4)
+        .extracting(VisitNote::type, VisitNote::text)
+        .containsExactlyInAnyOrder(
+          tuple(VISITOR_CONCERN, "A visit concern"),
+          tuple(VISIT_OUTCOMES, "A visit outcome"),
+          tuple(VISIT_COMMENT, "A visit comment"),
+          tuple(STATUS_CHANGED_REASON, "Status has changed")
+        )
 
       val legacyData = legacyDataRepository.findByVisitId(visit.id)
       assertThat(legacyData).isNotNull

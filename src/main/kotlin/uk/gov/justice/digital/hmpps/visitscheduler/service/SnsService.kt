@@ -73,10 +73,7 @@ class SnsService(hmppsQueueService: HmppsQueueService, private val objectMapper:
           ).also { log.info("Published event $payload to outbound topic") }
       )
     } catch (e: Throwable) {
-      // throw PublishEventException("Failed to publish Event $payload.eventType to $TOPIC_ID", e)
-
-      // Note: Silently fail until VB-671 is implemented
-      log.debug("Failed to publish Event $payload.eventType to $TOPIC_ID", e)
+      throw PublishEventException("Failed to publish Event $payload.eventType to $TOPIC_ID", e)
     }
   }
 
@@ -106,7 +103,6 @@ internal data class HMPPSDomainEvent(
   val additionalInformation: AdditionalInformation,
 )
 
-@Suppress("unused")
 class PublishEventException(message: String? = null, cause: Throwable? = null) :
   RuntimeException(message, cause),
   Supplier<SupportNotFoundException> {

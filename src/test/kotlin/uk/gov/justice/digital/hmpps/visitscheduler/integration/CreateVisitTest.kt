@@ -53,8 +53,8 @@ class CreateVisitTest : IntegrationTestBase() {
       visitStatus = RESERVED,
       visitRestriction = OPEN,
       visitContact = CreateContactOnVisitRequestDto("John Smith", "013448811538"),
-      visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
-      visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitors = setOf(CreateVisitorOnVisitRequestDto(123)),
+      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
     )
   }
 
@@ -104,7 +104,7 @@ class CreateVisitTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitStatus = RESERVED,
       visitRestriction = OPEN,
-      visitors = listOf(),
+      visitors = setOf(),
       visitRoom = "A1",
       visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890")
     )
@@ -133,11 +133,11 @@ class CreateVisitTest : IntegrationTestBase() {
       visitRestriction = OPEN,
       visitRoom = "A1",
       visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-      visitors = listOf(
+      visitors = setOf(
         CreateVisitorOnVisitRequestDto(123),
         CreateVisitorOnVisitRequestDto(123)
       ),
-      visitorSupport = listOf(
+      visitorSupport = setOf(
         CreateSupportOnVisitRequestDto("OTHER", "Some Text"),
         CreateSupportOnVisitRequestDto("OTHER", "Some Text")
       )
@@ -171,8 +171,8 @@ class CreateVisitTest : IntegrationTestBase() {
       visitRestriction = OPEN,
       visitRoom = "A1",
       visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-      visitors = listOf(),
-      visitorSupport = listOf(CreateSupportOnVisitRequestDto("ANYTHINGWILLDO")),
+      visitors = setOf(),
+      visitorSupport = setOf(CreateSupportOnVisitRequestDto("ANYTHINGWILLDO")),
     )
 
     val jsonBody = BodyInserters.fromValue(migratedVisitRequestDto)
