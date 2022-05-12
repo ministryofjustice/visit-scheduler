@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
-import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -108,35 +107,28 @@ class UpdateVisitTest : IntegrationTestBase() {
     val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
 
     // Then
-    var reference = ""
 
-    responseSpec.expectStatus().isOk
+    responseSpec
+      .expectStatus().isOk
       .expectBody()
-      .jsonPath("$")
-      .value<String> { json -> reference = json }
-
-    val visit = visitRepository.findByReference(reference)
-    Assertions.assertThat(visit).isNotNull
-    visit?.let {
-      Assertions.assertThat(visit.reference).isEqualTo(reference)
-      Assertions.assertThat(visit.prisonId).isEqualTo(updateRequest.prisonId!!)
-      Assertions.assertThat(visit.prisonerId).isEqualTo(updateRequest.prisonerId!!)
-      Assertions.assertThat(visit.visitRoom).isEqualTo(updateRequest.visitRoom!!)
-      Assertions.assertThat(visit.visitType).isEqualTo(updateRequest.visitType!!)
-      Assertions.assertThat(visit.visitStart).isEqualTo(updateRequest.startTimestamp.toString())
-      Assertions.assertThat(visit.visitEnd).isEqualTo(updateRequest.endTimestamp.toString())
-      Assertions.assertThat(visit.visitStatus).isEqualTo(updateRequest.visitStatus!!)
-      Assertions.assertThat(visit.visitRestriction).isEqualTo(updateRequest.visitRestriction!!)
-      Assertions.assertThat(visit.visitContact!!.name).isNotEmpty
-      Assertions.assertThat(visit.visitContact!!.name).isEqualTo(updateRequest.visitContact!!.name)
-      Assertions.assertThat(visit.visitContact!!.telephone).isEqualTo(updateRequest.visitContact!!.telephone)
-      Assertions.assertThat(visit.createTimestamp).isNotNull()
-      Assertions.assertThat(visit.visitors.size).isEqualTo(updateRequest.visitors!!.size)
-      Assertions.assertThat(visit.visitors[0].nomisPersonId).isEqualTo(updateRequest.visitors!![0].nomisPersonId)
-      Assertions.assertThat(visit.support.size).isEqualTo(updateRequest.visitorSupport!!.size)
-      Assertions.assertThat(visit.support[0].type).isEqualTo(updateRequest.visitorSupport!![0].type)
-      Assertions.assertThat(visit.support[0].text).isEqualTo(updateRequest.visitorSupport!![0].text!!)
-    }
+      .jsonPath("$.reference").isNotEmpty
+      .jsonPath("$.prisonerId").isEqualTo(updateRequest.prisonerId!!)
+      .jsonPath("$.prisonId").isEqualTo(updateRequest.prisonId!!)
+      .jsonPath("$.visitRoom").isEqualTo(updateRequest.visitRoom!!)
+      .jsonPath("$.startTimestamp").isEqualTo(updateRequest.startTimestamp.toString())
+      .jsonPath("$.endTimestamp").isEqualTo(updateRequest.endTimestamp.toString())
+      .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
+      .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
+      .jsonPath("$.visitRestriction").isEqualTo(updateRequest.visitRestriction!!.name)
+      .jsonPath("$.visitContact.name").isNotEmpty
+      .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
+      .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
+      .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
+      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!![0].nomisPersonId)
+      .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
+      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!![0].type)
+      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!![0].text!!)
+      .jsonPath("$.createdTimestamp").isNotEmpty
   }
 
   @Test
@@ -154,19 +146,10 @@ class UpdateVisitTest : IntegrationTestBase() {
     val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
 
     // Then
-    var reference = ""
-
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$")
-      .value<String> { json -> reference = json }
-
-    val visit = visitRepository.findByReference(reference)
-    Assertions.assertThat(visit).isNotNull
-    visit?.let {
-      Assertions.assertThat(visit.visitContact!!.name).isEqualTo(updateRequest.visitContact!!.name)
-      Assertions.assertThat(visit.visitContact!!.telephone).isEqualTo(updateRequest.visitContact!!.telephone)
-    }
+      .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
+      .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
   }
 
   @Test
@@ -184,19 +167,10 @@ class UpdateVisitTest : IntegrationTestBase() {
     val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
 
     // Then
-    var reference = ""
-
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$")
-      .value<String> { json -> reference = json }
-
-    val visit = visitRepository.findByReference(reference)
-    Assertions.assertThat(visit).isNotNull
-    visit?.let {
-      Assertions.assertThat(visit.visitors.size).isEqualTo(updateRequest.visitors!!.size)
-      Assertions.assertThat(visit.visitors[0].nomisPersonId).isEqualTo(updateRequest.visitors!![0].nomisPersonId)
-    }
+      .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
+      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!![0].nomisPersonId)
   }
 
   @Test
@@ -213,20 +187,11 @@ class UpdateVisitTest : IntegrationTestBase() {
     val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
 
     // Then
-    var reference = ""
-
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$")
-      .value<String> { json -> reference = json }
-
-    val visit = visitRepository.findByReference(reference)
-    Assertions.assertThat(visit).isNotNull
-    visit?.let {
-      Assertions.assertThat(visit.support.size).isEqualTo(updateRequest.visitorSupport!!.size)
-      Assertions.assertThat(visit.support[0].type).isEqualTo(updateRequest.visitorSupport!![0].type)
-      Assertions.assertThat(visit.support[0].text).isEqualTo(updateRequest.visitorSupport!![0].text!!)
-    }
+      .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
+      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!![0].type)
+      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!![0].text!!)
   }
 
   @Test

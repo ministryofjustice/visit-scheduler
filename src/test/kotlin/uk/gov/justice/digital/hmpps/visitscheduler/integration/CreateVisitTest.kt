@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
-import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -71,35 +70,26 @@ class CreateVisitTest : IntegrationTestBase() {
     val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
-    var reference = ""
-
     responseSpec.expectStatus().isCreated
       .expectBody()
-      .jsonPath("$")
-      .value<String> { json -> reference = json }
-
-    val visit = visitRepository.findByReference(reference)
-    Assertions.assertThat(visit).isNotNull
-    visit?.let {
-      Assertions.assertThat(visit.reference).isEqualTo(reference)
-      Assertions.assertThat(visit.prisonId).isEqualTo("MDI")
-      Assertions.assertThat(visit.prisonerId).isEqualTo("FF0000FF")
-      Assertions.assertThat(visit.visitRoom).isEqualTo("A1")
-      Assertions.assertThat(visit.visitType).isEqualTo(SOCIAL)
-      Assertions.assertThat(visit.visitStart).isEqualTo(MigrateVisitTest.visitTime.toString())
-      Assertions.assertThat(visit.visitEnd).isEqualTo(MigrateVisitTest.visitTime.plusHours(1).toString())
-      Assertions.assertThat(visit.visitStatus).isEqualTo(RESERVED)
-      Assertions.assertThat(visit.visitRestriction).isEqualTo(OPEN)
-      Assertions.assertThat(visit.visitContact!!.name).isNotEmpty
-      Assertions.assertThat(visit.visitContact!!.name).isEqualTo("John Smith")
-      Assertions.assertThat(visit.visitContact!!.telephone).isEqualTo("013448811538")
-      Assertions.assertThat(visit.createTimestamp).isNotNull()
-      Assertions.assertThat(visit.visitors.size).isEqualTo(1)
-      Assertions.assertThat(visit.visitors[0].nomisPersonId).isEqualTo(123)
-      Assertions.assertThat(visit.support.size).isEqualTo(1)
-      Assertions.assertThat(visit.support[0].type).isEqualTo("OTHER")
-      Assertions.assertThat(visit.support[0].text).isEqualTo("Some Text")
-    }
+      .jsonPath("$.reference").isNotEmpty
+      .jsonPath("$.prisonId").isEqualTo("MDI")
+      .jsonPath("$.prisonerId").isEqualTo("FF0000FF")
+      .jsonPath("$.visitRoom").isEqualTo("A1")
+      .jsonPath("$.visitType").isEqualTo(SOCIAL.name)
+      .jsonPath("$.startTimestamp").isEqualTo(visitTime.toString())
+      .jsonPath("$.endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
+      .jsonPath("$.visitStatus").isEqualTo(RESERVED.name)
+      .jsonPath("$.visitRestriction").isEqualTo(OPEN.name)
+      .jsonPath("$.visitContact.name").isNotEmpty
+      .jsonPath("$.visitContact.name").isEqualTo("John Smith")
+      .jsonPath("$.visitContact.telephone").isEqualTo("013448811538")
+      .jsonPath("$.visitors.length()").isEqualTo(1)
+      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(123)
+      .jsonPath("$.visitorSupport.length()").isEqualTo(1)
+      .jsonPath("$.visitorSupport[0].type").isEqualTo("OTHER")
+      .jsonPath("$.visitorSupport[0].text").isEqualTo("Some Text")
+      .jsonPath("$.createdTimestamp").isNotEmpty
   }
 
   @Test
@@ -161,19 +151,10 @@ class CreateVisitTest : IntegrationTestBase() {
     val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
-    var reference = ""
-
     responseSpec.expectStatus().isCreated
       .expectBody()
-      .jsonPath("$")
-      .value<String> { json -> reference = json }
-
-    val visit = visitRepository.findByReference(reference)
-    Assertions.assertThat(visit).isNotNull
-    visit?.let {
-      Assertions.assertThat(visit.visitors.size).isEqualTo(1)
-      Assertions.assertThat(visit.support.size).isEqualTo(1)
-    }
+      .jsonPath("$.visitors.length()").isEqualTo(1)
+      .jsonPath("$.visitorSupport.length()").isEqualTo(1)
   }
 
   @Test
