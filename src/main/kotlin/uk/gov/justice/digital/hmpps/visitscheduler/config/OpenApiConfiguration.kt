@@ -14,17 +14,17 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
   private val buildName: String = buildProperties.name
   private val buildVersion: String = buildProperties.version
 
-  @Value("\${info.app.description}") private val description: String = ""
-  @Value("\${info.app.contact.name}") private val contactName: String = ""
-  @Value("\${info.app.contact.email}") private val contactEmail: String = ""
+  @Value("\${info.app.description}") private val description: String = "A service for managing and storing the schedule of prison visits"
+  @Value("\${info.app.contact.name}") private val contactName: String = "Prison Visits Booking Project"
+  @Value("\${info.app.contact.email}") private val contactEmail: String = "prisonvisitsbooking@digital.justice.gov.uk"
 
   @Bean
   fun customOpenAPI(): OpenAPI = OpenAPI()
     .servers(
       listOf(
-        Server().url("https://visit-scheduler.hmpps.service.justice.gov.uk").description("Prod"),
-        Server().url("https://visit-scheduler-preprod.hmpps.service.justice.gov.uk").description("PreProd"),
-        Server().url("https://visit-scheduler-dev.hmpps.service.justice.gov.uk").description("Development"),
+        Server().url("https://visit-scheduler.prison.service.justice.gov.uk").description("Prod"),
+        Server().url("https://visit-scheduler-preprod.prison.service.justice.gov.uk").description("PreProd"),
+        Server().url("https://visit-scheduler-dev.prison.service.justice.gov.uk").description("Development"),
         Server().url("http://localhost:8080").description("Local"),
       )
     )
