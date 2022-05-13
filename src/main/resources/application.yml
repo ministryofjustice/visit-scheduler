@@ -56,7 +56,6 @@ spring:
       WRITE_DATES_AS_TIMESTAMPS: false
     default-property-inclusion: non_null
 
-
 server:
   port: 8080
   servlet:

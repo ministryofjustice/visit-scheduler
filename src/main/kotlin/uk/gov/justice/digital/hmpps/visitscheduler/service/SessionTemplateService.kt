@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
@@ -15,10 +16,10 @@ import java.util.function.Supplier
 @Transactional
 class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
+  private val telemetryClient: TelemetryClient,
 ) {
 
   fun createSessionTemplate(createSessionTemplateRequest: CreateSessionTemplateRequestDto): SessionTemplateDto {
-    log.info("Creating session template for prison")
     val sessionTemplateEntity = sessionTemplateRepository.saveAndFlush(
       SessionTemplate(
         prisonId = createSessionTemplateRequest.prisonId,
@@ -34,9 +35,16 @@ class SessionTemplateService(
         restrictions = createSessionTemplateRequest.restrictions
       )
     )
-    return SessionTemplateDto(
-      sessionTemplateEntity
+
+    telemetryClient.trackEvent(
+      "visit-scheduler-prison-session-template-created",
+      mapOf(
+        "id" to sessionTemplateEntity.id.toString()
+      ),
+      null
     )
+
+    return SessionTemplateDto(sessionTemplateEntity)
   }
 
   fun getSessionTemplates(): List<SessionTemplateDto> {
@@ -48,12 +56,18 @@ class SessionTemplateService(
       .orElseThrow(TemplateNotFoundException("Template id $sessionTemplateId not found"))
   }
 
-  fun deleteSessionTemplate(sessionTemplateId: Long) {
-    val sessionTemplate = sessionTemplateRepository.findByIdOrNull(sessionTemplateId)
-    sessionTemplate?.let { sessionTemplateRepository.delete(it) }.also { log.info("Session template with id  $sessionTemplateId deleted") }
-      ?: run {
-        log.info("Session template with id  $sessionTemplateId not found")
-      }
+  fun deleteSessionTemplate(templateId: Long) {
+    val template = sessionTemplateRepository.findByIdOrNull(templateId)
+    template?.let {
+      sessionTemplateRepository.delete(it)
+      telemetryClient.trackEvent(
+        "visit-scheduler-prison-session-template-deleted",
+        mapOf(
+          "id" to templateId.toString()
+        ),
+        null
+      )
+    } ?: run { log.debug("Session template $templateId not found") }
   }
 
   companion object {

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -20,24 +21,24 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotFoundExceptio
 import javax.validation.ValidationException
 
 @RestControllerAdvice
-class VisitSchedulerExceptionHandler {
+class VisitSchedulerExceptionHandler(
+  private val telemetryClient: TelemetryClient,
+) {
   @ExceptionHandler(AccessDeniedException::class)
   fun handleAccessDeniedException(e: AccessDeniedException): ResponseEntity<ErrorResponse> {
     log.debug("Forbidden (403) returned with message {}", e.message)
-    return ResponseEntity
-      .status(HttpStatus.FORBIDDEN)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.FORBIDDEN,
-          userMessage = "Access denied",
-        )
-      )
+    val error = ErrorResponse(
+      status = HttpStatus.FORBIDDEN,
+      userMessage = "Access denied",
+    )
+    sendErrorTelemetry("visit-scheduler-prison-visit-access-denied-error", error)
+    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error)
   }
 
   @ExceptionHandler(WebClientResponseException::class)
   fun handleWebClientResponseException(e: WebClientResponseException): ResponseEntity<ByteArray> {
     if (e.statusCode.is4xxClientError) {
-      log.info("Unexpected client exception with message {}", e.message)
+      log.debug("Unexpected client exception with message {}", e.message)
     } else {
       log.error("Unexpected server exception", e)
     }
@@ -49,84 +50,72 @@ class VisitSchedulerExceptionHandler {
   @ExceptionHandler(WebClientException::class)
   fun handleWebClientException(e: WebClientException): ResponseEntity<ErrorResponse> {
     log.error("Unexpected exception", e)
-    return ResponseEntity
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.INTERNAL_SERVER_ERROR,
-          developerMessage = e.message
-        )
-      )
+    val error = ErrorResponse(
+      status = HttpStatus.INTERNAL_SERVER_ERROR,
+      developerMessage = e.message
+    )
+    sendErrorTelemetry("visit-scheduler-prison-visit-internal-server-error", error)
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
   }
 
   @ExceptionHandler(ValidationException::class)
   fun handleValidationException(e: Exception): ResponseEntity<ErrorResponse> {
-    log.info("Validation exception: {}", e.message)
-    return ResponseEntity
-      .status(HttpStatus.BAD_REQUEST)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.BAD_REQUEST,
-          userMessage = "Validation failure: ${e.cause?.message}",
-          developerMessage = e.message
-        )
-      )
+    log.debug("Validation exception: {}", e.message)
+    val error = ErrorResponse(
+      status = HttpStatus.BAD_REQUEST,
+      userMessage = "Validation failure: ${e.cause?.message}",
+      developerMessage = e.message
+    )
+    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
   @ExceptionHandler(MissingServletRequestParameterException::class)
   fun handleValidationException(e: MissingServletRequestParameterException): ResponseEntity<ErrorResponse> {
     log.debug("Bad Request (400) returned {}", e.message)
-    return ResponseEntity
-      .status(HttpStatus.BAD_REQUEST)
-      .body(
-        ErrorResponse(
-          status = (HttpStatus.BAD_REQUEST),
-          userMessage = "Missing Request Parameter: ${e.cause?.message}",
-          developerMessage = (e.message)
-        )
-      )
+    val error = ErrorResponse(
+      status = (HttpStatus.BAD_REQUEST),
+      userMessage = "Missing Request Parameter: ${e.cause?.message}",
+      developerMessage = (e.message)
+    )
+    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
   @ExceptionHandler(HttpMessageNotReadableException::class)
   fun handleJsonMappingValidationException(e: Exception): ResponseEntity<ErrorResponse> {
-    log.info("Validation exception: {}", e.message)
-    return ResponseEntity
-      .status(HttpStatus.BAD_REQUEST)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.BAD_REQUEST,
-          userMessage = "Validation failure: ${e.message}",
-          developerMessage = e.message
-        )
-      )
+    log.debug("Validation exception: {}", e.message)
+    val error = ErrorResponse(
+      status = HttpStatus.BAD_REQUEST,
+      userMessage = "Validation failure: ${e.message}",
+      developerMessage = e.message
+    )
+    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
   @ExceptionHandler(MethodArgumentTypeMismatchException::class)
   fun handleMethodArgumentTypeMismatchException(e: Exception): ResponseEntity<ErrorResponse> {
-    log.info("Validation exception: {}", e.message)
-    return ResponseEntity
-      .status(HttpStatus.BAD_REQUEST)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.BAD_REQUEST,
-          userMessage = "Invalid Argument: ${e.cause?.message}",
-          developerMessage = e.message
-        )
-      )
+    log.debug("Validation exception: {}", e.message)
+    val error = ErrorResponse(
+      status = HttpStatus.BAD_REQUEST,
+      userMessage = "Invalid Argument: ${e.cause?.message}",
+      developerMessage = e.message
+    )
+    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
   @ExceptionHandler(MethodArgumentNotValidException::class)
   fun handleMethodArgumentNotValidException(e: Exception): ResponseEntity<ErrorResponse> {
-    log.info("Validation exception: {}", e.message)
-    return ResponseEntity
-      .status(HttpStatus.BAD_REQUEST)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.BAD_REQUEST,
-          userMessage = "Invalid Argument: ${e.cause?.message}",
-          developerMessage = e.message
-        )
-      )
+    log.debug("Validation exception: {}", e.message)
+    val error = ErrorResponse(
+      status = HttpStatus.BAD_REQUEST,
+      userMessage = "Invalid Argument: ${e.cause?.message}",
+      developerMessage = e.message
+    )
+    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
   @ExceptionHandler(VisitNotFoundException::class)
@@ -173,32 +162,41 @@ class VisitSchedulerExceptionHandler {
 
   @ExceptionHandler(PublishEventException::class)
   fun handlePublishEventException(e: PublishEventException): ResponseEntity<ErrorResponse?>? {
-    log.debug("Publish event exception caught: {}", e.message)
-    return ResponseEntity
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.INTERNAL_SERVER_ERROR,
-          userMessage = "Failed to publish event: ${e.cause?.message}",
-          developerMessage = e.message
-        )
-      )
+    log.error("Publish event exception caught: {}", e.message)
+    val error = ErrorResponse(
+      status = HttpStatus.INTERNAL_SERVER_ERROR,
+      userMessage = "Failed to publish event: ${e.cause?.message}",
+      developerMessage = e.message
+    )
+    sendErrorTelemetry("visit-scheduler-prison-visit-publish-event-error", error)
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
   }
 
   @ExceptionHandler(java.lang.Exception::class)
   fun handleException(e: java.lang.Exception): ResponseEntity<ErrorResponse?>? {
     log.error("Unexpected exception", e)
-    return ResponseEntity
-      .status(HttpStatus.INTERNAL_SERVER_ERROR)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.INTERNAL_SERVER_ERROR,
-          developerMessage = e.message
-        )
-      )
+    val error = ErrorResponse(
+      status = HttpStatus.INTERNAL_SERVER_ERROR,
+      developerMessage = e.message
+    )
+    sendErrorTelemetry("visit-scheduler-prison-visit-internal-server-error", error)
+    return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
+  }
+
+  private fun sendErrorTelemetry(name: String, error: ErrorResponse) {
+    telemetryClient.trackEvent(
+      name,
+      mapOf(
+        "status" to error.status.toString(),
+        "message" to (error.developerMessage?.take(MAX_ERROR_LENGTH) ?: ""),
+        "cause" to (error.userMessage?.take(MAX_ERROR_LENGTH) ?: "")
+      ),
+      null
+    )
   }
 
   companion object {
+    const val MAX_ERROR_LENGTH = 256
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }

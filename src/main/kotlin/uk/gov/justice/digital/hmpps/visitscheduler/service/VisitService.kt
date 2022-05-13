@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
@@ -19,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.format.DateTimeFormatter
 import java.util.function.Supplier
 
 @Service
@@ -26,10 +28,10 @@ import java.util.function.Supplier
 class VisitService(
   private val visitRepository: VisitRepository,
   private val supportTypeRepository: SupportTypeRepository,
+  private val telemetryClient: TelemetryClient,
 ) {
 
   fun createVisit(createVisitRequest: CreateVisitRequestDto): VisitDto {
-    log.info("Creating visit for prisoner")
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = createVisitRequest.prisonerId,
@@ -47,16 +49,31 @@ class VisitService(
       visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
     }
 
-    createVisitRequest.visitors.distinctBy { it.nomisPersonId }.forEach {
+    createVisitRequest.visitors.forEach {
       visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
     }
 
     createVisitRequest.visitorSupport?.let { supportList ->
-      supportList.distinctBy { it.type }.forEach {
+      supportList.forEach {
         supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
         visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
       }
     }
+
+    telemetryClient.trackEvent(
+      "visit-scheduler-prison-visit-created",
+      mapOf(
+        "reference" to visitEntity.reference,
+        "prisonerId" to visitEntity.prisonerId,
+        "prisonId" to visitEntity.prisonId,
+        "visitType" to visitEntity.visitType.name,
+        "visitRoom" to visitEntity.visitRoom,
+        "visitRestriction" to visitEntity.visitRestriction.name,
+        "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
+        "visitStatus" to visitEntity.visitStatus.name
+      ),
+      null
+    )
 
     return VisitDto(visitEntity)
   }
@@ -72,10 +89,7 @@ class VisitService(
   }
 
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
-    log.info("Updating visit for $reference")
-
-    val visitEntity = visitRepository.findByReference(reference)
-    visitEntity ?: throw VisitNotFoundException("Visit reference $reference not found")
+    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
 
     updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
     updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
@@ -86,7 +100,6 @@ class VisitService(
     updateVisitRequest.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
     updateVisitRequest.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
 
-    // Update existing or add new
     updateVisitRequest.visitContact?.let { visitContactUpdate ->
       visitEntity.visitContact?.let { visitContact ->
         visitContact.name = visitContactUpdate.name
@@ -96,7 +109,6 @@ class VisitService(
       }
     }
 
-    // Replace existing list
     updateVisitRequest.visitors?.let { visitorsUpdate ->
       visitEntity.visitors.clear()
       visitRepository.saveAndFlush(visitEntity)
@@ -105,46 +117,84 @@ class VisitService(
       }
     }
 
-    // Replace existing list
     updateVisitRequest.visitorSupport?.let { visitSupportUpdate ->
       visitEntity.support.clear()
       visitRepository.saveAndFlush(visitEntity)
-      visitSupportUpdate.distinctBy { it.type }.forEach {
+      visitSupportUpdate.forEach {
         supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
         visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
       }
     }
+
+    telemetryClient.trackEvent(
+      "visit-scheduler-prison-visit-updated",
+      listOfNotNull(
+        "reference" to reference,
+        if (updateVisitRequest.prisonerId != null) "prisonerId" to updateVisitRequest.prisonerId else null,
+        if (updateVisitRequest.prisonId != null) "prisonId" to updateVisitRequest.prisonId else null,
+        if (updateVisitRequest.visitType != null) "visitType" to updateVisitRequest.visitType.name else null,
+        if (updateVisitRequest.visitRoom != null) "visitRoom" to updateVisitRequest.visitRoom else null,
+        if (updateVisitRequest.visitRestriction != null) "visitRestriction" to updateVisitRequest.visitRestriction.name else null,
+        if (updateVisitRequest.startTimestamp != null) "visitStart" to updateVisitRequest.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME) else null,
+        if (updateVisitRequest.visitStatus != null) "visitStatus" to updateVisitRequest.visitStatus.name else null
+      ).toMap(),
+      null
+    )
 
     return VisitDto(visitEntity)
   }
 
   fun deleteVisit(reference: String) {
     val visit = visitRepository.findByReference(reference)
-    visit?.let { visitRepository.delete(it) }.also { log.info("Visit with reference $reference deleted") }
-      ?: run {
-        log.info("Visit reference $reference not found")
-      }
+
+    visit?.let {
+      visitRepository.delete(it)
+      telemetryClient.trackEvent(
+        "visit-scheduler-prison-visit-deleted",
+        mapOf(
+          "reference" to reference
+        ),
+        null
+      )
+    } ?: run { log.debug("Visit reference $reference not found") }
   }
 
   fun deleteAllVisits(visits: List<VisitDto>) {
     visitRepository.deleteAllByReferenceIn(visits.map { it.reference }.toList())
+
+    for (visit in visits) {
+      telemetryClient.trackEvent(
+        "visit-scheduler-prison-visit-deleted",
+        mapOf(
+          "reference" to visit.reference
+        ),
+        null
+      )
+    }
   }
 
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
-    log.info("Canceling visit for $reference with $cancelOutcome")
-
-    val visitEntity = visitRepository.findByReference(reference)
-    visitEntity ?: throw VisitNotFoundException("Visit reference $reference not found")
+    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
 
     visitEntity.visitStatus = VisitStatus.CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {
-      val outcomeNote = createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text)
-      visitEntity.visitNotes.add(outcomeNote)
+      visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
     }
 
     visitRepository.saveAndFlush(visitEntity)
+
+    telemetryClient.trackEvent(
+      "visit-scheduler-prison-visit-cancelled",
+      mapOf(
+        "reference" to reference,
+        "visitStatus" to visitEntity.visitStatus.name,
+        "outcomeStatus" to visitEntity.outcomeStatus?.name
+      ),
+      null
+    )
+
     return VisitDto(visitEntity)
   }
 

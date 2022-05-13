@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import org.slf4j.Logger
-import org.slf4j.LoggerFactory
+import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
@@ -19,11 +18,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
-
+  private val telemetryClient: TelemetryClient,
 ) {
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
-    log.info("Entered migrateVisit create migrated visit for prisoner ${migrateVisitRequest.prisonerId}")
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
@@ -54,9 +52,27 @@ class MigrateVisitService(
         visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
       }
     }
+
     migrateVisitRequest.legacyData?.let { legacyData ->
       saveLegacyData(visitEntity, legacyData.leadVisitorId)
     }
+
+    telemetryClient.trackEvent(
+      "visit-scheduler-prison-visit-migrated",
+      mapOf(
+        "reference" to visitEntity.reference,
+        "prisonerId" to visitEntity.prisonerId,
+        "prisonId" to visitEntity.prisonId,
+        "visitType" to visitEntity.visitType.name,
+        "visitRoom" to visitEntity.visitRoom,
+        "visitRestriction" to visitEntity.visitRestriction.name,
+        "visitStart" to visitEntity.visitStart.toString(),
+        "visitStatus" to visitEntity.visitStatus.name,
+        "outcomeStatus" to visitEntity.outcomeStatus?.name
+      ),
+      null
+    )
+
     return visitEntity.reference
   }
 
@@ -93,9 +109,5 @@ class MigrateVisitService(
       visitId = visit.id,
       visit = visit
     )
-  }
-
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }

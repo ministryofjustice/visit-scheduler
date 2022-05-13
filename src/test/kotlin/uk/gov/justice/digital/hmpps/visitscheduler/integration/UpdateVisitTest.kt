@@ -1,10 +1,19 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.microsoft.applicationinsights.TelemetryClient
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
@@ -16,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitReque
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -36,12 +46,15 @@ private const val TEST_END_POINT = "/visits/"
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Update PUT /visits")
-class UpdateVisitTest : IntegrationTestBase() {
+class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
+
+  @SpyBean
+  private lateinit var telemetryClient: TelemetryClient
 
   private var visitMin: Visit? = null
   private var visitFull: Visit? = null
@@ -97,8 +110,8 @@ class UpdateVisitTest : IntegrationTestBase() {
       visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-      visitors = listOf(CreateVisitorOnVisitRequestDto(123L)),
-      visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitors = setOf(CreateVisitorOnVisitRequestDto(123L)),
+      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
@@ -108,7 +121,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     // Then
 
-    responseSpec
+    val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.reference").isNotEmpty
@@ -120,15 +133,36 @@ class UpdateVisitTest : IntegrationTestBase() {
       .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
       .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
       .jsonPath("$.visitRestriction").isEqualTo(updateRequest.visitRestriction!!.name)
-      .jsonPath("$.visitContact.name").isNotEmpty
       .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
       .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
       .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
-      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!![0].nomisPersonId)
+      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!!.first().nomisPersonId)
       .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
-      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!![0].type)
-      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!![0].text!!)
+      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!!.first().type)
+      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!!.first().text!!)
       .jsonPath("$.createdTimestamp").isNotEmpty
+      .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-scheduler-prison-visit-updated"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+
+    verify(telemetryClient).trackEvent(
+      eq("visit-scheduler-prison-visit.booked-event"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
   }
 
   @Test
@@ -146,10 +180,22 @@ class UpdateVisitTest : IntegrationTestBase() {
     val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
 
     // Then
-    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
       .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
+      .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-scheduler-prison-visit-updated"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
   }
 
   @Test
@@ -158,7 +204,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitors = listOf(CreateVisitorOnVisitRequestDto(123L)),
+      visitors = setOf(CreateVisitorOnVisitRequestDto(123L)),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
@@ -167,10 +213,22 @@ class UpdateVisitTest : IntegrationTestBase() {
     val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
 
     // Then
-    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
-      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!![0].nomisPersonId)
+      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!!.first().nomisPersonId)
+      .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-scheduler-prison-visit-updated"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
   }
 
   @Test
@@ -178,7 +236,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitorSupport = listOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
@@ -187,11 +245,23 @@ class UpdateVisitTest : IntegrationTestBase() {
     val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
 
     // Then
-    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
-      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!![0].type)
-      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!![0].text!!)
+      .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!!.first().type)
+      .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!!.first().text!!)
+      .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-scheduler-prison-visit-updated"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
   }
 
   @Test
@@ -218,6 +288,9 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isForbidden
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
   }
 
   @Test

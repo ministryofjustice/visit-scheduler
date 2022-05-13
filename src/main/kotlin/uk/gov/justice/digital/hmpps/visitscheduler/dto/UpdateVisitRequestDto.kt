@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.validation.NullableNotEmpty
 import java.time.LocalDateTime
 import javax.validation.Valid
 
@@ -28,9 +29,8 @@ data class UpdateVisitRequestDto(
   @field:Valid
   val visitContact: CreateContactOnVisitRequestDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false)
-  val visitors: List<@Valid CreateVisitorOnVisitRequestDto>? = null,
+  @field:NullableNotEmpty
+  val visitors: Set<@Valid CreateVisitorOnVisitRequestDto>? = null,
   @Schema(description = "List of additional support associated with the visit", required = false)
-  val visitorSupport: List<@Valid CreateSupportOnVisitRequestDto>? = null,
+  val visitorSupport: Set<@Valid CreateSupportOnVisitRequestDto>? = null,
 )
-
-// once set the main contact cannot be changed
