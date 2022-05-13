@@ -140,8 +140,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
-      visitRestriction = OPEN,
-      legacyData = CreateLegacyDataRequestDto(123)
+      visitRestriction = OPEN
     )
 
     val jsonBody = BodyInserters.fromValue(
@@ -176,8 +175,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
-      visitRestriction = OPEN,
-      legacyData = CreateLegacyDataRequestDto(123)
+      visitRestriction = OPEN
     )
 
     val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
@@ -209,7 +207,6 @@ class MigrateVisitTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
       visitRestriction = OPEN,
-      legacyData = CreateLegacyDataRequestDto(123),
       visitContact = CreateLegacyContactOnVisitRequestDto(name = "John Smith")
     )
 
@@ -242,7 +239,6 @@ class MigrateVisitTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
       visitRestriction = OPEN,
-      legacyData = CreateLegacyDataRequestDto(123),
       visitContact = CreateLegacyContactOnVisitRequestDto(telephone = "013448811538")
     )
 

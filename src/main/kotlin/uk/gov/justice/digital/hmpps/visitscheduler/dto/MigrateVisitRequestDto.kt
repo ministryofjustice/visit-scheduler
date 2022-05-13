@@ -38,8 +38,8 @@ data class MigrateVisitRequestDto(
   @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = true)
   @field:NotNull
   val endTimestamp: LocalDateTime,
-  @Schema(description = "Create legacy data", required = true)
-  val legacyData: CreateLegacyDataRequestDto,
+  @Schema(description = "Create legacy data", required = false)
+  val legacyData: CreateLegacyDataRequestDto? = null,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
   val visitContact: CreateLegacyContactOnVisitRequestDto? = CreateLegacyContactOnVisitRequestDto(),
