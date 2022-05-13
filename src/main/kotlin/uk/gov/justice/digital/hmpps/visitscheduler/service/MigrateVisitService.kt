@@ -54,9 +54,9 @@ class MigrateVisitService(
         visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
       }
     }
-
-    saveLegacyData(visitEntity, migrateVisitRequest.legacyData.leadVisitorId)
-
+    migrateVisitRequest.legacyData?.let { legacyData ->
+      saveLegacyData(visitEntity, legacyData.leadVisitorId)
+    }
     return visitEntity.reference
   }
 
