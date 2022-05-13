@@ -6,4 +6,5 @@ enum class VisitRestriction(
 ) {
   OPEN("Open"),
   CLOSED("Closed"),
+  UNKNOWN("Unknown")
 }

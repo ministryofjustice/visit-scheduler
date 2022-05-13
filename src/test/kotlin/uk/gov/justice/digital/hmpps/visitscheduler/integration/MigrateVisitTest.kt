@@ -54,7 +54,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
-  private fun createMigrateVisitRequestDto(telephone: String? = null): MigrateVisitRequestDto {
+  private fun createMigrateVisitRequestDto(): MigrateVisitRequestDto {
     return MigrateVisitRequestDto(
       prisonId = "MDI",
       prisonerId = "FF0000FF",
@@ -65,7 +65,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       visitStatus = RESERVED,
       outcomeStatus = COMPLETED_NORMALLY,
       visitRestriction = OPEN,
-      visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", telephone?.let { telephone }),
+      visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", "013448811538"),
       visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
       visitNotes = listOf(
         VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
@@ -82,19 +82,15 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Given
     val jsonBody = BodyInserters.fromValue(
-      createMigrateVisitRequestDto("013448811538")
+      createMigrateVisitRequestDto()
     )
 
     // When
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
-    var reference = ""
-
     responseSpec.expectStatus().isCreated
-      .expectBody()
-      .jsonPath("$")
-      .value<String> { json -> reference = json }
+    val reference = getReference(responseSpec)
 
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
@@ -133,6 +129,42 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `migrate visit without contact details`() {
+
+    // Given
+    val createMigrateVisitRequestDto = MigrateVisitRequestDto(
+      prisonId = "MDI",
+      prisonerId = "FF0000FF",
+      visitRoom = "A1",
+      visitType = SOCIAL,
+      startTimestamp = visitTime,
+      endTimestamp = visitTime.plusHours(1),
+      visitStatus = RESERVED,
+      visitRestriction = OPEN,
+      legacyData = CreateLegacyDataRequestDto(123)
+    )
+
+    val jsonBody = BodyInserters.fromValue(
+      createMigrateVisitRequestDto
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+
+    // Then
+
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
+      assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
+    }
+  }
+
+  @Test
   fun `migrate visit when outcome status not given`() {
 
     // Given
@@ -145,8 +177,6 @@ class MigrateVisitTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
       visitRestriction = OPEN,
-      visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", "01348811538"),
-      visitors = listOf(CreateVisitorOnVisitRequestDto(123)),
       legacyData = CreateLegacyDataRequestDto(123)
     )
 
@@ -156,12 +186,8 @@ class MigrateVisitTest : IntegrationTestBase() {
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
-    var reference = ""
-
     responseSpec.expectStatus().isCreated
-      .expectBody()
-      .jsonPath("$")
-      .value<String> { json -> reference = json }
+    val reference = getReference(responseSpec)
 
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
@@ -171,28 +197,68 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when telephone number is not given then an empty string will be migrated  `() {
+  fun `when telephone number is not given then an UNKNOWN will be migrated  `() {
 
     // Given
-    val jsonBody = BodyInserters.fromValue(
-      createMigrateVisitRequestDto()
+    val migrateVisitRequestDto = MigrateVisitRequestDto(
+      prisonId = "MDI",
+      prisonerId = "FF0000FF",
+      visitRoom = "A1",
+      visitType = SOCIAL,
+      startTimestamp = visitTime,
+      endTimestamp = visitTime.plusHours(1),
+      visitStatus = RESERVED,
+      visitRestriction = OPEN,
+      legacyData = CreateLegacyDataRequestDto(123),
+      visitContact = CreateLegacyContactOnVisitRequestDto(name = "John Smith")
     )
+
+    val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
 
     // When
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
-    var reference = ""
-
     responseSpec.expectStatus().isCreated
-      .expectBody()
-      .jsonPath("$")
-      .value<String> { json -> reference = json }
+    val reference = getReference(responseSpec)
 
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo("")
+      assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
+    }
+  }
+
+  @Test
+  fun `when contact name is not given then an UNKNOWN will be migrated  `() {
+
+    // Given
+    val migrateVisitRequestDto = MigrateVisitRequestDto(
+      prisonId = "MDI",
+      prisonerId = "FF0000FF",
+      visitRoom = "A1",
+      visitType = SOCIAL,
+      startTimestamp = visitTime,
+      endTimestamp = visitTime.plusHours(1),
+      visitStatus = RESERVED,
+      visitRestriction = OPEN,
+      legacyData = CreateLegacyDataRequestDto(123),
+      visitContact = CreateLegacyContactOnVisitRequestDto(telephone = "013448811538")
+    )
+
+    val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
     }
   }
 
@@ -240,6 +306,14 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isUnauthorized
+  }
+
+  private fun getReference(responseSpec: ResponseSpec): String {
+    var reference = ""
+    responseSpec.expectBody()
+      .jsonPath("$")
+      .value<String> { json -> reference = json }
+    return reference
   }
 
   private fun callMigrateVisit(
