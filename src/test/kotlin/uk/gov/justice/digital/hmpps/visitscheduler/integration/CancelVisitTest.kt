@@ -159,7 +159,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val reference = "12345"
 
     val outcomeDto = OutcomeDto(
-      OutcomeStatus.ADMINISTRATIVE_ERROR,
+      OutcomeStatus.ADMINISTRATIVE_CANCELLATION,
       "Visit does not exist"
     )
 
