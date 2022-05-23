@@ -39,17 +39,27 @@ class SessionService(
     noticeDaysMin: Long? = null,
     noticeDaysMax: Long? = null
   ): List<VisitSessionDto> {
-    val bookablePeriodStartDate = LocalDate.now(clock).plusDays(noticeDaysMin ?: defaultNoticeDaysMin)
-    val bookablePeriodEndDate = LocalDate.now(clock).plusDays(noticeDaysMax ?: defaultNoticeDaysMax)
+    val firstBookableDate = LocalDate.now(clock).plusDays(noticeDaysMin ?: defaultNoticeDaysMin)
+    val lastBookableDate = LocalDate.now(clock).plusDays(noticeDaysMax ?: defaultNoticeDaysMax)
+    return getVisitSessions(prisonId, prisonerId, firstBookableDate, lastBookableDate)
+  }
+
+  @Transactional(readOnly = true)
+  fun getVisitSessions(
+    prisonId: String,
+    prisonerId: String? = null,
+    firstBookableDate: LocalDate,
+    lastBookableDate: LocalDate,
+  ): List<VisitSessionDto> {
 
     val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
       prisonId,
-      bookablePeriodStartDate,
-      bookablePeriodEndDate
+      firstBookableDate,
+      lastBookableDate
     )
 
     var available = sessionTemplates.map {
-      buildVisitSessionsUsingTemplate(it, bookablePeriodStartDate, bookablePeriodEndDate)
+      buildVisitSessionsUsingTemplate(it, firstBookableDate, lastBookableDate)
     }.flatten()
 
     if (!prisonerId.isNullOrBlank()) {
@@ -74,7 +84,7 @@ class SessionService(
       else
         sessionTemplate.expiryDate
 
-    val firstBookableSessionDay: LocalDate = if (bookablePeriodStartDate.isAfter(sessionTemplate.startDate))
+    val firstBookableSessionDay = if (bookablePeriodStartDate.isAfter(sessionTemplate.startDate))
       bookablePeriodStartDate
     else
       sessionTemplate.startDate

@@ -13,8 +13,8 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   @Query(
     "select u from SessionTemplate u " +
       "where u.prisonId = :prisonId " +
-      "and (u.expiryDate is null or u.expiryDate >= :firstBookableDay) " +
-      "and (u.startDate <= :lastBookableDay)"
+      "and (u.startDate <= :lastBookableDay)" +
+      "and (u.expiryDate is null or u.expiryDate >= :firstBookableDay) "
   )
   fun findValidSessionTemplatesByPrisonId(
     @Param("prisonId") prisonId: String,

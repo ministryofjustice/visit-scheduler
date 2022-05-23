@@ -38,6 +38,41 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
   internal fun deleteAllVisitSessions() = visitDeleter(visitRepository)
 
   @Test
+  fun `visit sessions are returned for given start and end date`() {
+
+    // Given
+
+    val firstBookableDate = "2021-01-09"
+    val lastBookableDate = "2021-01-10"
+
+    val setUpSessionTemplateInDB = fun(dateStr: String) {
+      val dateTime = LocalDate.parse(dateStr)
+      sessionTemplateCreator(
+        repository = sessionTemplateRepository,
+        sessionTemplate = sessionTemplate(
+          startDate = dateTime,
+          expiryDate = dateTime,
+          frequency = DAILY
+        )
+      ).save()
+    }
+
+    setUpSessionTemplateInDB("2021-01-08")
+    setUpSessionTemplateInDB("2021-01-09")
+    setUpSessionTemplateInDB("2021-01-10")
+
+    // When
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&firstBookableDate=${firstBookableDate}&lastBookableDate=${lastBookableDate}")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .exchange()
+
+    // Then
+    responseSpec.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(2)
+  }
+
+  @Test
   fun `visit sessions are returned for a prison for a single schedule`() {
     sessionTemplateCreator(
       repository = sessionTemplateRepository,
