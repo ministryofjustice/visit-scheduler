@@ -8,6 +8,8 @@ data class CreateLegacyContactOnVisitRequestDto(@field:NotBlank val name: String
   companion object {
     private const val UNKNOWN = "UNKNOWN"
 
+    // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below
+    // JsonCreator and JvmStatic code
     @JsonCreator
     @JvmStatic
     fun create(
