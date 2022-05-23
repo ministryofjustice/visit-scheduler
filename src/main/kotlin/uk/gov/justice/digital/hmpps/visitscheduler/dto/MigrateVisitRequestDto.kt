@@ -42,7 +42,7 @@ data class MigrateVisitRequestDto(
   val legacyData: CreateLegacyDataRequestDto? = null,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
-  val visitContact: CreateLegacyContactOnVisitRequestDto? = CreateLegacyContactOnVisitRequestDto(),
+  val visitContact: CreateLegacyContactOnVisitRequestDto? = CreateLegacyContactOnVisitRequestDto.create(),
   @Schema(description = "List of visitors associated with the visit", required = false)
   val visitors: Set<@Valid CreateVisitorOnVisitRequestDto>? = setOf(),
   @Schema(description = "Visit notes", required = false)
