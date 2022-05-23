@@ -38,7 +38,7 @@ class MigrateVisitService(
     )
 
     migrateVisitRequest.visitContact?.let {
-      visitEntity.visitContact = createVisitContact(visitEntity, it.name!!, it.telephone!!)
+      visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
     }
 
     migrateVisitRequest.visitors?.let { contactList ->

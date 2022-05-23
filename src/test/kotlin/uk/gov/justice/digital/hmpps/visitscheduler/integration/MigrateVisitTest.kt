@@ -181,7 +181,6 @@ class MigrateVisitTest : IntegrationTestBase() {
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
-
     responseSpec.expectStatus().isCreated
     val reference = getReference(responseSpec)
 
@@ -191,6 +190,8 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
       assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
     }
+
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -239,22 +240,29 @@ class MigrateVisitTest : IntegrationTestBase() {
   fun `when telephone number is not given then an UNKNOWN will be migrated  `() {
 
     // Given
-    val migrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonId = "MDI",
-      prisonerId = "FF0000FF",
-      visitRoom = "A1",
-      visitType = SOCIAL,
-      startTimestamp = visitTime,
-      endTimestamp = visitTime.plusHours(1),
-      visitStatus = RESERVED,
-      visitRestriction = OPEN,
-      visitContact = CreateLegacyContactOnVisitRequestDto("John Smith")
-    )
+    val jsonString = """{
+      "prisonerId": "G9377GA",
+      "prisonId": "MDI",
+      "visitRoom": "A1",
+      "startTimestamp": "$visitTime",
+      "endTimestamp": "${visitTime.plusHours(1)}",
+      "visitType": "${SOCIAL.name}",
+      "visitStatus": "${RESERVED.name}",
+      "visitRestriction": "${OPEN.name}",
+      "visitContact": {
+        "name": "John Smith"
+      }    
+    }"""
 
-    val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
-
-    // When
-    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = webTestClient.post().uri(TEST_END_POINT)
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .contentType(MediaType.APPLICATION_JSON)
+      .body(
+        BodyInserters.fromValue(
+          jsonString
+        )
+      )
+      .exchange()
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -265,6 +273,9 @@ class MigrateVisitTest : IntegrationTestBase() {
     visit?.let {
       assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
     }
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -305,28 +316,81 @@ class MigrateVisitTest : IntegrationTestBase() {
     visit?.let {
       assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
     }
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
   }
 
   @Test
   fun `when contact name is not given then an UNKNOWN will be migrated  `() {
 
     // Given
-    val migrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonId = "MDI",
-      prisonerId = "FF0000FF",
-      visitRoom = "A1",
-      visitType = SOCIAL,
-      startTimestamp = visitTime,
-      endTimestamp = visitTime.plusHours(1),
-      visitStatus = RESERVED,
-      visitRestriction = OPEN,
-      visitContact = CreateLegacyContactOnVisitRequestDto(_telephone = "013448811538")
-    )
+    val jsonString = """{
+      "prisonerId": "G9377GA",
+      "prisonId": "MDI",
+      "visitRoom": "A1",
+      "startTimestamp": "$visitTime",
+      "endTimestamp": "${visitTime.plusHours(1)}",
+      "visitType": "${SOCIAL.name}",
+      "visitStatus": "${RESERVED.name}",
+      "visitRestriction": "${OPEN.name}",
+      "visitContact": {
+        "telephone": "1234567890"
+      }    
+    }"""
 
-    val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
+    val responseSpec = webTestClient.post().uri(TEST_END_POINT)
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .contentType(MediaType.APPLICATION_JSON)
+      .body(
+        BodyInserters.fromValue(
+          jsonString
+        )
+      )
+      .exchange()
 
-    // When
-    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
+    }
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+  }
+
+  @Test
+  fun `when contact name is NULL then an UNKNOWN will be migrated`() {
+
+    // Given
+    val jsonString = """{
+      "prisonerId": "G9377GA",
+      "prisonId": "MDI",
+      "visitRoom": "A1",
+      "startTimestamp": "$visitTime",
+      "endTimestamp": "${visitTime.plusHours(1)}",
+      "visitType": "${SOCIAL.name}",
+      "visitStatus": "${RESERVED.name}",
+      "visitRestriction": "${OPEN.name}",
+      "visitContact": {
+        "name": null,
+        "telephone": "1234567890"
+      }    
+    }"""
+
+    val responseSpec = webTestClient.post().uri(TEST_END_POINT)
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .contentType(MediaType.APPLICATION_JSON)
+      .body(
+        BodyInserters.fromValue(
+          jsonString
+        )
+      )
+      .exchange()
 
     // Then
     responseSpec.expectStatus().isCreated
