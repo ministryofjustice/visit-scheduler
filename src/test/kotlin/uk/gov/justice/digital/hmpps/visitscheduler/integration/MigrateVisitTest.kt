@@ -15,6 +15,7 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -247,13 +248,53 @@ class MigrateVisitTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
       visitRestriction = OPEN,
-      visitContact = CreateLegacyContactOnVisitRequestDto(name = "John Smith")
+      visitContact = CreateLegacyContactOnVisitRequestDto("John Smith")
     )
 
     val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
 
     // When
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
+    }
+  }
+
+  @Test
+  fun `when telephone number is NULL then an UNKNOWN will be migrated`() {
+
+    // Given
+    val jsonString = """{
+      "prisonerId": "G9377GA",
+      "prisonId": "MDI",
+      "visitRoom": "A1",
+      "startTimestamp": "$visitTime",
+      "endTimestamp": "${visitTime.plusHours(1)}",
+      "visitType": "${SOCIAL.name}",
+      "visitStatus": "${RESERVED.name}",
+      "visitRestriction": "${OPEN.name}",
+      "visitContact": {
+        "name": "John Smith",
+        "telephone": null
+      }    
+    }"""
+
+    val responseSpec = webTestClient.post().uri(TEST_END_POINT)
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .contentType(MediaType.APPLICATION_JSON)
+      .body(
+        BodyInserters.fromValue(
+          jsonString
+        )
+      )
+      .exchange()
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -279,7 +320,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
       visitRestriction = OPEN,
-      visitContact = CreateLegacyContactOnVisitRequestDto(telephone = "013448811538")
+      visitContact = CreateLegacyContactOnVisitRequestDto(_telephone = "013448811538")
     )
 
     val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
