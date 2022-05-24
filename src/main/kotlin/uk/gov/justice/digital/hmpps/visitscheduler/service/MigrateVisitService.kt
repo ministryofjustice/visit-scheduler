@@ -4,6 +4,7 @@ import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -23,6 +24,9 @@ class MigrateVisitService(
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
 
+    // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
+    val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
+
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
@@ -30,7 +34,7 @@ class MigrateVisitService(
         visitRoom = migrateVisitRequest.visitRoom,
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
-        outcomeStatus = migrateVisitRequest.outcomeStatus,
+        outcomeStatus = outcomeStatus,
         visitRestriction = migrateVisitRequest.visitRestriction,
         visitStart = migrateVisitRequest.startTimestamp,
         visitEnd = migrateVisitRequest.endTimestamp
