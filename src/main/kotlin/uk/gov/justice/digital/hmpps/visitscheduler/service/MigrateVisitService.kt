@@ -63,12 +63,12 @@ class MigrateVisitService(
       saveLegacyData(visitEntity, null)
     }
 
-    sentTelemetryData(visitEntity)
+    sendTelemetryData(visitEntity)
 
     return visitEntity.reference
   }
 
-  private fun sentTelemetryData(visitEntity: Visit) {
+  private fun sendTelemetryData(visitEntity: Visit) {
     telemetryClient.trackEvent(
       "visit-scheduler-prison-visit-migrated",
       mapOf(
