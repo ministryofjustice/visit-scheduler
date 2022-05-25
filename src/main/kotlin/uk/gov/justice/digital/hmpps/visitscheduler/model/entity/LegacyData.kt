@@ -18,10 +18,10 @@ data class LegacyData(
   val id: Long = 0,
 
   @Column(name = "VISIT_ID", unique = true)
-  var visitId: Long,
+  val visitId: Long,
 
-  @Column(name = "LEAD_PERSON_ID", nullable = false)
-  var leadPersonId: Long,
+  @Column(name = "LEAD_PERSON_ID", nullable = true)
+  val leadPersonId: Long?,
 
 ) {
   override fun equals(other: Any?): Boolean {
