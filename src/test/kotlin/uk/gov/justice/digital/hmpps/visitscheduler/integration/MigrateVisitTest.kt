@@ -136,7 +136,10 @@ class MigrateVisitTest : IntegrationTestBase() {
 
       val legacyData = legacyDataRepository.findByVisitId(visit.id)
       assertThat(legacyData).isNotNull
-      assertThat(legacyData!!.visitId).isEqualTo(visit.id)
+      if (legacyData != null) {
+        assertThat(legacyData.visitId).isEqualTo(visit.id)
+        assertThat(legacyData.leadPersonId).isEqualTo(123)
+      }
     }
 
     // And
@@ -156,6 +159,39 @@ class MigrateVisitTest : IntegrationTestBase() {
       isNull()
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+  }
+
+  @Test
+  fun `can migrate visit without leadVisitorId`() {
+
+    // Given
+    val createMigrateVisitRequestDto = MigrateVisitRequestDto(
+      prisonId = "MDI",
+      prisonerId = "FF0000FF",
+      visitRoom = "A1",
+      visitType = SOCIAL,
+      startTimestamp = visitTime,
+      endTimestamp = visitTime.plusHours(1),
+      visitStatus = RESERVED,
+      visitRestriction = OPEN
+    )
+    val jsonBody = BodyInserters.fromValue(createMigrateVisitRequestDto)
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      val legacyData = legacyDataRepository.findByVisitId(visit.id)
+      assertThat(legacyData).isNotNull
+      assertThat(legacyData!!.visitId).isEqualTo(visit.id)
+      assertThat(legacyData.leadPersonId).isNull()
+    }
   }
 
   @Test

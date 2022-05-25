@@ -57,10 +57,18 @@ class MigrateVisitService(
       }
     }
 
-    migrateVisitRequest.legacyData?.let { legacyData ->
-      saveLegacyData(visitEntity, legacyData.leadVisitorId)
+    migrateVisitRequest.legacyData?.let {
+      saveLegacyData(visitEntity, it.leadVisitorId)
+    } ?: run {
+      saveLegacyData(visitEntity, null)
     }
 
+    sendTelemetryData(visitEntity)
+
+    return visitEntity.reference
+  }
+
+  private fun sendTelemetryData(visitEntity: Visit) {
     telemetryClient.trackEvent(
       "visit-scheduler-prison-visit-migrated",
       mapOf(
@@ -76,8 +84,6 @@ class MigrateVisitService(
       ),
       null
     )
-
-    return visitEntity.reference
   }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
@@ -89,7 +95,7 @@ class MigrateVisitService(
     )
   }
 
-  private fun saveLegacyData(visit: Visit, leadPersonId: Long) {
+  private fun saveLegacyData(visit: Visit, leadPersonId: Long?) {
     val legacyData = LegacyData(
       visitId = visit.id,
       leadPersonId = leadPersonId
