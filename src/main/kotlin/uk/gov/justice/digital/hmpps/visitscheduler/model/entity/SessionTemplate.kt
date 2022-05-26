@@ -23,7 +23,7 @@ data class SessionTemplate(
   @Column(nullable = false)
   val prisonId: String,
 
-  @Column(nullable = false)
+  @Column
   val visitRoom: String,
 
   @Column
