@@ -43,8 +43,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2021-01-08"),
-        frequency = SINGLE,
-        restrictions = "Only B wing"
+        frequency = SINGLE
       )
     ).save()
 
@@ -55,7 +54,6 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.length()").isEqualTo(1)
       .jsonPath("$[0].prisonId").isEqualTo("MDI")
-      .jsonPath("$[0].restrictions").isEqualTo("Only B wing")
       .jsonPath("$[0].visitRoomName").isEqualTo("1")
       .jsonPath("$[0].visitType").isEqualTo(VisitType.SOCIAL.name)
       .jsonPath("$[0].openVisitCapacity").isEqualTo(10)
@@ -91,8 +89,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2021-01-08"),
-        frequency = WEEKLY,
-        restrictions = "Only B wing"
+        frequency = WEEKLY
       )
     ).save()
 
@@ -140,8 +137,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2020-01-01"),
         expiryDate = LocalDate.parse("2020-06-01"),
-        frequency = WEEKLY,
-        restrictions = "Only B wing"
+        frequency = WEEKLY
       )
     ).save()
 
@@ -160,8 +156,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2022-01-01"),
         expiryDate = LocalDate.parse("2022-06-01"),
-        frequency = WEEKLY,
-        restrictions = "Only B wing"
+        frequency = WEEKLY
       )
     ).save()
 

@@ -34,9 +34,6 @@ data class SessionTemplate(
   @Enumerated(EnumType.STRING)
   val frequency: SessionFrequency,
 
-  @Column
-  val restrictions: String?,
-
   @Column(nullable = false)
   val startTime: LocalTime,
 

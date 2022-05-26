@@ -31,8 +31,7 @@ class SessionTemplateService(
         frequency = createSessionTemplateRequest.frequency,
         visitRoom = createSessionTemplateRequest.visitRoom,
         closedCapacity = createSessionTemplateRequest.closedCapacity,
-        openCapacity = createSessionTemplateRequest.openCapacity,
-        restrictions = createSessionTemplateRequest.restrictions
+        openCapacity = createSessionTemplateRequest.openCapacity
       )
     )
 

@@ -94,8 +94,7 @@ class SessionService(
           closedVisitCapacity = sessionTemplate.closedCapacity,
           endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
           visitRoomName = sessionTemplate.visitRoom,
-          visitType = sessionTemplate.visitType,
-          restrictions = sessionTemplate.restrictions
+          visitType = sessionTemplate.visitType
         )
       }
       // remove created VisitSessions which are before the bookable period
