@@ -54,8 +54,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
       visitType = VisitType.SOCIAL,
       frequency = WEEKLY,
       openCapacity = 5,
-      closedCapacity = 2,
-      restrictions = "restrictions text"
+      closedCapacity = 2
     )
 
     @Test
@@ -79,7 +78,6 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .jsonPath("$.startTime").isEqualTo("14:30:00")
         .jsonPath("$.endTime").isEqualTo("16:30:00")
         .jsonPath("$.frequency").isEqualTo(WEEKLY.name)
-        .jsonPath("$.restrictions").isEqualTo("restrictions text")
         .jsonPath("$.openCapacity").isEqualTo(5)
         .jsonPath("$.closedCapacity").isEqualTo(2)
         .jsonPath("$.visitRoom").isEqualTo("A1")
@@ -231,16 +229,14 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
           startDate = LocalDate.parse("2021-01-01"),
-          frequency = WEEKLY,
-          restrictions = "Only B wing"
+          frequency = WEEKLY
         )
       ).save()
       sessionTemplateCreator(
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
           startDate = LocalDate.parse("2021-02-01"),
-          frequency = WEEKLY,
-          restrictions = "Only C wing"
+          frequency = WEEKLY
         )
       ).save()
       webTestClient.get().uri("/visit-session-templates")
@@ -257,8 +253,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
           startDate = LocalDate.parse("2021-01-01"),
-          frequency = WEEKLY,
-          restrictions = "Only A wing"
+          frequency = WEEKLY
         )
       ).save()
 
@@ -267,7 +262,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .exchange()
         .expectStatus().isOk
         .expectBody()
-        .jsonPath("$.length()").isEqualTo(11)
+        .jsonPath("$.length()").isEqualTo(10)
         .jsonPath("$.sessionTemplateId").isEqualTo(sessionTemplate.id)
         .jsonPath("$.prisonId").isEqualTo("MDI")
         .jsonPath("$.startTime").isEqualTo("09:00:00")
@@ -275,7 +270,6 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .jsonPath("$.startDate").isEqualTo("2021-01-01")
         .jsonPath("$.visitType").isEqualTo(VisitType.SOCIAL.name)
         .jsonPath("$.visitRoom").isEqualTo("1")
-        .jsonPath("$.restrictions").isEqualTo("Only A wing")
         .jsonPath("$.frequency").isEqualTo(WEEKLY.name)
         .jsonPath("$.closedCapacity").isEqualTo(5)
         .jsonPath("$.openCapacity").isEqualTo(10)

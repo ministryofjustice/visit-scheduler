@@ -19,9 +19,6 @@ data class VisitSessionDto(
   @Schema(description = "The prison id", example = "LEI", required = true)
   val prisonId: String,
 
-  @Schema(description = "Description of any session restrictions", example = "A wing only")
-  val restrictions: String?,
-
   @Schema(description = "The number of concurrent visits which may take place within this session", example = "1", required = true)
   val openVisitCapacity: Int,
 

@@ -17,8 +17,7 @@ fun sessionTemplate(
   visitType: VisitType = VisitType.SOCIAL,
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
-  frequency: SessionFrequency = SessionFrequency.DAILY,
-  restrictions: String? = null
+  frequency: SessionFrequency = SessionFrequency.DAILY
 ) = SessionTemplate(
   id = id,
   startDate = startDate,
@@ -30,6 +29,5 @@ fun sessionTemplate(
   visitType = visitType,
   startTime = startTime,
   endTime = endTime,
-  frequency = frequency,
-  restrictions = restrictions
+  frequency = frequency
 )

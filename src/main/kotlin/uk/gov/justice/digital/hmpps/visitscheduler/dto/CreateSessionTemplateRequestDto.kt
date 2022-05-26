@@ -29,8 +29,6 @@ data class CreateSessionTemplateRequestDto(
   @Schema(description = "visit room", example = "A1", required = true)
   @field:NotBlank
   val visitRoom: String,
-  @Schema(description = "restrictions", required = false)
-  val restrictions: String? = null,
   @Schema(description = "frequency", required = true)
   @field:NotNull
   val frequency: SessionFrequency,

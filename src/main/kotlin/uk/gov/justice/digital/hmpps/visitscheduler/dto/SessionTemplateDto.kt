@@ -26,8 +26,6 @@ data class SessionTemplateDto(
   val visitType: VisitType,
   @Schema(description = "visit room", example = "A1", required = true)
   val visitRoom: String,
-  @Schema(description = "restrictions", required = false)
-  val restrictions: String? = null,
   @Schema(description = "frequency", example = "A1", required = true)
   val frequency: SessionFrequency,
   @Schema(description = "closed capacity", example = "10", required = true)
@@ -46,7 +44,6 @@ data class SessionTemplateDto(
     frequency = sessionTemplateEntity.frequency,
     visitRoom = sessionTemplateEntity.visitRoom,
     closedCapacity = sessionTemplateEntity.closedCapacity,
-    openCapacity = sessionTemplateEntity.openCapacity,
-    restrictions = sessionTemplateEntity.restrictions
+    openCapacity = sessionTemplateEntity.openCapacity
   )
 }

@@ -23,7 +23,7 @@ data class SessionTemplate(
   @Column(nullable = false)
   val prisonId: String,
 
-  @Column
+  @Column(nullable = false)
   val visitRoom: String,
 
   @Column
@@ -33,9 +33,6 @@ data class SessionTemplate(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   val frequency: SessionFrequency,
-
-  @Column
-  val restrictions: String?,
 
   @Column(nullable = false)
   val startTime: LocalTime,
