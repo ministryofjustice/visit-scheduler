@@ -20,7 +20,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.MONTHLY
@@ -36,6 +35,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.Clock
+import java.time.DayOfWeek
+import java.time.DayOfWeek.FRIDAY
+import java.time.DayOfWeek.MONDAY
+import java.time.DayOfWeek.SATURDAY
+import java.time.DayOfWeek.SUNDAY
+import java.time.DayOfWeek.THURSDAY
+import java.time.DayOfWeek.TUESDAY
+import java.time.DayOfWeek.WEDNESDAY
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -104,15 +111,13 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(7) // expiry date is inclusive
-      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
-        LocalDateTime.parse("2021-01-02T11:30:00"),
-        LocalDateTime.parse("2021-01-03T11:30:00"),
-        LocalDateTime.parse("2021-01-04T11:30:00"),
-        LocalDateTime.parse("2021-01-05T11:30:00"),
-        LocalDateTime.parse("2021-01-06T11:30:00"),
-        LocalDateTime.parse("2021-01-07T11:30:00"),
-        LocalDateTime.parse("2021-01-08T11:30:00"),
-      )
+      assertDate(sessions[0].startTimestamp, "2021-01-02T11:30:00", SATURDAY)
+      assertDate(sessions[1].startTimestamp, "2021-01-03T11:30:00", SUNDAY)
+      assertDate(sessions[2].startTimestamp, "2021-01-04T11:30:00", MONDAY)
+      assertDate(sessions[3].startTimestamp, "2021-01-05T11:30:00", TUESDAY)
+      assertDate(sessions[4].startTimestamp, "2021-01-06T11:30:00", WEDNESDAY)
+      assertDate(sessions[5].startTimestamp, "2021-01-07T11:30:00", THURSDAY)
+      assertDate(sessions[6].startTimestamp, "2021-01-08T11:30:00", FRIDAY)
     }
 
     @Test
@@ -136,13 +141,11 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
-      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
-        LocalDateTime.parse("2021-01-08T11:30:00"),
-        LocalDateTime.parse("2021-01-15T11:30:00"),
-        LocalDateTime.parse("2021-01-22T11:30:00"),
-        LocalDateTime.parse("2021-01-29T11:30:00"),
-        LocalDateTime.parse("2021-02-05T11:30:00"),
-      )
+      assertDate(sessions[0].startTimestamp, "2021-01-08T11:30:00", FRIDAY)
+      assertDate(sessions[1].startTimestamp, "2021-01-15T11:30:00", FRIDAY)
+      assertDate(sessions[2].startTimestamp, "2021-01-22T11:30:00", FRIDAY)
+      assertDate(sessions[3].startTimestamp, "2021-01-29T11:30:00", FRIDAY)
+      assertDate(sessions[4].startTimestamp, "2021-02-05T11:30:00", FRIDAY)
     }
 
     @Test
@@ -165,14 +168,41 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions("MDI")
 
       // Then
-      assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
-      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
-        LocalDateTime.parse("2021-01-06T11:30:00"), // first wednesday after today (1/1/2021)
-        LocalDateTime.parse("2021-01-13T11:30:00"),
-        LocalDateTime.parse("2021-01-20T11:30:00"),
-        LocalDateTime.parse("2021-01-27T11:30:00"),
-        LocalDateTime.parse("2021-02-03T11:30:00"),
+      assertThat(sessions).size().isEqualTo(5) // expiry date is inclusiv
+      assertDate(sessions[0].startTimestamp, "2021-01-06T11:30:00", WEDNESDAY)
+      assertDate(sessions[1].startTimestamp, "2021-01-13T11:30:00", WEDNESDAY)
+      assertDate(sessions[2].startTimestamp, "2021-01-20T11:30:00", WEDNESDAY)
+      assertDate(sessions[3].startTimestamp, "2021-01-27T11:30:00", WEDNESDAY)
+      assertDate(sessions[4].startTimestamp, "2021-02-03T11:30:00", WEDNESDAY)
+    }
+
+    @Test
+    fun `sessions are consistently generated, monthly sessions always fall on the same day regardless of date of generation`() {
+
+      // Given
+
+      val startDate: LocalDate = LocalDate.parse("2021-01-02")
+
+      val monthlySession = sessionTemplate(
+        expiryDate = startDate.plusMonths(12),
+        startDate = startDate, // session template start date is a Wednesday
+        closedCapacity = 5,
+        openCapacity = 10,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = MONTHLY
       )
+      mockSessionRepositoryResponse(listOf(monthlySession))
+
+      // When
+      val sessions = sessionService.getVisitSessions("MDI")
+
+      // Then
+      assertThat(sessions).size().isEqualTo(4) // expiry date is inclusive
+      assertDate(sessions[0].startTimestamp, "2021-01-02T11:30", SATURDAY)
+      assertDate(sessions[1].startTimestamp, "2021-02-02T11:30", TUESDAY)
+      assertDate(sessions[2].startTimestamp, "2021-03-02T11:30", TUESDAY)
+      assertDate(sessions[3].startTimestamp, "2021-04-02T11:30", FRIDAY)
     }
 
     @Test
@@ -192,9 +222,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
-        LocalDateTime.parse("2021-02-01T11:30:00")
-      )
+      assertDate(sessions[0].startTimestamp, "2021-02-01T11:30:00", MONDAY)
     }
 
     @Test
@@ -227,7 +255,8 @@ class SessionServiceTest {
         frequency = MONTHLY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("11:45"),
-        id = 1
+        id = 1,
+        visitRoom = "Monthly Room"
       )
       val dailySession = sessionTemplate(
         startDate = LocalDate.parse("2021-01-01"),
@@ -235,7 +264,8 @@ class SessionServiceTest {
         frequency = DAILY,
         startTime = LocalTime.of(16, 0, 0),
         endTime = LocalTime.of(16, 30, 0),
-        id = 2
+        id = 2,
+        visitRoom = "Daily Room"
       )
 
       mockSessionRepositoryResponse(listOf(monthlySession, dailySession))
@@ -245,22 +275,15 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(5)
-      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp)
-        .containsExactly( // ordered by start date time
-          LocalDateTime.parse("2021-01-02T16:00"),
-          LocalDateTime.parse("2021-01-03T16:00"),
-          LocalDateTime.parse("2021-01-04T16:00"),
-          LocalDateTime.parse("2021-01-05T16:00"),
-          LocalDateTime.parse("2021-02-01T11:30")
-        )
-      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp)
-        .containsExactly( // ordered by start date time
-          LocalDateTime.parse("2021-01-02T16:00"),
-          LocalDateTime.parse("2021-01-03T16:00"),
-          LocalDateTime.parse("2021-01-04T16:00"),
-          LocalDateTime.parse("2021-01-05T16:00"),
-          LocalDateTime.parse("2021-02-01T11:30")
-        )
+
+      assertDate(sessions[0].startTimestamp, "2021-01-02T16:00", SATURDAY)
+      assertDate(sessions[1].startTimestamp, "2021-01-03T16:00", SUNDAY)
+      assertDate(sessions[2].startTimestamp, "2021-01-04T16:00", MONDAY)
+      assertDate(sessions[3].startTimestamp, "2021-01-05T16:00", TUESDAY)
+      assertDate(sessions[4].startTimestamp, "2021-02-01T11:30", MONDAY)
+
+      assertThat(sessions).filteredOn("visitRoomName", "Daily Room").hasSize(4)
+      assertThat(sessions).filteredOn("visitRoomName", "Monthly Room").hasSize(1)
     }
 
     @Test
@@ -390,10 +413,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
-        LocalDateTime.parse("2021-02-01T11:30:00")
-      )
-
+      assertDate(sessions[0].startTimestamp, "2021-02-01T11:30:00", MONDAY)
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
 
@@ -523,9 +543,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      assertThat(sessions).extracting<LocalDateTime>(VisitSessionDto::startTimestamp).containsExactly(
-        LocalDateTime.parse("2021-02-01T11:30:00")
-      )
+      assertDate(sessions[0].startTimestamp, "2021-02-01T11:30:00", MONDAY)
 
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
@@ -560,5 +578,10 @@ class SessionServiceTest {
       // Then
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
+  }
+
+  private fun assertDate(localDateTime: LocalDateTime, expectedlyDateTime: String, dayOfWeek: DayOfWeek) {
+    assertThat(localDateTime).isEqualTo(LocalDateTime.parse(expectedlyDateTime))
+    assertThat(localDateTime.dayOfWeek).isEqualTo(dayOfWeek)
   }
 }
