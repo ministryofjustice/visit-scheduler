@@ -115,7 +115,7 @@ class VisitsByFilter : IntegrationTestBase() {
     val prisonerId = "FF0000BB"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?prisonerId=${prisonerId}")
+    val responseSpec = callVisitEndPoint("/visits?prisonerId=$prisonerId")
 
     // Then
     responseSpec
