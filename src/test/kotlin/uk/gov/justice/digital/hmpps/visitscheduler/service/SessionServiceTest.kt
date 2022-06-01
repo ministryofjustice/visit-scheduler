@@ -168,7 +168,7 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions("MDI")
 
       // Then
-      assertThat(sessions).size().isEqualTo(5) // expiry date is inclusiv
+      assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
       assertDate(sessions[0].startTimestamp, "2021-01-06T11:30:00", WEDNESDAY)
       assertDate(sessions[1].startTimestamp, "2021-01-13T11:30:00", WEDNESDAY)
       assertDate(sessions[2].startTimestamp, "2021-01-20T11:30:00", WEDNESDAY)

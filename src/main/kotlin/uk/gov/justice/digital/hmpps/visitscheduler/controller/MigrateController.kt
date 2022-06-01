@@ -25,7 +25,7 @@ class MigrateController(
   private val migrateVisitService: MigrateVisitService
 ) {
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasAnyRole('MIGRATE_VISITS', 'MIGRATION_ADMIN')")
   @PostMapping
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(
