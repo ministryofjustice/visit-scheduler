@@ -61,7 +61,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+    roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_MIGRATE_VISITS"))
   }
 
   @AfterEach
@@ -535,8 +535,8 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   private fun callMigrateVisit(jsonString: String): ResponseSpec {
-    val responseSpec = webTestClient.post().uri(TEST_END_POINT)
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+    return webTestClient.post().uri(TEST_END_POINT)
+      .headers(roleVisitSchedulerHttpHeaders)
       .contentType(MediaType.APPLICATION_JSON)
       .body(
         BodyInserters.fromValue(
@@ -544,7 +544,6 @@ class MigrateVisitTest : IntegrationTestBase() {
         )
       )
       .exchange()
-    return responseSpec
   }
 
   private fun callMigrateVisit(
