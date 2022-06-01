@@ -30,11 +30,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
 @DisplayName("GET /visits")
-class VisitsByFilter : IntegrationTestBase() {
+class VisitsByFilterTest : IntegrationTestBase() {
 
-  companion object {
-    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
-  }
+  private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
