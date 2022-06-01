@@ -43,10 +43,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_VERSION
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_ZONE_ID
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
+import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+
+  private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -79,8 +82,8 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
         prisonerId = "FF0000FF",
         visitRoom = "A1",
         visitType = VisitType.SOCIAL,
-        startTimestamp = VisitControllerTest.visitTime,
-        endTimestamp = VisitControllerTest.visitTime.plusHours(1),
+        startTimestamp = visitTime,
+        endTimestamp = visitTime.plusHours(1),
         visitStatus = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.OPEN,
         visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
