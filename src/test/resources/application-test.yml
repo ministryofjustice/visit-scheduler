@@ -31,9 +31,15 @@ prison:
     timeout: 5s
 
 policy:
-  minimum-booking-notice-period-days: 2
-  maximum-booking-notice-period-days: 28
-  non-association-whole-day: true
+  session:
+    non-association:
+      filter: true
+      whole-day: true
+    double-booking:
+      filter: false
+    booking-notice-period:
+      minimum-days: 2
+      maximum-days: 28
 
 task:
   expired-visit:

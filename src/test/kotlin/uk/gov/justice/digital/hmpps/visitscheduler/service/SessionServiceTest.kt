@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDet
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.MONTHLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.SINGLE
@@ -61,23 +62,23 @@ class SessionServiceTest {
   private val clock =
     Clock.fixed(Instant.parse("2021-01-01T11:15:00.00Z"), ZoneId.systemDefault()) // today is Friday Jan 1st
 
-  @BeforeEach
-  fun setUp() {
-    sessionService = SessionService(
-      sessionTemplateRepository,
-      visitRepository,
-      prisonApiClient,
-      clock,
-      1,
-      100,
-      true
-    )
-  }
-
   @Nested
   @DisplayName("simple session generation")
   inner class SlotGeneration {
-
+    @BeforeEach
+    fun setUp() {
+      sessionService = SessionService(
+        sessionTemplateRepository,
+        visitRepository,
+        prisonApiClient,
+        clock,
+        1,
+        100,
+        policyFilterDoubleBooking = false,
+        policyFilterNonAssociation = false,
+        policyNonAssociationWholeDay = true,
+      )
+    }
     private fun mockSessionRepositoryResponse(response: List<SessionTemplate>) {
       whenever(
         sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
@@ -95,7 +96,6 @@ class SessionServiceTest {
 
     @Test
     fun `a daily session will return 7 sessions including first bookable day and expiry day`() {
-
       // Given
       val dailySession = sessionTemplate(
         expiryDate = LocalDate.parse("2021-01-08"),
@@ -122,9 +122,7 @@ class SessionServiceTest {
 
     @Test
     fun `a weekly session will return 6 sessions including today and expiry date`() {
-
       // Given
-
       val weeklySession = sessionTemplate(
         expiryDate = LocalDate.parse("2021-01-01").plusWeeks(5),
         startDate = LocalDate.parse("2021-01-01"),
@@ -150,9 +148,7 @@ class SessionServiceTest {
 
     @Test
     fun `sessions are consistently generated, weekly sessions always fall on the same day regardless of date of generation`() {
-
       // Given
-
       val weeklySession = sessionTemplate(
         expiryDate = LocalDate.parse("2021-01-01").plusWeeks(5), // 5 weeks from today
         startDate = LocalDate.parse("2020-12-30"), // session template start date is a Wednesday
@@ -178,9 +174,7 @@ class SessionServiceTest {
 
     @Test
     fun `sessions are consistently generated, monthly sessions always fall on the same day regardless of date of generation`() {
-
       // Given
-
       val startDate: LocalDate = LocalDate.parse("2021-01-02")
 
       val monthlySession = sessionTemplate(
@@ -207,7 +201,6 @@ class SessionServiceTest {
 
     @Test
     fun `a single session will return 1 session`() {
-
       // Given
       val singleSession = sessionTemplate(
         startDate = LocalDate.parse("2021-02-01"),
@@ -246,9 +239,7 @@ class SessionServiceTest {
 
     @Test
     fun getMultipleSessions() {
-
       // Given
-
       val monthlySession = sessionTemplate(
         startDate = LocalDate.parse("2021-01-01"),
         expiryDate = LocalDate.parse("2021-02-01"),
@@ -267,7 +258,6 @@ class SessionServiceTest {
         id = 2,
         visitRoom = "Daily Room"
       )
-
       mockSessionRepositoryResponse(listOf(monthlySession, dailySession))
 
       // When
@@ -275,13 +265,11 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(5)
-
       assertDate(sessions[0].startTimestamp, "2021-01-02T16:00", SATURDAY)
       assertDate(sessions[1].startTimestamp, "2021-01-03T16:00", SUNDAY)
       assertDate(sessions[2].startTimestamp, "2021-01-04T16:00", MONDAY)
       assertDate(sessions[3].startTimestamp, "2021-01-05T16:00", TUESDAY)
       assertDate(sessions[4].startTimestamp, "2021-02-01T11:30", MONDAY)
-
       assertThat(sessions).filteredOn("visitRoomName", "Daily Room").hasSize(4)
       assertThat(sessions).filteredOn("visitRoomName", "Monthly Room").hasSize(1)
     }
@@ -289,7 +277,6 @@ class SessionServiceTest {
     @Test
     fun `Single Session without Visit has zero Open and zero Closed slot count`() {
       // Given
-
       val singleSession = sessionTemplate(
         startDate = LocalDate.parse("2021-02-01"),
         startTime = LocalTime.parse("11:30"), // future time
@@ -309,7 +296,6 @@ class SessionServiceTest {
 
     @Test
     fun `Single Session with BOOKED Visit has booked slot count`() {
-
       // Given
       val singleSession = sessionTemplate(
         startDate = LocalDate.parse("2021-02-01"),
@@ -343,7 +329,6 @@ class SessionServiceTest {
     @Test
     fun `Single Session with RESERVED Visit has booked slot count`() {
       // Given
-
       val singleSession = sessionTemplate(
         startDate = LocalDate.parse("2021-02-01"),
         startTime = LocalTime.parse("11:30"), // future time
@@ -375,8 +360,23 @@ class SessionServiceTest {
   }
 
   @Nested
-  @DisplayName("Available slots including non-association")
-  inner class NonAssociations {
+  @DisplayName("Available slots including conflicts")
+  inner class IncludeConflicts {
+
+    @BeforeEach
+    fun setUp() {
+      sessionService = SessionService(
+        sessionTemplateRepository,
+        visitRepository,
+        prisonApiClient,
+        clock,
+        1,
+        100,
+        policyFilterDoubleBooking = false,
+        policyFilterNonAssociation = false,
+        policyNonAssociationWholeDay = true,
+      )
+    }
 
     private fun mockRepositoryResponse(response: List<SessionTemplate>) {
       whenever(
@@ -389,8 +389,270 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `all sessions are returned when an offender has no non-associations`() {
+    fun `session does not contain conflicts when an offender has no non-associations and no double bookings`() {
+      // Given
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val startDate = LocalDate.parse("2021-02-01")
 
+      val singleSession = sessionTemplate(
+        startDate = startDate,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenReturn(OffenderNonAssociationDetailsDto())
+
+      // When
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+
+      // Then
+      assertThat(sessions).size().isEqualTo(1)
+      assertDate(sessions[0].startTimestamp, "2021-02-01T11:30:00", MONDAY)
+      assertThat(sessions[0].sessionConflicts).isEmpty()
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+
+    @Test
+    fun `session does not contain conflicts when an offender has a valid non-association without bookings`() {
+      // Given
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val associationId = "B1234BB"
+      val startDate = LocalDate.parse("2021-01-02")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate.plusDays(2),
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenReturn(
+        OffenderNonAssociationDetailsDto(
+          listOf(
+            OffenderNonAssociationDetailDto(
+              effectiveDate = startDate.minusMonths(1),
+              expiryDate = startDate.plusMonths(1),
+              offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId)
+            )
+          )
+        )
+      )
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
+
+      // When
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+
+      // Then
+      assertThat(sessions).size().isEqualTo(1)
+      assertDate(sessions[0].startTimestamp, "2021-01-04T11:30:00", MONDAY)
+      assertThat(sessions[0].sessionConflicts).isEmpty()
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+
+    @Test
+    fun `sessions contain conflicts when an offender has a valid non-association with a booking`() {
+      // Given
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val associationId = "B1234BB"
+      val startDate = LocalDate.parse("2021-01-02")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate.plusDays(2),
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenReturn(
+        OffenderNonAssociationDetailsDto(
+          listOf(
+            OffenderNonAssociationDetailDto(
+              effectiveDate = startDate.minusMonths(1),
+              expiryDate = startDate.plusMonths(1),
+              offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId)
+            )
+          )
+        )
+      )
+
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+        .thenReturn(
+          listOf(
+            Visit(
+              prisonerId = associationId,
+              visitStart = startDate.plusDays(2).atTime(11, 30),
+              visitEnd = startDate.plusDays(2).atTime(12, 30),
+              visitType = SOCIAL,
+              prisonId = prisonId,
+              visitStatus = BOOKED,
+              visitRestriction = OPEN,
+              visitRoom = "123c",
+            )
+          ),
+          emptyList()
+        )
+
+      // When
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+
+      // Then
+      assertThat(sessions).size().isEqualTo(1)
+      assertDate(sessions[0].startTimestamp, "2021-01-04T11:30:00", MONDAY)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+
+    @Test
+    fun `sessions contain conflicts when an offender has a double booking`() {
+      // Given
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val startDate = LocalDate.parse("2021-01-02")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate.plusDays(2),
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenReturn(OffenderNonAssociationDetailsDto())
+
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+        .thenReturn(
+          listOf(
+            Visit(
+              prisonerId = prisonId,
+              visitStart = startDate.plusDays(2).atTime(11, 30),
+              visitEnd = startDate.plusDays(2).atTime(12, 30),
+              visitType = SOCIAL,
+              prisonId = prisonId,
+              visitStatus = BOOKED,
+              visitRestriction = OPEN,
+              visitRoom = "123c",
+            )
+          )
+        )
+
+      // When
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+
+      // Then
+      assertThat(sessions).size().isEqualTo(1)
+      assertDate(sessions[0].startTimestamp, "2021-01-04T11:30:00", MONDAY)
+      assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
+      assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.DOUBLE_BOOKED)
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+
+    @Test
+    fun `session does not contain conflicts when an offender non-association NOT FOUND`() {
+      // Given
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val startDate = LocalDate.parse("2021-02-01")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenThrow(
+        WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      )
+
+      // When
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+
+      // Then
+      assertThat(sessions).size().isEqualTo(1)
+      assertDate(sessions[0].startTimestamp, "2021-02-01T11:30:00", MONDAY)
+      assertThat(sessions[0].sessionConflicts).isEmpty()
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+
+    @Test
+    fun `get sessions throws WebClientResponseException for BAD REQUEST`() {
+      // Given
+      val prisonId = "MDI"
+      val prisonerId = "A1234AA"
+      val startDate = LocalDate.parse("2021-02-01")
+
+      val singleSession = sessionTemplate(
+        startDate = startDate,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30"),
+        frequency = SINGLE
+      )
+      mockRepositoryResponse(listOf(singleSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenThrow(
+        WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      )
+
+      // Then
+      assertThrows<WebClientResponseException> {
+        sessionService.getVisitSessions(prisonId, prisonerId)
+      }
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
+  }
+
+  @Nested
+  @DisplayName("Available slots exclude conflicts")
+  inner class ExcludeConflicts {
+
+    @BeforeEach
+    fun setUp() {
+      sessionService = SessionService(
+        sessionTemplateRepository,
+        visitRepository,
+        prisonApiClient,
+        clock,
+        1,
+        100,
+        policyFilterDoubleBooking = true,
+        policyFilterNonAssociation = true,
+        policyNonAssociationWholeDay = true,
+      )
+    }
+
+    private fun mockRepositoryResponse(response: List<SessionTemplate>) {
+      whenever(
+        sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
+          "MDI",
+          LocalDate.parse("2021-01-01").plusDays(1),
+          LocalDate.parse("2021-01-01").plusDays(100)
+        )
+      ).thenReturn(response)
+    }
+
+    @Test
+    fun `all sessions are returned when an offender has no non-associations and no double bookings`() {
       // Given
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
@@ -418,10 +680,8 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `only available sessions are returned when an offender has a valid non-association without a booking`() {
-
+    fun `only available sessions are returned when an offender has a valid non-association without bookings`() {
       // Given
-
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -448,7 +708,6 @@ class SessionServiceTest {
           )
         )
       )
-
       whenever(visitRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
 
       // When
@@ -461,9 +720,7 @@ class SessionServiceTest {
 
     @Test
     fun `only available sessions are returned when an offender has a valid non-association with a booking`() {
-
       // Given
-
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -516,16 +773,14 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `all sessions are returned when an offender non-association NOT FOUND`() {
-
+    fun `only available sessions are returned when an offender has a double booking`() {
       // Given
-
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
-      val startDate = LocalDate.parse("2021-02-01")
+      val startDate = LocalDate.parse("2021-01-02")
 
       val singleSession = sessionTemplate(
-        startDate = startDate,
+        startDate = startDate.plusDays(2),
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
         frequency = SINGLE
@@ -534,48 +789,29 @@ class SessionServiceTest {
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
-      ).thenThrow(
-        WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
-      )
+      ).thenReturn(OffenderNonAssociationDetailsDto())
+
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+        .thenReturn(
+          listOf(
+            Visit(
+              prisonerId = prisonId,
+              visitStart = startDate.plusDays(2).atTime(11, 30),
+              visitEnd = startDate.plusDays(2).atTime(12, 30),
+              visitType = SOCIAL,
+              prisonId = prisonId,
+              visitStatus = BOOKED,
+              visitRestriction = OPEN,
+              visitRoom = "123c",
+            )
+          )
+        )
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
 
       // Then
-      assertThat(sessions).size().isEqualTo(1)
-      assertDate(sessions[0].startTimestamp, "2021-02-01T11:30:00", MONDAY)
-
-      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
-    }
-
-    @Test
-    fun `get sessions throws WebClientResponseException for BAD REQUEST`() {
-
-      // Given
-      val prisonId = "MDI"
-      val prisonerId = "A1234AA"
-      val startDate = LocalDate.parse("2021-02-01")
-
-      val singleSession = sessionTemplate(
-        startDate = startDate,
-        startTime = LocalTime.parse("11:30"),
-        endTime = LocalTime.parse("12:30"),
-        frequency = SINGLE
-      )
-      mockRepositoryResponse(listOf(singleSession))
-
-      whenever(
-        prisonApiClient.getOffenderNonAssociation(prisonerId)
-      ).thenThrow(
-        WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
-      )
-
-      // When
-      assertThrows<WebClientResponseException> {
-        sessionService.getVisitSessions(prisonId, prisonerId)
-      }
-
-      // Then
+      assertThat(sessions).size().isEqualTo(0)
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
   }
