@@ -28,11 +28,16 @@ class SessionService(
   private val visitRepository: VisitRepository,
   private val prisonApiClient: PrisonApiClient,
   private val clock: Clock,
-  @Value("\${policy.session.booking-notice-period.minimum-days:2}") private val policyNoticeDaysMin: Long,
-  @Value("\${policy.session.booking-notice-period.maximum-days:28}") private val policyNoticeDaysMax: Long,
-  @Value("\${policy.session.double-booking.filter:false}") private val policyFilterDoubleBooking: Boolean,
-  @Value("\${policy.session.non-association.filter:false}") private val policyFilterNonAssociation: Boolean,
-  @Value("\${policy.session.non-association.whole-day:true}") private val policyNonAssociationWholeDay: Boolean,
+  @Value("\${policy.session.booking-notice-period.minimum-days:2}")
+  private val policyNoticeDaysMin: Long,
+  @Value("\${policy.session.booking-notice-period.maximum-days:28}")
+  private val policyNoticeDaysMax: Long,
+  @Value("\${policy.session.double-booking.filter:false}")
+  private val policyFilterDoubleBooking: Boolean,
+  @Value("\${policy.session.non-association.filter:false}")
+  private val policyFilterNonAssociation: Boolean,
+  @Value("\${policy.session.non-association.whole-day:true}")
+  private val policyNonAssociationWholeDay: Boolean,
 ) {
 
   @Transactional(readOnly = true)
@@ -51,18 +56,18 @@ class SessionService(
       bookablePeriodEndDate
     )
 
-    var available = sessionTemplates.map {
+    var sessions = sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, bookablePeriodStartDate, bookablePeriodEndDate)
     }.flatten()
 
     if (!prisonerId.isNullOrBlank()) {
-      available = filterConflict(available, prisonerId)
-      populateConflict(available, prisonerId)
+      sessions = filterPrisonerConflict(sessions, prisonerId)
+      populateConflict(sessions, prisonerId)
     }
 
-    populateBookedCount(available)
+    populateBookedCount(sessions)
 
-    return available.sortedWith(compareBy { it.startTimestamp })
+    return sessions.sortedWith(compareBy { it.startTimestamp })
   }
 
   private fun buildVisitSessionsUsingTemplate(
@@ -105,7 +110,7 @@ class SessionService(
       .toList()
   }
 
-  private fun filterConflict(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
+  private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
     return sessions.filterNot {
       (policyFilterNonAssociation && sessionHasNonAssociation(it, prisonerId)) ||
         (policyFilterDoubleBooking && sessionHasBooking(it, prisonerId))
