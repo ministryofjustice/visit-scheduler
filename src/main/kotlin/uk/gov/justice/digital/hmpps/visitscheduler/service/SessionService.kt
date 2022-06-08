@@ -27,9 +27,12 @@ class SessionService(
   private val visitRepository: VisitRepository,
   private val prisonApiClient: PrisonApiClient,
   private val clock: Clock,
-  @Value("\${policy.minimum-booking-notice-period-days:2}") private val defaultNoticeDaysMin: Long,
-  @Value("\${policy.maximum-booking-notice-period-days:28}") private val defaultNoticeDaysMax: Long,
-  @Value("\${policy.non-association-whole-day:true}") private val defaultNonAssociationWholeDay: Boolean,
+  @Value("\${policy.session.booking-notice-period.minimum-days:2}")
+  private val policyNoticeDaysMin: Long,
+  @Value("\${policy.session.booking-notice-period.maximum-days:28}")
+  private val policyNoticeDaysMax: Long,
+  @Value("\${policy.session.non-association.whole-day:true}")
+  private val policyNonAssociationWholeDay: Boolean,
 ) {
 
   @Transactional(readOnly = true)
@@ -39,8 +42,8 @@ class SessionService(
     noticeDaysMin: Long? = null,
     noticeDaysMax: Long? = null
   ): List<VisitSessionDto> {
-    val bookablePeriodStartDate = LocalDate.now(clock).plusDays(noticeDaysMin ?: defaultNoticeDaysMin)
-    val bookablePeriodEndDate = LocalDate.now(clock).plusDays(noticeDaysMax ?: defaultNoticeDaysMax)
+    val bookablePeriodStartDate = LocalDate.now(clock).plusDays(noticeDaysMin ?: policyNoticeDaysMin)
+    val bookablePeriodEndDate = LocalDate.now(clock).plusDays(noticeDaysMax ?: policyNoticeDaysMax)
 
     val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
       prisonId,
@@ -48,26 +51,24 @@ class SessionService(
       bookablePeriodEndDate
     )
 
-    var available = sessionTemplates.map {
+    var sessions = sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, bookablePeriodStartDate, bookablePeriodEndDate)
     }.flatten()
 
     if (!prisonerId.isNullOrBlank()) {
-      available = filterNonAssociationByPrisonerId(available, prisonerId)
+      sessions = filterPrisonerConflict(sessions, prisonerId)
     }
 
-    populateBookedCounts(available)
+    populateBookedCount(sessions)
 
-    return available.sortedWith(compareBy { it.startTimestamp })
+    return sessions.sortedWith(compareBy { it.startTimestamp })
   }
 
-  // from the start date calculate the slots for based on chosen frequency  (expiry is inclusive)
   private fun buildVisitSessionsUsingTemplate(
     sessionTemplate: SessionTemplate,
     bookablePeriodStartDate: LocalDate,
     bookablePeriodEndDate: LocalDate
   ): List<VisitSessionDto> {
-
     val lastBookableSessionDay =
       if (sessionTemplate.expiryDate == null || bookablePeriodEndDate.isBefore(sessionTemplate.expiryDate))
         bookablePeriodEndDate
@@ -79,8 +80,8 @@ class SessionService(
     else
       sessionTemplate.startDate
 
-    // Create a VisitSession for every date from the template start date in increments of
-    // frequency until the lastBookableSessionDay + 1
+    // Create a VisitSession for every date from the template start date in increments of frequency until the
+    // lastBookableSessionDay + 1
     return sessionTemplate.startDate.datesUntil(
       lastBookableSessionDay.plusDays(1), sessionTemplate.frequency.frequencyPeriod
     )
@@ -102,11 +103,39 @@ class SessionService(
       .toList()
   }
 
-  private fun filterNonAssociationByPrisonerId(visitSessions: List<VisitSessionDto>?, prisonerId: String): List<VisitSessionDto> {
-    val nonAssociations = getNonAssociation(prisonerId)
-    return visitSessions?.filterNot {
-      sessionHasNonAssociation(it, nonAssociations, defaultNonAssociationWholeDay)
-    } ?: emptyList()
+  private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
+    return sessions.filterNot {
+      sessionHasNonAssociation(it, prisonerId)
+    }
+  }
+
+  private fun populateBookedCount(sessions: List<VisitSessionDto>) {
+    sessions.forEach {
+      it.openVisitBookedCount = sessionBookedCount(it, VisitRestriction.OPEN)
+      it.closedVisitBookedCount = sessionBookedCount(it, VisitRestriction.CLOSED)
+    }
+  }
+
+  private fun sessionHasNonAssociation(session: VisitSessionDto, prisonerId: String): Boolean {
+    // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
+    // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
+    return getNonAssociation(prisonerId).any { it ->
+      isDateWithinRange(session.startTimestamp.toLocalDate(), it.effectiveDate, it.expiryDate) &&
+        it.offenderNonAssociation.let { ona ->
+          visitRepository.findAll(
+            VisitSpecification(
+              VisitFilter(
+                prisonerId = ona.offenderNo,
+                prisonId = session.prisonId,
+                startDateTime =
+                if (policyNonAssociationWholeDay) session.startTimestamp.toLocalDate().atStartOfDay() else session.startTimestamp,
+                endDateTime =
+                if (policyNonAssociationWholeDay) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
+              )
+            )
+          ).any { isActiveStatus(it.visitStatus) }
+        }
+    }
   }
 
   private fun getNonAssociation(prisonerId: String): List<OffenderNonAssociationDetailDto> {
@@ -119,42 +148,7 @@ class SessionService(
     return emptyList()
   }
 
-  private fun sessionHasNonAssociation(session: VisitSessionDto, nonAssociations: List<OffenderNonAssociationDetailDto>, wholeDay: Boolean? = true): Boolean {
-    // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
-    // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
-    return nonAssociations.any { it ->
-      isDateWithinRange(session.startTimestamp.toLocalDate(), it.effectiveDate, it.expiryDate) &&
-        it.offenderNonAssociation.let { ona ->
-          visitRepository.findAll(
-            VisitSpecification(
-              VisitFilter(
-                prisonerId = ona.offenderNo,
-                prisonId = session.prisonId,
-                startDateTime =
-                if (wholeDay == true) session.startTimestamp.toLocalDate().atStartOfDay() else session.startTimestamp,
-                endDateTime =
-                if (wholeDay == true) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
-              )
-            )
-          ).any { isActiveStatus(it.visitStatus) }
-        }
-    }
-  }
-
-  private fun isDateWithinRange(
-    sessionDate: LocalDate,
-    naStartDate: LocalDate,
-    naEndDate: LocalDate? = null
-  ): Boolean = sessionDate >= naStartDate && (naEndDate == null || sessionDate <= naEndDate)
-
-  private fun populateBookedCounts(available: List<VisitSessionDto>) {
-    available.forEach {
-      it.openVisitBookedCount = visitBookedCount(it, VisitRestriction.OPEN)
-      it.closedVisitBookedCount = visitBookedCount(it, VisitRestriction.CLOSED)
-    }
-  }
-
-  private fun visitBookedCount(session: VisitSessionDto, restriction: VisitRestriction): Int {
+  private fun sessionBookedCount(session: VisitSessionDto, restriction: VisitRestriction): Int {
     return visitRepository.findAll(
       VisitSpecification(
         VisitFilter(
@@ -167,6 +161,9 @@ class SessionService(
       )
     ).count { isActiveStatus(it.visitStatus) }
   }
+
+  private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
+    sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
 
   private fun isActiveStatus(status: VisitStatus) =
     status == VisitStatus.BOOKED || status == VisitStatus.RESERVED

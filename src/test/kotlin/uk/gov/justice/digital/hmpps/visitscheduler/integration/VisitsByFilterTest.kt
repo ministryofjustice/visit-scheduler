@@ -143,8 +143,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.length()").isEqualTo(2)
       .jsonPath("$..prisonerId").value(
         Matchers.contains(
+          "FF0000CC",
           "FF0000BB",
-          "FF0000CC"
         )
       )
       .jsonPath("$..prisonId").value(
@@ -189,8 +189,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.length()").isEqualTo(2)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
-          "2021-11-02T13:30:44",
           "2021-11-03T13:30:44",
+          "2021-11-02T13:30:44",
         )
       )
       .jsonPath("$..prisonId").value(
@@ -221,10 +221,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.length()").isEqualTo(4)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
-          "2021-11-01T12:30:44",
-          "2021-11-01T13:30:44",
+          "2021-11-02T13:30:44",
           "2021-11-02T12:30:44",
-          "2021-11-02T13:30:44"
+          "2021-11-01T13:30:44",
+          "2021-11-01T12:30:44"
         )
       )
   }
@@ -244,8 +244,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.length()").isEqualTo(2)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
+          "2021-11-02T13:30:44",
           "2021-11-02T12:30:44",
-          "2021-11-02T13:30:44"
         )
       )
   }
