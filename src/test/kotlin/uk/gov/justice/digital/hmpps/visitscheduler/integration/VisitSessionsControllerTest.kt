@@ -171,7 +171,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
   @Test
   fun `visit sessions include reserved and booked open visit count`() {
     val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
-    sessionTemplateCreator(
+    val session = sessionTemplateCreator(
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = dateTime.toLocalDate(),
@@ -181,16 +181,19 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       )
     ).save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
       .withVisitStatus(VisitStatus.RESERVED)
       .save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
       .withVisitStatus(VisitStatus.BOOKED)
       .save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
       .withVisitStatus(VisitStatus.CANCELLED)
@@ -207,9 +210,9 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions include reserved and booked closed visit count`() {
+  fun `visit sessions include visit count one matching room`() {
     val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
-    sessionTemplateCreator(
+    val session = sessionTemplateCreator(
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = dateTime.toLocalDate(),
@@ -219,18 +222,55 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       )
     ).save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
+      .withVisitStart(dateTime)
+      .withVisitEnd(dateTime.plusHours(1))
+      .withVisitStatus(VisitStatus.BOOKED)
+      .save()
+    visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom + "Anythingwilldo")
+      .withVisitStart(dateTime)
+      .withVisitEnd(dateTime.plusHours(1))
+      .withVisitStatus(VisitStatus.BOOKED)
+      .save()
+
+    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .exchange()
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].openVisitBookedCount").isEqualTo(1)
+      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(0)
+  }
+  @Test
+  fun `visit sessions include reserved and booked closed visit count`() {
+    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
+    val session = sessionTemplateCreator(
+      repository = sessionTemplateRepository,
+      sessionTemplate = sessionTemplate(
+        startDate = dateTime.toLocalDate(),
+        startTime = dateTime.toLocalTime(),
+        endTime = dateTime.plusHours(1).toLocalTime(),
+        frequency = SINGLE
+      )
+    ).save()
+    visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
       .withVisitStatus(VisitStatus.RESERVED)
       .withRestriction(VisitRestriction.CLOSED)
       .save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
       .withVisitStatus(VisitStatus.BOOKED)
       .withRestriction(VisitRestriction.CLOSED)
       .save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusHours(1))
       .withVisitStatus(VisitStatus.CANCELLED)
@@ -250,7 +290,8 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
   @Test
   fun `visit sessions visit count includes only visits within session period`() {
     val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
-    sessionTemplateCreator(
+
+    val session = sessionTemplateCreator(
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = dateTime.toLocalDate(),
@@ -260,21 +301,25 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       )
     ).save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime.minusHours(1))
       .withVisitEnd(dateTime)
       .withVisitStatus(VisitStatus.BOOKED)
       .save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime)
       .withVisitEnd(dateTime.plusMinutes(30))
       .withVisitStatus(VisitStatus.BOOKED)
       .save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime.plusMinutes(30))
       .withVisitEnd(dateTime.plusHours(1))
       .withVisitStatus(VisitStatus.BOOKED)
       .save()
     visitCreator(visitRepository)
+      .withVisitRoom(session.visitRoom)
       .withVisitStart(dateTime.plusHours(1))
       .withVisitEnd(dateTime.plusHours(2))
       .withVisitStatus(VisitStatus.BOOKED)
