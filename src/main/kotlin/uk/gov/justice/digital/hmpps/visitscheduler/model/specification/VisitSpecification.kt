@@ -33,10 +33,15 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
       predicates.add(criteriaBuilder.lessThan(root.get(Visit::visitStart.name), this))
     }
 
+    filter.visitRoom?.run {
+      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::visitRoom.name), this))
+    }
+
     filter.nomisPersonId?.run {
-      val innerJoinFromVisitToVisitors = root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitor>(
-        VisitVisitor::nomisPersonId.name
-      )
+      val innerJoinFromVisitToVisitors =
+        root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitor>(
+          VisitVisitor::nomisPersonId.name
+        )
       predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, this))
     }
 

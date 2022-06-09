@@ -159,6 +159,7 @@ class SessionService(
       VisitSpecification(
         VisitFilter(
           prisonId = session.prisonId,
+          visitRoom = session.visitRoomName,
           startDateTime = session.startTimestamp,
           endDateTime = session.endTimestamp,
           visitRestriction = restriction
