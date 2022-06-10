@@ -82,14 +82,14 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageable(visitFilter).content"))
+  @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
   fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
-    return findVisitsByFilterPageable(visitFilter).content
+    return findVisitsByFilterPageableDescending(visitFilter).content
   }
 
   @Transactional(readOnly = true)
-  fun findVisitsByFilterPageable(visitFilter: VisitFilter, page: Int? = null, size: Int? = null): Page<VisitDto> {
-    val page: Pageable = PageRequest.of(page ?: 0, size ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
+  fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
     return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
   }
 

@@ -17,18 +17,19 @@ class VisitTask(
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriod: Long
 ) {
 
+  @Suppress("KotlinDeprecation")
   @Scheduled(cron = "\${task.expired-visit.cron:0 0/15 * * * ?}")
   fun deleteExpiredReservations() {
     if (!enabled) {
       return
     }
 
-    val expired = visitService.findVisitsByFilter(
+    val expired = visitService.findVisitsByFilterPageableDescending(
       VisitFilter(
         visitStatus = RESERVED,
         modifyTimestamp = LocalDateTime.now().minusMinutes(expiredPeriod)
       )
-    )
+    ).content
 
     if (expired.isNotEmpty()) {
       log.debug("Expired visits: ${expired.count()}")

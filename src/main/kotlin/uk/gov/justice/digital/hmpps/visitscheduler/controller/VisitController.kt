@@ -89,11 +89,12 @@ class VisitController(
     return visit
   }
 
+  @Suppress("KotlinDeprecation")
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping
   @Operation(
     summary = "Get visits",
-    description = "Retrieve visits with optional filters, sorted by startTimestamp ascending",
+    description = "Retrieve visits with optional filters, sorted by start timestamp descending",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -165,7 +166,7 @@ class VisitController(
   @GetMapping(params = ["page", "size"])
   @Operation(
     summary = "Get visits",
-    description = "Retrieve visits with optional filters, sorted by startTimestamp ascending",
+    description = "Retrieve visits with optional filters, sorted by start timestamp descending",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -223,16 +224,16 @@ class VisitController(
     ) visitStatus: VisitStatus?,
     @RequestParam(value = "page", required = true)
     @Parameter(
-      description = "page number",
+      description = "Pagination page number, starting at zero",
       example = "0"
     ) page: Int?,
     @RequestParam(value = "size", required = true)
     @Parameter(
-      description = "page size",
+      description = "Pagination size per page",
       example = "50"
     ) size: Int?
   ): Page<VisitDto> =
-    visitService.findVisitsByFilterPageable(
+    visitService.findVisitsByFilterPageableDescending(
       VisitFilter(
         prisonerId = prisonerId?.trim(),
         prisonId = prisonId?.trim(),
