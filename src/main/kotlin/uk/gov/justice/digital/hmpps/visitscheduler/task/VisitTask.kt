@@ -17,7 +17,6 @@ class VisitTask(
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriod: Long
 ) {
 
-  @Suppress("KotlinDeprecation")
   @Scheduled(cron = "\${task.expired-visit.cron:0 0/15 * * * ?}")
   fun deleteExpiredReservations() {
     if (!enabled) {

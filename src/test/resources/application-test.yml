@@ -33,7 +33,10 @@ prison:
 policy:
   session:
     non-association:
+      filter: true
       whole-day: true
+    double-booking:
+      filter: false
     booking-notice-period:
       minimum-days: 2
       maximum-days: 28
