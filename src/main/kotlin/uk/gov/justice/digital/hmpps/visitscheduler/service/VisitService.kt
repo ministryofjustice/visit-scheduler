@@ -3,6 +3,10 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageRequest
+import org.springframework.data.domain.Pageable
+import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
@@ -78,9 +82,15 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  @Transactional(readOnly = true)
+  @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
   fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
-    return visitRepository.findAll(VisitSpecification(visitFilter)).sortedBy { it.visitStart }.map { VisitDto(it) }
+    return findVisitsByFilterPageableDescending(visitFilter).content
+  }
+
+  @Transactional(readOnly = true)
+  fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
+    return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
   }
 
   @Transactional(readOnly = true)
@@ -235,6 +245,7 @@ class VisitService(
 
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
+    const val MAX_RECORDS = 10000
   }
 }
 

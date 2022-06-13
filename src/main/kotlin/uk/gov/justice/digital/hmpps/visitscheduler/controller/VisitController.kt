@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.springframework.data.domain.Page
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -88,11 +89,12 @@ class VisitController(
     return visit
   }
 
+  @Suppress("KotlinDeprecation")
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping
   @Operation(
     summary = "Get visits",
-    description = "Retrieve visits with optional filters, sorted by startTimestamp ascending",
+    description = "Retrieve visits with optional filters, sorted by start timestamp descending",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -158,6 +160,90 @@ class VisitController(
         nomisPersonId = nomisPersonId,
         visitStatus = visitStatus
       )
+    )
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(params = ["page", "size"])
+  @Operation(
+    summary = "Get visits",
+    description = "Retrieve visits with optional filters, sorted by start timestamp descending",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit Information Returned"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to Get visits for prisoner",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to retrieve visits",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun getVisitsByFilterPageable(
+    @RequestParam(value = "prisonerId", required = false)
+    @Parameter(
+      description = "Filter results by prisoner id",
+      example = "A12345DC"
+    ) prisonerId: String?,
+    @RequestParam(value = "prisonId", required = false)
+    @Parameter(
+      description = "Filter results by prison id",
+      example = "MDI"
+    ) prisonId: String?,
+    @RequestParam(value = "startTimestamp", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Parameter(
+      description = "Filter results by visits that start on or after the given timestamp",
+      example = "2021-11-03T09:00:00"
+    ) startTimestamp: LocalDateTime?,
+    @RequestParam(value = "endTimestamp", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Parameter(
+      description = "Filter results by visits that start on or before the given timestamp",
+      example = "2021-11-03T09:00:00"
+    ) endTimestamp: LocalDateTime?,
+    @RequestParam(value = "nomisPersonId", required = false)
+    @Parameter(
+      description = "Filter results by visitor (contact id)",
+      example = "12322"
+    ) nomisPersonId: Long?,
+    @RequestParam(value = "visitStatus", required = false)
+    @Parameter(
+      description = "Filter results by visit status",
+      example = "BOOKED"
+    ) visitStatus: VisitStatus?,
+    @RequestParam(value = "page", required = true)
+    @Parameter(
+      description = "Pagination page number, starting at zero",
+      example = "0"
+    ) page: Int?,
+    @RequestParam(value = "size", required = true)
+    @Parameter(
+      description = "Pagination size per page",
+      example = "50"
+    ) size: Int?
+  ): Page<VisitDto> =
+    visitService.findVisitsByFilterPageableDescending(
+      VisitFilter(
+        prisonerId = prisonerId?.trim(),
+        prisonId = prisonId?.trim(),
+        startDateTime = startTimestamp,
+        endDateTime = endTimestamp,
+        nomisPersonId = nomisPersonId,
+        visitStatus = visitStatus
+      ),
+      page,
+      size
     )
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

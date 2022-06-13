@@ -143,8 +143,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.length()").isEqualTo(2)
       .jsonPath("$..prisonerId").value(
         Matchers.contains(
+          "FF0000CC",
           "FF0000BB",
-          "FF0000CC"
         )
       )
       .jsonPath("$..prisonId").value(
@@ -189,8 +189,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.length()").isEqualTo(2)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
-          "2021-11-02T13:30:44",
           "2021-11-03T13:30:44",
+          "2021-11-02T13:30:44",
         )
       )
       .jsonPath("$..prisonId").value(
@@ -221,10 +221,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.length()").isEqualTo(4)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
-          "2021-11-01T12:30:44",
-          "2021-11-01T13:30:44",
+          "2021-11-02T13:30:44",
           "2021-11-02T12:30:44",
-          "2021-11-02T13:30:44"
+          "2021-11-01T13:30:44",
+          "2021-11-01T12:30:44"
         )
       )
   }
@@ -244,8 +244,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.length()").isEqualTo(2)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
+          "2021-11-02T13:30:44",
           "2021-11-02T12:30:44",
-          "2021-11-02T13:30:44"
         )
       )
   }
@@ -279,6 +279,40 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.length()").isEqualTo(1)
       .jsonPath("$[0].prisonerId").isEqualTo("GG0000BB")
+  }
+
+  @Test
+  fun `get visits paged`() {
+    // Given
+    val size = 4
+
+    // When
+    val responseSpecFirst = callVisitEndPoint("/visits?page=0&size=$size")
+    val responseSpecLast = callVisitEndPoint("/visits?page=1&size=$size")
+
+    // Then - Page 0
+    responseSpecFirst.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.content.length()").isEqualTo(4)
+      .jsonPath("$.content..startTimestamp").value(
+        Matchers.contains(
+          "2021-11-03T13:30:44",
+          "2021-11-03T12:30:44",
+          "2021-11-02T13:30:44",
+          "2021-11-02T12:30:44",
+        )
+      )
+
+    // And - Page 1
+    responseSpecLast.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.content.length()").isEqualTo(2)
+      .jsonPath("$.content..startTimestamp").value(
+        Matchers.contains(
+          "2021-11-01T13:30:44",
+          "2021-11-01T12:30:44",
+        )
+      )
   }
 
   @Test

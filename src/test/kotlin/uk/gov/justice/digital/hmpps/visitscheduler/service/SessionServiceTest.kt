@@ -68,9 +68,9 @@ class SessionServiceTest {
       visitRepository,
       prisonApiClient,
       clock,
-      1,
-      100,
-      true
+      policyNoticeDaysMin = 1,
+      policyNoticeDaysMax = 100,
+      policyNonAssociationWholeDay = true
     )
   }
 
