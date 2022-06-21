@@ -4,6 +4,7 @@ import com.amazonaws.services.sns.model.MessageAttributeValue
 import com.amazonaws.services.sns.model.PublishRequest
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
@@ -21,7 +22,9 @@ import java.util.function.Supplier
 class SnsService(
   private val hmppsQueueService: HmppsQueueService,
   private val telemetryClient: TelemetryClient,
-  private val objectMapper: ObjectMapper
+  private val objectMapper: ObjectMapper,
+  @Value("\${feature.events.sns.enabled::true}")
+  private val snsEventsEnabled: Boolean
 ) {
 
   private val domaineventsTopic by lazy { hmppsQueueService.findByTopicId(TOPIC_ID) ?: throw RuntimeException("Topic with name $TOPIC_ID doesn't exist") }
@@ -31,6 +34,7 @@ class SnsService(
     atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
   fun sendVisitBookedEvent(visit: VisitDto) {
+
     publishToDomainEventsTopic(
       HMPPSDomainEvent(
         eventType = EVENT_PRISON_VISIT_BOOKED,
@@ -61,6 +65,10 @@ class SnsService(
   }
 
   private fun publishToDomainEventsTopic(payload: HMPPSDomainEvent) {
+    if (!snsEventsEnabled) {
+      return
+    }
+
     try {
       val result = domaineventsTopicClient.publish(
         PublishRequest(domaineventsTopic.arn, objectMapper.writeValueAsString(payload))
