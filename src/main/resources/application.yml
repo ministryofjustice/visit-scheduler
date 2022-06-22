@@ -105,3 +105,8 @@ task:
     enabled: true
     cron: 0 0 * * * *
     validity-minutes: 20
+
+feature:
+  events:
+    sns:
+      enabled: true
