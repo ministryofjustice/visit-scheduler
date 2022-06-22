@@ -4,6 +4,8 @@ import com.amazonaws.services.sns.model.MessageAttributeValue
 import com.amazonaws.services.sns.model.PublishRequest
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -26,6 +28,17 @@ class SnsService(
   @Value("\${feature.events.sns.enabled::true}")
   private val snsEventsEnabled: Boolean
 ) {
+
+  companion object {
+    const val TOPIC_ID = "domainevents"
+    const val EVENT_ZONE_ID = "Europe/London"
+    const val EVENT_PRISON_VISIT_VERSION = 1
+    const val EVENT_PRISON_VISIT_BOOKED = "prison-visit.booked"
+    const val EVENT_PRISON_VISIT_BOOKED_DESC = "Prison Visit Booked"
+    const val EVENT_PRISON_VISIT_CANCELLED = "prison-visit.cancelled"
+    const val EVENT_PRISON_VISIT_CANCELLED_DESC = "Prison Visit Cancelled"
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
+  }
 
   private val domaineventsTopic by lazy { hmppsQueueService.findByTopicId(TOPIC_ID) ?: throw RuntimeException("Topic with name $TOPIC_ID doesn't exist") }
   private val domaineventsTopicClient by lazy { domaineventsTopic.snsClient }
@@ -64,39 +77,30 @@ class SnsService(
     )
   }
 
-  private fun publishToDomainEventsTopic(payload: HMPPSDomainEvent) {
+  private fun publishToDomainEventsTopic(payloadEvent: HMPPSDomainEvent) {
     if (!snsEventsEnabled) {
+      log.info("Publish to domain events topic Disabled : {payloadEvent}")
       return
     }
 
     try {
       val result = domaineventsTopicClient.publish(
-        PublishRequest(domaineventsTopic.arn, objectMapper.writeValueAsString(payload))
+        PublishRequest(domaineventsTopic.arn, objectMapper.writeValueAsString(payloadEvent))
           .withMessageAttributes(
             mapOf(
-              "eventType" to MessageAttributeValue().withDataType("String").withStringValue(payload.eventType)
+              "eventType" to MessageAttributeValue().withDataType("String").withStringValue(payloadEvent.eventType)
             )
           )
       )
 
       telemetryClient.trackEvent(
-        "visit-scheduler-${payload.eventType}-event",
-        mapOf("messageId" to result.messageId, "reference" to payload.additionalInformation.reference),
+        "visit-scheduler-${payloadEvent.eventType}-event",
+        mapOf("messageId" to result.messageId, "reference" to payloadEvent.additionalInformation.reference),
         null
       )
     } catch (e: Throwable) {
-      throw PublishEventException("Failed to publish Event $payload.eventType to $TOPIC_ID", e)
+      throw PublishEventException("Failed to publish Event $payloadEvent.eventType to $TOPIC_ID", e)
     }
-  }
-
-  companion object {
-    const val TOPIC_ID = "domainevents"
-    const val EVENT_ZONE_ID = "Europe/London"
-    const val EVENT_PRISON_VISIT_VERSION = 1
-    const val EVENT_PRISON_VISIT_BOOKED = "prison-visit.booked"
-    const val EVENT_PRISON_VISIT_BOOKED_DESC = "Prison Visit Booked"
-    const val EVENT_PRISON_VISIT_CANCELLED = "prison-visit.cancelled"
-    const val EVENT_PRISON_VISIT_CANCELLED_DESC = "Prison Visit Cancelled"
   }
 }
 
