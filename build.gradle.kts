@@ -25,7 +25,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-kotlin:1.6.9")
   implementation("org.springdoc:springdoc-openapi-data-rest:1.6.9")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:1.1.3")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:1.1.5")
 
   runtimeOnly("org.postgresql:postgresql")
   runtimeOnly("org.flywaydb:flyway-core")
