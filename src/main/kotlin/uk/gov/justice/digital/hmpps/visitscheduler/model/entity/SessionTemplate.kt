@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.persistence.Column
@@ -52,4 +53,7 @@ data class SessionTemplate(
   @Column(nullable = false)
   val openCapacity: Int,
 
+  @Column(nullable = true)
+  @Enumerated(EnumType.STRING)
+  val dayOfWeek: DayOfWeek? = null
 )

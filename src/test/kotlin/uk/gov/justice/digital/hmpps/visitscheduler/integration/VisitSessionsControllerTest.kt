@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
-import org.hamcrest.Matchers
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,8 +10,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.MONTHLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.SINGLE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -20,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 @Import(TestClockConfiguration::class)
@@ -65,31 +63,13 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions are returned for a prison for a daily schedule`() {
-    sessionTemplateCreator(
-      repository = sessionTemplateRepository,
-      sessionTemplate = sessionTemplate(
-        startDate = LocalDate.parse("2021-01-08"),
-        expiryDate = LocalDate.parse("2021-01-14"),
-        frequency = DAILY,
-      )
-    ).save()
-
-    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-      .exchange()
-      .expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(7)
-  }
-
-  @Test
   fun `visit sessions are returned for a prison for a weekly schedule`() {
     sessionTemplateCreator(
       repository = sessionTemplateRepository,
       sessionTemplate = sessionTemplate(
         startDate = LocalDate.parse("2021-01-08"),
-        frequency = WEEKLY
+        frequency = WEEKLY,
+        dayOfWeek = DayOfWeek.SUNDAY
       )
     ).save()
 
@@ -98,36 +78,10 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(4)
-      .jsonPath("$[0].endTimestamp").isEqualTo("2021-01-08T10:00:00")
-      .jsonPath("$..startTimestamp").value(
-        Matchers.contains(
-          "2021-01-08T09:00:00",
-          "2021-01-15T09:00:00",
-          "2021-01-22T09:00:00",
-          "2021-01-29T09:00:00"
-        )
-      )
-  }
-
-  @Test
-  fun `visit sessions are returned for a prison for a monthly schedule`() {
-    sessionTemplateCreator(
-      repository = sessionTemplateRepository,
-      sessionTemplate = sessionTemplate(
-        startDate = LocalDate.parse("2021-01-08"),
-        frequency = MONTHLY
-      )
-    ).save()
-
-    webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-      .exchange()
-      .expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].startTimestamp").isEqualTo("2021-01-08T09:00:00")
-      .jsonPath("$[0].endTimestamp").isEqualTo("2021-01-08T10:00:00")
+      .jsonPath("$.length()").isEqualTo(3)
+      .jsonPath("$[0].endTimestamp").isEqualTo("2021-01-10T10:00:00")
+      .jsonPath("$[1].startTimestamp").isEqualTo("2021-01-17T09:00:00")
+      .jsonPath("$[2].startTimestamp").isEqualTo("2021-01-24T09:00:00")
   }
 
   @Test
@@ -352,7 +306,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
+      .jsonPath("$.length()").isEqualTo(4)
   }
 
   @Test
@@ -377,7 +331,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
+      .jsonPath("$.length()").isEqualTo(4)
   }
 
   @Test
@@ -408,7 +362,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
+      .jsonPath("$.length()").isEqualTo(4)
   }
 
   @Test
@@ -440,7 +394,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
+      .jsonPath("$.length()").isEqualTo(4)
   }
 
   @Test
@@ -472,7 +426,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(21)
+      .jsonPath("$.length()").isEqualTo(3)
   }
 
   @Test
@@ -505,7 +459,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
+      .jsonPath("$.length()").isEqualTo(4)
   }
 
   @Test
@@ -537,7 +491,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
+      .jsonPath("$.length()").isEqualTo(4)
   }
 
   @Test
@@ -569,6 +523,6 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(22)
+      .jsonPath("$.length()").isEqualTo(4)
   }
 }
