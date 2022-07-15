@@ -21,11 +21,11 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -109,9 +109,9 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitType = VisitType.FAMILY,
       visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-      visitors = setOf(CreateVisitorOnVisitRequestDto(123L)),
-      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitors = setOf(VisitorDto(123L)),
+      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
@@ -171,7 +171,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
@@ -204,7 +204,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitors = setOf(CreateVisitorOnVisitRequestDto(123L)),
+      visitors = setOf(VisitorDto(123L)),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
@@ -236,7 +236,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)

@@ -20,13 +20,13 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
@@ -86,9 +86,9 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
         endTimestamp = visitTime.plusHours(1),
         visitStatus = VisitStatus.BOOKED,
         visitRestriction = VisitRestriction.OPEN,
-        visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-        visitors = setOf(CreateVisitorOnVisitRequestDto(123)),
-        visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text"))
+        visitContact = ContactDto("John Smith", "01234 567890"),
+        visitors = setOf(VisitorDto(123)),
+        visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text"))
       )
     }
 
