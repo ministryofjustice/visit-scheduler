@@ -37,10 +37,10 @@ data class CreateVisitRequestDto(
   val endTimestamp: LocalDateTime,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
-  val visitContact: CreateContactOnVisitRequestDto?,
+  val visitContact: ContactDto?,
   @Schema(description = "List of visitors associated with the visit", required = true)
   @field:NotEmpty
-  val visitors: Set<@Valid CreateVisitorOnVisitRequestDto>,
+  val visitors: Set<@Valid VisitorDto>,
   @Schema(description = "List of additional support associated with the visit", required = false)
-  val visitorSupport: Set<@Valid CreateSupportOnVisitRequestDto>? = setOf(),
+  val visitorSupport: Set<@Valid VisitorSupportDto>? = setOf(),
 )
