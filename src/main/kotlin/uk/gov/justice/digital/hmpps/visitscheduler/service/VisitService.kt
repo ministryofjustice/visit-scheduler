@@ -9,77 +9,86 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.CreateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.NoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Booking
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Contact
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Note
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Reservation
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Support
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.format.DateTimeFormatter
 import java.util.function.Supplier
 
 @Service
 @Transactional
 class VisitService(
-  private val visitRepository: VisitRepository,
+  private val reservationRepository: ReservationRepository,
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
 ) {
 
   fun createVisit(createVisitRequest: CreateVisitRequestDto): VisitDto {
-    val visitEntity = visitRepository.saveAndFlush(
-      Visit(
-        prisonerId = createVisitRequest.prisonerId,
-        prisonId = createVisitRequest.prisonId,
+
+    val entity = reservationRepository.saveAndFlush(
+      Reservation(
         visitRoom = createVisitRequest.visitRoom,
-        visitType = createVisitRequest.visitType,
-        visitStatus = createVisitRequest.visitStatus,
-        visitRestriction = createVisitRequest.visitRestriction,
         visitStart = createVisitRequest.startTimestamp,
-        visitEnd = createVisitRequest.endTimestamp
+        visitEnd = createVisitRequest.endTimestamp,
+        visitRestriction = createVisitRequest.visitRestriction,
       )
     )
 
+    entity.booking = Booking(
+      reservationId = entity.id,
+      prisonerId = createVisitRequest.prisonerId,
+      prisonId = createVisitRequest.prisonId,
+      visitType = createVisitRequest.visitType,
+      visitStatus = createVisitRequest.visitStatus,
+      reservation = entity,
+    )
+    reservationRepository.save(entity)
+
     createVisitRequest.visitContact?.let {
-      visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
+      entity.booking?.visitContact = createBookingContact(entity.booking!!, it.name, it.telephone)
     }
 
     createVisitRequest.visitors.forEach {
-      visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
+      entity.booking?.visitors?.add(createBookingVisitor(entity.booking!!, it.nomisPersonId))
     }
 
     createVisitRequest.visitorSupport?.let { supportList ->
       supportList.forEach {
         supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
-        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
+        entity.booking?.support?.add(createBookingSupport(entity.booking!!, it.type, it.text))
       }
     }
 
     telemetryClient.trackEvent(
       "visit-scheduler-prison-visit-created",
       mapOf(
-        "reference" to visitEntity.reference,
-        "prisonerId" to visitEntity.prisonerId,
-        "prisonId" to visitEntity.prisonId,
-        "visitType" to visitEntity.visitType.name,
-        "visitRoom" to visitEntity.visitRoom,
-        "visitRestriction" to visitEntity.visitRestriction.name,
-        "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
-        "visitStatus" to visitEntity.visitStatus.name
+        "reference" to entity.reference,
+        "visitRoom" to entity.visitRoom,
+        "visitStart" to entity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
+        "visitRestriction" to entity.visitRestriction.name,
+        "prisonerId" to entity.booking!!.prisonerId,
+        "prisonId" to entity.booking!!.prisonId,
+        "visitType" to entity.booking!!.visitType.name,
+        "visitStatus" to entity.booking!!.visitStatus.name
       ),
       null
     )
 
-    return VisitDto(visitEntity)
+    // compatible response
+    return VisitDto(entity)
   }
 
   @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
@@ -89,50 +98,52 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
-    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
-    return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Reservation::visitStart.name).descending())
+    return reservationRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
   }
 
   @Transactional(readOnly = true)
   fun getVisitByReference(reference: String): VisitDto {
-    return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
+    return VisitDto(reservationRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found"))
   }
 
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
-    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
+    val entity = reservationRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+    entity.booking ?: throw VisitNotFoundException("Visit $reference booking not found")
 
-    updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
-    updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
-    updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
-    updateVisitRequest.visitType?.let { visitType -> visitEntity.visitType = visitType }
-    updateVisitRequest.visitStatus?.let { status -> visitEntity.visitStatus = status }
-    updateVisitRequest.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
-    updateVisitRequest.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
-    updateVisitRequest.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
+    updateVisitRequest.visitRoom?.let { visitRoom -> entity.visitRoom = visitRoom }
+    updateVisitRequest.startTimestamp?.let { visitStart -> entity.visitStart = visitStart }
+    updateVisitRequest.endTimestamp?.let { visitEnd -> entity.visitEnd = visitEnd }
+
+    updateVisitRequest.prisonerId?.let { prisonerId -> entity.booking!!.prisonerId = prisonerId }
+    updateVisitRequest.prisonId?.let { prisonId -> entity.booking!!.prisonId = prisonId }
+    updateVisitRequest.visitType?.let { visitType -> entity.booking!!.visitType = visitType }
+    updateVisitRequest.visitStatus?.let { status -> entity.booking!!.visitStatus = status }
+    updateVisitRequest.visitRestriction?.let { visitRestriction -> entity.visitRestriction = visitRestriction }
 
     updateVisitRequest.visitContact?.let { visitContactUpdate ->
-      visitEntity.visitContact?.let { visitContact ->
+      entity.booking!!.visitContact?.let { visitContact ->
         visitContact.name = visitContactUpdate.name
         visitContact.telephone = visitContactUpdate.telephone
       } ?: run {
-        visitEntity.visitContact = createVisitContact(visitEntity, visitContactUpdate.name, visitContactUpdate.telephone)
+        entity.booking!!.visitContact = createBookingContact(entity.booking!!, visitContactUpdate.name, visitContactUpdate.telephone)
       }
     }
 
     updateVisitRequest.visitors?.let { visitorsUpdate ->
-      visitEntity.visitors.clear()
-      visitRepository.saveAndFlush(visitEntity)
+      entity.booking!!.visitors.clear()
+      reservationRepository.saveAndFlush(entity)
       visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
-        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
+        entity.booking!!.visitors.add(createBookingVisitor(entity.booking!!, it.nomisPersonId))
       }
     }
 
     updateVisitRequest.visitorSupport?.let { visitSupportUpdate ->
-      visitEntity.support.clear()
-      visitRepository.saveAndFlush(visitEntity)
+      entity.booking!!.support.clear()
+      reservationRepository.saveAndFlush(entity)
       visitSupportUpdate.forEach {
         supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
-        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
+        entity.booking!!.support.add(createBookingSupport(entity.booking!!, it.type, it.text))
       }
     }
 
@@ -151,14 +162,14 @@ class VisitService(
       null
     )
 
-    return VisitDto(visitEntity)
+    return VisitDto(entity)
   }
 
   fun deleteVisit(reference: String) {
-    val visit = visitRepository.findByReference(reference)
+    val visit = reservationRepository.findByReference(reference)
 
     visit?.let {
-      visitRepository.delete(it)
+      reservationRepository.delete(it)
       telemetryClient.trackEvent(
         "visit-scheduler-prison-visit-deleted",
         mapOf(
@@ -170,7 +181,7 @@ class VisitService(
   }
 
   fun deleteAllVisits(visits: List<VisitDto>) {
-    visitRepository.deleteAllByReferenceIn(visits.map { it.reference }.toList())
+    reservationRepository.deleteAllByReferenceIn(visits.map { it.reference }.toList())
 
     for (visit in visits) {
       telemetryClient.trackEvent(
@@ -184,62 +195,69 @@ class VisitService(
   }
 
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
-    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+    val entity = reservationRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
 
-    visitEntity.visitStatus = VisitStatus.CANCELLED
-    visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
+    entity.booking?.let {
+      entity.booking!!.visitStatus = StatusType.CANCELLED
+      entity.booking!!.outcomeStatus = cancelOutcome.outcomeStatus
 
-    cancelOutcome.text?.let {
-      visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
+      cancelOutcome.text?.let {
+        entity.booking!!.visitNotes.add(
+          createBookingNote(
+            entity.booking!!,
+            NoteType.VISIT_OUTCOMES,
+            cancelOutcome.text
+          )
+        )
+      }
+      reservationRepository.saveAndFlush(entity)
+
+      telemetryClient.trackEvent(
+        "visit-scheduler-prison-visit-cancelled",
+        mapOf(
+          "reference" to reference,
+          "visitStatus" to entity.booking!!.visitStatus.name,
+          "outcomeStatus" to entity.booking!!.outcomeStatus?.name
+        ),
+        null
+      )
     }
 
-    visitRepository.saveAndFlush(visitEntity)
-
-    telemetryClient.trackEvent(
-      "visit-scheduler-prison-visit-cancelled",
-      mapOf(
-        "reference" to reference,
-        "visitStatus" to visitEntity.visitStatus.name,
-        "outcomeStatus" to visitEntity.outcomeStatus?.name
-      ),
-      null
-    )
-
-    return VisitDto(visitEntity)
+    return VisitDto(entity)
   }
 
-  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
-    return VisitNote(
-      visitId = visit.id,
+  private fun createBookingNote(booking: Booking, type: NoteType, text: String): Note {
+    return Note(
+      bookingId = booking.id,
       type = type,
       text = text,
-      visit = visit
+      booking = booking
     )
   }
 
-  private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {
-    return VisitContact(
-      visitId = visit.id,
+  private fun createBookingContact(booking: Booking, name: String, telephone: String): Contact {
+    return Contact(
+      bookingId = booking.id,
       name = name,
       telephone = telephone,
-      visit = visit
+      booking = booking
     )
   }
 
-  private fun createVisitVisitor(visit: Visit, personId: Long): VisitVisitor {
-    return VisitVisitor(
+  private fun createBookingVisitor(booking: Booking, personId: Long): Visitor {
+    return Visitor(
       nomisPersonId = personId,
-      visitId = visit.id,
-      visit = visit
+      bookingId = booking.id,
+      booking = booking
     )
   }
 
-  private fun createVisitSupport(visit: Visit, type: String, text: String?): VisitSupport {
-    return VisitSupport(
+  private fun createBookingSupport(booking: Booking, type: String, text: String?): Support {
+    return Support(
       type = type,
-      visitId = visit.id,
+      bookingId = booking.id,
       text = text,
-      visit = visit
+      booking = booking
     )
   }
 

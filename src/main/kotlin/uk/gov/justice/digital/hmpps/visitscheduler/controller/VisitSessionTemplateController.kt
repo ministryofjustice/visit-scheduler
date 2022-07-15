@@ -17,8 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSessionTemplateRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.CreateSessionTemplateRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import javax.validation.Valid
 

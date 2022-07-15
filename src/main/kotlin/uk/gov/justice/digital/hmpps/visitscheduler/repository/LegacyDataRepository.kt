@@ -7,5 +7,5 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 @Repository
 interface LegacyDataRepository : JpaRepository<LegacyData, Long> {
 
-  fun findByVisitId(visitId: Long): LegacyData?
+  fun findByBookingId(bookingId: Long): LegacyData? // test only
 }

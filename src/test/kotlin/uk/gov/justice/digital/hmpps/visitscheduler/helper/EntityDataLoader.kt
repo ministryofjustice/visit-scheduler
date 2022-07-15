@@ -1,155 +1,114 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
+import uk.gov.justice.digital.hmpps.visitscheduler.model.NoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.RestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Booking
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Contact
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Note
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Reservation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Support
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visitor
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-class VisitBuilder(
-  private val repository: VisitRepository,
-  private var visit: Visit,
+class ReservationBuilder(
+  private val repository: ReservationRepository,
+  private var reservation: Reservation,
 ) {
 
-  fun save(): Visit {
-    return repository.saveAndFlush(visit)
+  fun save(): Reservation {
+    return repository.saveAndFlush(reservation)
   }
 
-  fun withPrisonerId(prisonerId: String): VisitBuilder {
-    this.visit = visit.copy(prisonerId = prisonerId)
+  fun withVisitRoom(room: String): ReservationBuilder {
+    this.reservation = reservation.copy(visitRoom = room)
     return this
   }
 
-  fun withPrisonId(prisonId: String): VisitBuilder {
-    this.visit = visit.copy(prisonId = prisonId)
+  fun withVisitStart(visitDateTime: LocalDateTime): ReservationBuilder {
+    this.reservation = reservation.copy(visitStart = visitDateTime)
     return this
   }
 
-  fun withVisitRoom(room: String): VisitBuilder {
-    this.visit = visit.copy(visitRoom = room)
-    return this
-  }
-
-  fun withVisitType(type: VisitType): VisitBuilder {
-    this.visit = visit.copy(visitType = type)
-    return this
-  }
-
-  fun withVisitStatus(status: VisitStatus): VisitBuilder {
-    this.visit = visit.copy(visitStatus = status)
-    return this
-  }
-
-  fun withRestriction(restriction: VisitRestriction): VisitBuilder {
-    this.visit = visit.copy(visitRestriction = restriction)
-    return this
-  }
-
-  fun withVisitStart(visitDateTime: LocalDateTime): VisitBuilder {
-    this.visit = visit.copy(visitStart = visitDateTime)
-    return this
-  }
-
-  fun withVisitEnd(visitDateTime: LocalDateTime): VisitBuilder {
-    this.visit = visit.copy(visitEnd = visitDateTime)
+  fun withVisitEnd(visitDateTime: LocalDateTime): ReservationBuilder {
+    this.reservation = reservation.copy(visitEnd = visitDateTime)
     return this
   }
 }
 
-fun visitCreator(
-  repository: VisitRepository,
-  visit: Visit = defaultVisit(),
-): VisitBuilder {
-  return VisitBuilder(repository, visit)
+fun reservationCreator(
+  repository: ReservationRepository,
+  reservation: Reservation = defaultReservation(),
+): ReservationBuilder {
+  return ReservationBuilder(repository, reservation)
 }
 
-fun visitDeleter(
-  repository: VisitRepository,
+fun reservationDeleter(
+  repository: ReservationRepository,
 ) {
   repository.deleteAll()
   repository.flush()
 }
 
-fun defaultVisit(): Visit {
-  return Visit(
-    prisonerId = "AF12345G",
-    prisonId = "MDI",
+fun defaultReservation(): Reservation {
+  return Reservation(
     visitRoom = "3B",
     visitStart = LocalDateTime.of(2021, 10, 23, 10, 30),
     visitEnd = LocalDateTime.of(2021, 10, 23, 11, 30),
+    visitRestriction = RestrictionType.OPEN,
+  )
+}
+
+fun defaultBooking(reservation: Reservation): Booking {
+  return Booking(
+    reservationId = reservation.id,
+    prisonerId = "AF12345G",
+    prisonId = "MDI",
     visitType = SOCIAL,
-    visitStatus = RESERVED,
-    visitRestriction = OPEN,
+    visitStatus = StatusType.RESERVED,
+    reservation = reservation
   )
 }
 
-fun visitContactCreator(
-  visit: Visit,
-  name: String,
-  phone: String,
-) {
-  visit.visitContact = VisitContact(
-    visitId = visit.id,
+fun createBookingContact(booking: Booking, name: String, telephone: String): Contact {
+  return Contact(
+    bookingId = booking.id,
     name = name,
-    telephone = phone,
-    visit = visit
+    telephone = telephone,
+    booking = booking
   )
 }
 
-fun visitVisitorCreator(
-  visit: Visit,
-  nomisPersonId: Long,
-) {
-  visit.visitors.add(
-    VisitVisitor(
-      nomisPersonId = nomisPersonId,
-      visitId = visit.id,
-      visit = visit
-    )
+fun createBookingVisitor(booking: Booking, personId: Long): Visitor {
+  return Visitor(
+    nomisPersonId = personId,
+    bookingId = booking.id,
+    booking = booking
   )
 }
 
-fun visitSupportCreator(
-  visit: Visit,
-  name: String,
-  details: String?,
-) {
-  visit.support.add(
-    VisitSupport(
-      type = name,
-      visitId = visit.id,
-      text = details,
-      visit = visit
-    )
+fun createBookingSupport(booking: Booking, type: String, text: String?): Support {
+  return Support(
+    type = type,
+    bookingId = booking.id,
+    text = text,
+    booking = booking
   )
 }
 
-fun visitNoteCreator(
-  visit: Visit,
-  text: String,
-  type: VisitNoteType
-) {
-  visit.visitNotes.add(
-    VisitNote(
-      visitId = visit.id,
-      type = type,
-      text = text,
-      visit = visit
-    )
+fun createBookingNote(booking: Booking, type: NoteType, text: String): Note {
+  return Note(
+    bookingId = booking.id,
+    type = type,
+    text = text,
+    booking = booking
   )
 }
 

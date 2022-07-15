@@ -18,7 +18,7 @@ data class LegacyData(
   val id: Long = 0,
 
   @Column(name = "VISIT_ID", unique = true)
-  val visitId: Long,
+  val bookingId: Long,
 
   @Column(name = "LEAD_PERSON_ID", nullable = true)
   val leadPersonId: Long?,

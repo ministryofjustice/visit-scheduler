@@ -14,32 +14,34 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.defaultBooking
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 
 @DisplayName("Put /visits/{reference}/cancel")
 class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
   @Autowired
-  private lateinit var visitRepository: VisitRepository
+  private lateinit var reservationRepository: ReservationRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = reservationDeleter(reservationRepository)
 
   @Test
   fun `cancel visit by reference with outcome and outcome text`() {
 
     // Given
-    val visit = createVisitAndSave()
+    val reservation = reservationCreator(reservationRepository).save()
+    val booking = defaultBooking(reservation)
+    reservation.booking = booking
+    reservationRepository.saveAndFlush(reservation)
 
     val outcomeDto = OutcomeDto(
       OutcomeStatus.PRISONER_CANCELLED,
@@ -47,7 +49,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
+    val responseSpec = webTestClient.patch().uri("/visits/${reservation.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
         BodyInserters.fromValue(outcomeDto)
@@ -57,7 +59,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Then
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.visitStatus").isEqualTo(VisitStatus.CANCELLED.name)
+      .jsonPath("$.visitStatus").isEqualTo(StatusType.CANCELLED.name)
       .jsonPath("$.outcomeStatus").isEqualTo(OutcomeStatus.PRISONER_CANCELLED.name)
       .jsonPath("$.visitNotes.length()").isEqualTo(1)
       .jsonPath("$.visitNotes[?(@.type=='VISIT_OUTCOMES')].text").isEqualTo("Prisoner got covid")
@@ -90,14 +92,17 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `cancel visit by reference with outcome and without outcome text`() {
 
     // Given
-    val visit = createVisitAndSave()
+    val reservation = reservationCreator(reservationRepository).save()
+    val booking = defaultBooking(reservation)
+    reservation.booking = booking
+    reservationRepository.saveAndFlush(reservation)
 
     val outcomeDto = OutcomeDto(
       outcomeStatus = OutcomeStatus.VISITOR_CANCELLED
     )
 
     // When
-    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
+    val responseSpec = webTestClient.patch().uri("/visits/${reservation.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
         BodyInserters.fromValue(outcomeDto)
@@ -138,10 +143,10 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `cancel visit by reference without outcome`() {
 
     // Given
-    val visit = createVisitAndSave()
+    val reservation = reservationCreator(reservationRepository).save()
 
     // When
-    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
+    val responseSpec = webTestClient.patch().uri("/visits/${reservation.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .exchange()
 
@@ -227,12 +232,12 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isUnauthorized
   }
 
-  private fun createVisitAndSave(): Visit {
+/*  private fun createVisitAndSave(): Visit {
     val visit = visitCreator(visitRepository)
       .withVisitStatus(BOOKED)
       .save()
 
     visitRepository.saveAndFlush(visit)
     return visit
-  }
+  }*/
 }

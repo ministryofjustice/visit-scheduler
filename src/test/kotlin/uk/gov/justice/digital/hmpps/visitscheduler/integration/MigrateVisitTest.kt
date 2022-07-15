@@ -18,40 +18,40 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.migration.CreateLegacyContactOnVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.migration.CreateLegacyDataRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.migration.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.NoteDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.NoteType.STATUS_CHANGED_REASON
+import uk.gov.justice.digital.hmpps.visitscheduler.model.NoteType.VISITOR_CONCERN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.NoteType.VISIT_COMMENT
+import uk.gov.justice.digital.hmpps.visitscheduler.model.NoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.RestrictionType.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Note
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 import java.time.LocalDateTime
 
 private const val TEST_END_POINT = "/migrate-visits"
 
-@Transactional(propagation = SUPPORTS)
+// @Transactional(propagation = SUPPORTS)
+@Transactional
 @DisplayName("Migrate POST /visits")
 class MigrateVisitTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
-  private lateinit var visitRepository: VisitRepository
+  private lateinit var reservationRepository: ReservationRepository
 
   @Autowired
   private lateinit var legacyDataRepository: LegacyDataRepository
@@ -65,7 +65,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = reservationDeleter(reservationRepository)
 
   private fun createMigrateVisitRequestDto(): MigrateVisitRequestDto {
     return MigrateVisitRequestDto(
@@ -79,12 +79,12 @@ class MigrateVisitTest : IntegrationTestBase() {
       outcomeStatus = COMPLETED_NORMALLY,
       visitRestriction = OPEN,
       visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", "013448811538"),
-      visitors = setOf(CreateVisitorOnVisitRequestDto(123)),
+      visitors = setOf(VisitorDto(123)),
       visitNotes = setOf(
-        VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
-        VisitNoteDto(type = VISIT_OUTCOMES, "A visit outcome"),
-        VisitNoteDto(type = VISIT_COMMENT, "A visit comment"),
-        VisitNoteDto(type = STATUS_CHANGED_REASON, "Status has changed")
+        NoteDto(type = VISITOR_CONCERN, "A visit concern"),
+        NoteDto(type = VISIT_OUTCOMES, "A visit outcome"),
+        NoteDto(type = VISIT_COMMENT, "A visit comment"),
+        NoteDto(type = STATUS_CHANGED_REASON, "Status has changed")
       ),
       legacyData = CreateLegacyDataRequestDto(123)
     )
@@ -105,42 +105,39 @@ class MigrateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isCreated
     val reference = getReference(responseSpec)
 
-    val visit = visitRepository.findByReference(reference)
-    assertThat(visit).isNotNull
-    visit?.let {
+    val reservation = reservationRepository.findByReference(reference)
+    assertThat(reservation).isNotNull
+    assertThat(reservation!!.reference).isEqualTo(reference)
+    assertThat(reservation.visitRoom).isEqualTo("A1")
+    assertThat(reservation.visitStart).isEqualTo(visitTime.toString())
+    assertThat(reservation.visitEnd).isEqualTo(visitTime.plusHours(1).toString())
+    assertThat(reservation.visitRestriction).isEqualTo(OPEN)
+    assertThat(reservation.createTimestamp).isNotNull
 
-      assertThat(visit.reference).isEqualTo(reference)
-      assertThat(visit.prisonId).isEqualTo("MDI")
-      assertThat(visit.prisonerId).isEqualTo("FF0000FF")
-      assertThat(visit.visitRoom).isEqualTo("A1")
-      assertThat(visit.visitType).isEqualTo(SOCIAL)
-      assertThat(visit.visitStart).isEqualTo(visitTime.toString())
-      assertThat(visit.visitEnd).isEqualTo(visitTime.plusHours(1).toString())
-      assertThat(visit.visitStatus).isEqualTo(RESERVED)
-      assertThat(visit.outcomeStatus).isEqualTo(COMPLETED_NORMALLY)
-      assertThat(visit.visitRestriction).isEqualTo(OPEN)
-      assertThat(visit.visitContact!!.name).isEqualTo("John Smith")
-      assertThat(visit.visitContact!!.telephone).isEqualTo("013448811538")
-      assertThat(visit.createTimestamp).isNotNull
-      assertThat(visit.visitors.size).isEqualTo(1)
-      assertThat(visit.visitors[0].nomisPersonId).isEqualTo(123)
-      assertThat(visit.visitNotes)
-        .hasSize(4)
-        .extracting(VisitNote::type, VisitNote::text)
-        .containsExactlyInAnyOrder(
-          tuple(VISITOR_CONCERN, "A visit concern"),
-          tuple(VISIT_OUTCOMES, "A visit outcome"),
-          tuple(VISIT_COMMENT, "A visit comment"),
-          tuple(STATUS_CHANGED_REASON, "Status has changed")
-        )
+    assertThat(reservation.booking).isNotNull
+    assertThat(reservation.booking!!.prisonId).isEqualTo("MDI")
+    assertThat(reservation.booking!!.prisonerId).isEqualTo("FF0000FF")
+    assertThat(reservation.booking!!.visitType).isEqualTo(SOCIAL)
+    assertThat(reservation.booking!!.visitStatus).isEqualTo(RESERVED)
+    assertThat(reservation.booking!!.outcomeStatus).isEqualTo(COMPLETED_NORMALLY)
+    assertThat(reservation.booking!!.visitContact!!.name).isEqualTo("John Smith")
+    assertThat(reservation.booking!!.visitContact!!.telephone).isEqualTo("013448811538")
+    assertThat(reservation.booking!!.visitors.size).isEqualTo(1)
+    assertThat(reservation.booking!!.visitors[0].nomisPersonId).isEqualTo(123)
+    assertThat(reservation.booking!!.visitNotes)
+      .hasSize(4)
+      .extracting(Note::type, Note::text)
+      .containsExactlyInAnyOrder(
+        tuple(VISITOR_CONCERN, "A visit concern"),
+        tuple(VISIT_OUTCOMES, "A visit outcome"),
+        tuple(VISIT_COMMENT, "A visit comment"),
+        tuple(STATUS_CHANGED_REASON, "Status has changed")
+      )
 
-      val legacyData = legacyDataRepository.findByVisitId(visit.id)
-      assertThat(legacyData).isNotNull
-      if (legacyData != null) {
-        assertThat(legacyData.visitId).isEqualTo(visit.id)
-        assertThat(legacyData.leadPersonId).isEqualTo(123)
-      }
-    }
+    val legacyData = legacyDataRepository.findByBookingId(reservation.booking!!.id)
+    assertThat(legacyData).isNotNull
+    assertThat(legacyData!!.bookingId).isEqualTo(reservation.booking!!.id)
+    assertThat(legacyData.leadPersonId).isEqualTo(123)
 
     // And
     verify(telemetryClient).trackEvent(
@@ -184,14 +181,13 @@ class MigrateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isCreated
     val reference = getReference(responseSpec)
 
-    val visit = visitRepository.findByReference(reference)
-    assertThat(visit).isNotNull
-    visit?.let {
-      val legacyData = legacyDataRepository.findByVisitId(visit.id)
-      assertThat(legacyData).isNotNull
-      assertThat(legacyData!!.visitId).isEqualTo(visit.id)
-      assertThat(legacyData.leadPersonId).isNull()
-    }
+    val reservation = reservationRepository.findByReference(reference)
+    assertThat(reservation).isNotNull
+
+    val legacyData = legacyDataRepository.findByBookingId(reservation?.booking!!.id)
+    assertThat(legacyData).isNotNull
+    assertThat(legacyData!!.bookingId).isEqualTo(reservation.booking!!.id)
+    assertThat(legacyData.leadPersonId).isNull()
   }
 
   @Test
@@ -220,12 +216,11 @@ class MigrateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isCreated
     val reference = getReference(responseSpec)
 
-    val visit = visitRepository.findByReference(reference)
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
-      assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
-    }
+    val reservation = reservationRepository.findByReference(reference)
+    assertThat(reservation).isNotNull
+    assertThat(reservation!!.booking).isNotNull
+    assertThat(reservation.booking!!.visitContact!!.name).isEqualTo("UNKNOWN")
+    assertThat(reservation.booking!!.visitContact!!.telephone).isEqualTo("UNKNOWN")
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
   }
@@ -254,11 +249,10 @@ class MigrateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isCreated
     val reference = getReference(responseSpec)
 
-    val visit = visitRepository.findByReference(reference)
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.outcomeStatus).isEqualTo(NOT_RECORDED)
-    }
+    val reservation = reservationRepository.findByReference(reference)
+    assertThat(reservation).isNotNull
+    assertThat(reservation!!.booking).isNotNull
+    assertThat(reservation.booking!!.outcomeStatus).isEqualTo(NOT_RECORDED)
 
     // And
     verify(telemetryClient).trackEvent(
@@ -296,11 +290,10 @@ class MigrateVisitTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isCreated
 
-    val visit = visitRepository.findByReference(getReference(responseSpec))
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
-    }
+    val reservation = reservationRepository.findByReference(getReference(responseSpec))
+    assertThat(reservation).isNotNull
+    assertThat(reservation!!.booking).isNotNull
+    assertThat(reservation.booking!!.visitContact!!.telephone).isEqualTo("UNKNOWN")
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
@@ -331,11 +324,10 @@ class MigrateVisitTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isCreated
 
-    val visit = visitRepository.findByReference(getReference(responseSpec))
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
-    }
+    val reservation = reservationRepository.findByReference(getReference(responseSpec))
+    assertThat(reservation).isNotNull
+    assertThat(reservation!!.booking).isNotNull
+    assertThat(reservation.booking!!.visitContact!!.telephone).isEqualTo("UNKNOWN")
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
@@ -365,11 +357,10 @@ class MigrateVisitTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isCreated
 
-    val visit = visitRepository.findByReference(getReference(responseSpec))
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
-    }
+    val reservation = reservationRepository.findByReference(getReference(responseSpec))
+    assertThat(reservation).isNotNull
+    assertThat(reservation!!.booking).isNotNull
+    assertThat(reservation.booking!!.visitContact!!.name).isEqualTo("UNKNOWN")
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
@@ -400,11 +391,11 @@ class MigrateVisitTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isCreated
 
-    val visit = visitRepository.findByReference(getReference(responseSpec))
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
-    }
+    val reservation = reservationRepository.findByReference(getReference(responseSpec))
+    assertThat(reservation).isNotNull
+    assertThat(reservation!!.booking).isNotNull
+
+    assertThat(reservation.booking!!.visitContact!!.name).isEqualTo("UNKNOWN")
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
@@ -431,11 +422,11 @@ class MigrateVisitTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isCreated
 
-    val visit = visitRepository.findByReference(getReference(responseSpec))
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.outcomeStatus).isEqualTo(NOT_RECORDED)
-    }
+    val reservation = reservationRepository.findByReference(getReference(responseSpec))
+    assertThat(reservation).isNotNull
+    assertThat(reservation!!.booking).isNotNull
+
+    assertThat(reservation.booking!!.outcomeStatus).isEqualTo(NOT_RECORDED)
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
@@ -464,11 +455,11 @@ class MigrateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isCreated
     val reference = getReference(responseSpec)
 
-    val visit = visitRepository.findByReference(reference)
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.outcomeStatus).isEqualTo(NOT_RECORDED)
-    }
+    val reservation = reservationRepository.findByReference(reference)
+    assertThat(reservation).isNotNull
+    assertThat(reservation!!.booking).isNotNull
+
+    assertThat(reservation.booking!!.outcomeStatus).isEqualTo(NOT_RECORDED)
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())

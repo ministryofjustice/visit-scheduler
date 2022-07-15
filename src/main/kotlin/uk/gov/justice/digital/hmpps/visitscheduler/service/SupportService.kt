@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SupportTypeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.SupportTypeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 
 @Service

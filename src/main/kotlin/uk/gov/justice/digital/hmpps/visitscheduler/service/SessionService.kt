@@ -6,15 +6,15 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.RestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.Clock
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -24,7 +24,7 @@ import java.time.LocalTime
 @Transactional
 class SessionService(
   private val sessionTemplateRepository: SessionTemplateRepository,
-  private val visitRepository: VisitRepository,
+  private val reservationRepository: ReservationRepository,
   private val prisonApiClient: PrisonApiClient,
   private val clock: Clock,
   @Value("\${policy.session.booking-notice-period.minimum-days:2}")
@@ -111,8 +111,8 @@ class SessionService(
 
   private fun populateBookedCount(sessions: List<VisitSessionDto>) {
     sessions.forEach {
-      it.openVisitBookedCount = sessionBookedCount(it, VisitRestriction.OPEN)
-      it.closedVisitBookedCount = sessionBookedCount(it, VisitRestriction.CLOSED)
+      it.openVisitBookedCount = sessionBookedCount(it, RestrictionType.OPEN)
+      it.closedVisitBookedCount = sessionBookedCount(it, RestrictionType.CLOSED)
     }
   }
 
@@ -122,7 +122,7 @@ class SessionService(
     return getNonAssociation(prisonerId).any { it ->
       isDateWithinRange(session.startTimestamp.toLocalDate(), it.effectiveDate, it.expiryDate) &&
         it.offenderNonAssociation.let { ona ->
-          visitRepository.findAll(
+          reservationRepository.findAll(
             VisitSpecification(
               VisitFilter(
                 prisonerId = ona.offenderNo,
@@ -133,7 +133,7 @@ class SessionService(
                 if (policyNonAssociationWholeDay) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
               )
             )
-          ).any { isActiveStatus(it.visitStatus) }
+          ).any { it.booking?.let { booking -> isActiveStatus(booking.visitStatus) } ?: false }
         }
     }
   }
@@ -148,8 +148,8 @@ class SessionService(
     return emptyList()
   }
 
-  private fun sessionBookedCount(session: VisitSessionDto, restriction: VisitRestriction): Int {
-    return visitRepository.findAll(
+  private fun sessionBookedCount(session: VisitSessionDto, restriction: RestrictionType): Int {
+    return reservationRepository.findAll(
       VisitSpecification(
         VisitFilter(
           prisonId = session.prisonId,
@@ -159,12 +159,12 @@ class SessionService(
           visitRestriction = restriction
         )
       )
-    ).count { isActiveStatus(it.visitStatus) }
+    ).count { it.booking?.let { booking -> isActiveStatus(booking.visitStatus) } ?: true }
   }
 
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
 
-  private fun isActiveStatus(status: VisitStatus) =
-    status == VisitStatus.BOOKED || status == VisitStatus.RESERVED
+  private fun isActiveStatus(status: StatusType) =
+    status == StatusType.BOOKED || status == StatusType.RESERVED
 }

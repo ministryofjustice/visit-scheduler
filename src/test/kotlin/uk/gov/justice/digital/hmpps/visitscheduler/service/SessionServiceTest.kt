@@ -17,23 +17,23 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.OffenderNonAssociationDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.OffenderNonAssociationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.RestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.MONTHLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.SINGLE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Booking
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Reservation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.Clock
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
@@ -53,7 +53,7 @@ import java.time.ZoneId
 class SessionServiceTest {
 
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
-  private val visitRepository = mock<VisitRepository>()
+  private val reservationRepository = mock<ReservationRepository>()
   private val prisonApiClient = mock<PrisonApiClient>()
 
   private lateinit var sessionService: SessionService
@@ -65,7 +65,7 @@ class SessionServiceTest {
   fun setUp() {
     sessionService = SessionService(
       sessionTemplateRepository,
-      visitRepository,
+      reservationRepository,
       prisonApiClient,
       clock,
       policyNoticeDaysMin = 1,
@@ -88,8 +88,8 @@ class SessionServiceTest {
       ).thenReturn(response)
     }
 
-    private fun mockVisitRepositoryResponse(response: List<Visit>) {
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+    private fun mockReservationRepositoryResponse(response: List<Reservation>) {
+      whenever(reservationRepository.findAll(any(VisitSpecification::class.java)))
         .thenReturn(response)
     }
 
@@ -319,17 +319,24 @@ class SessionServiceTest {
       )
       mockSessionRepositoryResponse(listOf(singleSession))
 
-      val visit = Visit(
-        prisonerId = "Anythingwilldo",
+      val reservation = Reservation(
+        visitRoom = "123c",
         visitStart = LocalDate.parse("2021-02-01").atTime(11, 30),
         visitEnd = LocalDate.parse("2021-02-01").atTime(12, 30),
-        visitType = SOCIAL,
-        prisonId = "MDI",
-        visitStatus = BOOKED,
-        visitRestriction = OPEN,
-        visitRoom = "123c",
+        visitRestriction = RestrictionType.OPEN,
       )
-      mockVisitRepositoryResponse(listOf(visit))
+
+      val booking = Booking(
+        reservationId = -1L,
+        prisonerId = "Anythingwilldo",
+        visitType = VisitType.SOCIAL,
+        prisonId = "MDI",
+        visitStatus = StatusType.BOOKED,
+        reservation = reservation
+      )
+      reservation.booking = booking
+
+      mockReservationRepositoryResponse(listOf(reservation))
 
       // When
       val sessions = sessionService.getVisitSessions("MDI")
@@ -342,8 +349,8 @@ class SessionServiceTest {
 
     @Test
     fun `Single Session with RESERVED Visit has booked slot count`() {
-      // Given
 
+      // Given
       val singleSession = sessionTemplate(
         startDate = LocalDate.parse("2021-02-01"),
         startTime = LocalTime.parse("11:30"), // future time
@@ -352,20 +359,16 @@ class SessionServiceTest {
       )
       mockSessionRepositoryResponse(listOf(singleSession))
 
-      val visit = Visit(
-        prisonerId = "Anythingwilldo",
+      val reservation = Reservation(
+        visitRoom = singleSession.visitRoom,
         visitStart = LocalDate.parse("2021-02-01").atTime(11, 30),
         visitEnd = LocalDate.parse("2021-02-01").atTime(12, 30),
-        visitType = SOCIAL,
-        prisonId = "MDI",
-        visitStatus = RESERVED,
-        visitRestriction = OPEN,
-        visitRoom = "123c",
+        visitRestriction = RestrictionType.OPEN,
       )
-      mockVisitRepositoryResponse(listOf(visit))
+      mockReservationRepositoryResponse(listOf(reservation))
 
       // When
-      val sessions = sessionService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions(singleSession.prisonId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -449,7 +452,7 @@ class SessionServiceTest {
         )
       )
 
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
+      whenever(reservationRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -491,19 +494,27 @@ class SessionServiceTest {
         )
       )
 
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+      val reservation = Reservation(
+        visitRoom = "123c",
+        visitStart = startDate.plusDays(2).atTime(10, 30),
+        visitEnd = startDate.plusDays(2).atTime(11, 30),
+        visitRestriction = RestrictionType.OPEN,
+      )
+
+      val booking = Booking(
+        reservationId = -1L,
+        prisonerId = associationId,
+        visitType = VisitType.SOCIAL,
+        prisonId = prisonId,
+        visitStatus = StatusType.BOOKED,
+        reservation = reservation
+      )
+      reservation.booking = booking
+
+      whenever(reservationRepository.findAll(any(VisitSpecification::class.java)))
         .thenReturn(
           listOf(
-            Visit(
-              prisonerId = associationId,
-              visitStart = startDate.plusDays(2).atTime(10, 30),
-              visitEnd = startDate.plusDays(2).atTime(11, 30),
-              visitType = SOCIAL,
-              prisonId = prisonId,
-              visitStatus = BOOKED,
-              visitRestriction = OPEN,
-              visitRoom = "123c",
-            )
+            reservation
           )
         )
 

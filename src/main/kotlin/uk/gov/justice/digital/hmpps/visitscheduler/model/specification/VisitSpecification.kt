@@ -1,64 +1,77 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.specification
 
 import org.springframework.data.jpa.domain.Specification
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Booking
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Reservation
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visitor
 import javax.persistence.criteria.CriteriaBuilder
 import javax.persistence.criteria.CriteriaQuery
+import javax.persistence.criteria.JoinType
 import javax.persistence.criteria.Predicate
 import javax.persistence.criteria.Root
 
-class VisitSpecification(private val filter: VisitFilter) : Specification<Visit> {
+class VisitSpecification(private val filter: VisitFilter) : Specification<Reservation> {
   override fun toPredicate(
-    root: Root<Visit>,
+    root: Root<Reservation>,
     query: CriteriaQuery<*>,
     criteriaBuilder: CriteriaBuilder
   ): Predicate? {
     val predicates = mutableListOf<Predicate>()
 
     filter.prisonerId?.run {
-      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::prisonerId.name), this))
+      val leftJoinFromReservationToBooking =
+        root.join<Reservation, Booking>(Reservation::booking.name, JoinType.LEFT).get<Booking>(
+          Booking::prisonerId.name
+        )
+      predicates.add(criteriaBuilder.equal(leftJoinFromReservationToBooking, this))
     }
 
     filter.prisonId?.run {
-      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::prisonId.name), this))
+      val leftJoinFromReservationToBooking =
+        root.join<Reservation, Booking>(Reservation::booking.name, JoinType.LEFT).get<Booking>(
+          Booking::prisonId.name
+        )
+      predicates.add(criteriaBuilder.equal(leftJoinFromReservationToBooking, this))
     }
 
     filter.startDateTime?.run {
-      predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(Visit::visitStart.name), this))
+      predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(Reservation::visitStart.name), this))
     }
 
     filter.endDateTime?.run {
-      predicates.add(criteriaBuilder.lessThan(root.get(Visit::visitStart.name), this))
-    }
-
-    filter.visitRoom?.run {
-      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::visitRoom.name), this))
-    }
-
-    filter.nomisPersonId?.run {
-      val innerJoinFromVisitToVisitors =
-        root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitor>(
-          VisitVisitor::nomisPersonId.name
-        )
-      predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, this))
-    }
-
-    filter.visitStatus?.run {
-      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::visitStatus.name), this))
+      predicates.add(criteriaBuilder.lessThan(root.get(Reservation::visitStart.name), this))
     }
 
     filter.visitRestriction?.run {
-      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::visitRestriction.name), this))
+      predicates.add(criteriaBuilder.equal(root.get<String>(Reservation::visitRestriction.name), this))
+    }
+
+    filter.visitRoom?.run {
+      predicates.add(criteriaBuilder.equal(root.get<String>(Reservation::visitRoom.name), this))
+    }
+
+    filter.nomisPersonId?.run {
+      val leftJoinFromReservationToBookingToVisitor = root.join<Reservation, Booking>(Reservation::booking.name, JoinType.LEFT)
+        .join<Booking, MutableList<Visitor>>(Booking::visitors.name).get<Visitor>(
+          Visitor::nomisPersonId.name
+        )
+      predicates.add(criteriaBuilder.equal(leftJoinFromReservationToBookingToVisitor, this))
+    }
+
+    filter.visitStatus?.run {
+      val leftJoinFromReservationToBooking =
+        root.join<Reservation, Booking>(Reservation::booking.name, JoinType.LEFT).get<Booking>(
+          Booking::visitStatus.name
+        )
+      predicates.add(criteriaBuilder.equal(leftJoinFromReservationToBooking, this))
     }
 
     filter.createTimestamp?.run {
-      predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::createTimestamp.name), this))
+      predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Reservation::createTimestamp.name), this))
     }
 
     filter.modifyTimestamp?.run {
-      predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::modifyTimestamp.name), this))
+      predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Reservation::modifyTimestamp.name), this))
     }
 
     return criteriaBuilder.and(*predicates.toTypedArray())

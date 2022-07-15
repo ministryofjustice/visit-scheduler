@@ -17,32 +17,32 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.SupportTypeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.CreateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.RestrictionType.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 import java.time.LocalDateTime
 
 private const val TEST_END_POINT = "/visits"
 
-@Transactional(propagation = SUPPORTS)
+// @Transactional(propagation = SUPPORTS)
+@Transactional
 @DisplayName("POST /visits")
 class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
-  private lateinit var visitRepository: VisitRepository
+  private lateinit var reservationRepository: ReservationRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -53,7 +53,7 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = reservationDeleter(reservationRepository)
 
   private fun createVisitRequest(): CreateVisitRequestDto {
     return CreateVisitRequestDto(
@@ -65,9 +65,9 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       endTimestamp = visitTime.plusHours(1),
       visitStatus = RESERVED,
       visitRestriction = OPEN,
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "013448811538"),
-      visitors = setOf(CreateVisitorOnVisitRequestDto(123)),
-      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitContact = ContactDto("John Smith", "013448811538"),
+      visitors = setOf(VisitorDto(123)),
+      visitorSupport = setOf(SupportTypeDto("OTHER", "Some Text")),
     )
   }
 
@@ -137,7 +137,7 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN,
       visitors = setOf(),
       visitRoom = "A1",
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890")
+      visitContact = ContactDto("John Smith", "01234 567890")
     )
 
     val jsonBody = BodyInserters.fromValue(createVisitRequest)
@@ -167,14 +167,14 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = RESERVED,
       visitRestriction = OPEN,
       visitRoom = "A1",
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
+      visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
-        CreateVisitorOnVisitRequestDto(123),
-        CreateVisitorOnVisitRequestDto(123)
+        VisitorDto(123),
+        VisitorDto(123)
       ),
       visitorSupport = setOf(
-        CreateSupportOnVisitRequestDto("OTHER", "Some Text"),
-        CreateSupportOnVisitRequestDto("OTHER", "Some Text")
+        SupportTypeDto("OTHER", "Some Text"),
+        SupportTypeDto("OTHER", "Some Text")
       )
     )
 
@@ -224,9 +224,9 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = RESERVED,
       visitRestriction = OPEN,
       visitRoom = "A1",
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
+      visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
-      visitorSupport = setOf(CreateSupportOnVisitRequestDto("ANYTHINGWILLDO")),
+      visitorSupport = setOf(SupportTypeDto("ANYTHINGWILLDO")),
     )
 
     val jsonBody = BodyInserters.fromValue(createVisitRequest)

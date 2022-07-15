@@ -17,8 +17,8 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSessionTemplateRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.CreateSessionTemplateRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator

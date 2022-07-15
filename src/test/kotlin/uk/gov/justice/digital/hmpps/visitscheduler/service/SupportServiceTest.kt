@@ -55,7 +55,7 @@ class SupportServiceTest {
       // Then
       assertThat(supportTypes).size().isEqualTo(1)
       assertThat(supportTypes[0].type).isEqualTo(supportType.name)
-      assertThat(supportTypes[0].description).isEqualTo(supportType.description)
+      assertThat(supportTypes[0].text).isEqualTo(supportType.description)
 
       Mockito.verify(supportTypeRepository, times(1)).findAll()
     }

@@ -17,83 +17,88 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import org.springframework.transaction.annotation.Propagation.SUPPORTS
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateContactOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSupportOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitorOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.SupportTypeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingContact
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingNote
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.defaultBooking
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.NoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.RestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Reservation
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.BookingRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 import java.time.LocalDateTime
 
 private const val TEST_END_POINT = "/visits/"
 
-@Transactional(propagation = SUPPORTS)
 @DisplayName("Update PUT /visits")
 class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
-  private lateinit var visitRepository: VisitRepository
+  private lateinit var reservationRepository: ReservationRepository
+
+  @Autowired
+  private lateinit var bookingRepository: BookingRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private var visitMin: Visit? = null
-  private var visitFull: Visit? = null
+  private var reservation: Reservation? = null
 
   @BeforeEach
   internal fun setUp() {
 
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    visitMin = visitCreator(visitRepository)
-      .withPrisonerId("FF0000AA")
-      .withPrisonId("AAA")
-      .withVisitRoom("A1")
-      .withVisitStart(visitTime)
-      .withVisitEnd(visitTime.plusHours(1))
-      .withVisitType(VisitType.SOCIAL)
-      .withVisitStatus(VisitStatus.RESERVED)
-      .save()
-
-    visitFull = visitCreator(visitRepository)
-      .withPrisonerId("FF0000BB")
-      .withPrisonId("BBB")
+    reservation = reservationCreator(reservationRepository)
       .withVisitRoom("B1")
       .withVisitStart(visitTime.plusDays(2))
       .withVisitEnd(visitTime.plusDays(2).plusHours(1))
-      .withVisitType(VisitType.FAMILY)
-      .withVisitStatus(VisitStatus.BOOKED)
       .save()
-    visitNoteCreator(visit = visitFull!!, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = visitFull!!, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = visitFull!!, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L)
-    visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(visitFull!!)
+    val booking = defaultBooking(reservation!!)
+    booking.prisonerId = "FF0000BB"
+    booking.prisonId = "BBB"
+    booking.visitType = VisitType.FAMILY
+    booking.visitStatus = StatusType.BOOKED
+    val bookingEntity = bookingRepository.save(booking)
+    reservation!!.booking = bookingEntity
+
+    reservation!!.booking!!.visitContact =
+      createBookingContact(reservation!!.booking!!, name = "Jane Doe", telephone = "01234 098765")
+    reservation!!.booking!!.visitors.add(
+      createBookingVisitor(reservation!!.booking!!, personId = 321L)
+    )
+    reservation!!.booking!!.support.add(
+      createBookingSupport(reservation!!.booking!!, type = "OTHER", text = "Some Text")
+    )
+    reservation!!.booking!!.visitNotes.add(
+      createBookingNote(reservation!!.booking!!, text = "Some text outcomes", type = NoteType.VISIT_OUTCOMES)
+    )
+    reservation!!.booking!!.visitNotes.add(
+      createBookingNote(reservation!!.booking!!, text = "Some text concerns", type = NoteType.VISITOR_CONCERN)
+    )
+    reservation!!.booking!!.visitNotes.add(
+      createBookingNote(reservation!!.booking!!, text = "Some text comment", type = NoteType.VISIT_COMMENT)
+    )
+
+    reservationRepository.saveAndFlush(reservation)
   }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = reservationDeleter(reservationRepository)
 
   @Test
   fun `update visit by reference - add booked details`() {
@@ -107,17 +112,17 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
       visitType = VisitType.FAMILY,
-      visitStatus = VisitStatus.BOOKED,
-      visitRestriction = VisitRestriction.CLOSED,
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
-      visitors = setOf(CreateVisitorOnVisitRequestDto(123L)),
-      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitStatus = StatusType.BOOKED,
+      visitRestriction = RestrictionType.CLOSED,
+      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitors = setOf(VisitorDto(123L)),
+      visitorSupport = setOf(SupportTypeDto("OTHER", "Some Text")),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reservation!!.reference)
 
     // Then
 
@@ -169,15 +174,14 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `put visit by reference - amend contact`() {
 
     // Given
-
     val updateRequest = UpdateVisitRequestDto(
-      visitContact = CreateContactOnVisitRequestDto("John Smith", "01234 567890"),
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reservation!!.reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -202,15 +206,14 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `put visit by reference - amend visitors`() {
 
     // Given
-
     val updateRequest = UpdateVisitRequestDto(
-      visitors = setOf(CreateVisitorOnVisitRequestDto(123L)),
+      visitors = setOf(VisitorDto(123L)),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reservation!!.reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -236,13 +239,13 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitorSupport = setOf(CreateSupportOnVisitRequestDto("OTHER", "Some Text")),
+      visitorSupport = setOf(SupportTypeDto("OTHER", "Some Text")),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reservation!!.reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk

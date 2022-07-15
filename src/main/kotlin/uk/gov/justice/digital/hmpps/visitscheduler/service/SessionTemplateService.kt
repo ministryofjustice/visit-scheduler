@@ -6,8 +6,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSessionTemplateRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.CreateSessionTemplateRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.session.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import java.util.function.Supplier

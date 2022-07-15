@@ -13,12 +13,14 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingContact
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.defaultBooking
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.BookingRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 import java.time.LocalDateTime
 
 @DisplayName("DELETE /visits/{reference}")
@@ -27,44 +29,52 @@ class DeleteVisitByReferenceTest : IntegrationTestBase() {
   private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
 
   @Autowired
-  private lateinit var visitRepository: VisitRepository
+  private lateinit var reservationRepository: ReservationRepository
+
+  @Autowired
+  private lateinit var bookingRepository: BookingRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = reservationDeleter(reservationRepository)
 
   @Test
   fun `delete visit by reference`() {
 
     // Given
-
-    val visitCC = visitCreator(visitRepository)
-      .withPrisonerId("FF0000CC")
+    val reservation = reservationCreator(reservationRepository)
       .withVisitStart(visitTime.plusDays(2))
       .withVisitEnd(visitTime.plusDays(2).plusHours(1))
-      .withPrisonId("LEI")
       .save()
-
-    visitContactCreator(visit = visitCC, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitCC, nomisPersonId = 123L)
-    visitSupportCreator(visit = visitCC, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(visitCC)
+    val booking = defaultBooking(reservation)
+    booking.prisonerId = "FF0000CC"
+    booking.prisonId = "LEI"
+    val bookingEntity = bookingRepository.save(booking)
+    reservation.booking = bookingEntity
+    reservation.booking!!.visitContact = createBookingContact(reservation.booking!!, name = "Jane Doe", telephone = "01234 098765")
+    reservation.booking!!.visitors.add(
+      createBookingVisitor(reservation.booking!!, personId = 123L)
+    )
+    reservation.booking!!.support.add(
+      createBookingSupport(reservation.booking!!, type = "OTHER", text = "Some Text")
+    )
+    reservationRepository.saveAndFlush(reservation)
 
     // When
-    val responseSpec = callDeleteVisitEndPoint("/visits/${visitCC.reference}")
+    val responseSpec = callDeleteVisitEndPoint("/visits/${reservation.reference}")
 
     // Then
     responseSpec.expectStatus().isOk
 
-    val visit = visitRepository.findByReference(visitCC.reference)
+    val visit = reservationRepository.findByReference(reservation.reference)
     Assertions.assertThat(visit).isNull()
 
     verify(telemetryClient).trackEvent(
       eq("visit-scheduler-prison-visit-deleted"),
       org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visitCC.reference)
+        Assertions.assertThat(it["reference"]).isEqualTo(reservation.reference)
       },
       isNull()
     )

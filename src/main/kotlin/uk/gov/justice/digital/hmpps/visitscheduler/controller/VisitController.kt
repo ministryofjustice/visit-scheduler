@@ -23,12 +23,12 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reservation.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.CreateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visit.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
@@ -83,7 +83,7 @@ class VisitController(
     val visit = visitService.createVisit(createVisitRequest)
 
     // Created with BOOKED status - review if POST & PUT are replaced with Reserve, Book & Amend endpoints
-    if (visit.visitStatus == VisitStatus.BOOKED) {
+    if (visit.visitStatus == StatusType.BOOKED) {
       snsService.sendVisitBookedEvent(visit)
     }
     return visit
@@ -149,7 +149,7 @@ class VisitController(
     @Parameter(
       description = "Filter results by visit status",
       example = "BOOKED"
-    ) visitStatus: VisitStatus?
+    ) visitStatus: StatusType?
   ): List<VisitDto> =
     visitService.findVisitsByFilter(
       VisitFilter(
@@ -221,7 +221,7 @@ class VisitController(
     @Parameter(
       description = "Filter results by visit status",
       example = "BOOKED"
-    ) visitStatus: VisitStatus?,
+    ) visitStatus: StatusType?,
     @RequestParam(value = "page", required = true)
     @Parameter(
       description = "Pagination page number, starting at zero",
@@ -332,7 +332,7 @@ class VisitController(
 
     // Updated to BOOKED status - review if POST & PUT are replaced with Reserve, Book & Amend endpoints
     updateVisitRequest.visitStatus?.run {
-      if (visit.visitStatus == VisitStatus.BOOKED) {
+      if (visit.visitStatus == StatusType.BOOKED) {
         snsService.sendVisitBookedEvent(visit)
       }
     }

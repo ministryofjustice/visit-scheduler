@@ -14,19 +14,18 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingContact
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingNote
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createBookingVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.defaultBooking
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.reservationDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.NoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.StatusType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Reservation
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.BookingRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 import java.time.LocalDateTime
 
 @DisplayName("GET /visits")
@@ -35,75 +34,110 @@ class VisitsByFilterTest : IntegrationTestBase() {
   private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
 
   @Autowired
-  private lateinit var visitRepository: VisitRepository
+  private lateinit var reservationRepository: ReservationRepository
+
+  @Autowired
+  private lateinit var bookingRepository: BookingRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllReservations() = reservationDeleter(reservationRepository)
 
-  private var visitMin: Visit? = null
-  private var visitFull: Visit? = null
+  private lateinit var reservationMin: Reservation
+  private lateinit var reservationFull: Reservation
 
   @BeforeEach
-  internal fun createVisits() {
+  internal fun createReservations() {
 
-    visitMin = visitCreator(visitRepository)
-      .withPrisonerId("FF0000AA")
+    reservationMin = reservationCreator(reservationRepository)
       .withVisitStart(visitTime)
-      .withPrisonId("MDI")
       .save()
+    val bookingMin = defaultBooking(reservationMin)
+    bookingMin.prisonId = "MDI"
+    bookingMin.prisonerId = "FF0000AA"
+    val bookingMinEntity = bookingRepository.save(bookingMin)
+    reservationMin.booking = bookingMinEntity
+    reservationRepository.saveAndFlush(reservationMin)
 
-    visitFull = visitCreator(visitRepository)
-      .withPrisonerId("FF0000BB")
+    reservationFull = reservationCreator(reservationRepository)
       .withVisitStart(visitTime.plusDays(1))
       .withVisitEnd(visitTime.plusDays(1).plusHours(1))
-      .withPrisonId("LEI")
       .save()
+    val bookingFull = defaultBooking(reservationFull)
+    bookingFull.prisonId = "LEI"
+    bookingFull.prisonerId = "FF0000BB"
+    val bookingFullEntity = bookingRepository.save(bookingFull)
+    reservationFull.booking = bookingFullEntity
+    reservationFull.booking!!.visitNotes.add(
+      createBookingNote(reservationFull.booking!!, text = "A visit concern", type = NoteType.VISITOR_CONCERN)
+    )
+    reservationFull.booking!!.visitNotes.add(
+      createBookingNote(reservationFull.booking!!, text = "A visit outcome", type = NoteType.VISIT_OUTCOMES)
+    )
+    reservationFull.booking!!.visitNotes.add(
+      createBookingNote(reservationFull.booking!!, text = "A visit comment", type = NoteType.VISIT_COMMENT)
+    )
+    reservationFull.booking!!.visitNotes.add(
+      createBookingNote(reservationFull.booking!!, text = "Status has changed", type = NoteType.STATUS_CHANGED_REASON)
+    )
+    reservationRepository.saveAndFlush(reservationFull)
 
-    visitNoteCreator(visit = visitFull!!, text = "A visit concern", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = visitFull!!, text = "A visit outcome", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = visitFull!!, text = "A visit comment", type = VISIT_COMMENT)
-    visitNoteCreator(visit = visitFull!!, text = "Status has changed", type = STATUS_CHANGED_REASON)
-
-    visitRepository.saveAndFlush(visitFull!!)
-
-    val visitCC = visitCreator(visitRepository)
-      .withPrisonerId("FF0000CC")
+    val visitCC = reservationCreator(reservationRepository)
       .withVisitStart(visitTime.plusDays(2))
       .withVisitEnd(visitTime.plusDays(2).plusHours(1))
-      .withPrisonId("LEI")
       .save()
-    visitContactCreator(visit = visitCC, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitCC, nomisPersonId = 123L)
-    visitSupportCreator(visit = visitCC, name = "OTHER", details = "Some Text")
+    val bookingCC = defaultBooking(visitCC)
+    bookingCC.prisonId = "LEI"
+    bookingCC.prisonerId = "FF0000CC"
+    val bookingCCEntity = bookingRepository.save(bookingCC)
+    visitCC.booking = bookingCCEntity
+    visitCC.booking!!.visitContact =
+      createBookingContact(visitCC.booking!!, name = "Jane Doe", telephone = "01234 098765")
+    visitCC.booking!!.visitors.add(
+      createBookingVisitor(visitCC.booking!!, personId = 123L)
+    )
+    visitCC.booking!!.support.add(
+      createBookingSupport(visitCC.booking!!, type = "OTHER", text = "Some Text")
+    )
+    reservationRepository.saveAndFlush(visitCC)
 
-    visitRepository.saveAndFlush(visitCC)
-
-    visitCreator(visitRepository)
-      .withPrisonerId("GG0000BB")
+    val visitRESERVED = reservationCreator(reservationRepository)
       .withVisitStart(visitTime.plusHours(1))
       .withVisitEnd(visitTime.plusHours(2))
-      .withPrisonId("BEI")
-      .withVisitStatus(VisitStatus.RESERVED)
       .save()
+    val bookingRESERVED = defaultBooking(visitRESERVED)
+    bookingRESERVED.prisonId = "BEI"
+    bookingRESERVED.prisonerId = "GG0000BB"
+    bookingRESERVED.visitStatus = StatusType.RESERVED
+    val bookingRESERVEDEntity = bookingRepository.save(bookingRESERVED)
+    visitRESERVED.booking = bookingRESERVEDEntity
+    reservationRepository.saveAndFlush(visitRESERVED)
 
-    visitCreator(visitRepository)
-      .withPrisonerId("GG0000BB")
+    val visitBOOKED = reservationCreator(reservationRepository)
       .withVisitStart(visitTime.plusDays(1).plusHours(1))
       .withVisitEnd(visitTime.plusDays(1).plusHours(2))
-      .withPrisonId("BEI")
-      .withVisitStatus(VisitStatus.BOOKED)
       .save()
+    val bookingBOOKED = defaultBooking(visitBOOKED)
+    bookingBOOKED.prisonId = "BEI"
+    bookingBOOKED.prisonerId = "GG0000BB"
+    bookingBOOKED.visitStatus = StatusType.BOOKED
+    val bookingBOOKEDEntity = bookingRepository.save(bookingBOOKED)
+    visitBOOKED.booking = bookingBOOKEDEntity
+    reservationRepository.saveAndFlush(visitBOOKED)
 
-    visitCreator(visitRepository)
-      .withPrisonerId("GG0000BB")
+    val visitCANCELLED = reservationCreator(reservationRepository)
       .withVisitStart(visitTime.plusDays(2).plusHours(1))
       .withVisitEnd(visitTime.plusDays(2).plusHours(2))
-      .withPrisonId("BEI")
-      .withVisitStatus(VisitStatus.CANCELLED)
       .save()
+    val bookingCANCELLED = defaultBooking(visitCANCELLED)
+    bookingCANCELLED.prisonId = "BEI"
+    bookingCANCELLED.prisonerId = "GG0000BB"
+    bookingCANCELLED.visitStatus = StatusType.CANCELLED
+    val bookingCANCELLEDEntity = bookingRepository.save(bookingCANCELLED)
+    visitCANCELLED.booking = bookingCANCELLEDEntity
+    reservationRepository.saveAndFlush(visitCANCELLED)
   }
 
   @Test
@@ -121,7 +155,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.length()").isEqualTo(1)
       .jsonPath("$[0].prisonerId").isEqualTo("FF0000BB")
-      .jsonPath("$[0].startTimestamp").isEqualTo(visitFull?.visitStart.toString())
+      .jsonPath("$[0].startTimestamp").isEqualTo(reservationFull.visitStart.toString())
       .jsonPath("$[0].reference").exists()
       .jsonPath("$[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
       .jsonPath("$[0].visitNotes[?(@.type=='VISIT_COMMENT')].text").isEqualTo("A visit comment")
@@ -269,7 +303,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @Test
   fun `get visits by status`() {
     // Given
-    val visitStatus = VisitStatus.BOOKED
+    val visitStatus = StatusType.BOOKED
 
     // When
     val responseSpec = callVisitEndPoint("/visits?visitStatus=$visitStatus")
@@ -283,6 +317,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @Test
   fun `get visits paged`() {
+
     // Given
     val size = 4
 

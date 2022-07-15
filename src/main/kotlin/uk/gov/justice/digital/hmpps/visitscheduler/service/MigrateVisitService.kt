@@ -3,121 +3,116 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.migration.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.NoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Booking
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Contact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Note
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Reservation
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visitor
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ReservationRepository
 
 @Service
 @Transactional
 class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
-  private val visitRepository: VisitRepository,
+  private val reservationRepository: ReservationRepository,
   private val telemetryClient: TelemetryClient,
 ) {
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
 
-    // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
-    val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
-
-    val visitEntity = visitRepository.saveAndFlush(
-      Visit(
-        prisonerId = migrateVisitRequest.prisonerId,
-        prisonId = migrateVisitRequest.prisonId,
+    val entity = reservationRepository.saveAndFlush(
+      Reservation(
         visitRoom = migrateVisitRequest.visitRoom,
-        visitType = migrateVisitRequest.visitType,
-        visitStatus = migrateVisitRequest.visitStatus,
-        outcomeStatus = outcomeStatus,
-        visitRestriction = migrateVisitRequest.visitRestriction,
         visitStart = migrateVisitRequest.startTimestamp,
-        visitEnd = migrateVisitRequest.endTimestamp
+        visitEnd = migrateVisitRequest.endTimestamp,
+        visitRestriction = migrateVisitRequest.visitRestriction,
       )
     )
 
+    entity.booking = Booking(
+      reservationId = entity.id,
+      prisonerId = migrateVisitRequest.prisonerId,
+      prisonId = migrateVisitRequest.prisonId,
+      visitType = migrateVisitRequest.visitType,
+      visitStatus = migrateVisitRequest.visitStatus,
+      outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED,
+      reservation = entity,
+    )
+    reservationRepository.save(entity)
+
     migrateVisitRequest.visitContact?.let {
-      visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
+      entity.booking?.visitContact = createBookingContact(entity.booking!!, it.name, it.telephone)
     }
 
-    migrateVisitRequest.visitors?.let { contactList ->
-      contactList.forEach {
-        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
-      }
+    migrateVisitRequest.visitors?.forEach {
+      entity.booking?.visitors?.add(createBookingVisitor(entity.booking!!, it.nomisPersonId))
     }
 
-    migrateVisitRequest.visitNotes?.let { visitNotes ->
-      visitNotes.forEach {
-        visitEntity.visitNotes.add(createVisitNote(visitEntity, it.type, it.text))
-      }
+    migrateVisitRequest.visitNotes?.forEach {
+      entity.booking?.visitNotes?.add(createBookingNote(entity.booking!!, it.type, it.text))
     }
 
-    migrateVisitRequest.legacyData?.let {
-      saveLegacyData(visitEntity, it.leadVisitorId)
-    } ?: run {
-      saveLegacyData(visitEntity, null)
-    }
+    legacyDataRepository.saveAndFlush(
+      createLegacyData(
+        entity.booking!!,
+        migrateVisitRequest.legacyData?.leadVisitorId
+      )
+    )
 
-    sendTelemetryData(visitEntity)
-
-    return visitEntity.reference
-  }
-
-  private fun sendTelemetryData(visitEntity: Visit) {
     telemetryClient.trackEvent(
       "visit-scheduler-prison-visit-migrated",
       mapOf(
-        "reference" to visitEntity.reference,
-        "prisonerId" to visitEntity.prisonerId,
-        "prisonId" to visitEntity.prisonId,
-        "visitType" to visitEntity.visitType.name,
-        "visitRoom" to visitEntity.visitRoom,
-        "visitRestriction" to visitEntity.visitRestriction.name,
-        "visitStart" to visitEntity.visitStart.toString(),
-        "visitStatus" to visitEntity.visitStatus.name,
-        "outcomeStatus" to visitEntity.outcomeStatus?.name
+        "reference" to entity.reference,
+        "visitRoom" to entity.visitRoom,
+        "visitStart" to entity.visitStart.toString(),
+        "visitRestriction" to entity.visitRestriction.name,
+        "prisonerId" to entity.booking!!.prisonerId,
+        "prisonId" to entity.booking!!.prisonId,
+        "visitType" to entity.booking!!.visitType.name,
+        "visitStatus" to entity.booking!!.visitStatus.name,
+        "outcomeStatus" to entity.booking!!.outcomeStatus?.name
       ),
       null
     )
+
+    return entity.reference // dto?
   }
 
-  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
-    return VisitNote(
-      visitId = visit.id,
+  private fun createBookingContact(booking: Booking, name: String, telephone: String): Contact {
+    return Contact(
+      bookingId = booking.id,
+      name = name,
+      telephone = telephone,
+      booking = booking
+    )
+  }
+
+  private fun createBookingVisitor(booking: Booking, personId: Long): Visitor {
+    return Visitor(
+      nomisPersonId = personId,
+      bookingId = booking.id,
+      booking = booking
+    )
+  }
+
+  private fun createBookingNote(booking: Booking, type: NoteType, text: String): Note {
+    return Note(
+      bookingId = booking.id,
       type = type,
       text = text,
-      visit = visit
+      booking = booking
     )
   }
 
-  private fun saveLegacyData(visit: Visit, leadPersonId: Long?) {
-    val legacyData = LegacyData(
-      visitId = visit.id,
+  private fun createLegacyData(booking: Booking, leadPersonId: Long?): LegacyData {
+    return LegacyData(
+      bookingId = booking.id,
       leadPersonId = leadPersonId
-    )
-
-    legacyDataRepository.saveAndFlush(legacyData)
-  }
-
-  private fun createVisitContact(visit: Visit, name: String, telephone: String?): VisitContact {
-    return VisitContact(
-      visitId = visit.id,
-      name = name,
-      telephone = telephone ?: "",
-      visit = visit
-    )
-  }
-
-  private fun createVisitVisitor(visit: Visit, personId: Long): VisitVisitor {
-    return VisitVisitor(
-      nomisPersonId = personId,
-      visitId = visit.id,
-      visit = visit
     )
   }
 }
