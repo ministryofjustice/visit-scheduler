@@ -33,7 +33,7 @@ data class SessionTemplateDto(
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
   val openCapacity: Int,
-  @Schema(description = "open capacity", example = "MONDAY", required = false)
+  @Schema(description = "day of week fpr visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
