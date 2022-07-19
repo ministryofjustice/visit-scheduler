@@ -76,7 +76,7 @@ class SessionService(
     val firstBookableSessionDay = getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate)
     val lastBookableSessionDay = getLastBookableSession(sessionTemplate, requestedBookableEndDate)
 
-    if (firstBookableSessionDay.isBefore(lastBookableSessionDay)) {
+    if (firstBookableSessionDay <= lastBookableSessionDay) {
 
       return firstBookableSessionDay.datesUntil(
         lastBookableSessionDay.plusDays(1), sessionTemplate.frequency.frequencyPeriod
