@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import java.time.DayOfWeek.MONDAY
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -54,7 +55,8 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
       visitType = VisitType.SOCIAL,
       frequency = WEEKLY,
       openCapacity = 5,
-      closedCapacity = 2
+      closedCapacity = 2,
+      dayOfWeek = MONDAY
     )
 
     @Test
@@ -83,6 +85,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .jsonPath("$.visitRoom").isEqualTo("A1")
         .jsonPath("$.visitType").isEqualTo(VisitType.SOCIAL.name)
         .jsonPath("$.sessionTemplateId").isNumber
+        .jsonPath("$.dayOfWeek").isEqualTo(MONDAY.name)
         .returnResult()
 
       // And
