@@ -23,7 +23,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import java.time.DayOfWeek.MONDAY
@@ -53,7 +52,6 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
       expiryDate = LocalDate.of(2021, 4, 1),
       visitRoom = "A1",
       visitType = VisitType.SOCIAL,
-      frequency = WEEKLY,
       openCapacity = 5,
       closedCapacity = 2,
       dayOfWeek = MONDAY
@@ -79,7 +77,6 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .jsonPath("$.prisonId").isEqualTo("LEI")
         .jsonPath("$.startTime").isEqualTo("14:30:00")
         .jsonPath("$.endTime").isEqualTo("16:30:00")
-        .jsonPath("$.frequency").isEqualTo(WEEKLY.name)
         .jsonPath("$.openCapacity").isEqualTo(5)
         .jsonPath("$.closedCapacity").isEqualTo(2)
         .jsonPath("$.visitRoom").isEqualTo("A1")
@@ -231,15 +228,13 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
       sessionTemplateCreator(
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
-          startDate = LocalDate.parse("2021-01-01"),
-          frequency = WEEKLY
+          startDate = LocalDate.parse("2021-01-01")
         )
       ).save()
       sessionTemplateCreator(
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
-          startDate = LocalDate.parse("2021-02-01"),
-          frequency = WEEKLY
+          startDate = LocalDate.parse("2021-02-01")
         )
       ).save()
       webTestClient.get().uri("/visit-session-templates")
@@ -255,8 +250,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
       val sessionTemplate = sessionTemplateCreator(
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
-          startDate = LocalDate.parse("2021-01-01"),
-          frequency = WEEKLY
+          startDate = LocalDate.parse("2021-01-01")
         )
       ).save()
 
@@ -273,7 +267,6 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .jsonPath("$.startDate").isEqualTo("2021-01-01")
         .jsonPath("$.visitType").isEqualTo(VisitType.SOCIAL.name)
         .jsonPath("$.visitRoom").isEqualTo("1")
-        .jsonPath("$.frequency").isEqualTo(WEEKLY.name)
         .jsonPath("$.closedCapacity").isEqualTo(5)
         .jsonPath("$.openCapacity").isEqualTo(10)
     }

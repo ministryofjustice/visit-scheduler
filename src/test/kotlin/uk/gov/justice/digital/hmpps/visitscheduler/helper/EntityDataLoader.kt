@@ -1,8 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
@@ -51,11 +49,6 @@ class VisitBuilder(
 
   fun withVisitStatus(status: VisitStatus): VisitBuilder {
     this.visit = visit.copy(visitStatus = status)
-    return this
-  }
-
-  fun withRestriction(restriction: VisitRestriction): VisitBuilder {
-    this.visit = visit.copy(visitRestriction = restriction)
     return this
   }
 
@@ -190,7 +183,6 @@ fun defaultSessionTemplate(): SessionTemplate {
   return sessionTemplate(
     prisonId = "MDI",
     startDate = LocalDate.of(2021, 10, 23),
-    frequency = WEEKLY,
     openCapacity = 5,
     closedCapacity = 1,
     visitRoom = "3B",

@@ -8,8 +8,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.SINGLE
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
@@ -43,11 +41,13 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
   fun `visit sessions are returned for a prison for a single schedule`() {
 
     // Given
+    val dateTime = LocalDate.parse("2021-01-08")
+
     val sessionTemplate = sessionTemplate(
-      startDate = LocalDate.parse("2021-01-08"),
+      startDate = dateTime,
+      expiryDate = dateTime,
       startTime = LocalTime.parse("09:00"),
-      endTime = LocalTime.parse("10:00"),
-      frequency = SINGLE
+      endTime = LocalTime.parse("10:00")
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -70,7 +70,6 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
     // Given
     val sessionTemplate1 = sessionTemplate(
       startDate = LocalDate.parse("2021-01-08"),
-      frequency = WEEKLY,
       dayOfWeek = DayOfWeek.SUNDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
@@ -78,7 +77,6 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
 
     val sessionTemplate2 = sessionTemplate(
       startDate = LocalDate.parse("2021-01-08"),
-      frequency = WEEKLY,
       dayOfWeek = DayOfWeek.MONDAY,
       startTime = LocalTime.parse("10:30"),
       endTime = LocalTime.parse("11:30")
@@ -125,7 +123,6 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplate(
       startDate = LocalDate.parse("2021-01-01"),
       expiryDate = LocalDate.parse("2021-01-01"),
-      frequency = WEEKLY,
       dayOfWeek = DayOfWeek.FRIDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
@@ -154,7 +151,6 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplate(
       startDate = LocalDate.parse("2021-01-01"),
       expiryDate = LocalDate.parse("2021-01-01"),
-      frequency = WEEKLY,
       dayOfWeek = DayOfWeek.SATURDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
@@ -238,8 +234,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
     // Given
     val sessionTemplate = sessionTemplate(
       startDate = LocalDate.parse("2020-01-01"),
-      expiryDate = LocalDate.parse("2020-06-01"),
-      frequency = WEEKLY
+      expiryDate = LocalDate.parse("2020-06-01")
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -262,8 +257,7 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
     // System time is altered using the TestClockConfiguration above
     val sessionTemplate = sessionTemplate(
       startDate = LocalDate.parse("2022-01-01"),
-      expiryDate = LocalDate.parse("2022-06-01"),
-      frequency = WEEKLY
+      expiryDate = LocalDate.parse("2022-06-01")
     )
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -288,9 +282,9 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
 
     val sessionTemplate = sessionTemplate(
       startDate = dateTime.toLocalDate(),
+      expiryDate = dateTime.toLocalDate(),
       startTime = startTime,
-      endTime = endTime.toLocalTime(),
-      frequency = SINGLE
+      endTime = endTime.toLocalTime()
     )
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -335,9 +329,10 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
 
     val sessionTemplate = sessionTemplate(
       startDate = dateTime.toLocalDate(),
+      expiryDate = dateTime.toLocalDate(),
       startTime = startTime,
       endTime = endTime.toLocalTime(),
-      frequency = SINGLE
+      dayOfWeek = DayOfWeek.FRIDAY
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -381,9 +376,9 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
 
     val sessionTemplate = sessionTemplate(
       startDate = dateTime.toLocalDate(),
+      expiryDate = dateTime.toLocalDate(),
       startTime = startTime,
-      endTime = endTime.toLocalTime(),
-      frequency = SINGLE
+      endTime = endTime.toLocalTime()
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -429,9 +424,9 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
 
     val sessionTemplate = sessionTemplate(
       startDate = dateTime.toLocalDate(),
+      expiryDate = dateTime.toLocalDate(),
       startTime = startTime,
-      endTime = endTime.toLocalTime(),
-      frequency = SINGLE
+      endTime = endTime.toLocalTime()
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)

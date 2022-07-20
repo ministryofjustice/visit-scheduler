@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
 import java.time.DayOfWeek
@@ -27,8 +26,6 @@ data class SessionTemplateDto(
   val visitType: VisitType,
   @Schema(description = "visit room", example = "A1", required = true)
   val visitRoom: String,
-  @Schema(description = "frequency", example = "A1", required = true)
-  val frequency: SessionFrequency,
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
@@ -44,7 +41,6 @@ data class SessionTemplateDto(
     visitType = sessionTemplateEntity.visitType,
     startDate = sessionTemplateEntity.startDate,
     expiryDate = sessionTemplateEntity.expiryDate,
-    frequency = sessionTemplateEntity.frequency,
     visitRoom = sessionTemplateEntity.visitRoom,
     closedCapacity = sessionTemplateEntity.closedCapacity,
     openCapacity = sessionTemplateEntity.openCapacity,

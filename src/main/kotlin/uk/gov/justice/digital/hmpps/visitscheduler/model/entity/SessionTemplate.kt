@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -32,10 +31,6 @@ data class SessionTemplate(
   val visitType: VisitType,
 
   @Column(nullable = false)
-  @Enumerated(EnumType.STRING)
-  val frequency: SessionFrequency,
-
-  @Column(nullable = false)
   val startTime: LocalTime,
 
   @Column(nullable = false)
@@ -53,7 +48,7 @@ data class SessionTemplate(
   @Column(nullable = false)
   val openCapacity: Int,
 
-  @Column(nullable = true)
+  @Column(nullable = false)
   @Enumerated(EnumType.STRING)
-  val dayOfWeek: DayOfWeek? = null
+  val dayOfWeek: DayOfWeek
 )
