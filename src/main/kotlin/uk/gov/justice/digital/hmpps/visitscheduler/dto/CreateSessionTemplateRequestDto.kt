@@ -35,6 +35,6 @@ data class CreateSessionTemplateRequestDto(
   @Schema(description = "open capacity", example = "50", required = true)
   @field:NotNull
   val openCapacity: Int,
-  @Schema(description = "day of week fpr visit", example = "MONDAY", required = true)
+  @Schema(description = "day of week for visit", example = "MONDAY", required = true)
   val dayOfWeek: DayOfWeek
 )
