@@ -52,10 +52,10 @@ data class VisitSessionDto(
   )
   var closedVisitBookedCount: Int? = 0,
 
-  @Schema(description = "The start timestamp for this visit session", example = "1", required = true)
+  @Schema(description = "The start timestamp for this visit session", example = "2020-11-01T12:00:00", required = true)
   val startTimestamp: LocalDateTime,
 
-  @Schema(description = "The end timestamp for this visit session", example = "1", required = true)
+  @Schema(description = "The end timestamp for this visit session", example = "2020-11-01T14:30:00", required = true)
   val endTimestamp: LocalDateTime,
 
   @Schema(description = "The day of week for the visit session", example = "MONDAY", required = true)
