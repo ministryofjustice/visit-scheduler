@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import java.time.DayOfWeek
 import java.time.LocalDateTime
 
 @Schema(description = "Visit Session")
@@ -56,9 +55,5 @@ data class VisitSessionDto(
   val startTimestamp: LocalDateTime,
 
   @Schema(description = "The end timestamp for this visit session", example = "2020-11-01T14:30:00", required = true)
-  val endTimestamp: LocalDateTime,
-
-  @Schema(description = "The day of week for the visit session", example = "MONDAY", required = true)
-  val dayOfWeek: DayOfWeek?,
-
+  val endTimestamp: LocalDateTime
 )

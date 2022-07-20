@@ -1,9 +1,12 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
@@ -19,11 +22,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRep
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 
 // System time is altered using the TestClockConfiguration below
 @Import(TestClockConfiguration::class)
-class VisitSessionsControllerTest : IntegrationTestBase() {
+class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sessionTemplateRepository: SessionTemplateRepository
@@ -91,27 +95,41 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
 
     // Then
-    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(6)
-      .jsonPath("$[0].startTimestamp").isEqualTo("2021-01-10T09:00:00")
-      .jsonPath("$[0].endTimestamp").isEqualTo("2021-01-10T10:00:00")
-      .jsonPath("$[0].dayOfWeek").isEqualTo(DayOfWeek.SUNDAY.name)
-      .jsonPath("$[1].startTimestamp").isEqualTo("2021-01-11T10:30:00")
-      .jsonPath("$[1].endTimestamp").isEqualTo("2021-01-11T11:30:00")
-      .jsonPath("$[1].dayOfWeek").isEqualTo(DayOfWeek.MONDAY.name)
-      .jsonPath("$[2].startTimestamp").isEqualTo("2021-01-17T09:00:00")
-      .jsonPath("$[2].endTimestamp").isEqualTo("2021-01-17T10:00:00")
-      .jsonPath("$[2].dayOfWeek").isEqualTo(DayOfWeek.SUNDAY.name)
-      .jsonPath("$[3].startTimestamp").isEqualTo("2021-01-18T10:30:00")
-      .jsonPath("$[3].endTimestamp").isEqualTo("2021-01-18T11:30:00")
-      .jsonPath("$[3].dayOfWeek").isEqualTo(DayOfWeek.MONDAY.name)
-      .jsonPath("$[4].startTimestamp").isEqualTo("2021-01-24T09:00:00")
-      .jsonPath("$[4].endTimestamp").isEqualTo("2021-01-24T10:00:00")
-      .jsonPath("$[4].dayOfWeek").isEqualTo(DayOfWeek.SUNDAY.name)
-      .jsonPath("$[5].startTimestamp").isEqualTo("2021-01-25T10:30:00")
-      .jsonPath("$[5].endTimestamp").isEqualTo("2021-01-25T11:30:00")
-      .jsonPath("$[5].dayOfWeek").isEqualTo(DayOfWeek.MONDAY.name)
+
+    val visitSessionDto = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+
+    Assertions.assertThat(visitSessionDto.size).isEqualTo(6)
+    Assertions.assertThat(visitSessionDto[0].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-10T09:00:00"))
+    Assertions.assertThat(visitSessionDto[0].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-10T10:00:00"))
+    Assertions.assertThat(visitSessionDto[0].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
+    Assertions.assertThat(visitSessionDto[0].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
+
+    Assertions.assertThat(visitSessionDto[1].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-11T10:30:00"))
+    Assertions.assertThat(visitSessionDto[1].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-11T11:30:00"))
+    Assertions.assertThat(visitSessionDto[1].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
+    Assertions.assertThat(visitSessionDto[1].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
+
+    Assertions.assertThat(visitSessionDto[2].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-17T09:00:00"))
+    Assertions.assertThat(visitSessionDto[2].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-17T10:00:00"))
+    Assertions.assertThat(visitSessionDto[2].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
+    Assertions.assertThat(visitSessionDto[2].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
+
+    Assertions.assertThat(visitSessionDto[3].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-18T10:30:00"))
+    Assertions.assertThat(visitSessionDto[3].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-18T11:30:00"))
+    Assertions.assertThat(visitSessionDto[3].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
+    Assertions.assertThat(visitSessionDto[3].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
+
+    Assertions.assertThat(visitSessionDto[4].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-24T09:00:00"))
+    Assertions.assertThat(visitSessionDto[4].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-24T10:00:00"))
+    Assertions.assertThat(visitSessionDto[4].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
+    Assertions.assertThat(visitSessionDto[4].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
+
+    Assertions.assertThat(visitSessionDto[5].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-25T10:30:00"))
+    Assertions.assertThat(visitSessionDto[5].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-25T11:30:00"))
+    Assertions.assertThat(visitSessionDto[5].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
+    Assertions.assertThat(visitSessionDto[5].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
   }
 
   @Test
@@ -136,10 +154,14 @@ class VisitSessionsControllerTest : IntegrationTestBase() {
       .exchange()
 
     // Then
-    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].dayOfWeek").isEqualTo(DayOfWeek.FRIDAY.name)
+
+    val visitSessionDto = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+
+    Assertions.assertThat(visitSessionDto.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionDto[0].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.FRIDAY)
+    Assertions.assertThat(visitSessionDto[0].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.FRIDAY)
   }
 
   @Test

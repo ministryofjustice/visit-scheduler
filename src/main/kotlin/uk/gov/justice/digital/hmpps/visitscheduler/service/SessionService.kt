@@ -91,8 +91,7 @@ class SessionService(
             closedVisitCapacity = sessionTemplate.closedCapacity,
             endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
             visitRoomName = sessionTemplate.visitRoom,
-            visitType = sessionTemplate.visitType,
-            dayOfWeek = sessionTemplate.dayOfWeek
+            visitType = sessionTemplate.visitType
           )
         }
         .toList()
