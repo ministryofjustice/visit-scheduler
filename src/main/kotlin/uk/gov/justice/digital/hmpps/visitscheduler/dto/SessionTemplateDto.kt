@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.validation.constraints.NotBlank
@@ -26,12 +26,12 @@ data class SessionTemplateDto(
   val visitType: VisitType,
   @Schema(description = "visit room", example = "A1", required = true)
   val visitRoom: String,
-  @Schema(description = "frequency", example = "A1", required = true)
-  val frequency: SessionFrequency,
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
   val openCapacity: Int,
+  @Schema(description = "day of week fpr visit", example = "MONDAY", required = false)
+  val dayOfWeek: DayOfWeek?,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     sessionTemplateId = sessionTemplateEntity.id,
@@ -41,9 +41,9 @@ data class SessionTemplateDto(
     visitType = sessionTemplateEntity.visitType,
     startDate = sessionTemplateEntity.startDate,
     expiryDate = sessionTemplateEntity.expiryDate,
-    frequency = sessionTemplateEntity.frequency,
     visitRoom = sessionTemplateEntity.visitRoom,
     closedCapacity = sessionTemplateEntity.closedCapacity,
-    openCapacity = sessionTemplateEntity.openCapacity
+    openCapacity = sessionTemplateEntity.openCapacity,
+    dayOfWeek = sessionTemplateEntity.dayOfWeek
   )
 }

@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 import javax.validation.constraints.NotBlank
@@ -29,13 +29,12 @@ data class CreateSessionTemplateRequestDto(
   @Schema(description = "visit room", example = "A1", required = true)
   @field:NotBlank
   val visitRoom: String,
-  @Schema(description = "frequency", required = true)
-  @field:NotNull
-  val frequency: SessionFrequency,
   @Schema(description = "closed capacity", example = "10", required = true)
   @field:NotNull
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
   @field:NotNull
   val openCapacity: Int,
+  @Schema(description = "day of week for visit", example = "MONDAY", required = true)
+  val dayOfWeek: DayOfWeek
 )

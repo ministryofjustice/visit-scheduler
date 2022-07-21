@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -17,7 +17,7 @@ fun sessionTemplate(
   visitType: VisitType = VisitType.SOCIAL,
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
-  frequency: SessionFrequency = SessionFrequency.DAILY
+  dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY
 ) = SessionTemplate(
   id = id,
   startDate = startDate,
@@ -29,5 +29,5 @@ fun sessionTemplate(
   visitType = visitType,
   startTime = startTime,
   endTime = endTime,
-  frequency = frequency
+  dayOfWeek = dayOfWeek
 )

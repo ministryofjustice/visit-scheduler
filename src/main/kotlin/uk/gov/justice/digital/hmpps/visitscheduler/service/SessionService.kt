@@ -16,9 +16,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.Clock
+import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.Period
+import java.time.temporal.TemporalAdjusters
+import java.util.stream.Stream
 
 @Service
 @Transactional
@@ -42,17 +46,19 @@ class SessionService(
     noticeDaysMin: Long? = null,
     noticeDaysMax: Long? = null
   ): List<VisitSessionDto> {
-    val bookablePeriodStartDate = LocalDate.now(clock).plusDays(noticeDaysMin ?: policyNoticeDaysMin)
-    val bookablePeriodEndDate = LocalDate.now(clock).plusDays(noticeDaysMax ?: policyNoticeDaysMax)
+
+    val today = LocalDate.now(clock)
+    val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
+    val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
 
     val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
       prisonId,
-      bookablePeriodStartDate,
-      bookablePeriodEndDate
+      requestedBookableStartDate,
+      requestedBookableEndDate
     )
 
     var sessions = sessionTemplates.map {
-      buildVisitSessionsUsingTemplate(it, bookablePeriodStartDate, bookablePeriodEndDate)
+      buildVisitSessionsUsingTemplate(it, requestedBookableStartDate, requestedBookableEndDate)
     }.flatten()
 
     if (!prisonerId.isNullOrBlank()) {
@@ -66,41 +72,68 @@ class SessionService(
 
   private fun buildVisitSessionsUsingTemplate(
     sessionTemplate: SessionTemplate,
-    bookablePeriodStartDate: LocalDate,
-    bookablePeriodEndDate: LocalDate
+    requestedBookableStartDate: LocalDate,
+    requestedBookableEndDate: LocalDate
   ): List<VisitSessionDto> {
-    val lastBookableSessionDay =
-      if (sessionTemplate.expiryDate == null || bookablePeriodEndDate.isBefore(sessionTemplate.expiryDate))
-        bookablePeriodEndDate
-      else
-        sessionTemplate.expiryDate
 
-    val firstBookableSessionDay: LocalDate = if (bookablePeriodStartDate.isAfter(sessionTemplate.startDate))
-      bookablePeriodStartDate
-    else
-      sessionTemplate.startDate
+    val firstBookableSessionDay = getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.startDate, sessionTemplate.dayOfWeek)
+    val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.expiryDate)
 
-    // Create a VisitSession for every date from the template start date in increments of frequency until the
-    // lastBookableSessionDay + 1
-    return sessionTemplate.startDate.datesUntil(
-      lastBookableSessionDay.plusDays(1), sessionTemplate.frequency.frequencyPeriod
+    if (firstBookableSessionDay <= lastBookableSessionDay) {
+
+      return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay)
+        .map { date ->
+          VisitSessionDto(
+            sessionTemplateId = sessionTemplate.id,
+            prisonId = sessionTemplate.prisonId,
+            startTimestamp = LocalDateTime.of(date, sessionTemplate.startTime),
+            openVisitCapacity = sessionTemplate.openCapacity,
+            closedVisitCapacity = sessionTemplate.closedCapacity,
+            endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
+            visitRoomName = sessionTemplate.visitRoom,
+            visitType = sessionTemplate.visitType
+          )
+        }
+        .toList()
+    }
+
+    return emptyList()
+  }
+
+  private fun calculateDates(firstBookableSessionDay: LocalDate, lastBookableSessionDay: LocalDate): Stream<LocalDate> {
+    return firstBookableSessionDay.datesUntil(
+      lastBookableSessionDay.plusDays(1), Period.ofWeeks(1)
     )
-      .map {
-        date ->
-        VisitSessionDto(
-          sessionTemplateId = sessionTemplate.id,
-          prisonId = sessionTemplate.prisonId,
-          startTimestamp = LocalDateTime.of(date, sessionTemplate.startTime),
-          openVisitCapacity = sessionTemplate.openCapacity,
-          closedVisitCapacity = sessionTemplate.closedCapacity,
-          endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
-          visitRoomName = sessionTemplate.visitRoom,
-          visitType = sessionTemplate.visitType
-        )
+  }
+
+  private fun getFirstBookableSessionDay(
+    bookablePeriodStartDate: LocalDate,
+    sessionStartDate: LocalDate,
+    sessionDayOfWeek: DayOfWeek?
+  ): LocalDate {
+
+    var startDate = sessionStartDate
+    if (bookablePeriodStartDate.isAfter(startDate)) {
+      startDate = bookablePeriodStartDate
+    }
+    sessionDayOfWeek?.let {
+      if (startDate.dayOfWeek != sessionDayOfWeek) {
+        startDate = startDate.with(TemporalAdjusters.next(sessionDayOfWeek))
       }
-      // remove created VisitSessions which are before the bookable period
-      .filter { session -> session.startTimestamp > LocalDateTime.of(firstBookableSessionDay, LocalTime.MIDNIGHT) }
-      .toList()
+    }
+    return startDate
+  }
+
+  private fun getLastBookableSession(
+    bookablePeriodEndDate: LocalDate,
+    sessionExpiryDate: LocalDate?
+  ): LocalDate {
+
+    if (sessionExpiryDate == null || bookablePeriodEndDate.isBefore(sessionExpiryDate)) {
+      return bookablePeriodEndDate
+    }
+
+    return sessionExpiryDate
   }
 
   private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {

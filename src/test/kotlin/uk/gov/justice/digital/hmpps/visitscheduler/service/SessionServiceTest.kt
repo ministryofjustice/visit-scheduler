@@ -21,10 +21,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDet
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.DAILY
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.MONTHLY
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.SINGLE
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionFrequency.WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
@@ -38,10 +34,6 @@ import java.time.Clock
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
-import java.time.DayOfWeek.SATURDAY
-import java.time.DayOfWeek.SUNDAY
-import java.time.DayOfWeek.THURSDAY
-import java.time.DayOfWeek.TUESDAY
 import java.time.DayOfWeek.WEDNESDAY
 import java.time.Instant
 import java.time.LocalDate
@@ -94,33 +86,6 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `a daily session will return 7 sessions including first bookable day and expiry day`() {
-
-      // Given
-      val dailySession = sessionTemplate(
-        expiryDate = LocalDate.parse("2021-01-08"),
-        startDate = LocalDate.parse("2021-01-01"),
-        startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
-        frequency = DAILY
-      )
-      mockSessionRepositoryResponse(listOf(dailySession))
-
-      // When
-      val sessions = sessionService.getVisitSessions("MDI")
-
-      // Then
-      assertThat(sessions).size().isEqualTo(7) // expiry date is inclusive
-      assertDate(sessions[0].startTimestamp, "2021-01-02T11:30:00", SATURDAY)
-      assertDate(sessions[1].startTimestamp, "2021-01-03T11:30:00", SUNDAY)
-      assertDate(sessions[2].startTimestamp, "2021-01-04T11:30:00", MONDAY)
-      assertDate(sessions[3].startTimestamp, "2021-01-05T11:30:00", TUESDAY)
-      assertDate(sessions[4].startTimestamp, "2021-01-06T11:30:00", WEDNESDAY)
-      assertDate(sessions[5].startTimestamp, "2021-01-07T11:30:00", THURSDAY)
-      assertDate(sessions[6].startTimestamp, "2021-01-08T11:30:00", FRIDAY)
-    }
-
-    @Test
     fun `a weekly session will return 6 sessions including today and expiry date`() {
 
       // Given
@@ -132,7 +97,7 @@ class SessionServiceTest {
         openCapacity = 10,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
-        frequency = WEEKLY
+        dayOfWeek = FRIDAY
       )
       mockSessionRepositoryResponse(listOf(weeklySession))
 
@@ -160,7 +125,7 @@ class SessionServiceTest {
         openCapacity = 10,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
-        frequency = WEEKLY
+        dayOfWeek = WEDNESDAY
       )
       mockSessionRepositoryResponse(listOf(weeklySession))
 
@@ -177,43 +142,17 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `sessions are consistently generated, monthly sessions always fall on the same day regardless of date of generation`() {
-
-      // Given
-
-      val startDate: LocalDate = LocalDate.parse("2021-01-02")
-
-      val monthlySession = sessionTemplate(
-        expiryDate = startDate.plusMonths(12),
-        startDate = startDate, // session template start date is a Wednesday
-        closedCapacity = 5,
-        openCapacity = 10,
-        startTime = LocalTime.parse("11:30"),
-        endTime = LocalTime.parse("12:30"),
-        frequency = MONTHLY
-      )
-      mockSessionRepositoryResponse(listOf(monthlySession))
-
-      // When
-      val sessions = sessionService.getVisitSessions("MDI")
-
-      // Then
-      assertThat(sessions).size().isEqualTo(4) // expiry date is inclusive
-      assertDate(sessions[0].startTimestamp, "2021-01-02T11:30", SATURDAY)
-      assertDate(sessions[1].startTimestamp, "2021-02-02T11:30", TUESDAY)
-      assertDate(sessions[2].startTimestamp, "2021-03-02T11:30", TUESDAY)
-      assertDate(sessions[3].startTimestamp, "2021-04-02T11:30", FRIDAY)
-    }
-
-    @Test
     fun `a single session will return 1 session`() {
 
       // Given
+      val dateTime = LocalDate.parse("2021-02-01")
+
       val singleSession = sessionTemplate(
-        startDate = LocalDate.parse("2021-02-01"),
+        startDate = dateTime,
+        expiryDate = dateTime,
+        dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
-        frequency = SINGLE
+        endTime = LocalTime.parse("12:30") // future time
       )
       mockSessionRepositoryResponse(listOf(singleSession))
 
@@ -226,75 +165,17 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `all sessions are on past dates, no sessions are returned`() {
-
-      // Given
-
-      val dailySession = sessionTemplate(
-        startDate = LocalDate.parse("2021-01-01").minusDays(8),
-        expiryDate = LocalDate.parse("2021-01-01").minusDays(1),
-        frequency = DAILY
-      )
-      mockSessionRepositoryResponse(listOf(dailySession))
-
-      // When
-      val sessions = sessionService.getVisitSessions("MDI")
-
-      // Then
-      assertThat(sessions).size().isEqualTo(0)
-    }
-
-    @Test
-    fun getMultipleSessions() {
-
-      // Given
-
-      val monthlySession = sessionTemplate(
-        startDate = LocalDate.parse("2021-01-01"),
-        expiryDate = LocalDate.parse("2021-02-01"),
-        frequency = MONTHLY,
-        startTime = LocalTime.parse("11:30"),
-        endTime = LocalTime.parse("11:45"),
-        id = 1,
-        visitRoom = "Monthly Room"
-      )
-      val dailySession = sessionTemplate(
-        startDate = LocalDate.parse("2021-01-01"),
-        expiryDate = LocalDate.parse("2021-01-05"),
-        frequency = DAILY,
-        startTime = LocalTime.of(16, 0, 0),
-        endTime = LocalTime.of(16, 30, 0),
-        id = 2,
-        visitRoom = "Daily Room"
-      )
-
-      mockSessionRepositoryResponse(listOf(monthlySession, dailySession))
-
-      // When
-      val sessions = sessionService.getVisitSessions("MDI")
-
-      // Then
-      assertThat(sessions).size().isEqualTo(5)
-
-      assertDate(sessions[0].startTimestamp, "2021-01-02T16:00", SATURDAY)
-      assertDate(sessions[1].startTimestamp, "2021-01-03T16:00", SUNDAY)
-      assertDate(sessions[2].startTimestamp, "2021-01-04T16:00", MONDAY)
-      assertDate(sessions[3].startTimestamp, "2021-01-05T16:00", TUESDAY)
-      assertDate(sessions[4].startTimestamp, "2021-02-01T11:30", MONDAY)
-
-      assertThat(sessions).filteredOn("visitRoomName", "Daily Room").hasSize(4)
-      assertThat(sessions).filteredOn("visitRoomName", "Monthly Room").hasSize(1)
-    }
-
-    @Test
     fun `Single Session without Visit has zero Open and zero Closed slot count`() {
       // Given
 
+      val dateTime = LocalDate.parse("2021-02-01")
+
       val singleSession = sessionTemplate(
-        startDate = LocalDate.parse("2021-02-01"),
+        startDate = dateTime,
+        expiryDate = dateTime,
+        dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
-        frequency = SINGLE
+        endTime = LocalTime.parse("12:30") // future time
       )
       mockSessionRepositoryResponse(listOf(singleSession))
 
@@ -311,11 +192,14 @@ class SessionServiceTest {
     fun `Single Session with BOOKED Visit has booked slot count`() {
 
       // Given
+      val dateTime = LocalDate.parse("2021-02-01")
+
       val singleSession = sessionTemplate(
-        startDate = LocalDate.parse("2021-02-01"),
+        startDate = dateTime,
+        expiryDate = dateTime,
+        dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
-        frequency = SINGLE
+        endTime = LocalTime.parse("12:30") // future time
       )
       mockSessionRepositoryResponse(listOf(singleSession))
 
@@ -327,7 +211,7 @@ class SessionServiceTest {
         prisonId = "MDI",
         visitStatus = BOOKED,
         visitRestriction = OPEN,
-        visitRoom = "123c",
+        visitRoom = "123c"
       )
       mockVisitRepositoryResponse(listOf(visit))
 
@@ -344,11 +228,14 @@ class SessionServiceTest {
     fun `Single Session with RESERVED Visit has booked slot count`() {
       // Given
 
+      val dateTime = LocalDate.parse("2021-02-01")
+
       val singleSession = sessionTemplate(
-        startDate = LocalDate.parse("2021-02-01"),
+        startDate = dateTime,
+        expiryDate = dateTime,
+        dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
-        frequency = SINGLE
+        endTime = LocalTime.parse("12:30") // future time
       )
       mockSessionRepositoryResponse(listOf(singleSession))
 
@@ -360,7 +247,7 @@ class SessionServiceTest {
         prisonId = "MDI",
         visitStatus = RESERVED,
         visitRestriction = OPEN,
-        visitRoom = "123c",
+        visitRoom = "123c"
       )
       mockVisitRepositoryResponse(listOf(visit))
 
@@ -395,13 +282,16 @@ class SessionServiceTest {
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
       val startDate = LocalDate.parse("2021-02-01")
+      val endDate = LocalDate.parse("2021-02-01")
 
       val singleSession = sessionTemplate(
         startDate = startDate,
+        expiryDate = endDate,
+        dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
-        endTime = LocalTime.parse("12:30"),
-        frequency = SINGLE
+        endTime = LocalTime.parse("12:30")
       )
+
       mockRepositoryResponse(listOf(singleSession))
 
       whenever(
@@ -425,13 +315,16 @@ class SessionServiceTest {
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
+
       val startDate = LocalDate.parse("2021-01-01")
+      val endDate = LocalDate.parse("2021-01-09")
 
       val singleSession = sessionTemplate(
         startDate = startDate.plusDays(2),
+        expiryDate = endDate,
+        dayOfWeek = FRIDAY,
         startTime = LocalTime.parse("11:30"),
-        endTime = LocalTime.parse("12:30"),
-        frequency = SINGLE
+        endTime = LocalTime.parse("12:30")
       )
       mockRepositoryResponse(listOf(singleSession))
 
@@ -468,12 +361,14 @@ class SessionServiceTest {
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
       val startDate = LocalDate.parse("2021-01-01")
+      val endDate = LocalDate.parse("2021-01-09")
 
       val singleSession = sessionTemplate(
         startDate = startDate.plusDays(2),
+        expiryDate = endDate,
+        dayOfWeek = DayOfWeek.SATURDAY,
         startTime = LocalTime.parse("11:30"),
-        endTime = LocalTime.parse("12:30"),
-        frequency = SINGLE
+        endTime = LocalTime.parse("12:30")
       )
       mockRepositoryResponse(listOf(singleSession))
 
@@ -526,9 +421,10 @@ class SessionServiceTest {
 
       val singleSession = sessionTemplate(
         startDate = startDate,
+        expiryDate = startDate,
+        dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
-        endTime = LocalTime.parse("12:30"),
-        frequency = SINGLE
+        endTime = LocalTime.parse("12:30")
       )
       mockRepositoryResponse(listOf(singleSession))
 
@@ -559,8 +455,7 @@ class SessionServiceTest {
       val singleSession = sessionTemplate(
         startDate = startDate,
         startTime = LocalTime.parse("11:30"),
-        endTime = LocalTime.parse("12:30"),
-        frequency = SINGLE
+        endTime = LocalTime.parse("12:30")
       )
       mockRepositoryResponse(listOf(singleSession))
 
