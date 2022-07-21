@@ -23,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
@@ -223,8 +224,8 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
-      assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
+      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN)
+      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN)
     }
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
@@ -299,7 +300,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
+      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN)
     }
 
     // And
@@ -334,7 +335,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo("UNKNOWN")
+      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN)
     }
 
     // And
@@ -368,7 +369,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
+      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN)
     }
 
     // And
@@ -403,7 +404,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo("UNKNOWN")
+      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN)
     }
 
     // And

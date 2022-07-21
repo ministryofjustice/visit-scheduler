@@ -6,7 +6,7 @@ import javax.validation.constraints.NotBlank
 
 data class CreateLegacyContactOnVisitRequestDto(@field:NotBlank val name: String, @field:NotBlank val telephone: String) {
   companion object {
-    private const val UNKNOWN = "UNKNOWN"
+    const val UNKNOWN = "Unknown"
 
     // Deserialization kotlin data class issue when name and/or telephone  = json type of null defaults do not get set hence below
     // JsonCreator and JvmStatic code
