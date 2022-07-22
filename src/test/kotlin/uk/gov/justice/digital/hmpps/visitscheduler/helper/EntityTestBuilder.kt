@@ -8,8 +8,8 @@ import java.time.LocalTime
 
 fun sessionTemplate(
   id: Long = 123,
-  startDate: LocalDate,
-  expiryDate: LocalDate? = null,
+  validFromDate: LocalDate,
+  validToDate: LocalDate? = null,
   closedCapacity: Int = 5,
   openCapacity: Int = 10,
   prisonId: String = "MDI",
@@ -20,8 +20,8 @@ fun sessionTemplate(
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY
 ) = SessionTemplate(
   id = id,
-  startDate = startDate,
-  expiryDate = expiryDate,
+  validFromDate = validFromDate,
+  validToDate = validToDate,
   closedCapacity = closedCapacity,
   openCapacity = openCapacity,
   prisonId = prisonId,

@@ -48,8 +48,8 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
       prisonId = "LEI",
       startTime = LocalTime.of(14, 30),
       endTime = LocalTime.of(16, 30),
-      startDate = LocalDate.of(2021, 1, 1),
-      expiryDate = LocalDate.of(2021, 4, 1),
+      validFromDate = LocalDate.of(2021, 1, 1),
+      validToDate = LocalDate.of(2021, 4, 1),
       visitRoom = "A1",
       visitType = VisitType.SOCIAL,
       openCapacity = 5,
@@ -145,8 +145,8 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         "prisonId":"",
         "startTime":"14:30:00",
         "endTime":"16:30:00",
-        "startDate":"2021-01-01",
-        "expiryDate":"2021-04-01",
+        "validFromDate":"2021-01-01",
+        "validToDate":"2021-04-01",
         "visitType":"SOCIAL",
         "visitRoom":"A1",
         "frequency": "WEEKLY",
@@ -228,13 +228,13 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
       sessionTemplateCreator(
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
-          startDate = LocalDate.parse("2021-01-01")
+          validFromDate = LocalDate.parse("2021-01-01")
         )
       ).save()
       sessionTemplateCreator(
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
-          startDate = LocalDate.parse("2021-02-01")
+          validFromDate = LocalDate.parse("2021-02-01")
         )
       ).save()
       webTestClient.get().uri("/visit-session-templates")
@@ -250,7 +250,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
       val sessionTemplate = sessionTemplateCreator(
         repository = sessionTemplateRepository,
         sessionTemplate = sessionTemplate(
-          startDate = LocalDate.parse("2021-01-01")
+          validFromDate = LocalDate.parse("2021-01-01")
         )
       ).save()
 
@@ -264,7 +264,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .jsonPath("$.prisonId").isEqualTo("MDI")
         .jsonPath("$.startTime").isEqualTo("09:00:00")
         .jsonPath("$.endTime").isEqualTo("10:00:00")
-        .jsonPath("$.startDate").isEqualTo("2021-01-01")
+        .jsonPath("$.validFromDate").isEqualTo("2021-01-01")
         .jsonPath("$.visitType").isEqualTo(VisitType.SOCIAL.name)
         .jsonPath("$.visitRoom").isEqualTo("1")
         .jsonPath("$.closedCapacity").isEqualTo(5)

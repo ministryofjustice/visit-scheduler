@@ -76,8 +76,8 @@ class SessionService(
     requestedBookableEndDate: LocalDate
   ): List<VisitSessionDto> {
 
-    val firstBookableSessionDay = getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.startDate, sessionTemplate.dayOfWeek)
-    val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.expiryDate)
+    val firstBookableSessionDay = getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek)
+    val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.validToDate)
 
     if (firstBookableSessionDay <= lastBookableSessionDay) {
 
@@ -112,28 +112,28 @@ class SessionService(
     sessionDayOfWeek: DayOfWeek?
   ): LocalDate {
 
-    var startDate = sessionStartDate
-    if (bookablePeriodStartDate.isAfter(startDate)) {
-      startDate = bookablePeriodStartDate
+    var firstBookableSessionDate = sessionStartDate
+    if (bookablePeriodStartDate.isAfter(firstBookableSessionDate)) {
+      firstBookableSessionDate = bookablePeriodStartDate
     }
     sessionDayOfWeek?.let {
-      if (startDate.dayOfWeek != sessionDayOfWeek) {
-        startDate = startDate.with(TemporalAdjusters.next(sessionDayOfWeek))
+      if (firstBookableSessionDate.dayOfWeek != sessionDayOfWeek) {
+        firstBookableSessionDate = firstBookableSessionDate.with(TemporalAdjusters.next(sessionDayOfWeek))
       }
     }
-    return startDate
+    return firstBookableSessionDate
   }
 
   private fun getLastBookableSession(
     bookablePeriodEndDate: LocalDate,
-    sessionExpiryDate: LocalDate?
+    validToDate: LocalDate?
   ): LocalDate {
 
-    if (sessionExpiryDate == null || bookablePeriodEndDate.isBefore(sessionExpiryDate)) {
+    if (validToDate == null || bookablePeriodEndDate.isBefore(validToDate)) {
       return bookablePeriodEndDate
     }
 
-    return sessionExpiryDate
+    return validToDate
   }
 
   private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {

@@ -48,8 +48,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val dateTime = LocalDate.parse("2021-01-08")
 
     val sessionTemplate = sessionTemplate(
-      startDate = dateTime,
-      expiryDate = dateTime,
+      validFromDate = dateTime,
+      validToDate = dateTime,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
     )
@@ -73,14 +73,14 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
   fun `visit sessions are returned for a prison for a weekly schedule`() {
     // Given
     val sessionTemplate1 = sessionTemplate(
-      startDate = LocalDate.parse("2021-01-08"),
+      validFromDate = LocalDate.parse("2021-01-08"),
       dayOfWeek = DayOfWeek.SUNDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
     )
 
     val sessionTemplate2 = sessionTemplate(
-      startDate = LocalDate.parse("2021-01-08"),
+      validFromDate = LocalDate.parse("2021-01-08"),
       dayOfWeek = DayOfWeek.MONDAY,
       startTime = LocalTime.parse("10:30"),
       endTime = LocalTime.parse("11:30")
@@ -139,8 +139,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val policyNoticeDaysMax = 10
 
     val sessionTemplate = sessionTemplate(
-      startDate = LocalDate.parse("2021-01-01"),
-      expiryDate = LocalDate.parse("2021-01-01"),
+      validFromDate = LocalDate.parse("2021-01-01"),
+      validToDate = LocalDate.parse("2021-01-01"),
       dayOfWeek = DayOfWeek.FRIDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
@@ -171,8 +171,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val policyNoticeDaysMax = 10
 
     val sessionTemplate = sessionTemplate(
-      startDate = LocalDate.parse("2021-01-01"),
-      expiryDate = LocalDate.parse("2021-01-01"),
+      validFromDate = LocalDate.parse("2021-01-01"),
+      validToDate = LocalDate.parse("2021-01-01"),
       dayOfWeek = DayOfWeek.SATURDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
@@ -192,9 +192,9 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
   }
 
   @Test
-  fun `visit sessions are not returned when policy notice min days is greater than max without expiry date`() {
+  fun `visit sessions are not returned when policy notice min days is greater than max without valid to date`() {
     // Given
-    val sessionTemplate = sessionTemplate(startDate = LocalDate.parse("2021-01-08"), expiryDate = null)
+    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.parse("2021-01-08"), validToDate = null)
     val policyNoticeDaysMin = 10
     val policyNoticeDaysMax = 1
 
@@ -214,7 +214,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
   @Test
   fun `visit sessions are not returned when start date is after policy notice min and max days`() {
     // Given
-    val sessionTemplate = sessionTemplate(startDate = LocalDate.parse("2021-01-10"), expiryDate = null)
+    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.parse("2021-01-10"), validToDate = null)
     val policyNoticeDaysMin = 0
     val policyNoticeDaysMax = 1
 
@@ -232,9 +232,9 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
   }
 
   @Test
-  fun `visit sessions are not returned for when policy notice min days is greater than max with expiry date`() {
+  fun `visit sessions are not returned for when policy notice min days is greater than max with valid to date`() {
     // Given
-    val sessionTemplate = sessionTemplate(startDate = LocalDate.parse("2021-01-08"), expiryDate = LocalDate.parse("2022-01-20"))
+    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.parse("2021-01-08"), validToDate = LocalDate.parse("2022-01-20"))
     val policyNoticeDaysMin = 10
     val policyNoticeDaysMax = 1
 
@@ -252,11 +252,11 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
   }
 
   @Test
-  fun `expired visit sessions are not returned`() {
+  fun `visit sessions that are no longer valid are not returned`() {
     // Given
     val sessionTemplate = sessionTemplate(
-      startDate = LocalDate.parse("2020-01-01"),
-      expiryDate = LocalDate.parse("2020-06-01")
+      validFromDate = LocalDate.parse("2020-01-01"),
+      validToDate = LocalDate.parse("2020-06-01")
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -278,8 +278,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // System time is altered using the TestClockConfiguration above
     val sessionTemplate = sessionTemplate(
-      startDate = LocalDate.parse("2022-01-01"),
-      expiryDate = LocalDate.parse("2022-06-01")
+      validFromDate = LocalDate.parse("2022-01-01"),
+      validToDate = LocalDate.parse("2022-06-01")
     )
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -303,8 +303,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val endTime = dateTime.plusHours(1)
 
     val sessionTemplate = sessionTemplate(
-      startDate = dateTime.toLocalDate(),
-      expiryDate = dateTime.toLocalDate(),
+      validFromDate = dateTime.toLocalDate(),
+      validToDate = dateTime.toLocalDate(),
       startTime = startTime,
       endTime = endTime.toLocalTime()
     )
@@ -350,8 +350,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val endTime = dateTime.plusHours(1)
 
     val sessionTemplate = sessionTemplate(
-      startDate = dateTime.toLocalDate(),
-      expiryDate = dateTime.toLocalDate(),
+      validFromDate = dateTime.toLocalDate(),
+      validToDate = dateTime.toLocalDate(),
       startTime = startTime,
       endTime = endTime.toLocalTime(),
       dayOfWeek = DayOfWeek.FRIDAY
@@ -397,8 +397,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val endTime = dateTime.plusHours(1)
 
     val sessionTemplate = sessionTemplate(
-      startDate = dateTime.toLocalDate(),
-      expiryDate = dateTime.toLocalDate(),
+      validFromDate = dateTime.toLocalDate(),
+      validToDate = dateTime.toLocalDate(),
       startTime = startTime,
       endTime = endTime.toLocalTime()
     )
@@ -445,8 +445,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val endTime = dateTime.plusHours(1)
 
     val sessionTemplate = sessionTemplate(
-      startDate = dateTime.toLocalDate(),
-      expiryDate = dateTime.toLocalDate(),
+      validFromDate = dateTime.toLocalDate(),
+      validToDate = dateTime.toLocalDate(),
       startTime = startTime,
       endTime = endTime.toLocalTime()
     )
@@ -491,9 +491,9 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     // Given
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
-    val startDate = LocalDate.parse("2021-01-08")
+    val validFromDate = LocalDate.parse("2021-01-08")
 
-    val sessionTemplate = sessionTemplate(startDate = startDate)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
@@ -516,14 +516,14 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(startDate = startDate)
+    val validFromDate = LocalDate.parse("2021-01-08")
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
-      startDate.toString()
+      validFromDate.toString()
     )
 
     // When
@@ -544,16 +544,16 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(startDate = startDate)
+    val validFromDate = LocalDate.parse("2021-01-08")
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
       prisonerId = prisonerId,
       prisonId = prisonId,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = startDate.atTime(9, 0),
-      visitEnd = startDate.atTime(9, 30),
+      visitStart = validFromDate.atTime(9, 0),
+      visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN
@@ -564,7 +564,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
-      startDate.plusMonths(6).toString()
+      validFromDate.plusMonths(6).toString()
     )
 
     // When
@@ -584,16 +584,16 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(startDate = startDate)
+    val validFromDate = LocalDate.parse("2021-01-08")
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
       prisonerId = prisonerId,
       prisonId = prisonId,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = startDate.atTime(9, 0),
-      visitEnd = startDate.atTime(9, 30),
+      visitStart = validFromDate.atTime(9, 0),
+      visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN
@@ -604,8 +604,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
-      startDate.minusMonths(6).toString(),
-      startDate.minusMonths(1).toString()
+      validFromDate.minusMonths(6).toString(),
+      validFromDate.minusMonths(1).toString()
     )
 
     // When
@@ -626,16 +626,16 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(startDate = startDate)
+    val validFromDate = LocalDate.parse("2021-01-08")
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
       prisonerId = associationPrisonerId,
       prisonId = prisonId,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = startDate.atTime(9, 0),
-      visitEnd = startDate.atTime(9, 30),
+      visitStart = validFromDate.atTime(9, 0),
+      visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN
@@ -646,8 +646,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationPrisonerId,
-      startDate.minusMonths(6).toString(),
-      startDate.plusMonths(1).toString()
+      validFromDate.minusMonths(6).toString(),
+      validFromDate.plusMonths(1).toString()
     )
 
     // When
@@ -668,17 +668,17 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
+    val validFromDate = LocalDate.parse("2021-01-08")
 
-    val sessionTemplate = sessionTemplate(startDate = startDate)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
       prisonerId = associationPrisonerId,
       prisonId = prisonId,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = startDate.atTime(9, 0),
-      visitEnd = startDate.atTime(9, 30),
+      visitStart = validFromDate.atTime(9, 0),
+      visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
       visitRestriction = OPEN
@@ -689,8 +689,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationPrisonerId,
-      startDate.minusMonths(6).toString(),
-      startDate.plusMonths(1).toString()
+      validFromDate.minusMonths(6).toString(),
+      validFromDate.plusMonths(1).toString()
     )
 
     // When
@@ -709,16 +709,16 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(startDate = startDate)
+    val validFromDate = LocalDate.parse("2021-01-08")
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
       prisonerId = associationPrisonerId,
       prisonId = prisonId,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = startDate.minusMonths(6).atTime(9, 0),
-      visitEnd = startDate.minusMonths(6).atTime(9, 30),
+      visitStart = validFromDate.minusMonths(6).atTime(9, 0),
+      visitEnd = validFromDate.minusMonths(6).atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN
@@ -729,8 +729,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationPrisonerId,
-      startDate.minusMonths(6).toString(),
-      startDate.plusMonths(1).toString()
+      validFromDate.minusMonths(6).toString(),
+      validFromDate.plusMonths(1).toString()
     )
 
     // When
@@ -750,16 +750,16 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val startDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(startDate = startDate)
+    val validFromDate = LocalDate.parse("2021-01-08")
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
       prisonerId = associationPrisonerId,
       prisonId = prisonId,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = startDate.plusMonths(6).atTime(9, 0),
-      visitEnd = startDate.plusMonths(6).atTime(9, 30),
+      visitStart = validFromDate.plusMonths(6).atTime(9, 0),
+      visitEnd = validFromDate.plusMonths(6).atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN
@@ -770,8 +770,8 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationPrisonerId,
-      startDate.minusYears(1).toString(),
-      startDate.plusYears(1).toString()
+      validFromDate.minusYears(1).toString(),
+      validFromDate.plusYears(1).toString()
     )
 
     // When

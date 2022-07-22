@@ -86,13 +86,13 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `a weekly session will return 6 sessions including today and expiry date`() {
+    fun `a weekly session will return 6 sessions including today and valid to date`() {
 
       // Given
 
       val weeklySession = sessionTemplate(
-        expiryDate = LocalDate.parse("2021-01-01").plusWeeks(5),
-        startDate = LocalDate.parse("2021-01-01"),
+        validToDate = LocalDate.parse("2021-01-01").plusWeeks(5),
+        validFromDate = LocalDate.parse("2021-01-01"),
         closedCapacity = 5,
         openCapacity = 10,
         startTime = LocalTime.parse("11:30"),
@@ -119,8 +119,8 @@ class SessionServiceTest {
       // Given
 
       val weeklySession = sessionTemplate(
-        expiryDate = LocalDate.parse("2021-01-01").plusWeeks(5), // 5 weeks from today
-        startDate = LocalDate.parse("2020-12-30"), // session template start date is a Wednesday
+        validToDate = LocalDate.parse("2021-01-01").plusWeeks(5), // 5 weeks from today
+        validFromDate = LocalDate.parse("2020-12-30"), // session template start date is a Wednesday
         closedCapacity = 5,
         openCapacity = 10,
         startTime = LocalTime.parse("11:30"),
@@ -148,8 +148,8 @@ class SessionServiceTest {
       val dateTime = LocalDate.parse("2021-02-01")
 
       val singleSession = sessionTemplate(
-        startDate = dateTime,
-        expiryDate = dateTime,
+        validFromDate = dateTime,
+        validToDate = dateTime,
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30") // future time
@@ -171,8 +171,8 @@ class SessionServiceTest {
       val dateTime = LocalDate.parse("2021-02-01")
 
       val singleSession = sessionTemplate(
-        startDate = dateTime,
-        expiryDate = dateTime,
+        validFromDate = dateTime,
+        validToDate = dateTime,
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30") // future time
@@ -195,8 +195,8 @@ class SessionServiceTest {
       val dateTime = LocalDate.parse("2021-02-01")
 
       val singleSession = sessionTemplate(
-        startDate = dateTime,
-        expiryDate = dateTime,
+        validFromDate = dateTime,
+        validToDate = dateTime,
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30") // future time
@@ -231,8 +231,8 @@ class SessionServiceTest {
       val dateTime = LocalDate.parse("2021-02-01")
 
       val singleSession = sessionTemplate(
-        startDate = dateTime,
-        expiryDate = dateTime,
+        validFromDate = dateTime,
+        validToDate = dateTime,
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30") // future time
@@ -281,12 +281,12 @@ class SessionServiceTest {
       // Given
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
-      val startDate = LocalDate.parse("2021-02-01")
-      val endDate = LocalDate.parse("2021-02-01")
+      val validFromDate = LocalDate.parse("2021-02-01")
+      val validToDate = LocalDate.parse("2021-02-01")
 
       val singleSession = sessionTemplate(
-        startDate = startDate,
-        expiryDate = endDate,
+        validFromDate = validFromDate,
+        validToDate = validToDate,
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
@@ -316,12 +316,12 @@ class SessionServiceTest {
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
-      val startDate = LocalDate.parse("2021-01-01")
+      val validFromDate = LocalDate.parse("2021-01-01")
       val endDate = LocalDate.parse("2021-01-09")
 
       val singleSession = sessionTemplate(
-        startDate = startDate.plusDays(2),
-        expiryDate = endDate,
+        validFromDate = validFromDate.plusDays(2),
+        validToDate = endDate,
         dayOfWeek = FRIDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
@@ -334,8 +334,8 @@ class SessionServiceTest {
         OffenderNonAssociationDetailsDto(
           listOf(
             OffenderNonAssociationDetailDto(
-              effectiveDate = startDate.minusMonths(1),
-              expiryDate = startDate.plusMonths(1),
+              effectiveDate = validFromDate.minusMonths(1),
+              expiryDate = validFromDate.plusMonths(1),
               offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId)
             )
           )
@@ -360,12 +360,12 @@ class SessionServiceTest {
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
-      val startDate = LocalDate.parse("2021-01-01")
-      val endDate = LocalDate.parse("2021-01-09")
+      val validFromDate = LocalDate.parse("2021-01-01")
+      val validToDate = LocalDate.parse("2021-01-09")
 
       val singleSession = sessionTemplate(
-        startDate = startDate.plusDays(2),
-        expiryDate = endDate,
+        validFromDate = validFromDate.plusDays(2),
+        validToDate = validToDate,
         dayOfWeek = DayOfWeek.SATURDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
@@ -378,8 +378,8 @@ class SessionServiceTest {
         OffenderNonAssociationDetailsDto(
           listOf(
             OffenderNonAssociationDetailDto(
-              effectiveDate = startDate.minusMonths(1),
-              expiryDate = startDate.plusMonths(1),
+              effectiveDate = validFromDate.minusMonths(1),
+              expiryDate = validFromDate.plusMonths(1),
               offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId)
             )
           )
@@ -391,8 +391,8 @@ class SessionServiceTest {
           listOf(
             Visit(
               prisonerId = associationId,
-              visitStart = startDate.plusDays(2).atTime(10, 30),
-              visitEnd = startDate.plusDays(2).atTime(11, 30),
+              visitStart = validFromDate.plusDays(2).atTime(10, 30),
+              visitEnd = validFromDate.plusDays(2).atTime(11, 30),
               visitType = SOCIAL,
               prisonId = prisonId,
               visitStatus = BOOKED,
@@ -417,11 +417,11 @@ class SessionServiceTest {
 
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
-      val startDate = LocalDate.parse("2021-02-01")
+      val validFromDate = LocalDate.parse("2021-02-01")
 
       val singleSession = sessionTemplate(
-        startDate = startDate,
-        expiryDate = startDate,
+        validFromDate = validFromDate,
+        validToDate = validFromDate,
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
@@ -450,10 +450,10 @@ class SessionServiceTest {
       // Given
       val prisonId = "MDI"
       val prisonerId = "A1234AA"
-      val startDate = LocalDate.parse("2021-02-01")
+      val validFromDate = LocalDate.parse("2021-02-01")
 
       val singleSession = sessionTemplate(
-        startDate = startDate,
+        validFromDate = validFromDate,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
