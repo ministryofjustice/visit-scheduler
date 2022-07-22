@@ -80,7 +80,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .withVisitRoom("B1")
       .withVisitStart(visitTime.plusDays(2))
       .withVisitEnd(visitTime.plusDays(2).plusHours(1))
-      .withVisitType(VisitType.FAMILY)
+      .withVisitType(VisitType.SOCIAL)
       .withVisitStatus(VisitStatus.BOOKED)
       .save()
     visitNoteCreator(visit = visitFull!!, text = "Some text outcomes", type = VISIT_OUTCOMES)
@@ -106,7 +106,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRoom = "A2",
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
-      visitType = VisitType.FAMILY,
+      visitType = VisitType.SOCIAL,
       visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),

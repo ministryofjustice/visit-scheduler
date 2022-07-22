@@ -5,6 +5,4 @@ enum class VisitType(
   val description: String,
 ) {
   SOCIAL("Social"),
-  OFFICIAL("Official"),
-  FAMILY("Family"),
 }
