@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.util.Locale
 
 @Service
 @Transactional
@@ -41,8 +43,15 @@ class MigrateVisitService(
       )
     )
 
-    migrateVisitRequest.visitContact?.let {
-      visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
+    migrateVisitRequest.visitContact?.let { contact ->
+      visitEntity.visitContact = createVisitContact(
+        visitEntity,
+        if (UNKNOWN_TOKEN == contact.name || contact.name.partition { it.isLowerCase() }.first.isNotEmpty())
+          contact.name
+        else
+          capitalise(contact.name),
+        contact.telephone
+      )
     }
 
     migrateVisitRequest.visitors?.let { contactList ->
@@ -85,6 +94,21 @@ class MigrateVisitService(
       null
     )
   }
+
+  private fun capitalise(sentence: String): String =
+    sentence.lowercase(Locale.getDefault()).split(" ").joinToString(" ") { word ->
+      var index = 0
+      for (ch in word) {
+        if (ch in 'a'..'z') {
+          break
+        }
+        index++
+      }
+      if (index < word.length)
+        word.replaceRange(index, index + 1, word[index].titlecase(Locale.getDefault()))
+      else
+        word
+    }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
     return VisitNote(
