@@ -37,10 +37,10 @@ data class SessionTemplate(
   val endTime: LocalTime,
 
   @Column(nullable = false)
-  val startDate: LocalDate,
+  val validFromDate: LocalDate,
 
   @Column
-  val expiryDate: LocalDate?,
+  val validToDate: LocalDate?,
 
   @Column(nullable = false)
   val closedCapacity: Int,

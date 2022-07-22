@@ -26,8 +26,8 @@ class SessionTemplateService(
         startTime = createSessionTemplateRequest.startTime,
         endTime = createSessionTemplateRequest.endTime,
         visitType = createSessionTemplateRequest.visitType,
-        startDate = createSessionTemplateRequest.startDate,
-        expiryDate = createSessionTemplateRequest.expiryDate,
+        validFromDate = createSessionTemplateRequest.validFromDate,
+        validToDate = createSessionTemplateRequest.validToDate,
         visitRoom = createSessionTemplateRequest.visitRoom,
         closedCapacity = createSessionTemplateRequest.closedCapacity,
         openCapacity = createSessionTemplateRequest.openCapacity,
@@ -47,7 +47,7 @@ class SessionTemplateService(
   }
 
   fun getSessionTemplates(): List<SessionTemplateDto> {
-    return sessionTemplateRepository.findAll().sortedBy { it.startDate }.map { SessionTemplateDto(it) }
+    return sessionTemplateRepository.findAll().sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
   }
 
   fun getSessionTemplates(sessionTemplateId: Long): SessionTemplateDto {

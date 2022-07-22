@@ -18,11 +18,11 @@ data class CreateSessionTemplateRequestDto(
   @Schema(description = "The end time of the generated visit session(s)", example = "13:45", required = true)
   @field:NotNull
   val endTime: LocalTime,
-  @Schema(description = "The start date of the session template", example = "2019-12-02", required = true)
+  @Schema(description = "The start of the Validity period for the session template", example = "2019-12-02", required = true)
   @field:NotNull
-  val startDate: LocalDate,
-  @Schema(description = "The expiry date of the session template", example = "2019-12-02", required = true)
-  val expiryDate: LocalDate?,
+  val validFromDate: LocalDate,
+  @Schema(description = "The end of the Validity period for the session template", example = "2019-12-02", required = false)
+  val validToDate: LocalDate? = null,
   @Schema(description = "visit type", example = "SOCIAL", required = true)
   @field:NotNull
   val visitType: VisitType,

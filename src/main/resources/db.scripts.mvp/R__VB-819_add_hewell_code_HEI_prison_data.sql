@@ -22,7 +22,7 @@ BEGIN;
 
     DELETE FROM session_template WHERE prison_id='HEI';
 
-    INSERT INTO public.session_template (prison_id, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, start_date, expiry_date, day_of_week)
+    INSERT INTO public.session_template (prison_id, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week)
     VALUES
         -- start_date MONDAY and then repeat weekly on Monday!
         ('HEI', 'visits main room', 'SOCIAL', 30, 3, '14:00:00', '16:00:00', '2022-05-30', null, 'MONDAY'),
