@@ -23,7 +23,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
@@ -224,8 +224,8 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN)
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN)
+      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
+      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
     }
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
@@ -300,7 +300,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN)
+      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
     }
 
     // And
@@ -335,7 +335,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN)
+      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
     }
 
     // And
@@ -369,7 +369,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN)
+      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
     }
 
     // And
@@ -404,7 +404,82 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN)
+      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
+    }
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+  }
+
+  @Test
+  fun `when contact name contains lowercase letters then name will be migrated as provided`() {
+
+    // Given
+    val name = "Title-case Name"
+
+    val jsonString = """{
+      "prisonerId": "G9377GA",
+      "prisonId": "MDI",
+      "visitRoom": "A1",
+      "startTimestamp": "$visitTime",
+      "endTimestamp": "${visitTime.plusHours(1)}",
+      "visitType": "${SOCIAL.name}",
+      "visitStatus": "${RESERVED.name}",
+      "visitRestriction": "${OPEN.name}",
+      "visitContact": {
+        "name": "$name",
+        "telephone": "1234567890"
+      }    
+    }"""
+
+    // When
+    val responseSpec = callMigrateVisit(jsonString)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+
+    val visit = visitRepository.findByReference(getReference(responseSpec))
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitContact!!.name).isEqualTo(name)
+    }
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+  }
+
+  @Test
+  fun `when contact name is uppercase then contact name capitalised will be migrated`() {
+
+    // Given
+    val name = "UPPERCASE NAME"
+    val capitalised = "Uppercase Name"
+
+    val jsonString = """{
+      "prisonerId": "G9377GA",
+      "prisonId": "MDI",
+      "visitRoom": "A1",
+      "startTimestamp": "$visitTime",
+      "endTimestamp": "${visitTime.plusHours(1)}",
+      "visitType": "${SOCIAL.name}",
+      "visitStatus": "${RESERVED.name}",
+      "visitRestriction": "${OPEN.name}",
+      "visitContact": {
+        "name": "$name",
+        "telephone": "1234567890"
+      }    
+    }"""
+
+    // When
+    val responseSpec = callMigrateVisit(jsonString)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+
+    val visit = visitRepository.findByReference(getReference(responseSpec))
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitContact!!.name).isEqualTo(capitalised)
     }
 
     // And
