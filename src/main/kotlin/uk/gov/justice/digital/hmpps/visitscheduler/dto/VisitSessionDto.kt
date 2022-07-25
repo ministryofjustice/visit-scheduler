@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDateTime
+import javax.validation.Valid
 
 @Schema(description = "Visit Session")
 data class VisitSessionDto(
@@ -55,5 +57,8 @@ data class VisitSessionDto(
   val startTimestamp: LocalDateTime,
 
   @Schema(description = "The end timestamp for this visit session", example = "2020-11-01T14:30:00", required = true)
-  val endTimestamp: LocalDateTime
+  val endTimestamp: LocalDateTime,
+
+  @Schema(description = "Session conflicts", required = false)
+  val sessionConflicts: MutableSet<@Valid SessionConflict>? = mutableSetOf(),
 )
