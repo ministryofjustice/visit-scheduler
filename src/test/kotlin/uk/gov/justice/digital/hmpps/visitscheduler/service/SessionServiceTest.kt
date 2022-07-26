@@ -37,11 +37,11 @@ import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.WEDNESDAY
-import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
+import java.time.ZoneOffset
 
 @ExtendWith(MockitoExtension::class)
 class SessionServiceTest {
@@ -53,8 +53,27 @@ class SessionServiceTest {
   private lateinit var sessionService: SessionService
 
   // today is Friday Jan 1st
-  private val clock = Clock.fixed(Instant.parse("2021-01-01T11:15:00.00Z"), ZoneId.systemDefault())
   private val date = LocalDate.parse("2021-01-01")
+  private val time = LocalTime.parse("11:15")
+
+  private val prisonId = "MDI"
+  private val noticeDaysMin = 1L
+  private val noticeDaysMax = 100L
+
+  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>) {
+    whenever(
+      sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
+        prisonId,
+        date.plusDays(noticeDaysMin),
+        date.plusDays(noticeDaysMax)
+      )
+    ).thenReturn(response)
+  }
+
+  private fun mockVisitRepositoryResponse(response: List<Visit>) {
+    whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+      .thenReturn(response)
+  }
 
   @Nested
   @DisplayName("simple session generation")
@@ -65,27 +84,13 @@ class SessionServiceTest {
         sessionTemplateRepository,
         visitRepository,
         prisonApiClient,
-        clock,
-        policyNoticeDaysMin = 1,
-        policyNoticeDaysMax = 100,
+        Clock.fixed(date.atTime(time).toInstant(ZoneOffset.UTC), ZoneId.systemDefault()),
+        policyNoticeDaysMin = noticeDaysMin,
+        policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
         policyNonAssociationWholeDay = true,
       )
-    }
-    private fun mockSessionRepositoryResponse(response: List<SessionTemplate>) {
-      whenever(
-        sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
-          "MDI",
-          date.plusDays(1),
-          date.plusDays(100)
-        )
-      ).thenReturn(response)
-    }
-
-    private fun mockVisitRepositoryResponse(response: List<Visit>) {
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
-        .thenReturn(response)
     }
 
     @Test
@@ -101,10 +106,10 @@ class SessionServiceTest {
         endTime = LocalTime.parse("12:30"),
         dayOfWeek = FRIDAY
       )
-      mockSessionRepositoryResponse(listOf(weeklySession))
+      mockSessionTemplateRepositoryResponse(listOf(weeklySession))
 
       // When
-      val sessions = sessionService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions(prisonId)
 
       // Then
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
@@ -128,10 +133,10 @@ class SessionServiceTest {
         endTime = LocalTime.parse("12:30"),
         dayOfWeek = WEDNESDAY
       )
-      mockSessionRepositoryResponse(listOf(weeklySession))
+      mockSessionTemplateRepositoryResponse(listOf(weeklySession))
 
       // When
-      val sessions = sessionService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions(prisonId)
 
       // Then
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
@@ -153,10 +158,10 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30") // future time
       )
-      mockSessionRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       // When
-      val sessions = sessionService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions(prisonId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -172,10 +177,10 @@ class SessionServiceTest {
         validToDate = date.minusDays(1),
         dayOfWeek = MONDAY,
       )
-      mockSessionRepositoryResponse(listOf(dailySession))
+      mockSessionTemplateRepositoryResponse(listOf(dailySession))
 
       // When
-      val sessions = sessionService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions(prisonId)
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
@@ -191,10 +196,10 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30") // future time
       )
-      mockSessionRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       // When
-      val sessions = sessionService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions(prisonId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -213,14 +218,14 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30") // future time
       )
-      mockSessionRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       val visit = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = date.atTime(11, 30),
         visitEnd = date.atTime(12, 30),
         visitType = SOCIAL,
-        prisonId = "MDI",
+        prisonId = prisonId,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
         visitRoom = "123c"
@@ -228,7 +233,7 @@ class SessionServiceTest {
       mockVisitRepositoryResponse(listOf(visit))
 
       // When
-      val sessions = sessionService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions(prisonId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -246,14 +251,14 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30") // future time
       )
-      mockSessionRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       val visit = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = date.atTime(11, 30),
         visitEnd = date.atTime(12, 30),
         visitType = SOCIAL,
-        prisonId = "MDI",
+        prisonId = prisonId,
         visitStatus = RESERVED,
         visitRestriction = OPEN,
         visitRoom = "123c"
@@ -261,7 +266,7 @@ class SessionServiceTest {
       mockVisitRepositoryResponse(listOf(visit))
 
       // When
-      val sessions = sessionService.getVisitSessions("MDI")
+      val sessions = sessionService.getVisitSessions(prisonId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -280,29 +285,18 @@ class SessionServiceTest {
         sessionTemplateRepository,
         visitRepository,
         prisonApiClient,
-        clock,
-        1,
-        100,
+        Clock.fixed(date.atTime(time).toInstant(ZoneOffset.UTC), ZoneId.systemDefault()),
+        policyNoticeDaysMin = noticeDaysMin,
+        policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
         policyNonAssociationWholeDay = true,
       )
     }
 
-    private fun mockRepositoryResponse(response: List<SessionTemplate>) {
-      whenever(
-        sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
-          "MDI",
-          date.plusDays(1),
-          date.plusDays(100)
-        )
-      ).thenReturn(response)
-    }
-
     @Test
     fun `session does not contain conflicts when an offender has no non-associations and no double bookings`() {
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
@@ -312,8 +306,7 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
-
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
@@ -332,7 +325,6 @@ class SessionServiceTest {
     @Test
     fun `session does not contain conflicts when an offender has a valid non-association without bookings`() {
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
@@ -343,7 +335,7 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
@@ -374,7 +366,6 @@ class SessionServiceTest {
     @Test
     fun `sessions contain conflicts when an offender has a valid non-association with a booking`() {
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
@@ -385,7 +376,7 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
@@ -432,7 +423,6 @@ class SessionServiceTest {
     @Test
     fun `sessions contain conflicts when an offender has a double booking`() {
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
@@ -442,7 +432,7 @@ class SessionServiceTest {
         endTime = LocalTime.parse("12:30"),
         dayOfWeek = SATURDAY,
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
@@ -478,7 +468,6 @@ class SessionServiceTest {
     @Test
     fun `session does not contain conflicts when an offender non-association NOT FOUND`() {
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
@@ -488,7 +477,7 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
@@ -510,7 +499,6 @@ class SessionServiceTest {
     fun `get sessions throws WebClientResponseException for BAD REQUEST`() {
 
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
@@ -518,7 +506,7 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
@@ -546,29 +534,18 @@ class SessionServiceTest {
         sessionTemplateRepository,
         visitRepository,
         prisonApiClient,
-        clock,
-        1,
-        100,
+        Clock.fixed(date.atTime(time).toInstant(ZoneOffset.UTC), ZoneId.systemDefault()),
+        policyNoticeDaysMin = noticeDaysMin,
+        policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = true,
         policyFilterNonAssociation = true,
         policyNonAssociationWholeDay = true,
       )
     }
 
-    private fun mockRepositoryResponse(response: List<SessionTemplate>) {
-      whenever(
-        sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
-          "MDI",
-          date.plusDays(1),
-          date.plusDays(100)
-        )
-      ).thenReturn(response)
-    }
-
     @Test
     fun `all sessions are returned when an offender has no non-associations and no double bookings`() {
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
@@ -578,7 +555,7 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
@@ -596,7 +573,6 @@ class SessionServiceTest {
     @Test
     fun `only available sessions are returned when an offender has a valid non-association without bookings`() {
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
@@ -607,7 +583,7 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
@@ -635,7 +611,6 @@ class SessionServiceTest {
     @Test
     fun `only available sessions are returned when an offender has a valid non-association with a booking`() {
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
 
@@ -646,7 +621,7 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
@@ -689,7 +664,6 @@ class SessionServiceTest {
     @Test
     fun `only available sessions are returned when an offender has a double booking`() {
       // Given
-      val prisonId = "MDI"
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
@@ -699,7 +673,7 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
-      mockRepositoryResponse(listOf(singleSession))
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
         prisonApiClient.getOffenderNonAssociation(prisonerId)
