@@ -8,6 +8,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -35,6 +36,10 @@ class SessionService(
   private val policyNoticeDaysMin: Long,
   @Value("\${policy.session.booking-notice-period.maximum-days:28}")
   private val policyNoticeDaysMax: Long,
+  @Value("\${policy.session.double-booking.filter:false}")
+  private val policyFilterDoubleBooking: Boolean,
+  @Value("\${policy.session.non-association.filter:false}")
+  private val policyFilterNonAssociation: Boolean,
   @Value("\${policy.session.non-association.whole-day:true}")
   private val policyNonAssociationWholeDay: Boolean,
 ) {
@@ -46,7 +51,6 @@ class SessionService(
     noticeDaysMin: Long? = null,
     noticeDaysMax: Long? = null
   ): List<VisitSessionDto> {
-
     val today = LocalDate.now(clock)
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
@@ -63,6 +67,7 @@ class SessionService(
 
     if (!prisonerId.isNullOrBlank()) {
       sessions = filterPrisonerConflict(sessions, prisonerId)
+      populateConflict(sessions, prisonerId)
     }
 
     populateBookedCount(sessions)
@@ -75,7 +80,6 @@ class SessionService(
     requestedBookableStartDate: LocalDate,
     requestedBookableEndDate: LocalDate
   ): List<VisitSessionDto> {
-
     val firstBookableSessionDay = getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek)
     val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.validToDate)
 
@@ -138,7 +142,17 @@ class SessionService(
 
   private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
     return sessions.filterNot {
-      sessionHasNonAssociation(it, prisonerId)
+      (policyFilterNonAssociation && sessionHasNonAssociation(it, prisonerId)) ||
+        (policyFilterDoubleBooking && sessionHasBooking(it, prisonerId))
+    }
+  }
+
+  private fun populateConflict(sessions: List<VisitSessionDto>, prisonerId: String) {
+    sessions.forEach {
+      if (!policyFilterNonAssociation && sessionHasNonAssociation(it, prisonerId))
+        it.sessionConflicts?.add(SessionConflict.NON_ASSOCIATION)
+      if (!policyFilterDoubleBooking && sessionHasBooking(it, prisonerId))
+        it.sessionConflicts?.add(SessionConflict.DOUBLE_BOOKED)
     }
   }
 
@@ -179,6 +193,19 @@ class SessionService(
         throw e
     }
     return emptyList()
+  }
+
+  private fun sessionHasBooking(session: VisitSessionDto, prisonerId: String): Boolean {
+    return visitRepository.findAll(
+      VisitSpecification(
+        VisitFilter(
+          prisonId = session.prisonId,
+          prisonerId = prisonerId,
+          startDateTime = session.startTimestamp,
+          endDateTime = session.endTimestamp
+        )
+      )
+    ).any { isActiveStatus(it.visitStatus) }
   }
 
   private fun sessionBookedCount(session: VisitSessionDto, restriction: VisitRestriction): Int {

@@ -94,20 +94,8 @@ class VisitSchedulerExceptionHandler(
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
-  @ExceptionHandler(MethodArgumentTypeMismatchException::class)
-  fun handleMethodArgumentTypeMismatchException(e: Exception): ResponseEntity<ErrorResponse> {
-    log.debug("Validation exception: {}", e.message)
-    val error = ErrorResponse(
-      status = HttpStatus.BAD_REQUEST,
-      userMessage = "Invalid Argument: ${e.cause?.message}",
-      developerMessage = e.message
-    )
-    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
-  }
-
-  @ExceptionHandler(MethodArgumentNotValidException::class)
-  fun handleMethodArgumentNotValidException(e: Exception): ResponseEntity<ErrorResponse> {
+  @ExceptionHandler(MethodArgumentTypeMismatchException::class, MethodArgumentNotValidException::class)
+  fun handleMethodArgumentException(e: Exception): ResponseEntity<ErrorResponse> {
     log.debug("Validation exception: {}", e.message)
     val error = ErrorResponse(
       status = HttpStatus.BAD_REQUEST,

@@ -37,9 +37,7 @@ class SessionTemplateService(
 
     telemetryClient.trackEvent(
       "visit-scheduler-prison-session-template-created",
-      mapOf(
-        "id" to sessionTemplateEntity.id.toString()
-      ),
+      mapOf("id" to sessionTemplateEntity.id.toString()),
       null
     )
 
@@ -61,9 +59,7 @@ class SessionTemplateService(
       sessionTemplateRepository.delete(it)
       telemetryClient.trackEvent(
         "visit-scheduler-prison-session-template-deleted",
-        mapOf(
-          "id" to templateId.toString()
-        ),
+        mapOf("id" to templateId.toString()),
         null
       )
     } ?: run { log.debug("Session template $templateId not found") }
