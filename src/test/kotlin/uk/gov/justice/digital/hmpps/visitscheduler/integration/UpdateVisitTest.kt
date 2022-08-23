@@ -190,7 +190,6 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     // Then
     responseSpec.expectStatus().isBadRequest
-
   }
 
   @Test
