@@ -166,6 +166,34 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
+  fun `update visit by reference - only one visit contact allowed`() {
+
+    // Given
+
+    val updateRequest = UpdateVisitRequestDto(
+      prisonerId = "FF0000AB",
+      prisonId = "AAB",
+      visitRoom = "A2",
+      startTimestamp = visitTime.plusDays(2),
+      endTimestamp = visitTime.plusDays(2).plusHours(1),
+      visitType = VisitType.SOCIAL,
+      visitStatus = VisitStatus.BOOKED,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = true))
+    )
+
+    val jsonBody = BodyInserters.fromValue(updateRequest)
+
+    // When
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+
+  }
+
+  @Test
   fun `put visit by reference - amend contact`() {
 
     // Given
