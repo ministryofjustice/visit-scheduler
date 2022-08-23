@@ -6,5 +6,5 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SupportType
 
 @Repository
 interface SupportTypeRepository : JpaRepository<SupportType, Int> {
-  fun findByName(name: String): SupportType?
+  fun existsByName(name: String): Boolean
 }

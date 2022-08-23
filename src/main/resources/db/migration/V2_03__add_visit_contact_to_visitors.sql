@@ -1,0 +1,1 @@
+ALTER TABLE visit_visitor ADD visit_contact BOOLEAN;

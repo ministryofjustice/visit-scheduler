@@ -95,6 +95,8 @@ data class Visit(
 
   @PostPersist
   fun createReference() {
-    reference = QuotableEncoder(minLength = 8).encode(id)
+    if (reference.isBlank()) {
+      reference = QuotableEncoder(minLength = 8).encode(id)
+    }
   }
 }

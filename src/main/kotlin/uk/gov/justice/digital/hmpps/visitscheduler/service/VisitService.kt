@@ -54,12 +54,14 @@ class VisitService(
     }
 
     createVisitRequest.visitors.forEach {
-      visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
+      visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
     }
 
     createVisitRequest.visitorSupport?.let { supportList ->
       supportList.forEach {
-        supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
+        if (!supportTypeRepository.existsByName(it.type)) {
+          throw SupportNotFoundException("Invalid support ${it.type} not found")
+        }
         visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
       }
     }
@@ -123,7 +125,7 @@ class VisitService(
       visitEntity.visitors.clear()
       visitRepository.saveAndFlush(visitEntity)
       visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
-        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId))
+        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
       }
     }
 
@@ -131,7 +133,9 @@ class VisitService(
       visitEntity.support.clear()
       visitRepository.saveAndFlush(visitEntity)
       visitSupportUpdate.forEach {
-        supportTypeRepository.findByName(it.type) ?: throw SupportNotFoundException("Invalid support ${it.type} not found")
+        if (!supportTypeRepository.existsByName(it.type)) {
+          throw SupportNotFoundException("Invalid support ${it.type} not found")
+        }
         visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
       }
     }
@@ -226,11 +230,12 @@ class VisitService(
     )
   }
 
-  private fun createVisitVisitor(visit: Visit, personId: Long): VisitVisitor {
+  private fun createVisitVisitor(visit: Visit, personId: Long, visitContact: Boolean?): VisitVisitor {
     return VisitVisitor(
       nomisPersonId = personId,
       visitId = visit.id,
-      visit = visit
+      visit = visit,
+      visitContact = visitContact
     )
   }
 

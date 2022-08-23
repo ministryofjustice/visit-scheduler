@@ -66,7 +66,7 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = RESERVED,
       visitRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
-      visitors = setOf(VisitorDto(123)),
+      visitors = setOf(VisitorDto(123, true)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
   }
@@ -154,7 +154,7 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `created visit - duplicates are ignored`() {
+  fun `created visit - only one visit contact allowed`() {
 
     // Given
 
@@ -169,11 +169,10 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRoom = "A1",
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
-        VisitorDto(123),
-        VisitorDto(123)
+        VisitorDto(nomisPersonId = 123, visitContact = true),
+        VisitorDto(nomisPersonId = 124, visitContact = true)
       ),
       visitorSupport = setOf(
-        VisitorSupportDto("OTHER", "Some Text"),
         VisitorSupportDto("OTHER", "Some Text")
       )
     )
@@ -186,29 +185,7 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
-    val returnResult = responseSpec.expectStatus().isCreated
-      .expectBody()
-      .jsonPath("$.visitors.length()").isEqualTo(1)
-      .jsonPath("$.visitorSupport.length()").isEqualTo(1)
-      .returnResult()
-
-    // And
-    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-created"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
-        Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-      },
-      isNull()
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+    responseSpec.expectStatus().isBadRequest
   }
 
   @Test

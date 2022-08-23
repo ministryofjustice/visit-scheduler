@@ -87,7 +87,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     visitNoteCreator(visit = visitFull!!, text = "Some text concerns", type = VISITOR_CONCERN)
     visitNoteCreator(visit = visitFull!!, text = "Some text comment", type = VISIT_COMMENT)
     visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L)
+    visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, visitContact = true)
     visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
     visitRepository.saveAndFlush(visitFull!!)
   }
@@ -110,7 +110,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),
-      visitors = setOf(VisitorDto(123L)),
+      visitors = setOf(VisitorDto(123L, visitContact = true)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
@@ -204,7 +204,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitors = setOf(VisitorDto(123L)),
+      visitors = setOf(VisitorDto(123L, visitContact = true)),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)

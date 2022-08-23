@@ -48,7 +48,7 @@ class DeleteVisitByReferenceTest : IntegrationTestBase() {
       .save()
 
     visitContactCreator(visit = visitCC, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitCC, nomisPersonId = 123L)
+    visitVisitorCreator(visit = visitCC, nomisPersonId = 123L, visitContact = true)
     visitSupportCreator(visit = visitCC, name = "OTHER", details = "Some Text")
     visitRepository.saveAndFlush(visitCC)
 
