@@ -19,14 +19,15 @@ annotation class VisitorContactValidation(
 class VisitorContactValidator : ConstraintValidator<VisitorContactValidation, Set<VisitorDto>> {
 
   override fun isValid(childList: Set<VisitorDto>?, context: ConstraintValidatorContext?): Boolean {
-    var count = 0
+    var visitContactCount = 0
     childList?.let { list ->
       list.forEach {
         it.visitContact?.let { visitContact ->
-          if (visitContact) count++
+          if (visitContact) visitContactCount++
         }
       }
     }
-    return count <2
+    // Cannot have more than one visit contact
+    return visitContactCount <= 1
   }
 }
