@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -31,7 +31,7 @@ data class UpdateVisitRequestDto(
   val visitContact: ContactDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false)
   @field:NullableNotEmpty
-  @field:VisitorValidation
+  @field:VisitorContactValidation
   val visitors: Set<@Valid VisitorDto>? = null,
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: Set<@Valid VisitorSupportDto>? = null,

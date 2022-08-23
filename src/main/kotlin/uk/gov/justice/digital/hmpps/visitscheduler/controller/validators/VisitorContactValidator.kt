@@ -9,14 +9,14 @@ import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FIELD)
 @MustBeDocumented
-@Constraint(validatedBy = [VisitorValidator::class])
-annotation class VisitorValidation(
+@Constraint(validatedBy = [VisitorContactValidator::class])
+annotation class VisitorContactValidation(
   val message: String = "{javax.validation.constraints.visitor.contact.message}",
   val groups: Array<KClass<*>> = [],
   val payload: Array<KClass<out Payload>> = []
 )
 
-class VisitorValidator : ConstraintValidator<VisitorValidation, Set<VisitorDto>> {
+class VisitorContactValidator : ConstraintValidator<VisitorContactValidation, Set<VisitorDto>> {
 
   override fun isValid(childList: Set<VisitorDto>?, context: ConstraintValidatorContext?): Boolean {
     var count = 0
