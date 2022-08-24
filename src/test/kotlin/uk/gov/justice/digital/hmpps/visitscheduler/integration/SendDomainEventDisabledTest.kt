@@ -121,7 +121,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
       visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
-      visitors = setOf(VisitorDto(123)),
+      visitors = setOf(VisitorDto(123, visitContact = true)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text"))
     )
   }

@@ -31,6 +31,9 @@ data class VisitVisitor(
   @Column(name = "NOMIS_PERSON_ID", nullable = false)
   var nomisPersonId: Long,
 
+  @Column(name = "VISIT_CONTACT", nullable = true)
+  var visitContact: Boolean?,
+
   @ManyToOne
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
   val visit: Visit,

@@ -87,7 +87,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     visitNoteCreator(visit = visitFull!!, text = "Some text concerns", type = VISITOR_CONCERN)
     visitNoteCreator(visit = visitFull!!, text = "Some text comment", type = VISIT_COMMENT)
     visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L)
+    visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, visitContact = true)
     visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
     visitRepository.saveAndFlush(visitFull!!)
   }
@@ -110,7 +110,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),
-      visitors = setOf(VisitorDto(123L)),
+      visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
@@ -136,7 +136,10 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
       .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
       .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
-      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!!.first().nomisPersonId)
+      .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(123)
+      .jsonPath("$.visitors[0].visitContact").isEqualTo(true)
+      .jsonPath("$.visitors[1].nomisPersonId").isEqualTo(124)
+      .jsonPath("$.visitors[1].visitContact").isEqualTo(false)
       .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
       .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!!.first().type)
       .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!!.first().text!!)
@@ -163,6 +166,33 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       isNull()
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
+  }
+
+  @Test
+  fun `update visit by reference - only one visit contact allowed`() {
+
+    // Given
+
+    val updateRequest = UpdateVisitRequestDto(
+      prisonerId = "FF0000AB",
+      prisonId = "AAB",
+      visitRoom = "A2",
+      startTimestamp = visitTime.plusDays(2),
+      endTimestamp = visitTime.plusDays(2).plusHours(1),
+      visitType = VisitType.SOCIAL,
+      visitStatus = VisitStatus.BOOKED,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = true))
+    )
+
+    val jsonBody = BodyInserters.fromValue(updateRequest)
+
+    // When
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
   }
 
   @Test
@@ -204,7 +234,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      visitors = setOf(VisitorDto(123L)),
+      visitors = setOf(VisitorDto(123L, visitContact = true)),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)

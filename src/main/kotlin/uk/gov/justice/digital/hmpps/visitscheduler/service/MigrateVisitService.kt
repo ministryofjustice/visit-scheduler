@@ -141,7 +141,8 @@ class MigrateVisitService(
     return VisitVisitor(
       nomisPersonId = personId,
       visitId = visit.id,
-      visit = visit
+      visit = visit,
+      visitContact = null
     )
   }
 }

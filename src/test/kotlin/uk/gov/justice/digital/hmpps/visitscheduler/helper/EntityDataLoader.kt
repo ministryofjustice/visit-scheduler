@@ -106,12 +106,14 @@ fun visitContactCreator(
 fun visitVisitorCreator(
   visit: Visit,
   nomisPersonId: Long,
+  visitContact: Boolean?
 ) {
   visit.visitors.add(
     VisitVisitor(
       nomisPersonId = nomisPersonId,
       visitId = visit.id,
-      visit = visit
+      visit = visit,
+      visitContact = visitContact
     )
   )
 }

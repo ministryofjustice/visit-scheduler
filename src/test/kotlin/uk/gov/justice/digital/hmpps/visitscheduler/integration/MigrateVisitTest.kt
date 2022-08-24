@@ -80,7 +80,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       outcomeStatus = COMPLETED_NORMALLY,
       visitRestriction = OPEN,
       visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", "013448811538"),
-      visitors = setOf(VisitorDto(123)),
+      visitors = setOf(VisitorDto(123, true)),
       visitNotes = setOf(
         VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
         VisitNoteDto(type = VISIT_OUTCOMES, "A visit outcome"),
