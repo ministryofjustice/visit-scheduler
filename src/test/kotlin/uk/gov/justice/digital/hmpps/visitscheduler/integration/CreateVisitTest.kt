@@ -66,7 +66,7 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = RESERVED,
       visitRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
-      visitors = setOf(VisitorDto(123, true)),
+      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
   }
@@ -96,8 +96,11 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .jsonPath("$.visitRestriction").isEqualTo(OPEN.name)
       .jsonPath("$.visitContact.name").isEqualTo("John Smith")
       .jsonPath("$.visitContact.telephone").isEqualTo("013448811538")
-      .jsonPath("$.visitors.length()").isEqualTo(1)
+      .jsonPath("$.visitors.length()").isEqualTo(2)
       .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(123)
+      .jsonPath("$.visitors[0].visitContact").isEqualTo(true)
+      .jsonPath("$.visitors[1].nomisPersonId").isEqualTo(124)
+      .jsonPath("$.visitors[1].visitContact").isEqualTo(false)
       .jsonPath("$.visitorSupport.length()").isEqualTo(1)
       .jsonPath("$.visitorSupport[0].type").isEqualTo("OTHER")
       .jsonPath("$.visitorSupport[0].text").isEqualTo("Some Text")
