@@ -154,6 +154,35 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
+  fun `cancel visit by reference with outcome status of superseded`() {
+
+    // Given
+    val visit = createVisitAndSave()
+
+    val outcomeDto = OutcomeDto(
+      OutcomeStatus.SUPERSEDED_CANCELLATION,
+      "Prisoner has updated the existing booking"
+    )
+
+    // When
+    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .body(
+        BodyInserters.fromValue(outcomeDto)
+      )
+      .exchange()
+
+    // Then
+    responseSpec.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.visitStatus").isEqualTo(VisitStatus.CANCELLED.name)
+      .jsonPath("$.outcomeStatus").isEqualTo(OutcomeStatus.SUPERSEDED_CANCELLATION.name)
+      .jsonPath("$.visitNotes.length()").isEqualTo(1)
+      .jsonPath("$.visitNotes[?(@.type=='VISIT_OUTCOMES')].text").isEqualTo("Prisoner has updated the existing booking")
+      .returnResult()
+  }
+
+  @Test
   fun `put visit by reference - not found`() {
     // Given
     val reference = "12345"
