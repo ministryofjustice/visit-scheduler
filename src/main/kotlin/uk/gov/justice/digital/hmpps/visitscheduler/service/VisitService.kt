@@ -42,7 +42,7 @@ class VisitService(
         prisonId = createVisitRequest.prisonId,
         visitRoom = createVisitRequest.visitRoom,
         visitType = createVisitRequest.visitType,
-        visitStatus = createVisitRequest.visitStatus,
+        visitStatus = VisitStatus.RESERVED,
         visitRestriction = createVisitRequest.visitRestriction,
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp

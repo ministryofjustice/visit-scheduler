@@ -80,13 +80,7 @@ class VisitController(
   fun createVisit(
     @RequestBody @Valid createVisitRequest: CreateVisitRequestDto
   ): VisitDto {
-    val visit = visitService.createVisit(createVisitRequest)
-
-    // Created with BOOKED status - review if POST & PUT are replaced with Reserve, Book & Amend endpoints
-    if (visit.visitStatus == VisitStatus.BOOKED) {
-      snsService.sendVisitBookedEvent(visit)
-    }
-    return visit
+    return visitService.createVisit(createVisitRequest)
   }
 
   @Suppress("KotlinDeprecation")

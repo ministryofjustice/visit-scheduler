@@ -20,19 +20,13 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.HMPPSDomainEvent
@@ -43,14 +37,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_VERSION
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_ZONE_ID
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
-import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
-
-  private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
-
   @Autowired
   private lateinit var visitRepository: VisitRepository
 
@@ -76,88 +66,12 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       testSqsClient.purgeQueue(PurgeQueueRequest(testQueueUrl))
     }
 
-    private fun createVisitRequest(): CreateVisitRequestDto {
-      return CreateVisitRequestDto(
-        prisonId = "MDI",
-        prisonerId = "FF0000FF",
-        visitRoom = "A1",
-        visitType = VisitType.SOCIAL,
-        startTimestamp = visitTime,
-        endTimestamp = visitTime.plusHours(1),
-        visitStatus = VisitStatus.BOOKED,
-        visitRestriction = VisitRestriction.OPEN,
-        visitContact = ContactDto("John Smith", "01234 567890"),
-        visitors = setOf(VisitorDto(123, visitContact = true)),
-        visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text"))
-      )
-    }
-
     private fun createVisitAndSave(visitStatus: VisitStatus): Visit {
       val visit = visitCreator(visitRepository)
         .withVisitStatus(visitStatus)
         .save()
       visitRepository.saveAndFlush(visit)
       return visit
-    }
-
-    @Test
-    fun `send visit booked event on create`() {
-
-      // Given
-      val requestDto = createVisitRequest()
-
-      // When
-      val responseSpec = webTestClient.post().uri("/visits")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(requestDto)
-        )
-        .exchange()
-
-      await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
-
-      // Then
-      val returnResult = responseSpec.expectStatus().isCreated
-        .expectBody()
-        .returnResult()
-
-      val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-      val requestJson = testSqsClient.receiveMessage(testQueueUrl).messages[0].body
-      val (message, messageAttributes) = objectMapper.readValue(requestJson, HMPPSMessage::class.java)
-      assertThat(messageAttributes.eventType.Value).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
-      val (eventType, version, description, occurredAt, prisonerId, additionalInformation) = objectMapper.readValue(message, HMPPSDomainEvent::class.java)
-      assertThat(eventType).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
-      assertThat(version).isEqualTo(EVENT_PRISON_VISIT_VERSION)
-      assertThat(description).isEqualTo(EVENT_PRISON_VISIT_BOOKED_DESC)
-      assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.createdTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
-      assertThat(prisonerId).isEqualTo(visit?.prisonerId)
-      assertThat(additionalInformation.reference).isEqualTo(visit.reference)
-
-      // And
-      verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-visit-created"),
-        org.mockito.kotlin.check {
-          assertThat(it["reference"]).isEqualTo(visit.reference)
-          assertThat(it["prisonerId"]).isEqualTo("FF0000FF")
-          assertThat(it["prisonId"]).isEqualTo("MDI")
-          assertThat(it["visitType"]).isEqualTo(VisitType.SOCIAL.name)
-          assertThat(it["visitRoom"]).isEqualTo("A1")
-          assertThat(it["visitRestriction"]).isEqualTo(VisitRestriction.OPEN.name)
-          assertThat(it["visitStart"]).isEqualTo(MigrateVisitTest.visitTime.toString())
-          assertThat(it["visitStatus"]).isEqualTo(VisitStatus.BOOKED.name)
-        },
-        isNull()
-      )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
-
-      verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-visit.booked-event"),
-        org.mockito.kotlin.check {
-          assertThat(it["reference"]).isEqualTo(visit.reference)
-        },
-        isNull()
-      )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
     }
 
     @Test

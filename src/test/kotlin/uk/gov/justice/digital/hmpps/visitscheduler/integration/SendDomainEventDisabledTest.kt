@@ -118,7 +118,6 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
       visitType = VisitType.SOCIAL,
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
-      visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123, visitContact = true)),
