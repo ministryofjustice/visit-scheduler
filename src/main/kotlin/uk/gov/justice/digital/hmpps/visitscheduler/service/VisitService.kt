@@ -248,6 +248,10 @@ class VisitService(
     )
   }
 
+  fun handlePrisonerReleaseDateMessageEvent(prisonerReleaseEventMessage: PrisonerReleaseDateMessageEvent?) {
+    log.debug("Entered handlePrisonerReleaseDateMessageEvent {}", prisonerReleaseEventMessage)
+  }
+
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
     const val MAX_RECORDS = 10000

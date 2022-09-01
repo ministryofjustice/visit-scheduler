@@ -53,9 +53,17 @@ hmpps.sqs:
     domaineventsqueue:
       queueName: ${random.uuid}
       subscribeTopicId: domainevents
+    prisonerreleasequeue:
+      queueName: prisoner-release-queue
+      dlqName: prisoner-release-queue-dlq
+      subscribeTopicId: prisonerreleasetopic
+      subscribeFilter: '{"eventType":["prison-offender-events.prisoner.released"] }'
+
   topics:
     domainevents:
       arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
+    prisonerreleasetopic:
+      arn: arn:aws:sns:eu-west-2:000000000000:prisoner-release-queue
 
 feature:
   events:
