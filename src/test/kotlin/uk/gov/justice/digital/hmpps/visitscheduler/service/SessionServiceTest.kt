@@ -391,22 +391,14 @@ class SessionServiceTest {
           )
         )
       )
+      val expectedAssociations = listOf(associationId)
+      val startDateTimeFilter = date.plusDays(1).atStartOfDay()
+      val endDateTimeFilter = date.plusDays(1).atTime(LocalTime.MAX)
 
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+      whenever(visitRepository.hasActiveVisits(expectedAssociations, prisonId, startDateTimeFilter, endDateTimeFilter))
         .thenReturn(
-          listOf(
-            Visit(
-              prisonerId = associationId,
-              visitStart = date.plusDays(2).atTime(10, 30),
-              visitEnd = date.plusDays(2).atTime(11, 30),
-              visitType = SOCIAL,
-              prisonId = prisonId,
-              visitStatus = BOOKED,
-              visitRestriction = OPEN,
-              visitRoom = "123c",
-            )
-          ),
-          emptyList()
+          true,
+          false
         )
 
       // When
