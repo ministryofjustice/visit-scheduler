@@ -1,12 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
@@ -43,6 +44,10 @@ class SessionService(
   @Value("\${policy.session.non-association.whole-day:true}")
   private val policyNonAssociationWholeDay: Boolean,
 ) {
+
+  companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
 
   @Transactional(readOnly = true)
   fun getVisitSessions(
@@ -164,30 +169,22 @@ class SessionService(
   }
 
   private fun sessionHasNonAssociation(session: VisitSessionDto, prisonerId: String): Boolean {
+
+    val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerId, session.startTimestamp.toLocalDate())
+    LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${nonAssociationPrisonerIds.size} non associations!")
+
+    val startDateTimeFilter = if (policyNonAssociationWholeDay) session.startTimestamp.toLocalDate().atStartOfDay() else session.startTimestamp
+    val endDateTimeFilter = if (policyNonAssociationWholeDay) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
+
     // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
     // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
-    return getNonAssociation(prisonerId).any { it ->
-      isDateWithinRange(session.startTimestamp.toLocalDate(), it.effectiveDate, it.expiryDate) &&
-        it.offenderNonAssociation.let { ona ->
-          visitRepository.findAll(
-            VisitSpecification(
-              VisitFilter(
-                prisonerId = ona.offenderNo,
-                prisonId = session.prisonId,
-                startDateTime =
-                if (policyNonAssociationWholeDay) session.startTimestamp.toLocalDate().atStartOfDay() else session.startTimestamp,
-                endDateTime =
-                if (policyNonAssociationWholeDay) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
-              )
-            )
-          ).any { isActiveStatus(it.visitStatus) }
-        }
-    }
+    return visitRepository.hasActiveVisits(nonAssociationPrisonerIds, session.prisonId, startDateTimeFilter, endDateTimeFilter)
   }
 
-  private fun getNonAssociation(prisonerId: String): List<OffenderNonAssociationDetailDto> {
+  private fun getNonAssociationPrisonerIds(prisonerId: String, startTimestamp: LocalDate): List<String> {
     try {
-      return prisonApiClient.getOffenderNonAssociation(prisonerId)!!.nonAssociations
+      val offenderNonAssociationList = prisonApiClient.getOffenderNonAssociation(prisonerId)!!.nonAssociations
+      return offenderNonAssociationList.filter { isDateWithinRange(startTimestamp, it.effectiveDate, it.expiryDate) }.map { it.offenderNonAssociation.offenderNo }
     } catch (e: WebClientResponseException) {
       if (e.statusCode != HttpStatus.NOT_FOUND)
         throw e
