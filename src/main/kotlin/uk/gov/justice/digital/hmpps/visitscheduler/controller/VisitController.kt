@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -331,35 +330,6 @@ class VisitController(
       }
     }
     return visit
-  }
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @DeleteMapping("/{reference}")
-  @Operation(
-    summary = "Delete visit",
-    description = "Delete a visit by visit reference",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Visit deleted"
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to delete a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
-  )
-  fun deleteVisit(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String
-  ) {
-    visitService.deleteVisit(reference.trim())
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
