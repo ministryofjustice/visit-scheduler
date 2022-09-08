@@ -18,6 +18,12 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun findByReference(reference: String): Visit?
 
   @Query(
+    "SELECT v FROM Visit v " +
+      "WHERE v.reference = :reference and v.visitStatus = 'BOOKED'"
+  )
+  fun findBookedVisitByReference(reference: String): Visit?
+
+  @Query(
     "SELECT count(v) > 0 FROM Visit v " +
       "WHERE v.prisonerId in (:prisonerIds) and " +
       "v.prisonId = :prisonId and " +

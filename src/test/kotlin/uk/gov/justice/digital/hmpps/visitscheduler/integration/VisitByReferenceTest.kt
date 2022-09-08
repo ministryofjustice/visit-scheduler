@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
 @DisplayName("GET /visits/{reference}")
-class VisitsByReferenceTest : IntegrationTestBase() {
+class VisitByReferenceTest : IntegrationTestBase() {
 
   private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
 

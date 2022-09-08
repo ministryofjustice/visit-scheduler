@@ -277,6 +277,43 @@ class VisitController(
   ): VisitDto = visitService.getVisitByReference(reference.trim())
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping("/booked/{reference}")
+  @Operation(
+    summary = "Get visit",
+    description = "Retrieve visit by visit reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit Information Returned"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to Get visits for prisoner",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions retrieve a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Visit not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+    ]
+  )
+  fun getBookedVisitByReference(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String
+  ): VisitDto = visitService.getBookedVisitByReference(reference.trim())
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping("/{reference}")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
