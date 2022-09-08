@@ -13,6 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
+import org.springframework.data.projection.ProjectionFactory
+import org.springframework.data.projection.SpelAwareProxyProjectionFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
@@ -22,12 +24,16 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDet
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -42,6 +48,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
+import java.time.temporal.TemporalAdjusters
 
 @ExtendWith(MockitoExtension::class)
 class SessionServiceTest {
@@ -70,9 +77,31 @@ class SessionServiceTest {
     ).thenReturn(response)
   }
 
-  private fun mockVisitRepositoryResponse(response: List<Visit>) {
-    whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
-      .thenReturn(response)
+  private fun mockVisitRepositoryCountResponse(visits: List<Visit>, sessionTemplate: SessionTemplate) {
+    val startDateTime = date.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.startTime)
+    val endDateTime = date.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.endTime)
+
+    whenever(
+      visitRepository.getCountOfActiveSessionVisitsForOpenOrClosedRestriction(
+        sessionTemplate.prisonId,
+        sessionTemplate.visitRoom,
+        startDateTime,
+        endDateTime,
+        visitStatuses = listOf(BOOKED, RESERVED)
+      )
+    ).thenReturn(getVisitRestrictionStatsList(visits))
+  }
+
+  private fun getVisitRestrictionStatsList(visits: List<Visit>): List<VisitRestrictionStats> {
+    return listOf(getVisitRestrictionStats(visits, OPEN), getVisitRestrictionStats(visits, CLOSED))
+  }
+
+  private fun getVisitRestrictionStats(visits: List<Visit>, visitRestriction: VisitRestriction): VisitRestrictionStats {
+    val factory: ProjectionFactory = SpelAwareProxyProjectionFactory()
+    val backingMap: MutableMap<String, Any> = HashMap()
+    backingMap["visitRestriction"] = visitRestriction
+    backingMap["count"] = visits.count { it.visitRestriction == visitRestriction }
+    return factory.createProjection(VisitRestrictionStats::class.java, backingMap)
   }
 
   @Nested
@@ -208,7 +237,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `Single Session with BOOKED Visit has booked slot count`() {
+    fun `Single Session with BOOKED Visit and OPEN and CLOSED restriction has booked slot count`() {
 
       // Given
       val singleSession = sessionTemplate(
@@ -220,7 +249,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      val visit = Visit(
+      val openVisit1 = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = date.atTime(11, 30),
         visitEnd = date.atTime(12, 30),
@@ -228,9 +257,75 @@ class SessionServiceTest {
         prisonId = prisonId,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
-        visitRoom = "123c"
+        visitRoom = "1"
       )
-      mockVisitRepositoryResponse(listOf(visit))
+
+      val openVisit2 = Visit(
+        prisonerId = "Anythingwilldo",
+        visitStart = date.atTime(11, 30),
+        visitEnd = date.atTime(12, 30),
+        visitType = SOCIAL,
+        prisonId = prisonId,
+        visitStatus = BOOKED,
+        visitRestriction = OPEN,
+        visitRoom = "1"
+      )
+
+      val closedVisit = Visit(
+        prisonerId = "Anythingwilldo",
+        visitStart = date.atTime(11, 30),
+        visitEnd = date.atTime(12, 30),
+        visitType = SOCIAL,
+        prisonId = prisonId,
+        visitStatus = BOOKED,
+        visitRestriction = CLOSED,
+        visitRoom = "1"
+      )
+      mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession)
+
+      // When
+      val sessions = sessionService.getVisitSessions(prisonId)
+
+      // Then
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].openVisitBookedCount).isEqualTo(2)
+      assertThat(sessions[0].closedVisitBookedCount).isEqualTo(1)
+    }
+
+    @Test
+    fun `Single Session with RESERVED Visit and OPEN and CLOSED restriction has booked slot count`() {
+      // Given
+      val singleSession = sessionTemplate(
+        validFromDate = date,
+        validToDate = date.plusWeeks(1),
+        dayOfWeek = MONDAY,
+        startTime = LocalTime.parse("11:30"), // future time
+        endTime = LocalTime.parse("12:30") // future time
+      )
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
+
+      val openVisit = Visit(
+        prisonerId = "Anythingwilldo",
+        visitStart = date.atTime(11, 30),
+        visitEnd = date.atTime(12, 30),
+        visitType = SOCIAL,
+        prisonId = prisonId,
+        visitStatus = RESERVED,
+        visitRestriction = OPEN,
+        visitRoom = "1"
+      )
+
+      val closedVisit = Visit(
+        prisonerId = "Anythingwilldo",
+        visitStart = date.atTime(11, 30),
+        visitEnd = date.atTime(12, 30),
+        visitType = SOCIAL,
+        prisonId = prisonId,
+        visitStatus = RESERVED,
+        visitRestriction = CLOSED,
+        visitRoom = "1"
+      )
+      mockVisitRepositoryCountResponse(listOf(openVisit, closedVisit), singleSession)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId)
@@ -242,7 +337,42 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `Single Session with RESERVED Visit has booked slot count`() {
+    fun `Sessions with UNKNOWN restriction Visits has booked slot counts of ZERO`() {
+      // Given
+      val singleSession = sessionTemplate(
+        validFromDate = date,
+        validToDate = date.plusWeeks(1),
+        dayOfWeek = MONDAY,
+        startTime = LocalTime.parse("11:30"), // future time
+        endTime = LocalTime.parse("12:30") // future time
+      )
+
+      val closedVisit = Visit(
+        prisonerId = "Anythingwilldo",
+        visitStart = date.atTime(11, 30),
+        visitEnd = date.atTime(12, 30),
+        visitType = SOCIAL,
+        prisonId = prisonId,
+        visitStatus = RESERVED,
+        visitRestriction = UNKNOWN,
+        visitRoom = "1"
+      )
+
+      mockSessionTemplateRepositoryResponse(listOf(singleSession))
+
+      mockVisitRepositoryCountResponse(listOf(closedVisit), singleSession)
+
+      // When
+      val sessions = sessionService.getVisitSessions(prisonId)
+
+      // Then
+      assertThat(sessions).size().isEqualTo(1)
+      assertThat(sessions[0].openVisitBookedCount).isEqualTo(0)
+      assertThat(sessions[0].closedVisitBookedCount).isEqualTo(0)
+    }
+
+    @Test
+    fun `Sessions with no Visits has booked slot counts of ZERO`() {
       // Given
       val singleSession = sessionTemplate(
         validFromDate = date,
@@ -253,25 +383,18 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      val visit = Visit(
-        prisonerId = "Anythingwilldo",
-        visitStart = date.atTime(11, 30),
-        visitEnd = date.atTime(12, 30),
-        visitType = SOCIAL,
-        prisonId = prisonId,
-        visitStatus = RESERVED,
-        visitRestriction = OPEN,
-        visitRoom = "123c"
-      )
-      mockVisitRepositoryResponse(listOf(visit))
+      // no BOOKED or RESERVED visits
+      val noVisitsBookedOrReserved = emptyList<Visit>()
+
+      mockVisitRepositoryCountResponse(noVisitsBookedOrReserved, singleSession)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      assertThat(sessions[0].openVisitBookedCount).isEqualTo(1)
-      assertThat(sessions[0].closedVisitBookedCount).isEqualTo(1)
+      assertThat(sessions[0].openVisitBookedCount).isEqualTo(0)
+      assertThat(sessions[0].closedVisitBookedCount).isEqualTo(0)
     }
   }
 

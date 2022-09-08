@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -47,6 +48,7 @@ class SessionService(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+    val ACTIVE_VISIT_STATUSES: List<VisitStatus> = listOf(VisitStatus.BOOKED, VisitStatus.RESERVED)
   }
 
   @Transactional(readOnly = true)
@@ -163,9 +165,14 @@ class SessionService(
 
   private fun populateBookedCount(sessions: List<VisitSessionDto>) {
     sessions.forEach {
-      it.openVisitBookedCount = sessionBookedCount(it, VisitRestriction.OPEN)
-      it.closedVisitBookedCount = sessionBookedCount(it, VisitRestriction.CLOSED)
+      val visitRestrictionStatsList: List<VisitRestrictionStats> = getVisitRestrictionStats(it)
+      it.openVisitBookedCount = getCountsByVisitRestriction(VisitRestriction.OPEN, visitRestrictionStatsList)
+      it.closedVisitBookedCount = getCountsByVisitRestriction(VisitRestriction.CLOSED, visitRestrictionStatsList)
     }
+  }
+
+  private fun getCountsByVisitRestriction(visitRestriction: VisitRestriction, visitRestrictionStatsList: List<VisitRestrictionStats>): Int {
+    return visitRestrictionStatsList.stream().filter { visitRestriction == it.visitRestriction }.findFirst().map { it.count.toInt() }.orElse(0)
   }
 
   private fun sessionHasNonAssociation(session: VisitSessionDto, prisonerId: String): Boolean {
@@ -205,23 +212,19 @@ class SessionService(
     ).any { isActiveStatus(it.visitStatus) }
   }
 
-  private fun sessionBookedCount(session: VisitSessionDto, restriction: VisitRestriction): Int {
-    return visitRepository.findAll(
-      VisitSpecification(
-        VisitFilter(
-          prisonId = session.prisonId,
-          visitRoom = session.visitRoomName,
-          startDateTime = session.startTimestamp,
-          endDateTime = session.endTimestamp,
-          visitRestriction = restriction
-        )
-      )
-    ).count { isActiveStatus(it.visitStatus) }
+  private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
+    return visitRepository.getCountOfActiveSessionVisitsForOpenOrClosedRestriction(
+      prisonId = session.prisonId,
+      visitRoom = session.visitRoomName,
+      startDateTime = session.startTimestamp,
+      endDateTime = session.endTimestamp,
+      visitStatuses = ACTIVE_VISIT_STATUSES
+    )
   }
 
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
 
   private fun isActiveStatus(status: VisitStatus) =
-    status == VisitStatus.BOOKED || status == VisitStatus.RESERVED
+    ACTIVE_VISIT_STATUSES.contains(status)
 }
