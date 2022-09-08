@@ -280,7 +280,7 @@ class VisitController(
   @GetMapping("/booked/{reference}")
   @Operation(
     summary = "Get visit",
-    description = "Retrieve visit by visit reference",
+    description = "Retrieve booked visit by visit reference",
     responses = [
       ApiResponse(
         responseCode = "200",
