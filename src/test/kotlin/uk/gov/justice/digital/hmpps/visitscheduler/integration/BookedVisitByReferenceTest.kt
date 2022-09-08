@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
-@DisplayName("GET /visits/{reference}")
+@DisplayName("GET /visits/booked/{reference}")
 class BookedVisitByReferenceTest : IntegrationTestBase() {
 
   private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
