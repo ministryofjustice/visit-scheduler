@@ -8,11 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
-@DisplayName("GET /visits/{reference}")
-class VisitsByReferenceTest : IntegrationTestBase() {
+@DisplayName("GET /visits/booked/{reference}")
+class BookedVisitByReferenceTest : IntegrationTestBase() {
 
   private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
 
@@ -32,16 +34,17 @@ class VisitsByReferenceTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `get visit by reference`() {
+  fun `get booked visit by reference`() {
 
     // Given
     val createdVisit = visitCreator(visitRepository)
       .withPrisonerId("FF0000AA")
+      .withVisitStatus(BOOKED)
       .withVisitStart(visitTime)
       .save()
 
     // When
-    val responseSpec = callVisitEndPoint("/visits/${createdVisit.reference}")
+    val responseSpec = callVisitEndPoint("/visits/booked/${createdVisit.reference}")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -50,12 +53,29 @@ class VisitsByReferenceTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `get visit by reference - not found`() {
+  fun `get booked visit by reference - not found`() {
     // Given
     val reference = "12345"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits/$reference")
+    val responseSpec = callVisitEndPoint("/visits/booked/$reference")
+
+    // Then
+    responseSpec.expectStatus().isNotFound
+  }
+
+  @Test
+  fun `get not booked visit by reference`() {
+
+    // Given
+    val createdVisit = visitCreator(visitRepository)
+      .withPrisonerId("FF0000AA")
+      .withVisitStatus(CANCELLED)
+      .withVisitStart(visitTime)
+      .save()
+
+    // When
+    val responseSpec = callVisitEndPoint("/visits/booked/${createdVisit.reference}")
 
     // Then
     responseSpec.expectStatus().isNotFound
