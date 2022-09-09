@@ -179,12 +179,23 @@ class SessionService(
     val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerId, session.startTimestamp.toLocalDate())
     LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${nonAssociationPrisonerIds.size} non associations!")
 
-    val startDateTimeFilter = if (policyNonAssociationWholeDay) session.startTimestamp.toLocalDate().atStartOfDay() else session.startTimestamp
-    val endDateTimeFilter = if (policyNonAssociationWholeDay) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
+    if (nonAssociationPrisonerIds.isNotEmpty()) {
+      val startDateTimeFilter = if (policyNonAssociationWholeDay) session.startTimestamp.toLocalDate()
+        .atStartOfDay() else session.startTimestamp
+      val endDateTimeFilter = if (policyNonAssociationWholeDay) session.endTimestamp.toLocalDate()
+        .atTime(LocalTime.MAX) else session.endTimestamp
 
-    // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
-    // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
-    return visitRepository.hasActiveVisits(nonAssociationPrisonerIds, session.prisonId, startDateTimeFilter, endDateTimeFilter)
+      // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
+      // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
+      return visitRepository.hasActiveVisits(
+        nonAssociationPrisonerIds,
+        session.prisonId,
+        startDateTimeFilter,
+        endDateTimeFilter
+      )
+    }
+
+    return false
   }
 
   private fun getNonAssociationPrisonerIds(prisonerId: String, startTimestamp: LocalDate): List<String> {
