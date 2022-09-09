@@ -100,11 +100,6 @@ class VisitService(
     return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
   }
 
-  @Transactional(readOnly = true)
-  fun getBookedVisitByReference(reference: String): VisitDto {
-    return VisitDto(visitRepository.findBookedVisitByReference(reference) ?: throw VisitNotFoundException("Booked visit reference $reference not found"))
-  }
-
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
     val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
 
