@@ -5,7 +5,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDateTime
@@ -41,14 +40,13 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "v.visitStart < :endDateTime and " +
       "v.visitRoom = :visitRoom and " +
       "(v.visitRestriction = 'OPEN' or v.visitRestriction = 'CLOSED') and " +
-      " v.visitStatus in (:visitStatuses) " +
+      " (v.visitStatus = 'BOOKED' or v.visitStatus = 'RESERVED') " +
       "group by v.visitRestriction"
   )
   fun getCountOfActiveSessionVisitsForOpenOrClosedRestriction(
     prisonId: String,
     visitRoom: String,
     startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime,
-    visitStatuses: List<VisitStatus>
+    endDateTime: LocalDateTime
   ): List<VisitRestrictionStats>
 }

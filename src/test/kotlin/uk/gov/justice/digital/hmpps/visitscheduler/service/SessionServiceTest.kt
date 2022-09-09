@@ -86,8 +86,7 @@ class SessionServiceTest {
         sessionTemplate.prisonId,
         sessionTemplate.visitRoom,
         startDateTime,
-        endDateTime,
-        visitStatuses = listOf(BOOKED, RESERVED)
+        endDateTime
       )
     ).thenReturn(getVisitRestrictionStatsList(visits))
   }

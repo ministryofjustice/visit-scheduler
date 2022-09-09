@@ -48,7 +48,6 @@ class SessionService(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    val ACTIVE_VISIT_STATUSES: List<VisitStatus> = listOf(VisitStatus.BOOKED, VisitStatus.RESERVED)
   }
 
   @Transactional(readOnly = true)
@@ -217,8 +216,7 @@ class SessionService(
       prisonId = session.prisonId,
       visitRoom = session.visitRoomName,
       startDateTime = session.startTimestamp,
-      endDateTime = session.endTimestamp,
-      visitStatuses = ACTIVE_VISIT_STATUSES
+      endDateTime = session.endTimestamp
     )
   }
 
@@ -226,5 +224,5 @@ class SessionService(
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
 
   private fun isActiveStatus(status: VisitStatus) =
-    ACTIVE_VISIT_STATUSES.contains(status)
+    status == VisitStatus.BOOKED || status == VisitStatus.RESERVED
 }
