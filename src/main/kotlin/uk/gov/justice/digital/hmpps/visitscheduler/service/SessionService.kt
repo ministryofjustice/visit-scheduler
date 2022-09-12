@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -163,9 +164,14 @@ class SessionService(
 
   private fun populateBookedCount(sessions: List<VisitSessionDto>) {
     sessions.forEach {
-      it.openVisitBookedCount = sessionBookedCount(it, VisitRestriction.OPEN)
-      it.closedVisitBookedCount = sessionBookedCount(it, VisitRestriction.CLOSED)
+      val visitRestrictionStatsList: List<VisitRestrictionStats> = getVisitRestrictionStats(it)
+      it.openVisitBookedCount = getCountsByVisitRestriction(VisitRestriction.OPEN, visitRestrictionStatsList)
+      it.closedVisitBookedCount = getCountsByVisitRestriction(VisitRestriction.CLOSED, visitRestrictionStatsList)
     }
+  }
+
+  private fun getCountsByVisitRestriction(visitRestriction: VisitRestriction, visitRestrictionStatsList: List<VisitRestrictionStats>): Int {
+    return visitRestrictionStatsList.stream().filter { visitRestriction == it.visitRestriction }.findFirst().map { it.count.toInt() }.orElse(0)
   }
 
   private fun sessionHasNonAssociation(session: VisitSessionDto, prisonerId: String): Boolean {
@@ -173,12 +179,16 @@ class SessionService(
     val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerId, session.startTimestamp.toLocalDate())
     LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${nonAssociationPrisonerIds.size} non associations!")
 
-    val startDateTimeFilter = if (policyNonAssociationWholeDay) session.startTimestamp.toLocalDate().atStartOfDay() else session.startTimestamp
-    val endDateTimeFilter = if (policyNonAssociationWholeDay) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
+    if (nonAssociationPrisonerIds.isNotEmpty()) {
+      val startDateTimeFilter = if (policyNonAssociationWholeDay) session.startTimestamp.toLocalDate().atStartOfDay() else session.startTimestamp
+      val endDateTimeFilter = if (policyNonAssociationWholeDay) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
 
-    // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
-    // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
-    return visitRepository.hasActiveVisits(nonAssociationPrisonerIds, session.prisonId, startDateTimeFilter, endDateTimeFilter)
+      // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
+      // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
+      return visitRepository.hasActiveVisits(nonAssociationPrisonerIds, session.prisonId, startDateTimeFilter, endDateTimeFilter)
+    }
+
+    return false
   }
 
   private fun getNonAssociationPrisonerIds(prisonerId: String, startTimestamp: LocalDate): List<String> {
@@ -205,18 +215,13 @@ class SessionService(
     ).any { isActiveStatus(it.visitStatus) }
   }
 
-  private fun sessionBookedCount(session: VisitSessionDto, restriction: VisitRestriction): Int {
-    return visitRepository.findAll(
-      VisitSpecification(
-        VisitFilter(
-          prisonId = session.prisonId,
-          visitRoom = session.visitRoomName,
-          startDateTime = session.startTimestamp,
-          endDateTime = session.endTimestamp,
-          visitRestriction = restriction
-        )
-      )
-    ).count { isActiveStatus(it.visitStatus) }
+  private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
+    return visitRepository.getCountOfActiveSessionVisitsForOpenOrClosedRestriction(
+      prisonId = session.prisonId,
+      visitRoom = session.visitRoomName,
+      startDateTime = session.startTimestamp,
+      endDateTime = session.endTimestamp
+    )
   }
 
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
