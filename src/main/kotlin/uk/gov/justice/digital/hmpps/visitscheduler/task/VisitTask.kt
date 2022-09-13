@@ -22,6 +22,7 @@ class VisitTask(
     if (!enabled) {
       return
     }
+    log.debug("Entered deleteExpiredReservations expiredPeriod : $expiredPeriod")
 
     val expired = visitService.findVisitsByFilterPageableDescending(
       VisitFilter(
