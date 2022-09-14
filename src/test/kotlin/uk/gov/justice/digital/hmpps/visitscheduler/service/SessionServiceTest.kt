@@ -816,6 +816,56 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(0)
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
+
+    @Test
+    fun `when multiple sessions prison api get offenders is only called once`() {
+      // Given
+      val prisonerId = "A1234AA"
+
+      val firstSession = sessionTemplate(
+        validFromDate = date,
+        validToDate = date.plusWeeks(1),
+        dayOfWeek = MONDAY,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30")
+      )
+
+      val secondSession = sessionTemplate(
+        validFromDate = date,
+        validToDate = date.plusWeeks(2),
+        dayOfWeek = MONDAY,
+        startTime = LocalTime.parse("11:30"),
+        endTime = LocalTime.parse("12:30")
+      )
+      mockSessionTemplateRepositoryResponse(listOf(firstSession, secondSession))
+
+      whenever(
+        prisonApiClient.getOffenderNonAssociation(prisonerId)
+      ).thenReturn(OffenderNonAssociationDetailsDto())
+
+      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
+        .thenReturn(
+          listOf(
+            Visit(
+              prisonerId = prisonId,
+              visitStart = date.plusDays(2).atTime(11, 30),
+              visitEnd = date.plusDays(2).atTime(12, 30),
+              visitType = SOCIAL,
+              prisonId = prisonId,
+              visitStatus = BOOKED,
+              visitRestriction = OPEN,
+              visitRoom = "123c",
+            )
+          )
+        )
+
+      // When
+      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+
+      // Then
+      assertThat(sessions).size().isEqualTo(0)
+      Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    }
   }
 
   private fun assertDate(localDateTime: LocalDateTime, expectedlyDateTime: String, dayOfWeek: DayOfWeek) {
