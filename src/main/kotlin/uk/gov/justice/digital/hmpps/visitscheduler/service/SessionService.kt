@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
@@ -26,6 +27,7 @@ import java.time.LocalTime
 import java.time.Period
 import java.time.temporal.TemporalAdjusters
 import java.util.stream.Stream
+import javax.validation.constraints.NotNull
 
 @Service
 @Transactional
@@ -72,8 +74,10 @@ class SessionService(
     }.flatten()
 
     if (!prisonerId.isNullOrBlank()) {
-      sessions = filterPrisonerConflict(sessions, prisonerId)
-      populateConflict(sessions, prisonerId)
+      val offenderNonAssociationList = getOffenderNonAssociationList(prisonerId)
+
+      sessions = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
+      populateConflict(sessions, prisonerId, offenderNonAssociationList)
     }
 
     populateBookedCount(sessions)
@@ -146,16 +150,16 @@ class SessionService(
     return validToDate
   }
 
-  private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
+  private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String, offenderNonAssociationList: List<OffenderNonAssociationDetailDto>): List<VisitSessionDto> {
     return sessions.filterNot {
-      (policyFilterNonAssociation && sessionHasNonAssociation(it, prisonerId)) ||
+      (policyFilterNonAssociation && offenderNonAssociationList.isNotEmpty() && sessionHasNonAssociation(it, offenderNonAssociationList)) ||
         (policyFilterDoubleBooking && sessionHasBooking(it, prisonerId))
     }
   }
 
-  private fun populateConflict(sessions: List<VisitSessionDto>, prisonerId: String) {
+  private fun populateConflict(sessions: List<VisitSessionDto>, prisonerId: String, offenderNonAssociationList: List<OffenderNonAssociationDetailDto>) {
     sessions.forEach {
-      if (!policyFilterNonAssociation && sessionHasNonAssociation(it, prisonerId))
+      if (!policyFilterNonAssociation && offenderNonAssociationList.isNotEmpty() && sessionHasNonAssociation(it, offenderNonAssociationList))
         it.sessionConflicts?.add(SessionConflict.NON_ASSOCIATION)
       if (!policyFilterDoubleBooking && sessionHasBooking(it, prisonerId))
         it.sessionConflicts?.add(SessionConflict.DOUBLE_BOOKED)
@@ -174,12 +178,9 @@ class SessionService(
     return visitRestrictionStatsList.stream().filter { visitRestriction == it.visitRestriction }.findFirst().map { it.count.toInt() }.orElse(0)
   }
 
-  private fun sessionHasNonAssociation(session: VisitSessionDto, prisonerId: String): Boolean {
-
-    val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerId, session.startTimestamp.toLocalDate())
-    LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${nonAssociationPrisonerIds.size} non associations!")
-
-    if (nonAssociationPrisonerIds.isNotEmpty()) {
+  private fun sessionHasNonAssociation(session: VisitSessionDto, offenderNonAssociationList: @NotNull List<OffenderNonAssociationDetailDto>): Boolean {
+    if (offenderNonAssociationList.isNotEmpty()) {
+      val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(session.startTimestamp.toLocalDate(), offenderNonAssociationList)
       val startDateTimeFilter = if (policyNonAssociationWholeDay) session.startTimestamp.toLocalDate().atStartOfDay() else session.startTimestamp
       val endDateTimeFilter = if (policyNonAssociationWholeDay) session.endTimestamp.toLocalDate().atTime(LocalTime.MAX) else session.endTimestamp
 
@@ -191,15 +192,21 @@ class SessionService(
     return false
   }
 
-  private fun getNonAssociationPrisonerIds(prisonerId: String, startTimestamp: LocalDate): List<String> {
+  private fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
     try {
-      val offenderNonAssociationList = prisonApiClient.getOffenderNonAssociation(prisonerId)!!.nonAssociations
-      return offenderNonAssociationList.filter { isDateWithinRange(startTimestamp, it.effectiveDate, it.expiryDate) }.map { it.offenderNonAssociation.offenderNo }
+      val offenderNonAssociationList = prisonApiClient.getOffenderNonAssociation(prisonerId)?.nonAssociations ?: emptyList()
+      LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${offenderNonAssociationList.size} non associations!")
+      return offenderNonAssociationList
     } catch (e: WebClientResponseException) {
       if (e.statusCode != HttpStatus.NOT_FOUND)
         throw e
     }
+
     return emptyList()
+  }
+
+  private fun getNonAssociationPrisonerIds(startTimestamp: LocalDate, @NotNull offenderNonAssociationList: List<OffenderNonAssociationDetailDto>): List<String> {
+    return offenderNonAssociationList.filter { isDateWithinRange(startTimestamp, it.effectiveDate, it.expiryDate) }.map { it.offenderNonAssociation.offenderNo }
   }
 
   private fun sessionHasBooking(session: VisitSessionDto, prisonerId: String): Boolean {
