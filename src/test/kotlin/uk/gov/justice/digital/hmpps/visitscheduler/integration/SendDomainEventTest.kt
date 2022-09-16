@@ -81,10 +81,10 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
 
       // When
-      val responseSpec = webTestClient.put().uri("/visits/${visitEntity.reference}")
+      val responseSpec = webTestClient.put().uri("/visits/${visitEntity.reference}/book")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
-          BodyInserters.fromValue(UpdateVisitRequestDto(visitStatus = VisitStatus.BOOKED))
+          BodyInserters.fromValue(UpdateVisitRequestDto())
         )
         .exchange()
 

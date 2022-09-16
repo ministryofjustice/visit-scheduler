@@ -39,7 +39,8 @@ class MigrateVisitService(
         outcomeStatus = outcomeStatus,
         visitRestriction = migrateVisitRequest.visitRestriction,
         visitStart = migrateVisitRequest.startTimestamp,
-        visitEnd = migrateVisitRequest.endTimestamp
+        visitEnd = migrateVisitRequest.endTimestamp,
+        active = true
       )
     )
 
@@ -74,7 +75,7 @@ class MigrateVisitService(
 
     sendTelemetryData(visitEntity)
 
-    return visitEntity.reference
+    return visitEntity.reference!!
   }
 
   private fun sendTelemetryData(visitEntity: Visit) {

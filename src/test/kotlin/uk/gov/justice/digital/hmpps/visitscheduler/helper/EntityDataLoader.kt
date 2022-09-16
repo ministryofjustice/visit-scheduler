@@ -87,6 +87,7 @@ fun defaultVisit(): Visit {
     visitType = SOCIAL,
     visitStatus = RESERVED,
     visitRestriction = OPEN,
+    active = true
   )
 }
 

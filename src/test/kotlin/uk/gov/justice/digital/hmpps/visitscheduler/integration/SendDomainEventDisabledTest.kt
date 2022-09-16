@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.TestPropertySource
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -85,7 +85,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
     webTestClient.put().uri("/visits/${visitEntity.reference}")
       .headers(setAuthorisation(roles = ROLES))
       .body(
-        BodyInserters.fromValue(UpdateVisitRequestDto(visitStatus = VisitStatus.BOOKED))
+        BodyInserters.fromValue(UpdateVisitRequestDto())
       )
       .exchange()
 
@@ -110,8 +110,8 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
     assertSNSEventsNotSent()
   }
 
-  private fun createVisitRequest(): CreateVisitRequestDto {
-    return CreateVisitRequestDto(
+  private fun createVisitRequest(): ReserveVisitRequestDto {
+    return ReserveVisitRequestDto(
       prisonId = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",

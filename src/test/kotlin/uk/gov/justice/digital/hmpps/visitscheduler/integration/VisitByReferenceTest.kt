@@ -1,13 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
@@ -22,21 +22,13 @@ class VisitByReferenceTest : IntegrationTestBase() {
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
-  @BeforeEach
-  internal fun createVisits() {
-    visitCreator(visitRepository)
-      .withPrisonerId("FF0000AA")
-      .withVisitStart(visitTime)
-      .withPrisonId("MDI")
-      .save()
-  }
-
   @Test
   fun `get visit by reference`() {
 
     // Given
     val createdVisit = visitCreator(visitRepository)
       .withPrisonerId("FF0000AA")
+      .withVisitStatus(BOOKED)
       .withVisitStart(visitTime)
       .save()
 

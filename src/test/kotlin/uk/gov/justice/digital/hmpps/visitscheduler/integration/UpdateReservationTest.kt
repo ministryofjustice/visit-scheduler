@@ -42,11 +42,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
-private const val TEST_END_POINT = "/visits/"
-
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Update PUT /visits")
-class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -56,8 +54,8 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private var visitMin: Visit? = null
-  private var visitFull: Visit? = null
+  private lateinit var visitMin: Visit
+  private lateinit var visitFull: Visit
 
   @BeforeEach
   internal fun setUp() {
@@ -81,33 +79,29 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .withVisitStart(visitTime.plusDays(2))
       .withVisitEnd(visitTime.plusDays(2).plusHours(1))
       .withVisitType(VisitType.SOCIAL)
-      .withVisitStatus(VisitStatus.BOOKED)
+      .withVisitStatus(VisitStatus.RESERVED)
       .save()
-    visitNoteCreator(visit = visitFull!!, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = visitFull!!, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = visitFull!!, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, visitContact = true)
-    visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(visitFull!!)
+
+    visitNoteCreator(visit = visitFull, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitNoteCreator(visit = visitFull, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitNoteCreator(visit = visitFull, text = "Some text comment", type = VISIT_COMMENT)
+    visitContactCreator(visit = visitFull, name = "Jane Doe", phone = "01234 098765")
+    visitVisitorCreator(visit = visitFull, nomisPersonId = 321L, visitContact = true)
+    visitSupportCreator(visit = visitFull, name = "OTHER", details = "Some Text")
+    visitRepository.saveAndFlush(visitFull)
   }
 
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
   @Test
-  fun `update visit by reference - add booked details`() {
+  fun `update visit by reference - add final details`() {
 
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      prisonerId = "FF0000AB",
-      prisonId = "AAB",
-      visitRoom = "A2",
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
-      visitType = VisitType.SOCIAL,
-      visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
@@ -117,7 +111,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull.reference)
 
     // Then
 
@@ -125,13 +119,13 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.reference").isNotEmpty
-      .jsonPath("$.prisonerId").isEqualTo(updateRequest.prisonerId!!)
-      .jsonPath("$.prisonId").isEqualTo(updateRequest.prisonId!!)
-      .jsonPath("$.visitRoom").isEqualTo(updateRequest.visitRoom!!)
+      .jsonPath("$.prisonerId").isEqualTo(visitFull.prisonerId)
+      .jsonPath("$.prisonId").isEqualTo(visitFull.prisonId)
+      .jsonPath("$.visitRoom").isEqualTo(visitFull.visitRoom)
       .jsonPath("$.startTimestamp").isEqualTo(updateRequest.startTimestamp.toString())
       .jsonPath("$.endTimestamp").isEqualTo(updateRequest.endTimestamp.toString())
-      .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
-      .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
+      .jsonPath("$.visitType").isEqualTo(visitFull.visitType.name)
+      .jsonPath("$.visitStatus").isEqualTo(VisitStatus.RESERVED.name)
       .jsonPath("$.visitRestriction").isEqualTo(updateRequest.visitRestriction!!.name)
       .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
       .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
@@ -157,15 +151,6 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       isNull()
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
-
-    verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit.booked-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-      },
-      isNull()
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
   }
 
   @Test
@@ -174,13 +159,8 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
 
     val updateRequest = UpdateVisitRequestDto(
-      prisonerId = "FF0000AB",
-      prisonId = "AAB",
-      visitRoom = "A2",
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
-      visitType = VisitType.SOCIAL,
-      visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = true))
@@ -189,7 +169,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull.reference)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -207,7 +187,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull.reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -240,7 +220,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull.reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -272,7 +252,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull.reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -342,7 +322,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     jsonBody: BodyInserter<*, in ClientHttpRequest>?,
     reference: String
   ): ResponseSpec {
-    return webTestClient.put().uri(TEST_END_POINT + reference)
+    return webTestClient.put().uri("/visits/$reference/update/reservation")
       .headers(authHttpHeaders)
       .body(jsonBody)
       .exchange()

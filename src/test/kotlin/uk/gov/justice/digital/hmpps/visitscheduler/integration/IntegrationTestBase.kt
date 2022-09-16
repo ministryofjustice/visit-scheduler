@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMoc
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 abstract class IntegrationTestBase {
+
   @Suppress("unused")
   @Autowired
   lateinit var webTestClient: WebTestClient

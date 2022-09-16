@@ -9,10 +9,11 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -33,31 +34,35 @@ class VisitService(
   private val visitRepository: VisitRepository,
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
+  private val snsService: SnsService,
 ) {
 
-  fun createVisit(createVisitRequest: CreateVisitRequestDto): VisitDto {
+  fun reserveVisit(useReference: String = "", reservedVisitRequestDto: ReserveVisitRequestDto): VisitDto {
+
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
-        prisonerId = createVisitRequest.prisonerId,
-        prisonId = createVisitRequest.prisonId,
-        visitRoom = createVisitRequest.visitRoom,
-        visitType = createVisitRequest.visitType,
+        prisonerId = reservedVisitRequestDto.prisonerId,
+        prisonId = reservedVisitRequestDto.prisonId,
+        visitRoom = reservedVisitRequestDto.visitRoom,
+        visitType = reservedVisitRequestDto.visitType,
         visitStatus = VisitStatus.RESERVED,
-        visitRestriction = createVisitRequest.visitRestriction,
-        visitStart = createVisitRequest.startTimestamp,
-        visitEnd = createVisitRequest.endTimestamp
+        visitRestriction = reservedVisitRequestDto.visitRestriction,
+        visitStart = reservedVisitRequestDto.startTimestamp,
+        visitEnd = reservedVisitRequestDto.endTimestamp,
+        reference = useReference,
+        active = false
       )
     )
 
-    createVisitRequest.visitContact?.let {
+    reservedVisitRequestDto.visitContact?.let {
       visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
     }
 
-    createVisitRequest.visitors.forEach {
+    reservedVisitRequestDto.visitors.forEach {
       visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
     }
 
-    createVisitRequest.visitorSupport?.let { supportList ->
+    reservedVisitRequestDto.visitorSupport?.let { supportList ->
       supportList.forEach {
         if (!supportTypeRepository.existsByName(it.type)) {
           throw SupportNotFoundException("Invalid support ${it.type} not found")
@@ -66,6 +71,12 @@ class VisitService(
       }
     }
 
+    createVisitTrackEvent(visitEntity)
+
+    return VisitDto(visitEntity)
+  }
+
+  private fun createVisitTrackEvent(visitEntity: Visit) {
     telemetryClient.trackEvent(
       "visit-scheduler-prison-visit-created",
       mapOf(
@@ -80,34 +91,11 @@ class VisitService(
       ),
       null
     )
-
-    return VisitDto(visitEntity)
   }
 
-  @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
-  fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
-    return findVisitsByFilterPageableDescending(visitFilter).content
-  }
+  fun updateReservation(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
+    val visitEntity = visitRepository.findReservedVisit(reference) ?: throw VisitNotFoundException("Reserved visit reference $reference not found")
 
-  @Transactional(readOnly = true)
-  fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
-    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
-    return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
-  }
-
-  @Transactional(readOnly = true)
-  fun getVisitByReference(reference: String): VisitDto {
-    return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
-  }
-
-  fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
-    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
-
-    updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
-    updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
-    updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
-    updateVisitRequest.visitType?.let { visitType -> visitEntity.visitType = visitType }
-    updateVisitRequest.visitStatus?.let { status -> visitEntity.visitStatus = status }
     updateVisitRequest.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
     updateVisitRequest.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
     updateVisitRequest.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
@@ -144,13 +132,13 @@ class VisitService(
       "visit-scheduler-prison-visit-updated",
       listOfNotNull(
         "reference" to reference,
-        if (updateVisitRequest.prisonerId != null) "prisonerId" to updateVisitRequest.prisonerId else null,
-        if (updateVisitRequest.prisonId != null) "prisonId" to updateVisitRequest.prisonId else null,
-        if (updateVisitRequest.visitType != null) "visitType" to updateVisitRequest.visitType.name else null,
-        if (updateVisitRequest.visitRoom != null) "visitRoom" to updateVisitRequest.visitRoom else null,
+        "prisonerId" to visitEntity.prisonerId,
+        "prisonId" to visitEntity.prisonId,
+        "visitType" to visitEntity.visitType.name,
+        "visitRoom" to visitEntity.visitRoom,
         if (updateVisitRequest.visitRestriction != null) "visitRestriction" to updateVisitRequest.visitRestriction.name else null,
         if (updateVisitRequest.startTimestamp != null) "visitStart" to updateVisitRequest.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME) else null,
-        if (updateVisitRequest.visitStatus != null) "visitStatus" to updateVisitRequest.visitStatus.name else null
+        if (visitEntity.visitStatus != null) "visitStatus" to visitEntity.visitStatus.name else null
       ).toMap(),
       null
     )
@@ -158,19 +146,43 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  fun deleteVisit(reference: String) {
-    val visit = visitRepository.findByReference(reference)
+  fun bookVisit(reference: String): VisitDto {
 
-    visit?.let {
-      visitRepository.delete(it)
-      telemetryClient.trackEvent(
-        "visit-scheduler-prison-visit-deleted",
-        mapOf(
-          "reference" to reference
-        ),
-        null
-      )
-    } ?: run { log.debug("Visit reference $reference not found") }
+    var revisedVisit = false
+    val existingBookedVisit = visitRepository.findBookedVisit(reference)
+    existingBookedVisit?.let {
+      existingBookedVisit.visitStatus = VisitStatus.CANCELLED
+      existingBookedVisit.outcomeStatus = SUPERSEDED_CANCELLATION
+      existingBookedVisit.active = false
+      visitRepository.saveAndFlush(existingBookedVisit)
+      revisedVisit = true
+    }
+
+    val visitToBook = visitRepository.findReservedVisit(reference) ?: throw VisitNotFoundException("Could not find reserved visit $reference not found")
+    visitToBook.visitStatus = VisitStatus.BOOKED
+    visitToBook.active = true
+
+    val visit = VisitDto(visitRepository.saveAndFlush(visitToBook))
+
+    // TODO can we change the name of the track event name?
+    telemetryClient.trackEvent(
+      "visit-scheduler-prison-visit-updated",
+      listOfNotNull(
+        "reference" to reference,
+        "visitStatus" to visit.visitStatus.name,
+      ).toMap(),
+      null
+    )
+
+    if (revisedVisit) {
+      // TODO we need to have a revised event
+      snsService.sendRevisedVisitBookedEvent(visit)
+    } else {
+      // Updated to BOOKED status - review if POST & PUT are replaced with Reserve, Book & Amend endpoints
+      snsService.sendVisitBookedEvent(visit)
+    }
+
+    return visit
   }
 
   fun deleteAllVisits(visits: List<VisitDto>) {
@@ -187,8 +199,24 @@ class VisitService(
     }
   }
 
+  @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
+  fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
+    return findVisitsByFilterPageableDescending(visitFilter).content
+  }
+
+  @Transactional(readOnly = true)
+  fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
+    return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
+  }
+
+  @Transactional(readOnly = true)
+  fun getVisitByReference(reference: String): VisitDto {
+    return VisitDto(visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
+  }
+
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
-    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
 
     visitEntity.visitStatus = VisitStatus.CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
@@ -209,7 +237,9 @@ class VisitService(
       null
     )
 
-    return VisitDto(visitEntity)
+    val visit = VisitDto(visitEntity)
+    snsService.sendVisitCancelledEvent(visit)
+    return visit
   }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
