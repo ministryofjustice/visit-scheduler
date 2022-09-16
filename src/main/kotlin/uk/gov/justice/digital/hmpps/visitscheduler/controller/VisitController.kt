@@ -35,7 +35,7 @@ import javax.validation.Valid
 @RestController
 @Validated
 @RequestMapping(name = "Visit Resource", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
-class createReservationRequester(
+class VisitController(
   private val visitService: VisitService
 ) {
 
