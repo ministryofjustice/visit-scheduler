@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateReservationRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -133,7 +133,7 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = UpdateVisitRequestDto::class)
+          schema = Schema(implementation = UpdateReservationRequestDto::class)
         )
       ]
     ),
@@ -167,7 +167,7 @@ class VisitController(
   fun updateReservation(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = false)
     @PathVariable reference: String,
-    @RequestBody @Valid updateVisitRequest: UpdateVisitRequestDto
+    @RequestBody @Valid updateVisitRequest: UpdateReservationRequestDto
   ): VisitDto {
     return visitService.updateReservation(reference.trim(), updateVisitRequest)
   }

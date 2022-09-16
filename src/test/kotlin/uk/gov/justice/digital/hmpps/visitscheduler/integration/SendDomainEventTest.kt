@@ -21,7 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateReservationRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -84,7 +84,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       val responseSpec = webTestClient.put().uri("/visits/${visitEntity.reference}/book")
         .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
         .body(
-          BodyInserters.fromValue(UpdateVisitRequestDto())
+          BodyInserters.fromValue(UpdateReservationRequestDto())
         )
         .exchange()
 

@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.validation.NullableNotEmpty
 import java.time.LocalDateTime
 import javax.validation.Valid
 
-data class UpdateVisitRequestDto(
+data class UpdateReservationRequestDto(
   @Schema(description = "Visit Restriction", example = "OPEN", required = false)
   val visitRestriction: VisitRestriction? = null,
   @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = false)

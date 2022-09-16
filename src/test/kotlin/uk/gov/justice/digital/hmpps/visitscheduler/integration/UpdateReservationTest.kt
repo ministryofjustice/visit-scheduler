@@ -22,7 +22,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateReservationRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -99,7 +99,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
+    val updateRequest = UpdateReservationRequestDto(
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
       visitRestriction = VisitRestriction.CLOSED,
@@ -158,7 +158,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
+    val updateRequest = UpdateReservationRequestDto(
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
       visitRestriction = VisitRestriction.CLOSED,
@@ -180,7 +180,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
+    val updateRequest = UpdateReservationRequestDto(
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
@@ -213,7 +213,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
+    val updateRequest = UpdateReservationRequestDto(
       visitors = setOf(VisitorDto(123L, visitContact = true)),
     )
 
@@ -245,7 +245,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
   fun `put visit by reference - amend support`() {
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
+    val updateRequest = UpdateReservationRequestDto(
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
@@ -277,7 +277,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
   @Test
   fun `put visit by reference - not found`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(UpdateVisitRequestDto())
+    val jsonBody = BodyInserters.fromValue(UpdateReservationRequestDto())
 
     // When
     val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, "IMNOTHERE")
@@ -291,7 +291,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val jsonBody = BodyInserters.fromValue(UpdateVisitRequestDto())
+    val jsonBody = BodyInserters.fromValue(UpdateReservationRequestDto())
 
     // When
     val responseSpec = callUpdateVisit(authHttpHeaders, jsonBody, "12345")
@@ -306,7 +306,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
   @Test
   fun `unauthorised when no token`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(UpdateVisitRequestDto())
+    val jsonBody = BodyInserters.fromValue(UpdateReservationRequestDto())
 
     // When
     val responseSpec = webTestClient.post().uri("/visits/12345")

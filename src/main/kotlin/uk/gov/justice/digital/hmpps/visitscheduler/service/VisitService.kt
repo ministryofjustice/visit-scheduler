@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateReservationRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
@@ -93,7 +93,7 @@ class VisitService(
     )
   }
 
-  fun updateReservation(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
+  fun updateReservation(reference: String, updateVisitRequest: UpdateReservationRequestDto): VisitDto {
     val visitEntity = visitRepository.findReservedVisit(reference) ?: throw VisitNotFoundException("Reserved visit reference $reference not found")
 
     updateVisitRequest.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }

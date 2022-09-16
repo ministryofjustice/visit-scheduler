@@ -13,7 +13,7 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateReservationRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
@@ -85,7 +85,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
     webTestClient.put().uri("/visits/${visitEntity.reference}")
       .headers(setAuthorisation(roles = ROLES))
       .body(
-        BodyInserters.fromValue(UpdateVisitRequestDto())
+        BodyInserters.fromValue(UpdateReservationRequestDto())
       )
       .exchange()
 
