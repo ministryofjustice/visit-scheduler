@@ -21,8 +21,9 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_REVISE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -37,14 +38,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST /visits/")
+@DisplayName("POST $VISIT_REVISE")
 class ReserveWithReferenceVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -68,9 +68,10 @@ class ReserveWithReferenceVisitTest(@Autowired private val objectMapper: ObjectM
       .withVisitRoom("B1")
       .withVisitStart(UpdateReservationTest.visitTime.plusDays(2))
       .withVisitEnd(UpdateReservationTest.visitTime.plusDays(2).plusHours(1))
-      .withVisitType(VisitType.SOCIAL)
+      .withVisitType(SOCIAL)
       .withVisitStatus(VisitStatus.BOOKED)
       .save()
+
     visitNoteCreator(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitNoteCreator(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
     visitNoteCreator(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
@@ -84,8 +85,8 @@ class ReserveWithReferenceVisitTest(@Autowired private val objectMapper: ObjectM
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
-  private fun createReserveVisitRequest(): ReserveVisitRequestDto {
-    return ReserveVisitRequestDto(
+  private fun createReserveVisitRequest(): ReserveVisitDto {
+    return ReserveVisitDto(
       prisonId = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
@@ -109,7 +110,7 @@ class ReserveWithReferenceVisitTest(@Autowired private val objectMapper: ObjectM
     )
 
     // When
-    val responseSpec = callReserveCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody, bookedVisit.reference)
+    val responseSpec = callSlotRevise(roleVisitSchedulerHttpHeaders, jsonBody, bookedVisit.reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isCreated
@@ -145,14 +146,14 @@ class ReserveWithReferenceVisitTest(@Autowired private val objectMapper: ObjectM
   fun `reserved visit has given reference`() {
 
     // Given
-    val reference = "TEST_REFERENCE"
+    val reference = bookedVisit.reference
 
     val jsonBody = BodyInserters.fromValue(
       createReserveVisitRequest()
     )
 
     // When
-    val responseSpec = callReserveCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
+    val responseSpec = callSlotRevise(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isCreated
@@ -187,11 +188,10 @@ class ReserveWithReferenceVisitTest(@Autowired private val objectMapper: ObjectM
       mapOf("wrongProperty" to "wrongValue")
     )
 
+    val reference = bookedVisit.reference
+
     // When
-    val responseSpec = webTestClient.put().uri("/visits/reference/reserve")
-      .headers(roleVisitSchedulerHttpHeaders)
-      .body(jsonBody)
-      .exchange()
+    val responseSpec = callSlotRevise(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -205,11 +205,12 @@ class ReserveWithReferenceVisitTest(@Autowired private val objectMapper: ObjectM
   fun `access forbidden when no role`() {
 
     // Given
-    val authHttpHeaders = setAuthorisation(roles = listOf())
+    val incorrectAuthHeaders = setAuthorisation(roles = listOf())
     val jsonBody = BodyInserters.fromValue(createReserveVisitRequest())
+    val reference = bookedVisit.reference
 
     // When
-    val responseSpec = callReserveCreateVisit(authHttpHeaders, jsonBody, "reference")
+    val responseSpec = callSlotRevise(incorrectAuthHeaders, jsonBody, reference)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -222,9 +223,10 @@ class ReserveWithReferenceVisitTest(@Autowired private val objectMapper: ObjectM
   fun `unauthorised when no token`() {
     // Given
     val jsonBody = BodyInserters.fromValue(createReserveVisitRequest())
+    val reference = bookedVisit.reference
 
     // When
-    val responseSpec = webTestClient.put().uri("/visits/reference/reserve")
+    val responseSpec = webTestClient.put().uri(getSlotReviseUrl(reference))
       .body(jsonBody)
       .exchange()
 
@@ -232,15 +234,26 @@ class ReserveWithReferenceVisitTest(@Autowired private val objectMapper: ObjectM
     responseSpec.expectStatus().isUnauthorized
   }
 
-  private fun callReserveCreateVisit(
+  private fun callSlotRevise(
     authHttpHeaders: (HttpHeaders) -> Unit,
     jsonBody: BodyInserter<*, in ClientHttpRequest>?,
     reference: String
   ): ResponseSpec {
-    return webTestClient.put().uri("/visits/$reference/reserve")
+
+    if (jsonBody == null) {
+      return webTestClient.put().uri(getSlotReviseUrl(reference))
+        .headers(authHttpHeaders)
+        .exchange()
+    }
+
+    return webTestClient.put().uri(getSlotReviseUrl(reference))
       .headers(authHttpHeaders)
       .body(jsonBody)
       .exchange()
+  }
+
+  private fun getSlotReviseUrl(reference: String): String {
+    return VISIT_REVISE.replace("{reference}", reference)
   }
 
   companion object {

@@ -53,11 +53,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<VisitRestrictionStats>
 
   @Query(
-    "Update Visit v set v.visitStatus = 'CANCELLED' WHERE v.reference = :reference and v.visitStatus = 'BOOKED'  "
-  )
-  fun cancelBookedVisit(reference: String): Visit?
-
-  @Query(
     "SELECT v FROM Visit v WHERE v.reference = :reference and v.visitStatus = 'RESERVED' "
   )
   fun findReservedVisit(reference: String): Visit?
@@ -66,9 +61,4 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT v FROM Visit v WHERE v.reference = :reference and v.visitStatus = 'BOOKED' "
   )
   fun findBookedVisit(reference: String): Visit?
-
-  @Query(
-    "SELECT v FROM Visit v WHERE v.reference = :reference and v.active = true "
-  )
-  fun findActiveVisit(reference: String): Visit?
 }

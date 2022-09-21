@@ -19,9 +19,12 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.http.HttpHeaders
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateReservationRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -79,14 +82,11 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
       // Given
       val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
+      val reference = visitEntity.reference
+      val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
       // When
-      val responseSpec = webTestClient.put().uri("/visits/${visitEntity.reference}/book")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(UpdateReservationRequestDto())
-        )
-        .exchange()
+      val responseSpec = callBookVisit(authHeader, reference)
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 
@@ -133,14 +133,15 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
     fun `send visit cancelled event`() {
       // Given
       val visitEntity = createVisitAndSave(VisitStatus.BOOKED)
+      val reference = visitEntity.reference
+      val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+      val outcomeDto = OutcomeDto(
+        OutcomeStatus.PRISONER_CANCELLED,
+        "Prisoner got covid"
+      )
 
       // When
-      val responseSpec = webTestClient.patch().uri("/visits/${visitEntity.reference}/cancel")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(OutcomeDto(OutcomeStatus.PRISONER_CANCELLED, "AnyThingWillDo"))
-        )
-        .exchange()
+      val responseSpec = callCancelVisit(authHeader, reference, outcomeDto)
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 
@@ -182,6 +183,41 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
       )
       verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.cancelled-event"), any(), isNull())
     }
+  }
+
+  private fun callBookVisit(
+    authHttpHeaders: (HttpHeaders) -> Unit,
+    reference: String
+  ): ResponseSpec {
+    return webTestClient.put().uri(getBookVisitUrl(reference))
+      .headers(authHttpHeaders)
+      .exchange()
+  }
+
+  private fun getBookVisitUrl(reference: String): String {
+    return VISIT_BOOK.replace("{reference}", reference)
+  }
+
+  private fun callCancelVisit(
+    authHttpHeaders: (HttpHeaders) -> Unit,
+    reference: String,
+    outcome: OutcomeDto? = null
+  ): ResponseSpec {
+
+    if (outcome == null) {
+      return webTestClient.patch().uri(getCancelVisitUrl(reference))
+        .headers(authHttpHeaders)
+        .exchange()
+    }
+
+    return webTestClient.patch().uri(getCancelVisitUrl(reference))
+      .headers(authHttpHeaders)
+      .body(BodyInserters.fromValue(outcome))
+      .exchange()
+  }
+
+  private fun getCancelVisitUrl(reference: String): String {
+    return VISIT_CANCEL.replace("{reference}", reference)
   }
 
   fun testQueueEventMessageCount(): Int? {

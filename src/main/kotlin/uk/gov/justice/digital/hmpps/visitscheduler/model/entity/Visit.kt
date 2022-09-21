@@ -82,10 +82,7 @@ data class Visit(
   var modifyTimestamp: LocalDateTime? = null,
 
   @Column
-  var reference: String = "",
-
-  @Column
-  var active: Boolean
+  var reference: String = ""
 
 ) {
 

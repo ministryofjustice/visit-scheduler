@@ -318,9 +318,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = RESERVED,
-      visitRestriction = OPEN,
-      active = true
-
+      visitRestriction = OPEN
     )
 
     val visit2 = visit1.copy(visitStatus = BOOKED)
@@ -369,8 +367,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN,
-      active = true
+      visitRestriction = OPEN
     )
 
     val visit2 = visit1.copy(visitRoom = sessionTemplate.visitRoom + "Anythingwilldo")
@@ -416,8 +413,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = RESERVED,
-      visitRestriction = VisitRestriction.CLOSED,
-      active = true
+      visitRestriction = VisitRestriction.CLOSED
     )
 
     val visit2 = visit1.copy(visitStatus = BOOKED, visitRestriction = VisitRestriction.CLOSED)
@@ -465,8 +461,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN,
-      active = true
+      visitRestriction = OPEN
     )
 
     val visit2 = visit1.copy(visitStart = dateTime, visitEnd = dateTime.plusMinutes(30))
@@ -561,8 +556,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN,
-      active = true
+      visitRestriction = OPEN
     )
 
     visitRepository.saveAndFlush(visit)
@@ -602,8 +596,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN,
-      active = true
+      visitRestriction = OPEN
     )
 
     visitRepository.saveAndFlush(visit)
@@ -645,8 +638,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN,
-      active = true
+      visitRestriction = OPEN
     )
 
     visitRepository.saveAndFlush(visit)
@@ -689,8 +681,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
-      visitRestriction = OPEN,
-      active = true
+      visitRestriction = OPEN
     )
 
     visitRepository.saveAndFlush(visit)
@@ -730,8 +721,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = validFromDate.minusMonths(6).atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN,
-      active = true
+      visitRestriction = OPEN
     )
 
     visitRepository.saveAndFlush(visit)
@@ -772,8 +762,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = validFromDate.plusMonths(6).atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN,
-      active = true
+      visitRestriction = OPEN
     )
 
     visitRepository.saveAndFlush(visit)

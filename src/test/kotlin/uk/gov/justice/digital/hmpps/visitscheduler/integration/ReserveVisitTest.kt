@@ -21,8 +21,9 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -33,10 +34,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
-private const val TEST_END_POINT = "/visits/reserve"
-
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST /visits/reserve")
+@DisplayName("POST $VISIT_RESERVE_SLOT")
 class ReserveVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -55,8 +54,8 @@ class ReserveVisitTest(@Autowired private val objectMapper: ObjectMapper) : Inte
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
-  private fun createReserveVisitRequest(): ReserveVisitRequestDto {
-    return ReserveVisitRequestDto(
+  private fun createReserveVisitRequest(): ReserveVisitDto {
+    return ReserveVisitDto(
       prisonId = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
@@ -129,7 +128,7 @@ class ReserveVisitTest(@Autowired private val objectMapper: ObjectMapper) : Inte
   fun `when reservation has no visitors then bad request is returned`() {
 
     // Given
-    val createReservationRequest = ReserveVisitRequestDto(
+    val createReservationRequest = ReserveVisitDto(
       prisonerId = "FF0000FF",
       prisonId = "MDI",
       startTimestamp = visitTime,
@@ -159,7 +158,7 @@ class ReserveVisitTest(@Autowired private val objectMapper: ObjectMapper) : Inte
 
     // Given
 
-    val createReservationRequest = ReserveVisitRequestDto(
+    val createReservationRequest = ReserveVisitDto(
       prisonerId = "FF0000FF",
       prisonId = "MDI",
       startTimestamp = visitTime,
@@ -192,7 +191,7 @@ class ReserveVisitTest(@Autowired private val objectMapper: ObjectMapper) : Inte
   fun `created visit - invalid support`() {
 
     // Given
-    val createReservationRequest = ReserveVisitRequestDto(
+    val createReservationRequest = ReserveVisitDto(
       prisonerId = "FF0000FF",
       prisonId = "MDI",
       startTimestamp = visitTime,
@@ -227,10 +226,7 @@ class ReserveVisitTest(@Autowired private val objectMapper: ObjectMapper) : Inte
     )
 
     // When
-    val responseSpec = webTestClient.post().uri(TEST_END_POINT)
-      .headers(roleVisitSchedulerHttpHeaders)
-      .body(jsonBody)
-      .exchange()
+    val responseSpec = callReserveCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -263,7 +259,7 @@ class ReserveVisitTest(@Autowired private val objectMapper: ObjectMapper) : Inte
     val jsonBody = BodyInserters.fromValue(createReserveVisitRequest())
 
     // When
-    val responseSpec = webTestClient.post().uri(TEST_END_POINT)
+    val responseSpec = webTestClient.post().uri(getSlotReserveUrl())
       .body(jsonBody)
       .exchange()
 
@@ -275,10 +271,21 @@ class ReserveVisitTest(@Autowired private val objectMapper: ObjectMapper) : Inte
     authHttpHeaders: (HttpHeaders) -> Unit,
     jsonBody: BodyInserter<*, in ClientHttpRequest>?
   ): ResponseSpec {
-    return webTestClient.post().uri(TEST_END_POINT)
+
+    if (jsonBody == null) {
+      return webTestClient.post().uri(getSlotReserveUrl())
+        .headers(authHttpHeaders)
+        .exchange()
+    }
+
+    return webTestClient.post().uri(getSlotReserveUrl())
       .headers(authHttpHeaders)
       .body(jsonBody)
       .exchange()
+  }
+
+  private fun getSlotReserveUrl(): String {
+    return VISIT_RESERVE_SLOT
   }
 
   companion object {

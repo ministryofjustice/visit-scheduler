@@ -23,8 +23,8 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateReservationRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReviseReservedVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -32,23 +32,31 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 import javax.validation.Valid
 
+const val VISIT_CONTROLLER_PATH: String = "/visits"
+const val VISIT_RESERVE_SLOT: String = "$VISIT_CONTROLLER_PATH/visit/slot/reserve"
+const val VISIT_RESERVED_SLOT_REVISE: String = "$VISIT_CONTROLLER_PATH/visit/{reference}/slot/revise"
+const val VISIT_REVISE: String = "$VISIT_CONTROLLER_PATH/visit/{reference}/revise"
+const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/visit/{reference}/book"
+const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/visit/{reference}/cancel"
+const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/visit/{reference}"
+
 @RestController
 @Validated
-@RequestMapping(name = "Visit Resource", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(name = "Visit Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitController(
   private val visitService: VisitService
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PostMapping("/reserve")
+  @PostMapping(VISIT_RESERVE_SLOT)
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(
-    summary = "Create a visit",
+    summary = "Reserve a slot (date/time slot) for a visit ",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = ReserveVisitRequestDto::class)
+          schema = Schema(implementation = ReserveVisitDto::class)
         )
       ]
     ),
@@ -74,66 +82,23 @@ class VisitController(
       )
     ]
   )
-  fun reserveVisit(
+  fun reserveVisitSlot(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @RequestBody @Valid reservedVisitRequestDto: ReserveVisitRequestDto
+    @RequestBody @Valid reserveVisitDto: ReserveVisitDto
   ): VisitDto {
-    return visitService.reserveVisit(reservedVisitRequestDto = reservedVisitRequestDto)
+    return visitService.reserveVisitSlot(reserveVisitDto = reserveVisitDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PutMapping("/{reference}/reserve")
-  @ResponseStatus(HttpStatus.CREATED)
-  @Operation(
-    summary = "Create a visit",
-    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
-      content = [
-        Content(
-          mediaType = "application/json",
-          schema = Schema(implementation = ReserveVisitRequestDto::class)
-        )
-      ]
-    ),
-    responses = [
-      ApiResponse(
-        responseCode = "201",
-        description = "Visit created"
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "Incorrect request to create a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to create a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
-  )
-  fun reserveVisitWithReference(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String,
-    @RequestBody @Valid reservedVisitRequestDto: ReserveVisitRequestDto
-  ): VisitDto {
-    return visitService.reserveVisit(reference.trim(), reservedVisitRequestDto)
-  }
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PutMapping("/{reference}/update/reservation")
+  @PutMapping(VISIT_RESERVED_SLOT_REVISE)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "Update an existing visit",
+    summary = "Revise a reserved slot (date/time slot) for a visit ",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = UpdateReservationRequestDto::class)
+          schema = Schema(implementation = ReviseReservedVisitSlotRequestDto::class)
         )
       ]
     ),
@@ -164,16 +129,59 @@ class VisitController(
       ),
     ]
   )
-  fun updateReservation(
+  fun reviseReservedVisitSlot(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = false)
     @PathVariable reference: String,
-    @RequestBody @Valid updateVisitRequest: UpdateReservationRequestDto
+    @RequestBody @Valid reviseReservedVisitSlotRequestDto: ReviseReservedVisitSlotRequestDto
   ): VisitDto {
-    return visitService.updateReservation(reference.trim(), updateVisitRequest)
+    return visitService.reviseReservedVisitSlot(reference.trim(), reviseReservedVisitSlotRequestDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PutMapping("/{reference}/book")
+  @PutMapping(VISIT_REVISE)
+  @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+    summary = "Create a visit",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = ReserveVisitDto::class)
+        )
+      ]
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "201",
+        description = "Visit created"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to create a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to create a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun reviseBookedVisit(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String,
+    @RequestBody @Valid reserveVisitDto: ReserveVisitDto
+  ): VisitDto {
+    return visitService.reserveVisitSlot(reference.trim(), reserveVisitDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping(VISIT_BOOK)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Update an existing visit",
@@ -212,7 +220,7 @@ class VisitController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PatchMapping("/{reference}/cancel")
+  @PatchMapping(VISIT_CANCEL)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Cancel an existing visit",
@@ -261,7 +269,7 @@ class VisitController(
 
   @Suppress("KotlinDeprecation")
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping
+  @GetMapping(VISIT_CONTROLLER_PATH)
   @Operation(
     summary = "Get visits",
     description = "Retrieve visits with optional filters, sorted by start timestamp descending",
@@ -333,7 +341,7 @@ class VisitController(
     )
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(params = ["page", "size"])
+  @GetMapping(params = ["page", "size"], path = [VISIT_CONTROLLER_PATH])
   @Operation(
     summary = "Get visits",
     description = "Retrieve visits with optional filters, sorted by start timestamp descending",
@@ -417,9 +425,9 @@ class VisitController(
     )
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping("/{reference}")
+  @GetMapping(GET_VISIT_BY_REFERENCE)
   @Operation(
-    summary = "Get visit",
+    summary = "Get a booked visit",
     description = "Retrieve visit by visit reference",
     responses = [
       ApiResponse(
@@ -448,10 +456,10 @@ class VisitController(
       ),
     ]
   )
-  fun getVisitByReference(
+  fun getBookedVisitByReference(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String
   ): VisitDto {
-    return visitService.getVisitByReference(reference.trim())
+    return visitService.getBookedVisitByReference(reference.trim())
   }
 }

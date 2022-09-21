@@ -21,8 +21,9 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_REVISE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateReservationRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReviseReservedVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -43,7 +44,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("Update PUT /visits")
+@DisplayName("Update PUT $VISIT_RESERVED_SLOT_REVISE")
 class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -99,7 +100,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
 
-    val updateRequest = UpdateReservationRequestDto(
+    val updateRequest = ReviseReservedVisitSlotRequestDto(
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
       visitRestriction = VisitRestriction.CLOSED,
@@ -158,7 +159,7 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
 
-    val updateRequest = UpdateReservationRequestDto(
+    val updateRequest = ReviseReservedVisitSlotRequestDto(
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
       visitRestriction = VisitRestriction.CLOSED,
@@ -180,14 +181,15 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
 
-    val updateRequest = UpdateReservationRequestDto(
+    val updateRequest = ReviseReservedVisitSlotRequestDto(
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -213,14 +215,15 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
 
-    val updateRequest = UpdateReservationRequestDto(
+    val updateRequest = ReviseReservedVisitSlotRequestDto(
       visitors = setOf(VisitorDto(123L, visitContact = true)),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -245,14 +248,15 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
   fun `put visit by reference - amend support`() {
     // Given
 
-    val updateRequest = UpdateReservationRequestDto(
+    val updateRequest = ReviseReservedVisitSlotRequestDto(
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
     val jsonBody = BodyInserters.fromValue(updateRequest)
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -277,10 +281,11 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
   @Test
   fun `put visit by reference - not found`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(UpdateReservationRequestDto())
+    val jsonBody = BodyInserters.fromValue(ReviseReservedVisitSlotRequestDto())
+    val reference = "IMNOTHERE"
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, "IMNOTHERE")
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     responseSpec.expectStatus().isNotFound
@@ -291,10 +296,11 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val jsonBody = BodyInserters.fromValue(UpdateReservationRequestDto())
+    val jsonBody = BodyInserters.fromValue(ReviseReservedVisitSlotRequestDto())
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(authHttpHeaders, jsonBody, "12345")
+    val responseSpec = callUpdateVisit(authHttpHeaders, jsonBody, reference)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -306,10 +312,11 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
   @Test
   fun `unauthorised when no token`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(UpdateReservationRequestDto())
+    val jsonBody = BodyInserters.fromValue(ReviseReservedVisitSlotRequestDto())
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = webTestClient.post().uri("/visits/12345")
+    val responseSpec = webTestClient.post().uri(getUrl(reference))
       .body(jsonBody)
       .exchange()
 
@@ -322,10 +329,20 @@ class UpdateReservationTest(@Autowired private val objectMapper: ObjectMapper) :
     jsonBody: BodyInserter<*, in ClientHttpRequest>?,
     reference: String
   ): ResponseSpec {
-    return webTestClient.put().uri("/visits/$reference/update/reservation")
+
+    if (jsonBody == null) {
+      return webTestClient.put().uri(getUrl(reference))
+        .headers(authHttpHeaders)
+        .exchange()
+    }
+    return webTestClient.put().uri(getUrl(reference))
       .headers(authHttpHeaders)
       .body(jsonBody)
       .exchange()
+  }
+
+  private fun getUrl(reference: String): String {
+    return VISIT_RESERVED_SLOT_REVISE.replace("{reference}", reference)
   }
 
   companion object {

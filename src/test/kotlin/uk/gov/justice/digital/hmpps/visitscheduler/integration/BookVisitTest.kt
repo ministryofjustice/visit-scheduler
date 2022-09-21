@@ -18,6 +18,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -39,7 +40,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("Update PUT /visits")
+@DisplayName("Update PUT $VISIT_BOOK")
 class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -78,7 +79,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     val reference = reservedVisit.reference
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, reference)
+    val responseSpec = callBookVisit(roleVisitSchedulerHttpHeaders, reference)
 
     // Then
 
@@ -129,7 +130,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     visitRepository.saveAndFlush(bookedVisit)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, reference)
+    val responseSpec = callBookVisit(roleVisitSchedulerHttpHeaders, reference)
 
     // Then
 
@@ -194,7 +195,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     val reference = "12345"
 
     // When
-    val responseSpec = callUpdateVisit(authHttpHeaders, reference)
+    val responseSpec = callBookVisit(authHttpHeaders, reference)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -209,24 +210,27 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     val reference = "12345"
 
     // When
-    val responseSpec = webTestClient.post().uri("/visits/$reference/book")
+    val responseSpec = webTestClient.post().uri(getBookVisitUrl(reference))
       .exchange()
 
     // Then
     responseSpec.expectStatus().isUnauthorized
   }
 
-  private fun callUpdateVisit(
+  private fun callBookVisit(
     authHttpHeaders: (HttpHeaders) -> Unit,
     reference: String
   ): ResponseSpec {
-    return webTestClient.put().uri("/visits/$reference/book")
+    return webTestClient.put().uri(getBookVisitUrl(reference))
       .headers(authHttpHeaders)
       .exchange()
   }
 
+  private fun getBookVisitUrl(reference: String): String {
+    return VISIT_BOOK.replace("{reference}", reference)
+  }
+
   private fun createVisit(
-    active: Boolean = true,
     visitStatus: VisitStatus = RESERVED,
     prisonerId: String = "FF0000AA",
     prisonId: String = "MDI",
@@ -241,7 +245,6 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     return visitRepository.saveAndFlush(
       Visit(
         visitStatus = visitStatus,
-        active = active,
         prisonerId = prisonerId,
         prisonId = prisonId,
         visitRoom = visitRoom,

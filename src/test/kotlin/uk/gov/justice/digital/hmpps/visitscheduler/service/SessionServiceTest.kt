@@ -256,8 +256,7 @@ class SessionServiceTest {
         prisonId = prisonId,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
-        visitRoom = "1",
-        active = true
+        visitRoom = "1"
       )
 
       val openVisit2 = Visit(
@@ -268,8 +267,7 @@ class SessionServiceTest {
         prisonId = prisonId,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
-        visitRoom = "1",
-        active = true
+        visitRoom = "1"
       )
 
       val closedVisit = Visit(
@@ -280,8 +278,7 @@ class SessionServiceTest {
         prisonId = prisonId,
         visitStatus = BOOKED,
         visitRestriction = CLOSED,
-        visitRoom = "1",
-        active = true
+        visitRoom = "1"
       )
       mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession)
 
@@ -314,8 +311,7 @@ class SessionServiceTest {
         prisonId = prisonId,
         visitStatus = RESERVED,
         visitRestriction = OPEN,
-        visitRoom = "1",
-        active = true
+        visitRoom = "1"
       )
 
       val closedVisit = Visit(
@@ -326,8 +322,7 @@ class SessionServiceTest {
         prisonId = prisonId,
         visitStatus = RESERVED,
         visitRestriction = CLOSED,
-        visitRoom = "1",
-        active = true
+        visitRoom = "1"
       )
       mockVisitRepositoryCountResponse(listOf(openVisit, closedVisit), singleSession)
 
@@ -359,8 +354,7 @@ class SessionServiceTest {
         prisonId = prisonId,
         visitStatus = RESERVED,
         visitRestriction = UNKNOWN,
-        visitRoom = "1",
-        active = true
+        visitRoom = "1"
       )
 
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
@@ -569,8 +563,7 @@ class SessionServiceTest {
               prisonId = prisonId,
               visitStatus = BOOKED,
               visitRestriction = OPEN,
-              visitRoom = "123c",
-              active = true
+              visitRoom = "123c"
             )
           )
         )
@@ -769,8 +762,7 @@ class SessionServiceTest {
               prisonId = prisonId,
               visitStatus = BOOKED,
               visitRestriction = OPEN,
-              visitRoom = "123c",
-              active = true
+              visitRoom = "123c"
             )
           )
         )
@@ -812,8 +804,7 @@ class SessionServiceTest {
               prisonId = prisonId,
               visitStatus = BOOKED,
               visitRestriction = OPEN,
-              visitRoom = "123c",
-              active = true
+              visitRoom = "123c"
             )
           )
         )

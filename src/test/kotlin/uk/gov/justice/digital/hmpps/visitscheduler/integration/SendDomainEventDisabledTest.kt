@@ -12,8 +12,8 @@ import org.springframework.test.context.TestPropertySource
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateReservationRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReviseReservedVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
@@ -85,7 +85,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
     webTestClient.put().uri("/visits/${visitEntity.reference}")
       .headers(setAuthorisation(roles = ROLES))
       .body(
-        BodyInserters.fromValue(UpdateReservationRequestDto())
+        BodyInserters.fromValue(ReviseReservedVisitSlotRequestDto())
       )
       .exchange()
 
@@ -110,8 +110,8 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
     assertSNSEventsNotSent()
   }
 
-  private fun createVisitRequest(): ReserveVisitRequestDto {
-    return ReserveVisitRequestDto(
+  private fun createVisitRequest(): ReserveVisitDto {
+    return ReserveVisitDto(
       prisonId = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
