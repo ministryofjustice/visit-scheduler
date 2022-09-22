@@ -159,6 +159,43 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
   }
 
   @Test
+  fun `Book visit visit by reference - check order of reserved visits is correct`() {
+
+    // Given
+    val reference = reservedVisit.reference
+
+    val newReservedVisit = createVisit(visitStatus = RESERVED, reference = reference, prisonerId = "THIS IS THE ONE")
+
+    visitNoteCreator(visit = newReservedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitNoteCreator(visit = newReservedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitNoteCreator(visit = newReservedVisit, text = "Some text comment", type = VISIT_COMMENT)
+    visitContactCreator(visit = newReservedVisit, name = "Jane Doe", phone = "01234 098765")
+    visitVisitorCreator(visit = newReservedVisit, nomisPersonId = 321L, visitContact = true)
+    visitSupportCreator(visit = newReservedVisit, name = "OTHER", details = "Some Text")
+    visitRepository.saveAndFlush(newReservedVisit)
+
+    val bookedVisit = createVisit(visitStatus = BOOKED, reference = reference)
+
+    visitNoteCreator(visit = bookedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitNoteCreator(visit = bookedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitNoteCreator(visit = bookedVisit, text = "Some text comment", type = VISIT_COMMENT)
+    visitContactCreator(visit = bookedVisit, name = "Jane Doe", phone = "01234 098765")
+    visitVisitorCreator(visit = bookedVisit, nomisPersonId = 321L, visitContact = true)
+    visitSupportCreator(visit = bookedVisit, name = "OTHER", details = "Some Text")
+    visitRepository.saveAndFlush(bookedVisit)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reference)
+
+    // Then
+
+    responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.prisonerId").isEqualTo("THIS IS THE ONE")
+  }
+
+  @Test
   fun `Book visit visit by reference - access forbidden when no role`() {
 
     // Given
