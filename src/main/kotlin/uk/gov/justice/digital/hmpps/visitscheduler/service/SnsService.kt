@@ -35,6 +35,8 @@ class SnsService(
     const val EVENT_PRISON_VISIT_VERSION = 1
     const val EVENT_PRISON_VISIT_BOOKED = "prison-visit.booked"
     const val EVENT_PRISON_VISIT_BOOKED_DESC = "Prison Visit Booked"
+    const val EVENT_PRISON_CHANGED_VISIT = "prison-visit.changed"
+    const val EVENT_PRISON_CHANGED_VISIT_DESC = "Prison Visit Changed"
     const val EVENT_PRISON_VISIT_CANCELLED = "prison-visit.cancelled"
     const val EVENT_PRISON_VISIT_CANCELLED_DESC = "Prison Visit Cancelled"
     val log: Logger = LoggerFactory.getLogger(this::class.java)
@@ -101,6 +103,21 @@ class SnsService(
     } catch (e: Throwable) {
       throw PublishEventException("Failed to publish Event $payloadEvent.eventType to $TOPIC_ID", e)
     }
+  }
+
+  fun sendChangedVisitBookedEvent(visit: VisitDto) {
+    publishToDomainEventsTopic(
+      HMPPSDomainEvent(
+        eventType = EVENT_PRISON_CHANGED_VISIT,
+        version = EVENT_PRISON_VISIT_VERSION,
+        description = EVENT_PRISON_CHANGED_VISIT_DESC,
+        occurredAt = visit.createdTimestamp.toOffsetDateFormat(),
+        prisonerId = visit.prisonerId,
+        additionalInformation = AdditionalInformation(
+          reference = visit.reference,
+        )
+      )
+    )
   }
 }
 

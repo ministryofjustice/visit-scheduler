@@ -15,17 +15,17 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
-import org.springframework.http.client.reactive.ClientHttpRequest
-import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeReservedVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitReserveSlotChangeUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -42,11 +42,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
-private const val TEST_END_POINT = "/visits/"
-
 @Transactional(propagation = SUPPORTS)
-@DisplayName("Update PUT /visits")
-class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+@DisplayName("PUT $VISIT_RESERVED_SLOT_CHANGE")
+class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -56,8 +54,12 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private var visitMin: Visit? = null
-  private var visitFull: Visit? = null
+  private lateinit var visitMin: Visit
+  private lateinit var visitFull: Visit
+
+  companion object {
+    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
+  }
 
   @BeforeEach
   internal fun setUp() {
@@ -81,43 +83,39 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .withVisitStart(visitTime.plusDays(2))
       .withVisitEnd(visitTime.plusDays(2).plusHours(1))
       .withVisitType(VisitType.SOCIAL)
-      .withVisitStatus(VisitStatus.BOOKED)
+      .withVisitStatus(VisitStatus.RESERVED)
       .save()
-    visitNoteCreator(visit = visitFull!!, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = visitFull!!, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = visitFull!!, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, visitContact = true)
-    visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(visitFull!!)
+
+    visitNoteCreator(visit = visitFull, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitNoteCreator(visit = visitFull, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitNoteCreator(visit = visitFull, text = "Some text comment", type = VISIT_COMMENT)
+    visitContactCreator(visit = visitFull, name = "Jane Doe", phone = "01234 098765")
+    visitVisitorCreator(visit = visitFull, nomisPersonId = 321L, visitContact = true)
+    visitSupportCreator(visit = visitFull, name = "OTHER", details = "Some Text")
+    visitRepository.saveAndFlush(visitFull)
   }
 
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
   @Test
-  fun `update visit by reference - add booked details`() {
+  fun `change reserved slot by reference - add final details`() {
 
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
-      prisonerId = "FF0000AB",
-      prisonId = "AAB",
-      visitRoom = "A2",
+    val updateRequest = ChangeReservedVisitSlotRequestDto(
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
-      visitType = VisitType.SOCIAL,
-      visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
-    val jsonBody = BodyInserters.fromValue(updateRequest)
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
 
     // Then
 
@@ -125,13 +123,13 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.reference").isNotEmpty
-      .jsonPath("$.prisonerId").isEqualTo(updateRequest.prisonerId!!)
-      .jsonPath("$.prisonId").isEqualTo(updateRequest.prisonId!!)
-      .jsonPath("$.visitRoom").isEqualTo(updateRequest.visitRoom!!)
+      .jsonPath("$.prisonerId").isEqualTo(visitFull.prisonerId)
+      .jsonPath("$.prisonId").isEqualTo(visitFull.prisonId)
+      .jsonPath("$.visitRoom").isEqualTo(visitFull.visitRoom)
       .jsonPath("$.startTimestamp").isEqualTo(updateRequest.startTimestamp.toString())
       .jsonPath("$.endTimestamp").isEqualTo(updateRequest.endTimestamp.toString())
-      .jsonPath("$.visitType").isEqualTo(updateRequest.visitType!!.name)
-      .jsonPath("$.visitStatus").isEqualTo(updateRequest.visitStatus!!.name)
+      .jsonPath("$.visitType").isEqualTo(visitFull.visitType.name)
+      .jsonPath("$.visitStatus").isEqualTo(VisitStatus.RESERVED.name)
       .jsonPath("$.visitRestriction").isEqualTo(updateRequest.visitRestriction!!.name)
       .jsonPath("$.visitContact.name").isEqualTo(updateRequest.visitContact!!.name)
       .jsonPath("$.visitContact.telephone").isEqualTo(updateRequest.visitContact!!.telephone)
@@ -157,57 +155,42 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       isNull()
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
-
-    verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit.booked-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-      },
-      isNull()
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
   }
 
   @Test
-  fun `update visit by reference - only one visit contact allowed`() {
+  fun `change reserved slot by reference - only one visit contact allowed`() {
 
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
-      prisonerId = "FF0000AB",
-      prisonId = "AAB",
-      visitRoom = "A2",
+    val updateRequest = ChangeReservedVisitSlotRequestDto(
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
-      visitType = VisitType.SOCIAL,
-      visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = true))
     )
-
-    val jsonBody = BodyInserters.fromValue(updateRequest)
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
 
     // Then
     responseSpec.expectStatus().isBadRequest
   }
 
   @Test
-  fun `put visit by reference - amend contact`() {
+  fun `change reserved slot - contact`() {
 
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
+    val updateRequest = ChangeReservedVisitSlotRequestDto(
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
-    val jsonBody = BodyInserters.fromValue(updateRequest)
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -229,18 +212,18 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `put visit by reference - amend visitors`() {
+  fun `change reserved slot - amend visitors`() {
 
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
+    val updateRequest = ChangeReservedVisitSlotRequestDto(
       visitors = setOf(VisitorDto(123L, visitContact = true)),
     )
 
-    val jsonBody = BodyInserters.fromValue(updateRequest)
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -262,17 +245,17 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `put visit by reference - amend support`() {
+  fun `change reserved slot - amend support`() {
     // Given
 
-    val updateRequest = UpdateVisitRequestDto(
+    val updateRequest = ChangeReservedVisitSlotRequestDto(
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
-    val jsonBody = BodyInserters.fromValue(updateRequest)
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -295,26 +278,28 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `put visit by reference - not found`() {
+  fun `change reserved slot - not found`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(UpdateVisitRequestDto())
+    val updateRequest = ChangeReservedVisitSlotRequestDto()
+    val reference = "IMNOTHERE"
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, "IMNOTHERE")
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
 
     // Then
     responseSpec.expectStatus().isNotFound
   }
 
   @Test
-  fun `access forbidden when no role`() {
+  fun `change reserved slot - access forbidden when no role`() {
 
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val jsonBody = BodyInserters.fromValue(UpdateVisitRequestDto())
+    val updateRequest = ChangeReservedVisitSlotRequestDto()
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = callUpdateVisit(authHttpHeaders, jsonBody, "12345")
+    val responseSpec = callVisitReserveSlotChange(webTestClient, authHttpHeaders, updateRequest, reference)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -324,31 +309,17 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `unauthorised when no token`() {
+  fun `change reserved slot - unauthorised when no token`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(UpdateVisitRequestDto())
+    val jsonBody = BodyInserters.fromValue(ChangeReservedVisitSlotRequestDto())
+    val reference = visitFull.reference
 
     // When
-    val responseSpec = webTestClient.post().uri("/visits/12345")
+    val responseSpec = webTestClient.post().uri(getVisitReserveSlotChangeUrl(reference))
       .body(jsonBody)
       .exchange()
 
     // Then
     responseSpec.expectStatus().isUnauthorized
-  }
-
-  private fun callUpdateVisit(
-    authHttpHeaders: (HttpHeaders) -> Unit,
-    jsonBody: BodyInserter<*, in ClientHttpRequest>?,
-    reference: String
-  ): ResponseSpec {
-    return webTestClient.put().uri(TEST_END_POINT + reference)
-      .headers(authHttpHeaders)
-      .body(jsonBody)
-      .exchange()
-  }
-
-  companion object {
-    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
   }
 }

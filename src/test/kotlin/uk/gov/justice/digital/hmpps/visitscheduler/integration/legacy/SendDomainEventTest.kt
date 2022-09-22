@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.legacy
 
 import com.amazonaws.services.sqs.model.PurgeQueueRequest
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -19,12 +19,13 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callBookVisit
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -40,6 +41,7 @@ import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
+@Suppress("KotlinDeprecation")
 class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -79,11 +81,14 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
       // Given
       val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
-      val reference = visitEntity.reference
-      val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
       // When
-      val responseSpec = callBookVisit(webTestClient, authHeader, reference)
+      val responseSpec = webTestClient.put().uri("/visits/${visitEntity.reference}")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(UpdateVisitRequestDto(visitStatus = VisitStatus.BOOKED))
+        )
+        .exchange()
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 
@@ -130,15 +135,14 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
     fun `send visit cancelled event`() {
       // Given
       val visitEntity = createVisitAndSave(VisitStatus.BOOKED)
-      val reference = visitEntity.reference
-      val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
-      val outcomeDto = OutcomeDto(
-        OutcomeStatus.PRISONER_CANCELLED,
-        "Prisoner got covid"
-      )
 
       // When
-      val responseSpec = callCancelVisit(webTestClient, authHeader, reference, outcomeDto)
+      val responseSpec = webTestClient.patch().uri("/visits/${visitEntity.reference}/cancel")
+        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+        .body(
+          BodyInserters.fromValue(OutcomeDto(OutcomeStatus.PRISONER_CANCELLED, "AnyThingWillDo"))
+        )
+        .exchange()
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 

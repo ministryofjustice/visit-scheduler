@@ -18,6 +18,8 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   fun findByReference(reference: String): Visit?
 
+  fun findAllByReference(reference: String): List<Visit>
+
   @Query(
     "SELECT count(v) > 0 FROM Visit v " +
       "WHERE v.prisonerId in (:prisonerIds) and " +
@@ -49,4 +51,12 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime
   ): List<VisitRestrictionStats>
+
+  @Query(
+    "SELECT v FROM Visit v WHERE v.reference = :reference and v.visitStatus = 'BOOKED' "
+  )
+  fun findBookedVisit(reference: String): Visit?
+
+  @Query("SELECT * FROM visit WHERE reference = :reference AND visit_status = 'RESERVED' ORDER BY modify_timestamp LIMIT 1", nativeQuery = true)
+  fun findReservedVisit(reference: String): Visit?
 }

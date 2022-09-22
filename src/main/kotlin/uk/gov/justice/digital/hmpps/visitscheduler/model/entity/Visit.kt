@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
 import org.hibernate.annotations.CreationTimestamp
-import org.hibernate.annotations.NaturalId
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
@@ -81,6 +80,9 @@ data class Visit(
   @Temporal(TemporalType.TIMESTAMP)
   @Column
   var modifyTimestamp: LocalDateTime? = null,
+
+  @Transient
+  private val _reference: String = ""
 ) {
 
   @Id
@@ -88,14 +90,13 @@ data class Visit(
   @Column(name = "ID")
   val id: Long = 0
 
-  @NaturalId(mutable = true)
-  @Column(name = "REFERENCE", unique = true)
-  var reference: String = ""
+  @Column
+  var reference = _reference
     private set
 
   @PostPersist
   fun createReference() {
-    if (reference.isBlank()) {
+    if (_reference.isBlank()) {
       reference = QuotableEncoder(minLength = 8).encode(id)
     }
   }

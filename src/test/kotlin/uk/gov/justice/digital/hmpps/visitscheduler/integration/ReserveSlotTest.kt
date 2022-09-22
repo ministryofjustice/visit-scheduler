@@ -15,17 +15,17 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
-import org.springframework.http.client.reactive.ClientHttpRequest
-import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlot
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitReserveSlotUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
@@ -33,11 +33,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
-private const val TEST_END_POINT = "/visits"
-
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST /visits")
-class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+@DisplayName("POST $VISIT_RESERVE_SLOT")
+class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -47,6 +45,10 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
+  companion object {
+    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
+  }
+
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
@@ -55,8 +57,8 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @AfterEach
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
-  private fun createVisitRequest(): CreateVisitRequestDto {
-    return CreateVisitRequestDto(
+  private fun createReserveVisitSlotDto(): ReserveVisitSlotDto {
+    return ReserveVisitSlotDto(
       prisonId = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
@@ -71,15 +73,13 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `created visit`() {
+  fun `reserve visit slot`() {
 
     // Given
-    val jsonBody = BodyInserters.fromValue(
-      createVisitRequest()
-    )
+    val reserveVisitSlotDto = createReserveVisitSlotDto()
 
     // When
-    val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
     val returnResult = responseSpec.expectStatus().isCreated
@@ -126,10 +126,10 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `when visit has no visitors then bad request is returned`() {
+  fun `when reserve visit slot has no visitors then bad request is returned`() {
 
     // Given
-    val createVisitRequest = CreateVisitRequestDto(
+    val createReservationRequest = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
       prisonId = "MDI",
       startTimestamp = visitTime,
@@ -141,10 +141,8 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitContact = ContactDto("John Smith", "01234 567890")
     )
 
-    val jsonBody = BodyInserters.fromValue(createVisitRequest)
-
     // When
-    val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, createReservationRequest)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -155,11 +153,11 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `created visit - only one visit contact allowed`() {
+  fun `reserve visit slot - only one visit contact allowed`() {
 
     // Given
 
-    val createVisitRequest = CreateVisitRequestDto(
+    val createReservationRequest = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
       prisonId = "MDI",
       startTimestamp = visitTime,
@@ -177,22 +175,18 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       )
     )
 
-    val jsonBody = BodyInserters.fromValue(
-      createVisitRequest
-    )
-
     // When
-    val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, createReservationRequest)
 
     // Then
     responseSpec.expectStatus().isBadRequest
   }
 
   @Test
-  fun `created visit - invalid support`() {
+  fun `reserve visit slot - invalid support`() {
 
     // Given
-    val createVisitRequest = CreateVisitRequestDto(
+    val reserveVisitSlotDto = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
       prisonId = "MDI",
       startTimestamp = visitTime,
@@ -205,10 +199,8 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitorSupport = setOf(VisitorSupportDto("ANYTHINGWILLDO")),
     )
 
-    val jsonBody = BodyInserters.fromValue(createVisitRequest)
-
     // When
-    val responseSpec = callCreateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -219,18 +211,12 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `created visit - invalid request`() {
+  fun `reserve visit slot - invalid request`() {
 
     // Given
-    val jsonBody = BodyInserters.fromValue(
-      mapOf("wrongProperty" to "wrongValue")
-    )
 
     // When
-    val responseSpec = webTestClient.post().uri(TEST_END_POINT)
-      .headers(roleVisitSchedulerHttpHeaders)
-      .body(jsonBody)
-      .exchange()
+    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -241,14 +227,14 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `access forbidden when no role`() {
+  fun `reserve visit slot - access forbidden when no role`() {
 
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val jsonBody = BodyInserters.fromValue(createVisitRequest())
+    val reserveVisitSlotDto = createReserveVisitSlotDto()
 
     // When
-    val responseSpec = callCreateVisit(authHttpHeaders, jsonBody)
+    val responseSpec = callVisitReserveSlot(webTestClient, authHttpHeaders, reserveVisitSlotDto)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -258,30 +244,16 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `unauthorised when no token`() {
+  fun `reserve visit slot - unauthorised when no token`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(createVisitRequest())
+    val jsonBody = BodyInserters.fromValue(createReserveVisitSlotDto())
 
     // When
-    val responseSpec = webTestClient.post().uri(TEST_END_POINT)
+    val responseSpec = webTestClient.post().uri(getVisitReserveSlotUrl())
       .body(jsonBody)
       .exchange()
 
     // Then
     responseSpec.expectStatus().isUnauthorized
-  }
-
-  private fun callCreateVisit(
-    authHttpHeaders: (HttpHeaders) -> Unit,
-    jsonBody: BodyInserter<*, in ClientHttpRequest>?
-  ): ResponseSpec {
-    return webTestClient.post().uri(TEST_END_POINT)
-      .headers(authHttpHeaders)
-      .body(jsonBody)
-      .exchange()
-  }
-
-  companion object {
-    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
   }
 }
