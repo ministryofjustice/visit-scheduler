@@ -32,12 +32,12 @@ import java.time.LocalDateTime
 import javax.validation.Valid
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
-const val VISIT_RESERVE_SLOT: String = "$VISIT_CONTROLLER_PATH/visit/slot/reserve"
-const val VISIT_RESERVED_SLOT_CHANGE: String = "$VISIT_CONTROLLER_PATH/visit/{reference}/slot/change"
-const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/visit/{reference}/change"
-const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/visit/{reference}/book"
-const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/visit/{reference}/cancel"
-const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/visit/{reference}"
+const val VISIT_RESERVE_SLOT: String = "$VISIT_CONTROLLER_PATH/slot/reserve"
+const val VISIT_RESERVED_SLOT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/slot/change"
+const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/change"
+const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{reference}/book"
+const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
+const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 
 @RestController
 @Validated

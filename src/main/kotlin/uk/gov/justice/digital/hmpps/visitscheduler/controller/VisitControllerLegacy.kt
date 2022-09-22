@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -79,45 +78,6 @@ class VisitControllerLegacy(
   ): VisitDto {
     return visitService.createVisit(createVisitRequest)
   }
-
-  @Deprecated("This endpoint should be changed to :$GET_VISIT_BY_REFERENCE", ReplaceWith(GET_VISIT_BY_REFERENCE), WARNING)
-  @Suppress("KotlinDeprecation")
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping("/{reference}")
-  @Operation(
-    summary = "Get visit",
-    description = "Retrieve visit by visit reference",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Visit Information Returned"
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "Incorrect request to Get visits for prisoner",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions retrieve a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Visit not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-    ]
-  )
-  fun getVisitByReference(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String
-  ): VisitDto = visitService.getVisitByReference(reference.trim())
 
   @Deprecated("This endpoint should be changed to $VISIT_RESERVED_SLOT_CHANGE and to book use the $VISIT_BOOK", ReplaceWith(VISIT_RESERVED_SLOT_CHANGE, VISIT_BOOK), WARNING)
   @Suppress("KotlinDeprecation")
