@@ -99,7 +99,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
   @Test
-  fun `change reserved slot by reference - add final details`() {
+  fun `change reserved slot by application reference - add final details`() {
 
     // Given
 
@@ -112,17 +112,18 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
-    val reference = visitFull.reference
+    val applicationReference = visitFull.applicationReference
 
     // When
-    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
 
     val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.reference").isNotEmpty
+      .jsonPath("$.reference").isEqualTo(visitFull.reference)
+      .jsonPath("$.applicationReference").isEqualTo(applicationReference)
       .jsonPath("$.prisonerId").isEqualTo(visitFull.prisonerId)
       .jsonPath("$.prisonId").isEqualTo(visitFull.prisonId)
       .jsonPath("$.visitRoom").isEqualTo(visitFull.visitRoom)
@@ -158,7 +159,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   }
 
   @Test
-  fun `change reserved slot by reference - only one visit contact allowed`() {
+  fun `change reserved slot by application reference - only one visit contact allowed`() {
 
     // Given
 
@@ -169,10 +170,10 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = true))
     )
-    val reference = visitFull.reference
+    val applicationReference = visitFull.applicationReference
 
     // When
-    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -187,10 +188,10 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
-    val reference = visitFull.reference
+    val applicationReference = visitFull.applicationReference
 
     // When
-    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -220,10 +221,10 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
       visitors = setOf(VisitorDto(123L, visitContact = true)),
     )
 
-    val reference = visitFull.reference
+    val applicationReference = visitFull.applicationReference
 
     // When
-    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -252,10 +253,10 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
-    val reference = visitFull.reference
+    val applicationReference = visitFull.applicationReference
 
     // When
-    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -281,10 +282,10 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   fun `change reserved slot - not found`() {
     // Given
     val updateRequest = ChangeReservedVisitSlotRequestDto()
-    val reference = "IMNOTHERE"
+    val applicationReference = "IM NOT HERE"
 
     // When
-    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
     responseSpec.expectStatus().isNotFound
@@ -296,10 +297,10 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
     val updateRequest = ChangeReservedVisitSlotRequestDto()
-    val reference = visitFull.reference
+    val applicationReference = visitFull.applicationReference
 
     // When
-    val responseSpec = callVisitReserveSlotChange(webTestClient, authHttpHeaders, updateRequest, reference)
+    val responseSpec = callVisitReserveSlotChange(webTestClient, authHttpHeaders, updateRequest, applicationReference)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -312,10 +313,10 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   fun `change reserved slot - unauthorised when no token`() {
     // Given
     val jsonBody = BodyInserters.fromValue(ChangeReservedVisitSlotRequestDto())
-    val reference = visitFull.reference
+    val applicationReference = visitFull.applicationReference
 
     // When
-    val responseSpec = webTestClient.post().uri(getVisitReserveSlotChangeUrl(reference))
+    val responseSpec = webTestClient.post().uri(getVisitReserveSlotChangeUrl(applicationReference))
       .body(jsonBody)
       .exchange()
 

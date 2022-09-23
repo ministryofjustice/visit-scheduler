@@ -167,6 +167,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       eq("visit-scheduler-prison-visit-created"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isNotEqualTo(visit.applicationReference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
         Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)

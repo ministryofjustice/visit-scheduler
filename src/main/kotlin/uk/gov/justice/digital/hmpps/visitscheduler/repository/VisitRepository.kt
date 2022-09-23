@@ -18,6 +18,8 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   fun findByReference(reference: String): Visit?
 
+  fun findByApplicationReference(applicationReference: String): Visit?
+
   fun findAllByReference(reference: String): List<Visit>
 
   @Query(

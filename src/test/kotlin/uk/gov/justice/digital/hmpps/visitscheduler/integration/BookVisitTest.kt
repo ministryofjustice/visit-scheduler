@@ -78,20 +78,21 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
   @Test
-  fun `Book visit visit by reference`() {
+  fun `Book visit visit by application Reference`() {
 
     // Given
-    val reference = reservedVisit.reference
+    val applicationReference = reservedVisit.applicationReference
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
 
     val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.reference").isNotEmpty
+      .jsonPath("$.reference").isEqualTo(reservedVisit.reference)
+      .jsonPath("$.applicationReference").isEqualTo(reservedVisit.applicationReference)
       .jsonPath("$.prisonerId").isEqualTo(reservedVisit.prisonerId)
       .jsonPath("$.prisonId").isEqualTo(reservedVisit.prisonId)
       .jsonPath("$.visitRoom").isEqualTo(reservedVisit.visitRoom)
@@ -119,7 +120,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
   }
 
   @Test
-  fun `Book visit visit by reference - change other visit with same reference to canceled`() {
+  fun `Book visit visit by application Reference - change other visit with same reference to canceled`() {
 
     // Given
     val reference = reservedVisit.reference
@@ -134,8 +135,10 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     visitSupportCreator(visit = bookedVisit, name = "OTHER", details = "Some Text")
     visitRepository.saveAndFlush(bookedVisit)
 
+    val applicationReference = reservedVisit.applicationReference
+
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
 
@@ -159,7 +162,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
   }
 
   @Test
-  fun `Book visit visit by reference - check order of reserved visits is correct`() {
+  fun `Book visit visit by application Reference - check order of reserved visits is correct`() {
 
     // Given
     val reference = reservedVisit.reference
@@ -184,8 +187,9 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     visitSupportCreator(visit = bookedVisit, name = "OTHER", details = "Some Text")
     visitRepository.saveAndFlush(bookedVisit)
 
+    val applicationReference = newReservedVisit.applicationReference
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
 
@@ -196,14 +200,14 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
   }
 
   @Test
-  fun `Book visit visit by reference - access forbidden when no role`() {
+  fun `Book visit visit by application Reference - access forbidden when no role`() {
 
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val reference = "12345"
+    val applicationReference = reservedVisit.applicationReference
 
     // When
-    val responseSpec = callVisitBook(webTestClient, authHttpHeaders, reference)
+    val responseSpec = callVisitBook(webTestClient, authHttpHeaders, applicationReference)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -213,12 +217,12 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
   }
 
   @Test
-  fun `Book visit visit by reference - unauthorised when no token`() {
+  fun `Book visit visit by application Reference - unauthorised when no token`() {
     // Given
-    val reference = "12345"
+    val applicationReference = "12345"
 
     // When
-    val responseSpec = webTestClient.post().uri(getVisitBookUrl(reference))
+    val responseSpec = webTestClient.post().uri(getVisitBookUrl(applicationReference))
       .exchange()
 
     // Then

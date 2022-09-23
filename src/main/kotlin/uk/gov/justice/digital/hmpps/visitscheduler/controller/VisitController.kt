@@ -33,9 +33,9 @@ import javax.validation.Valid
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
 const val VISIT_RESERVE_SLOT: String = "$VISIT_CONTROLLER_PATH/slot/reserve"
-const val VISIT_RESERVED_SLOT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/slot/change"
+const val VISIT_RESERVED_SLOT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/slot/change"
 const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/change"
-const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{reference}/book"
+const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 
@@ -82,7 +82,6 @@ class VisitController(
     ]
   )
   fun reserveVisitSlot(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto
   ): VisitDto {
     return visitService.reserveVisitSlot(reserveVisitSlotDto = reserveVisitSlotDto)
@@ -129,11 +128,11 @@ class VisitController(
     ]
   )
   fun changeReservedVisitSlot(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = false)
-    @PathVariable reference: String,
+    @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
+    @PathVariable applicationReference: String,
     @RequestBody @Valid changeReservedVisitSlotRequestDto: ChangeReservedVisitSlotRequestDto
   ): VisitDto {
-    return visitService.changeReservedVisitSlot(reference.trim(), changeReservedVisitSlotRequestDto)
+    return visitService.changeReservedVisitSlot(applicationReference.trim(), changeReservedVisitSlotRequestDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -212,10 +211,10 @@ class VisitController(
     ]
   )
   fun bookVisit(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String
+    @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
+    @PathVariable applicationReference: String
   ): VisitDto {
-    return visitService.bookVisit(reference.trim())
+    return visitService.bookVisit(applicationReference.trim())
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

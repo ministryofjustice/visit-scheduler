@@ -21,8 +21,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callBookVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
@@ -79,11 +79,11 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
       // Given
       val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
-      val reference = visitEntity.reference
+      val applicationReference = visitEntity.applicationReference
       val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
       // When
-      val responseSpec = callBookVisit(webTestClient, authHeader, reference)
+      val responseSpec = callVisitBook(webTestClient, authHeader, applicationReference)
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 

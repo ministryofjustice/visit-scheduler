@@ -85,6 +85,7 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val returnResult = responseSpec.expectStatus().isCreated
       .expectBody()
       .jsonPath("$.reference").isNotEmpty
+      .jsonPath("$.applicationReference").isNotEmpty
       .jsonPath("$.prisonId").isEqualTo("MDI")
       .jsonPath("$.prisonerId").isEqualTo("FF0000FF")
       .jsonPath("$.visitRoom").isEqualTo("A1")

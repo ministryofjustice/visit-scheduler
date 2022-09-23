@@ -14,20 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeReservedVisitSlotRe
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 
-fun callBookVisit(
-  webTestClient: WebTestClient,
-  authHttpHeaders: (HttpHeaders) -> Unit,
-  reference: String,
-): ResponseSpec {
-  return webTestClient.put().uri(getBookVisitUrl(reference))
-    .headers(authHttpHeaders)
-    .exchange()
-}
-
-fun getBookVisitUrl(reference: String): String {
-  return VISIT_BOOK.replace("{reference}", reference)
-}
-
 fun callCancelVisit(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -51,19 +37,19 @@ fun callVisitReserveSlotChange(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   dto: ChangeReservedVisitSlotRequestDto? = null,
-  reference: String
+  applicationReference: String
 ): ResponseSpec {
 
   return callPut(
     dto,
     webTestClient,
-    getVisitReserveSlotChangeUrl(reference),
+    getVisitReserveSlotChangeUrl(applicationReference),
     authHttpHeaders
   )
 }
 
 fun getVisitReserveSlotChangeUrl(reference: String): String {
-  return VISIT_RESERVED_SLOT_CHANGE.replace("{reference}", reference)
+  return VISIT_RESERVED_SLOT_CHANGE.replace("{applicationReference}", reference)
 }
 
 fun callVisitReserveSlot(
@@ -106,19 +92,19 @@ fun getVisitChangeUrl(reference: String): String {
 fun callVisitBook(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  reference: String
+  applicationReference: String
 ): ResponseSpec {
 
   return callPut(
     bodyValue = null,
     webTestClient,
-    getBookVisitUrl(reference),
+    getVisitBookUrl(applicationReference),
     authHttpHeaders
   )
 }
 
-fun getVisitBookUrl(reference: String): String {
-  return VISIT_BOOK.replace("{reference}", reference)
+fun getVisitBookUrl(applicationReference: String): String {
+  return VISIT_BOOK.replace("{applicationReference}", applicationReference)
 }
 
 fun callVisitByReference(

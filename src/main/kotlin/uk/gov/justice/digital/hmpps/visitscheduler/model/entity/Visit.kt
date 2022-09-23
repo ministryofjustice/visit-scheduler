@@ -94,10 +94,17 @@ data class Visit(
   var reference = _reference
     private set
 
+  @Column
+  var applicationReference: String = ""
+    private set
+
   @PostPersist
   fun createReference() {
     if (_reference.isBlank()) {
       reference = QuotableEncoder(minLength = 8).encode(id)
+    }
+    if (applicationReference.isBlank()) {
+      applicationReference = QuotableEncoder(minLength = 8, chunkSize = 3).encode(id)
     }
   }
 }

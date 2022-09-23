@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.TestPropertySource
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callBookVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
@@ -53,11 +53,11 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
 
     // Given
     val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
-    val reference = visitEntity.reference
+    val applicationReference = visitEntity.applicationReference
     val authHeader = setAuthorisation(roles = ROLES)
 
     // When
-    val responseSpec = callBookVisit(webTestClient, authHeader, reference)
+    val responseSpec = callVisitBook(webTestClient, authHeader, applicationReference)
 
     // Then
     responseSpec.expectStatus().isOk

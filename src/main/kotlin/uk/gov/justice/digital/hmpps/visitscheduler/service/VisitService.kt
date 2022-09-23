@@ -76,8 +76,8 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  fun changeReservedVisitSlot(reference: String, changeReservedVisitSlotRequestDto: ChangeReservedVisitSlotRequestDto): VisitDto {
-    val visitEntity = visitRepository.findReservedVisit(reference) ?: throw VisitNotFoundException("Reserved visit reference $reference not found")
+  fun changeReservedVisitSlot(applicationReference: String, changeReservedVisitSlotRequestDto: ChangeReservedVisitSlotRequestDto): VisitDto {
+    val visitEntity = visitRepository.findByApplicationReference(applicationReference) ?: throw VisitNotFoundException("Reserved visit reference $applicationReference not found")
 
     changeReservedVisitSlotRequestDto.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
     changeReservedVisitSlotRequestDto.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
@@ -114,7 +114,7 @@ class VisitService(
     telemetryClient.trackEvent(
       "visit-scheduler-prison-visit-updated",
       listOfNotNull(
-        "reference" to reference,
+        "reference" to visitEntity.reference,
         "prisonerId" to visitEntity.prisonerId,
         "prisonId" to visitEntity.prisonId,
         "visitType" to visitEntity.visitType.name,
@@ -194,11 +194,6 @@ class VisitService(
     return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
   }
 
-  @Transactional(readOnly = true)
-  fun getVisitByReference(reference: String): VisitDto {
-    return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
-  }
-
   @Suppress("KotlinDeprecation")
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
     val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
@@ -272,18 +267,18 @@ class VisitService(
     }
   }
 
-  fun bookVisit(reference: String): VisitDto {
+  fun bookVisit(applicationReference: String): VisitDto {
+
+    val visitToBook = visitRepository.findByApplicationReference(applicationReference) ?: throw VisitNotFoundException("Could not find reserved visit applicationReference:$applicationReference not found")
 
     var changedVisit = false
-    val existingBookedVisit = visitRepository.findBookedVisit(reference)
+    val existingBookedVisit = visitRepository.findBookedVisit(visitToBook.reference)
     existingBookedVisit?.let {
       existingBookedVisit.visitStatus = VisitStatus.CANCELLED
       existingBookedVisit.outcomeStatus = SUPERSEDED_CANCELLATION
       visitRepository.saveAndFlush(existingBookedVisit)
       changedVisit = true
     }
-
-    val visitToBook = visitRepository.findReservedVisit(reference) ?: throw VisitNotFoundException("Could not find reserved visit $reference not found")
 
     visitToBook.visitStatus = VisitStatus.BOOKED
 
@@ -293,7 +288,7 @@ class VisitService(
     telemetryClient.trackEvent(
       "visit-scheduler-prison-visit-updated",
       listOfNotNull(
-        "reference" to reference,
+        "reference" to visitToBook.reference,
         "visitStatus" to visit.visitStatus.name,
       ).toMap(),
       null
