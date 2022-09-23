@@ -58,7 +58,4 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT v FROM Visit v WHERE v.reference = :reference and v.visitStatus = 'BOOKED' "
   )
   fun findBookedVisit(reference: String): Visit?
-
-  @Query("SELECT * FROM visit WHERE reference = :reference AND visit_status = 'RESERVED' ORDER BY modify_timestamp DESC LIMIT 1 ", nativeQuery = true)
-  fun findReservedVisit(reference: String): Visit?
 }

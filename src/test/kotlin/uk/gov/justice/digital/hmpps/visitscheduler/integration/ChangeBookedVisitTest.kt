@@ -120,13 +120,15 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       .jsonPath("$.reference").isEqualTo(reference)
       .returnResult()
 
-    val reservedVisit = visitRepository.findReservedVisit(reference)
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+
+    val reservedVisit = visitRepository.findByApplicationReference(visit.applicationReference)
     val checkBookedVisit = visitRepository.findBookedVisit(reference)
     Assertions.assertThat(checkBookedVisit?.id).isEqualTo(bookedVisit.id)
     Assertions.assertThat(reservedVisit?.id).isNotEqualTo(bookedVisit.id)
 
     // And
-    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+
     verify(telemetryClient).trackEvent(
       eq("visit-scheduler-prison-visit-created"),
       org.mockito.kotlin.check {

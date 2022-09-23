@@ -130,6 +130,7 @@ class VisitService(
   }
 
   @Suppress("KotlinDeprecation")
+  @Deprecated("this should not be used ")
   fun createVisit(createVisitRequest: CreateVisitRequestDto): VisitDto {
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
@@ -195,6 +196,7 @@ class VisitService(
   }
 
   @Suppress("KotlinDeprecation")
+  @Deprecated("this should not be used ")
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
     val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
 
