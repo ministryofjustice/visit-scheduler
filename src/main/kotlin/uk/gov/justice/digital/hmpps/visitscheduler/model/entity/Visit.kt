@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
 import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.NaturalId
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
@@ -95,6 +96,7 @@ data class Visit(
     private set
 
   @Column
+  @NaturalId(mutable = true)
   var applicationReference: String = ""
     private set
 

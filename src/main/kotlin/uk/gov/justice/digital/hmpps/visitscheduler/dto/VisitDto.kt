@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
-import org.hibernate.annotations.NaturalId
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -12,7 +11,6 @@ import javax.validation.constraints.NotBlank
 
 @Schema(description = "Visit")
 data class VisitDto(
-  @NaturalId(mutable = true)
   @Schema(description = "Application Reference", example = "dfs-wjs-eqr", required = true)
   val applicationReference: String,
   @Schema(description = "Visit Reference", example = "v9-d7-ed-7u", required = true)
