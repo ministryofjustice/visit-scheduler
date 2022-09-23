@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.legacy
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
@@ -44,6 +45,7 @@ import java.time.LocalDateTime
 
 private const val TEST_END_POINT = "/visits/"
 
+@Suppress("KotlinDeprecation")
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Update PUT /visits")
 class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
@@ -56,8 +58,8 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private var visitMin: Visit? = null
-  private var visitFull: Visit? = null
+  private lateinit var visitMin: Visit
+  private lateinit var visitFull: Visit
 
   @BeforeEach
   internal fun setUp() {
@@ -83,13 +85,13 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .withVisitType(VisitType.SOCIAL)
       .withVisitStatus(VisitStatus.BOOKED)
       .save()
-    visitNoteCreator(visit = visitFull!!, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = visitFull!!, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = visitFull!!, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = visitFull!!, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitFull!!, nomisPersonId = 321L, visitContact = true)
-    visitSupportCreator(visit = visitFull!!, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(visitFull!!)
+    visitNoteCreator(visit = visitFull, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitNoteCreator(visit = visitFull, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitNoteCreator(visit = visitFull, text = "Some text comment", type = VISIT_COMMENT)
+    visitContactCreator(visit = visitFull, name = "Jane Doe", phone = "01234 098765")
+    visitVisitorCreator(visit = visitFull, nomisPersonId = 321L, visitContact = true)
+    visitSupportCreator(visit = visitFull, name = "OTHER", details = "Some Text")
+    visitRepository.saveAndFlush(visitFull)
   }
 
   @AfterEach
@@ -99,6 +101,8 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `update visit by reference - add booked details`() {
 
     // Given
+
+    val reference = visitFull.reference
 
     val updateRequest = UpdateVisitRequestDto(
       prisonerId = "FF0000AB",
@@ -117,7 +121,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
 
@@ -172,6 +176,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `update visit by reference - only one visit contact allowed`() {
 
     // Given
+    val reference = visitFull.reference
 
     val updateRequest = UpdateVisitRequestDto(
       prisonerId = "FF0000AB",
@@ -189,7 +194,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -199,6 +204,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `put visit by reference - amend contact`() {
 
     // Given
+    val reference = visitFull.reference
 
     val updateRequest = UpdateVisitRequestDto(
       visitContact = ContactDto("John Smith", "01234 567890"),
@@ -207,7 +213,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -232,7 +238,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `put visit by reference - amend visitors`() {
 
     // Given
-
+    val reference = visitFull.reference
     val updateRequest = UpdateVisitRequestDto(
       visitors = setOf(VisitorDto(123L, visitContact = true)),
     )
@@ -240,7 +246,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -264,6 +270,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `put visit by reference - amend support`() {
     // Given
+    val reference = visitFull.reference
 
     val updateRequest = UpdateVisitRequestDto(
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
@@ -272,7 +279,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val jsonBody = BodyInserters.fromValue(updateRequest)
 
     // When
-    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, visitFull!!.reference)
+    val responseSpec = callUpdateVisit(roleVisitSchedulerHttpHeaders, jsonBody, reference)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk

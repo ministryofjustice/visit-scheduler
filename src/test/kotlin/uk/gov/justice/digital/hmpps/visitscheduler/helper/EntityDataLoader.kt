@@ -86,7 +86,7 @@ fun defaultVisit(): Visit {
     visitEnd = LocalDateTime.of(2021, 10, 23, 11, 30),
     visitType = SOCIAL,
     visitStatus = RESERVED,
-    visitRestriction = OPEN,
+    visitRestriction = OPEN
   )
 }
 

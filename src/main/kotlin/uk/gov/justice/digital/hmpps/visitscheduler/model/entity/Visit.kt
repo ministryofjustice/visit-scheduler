@@ -81,6 +81,9 @@ data class Visit(
   @Temporal(TemporalType.TIMESTAMP)
   @Column
   var modifyTimestamp: LocalDateTime? = null,
+
+  @Transient
+  private val _reference: String = ""
 ) {
 
   @Id
@@ -88,15 +91,22 @@ data class Visit(
   @Column(name = "ID")
   val id: Long = 0
 
+  @Column
+  var reference = _reference
+    private set
+
+  @Column
   @NaturalId(mutable = true)
-  @Column(name = "REFERENCE", unique = true)
-  var reference: String = ""
+  var applicationReference: String = ""
     private set
 
   @PostPersist
   fun createReference() {
-    if (reference.isBlank()) {
+    if (_reference.isBlank()) {
       reference = QuotableEncoder(minLength = 8).encode(id)
+    }
+    if (applicationReference.isBlank()) {
+      applicationReference = QuotableEncoder(minLength = 8, chunkSize = 3).encode(id)
     }
   }
 }

@@ -9,10 +9,13 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeReservedVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -33,8 +36,101 @@ class VisitService(
   private val visitRepository: VisitRepository,
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
+  private val snsService: SnsService,
 ) {
 
+  fun reserveVisitSlot(useReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
+    val visitEntity = visitRepository.saveAndFlush(
+      Visit(
+        prisonerId = reserveVisitSlotDto.prisonerId,
+        prisonId = reserveVisitSlotDto.prisonId,
+        visitRoom = reserveVisitSlotDto.visitRoom,
+        visitType = reserveVisitSlotDto.visitType,
+        visitStatus = VisitStatus.RESERVED,
+        visitRestriction = reserveVisitSlotDto.visitRestriction,
+        visitStart = reserveVisitSlotDto.startTimestamp,
+        visitEnd = reserveVisitSlotDto.endTimestamp,
+        _reference = useReference
+      )
+    )
+
+    reserveVisitSlotDto.visitContact?.let {
+      visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
+    }
+
+    reserveVisitSlotDto.visitors.forEach {
+      visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
+    }
+
+    reserveVisitSlotDto.visitorSupport?.let { supportList ->
+      supportList.forEach {
+        if (!supportTypeRepository.existsByName(it.type)) {
+          throw SupportNotFoundException("Invalid support ${it.type} not found")
+        }
+        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
+      }
+    }
+
+    createVisitTrackEvent(visitEntity)
+
+    return VisitDto(visitEntity)
+  }
+
+  fun changeReservedVisitSlot(applicationReference: String, changeReservedVisitSlotRequestDto: ChangeReservedVisitSlotRequestDto): VisitDto {
+    val visitEntity = visitRepository.findByApplicationReference(applicationReference) ?: throw VisitNotFoundException("Reserved visit reference $applicationReference not found")
+
+    changeReservedVisitSlotRequestDto.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
+    changeReservedVisitSlotRequestDto.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
+    changeReservedVisitSlotRequestDto.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
+
+    changeReservedVisitSlotRequestDto.visitContact?.let { visitContactUpdate ->
+      visitEntity.visitContact?.let { visitContact ->
+        visitContact.name = visitContactUpdate.name
+        visitContact.telephone = visitContactUpdate.telephone
+      } ?: run {
+        visitEntity.visitContact = createVisitContact(visitEntity, visitContactUpdate.name, visitContactUpdate.telephone)
+      }
+    }
+
+    changeReservedVisitSlotRequestDto.visitors?.let { visitorsUpdate ->
+      visitEntity.visitors.clear()
+      visitRepository.saveAndFlush(visitEntity)
+      visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
+        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
+      }
+    }
+
+    changeReservedVisitSlotRequestDto.visitorSupport?.let { visitSupportUpdate ->
+      visitEntity.support.clear()
+      visitRepository.saveAndFlush(visitEntity)
+      visitSupportUpdate.forEach {
+        if (!supportTypeRepository.existsByName(it.type)) {
+          throw SupportNotFoundException("Invalid support ${it.type} not found")
+        }
+        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
+      }
+    }
+
+    telemetryClient.trackEvent(
+      "visit-scheduler-prison-visit-updated",
+      listOfNotNull(
+        "reference" to visitEntity.reference,
+        "prisonerId" to visitEntity.prisonerId,
+        "prisonId" to visitEntity.prisonId,
+        "visitType" to visitEntity.visitType.name,
+        "visitRoom" to visitEntity.visitRoom,
+        if (changeReservedVisitSlotRequestDto.visitRestriction != null) "visitRestriction" to changeReservedVisitSlotRequestDto.visitRestriction.name else null,
+        if (changeReservedVisitSlotRequestDto.startTimestamp != null) "visitStart" to changeReservedVisitSlotRequestDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME) else null,
+        if (visitEntity.visitStatus != null) "visitStatus" to visitEntity.visitStatus.name else null
+      ).toMap(),
+      null
+    )
+
+    return VisitDto(visitEntity)
+  }
+
+  @Suppress("KotlinDeprecation")
+  @Deprecated("this should not be used ")
   fun createVisit(createVisitRequest: CreateVisitRequestDto): VisitDto {
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
@@ -66,6 +162,12 @@ class VisitService(
       }
     }
 
+    createVisitTrackEvent(visitEntity)
+
+    return VisitDto(visitEntity)
+  }
+
+  private fun createVisitTrackEvent(visitEntity: Visit) {
     telemetryClient.trackEvent(
       "visit-scheduler-prison-visit-created",
       mapOf(
@@ -80,8 +182,6 @@ class VisitService(
       ),
       null
     )
-
-    return VisitDto(visitEntity)
   }
 
   @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
@@ -95,11 +195,8 @@ class VisitService(
     return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
   }
 
-  @Transactional(readOnly = true)
-  fun getVisitByReference(reference: String): VisitDto {
-    return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
-  }
-
+  @Suppress("KotlinDeprecation")
+  @Deprecated("this should not be used ")
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
     val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
 
@@ -158,21 +255,6 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  fun deleteVisit(reference: String) {
-    val visit = visitRepository.findByReference(reference)
-
-    visit?.let {
-      visitRepository.delete(it)
-      telemetryClient.trackEvent(
-        "visit-scheduler-prison-visit-deleted",
-        mapOf(
-          "reference" to reference
-        ),
-        null
-      )
-    } ?: run { log.debug("Visit reference $reference not found") }
-  }
-
   fun deleteAllVisits(visits: List<VisitDto>) {
     visitRepository.deleteAllByReferenceIn(visits.map { it.reference }.toList())
 
@@ -187,8 +269,46 @@ class VisitService(
     }
   }
 
+  fun bookVisit(applicationReference: String): VisitDto {
+
+    val visitToBook = visitRepository.findByApplicationReference(applicationReference) ?: throw VisitNotFoundException("Could not find reserved visit applicationReference:$applicationReference not found")
+
+    var changedVisit = false
+    val existingBookedVisit = visitRepository.findBookedVisit(visitToBook.reference)
+    existingBookedVisit?.let {
+      existingBookedVisit.visitStatus = VisitStatus.CANCELLED
+      existingBookedVisit.outcomeStatus = SUPERSEDED_CANCELLATION
+      visitRepository.saveAndFlush(existingBookedVisit)
+      changedVisit = true
+    }
+
+    visitToBook.visitStatus = VisitStatus.BOOKED
+
+    val visit = VisitDto(visitRepository.saveAndFlush(visitToBook))
+
+    // TODO can we change the name of the track event name?
+    telemetryClient.trackEvent(
+      "visit-scheduler-prison-visit-updated",
+      listOfNotNull(
+        "reference" to visitToBook.reference,
+        "visitStatus" to visit.visitStatus.name,
+      ).toMap(),
+      null
+    )
+
+    if (changedVisit) {
+      // TODO we need to have a changed event
+      snsService.sendChangedVisitBookedEvent(visit)
+    } else {
+      // Updated to BOOKED status - review if POST & PUT are replaced with Reserve, Book & Amend endpoints
+      snsService.sendVisitBookedEvent(visit)
+    }
+
+    return visit
+  }
+
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
-    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
 
     visitEntity.visitStatus = VisitStatus.CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
@@ -209,7 +329,14 @@ class VisitService(
       null
     )
 
-    return VisitDto(visitEntity)
+    val visit = VisitDto(visitEntity)
+    snsService.sendVisitCancelledEvent(visit)
+    return visit
+  }
+
+  @Transactional(readOnly = true)
+  fun getBookedVisitByReference(reference: String): VisitDto {
+    return VisitDto(visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
   }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {

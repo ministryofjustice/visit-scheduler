@@ -12,7 +12,6 @@ import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
@@ -22,35 +21,130 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeReservedVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 import javax.validation.Valid
 
+const val VISIT_CONTROLLER_PATH: String = "/visits"
+const val VISIT_RESERVE_SLOT: String = "$VISIT_CONTROLLER_PATH/slot/reserve"
+const val VISIT_RESERVED_SLOT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/slot/change"
+const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/change"
+const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
+const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
+const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
+
 @RestController
 @Validated
-@RequestMapping(name = "Visit Resource", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(name = "Visit Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitController(
-  private val visitService: VisitService,
-  private val snsService: SnsService,
+  private val visitService: VisitService
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PostMapping
+  @PostMapping(VISIT_RESERVE_SLOT)
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(
-    summary = "Create a visit",
+    summary = "Reserve a slot (date/time slot) for a visit ",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = CreateVisitRequestDto::class)
+          schema = Schema(implementation = ReserveVisitSlotDto::class)
+        )
+      ]
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "201",
+        description = "Visit slot reserved"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to reserve a slot",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to reserve a slot",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun reserveVisitSlot(
+    @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto
+  ): VisitDto {
+    return visitService.reserveVisitSlot(reserveVisitSlotDto = reserveVisitSlotDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping(VISIT_RESERVED_SLOT_CHANGE)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Change a reserved slot (date/time slot) for a visit ",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = ChangeReservedVisitSlotRequestDto::class)
+        )
+      ]
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit slot changed"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to changed a visit slot",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to changed a visit slot",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Visit slot not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+    ]
+  )
+  fun changeReservedVisitSlot(
+    @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
+    @PathVariable applicationReference: String,
+    @RequestBody @Valid changeReservedVisitSlotRequestDto: ChangeReservedVisitSlotRequestDto
+  ): VisitDto {
+    return visitService.changeReservedVisitSlot(applicationReference.trim(), changeReservedVisitSlotRequestDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping(VISIT_CHANGE)
+  @ResponseStatus(HttpStatus.CREATED)
+  @Operation(
+    summary = "Change a booked visit",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = ReserveVisitSlotDto::class)
         )
       ]
     ),
@@ -61,7 +155,7 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to create a visit",
+        description = "Incorrect request to change a booked visit",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       ),
       ApiResponse(
@@ -71,20 +165,109 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to create a visit",
+        description = "Incorrect permissions to change a booked visit",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       )
     ]
   )
-  fun createVisit(
-    @RequestBody @Valid createVisitRequest: CreateVisitRequestDto
+  fun changeBookedVisit(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String,
+    @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto
   ): VisitDto {
-    return visitService.createVisit(createVisitRequest)
+    return visitService.reserveVisitSlot(reference.trim(), reserveVisitSlotDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping(VISIT_BOOK)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Book a visit",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit updated"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to book a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to book a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Visit not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+    ]
+  )
+  fun bookVisit(
+    @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
+    @PathVariable applicationReference: String
+  ): VisitDto {
+    return visitService.bookVisit(applicationReference.trim())
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping(VISIT_CANCEL)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Cancel an existing booked visit",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = OutcomeDto::class)
+        )
+      ]
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit cancelled"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to cancel a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to cancel a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Visit not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+    ]
+  )
+  fun cancelVisit(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String,
+    @RequestBody @Valid cancelOutcome: OutcomeDto
+  ): VisitDto {
+    return visitService.cancelVisit(reference.trim(), cancelOutcome)
   }
 
   @Suppress("KotlinDeprecation")
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping
+  @GetMapping(VISIT_CONTROLLER_PATH)
   @Operation(
     summary = "Get visits",
     description = "Retrieve visits with optional filters, sorted by start timestamp descending",
@@ -156,7 +339,7 @@ class VisitController(
     )
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(params = ["page", "size"])
+  @GetMapping(params = ["page", "size"], path = [VISIT_CONTROLLER_PATH])
   @Operation(
     summary = "Get visits",
     description = "Retrieve visits with optional filters, sorted by start timestamp descending",
@@ -240,9 +423,9 @@ class VisitController(
     )
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping("/{reference}")
+  @GetMapping(GET_VISIT_BY_REFERENCE)
   @Operation(
-    summary = "Get visit",
+    summary = "Get a booked visit",
     description = "Retrieve visit by visit reference",
     responses = [
       ApiResponse(
@@ -271,112 +454,10 @@ class VisitController(
       ),
     ]
   )
-  fun getVisitByReference(
+  fun getBookedVisitByReference(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String
-  ): VisitDto = visitService.getVisitByReference(reference.trim())
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PutMapping("/{reference}")
-  @ResponseStatus(HttpStatus.OK)
-  @Operation(
-    summary = "Update an existing visit",
-    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
-      content = [
-        Content(
-          mediaType = "application/json",
-          schema = Schema(implementation = UpdateVisitRequestDto::class)
-        )
-      ]
-    ),
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Visit updated"
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "Incorrect request to update a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to update a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Visit not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-    ]
-  )
-  fun updateVisit(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String,
-    @RequestBody @Valid updateVisitRequest: UpdateVisitRequestDto
   ): VisitDto {
-    val visit = visitService.updateVisit(reference.trim(), updateVisitRequest)
-
-    // Updated to BOOKED status - review if POST & PUT are replaced with Reserve, Book & Amend endpoints
-    updateVisitRequest.visitStatus?.run {
-      if (visit.visitStatus == VisitStatus.BOOKED) {
-        snsService.sendVisitBookedEvent(visit)
-      }
-    }
-    return visit
-  }
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PatchMapping("/{reference}/cancel")
-  @ResponseStatus(HttpStatus.OK)
-  @Operation(
-    summary = "Cancel an existing visit",
-    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
-      content = [
-        Content(
-          mediaType = "application/json",
-          schema = Schema(implementation = OutcomeDto::class)
-        )
-      ]
-    ),
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Visit cancelled"
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "Incorrect request to cancel a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to cancel a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Visit not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-    ]
-  )
-  fun cancelVisit(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String,
-    @RequestBody @Valid cancelOutcome: OutcomeDto
-  ): VisitDto = visitService.cancelVisit(reference.trim(), cancelOutcome).also {
-    snsService.sendVisitCancelledEvent(it)
+    return visitService.getBookedVisitByReference(reference.trim())
   }
 }

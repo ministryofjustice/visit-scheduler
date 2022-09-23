@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.legacy
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
@@ -14,20 +14,19 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
-@DisplayName("Put $VISIT_CANCEL")
+@Suppress("KotlinDeprecation")
+@DisplayName("Put /visits/{reference}/cancel")
 class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -39,7 +38,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
   @Test
-  fun `cancel visit by reference -  with outcome and outcome text`() {
+  fun `cancel visit by reference with outcome and outcome text`() {
 
     // Given
     val visit = createVisitAndSave()
@@ -48,10 +47,14 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       OutcomeStatus.PRISONER_CANCELLED,
       "Prisoner got covid"
     )
-    val reference = visit.reference
 
     // When
-    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .body(
+        BodyInserters.fromValue(outcomeDto)
+      )
+      .exchange()
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -86,7 +89,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `cancel visit by reference -  with outcome and without outcome text`() {
+  fun `cancel visit by reference with outcome and without outcome text`() {
 
     // Given
     val visit = createVisitAndSave()
@@ -94,11 +97,14 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val outcomeDto = OutcomeDto(
       outcomeStatus = OutcomeStatus.VISITOR_CANCELLED
     )
-    val reference = visit.reference
 
     // When
-
-    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .body(
+        BodyInserters.fromValue(outcomeDto)
+      )
+      .exchange()
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -131,14 +137,15 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `cancel visit by reference - without outcome`() {
+  fun `cancel visit by reference without outcome`() {
 
     // Given
     val visit = createVisitAndSave()
-    val reference = visit.reference
 
     // When
-    val responseSpec = callCancelVisit(webTestClient, authHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference = reference)
+    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .exchange()
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -149,7 +156,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `cancel visit by reference - with outcome status of superseded`() {
+  fun `cancel visit by reference with outcome status of superseded`() {
 
     // Given
     val visit = createVisitAndSave()
@@ -158,10 +165,14 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       OutcomeStatus.SUPERSEDED_CANCELLATION,
       "Prisoner has updated the existing booking"
     )
-    val reference = visit.reference
 
     // When
-    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .body(
+        BodyInserters.fromValue(outcomeDto)
+      )
+      .exchange()
 
     // Then
     responseSpec.expectStatus().isOk
@@ -174,7 +185,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `cancel visit by reference - not found`() {
+  fun `put visit by reference - not found`() {
     // Given
     val reference = "12345"
 
@@ -184,14 +195,21 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+    val responseSpec = webTestClient.patch().uri("/visits/$reference/cancel")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .body(
+        BodyInserters.fromValue(
+          outcomeDto
+        )
+      )
+      .exchange()
 
     // Then
     responseSpec.expectStatus().isNotFound
   }
 
   @Test
-  fun `cancel visit by reference - access forbidden when no role`() {
+  fun `access forbidden when no role`() {
     // Given
     val reference = "12345"
 
@@ -201,7 +219,14 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf()), reference, outcomeDto)
+    val responseSpec = webTestClient.patch().uri("/visits/$reference/cancel")
+      .headers(setAuthorisation(roles = listOf()))
+      .body(
+        BodyInserters.fromValue(
+          outcomeDto
+        )
+      )
+      .exchange()
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -211,7 +236,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `cancel visit by reference - unauthorised when no token`() {
+  fun `unauthorised when no token`() {
     // Given
     val reference = "12345"
 
@@ -221,7 +246,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.put().uri(getCancelVisitUrl(reference))
+    val responseSpec = webTestClient.put().uri("/visits/$reference/cancel")
       .body(
         BodyInserters.fromValue(
           outcomeDto
