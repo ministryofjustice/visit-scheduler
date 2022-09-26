@@ -26,9 +26,8 @@ class VisitTask(
     log.debug("Entered deleteExpiredReservations expiredPeriod : $expiredPeriod")
 
     val expiredApplicationReferences = visitService.findExpiredApplicationReferences(expiredPeriod)
-
+    log.debug("Expired visits: ${expiredApplicationReferences.count()}")
     if (expiredApplicationReferences.isNotEmpty()) {
-      log.debug("Expired visits: ${expiredApplicationReferences.count()}")
       visitService.deleteAllReservedVisitsByApplicationReference(expiredApplicationReferences)
     }
   }

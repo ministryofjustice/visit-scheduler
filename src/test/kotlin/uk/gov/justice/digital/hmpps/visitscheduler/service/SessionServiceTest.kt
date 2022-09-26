@@ -118,6 +118,7 @@ class SessionServiceTest {
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
         policyNonAssociationWholeDay = true,
+        expiredPeriodMinutes = 20
       )
     }
 
@@ -413,6 +414,7 @@ class SessionServiceTest {
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
         policyNonAssociationWholeDay = true,
+        expiredPeriodMinutes = 20
       )
     }
 
@@ -654,6 +656,7 @@ class SessionServiceTest {
         policyFilterDoubleBooking = true,
         policyFilterNonAssociation = true,
         policyNonAssociationWholeDay = true,
+        expiredPeriodMinutes = 20
       )
     }
 

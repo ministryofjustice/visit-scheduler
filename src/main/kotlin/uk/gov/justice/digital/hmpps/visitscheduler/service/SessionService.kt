@@ -47,7 +47,7 @@ class SessionService(
   @Value("\${policy.session.non-association.whole-day:true}")
   private val policyNonAssociationWholeDay: Boolean,
   @Value("\${task.expired-visit.validity-minutes:20}")
-  private val expiredPeriodMinutes: Int = 20
+  private val expiredPeriodMinutes: Int
 ) {
 
   companion object {
