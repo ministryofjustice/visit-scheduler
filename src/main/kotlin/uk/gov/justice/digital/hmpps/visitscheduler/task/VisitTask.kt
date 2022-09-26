@@ -10,8 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 @Component
 class VisitTask(
   private val visitService: VisitService,
-  @Value("\${task.expired-visit.enabled:false}") private val enabled: Boolean,
-  @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriod: Int
+  @Value("\${task.expired-visit.enabled:false}") private val enabled: Boolean
 ) {
 
   companion object {
@@ -23,9 +22,9 @@ class VisitTask(
     if (!enabled) {
       return
     }
-    log.debug("Entered deleteExpiredReservations expiredPeriod : $expiredPeriod")
 
-    val expiredApplicationReferences = visitService.findExpiredApplicationReferences(expiredPeriod)
+    log.debug("Entered deleteExpiredReservations")
+    val expiredApplicationReferences = visitService.findExpiredApplicationReferences()
     log.debug("Expired visits: ${expiredApplicationReferences.count()}")
     if (expiredApplicationReferences.isNotEmpty()) {
       visitService.deleteAllReservedVisitsByApplicationReference(expiredApplicationReferences)

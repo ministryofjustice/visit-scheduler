@@ -35,6 +35,7 @@ class SessionService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
   private val prisonApiClient: PrisonApiClient,
+  private val visitService: VisitService,
   private val clock: Clock,
   @Value("\${policy.session.booking-notice-period.minimum-days:2}")
   private val policyNoticeDaysMin: Long,
@@ -46,8 +47,6 @@ class SessionService(
   private val policyFilterNonAssociation: Boolean,
   @Value("\${policy.session.non-association.whole-day:true}")
   private val policyNonAssociationWholeDay: Boolean,
-  @Value("\${task.expired-visit.validity-minutes:20}")
-  private val expiredPeriodMinutes: Int
 ) {
 
   companion object {
@@ -231,7 +230,7 @@ class SessionService(
       visitRoom = session.visitRoomName,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp,
-      expiredPeriodMinutes = expiredPeriodMinutes
+      expiredDateAndTime = visitService.getReservedExpiredDateAndTime()
     )
 
     val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(

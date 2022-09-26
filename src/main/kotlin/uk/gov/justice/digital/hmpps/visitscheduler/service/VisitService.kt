@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -28,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.function.Supplier
 
@@ -38,6 +40,7 @@ class VisitService(
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
+  @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int
 ) {
 
   fun reserveVisitSlot(useReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
@@ -197,8 +200,14 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun findExpiredApplicationReferences(expiredPeriodMinutes: Int): List<String> {
-    return visitRepository.findExpiredApplicationReferences(expiredPeriodMinutes)
+  fun findExpiredApplicationReferences(): List<String> {
+    val localDateTime = getReservedExpiredDateAndTime()
+    log.debug("Entered findExpiredApplicationReferences :" + localDateTime)
+    return visitRepository.findExpiredApplicationReferences(localDateTime)
+  }
+
+  fun getReservedExpiredDateAndTime(): LocalDateTime {
+    return LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
   }
 
   @Suppress("KotlinDeprecation")
