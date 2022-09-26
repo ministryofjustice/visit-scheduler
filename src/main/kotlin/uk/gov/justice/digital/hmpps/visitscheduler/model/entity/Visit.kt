@@ -80,7 +80,7 @@ data class Visit(
   @UpdateTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column
-  var modifyTimestamp: LocalDateTime? = null,
+  val modifyTimestamp: LocalDateTime? = null,
 
   @Transient
   private val _reference: String = ""

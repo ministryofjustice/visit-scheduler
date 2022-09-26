@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -19,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -27,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.function.Supplier
 
@@ -37,6 +40,7 @@ class VisitService(
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
+  @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int
 ) {
 
   fun reserveVisitSlot(useReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
@@ -46,7 +50,7 @@ class VisitService(
         prisonId = reserveVisitSlotDto.prisonId,
         visitRoom = reserveVisitSlotDto.visitRoom,
         visitType = reserveVisitSlotDto.visitType,
-        visitStatus = VisitStatus.RESERVED,
+        visitStatus = RESERVED,
         visitRestriction = reserveVisitSlotDto.visitRestriction,
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
@@ -138,7 +142,7 @@ class VisitService(
         prisonId = createVisitRequest.prisonId,
         visitRoom = createVisitRequest.visitRoom,
         visitType = createVisitRequest.visitType,
-        visitStatus = VisitStatus.RESERVED,
+        visitStatus = RESERVED,
         visitRestriction = createVisitRequest.visitRestriction,
         visitStart = createVisitRequest.startTimestamp,
         visitEnd = createVisitRequest.endTimestamp
@@ -193,6 +197,17 @@ class VisitService(
   fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
     return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
+  }
+
+  @Transactional(readOnly = true)
+  fun findExpiredApplicationReferences(): List<String> {
+    val localDateTime = getReservedExpiredDateAndTime()
+    log.debug("Entered findExpiredApplicationReferences :" + localDateTime)
+    return visitRepository.findExpiredApplicationReferences(localDateTime)
+  }
+
+  fun getReservedExpiredDateAndTime(): LocalDateTime {
+    return LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
   }
 
   @Suppress("KotlinDeprecation")
@@ -255,14 +270,14 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  fun deleteAllVisits(visits: List<VisitDto>) {
-    visitRepository.deleteAllByReferenceIn(visits.map { it.reference }.toList())
+  fun deleteAllReservedVisitsByApplicationReference(applicationReferences: List<String>) {
+    visitRepository.deleteAllByApplicationReferenceInAndVisitStatus(applicationReferences, RESERVED)
 
-    for (visit in visits) {
+    for (applicationReference in applicationReferences) {
       telemetryClient.trackEvent(
         "visit-scheduler-prison-visit-deleted",
         mapOf(
-          "reference" to visit.reference
+          "applicationReferences" to applicationReference
         ),
         null
       )

@@ -35,6 +35,7 @@ class SessionService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
   private val prisonApiClient: PrisonApiClient,
+  private val visitService: VisitService,
   private val clock: Clock,
   @Value("\${policy.session.booking-notice-period.minimum-days:2}")
   private val policyNoticeDaysMin: Long,
@@ -175,7 +176,7 @@ class SessionService(
   }
 
   private fun getCountsByVisitRestriction(visitRestriction: VisitRestriction, visitRestrictionStatsList: List<VisitRestrictionStats>): Int {
-    return visitRestrictionStatsList.stream().filter { visitRestriction == it.visitRestriction }.findFirst().map { it.count.toInt() }.orElse(0)
+    return visitRestrictionStatsList.stream().filter { visitRestriction == it.visitRestriction }.mapToInt(VisitRestrictionStats::count).sum()
   }
 
   private fun sessionHasNonAssociation(session: VisitSessionDto, offenderNonAssociationList: @NotNull List<OffenderNonAssociationDetailDto>): Boolean {
@@ -223,12 +224,23 @@ class SessionService(
   }
 
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
-    return visitRepository.getCountOfActiveSessionVisitsForOpenOrClosedRestriction(
+
+    val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
+      prisonId = session.prisonId,
+      visitRoom = session.visitRoomName,
+      startDateTime = session.startTimestamp,
+      endDateTime = session.endTimestamp,
+      expiredDateAndTime = visitService.getReservedExpiredDateAndTime()
+    )
+
+    val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
       prisonId = session.prisonId,
       visitRoom = session.visitRoomName,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp
     )
+
+    return restrictionReservedStats + restrictionBookedStats
   }
 
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =

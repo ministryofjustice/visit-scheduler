@@ -56,6 +56,7 @@ class SessionServiceTest {
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val visitRepository = mock<VisitRepository>()
   private val prisonApiClient = mock<PrisonApiClient>()
+  private val visitService = mock<VisitService>()
 
   private lateinit var sessionService: SessionService
 
@@ -82,7 +83,7 @@ class SessionServiceTest {
     val endDateTime = date.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.endTime)
 
     whenever(
-      visitRepository.getCountOfActiveSessionVisitsForOpenOrClosedRestriction(
+      visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
         sessionTemplate.prisonId,
         sessionTemplate.visitRoom,
         startDateTime,
@@ -112,12 +113,13 @@ class SessionServiceTest {
         sessionTemplateRepository,
         visitRepository,
         prisonApiClient,
+        visitService,
         Clock.fixed(date.atTime(time).toInstant(ZoneOffset.UTC), ZoneId.systemDefault()),
         policyNoticeDaysMin = noticeDaysMin,
         policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
-        policyNonAssociationWholeDay = true,
+        policyNonAssociationWholeDay = true
       )
     }
 
@@ -407,12 +409,13 @@ class SessionServiceTest {
         sessionTemplateRepository,
         visitRepository,
         prisonApiClient,
+        visitService,
         Clock.fixed(date.atTime(time).toInstant(ZoneOffset.UTC), ZoneId.systemDefault()),
         policyNoticeDaysMin = noticeDaysMin,
         policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
-        policyNonAssociationWholeDay = true,
+        policyNonAssociationWholeDay = true
       )
     }
 
@@ -648,12 +651,13 @@ class SessionServiceTest {
         sessionTemplateRepository,
         visitRepository,
         prisonApiClient,
+        visitService,
         Clock.fixed(date.atTime(time).toInstant(ZoneOffset.UTC), ZoneId.systemDefault()),
         policyNoticeDaysMin = noticeDaysMin,
         policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = true,
         policyFilterNonAssociation = true,
-        policyNonAssociationWholeDay = true,
+        policyNonAssociationWholeDay = true
       )
     }
 
