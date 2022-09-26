@@ -43,9 +43,9 @@ policy:
 
 task:
   expired-visit:
-    enabled: false
-    cron: 0/30 * * * * ?
-    validity-minutes: 3
+    enabled: true
+    cron: 0 0/10 * * * ?
+    validity-minutes: 20
 
 hmpps.sqs:
   provider: localstack

@@ -82,7 +82,7 @@ class SessionServiceTest {
     val endDateTime = date.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.endTime)
 
     whenever(
-      visitRepository.getCountOfActiveSessionVisitsForOpenOrClosedRestriction(
+      visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
         sessionTemplate.prisonId,
         sessionTemplate.visitRoom,
         startDateTime,

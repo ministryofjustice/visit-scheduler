@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDateTime
@@ -13,8 +14,22 @@ import javax.persistence.LockModeType
 @Repository
 interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
 
+  @Query(
+    "SELECT v.application_reference FROM visit v " +
+      "WHERE v.visit_status = 'RESERVED' and v.modify_timestamp < NOW() - (make_interval(mins => :expiredPeriodMinutes))",
+    nativeQuery = true
+  )
+  fun findExpiredApplicationReferences(expiredPeriodMinutes: Int): List<String>
+
   @Lock(LockModeType.PESSIMISTIC_WRITE)
-  fun deleteAllByReferenceIn(reference: List<String>)
+  @Query(
+    "DELETE FROM visit WHERE application_reference in :applicationReference and visit_status = 'RESERVED'",
+    nativeQuery = true
+  )
+  fun deleteAllReservedVisitsByApplicationId(applicationReference: List<String>)
+
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  fun deleteAllByApplicationReferenceInAndVisitStatus(applicationReference: List<String>, status: VisitStatus)
 
   fun findByReference(reference: String): Visit?
 
@@ -44,14 +59,33 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "v.visitStart < :endDateTime and " +
       "v.visitRoom = :visitRoom and " +
       "(v.visitRestriction = 'OPEN' or v.visitRestriction = 'CLOSED') and " +
-      " (v.visitStatus = 'BOOKED' or v.visitStatus = 'RESERVED') " +
+      "v.visitStatus = 'BOOKED'  " +
       "group by v.visitRestriction"
   )
-  fun getCountOfActiveSessionVisitsForOpenOrClosedRestriction(
+  fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
     prisonId: String,
     visitRoom: String,
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime
+  ): List<VisitRestrictionStats>
+
+  @Query(
+    "SELECT v.visit_restriction as visitRestriction, count(*) as count  FROM visit v " +
+      "WHERE v.prison_id = :prisonId and " +
+      "v.visit_start >= :startDateTime and " +
+      "v.visit_start < :endDateTime and " +
+      "v.visit_room = :visitRoom and " +
+      "v.visit_restriction in ('OPEN','CLOSED') and " +
+      "v.visit_status = 'RESERVED' and v.modify_timestamp >= NOW() - (make_interval(mins => :expiredPeriodMinutes))" +
+      "group by v.visit_restriction",
+    nativeQuery = true
+  )
+  fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
+    prisonId: String,
+    visitRoom: String,
+    startDateTime: LocalDateTime,
+    endDateTime: LocalDateTime,
+    expiredPeriodMinutes: Int
   ): List<VisitRestrictionStats>
 
   @Query(

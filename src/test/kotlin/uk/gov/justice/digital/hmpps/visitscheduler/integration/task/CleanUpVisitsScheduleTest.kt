@@ -1,0 +1,97 @@
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.task
+
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.transaction.annotation.Propagation.SUPPORTS
+import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.TestVisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
+import java.time.LocalDateTime
+
+@Transactional(propagation = SUPPORTS)
+@DisplayName("Clean K")
+class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
+
+  @Autowired
+  private lateinit var visitRepository: VisitRepository
+
+  @Autowired
+  private lateinit var visitTask: VisitTask
+
+  @Autowired
+  private lateinit var testVisitRepository: TestVisitRepository
+
+  private lateinit var reservedVisitNotExpired: Visit
+
+  private lateinit var reservedVisitExpired: Visit
+
+  @BeforeEach
+  internal fun setUp() {
+    reservedVisitNotExpired = createVisit(prisonerId = "NOT_EXPIRED")
+    visitRepository.saveAndFlush(reservedVisitNotExpired)
+
+    reservedVisitExpired = createVisit(prisonerId = "EXPIRED")
+    visitRepository.saveAndFlush(reservedVisitExpired)
+    testVisitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
+  }
+
+  @AfterEach
+  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+
+  @Test
+  fun `delete only expired reservations`() {
+
+    // Given
+
+    val notExpiredReference = reservedVisitNotExpired.reference
+    val visitExpiredReference = reservedVisitExpired.reference
+
+    // When
+
+    visitTask.deleteExpiredReservations()
+
+    // Then
+
+    assertThat(visitRepository.findByReference(notExpiredReference)).isNotNull()
+    assertThat(visitRepository.findByReference(visitExpiredReference)).isNull()
+  }
+
+  private fun createVisit(
+    visitStatus: VisitStatus = RESERVED,
+    prisonerId: String = "FF0000AA",
+    prisonId: String = "MDI",
+    visitRoom: String = "A1",
+    visitStart: LocalDateTime = LocalDateTime.now().minusDays(3),
+    visitEnd: LocalDateTime = visitStart.plusHours(1),
+    visitType: VisitType = VisitType.SOCIAL,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    reference: String = ""
+  ): Visit {
+
+    return visitRepository.saveAndFlush(
+      Visit(
+        visitStatus = visitStatus,
+        prisonerId = prisonerId,
+        prisonId = prisonId,
+        visitRoom = visitRoom,
+        visitStart = visitStart,
+        visitEnd = visitEnd,
+        visitType = visitType,
+        visitRestriction = visitRestriction,
+        _reference = reference
+      )
+    )
+  }
+}

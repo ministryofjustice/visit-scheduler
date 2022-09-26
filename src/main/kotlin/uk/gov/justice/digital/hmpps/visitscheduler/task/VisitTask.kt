@@ -5,17 +5,18 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
-import java.time.LocalDateTime
 
 @Component
 class VisitTask(
   private val visitService: VisitService,
   @Value("\${task.expired-visit.enabled:false}") private val enabled: Boolean,
-  @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriod: Long
+  @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriod: Int
 ) {
+
+  companion object {
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
+  }
 
   @Scheduled(cron = "\${task.expired-visit.cron:0 0/15 * * * ?}")
   fun deleteExpiredReservations() {
@@ -24,21 +25,11 @@ class VisitTask(
     }
     log.debug("Entered deleteExpiredReservations expiredPeriod : $expiredPeriod")
 
-    val expired = visitService.findVisitsByFilterPageableDescending(
-      VisitFilter(
-        visitStatus = RESERVED,
-        modifyTimestamp = LocalDateTime.now().minusMinutes(expiredPeriod)
-      )
-    ).content
+    val expiredApplicationReferences = visitService.findExpiredApplicationReferences(expiredPeriod)
 
-    if (expired.isNotEmpty()) {
-      log.debug("Expired visits: ${expired.count()}")
+    if (expiredApplicationReferences.isNotEmpty()) {
+      log.debug("Expired visits: ${expiredApplicationReferences.count()}")
+      visitService.deleteAllReservedVisitsByApplicationReference(expiredApplicationReferences)
     }
-
-    visitService.deleteAllVisits(expired)
-  }
-
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }
