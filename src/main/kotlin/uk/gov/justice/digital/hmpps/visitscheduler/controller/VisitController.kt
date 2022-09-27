@@ -21,7 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeReservedVisitSlotRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -91,12 +91,12 @@ class VisitController(
   @PutMapping(VISIT_RESERVED_SLOT_CHANGE)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "Change a reserved slot (date/time slot) for a visit ",
+    summary = "Change a reserved slot and associated details for a visit ",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = ChangeReservedVisitSlotRequestDto::class)
+          schema = Schema(implementation = ChangeVisitSlotRequestDto::class)
         )
       ]
     ),
@@ -130,9 +130,9 @@ class VisitController(
   fun changeReservedVisitSlot(
     @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
     @PathVariable applicationReference: String,
-    @RequestBody @Valid changeReservedVisitSlotRequestDto: ChangeReservedVisitSlotRequestDto
+    @RequestBody @Valid changeVisitSlotRequestDto: ChangeVisitSlotRequestDto
   ): VisitDto {
-    return visitService.changeReservedVisitSlot(applicationReference.trim(), changeReservedVisitSlotRequestDto)
+    return visitService.changeVisitSlot(applicationReference.trim(), changeVisitSlotRequestDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
