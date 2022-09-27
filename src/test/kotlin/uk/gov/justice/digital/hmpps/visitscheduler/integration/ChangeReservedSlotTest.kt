@@ -19,7 +19,7 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeReservedVisitSlotRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
@@ -103,7 +103,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
 
     // Given
 
-    val updateRequest = ChangeReservedVisitSlotRequestDto(
+    val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
       visitRestriction = VisitRestriction.CLOSED,
@@ -163,7 +163,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
 
     // Given
 
-    val updateRequest = ChangeReservedVisitSlotRequestDto(
+    val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
       visitRestriction = VisitRestriction.CLOSED,
@@ -184,7 +184,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
 
     // Given
 
-    val updateRequest = ChangeReservedVisitSlotRequestDto(
+    val updateRequest = ChangeVisitSlotRequestDto(
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
@@ -217,7 +217,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
 
     // Given
 
-    val updateRequest = ChangeReservedVisitSlotRequestDto(
+    val updateRequest = ChangeVisitSlotRequestDto(
       visitors = setOf(VisitorDto(123L, visitContact = true)),
     )
 
@@ -249,7 +249,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   fun `change reserved slot - amend support`() {
     // Given
 
-    val updateRequest = ChangeReservedVisitSlotRequestDto(
+    val updateRequest = ChangeVisitSlotRequestDto(
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
 
@@ -281,7 +281,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   @Test
   fun `change reserved slot - not found`() {
     // Given
-    val updateRequest = ChangeReservedVisitSlotRequestDto()
+    val updateRequest = ChangeVisitSlotRequestDto()
     val applicationReference = "IM NOT HERE"
 
     // When
@@ -296,7 +296,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
 
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val updateRequest = ChangeReservedVisitSlotRequestDto()
+    val updateRequest = ChangeVisitSlotRequestDto()
     val applicationReference = visitFull.applicationReference
 
     // When
@@ -312,7 +312,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   @Test
   fun `change reserved slot - unauthorised when no token`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(ChangeReservedVisitSlotRequestDto())
+    val jsonBody = BodyInserters.fromValue(ChangeVisitSlotRequestDto())
     val applicationReference = visitFull.applicationReference
 
     // When

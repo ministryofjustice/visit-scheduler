@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -66,8 +66,8 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     val visit = visitCreator(visitRepository)
-      .withPrisonerId("FF0000BB")
-      .withPrisonId("BBB")
+      .withPrisonerId("FF0000FF")
+      .withPrisonId("MDI")
       .withVisitRoom("B1")
       .withVisitStart(visitTime.plusDays(2))
       .withVisitEnd(visitTime.plusDays(2).plusHours(1))
@@ -86,16 +86,18 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() {
+    visitDeleter(visitRepository)
+  }
 
-  private fun createReserveVisitSlotDto(): ReserveVisitSlotDto {
+  private fun createReserveVisitSlotDto(prisonId: String = "MDI", prisonerId: String = "FF0000FF", startTimestamp: LocalDateTime = bookedVisit.visitStart): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
-      prisonId = "MDI",
-      prisonerId = "FF0000FF",
+      prisonId = prisonId,
+      prisonerId = prisonerId,
       visitRoom = "A1",
       visitType = SOCIAL,
-      startTimestamp = visitTime,
-      endTimestamp = visitTime.plusHours(1),
+      startTimestamp = startTimestamp,
+      endTimestamp = bookedVisit.visitEnd,
       visitRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
@@ -104,7 +106,51 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   }
 
   @Test
-  fun `change visit with given reference from another booked visit`() {
+  fun `change visit has given reference - with new application`() {
+
+    // Given
+    val reference = bookedVisit.reference
+
+    val reserveVisitSlotDto = createReserveVisitSlotDto(startTimestamp = bookedVisit.visitStart.minusHours(10))
+
+    // When
+    val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isCreated
+      .expectBody()
+      .jsonPath("$.reference").isEqualTo(reference)
+      .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    val reservedVisit = visitRepository.findByApplicationReference(visit.applicationReference)
+
+    assertThat(reservedVisit).isNotNull
+    reservedVisit?.let {
+      assertThat(reservedVisit.id).isNotEqualTo(bookedVisit.id)
+      assertThat(reservedVisit.visitStatus).isEqualTo(VisitStatus.RESERVED)
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-visit-created"),
+        org.mockito.kotlin.check {
+          assertThat(it["reference"]).isEqualTo(reservedVisit.reference)
+          assertThat(it["applicationReference"]).isNotEqualTo(reservedVisit.applicationReference)
+          assertThat(it["prisonerId"]).isEqualTo(reservedVisit.prisonerId)
+          assertThat(it["prisonId"]).isEqualTo(reservedVisit.prisonId)
+          assertThat(it["visitType"]).isEqualTo(reservedVisit.visitType.name)
+          assertThat(it["visitRoom"]).isEqualTo(reservedVisit.visitRoom)
+          assertThat(it["visitRestriction"]).isEqualTo(reservedVisit.visitRestriction.name)
+          assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.toString())
+          assertThat(it["visitStatus"]).isEqualTo("RESERVED")
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+    }
+  }
+
+  @Test
+  fun `change visit with given reference from another booked visit - with no new application`() {
 
     // Given
 
@@ -123,64 +169,68 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
 
     val reservedVisit = visitRepository.findByApplicationReference(visit.applicationReference)
-    val checkBookedVisit = visitRepository.findBookedVisit(reference)
-    Assertions.assertThat(checkBookedVisit?.id).isEqualTo(bookedVisit.id)
-    Assertions.assertThat(reservedVisit?.id).isNotEqualTo(bookedVisit.id)
 
-    // And
+    assertThat(reservedVisit).isNotNull
+    reservedVisit?.let {
+      assertThat(reservedVisit.id).isEqualTo(bookedVisit.id)
+      assertThat(reservedVisit.visitStatus).isEqualTo(VisitStatus.BOOKED)
+      // And
 
-    verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-created"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
-        Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-      },
-      isNull()
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+      verify(telemetryClient).trackEvent(
+        eq("visit-scheduler-prison-visit-updated"),
+        org.mockito.kotlin.check {
+          assertThat(it["reference"]).isEqualTo(visit.reference)
+          assertThat(it["reference"]).isEqualTo(visit.reference)
+          assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+          assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+          assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+          assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+          assertThat(it["visitStatus"]).isEqualTo("BOOKED")
+        },
+        isNull()
+      )
+
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    }
   }
 
   @Test
-  fun `change visit has given reference`() {
-
+  fun `changed booked visit creates new visit when prisonId has changed`() {
     // Given
     val reference = bookedVisit.reference
-
-    val reserveVisitSlotDto = createReserveVisitSlotDto()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonId = "NEW" + bookedVisit.prisonId)
 
     // When
-    val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
+    callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
 
     // Then
-    val returnResult = responseSpec.expectStatus().isCreated
-      .expectBody()
-      .jsonPath("$.reference").isEqualTo(reference)
-      .returnResult()
+    assertThat(visitRepository.findAllByReference(reference).size).isEqualTo(2)
+  }
 
-    // And
-    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-created"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-        Assertions.assertThat(it["applicationReference"]).isNotEqualTo(visit.applicationReference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
-        Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-      },
-      isNull()
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+  @Test
+  fun `changed booked visit creates new visit when prisonerId has changed`() {
+    // Given
+    val reference = bookedVisit.reference
+    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonerId = "NEW" + bookedVisit.prisonerId)
+
+    // When
+    callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
+
+    // Then
+    assertThat(visitRepository.findAllByReference(reference).size).isEqualTo(2)
+  }
+
+  @Test
+  fun `changed booked visit creates new visit when startTimestamp has changed`() {
+    // Given
+    val reference = bookedVisit.reference
+    val reserveVisitSlotDto = createReserveVisitSlotDto(startTimestamp = bookedVisit.visitStart.minusDays(1))
+
+    // When
+    callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
+
+    // Then
+    assertThat(visitRepository.findAllByReference(reference).size).isEqualTo(2)
   }
 
   @Test

@@ -16,7 +16,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT v.applicationReference FROM Visit v " +
-      "WHERE v.visitStatus = 'RESERVED' and v.modifyTimestamp < :expiredDateAndTime",
+      "WHERE v.visitStatus = 'RESERVED' AND v.modifyTimestamp < :expiredDateAndTime"
   )
   fun findExpiredApplicationReferences(expiredDateAndTime: LocalDateTime): List<String>
 
@@ -31,11 +31,11 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT count(v) > 0 FROM Visit v " +
-      "WHERE v.prisonerId in (:prisonerIds) and " +
-      "v.prisonId = :prisonId and " +
-      "v.visitStart >= :startDateTime and " +
-      "v.visitStart < :endDateTime and " +
-      " (v.visitStatus = 'BOOKED' or v.visitStatus = 'RESERVED') "
+      "WHERE v.prisonerId IN (:prisonerIds) AND " +
+      "v.prisonId = :prisonId AND " +
+      "v.visitStart >= :startDateTime AND " +
+      "v.visitStart < :endDateTime AND " +
+      " (v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED') "
   )
   fun hasActiveVisits(
     prisonerIds: List<String>,
@@ -45,14 +45,14 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
-    "SELECT v.visitRestriction as visitRestriction, count(v) as count  FROM Visit v " +
-      "WHERE v.prisonId = :prisonId and " +
-      "v.visitStart >= :startDateTime and " +
-      "v.visitStart < :endDateTime and " +
-      "v.visitRoom = :visitRoom and " +
-      "(v.visitRestriction = 'OPEN' or v.visitRestriction = 'CLOSED') and " +
+    "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
+      "WHERE v.prisonId = :prisonId AND " +
+      "v.visitStart >= :startDateTime AND " +
+      "v.visitStart < :endDateTime AND " +
+      "v.visitRoom = :visitRoom AND " +
+      "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
       "v.visitStatus = 'BOOKED'  " +
-      "group by v.visitRestriction"
+      "GROUP BY v.visitRestriction"
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
     prisonId: String,
@@ -62,14 +62,14 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT v.visitRestriction as visitRestriction, count(v) as count  FROM Visit v " +
-      "WHERE v.prisonId = :prisonId and " +
-      "v.visitStart >= :startDateTime and " +
-      "v.visitStart < :endDateTime and " +
-      "v.visitRoom = :visitRoom and " +
-      "(v.visitRestriction = 'OPEN' or v.visitRestriction = 'CLOSED') and " +
-      "v.visitStatus = 'RESERVED' and v.modifyTimestamp >= :expiredDateAndTime " +
-      "group by v.visitRestriction"
+    "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
+      "WHERE v.prisonId = :prisonId AND " +
+      "v.visitStart >= :startDateTime AND " +
+      "v.visitStart < :endDateTime AND " +
+      "v.visitRoom = :visitRoom AND " +
+      "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
+      "v.visitStatus = 'RESERVED' AND v.modifyTimestamp >= :expiredDateAndTime " +
+      "GROUP BY v.visitRestriction"
   )
   fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
     prisonId: String,
@@ -80,7 +80,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT v FROM Visit v WHERE v.reference = :reference and v.visitStatus = 'BOOKED' "
+    "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' "
   )
   fun findBookedVisit(reference: String): Visit?
 }
