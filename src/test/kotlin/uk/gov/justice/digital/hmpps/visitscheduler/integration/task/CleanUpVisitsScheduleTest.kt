@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -35,16 +36,27 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
 
   private lateinit var reservedVisitNotExpired: Visit
 
+  private lateinit var reservedVisitNotExpiredChangingStatus: Visit
+
   private lateinit var reservedVisitExpired: Visit
+
+  private lateinit var reservedVisitExpiredChangingStatus: Visit
 
   @BeforeEach
   internal fun setUp() {
     reservedVisitNotExpired = createVisit(prisonerId = "NOT_EXPIRED")
     visitRepository.saveAndFlush(reservedVisitNotExpired)
 
+    reservedVisitNotExpiredChangingStatus = createVisit(prisonerId = "NOT_EXPIRED", visitStatus = CHANGING)
+    visitRepository.saveAndFlush(reservedVisitNotExpiredChangingStatus)
+
     reservedVisitExpired = createVisit(prisonerId = "EXPIRED")
     visitRepository.saveAndFlush(reservedVisitExpired)
     testVisitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
+
+    reservedVisitExpiredChangingStatus = createVisit(prisonerId = "EXPIRED", visitStatus = CHANGING)
+    visitRepository.saveAndFlush(reservedVisitExpiredChangingStatus)
+    testVisitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
   }
 
   @AfterEach
@@ -56,7 +68,9 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
     // Given
 
     val notExpiredReference = reservedVisitNotExpired.reference
+    val notExpiredReferenceChangingStatus = reservedVisitNotExpiredChangingStatus.reference
     val visitExpiredReference = reservedVisitExpired.reference
+    val visitExpiredReferenceChangingStatus = reservedVisitExpiredChangingStatus.reference
 
     // When
 
@@ -65,7 +79,9 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
     // Then
 
     assertThat(visitRepository.findByReference(notExpiredReference)).isNotNull()
+    assertThat(visitRepository.findByReference(notExpiredReferenceChangingStatus)).isNotNull()
     assertThat(visitRepository.findByReference(visitExpiredReference)).isNull()
+    assertThat(visitRepository.findByReference(visitExpiredReferenceChangingStatus)).isNull()
   }
 
   private fun createVisit(

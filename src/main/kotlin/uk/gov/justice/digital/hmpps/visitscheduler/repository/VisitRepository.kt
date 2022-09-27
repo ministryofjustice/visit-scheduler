@@ -16,12 +16,13 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT v.applicationReference FROM Visit v " +
-      "WHERE v.visitStatus = 'RESERVED' AND v.modifyTimestamp < :expiredDateAndTime"
+      "WHERE (v.visitStatus = 'RESERVED' OR v.visitStatus = 'CHANGING')" +
+      " AND v.modifyTimestamp < :expiredDateAndTime"
   )
   fun findExpiredApplicationReferences(expiredDateAndTime: LocalDateTime): List<String>
 
   @Lock(LockModeType.PESSIMISTIC_WRITE)
-  fun deleteAllByApplicationReferenceInAndVisitStatus(applicationReference: List<String>, status: VisitStatus)
+  fun deleteAllByApplicationReferenceInAndVisitStatusIn(applicationReference: List<String>, status: List<VisitStatus>)
 
   fun findByReference(reference: String): Visit?
 

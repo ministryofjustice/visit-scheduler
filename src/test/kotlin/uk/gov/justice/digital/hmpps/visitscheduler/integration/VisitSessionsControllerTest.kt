@@ -11,10 +11,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -342,6 +343,60 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
   }
 
   @Test
+  fun `visit sessions exclude visits with changing status in visit count`() {
+
+    // Given
+    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
+    val startTime = dateTime.toLocalTime()
+    val endTime = dateTime.plusHours(1)
+
+    val sessionTemplate = sessionTemplate(
+      validFromDate = dateTime.toLocalDate(),
+      validToDate = dateTime.toLocalDate(),
+      startTime = startTime,
+      endTime = endTime.toLocalTime()
+    )
+    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+
+    val visit1 = Visit(
+      prisonerId = "AF12345G",
+      prisonId = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = CHANGING,
+      visitRestriction = OPEN
+    )
+
+    val visit2 = Visit(
+      prisonerId = "AF12345G",
+      prisonId = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = CHANGING,
+      visitRestriction = CLOSED
+    )
+
+    visitRepository.saveAndFlush(visit1)
+    visitRepository.saveAndFlush(visit2)
+
+    // When
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .exchange()
+
+    // Then
+    responseSpec.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].openVisitBookedCount").isEqualTo(0)
+      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(0)
+  }
+
+  @Test
   fun `visit sessions include visit count one matching room name`() {
 
     // Given
@@ -413,11 +468,11 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = RESERVED,
-      visitRestriction = VisitRestriction.CLOSED
+      visitRestriction = CLOSED
     )
 
-    val visit2 = visit1.copy(visitStatus = BOOKED, visitRestriction = VisitRestriction.CLOSED)
-    val visit3 = visit1.copy(visitStatus = CANCELLED, visitRestriction = VisitRestriction.CLOSED)
+    val visit2 = visit1.copy(visitStatus = BOOKED, visitRestriction = CLOSED)
+    val visit3 = visit1.copy(visitStatus = CANCELLED, visitRestriction = CLOSED)
 
     visitRepository.saveAndFlush(visit1)
     visitRepository.saveAndFlush(visit2)
