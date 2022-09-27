@@ -10,6 +10,7 @@
 # Suppression for snakeyaml 1.30 vulnerability as bundled with application insights so can't be upgraded easily
 #   Can be suppressed as we we don't parse untrusted yaml
 CVE-2022-25857
-# Suppression for snakeyaml 1.31 vulnerability as no current upgrade path available
+CVE-2022-38751
+# Suppression for snakeyaml 1.31 vulnerability as not fixed yet
 #   Can be suppressed as we we don't parse untrusted yaml
 CVE-2022-38752
