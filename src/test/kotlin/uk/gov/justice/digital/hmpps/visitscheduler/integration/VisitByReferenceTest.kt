@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
@@ -33,12 +34,33 @@ class VisitByReferenceTest : IntegrationTestBase() {
   internal fun deleteAllVisits() = visitDeleter(visitRepository)
 
   @Test
-  fun `Visit by reference`() {
+  fun `Booked visit by reference`() {
 
     // Given
     val createdVisit = visitCreator(visitRepository)
       .withPrisonerId("FF0000AA")
       .withVisitStatus(BOOKED)
+      .withVisitStart(visitTime)
+      .save()
+
+    val reference = createdVisit.reference
+
+    // When
+    val responseSpec = callVisitByReference(webTestClient, reference, roleVisitSchedulerHttpHeaders)
+
+    // Then
+    responseSpec.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.reference").isEqualTo(reference)
+  }
+
+  @Test
+  fun `Canceled visit by reference`() {
+
+    // Given
+    val createdVisit = visitCreator(visitRepository)
+      .withPrisonerId("FF0000AA")
+      .withVisitStatus(CANCELLED)
       .withVisitStart(visitTime)
       .save()
 

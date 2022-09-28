@@ -384,8 +384,8 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun getBookedVisitByReference(reference: String): VisitDto {
-    return VisitDto(visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
+  fun getVisitByReference(reference: String): VisitDto {
+    return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
   }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
