@@ -58,7 +58,7 @@ class VisitService(
         prisonId = reserveVisitSlotDto.prisonId,
         visitRoom = reserveVisitSlotDto.visitRoom,
         visitType = reserveVisitSlotDto.visitType,
-        visitStatus = getStartingStatus(bookingReference, reserveVisitSlotDto),
+        visitStatus = getStartingStatus(bookingReference, prisonId= reserveVisitSlotDto.prisonId, prisonerId = reserveVisitSlotDto.prisonerId, startTimestamp = reserveVisitSlotDto.startTimestamp),
         visitRestriction = reserveVisitSlotDto.visitRestriction,
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
@@ -87,14 +87,14 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  private fun getStartingStatus(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitStatus {
+  private fun getStartingStatus(bookingReference: String, prisonId: String? =null, prisonerId : String?=null,startTimestamp:LocalDateTime ) : VisitStatus {
 
     val bookedVisit = this.visitRepository.findBookedVisit(bookingReference)
 
     if (bookedVisit == null ||
-      bookedVisit.prisonId != reserveVisitSlotDto.prisonId ||
-      bookedVisit.prisonerId != reserveVisitSlotDto.prisonerId ||
-      bookedVisit.visitStart.compareTo(reserveVisitSlotDto.startTimestamp) != 0
+      (prisonId != null && bookedVisit.prisonId != prisonId) ||
+      (prisonerId != null && bookedVisit.prisonerId != prisonerId) ||
+      bookedVisit.visitStart.compareTo(startTimestamp) != 0
     ) {
       return RESERVED
     }
@@ -105,7 +105,10 @@ class VisitService(
     val visitEntity = visitRepository.findByApplicationReference(applicationReference) ?: throw VisitNotFoundException("Reserved visit reference $applicationReference not found")
 
     changeVisitSlotRequestDto.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
-    changeVisitSlotRequestDto.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
+    changeVisitSlotRequestDto.startTimestamp?.let {
+        visitEntity.visitStart = it
+        visitEntity.visitStatus = getStartingStatus(visitEntity.reference, startTimestamp = changeVisitSlotRequestDto.startTimestamp)
+    }
     changeVisitSlotRequestDto.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
 
     changeVisitSlotRequestDto.visitContact?.let { visitContactUpdate ->
