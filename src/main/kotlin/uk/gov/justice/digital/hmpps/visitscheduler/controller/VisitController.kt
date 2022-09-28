@@ -425,7 +425,7 @@ class VisitController(
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_VISIT_BY_REFERENCE)
   @Operation(
-    summary = "Get a booked visit",
+    summary = "Get a visit",
     description = "Retrieve visit by visit reference",
     responses = [
       ApiResponse(
@@ -454,10 +454,10 @@ class VisitController(
       ),
     ]
   )
-  fun getBookedVisitByReference(
+  fun getVisitByReference(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String
   ): VisitDto {
-    return visitService.getBookedVisitByReference(reference.trim())
+    return visitService.getVisitByReference(reference.trim())
   }
 }
