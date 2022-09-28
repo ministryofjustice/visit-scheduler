@@ -35,6 +35,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
@@ -90,7 +92,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     visitDeleter(visitRepository)
   }
 
-  private fun createReserveVisitSlotDto(prisonId: String = "MDI", prisonerId: String = "FF0000FF", startTimestamp: LocalDateTime = bookedVisit.visitStart): ReserveVisitSlotDto {
+  private fun createReserveVisitSlotDto(prisonId: String = "MDI", prisonerId: String = "FF0000FF", startTimestamp: LocalDateTime = bookedVisit.visitStart, visitRestriction: VisitRestriction = OPEN): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
       prisonId = prisonId,
       prisonerId = prisonerId,
@@ -98,7 +100,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       visitType = SOCIAL,
       startTimestamp = startTimestamp,
       endTimestamp = bookedVisit.visitEnd,
-      visitRestriction = OPEN,
+      visitRestriction = visitRestriction,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
@@ -207,6 +209,25 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   }
 
   @Test
+  fun `changed booked visit creates new visit when visit restriction has changed`() {
+    // Given
+    val reference = bookedVisit.reference
+    val reserveVisitSlotDto = createReserveVisitSlotDto(visitRestriction = CLOSED)
+
+    // When
+    val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isCreated
+      .expectBody()
+      .jsonPath("$.reference").isEqualTo(reference)
+      .returnResult()
+
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+  }
+
+  @Test
   fun `change visit - invalid request`() {
 
     // Given
@@ -254,5 +275,18 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Then
     responseSpec.expectStatus().isUnauthorized
+  }
+
+  @Test
+  fun `change visit - not found`() {
+    // Given
+    val reserveVisitSlotDto = createReserveVisitSlotDto()
+    val applicationReference = "IM NOT HERE"
+
+    // When
+    val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isNotFound
   }
 }

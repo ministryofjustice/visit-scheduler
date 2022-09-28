@@ -175,7 +175,7 @@ class VisitController(
     @PathVariable reference: String,
     @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto
   ): VisitDto {
-    return visitService.reserveVisitSlot(reference.trim(), reserveVisitSlotDto)
+    return visitService.changeBookedVisit(reference.trim(), reserveVisitSlotDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

@@ -37,6 +37,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -170,19 +171,15 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   }
 
   @Test
-  fun `change reserved slot by application reference - start date has not change`() {
+  fun `change reserved slot by application reference - start date has not changed`() {
 
     // Given
     val visitBooked = createVisit(visitStatus = BOOKED)
-    val visitReserved = createVisit(visitStatus = RESERVED, reference = visitBooked.reference)
+    val visitReserved = createVisit(visitStatus = CHANGING, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
-      startTimestamp = visitReserved.visitStart,
-      endTimestamp = visitReserved.visitEnd,
-      visitRestriction = visitReserved.visitRestriction,
-      visitContact = ContactDto("John Smith", "01234 567890"),
-      visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      startTimestamp = visitBooked.visitStart,
+      visitContact = ContactDto("John Smith", "01234 567890")
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -195,9 +192,85 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     responseSpec
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.reference").isEqualTo(visitReserved.reference)
-      .jsonPath("$.applicationReference").isEqualTo(applicationReference)
-      .jsonPath("$.visitStatus").isEqualTo(VisitStatus.CHANGING.name)
+      .jsonPath("$.visitStatus").isEqualTo(CHANGING.name)
+      .returnResult()
+  }
+
+  @Test
+  fun `change reserved slot by application reference - start restriction has not changed`() {
+
+    // Given
+    val visitBooked = createVisit(visitStatus = BOOKED)
+    val visitReserved = createVisit(visitStatus = CHANGING, reference = visitBooked.reference)
+
+    val updateRequest = ChangeVisitSlotRequestDto(
+      visitRestriction = visitBooked.visitRestriction,
+      visitContact = ContactDto("John Smith", "01234 567890")
+    )
+
+    val applicationReference = visitReserved.applicationReference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+
+    responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.visitStatus").isEqualTo(CHANGING.name)
+      .returnResult()
+  }
+
+  @Test
+  fun `change reserved slot by application reference - start date has changed`() {
+
+    // Given
+    val visitBooked = createVisit(visitStatus = BOOKED)
+    val visitReserved = createVisit(visitStatus = CHANGING, reference = visitBooked.reference)
+
+    val updateRequest = ChangeVisitSlotRequestDto(
+      startTimestamp = visitBooked.visitStart.minusDays(1),
+      visitContact = ContactDto("John Smith", "01234 567890")
+    )
+
+    val applicationReference = visitReserved.applicationReference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+
+    responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.visitStatus").isEqualTo(RESERVED.name)
+      .returnResult()
+  }
+
+  @Test
+  fun `change reserved slot by application reference - start restriction has changed`() {
+
+    // Given
+    val visitBooked = createVisit(visitStatus = BOOKED)
+    val visitReserved = createVisit(visitStatus = CHANGING, reference = visitBooked.reference)
+
+    val updateRequest = ChangeVisitSlotRequestDto(
+      visitRestriction = VisitRestriction.CLOSED,
+      visitContact = ContactDto("John Smith", "01234 567890")
+    )
+
+    val applicationReference = visitReserved.applicationReference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+
+    responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.visitStatus").isEqualTo(RESERVED.name)
       .returnResult()
   }
 

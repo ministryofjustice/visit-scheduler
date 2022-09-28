@@ -50,6 +50,15 @@ class VisitService(
     val EXPIRED_VISIT_STATUSES = listOf<VisitStatus>(RESERVED, CHANGING)
   }
 
+  fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
+
+    if (!visitRepository.isValidBookingReference(bookingReference)) {
+      throw VisitNotFoundException("Visit booking reference $bookingReference not found")
+    }
+
+    return reserveVisitSlot(bookingReference, reserveVisitSlotDto)
+  }
+
   fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
 
     val visitEntity = visitRepository.saveAndFlush(
@@ -58,7 +67,7 @@ class VisitService(
         prisonId = reserveVisitSlotDto.prisonId,
         visitRoom = reserveVisitSlotDto.visitRoom,
         visitType = reserveVisitSlotDto.visitType,
-        visitStatus = getStartingStatus(bookingReference, prisonId = reserveVisitSlotDto.prisonId, prisonerId = reserveVisitSlotDto.prisonerId, startTimestamp = reserveVisitSlotDto.startTimestamp),
+        visitStatus = getStartingStatus(bookingReference, reserveVisitSlotDto),
         visitRestriction = reserveVisitSlotDto.visitRestriction,
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
@@ -87,18 +96,32 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  private fun getStartingStatus(bookingReference: String, prisonId: String? = null, prisonerId: String? = null, startTimestamp: LocalDateTime): VisitStatus {
+  private fun getStartingStatus(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitStatus {
 
     val bookedVisit = this.visitRepository.findBookedVisit(bookingReference)
 
     if (bookedVisit == null ||
-      (prisonId != null && bookedVisit.prisonId != prisonId) ||
-      (prisonerId != null && bookedVisit.prisonerId != prisonerId) ||
-      bookedVisit.visitStart.compareTo(startTimestamp) != 0
+      (bookedVisit.prisonId != reserveVisitSlotDto.prisonId) ||
+      (bookedVisit.prisonerId != reserveVisitSlotDto.prisonerId) ||
+      (bookedVisit.visitRestriction != reserveVisitSlotDto.visitRestriction) ||
+      (bookedVisit.visitStart.compareTo(reserveVisitSlotDto.startTimestamp) != 0)
     ) {
       return RESERVED
     }
     return CHANGING
+  }
+
+  private fun getUpdatedStatus(visitEntity: Visit, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitStatus {
+
+    val bookedVisit = this.visitRepository.findBookedVisit(visitEntity.reference)
+
+    if (bookedVisit == null ||
+      (changeVisitSlotRequestDto.visitRestriction != null && bookedVisit.visitRestriction != changeVisitSlotRequestDto.visitRestriction) ||
+      (changeVisitSlotRequestDto.startTimestamp != null && bookedVisit.visitStart.compareTo(changeVisitSlotRequestDto.startTimestamp) != 0)
+    ) {
+      return RESERVED
+    }
+    return visitEntity.visitStatus
   }
 
   fun changeVisitSlot(applicationReference: String, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitDto {
@@ -107,8 +130,9 @@ class VisitService(
     changeVisitSlotRequestDto.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
     changeVisitSlotRequestDto.startTimestamp?.let {
       visitEntity.visitStart = it
-      visitEntity.visitStatus = getStartingStatus(visitEntity.reference, startTimestamp = changeVisitSlotRequestDto.startTimestamp)
     }
+    visitEntity.visitStatus = getUpdatedStatus(visitEntity, changeVisitSlotRequestDto)
+
     changeVisitSlotRequestDto.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
 
     changeVisitSlotRequestDto.visitContact?.let { visitContactUpdate ->

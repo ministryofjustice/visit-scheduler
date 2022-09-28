@@ -84,4 +84,9 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' "
   )
   fun findBookedVisit(reference: String): Visit?
+
+  @Query(
+    "SELECT CASE WHEN (COUNT(v) = 1) THEN TRUE ELSE FALSE END  FROM Visit v WHERE v.reference = :bookingReference AND v.visitStatus = 'BOOKED' "
+  )
+  fun isValidBookingReference(bookingReference: String): Boolean
 }
