@@ -261,7 +261,7 @@ class VisitService(
   @Suppress("KotlinDeprecation")
   @Deprecated("this should not be used ")
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
-    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
+    val visitEntity = visitRepository.findReservedVisit(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
 
     updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
     updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
@@ -339,6 +339,7 @@ class VisitService(
     val existingBookedVisit = visitRepository.findBookedVisit(visitToBook.reference)
     val changedVisit = existingBookedVisit != null
     if (changedVisit) {
+      // the existing booking should always be saved before the new booking, see VisitRepository.findByReference
       existingBookedVisit?.let {
         it.visitStatus = VisitStatus.CANCELLED
         it.outcomeStatus = SUPERSEDED_CANCELLATION

@@ -67,10 +67,10 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
 
     // Given
 
-    val notExpiredReference = reservedVisitNotExpired.reference
-    val notExpiredReferenceChangingStatus = reservedVisitNotExpiredChangingStatus.reference
-    val visitExpiredReference = reservedVisitExpired.reference
-    val visitExpiredReferenceChangingStatus = reservedVisitExpiredChangingStatus.reference
+    val notExpiredApplicationReference = reservedVisitNotExpired.applicationReference
+    val notExpiredApplicationReferenceChangingStatus = reservedVisitNotExpiredChangingStatus.applicationReference
+    val visitExpiredApplicationReference = reservedVisitExpired.applicationReference
+    val visitExpiredApplicationReferenceChangingStatus = reservedVisitExpiredChangingStatus.applicationReference
 
     // When
 
@@ -78,10 +78,10 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
 
     // Then
 
-    assertThat(visitRepository.findByReference(notExpiredReference)).isNotNull()
-    assertThat(visitRepository.findByReference(notExpiredReferenceChangingStatus)).isNotNull()
-    assertThat(visitRepository.findByReference(visitExpiredReference)).isNull()
-    assertThat(visitRepository.findByReference(visitExpiredReferenceChangingStatus)).isNull()
+    assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReference)).isNotNull()
+    assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReferenceChangingStatus)).isNotNull()
+    assertThat(visitRepository.findByApplicationReference(visitExpiredApplicationReference)).isNull()
+    assertThat(visitRepository.findByApplicationReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
   }
 
   private fun createVisit(

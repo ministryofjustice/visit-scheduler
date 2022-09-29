@@ -36,7 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_C
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
@@ -76,7 +76,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       visitType = SOCIAL,
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
-      visitStatus = RESERVED,
+      visitStatus = BOOKED,
       outcomeStatus = COMPLETED_NORMALLY,
       visitRestriction = OPEN,
       visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", "013448811538"),
@@ -117,7 +117,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.visitType).isEqualTo(SOCIAL)
       assertThat(visit.visitStart).isEqualTo(visitTime.toString())
       assertThat(visit.visitEnd).isEqualTo(visitTime.plusHours(1).toString())
-      assertThat(visit.visitStatus).isEqualTo(RESERVED)
+      assertThat(visit.visitStatus).isEqualTo(BOOKED)
       assertThat(visit.outcomeStatus).isEqualTo(COMPLETED_NORMALLY)
       assertThat(visit.visitRestriction).isEqualTo(OPEN)
       assertThat(visit.visitContact!!.name).isEqualTo("John Smith")
@@ -154,7 +154,7 @@ class MigrateVisitTest : IntegrationTestBase() {
         assertThat(it["visitRoom"]).isEqualTo("A1")
         assertThat(it["visitRestriction"]).isEqualTo(OPEN.name)
         assertThat(it["visitStart"]).isEqualTo(visitTime.toString())
-        assertThat(it["visitStatus"]).isEqualTo(RESERVED.name)
+        assertThat(it["visitStatus"]).isEqualTo(BOOKED.name)
         assertThat(it["outcomeStatus"]).isEqualTo(COMPLETED_NORMALLY.name)
       },
       isNull()
@@ -173,7 +173,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       visitType = SOCIAL,
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
-      visitStatus = RESERVED,
+      visitStatus = BOOKED,
       visitRestriction = OPEN
     )
     val jsonBody = BodyInserters.fromValue(createMigrateVisitRequestDto)
@@ -206,7 +206,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       visitType = SOCIAL,
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
-      visitStatus = RESERVED,
+      visitStatus = BOOKED,
       visitRestriction = OPEN
     )
 
@@ -242,7 +242,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       visitType = SOCIAL,
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
-      visitStatus = RESERVED,
+      visitStatus = BOOKED,
       visitRestriction = OPEN
     )
 
@@ -284,7 +284,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       "startTimestamp": "$visitTime",
       "endTimestamp": "${visitTime.plusHours(1)}",
       "visitType": "${SOCIAL.name}",
-      "visitStatus": "${RESERVED.name}",
+      "visitStatus": "${BOOKED.name}",
       "visitRestriction": "${OPEN.name}",
       "visitContact": {
         "name": "John Smith"
@@ -318,7 +318,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       "startTimestamp": "$visitTime",
       "endTimestamp": "${visitTime.plusHours(1)}",
       "visitType": "${SOCIAL.name}",
-      "visitStatus": "${RESERVED.name}",
+      "visitStatus": "${BOOKED.name}",
       "visitRestriction": "${OPEN.name}",
       "visitContact": {
         "name": "John Smith",
@@ -353,7 +353,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       "startTimestamp": "$visitTime",
       "endTimestamp": "${visitTime.plusHours(1)}",
       "visitType": "${SOCIAL.name}",
-      "visitStatus": "${RESERVED.name}",
+      "visitStatus": "${BOOKED.name}",
       "visitRestriction": "${OPEN.name}",
       "visitContact": {
         "telephone": "1234567890"
@@ -387,7 +387,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       "startTimestamp": "$visitTime",
       "endTimestamp": "${visitTime.plusHours(1)}",
       "visitType": "${SOCIAL.name}",
-      "visitStatus": "${RESERVED.name}",
+      "visitStatus": "${BOOKED.name}",
       "visitRestriction": "${OPEN.name}",
       "visitContact": {
         "name": null,
@@ -424,7 +424,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       "startTimestamp": "$visitTime",
       "endTimestamp": "${visitTime.plusHours(1)}",
       "visitType": "${SOCIAL.name}",
-      "visitStatus": "${RESERVED.name}",
+      "visitStatus": "${BOOKED.name}",
       "visitRestriction": "${OPEN.name}",
       "visitContact": {
         "name": "$name",
@@ -462,7 +462,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       "startTimestamp": "$visitTime",
       "endTimestamp": "${visitTime.plusHours(1)}",
       "visitType": "${SOCIAL.name}",
-      "visitStatus": "${RESERVED.name}",
+      "visitStatus": "${BOOKED.name}",
       "visitRestriction": "${OPEN.name}",
       "visitContact": {
         "name": "$name",
@@ -497,7 +497,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       "startTimestamp": "$visitTime",
       "endTimestamp": "${visitTime.plusHours(1)}",
       "visitType": "${SOCIAL.name}",
-      "visitStatus": "${RESERVED.name}",
+      "visitStatus": "${BOOKED.name}",
       "visitRestriction": "${OPEN.name}"
     }"""
 
@@ -528,7 +528,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       "startTimestamp": "$visitTime",
       "endTimestamp": "${visitTime.plusHours(1)}",
       "visitType": "${SOCIAL.name}",
-      "visitStatus": "${RESERVED.name}",
+      "visitStatus": "${BOOKED.name}",
       "visitRestriction": "${OPEN.name}",
       "outcomeStatus" : null
     }"""
