@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -43,77 +44,95 @@ class VisitService(
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int
 ) {
 
-  fun reserveVisitSlot(useReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
+  companion object {
+    val log: Logger = LoggerFactory.getLogger(this::class.java)
+    const val MAX_RECORDS = 10000
+    val EXPIRED_VISIT_STATUSES = listOf<VisitStatus>(RESERVED, CHANGING)
+  }
 
-    val bookedVisit = this.visitRepository.findBookedVisit(useReference)
+  fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
 
-    if (isVisitNew(bookedVisit, reserveVisitSlotDto)) {
-
-      val visitEntity = visitRepository.saveAndFlush(
-        Visit(
-          prisonerId = reserveVisitSlotDto.prisonerId,
-          prisonId = reserveVisitSlotDto.prisonId,
-          visitRoom = reserveVisitSlotDto.visitRoom,
-          visitType = reserveVisitSlotDto.visitType,
-          visitStatus = RESERVED,
-          visitRestriction = reserveVisitSlotDto.visitRestriction,
-          visitStart = reserveVisitSlotDto.startTimestamp,
-          visitEnd = reserveVisitSlotDto.endTimestamp,
-          _reference = useReference
-        )
-      )
-
-      reserveVisitSlotDto.visitContact?.let {
-        visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
-      }
-
-      reserveVisitSlotDto.visitors.forEach {
-        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
-      }
-
-      reserveVisitSlotDto.visitorSupport?.let { supportList ->
-        supportList.forEach {
-          if (!supportTypeRepository.existsByName(it.type)) {
-            throw SupportNotFoundException("Invalid support ${it.type} not found")
-          }
-          visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
-        }
-      }
-
-      createVisitTrackEvent(visitEntity)
-      return VisitDto(visitEntity)
-    } else {
-      return changeVisitSlot(bookedVisit!!.applicationReference, mapToChangeVisitSlotRequestDto(reserveVisitSlotDto))
+    if (!visitRepository.isValidBookingReference(bookingReference)) {
+      throw VisitNotFoundException("Visit booking reference $bookingReference not found")
     }
+
+    return reserveVisitSlot(bookingReference, reserveVisitSlotDto)
   }
 
-  private fun mapToChangeVisitSlotRequestDto(reserveVisitSlotDto: ReserveVisitSlotDto): ChangeVisitSlotRequestDto {
-    return ChangeVisitSlotRequestDto(
-      visitRestriction = reserveVisitSlotDto.visitRestriction,
-      visitContact = reserveVisitSlotDto.visitContact,
-      visitors = reserveVisitSlotDto.visitors,
-      visitorSupport = reserveVisitSlotDto.visitorSupport
+  fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
+
+    val visitEntity = visitRepository.saveAndFlush(
+      Visit(
+        prisonerId = reserveVisitSlotDto.prisonerId,
+        prisonId = reserveVisitSlotDto.prisonId,
+        visitRoom = reserveVisitSlotDto.visitRoom,
+        visitType = reserveVisitSlotDto.visitType,
+        visitStatus = getStartingStatus(bookingReference, reserveVisitSlotDto),
+        visitRestriction = reserveVisitSlotDto.visitRestriction,
+        visitStart = reserveVisitSlotDto.startTimestamp,
+        visitEnd = reserveVisitSlotDto.endTimestamp,
+        _reference = bookingReference
+      )
     )
+
+    reserveVisitSlotDto.visitContact?.let {
+      visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
+    }
+
+    reserveVisitSlotDto.visitors.forEach {
+      visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
+    }
+
+    reserveVisitSlotDto.visitorSupport?.let { supportList ->
+      supportList.forEach {
+        if (!supportTypeRepository.existsByName(it.type)) {
+          throw SupportNotFoundException("Invalid support ${it.type} not found")
+        }
+        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
+      }
+    }
+
+    createVisitTrackEvent(visitEntity)
+    return VisitDto(visitEntity)
   }
 
-  private fun isVisitNew(bookedVisit: Visit?, reserveVisitSlotDto: ReserveVisitSlotDto): Boolean {
+  private fun getStartingStatus(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitStatus {
+
+    val bookedVisit = this.visitRepository.findBookedVisit(bookingReference)
 
     if (bookedVisit == null ||
-      bookedVisit.prisonId != reserveVisitSlotDto.prisonId ||
-      bookedVisit.prisonerId != reserveVisitSlotDto.prisonerId ||
-      bookedVisit.visitStart.compareTo(reserveVisitSlotDto.startTimestamp) != 0
+      (bookedVisit.prisonId != reserveVisitSlotDto.prisonId) ||
+      (bookedVisit.prisonerId != reserveVisitSlotDto.prisonerId) ||
+      (bookedVisit.visitRestriction != reserveVisitSlotDto.visitRestriction) ||
+      (bookedVisit.visitStart.compareTo(reserveVisitSlotDto.startTimestamp) != 0)
     ) {
-      return true
+      return RESERVED
     }
+    return CHANGING
+  }
 
-    return false
+  private fun getUpdatedStatus(visitEntity: Visit, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitStatus {
+
+    val bookedVisit = this.visitRepository.findBookedVisit(visitEntity.reference)
+
+    if (bookedVisit == null ||
+      (changeVisitSlotRequestDto.visitRestriction != null && bookedVisit.visitRestriction != changeVisitSlotRequestDto.visitRestriction) ||
+      (changeVisitSlotRequestDto.startTimestamp != null && bookedVisit.visitStart.compareTo(changeVisitSlotRequestDto.startTimestamp) != 0)
+    ) {
+      return RESERVED
+    }
+    return visitEntity.visitStatus
   }
 
   fun changeVisitSlot(applicationReference: String, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitDto {
     val visitEntity = visitRepository.findByApplicationReference(applicationReference) ?: throw VisitNotFoundException("Reserved visit reference $applicationReference not found")
 
     changeVisitSlotRequestDto.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
-    changeVisitSlotRequestDto.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
+    changeVisitSlotRequestDto.startTimestamp?.let {
+      visitEntity.visitStart = it
+    }
+    visitEntity.visitStatus = getUpdatedStatus(visitEntity, changeVisitSlotRequestDto)
+
     changeVisitSlotRequestDto.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
 
     changeVisitSlotRequestDto.visitContact?.let { visitContactUpdate ->
@@ -299,8 +318,9 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  fun deleteAllReservedVisitsByApplicationReference(applicationReferences: List<String>) {
-    visitRepository.deleteAllByApplicationReferenceInAndVisitStatus(applicationReferences, RESERVED)
+  fun deleteAllExpiredVisitsByApplicationReference(applicationReferences: List<String>) {
+
+    visitRepository.deleteAllByApplicationReferenceInAndVisitStatusIn(applicationReferences, EXPIRED_VISIT_STATUSES)
 
     for (applicationReference in applicationReferences) {
       telemetryClient.trackEvent(
@@ -316,16 +336,14 @@ class VisitService(
   fun bookVisit(applicationReference: String): VisitDto {
 
     val visitToBook = visitRepository.findByApplicationReference(applicationReference) ?: throw VisitNotFoundException("Could not find reserved visit applicationReference:$applicationReference not found")
-
-    var changedVisit = false
     val existingBookedVisit = visitRepository.findBookedVisit(visitToBook.reference)
-    existingBookedVisit?.let {
-      if (isNewApplication(visitToBook, existingBookedVisit)) {
-        existingBookedVisit.visitStatus = VisitStatus.CANCELLED
-        existingBookedVisit.outcomeStatus = SUPERSEDED_CANCELLATION
-        visitRepository.saveAndFlush(existingBookedVisit)
+    val changedVisit = existingBookedVisit != null
+    if (changedVisit) {
+      existingBookedVisit?.let {
+        it.visitStatus = VisitStatus.CANCELLED
+        it.outcomeStatus = SUPERSEDED_CANCELLATION
+        visitRepository.saveAndFlush(it)
       }
-      changedVisit = true
     }
 
     visitToBook.visitStatus = VisitStatus.BOOKED
@@ -350,11 +368,6 @@ class VisitService(
 
     return visit
   }
-
-  private fun isNewApplication(
-    visitToBook: Visit,
-    existingBookedVisit: Visit
-  ) = visitToBook.applicationReference != existingBookedVisit.applicationReference
 
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
@@ -422,11 +435,6 @@ class VisitService(
       text = text,
       visit = visit
     )
-  }
-
-  companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
-    const val MAX_RECORDS = 10000
   }
 }
 

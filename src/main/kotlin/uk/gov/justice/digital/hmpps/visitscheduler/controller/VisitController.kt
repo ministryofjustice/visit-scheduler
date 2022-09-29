@@ -50,7 +50,7 @@ class VisitController(
   @PostMapping(VISIT_RESERVE_SLOT)
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(
-    summary = "Reserve a slot (date/time slot) for a visit ",
+    summary = "Reserve a slot (date/time slot) for a visit (a starting point)",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
@@ -91,7 +91,7 @@ class VisitController(
   @PutMapping(VISIT_RESERVED_SLOT_CHANGE)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "Change a reserved slot and associated details for a visit ",
+    summary = "Change a reserved slot and associated details for a visit (before booking)",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
@@ -139,7 +139,7 @@ class VisitController(
   @PutMapping(VISIT_CHANGE)
   @ResponseStatus(HttpStatus.CREATED)
   @Operation(
-    summary = "Change a booked visit",
+    summary = "Change a booked visit, (a starting point)",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
@@ -175,14 +175,14 @@ class VisitController(
     @PathVariable reference: String,
     @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto
   ): VisitDto {
-    return visitService.reserveVisitSlot(reference.trim(), reserveVisitSlotDto)
+    return visitService.changeBookedVisit(reference.trim(), reserveVisitSlotDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(VISIT_BOOK)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "Book a visit",
+    summary = "Book a visit (end of flow)",
     responses = [
       ApiResponse(
         responseCode = "200",

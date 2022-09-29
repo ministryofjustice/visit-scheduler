@@ -35,6 +35,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
@@ -90,7 +92,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     visitDeleter(visitRepository)
   }
 
-  private fun createReserveVisitSlotDto(prisonId: String = "MDI", prisonerId: String = "FF0000FF", startTimestamp: LocalDateTime = bookedVisit.visitStart): ReserveVisitSlotDto {
+  private fun createReserveVisitSlotDto(prisonId: String = "MDI", prisonerId: String = "FF0000FF", startTimestamp: LocalDateTime = bookedVisit.visitStart, visitRestriction: VisitRestriction = OPEN): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
       prisonId = prisonId,
       prisonerId = prisonerId,
@@ -98,7 +100,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       visitType = SOCIAL,
       startTimestamp = startTimestamp,
       endTimestamp = bookedVisit.visitEnd,
-      visitRestriction = OPEN,
+      visitRestriction = visitRestriction,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
@@ -106,12 +108,12 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   }
 
   @Test
-  fun `change visit has given reference - with new application`() {
+  fun `change visit has given reference`() {
 
     // Given
     val reference = bookedVisit.reference
 
-    val reserveVisitSlotDto = createReserveVisitSlotDto(startTimestamp = bookedVisit.visitStart.minusHours(10))
+    val reserveVisitSlotDto = createReserveVisitSlotDto()
 
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
@@ -129,7 +131,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     assertThat(reservedVisit).isNotNull
     reservedVisit?.let {
       assertThat(reservedVisit.id).isNotEqualTo(bookedVisit.id)
-      assertThat(reservedVisit.visitStatus).isEqualTo(VisitStatus.RESERVED)
+      assertThat(reservedVisit.visitStatus).isEqualTo(VisitStatus.CHANGING)
       verify(telemetryClient).trackEvent(
         eq("visit-scheduler-prison-visit-created"),
         org.mockito.kotlin.check {
@@ -141,7 +143,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
           assertThat(it["visitRoom"]).isEqualTo(reservedVisit.visitRoom)
           assertThat(it["visitRestriction"]).isEqualTo(reservedVisit.visitRestriction.name)
           assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.toString())
-          assertThat(it["visitStatus"]).isEqualTo("RESERVED")
+          assertThat(it["visitStatus"]).isEqualTo(VisitStatus.CHANGING.name)
         },
         isNull()
       )
@@ -150,12 +152,10 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   }
 
   @Test
-  fun `change visit with given reference from another booked visit - with no new application`() {
-
+  fun `changed booked visit creates new visit when prisonId has changed`() {
     // Given
-
-    val reserveVisitSlotDto = createReserveVisitSlotDto()
     val reference = bookedVisit.reference
+    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonId = "NEW" + bookedVisit.prisonId)
 
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
@@ -167,44 +167,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       .returnResult()
 
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-
-    val reservedVisit = visitRepository.findByApplicationReference(visit.applicationReference)
-
-    assertThat(reservedVisit).isNotNull
-    reservedVisit?.let {
-      assertThat(reservedVisit.id).isEqualTo(bookedVisit.id)
-      assertThat(reservedVisit.visitStatus).isEqualTo(VisitStatus.BOOKED)
-      // And
-
-      verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-visit-updated"),
-        org.mockito.kotlin.check {
-          assertThat(it["reference"]).isEqualTo(visit.reference)
-          assertThat(it["reference"]).isEqualTo(visit.reference)
-          assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-          assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
-          assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-          assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
-          assertThat(it["visitStatus"]).isEqualTo("BOOKED")
-        },
-        isNull()
-      )
-
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
-    }
-  }
-
-  @Test
-  fun `changed booked visit creates new visit when prisonId has changed`() {
-    // Given
-    val reference = bookedVisit.reference
-    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonId = "NEW" + bookedVisit.prisonId)
-
-    // When
-    callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
-
-    // Then
-    assertThat(visitRepository.findAllByReference(reference).size).isEqualTo(2)
+    assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
   }
 
   @Test
@@ -214,10 +177,16 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     val reserveVisitSlotDto = createReserveVisitSlotDto(prisonerId = "NEW" + bookedVisit.prisonerId)
 
     // When
-    callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
+    val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
 
     // Then
-    assertThat(visitRepository.findAllByReference(reference).size).isEqualTo(2)
+    val returnResult = responseSpec.expectStatus().isCreated
+      .expectBody()
+      .jsonPath("$.reference").isEqualTo(reference)
+      .returnResult()
+
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
   }
 
   @Test
@@ -227,10 +196,35 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     val reserveVisitSlotDto = createReserveVisitSlotDto(startTimestamp = bookedVisit.visitStart.minusDays(1))
 
     // When
-    callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
+    val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
 
     // Then
-    assertThat(visitRepository.findAllByReference(reference).size).isEqualTo(2)
+    val returnResult = responseSpec.expectStatus().isCreated
+      .expectBody()
+      .jsonPath("$.reference").isEqualTo(reference)
+      .returnResult()
+
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+  }
+
+  @Test
+  fun `changed booked visit creates new visit when visit restriction has changed`() {
+    // Given
+    val reference = bookedVisit.reference
+    val reserveVisitSlotDto = createReserveVisitSlotDto(visitRestriction = CLOSED)
+
+    // When
+    val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isCreated
+      .expectBody()
+      .jsonPath("$.reference").isEqualTo(reference)
+      .returnResult()
+
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
   }
 
   @Test
@@ -281,5 +275,18 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // Then
     responseSpec.expectStatus().isUnauthorized
+  }
+
+  @Test
+  fun `change visit - not found`() {
+    // Given
+    val reserveVisitSlotDto = createReserveVisitSlotDto()
+    val applicationReference = "IM NOT HERE"
+
+    // When
+    val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isNotFound
   }
 }
