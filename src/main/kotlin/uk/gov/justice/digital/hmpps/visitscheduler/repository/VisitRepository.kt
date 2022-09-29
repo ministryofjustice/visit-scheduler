@@ -24,6 +24,12 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   fun deleteAllByApplicationReferenceInAndVisitStatusIn(applicationReference: List<String>, status: List<VisitStatus>)
 
+  @Query(
+    "SELECT * FROM visit " +
+      "WHERE reference = :reference AND visit_status IN ('BOOKED','CANCELLED')  " +
+      "ORDER BY modify_timestamp DESC LIMIT 1 ",
+    nativeQuery = true
+  )
   fun findByReference(reference: String): Visit?
 
   fun findByApplicationReference(applicationReference: String): Visit?
@@ -84,6 +90,11 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' "
   )
   fun findBookedVisit(reference: String): Visit?
+
+  @Query(
+    "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'RESERVED' "
+  )
+  fun findReservedVisit(reference: String): Visit?
 
   @Query(
     "SELECT CASE WHEN (COUNT(v) = 1) THEN TRUE ELSE FALSE END  FROM Visit v WHERE v.reference = :bookingReference AND v.visitStatus = 'BOOKED' "
