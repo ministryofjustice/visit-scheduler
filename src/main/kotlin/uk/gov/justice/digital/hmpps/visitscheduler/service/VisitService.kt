@@ -121,7 +121,7 @@ class VisitService(
     ) {
       return RESERVED
     }
-    return visitEntity.visitStatus
+    return CHANGING
   }
 
   fun changeVisitSlot(applicationReference: String, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitDto {
