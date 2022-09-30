@@ -275,6 +275,58 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   }
 
   @Test
+  fun `change reserved slot by application reference - start date has changed back to match booked slot`() {
+
+    // Given
+    val visitBooked = createVisit(visitStatus = BOOKED)
+    val visitReserved = createVisit(visitStatus = RESERVED, reference = visitBooked.reference)
+
+    val updateRequest = ChangeVisitSlotRequestDto(
+      startTimestamp = visitBooked.visitStart,
+      visitContact = ContactDto("John Smith", "01234 567890")
+    )
+
+    val applicationReference = visitReserved.applicationReference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+
+    responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.visitStatus").isEqualTo(CHANGING.name)
+      .returnResult()
+  }
+
+  @Test
+  fun `change reserved slot by application reference - start restriction has changed back to match booked slot`() {
+
+    // Given
+    val visitBooked = createVisit(visitStatus = BOOKED)
+    val visitReserved = createVisit(visitStatus = RESERVED, reference = visitBooked.reference)
+
+    val updateRequest = ChangeVisitSlotRequestDto(
+      visitRestriction = visitBooked.visitRestriction,
+      visitContact = ContactDto("John Smith", "01234 567890")
+    )
+
+    val applicationReference = visitReserved.applicationReference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+
+    responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.visitStatus").isEqualTo(CHANGING.name)
+      .returnResult()
+  }
+
+  @Test
   fun `change reserved slot by application reference - only one visit contact allowed`() {
 
     // Given
