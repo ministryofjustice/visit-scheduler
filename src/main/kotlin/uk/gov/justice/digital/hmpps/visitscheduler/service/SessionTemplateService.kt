@@ -36,7 +36,7 @@ class SessionTemplateService(
     )
 
     telemetryClient.trackEvent(
-      "visit-scheduler-prison-session-template-created",
+      TelemetryVisitEvents.SESSION_TEMPLATE_CREATED.eventName,
       mapOf("id" to sessionTemplateEntity.id.toString()),
       null
     )
@@ -58,7 +58,7 @@ class SessionTemplateService(
     template?.let {
       sessionTemplateRepository.delete(it)
       telemetryClient.trackEvent(
-        "visit-scheduler-prison-session-template-deleted",
+        TelemetryVisitEvents.SESSION_TEMPLATE_DELETED.eventName,
         mapOf("id" to templateId.toString()),
         null
       )

@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
-@Suppress("KotlinDeprecation")
 @DisplayName("Put /visits/{reference}/cancel")
 class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
   @Autowired
@@ -68,7 +67,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // And
     val visitUpdated = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-cancelled"),
+      eq("visit-cancelled"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visitUpdated.reference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visitUpdated.visitStatus.name)
@@ -76,16 +75,16 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-cancelled"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-cancelled"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit.cancelled-event"),
+      eq("prison-visit.cancelled-domain-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visitUpdated.reference)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.cancelled-event"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
   }
 
   @Test
@@ -116,7 +115,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // And
     val visitUpdated = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-cancelled"),
+      eq("visit-cancelled"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visitUpdated.reference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visitUpdated.visitStatus.name)
@@ -124,16 +123,16 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-cancelled"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-cancelled"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit.cancelled-event"),
+      eq("prison-visit.cancelled-domain-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visitUpdated.reference)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.cancelled-event"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
   }
 
   @Test
@@ -151,8 +150,8 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isBadRequest
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
-    verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-visit.cancelled-event"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit.cancelled-domain-event"), any(), isNull())
   }
 
   @Test
@@ -232,7 +231,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isForbidden
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
   @Test

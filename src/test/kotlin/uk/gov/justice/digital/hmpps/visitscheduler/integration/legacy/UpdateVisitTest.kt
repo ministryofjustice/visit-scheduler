@@ -45,7 +45,6 @@ import java.time.LocalDateTime
 
 private const val TEST_END_POINT = "/visits/"
 
-@Suppress("KotlinDeprecation")
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Update PUT /visits")
 class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
@@ -153,23 +152,23 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-updated"),
+      eq("visit-updated"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-updated"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit.booked-event"),
+      eq("prison-visit.booked-domain-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.booked-domain-event"), any(), isNull())
   }
 
   @Test
@@ -225,13 +224,13 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-updated"),
+      eq("visit-updated"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-updated"), any(), isNull())
   }
 
   @Test
@@ -258,13 +257,13 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-updated"),
+      eq("visit-updated"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-updated"), any(), isNull())
   }
 
   @Test
@@ -292,13 +291,13 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-updated"),
+      eq("visit-updated"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-updated"), any(), isNull())
   }
 
   @Test
@@ -327,7 +326,7 @@ class UpdateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isForbidden
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
   @Test

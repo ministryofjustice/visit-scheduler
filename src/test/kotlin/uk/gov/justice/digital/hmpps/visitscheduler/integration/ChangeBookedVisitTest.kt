@@ -133,10 +133,11 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       assertThat(reservedVisit.id).isNotEqualTo(bookedVisit.id)
       assertThat(reservedVisit.visitStatus).isEqualTo(VisitStatus.CHANGING)
       verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-visit-created"),
+        eq("visit-changed"),
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(reservedVisit.reference)
-          assertThat(it["applicationReference"]).isNotEqualTo(reservedVisit.applicationReference)
+          assertThat(it["applicationReference"]).isNotEqualTo(bookedVisit.applicationReference)
+          assertThat(it["applicationReference"]).isEqualTo(reservedVisit.applicationReference)
           assertThat(it["prisonerId"]).isEqualTo(reservedVisit.prisonerId)
           assertThat(it["prisonId"]).isEqualTo(reservedVisit.prisonId)
           assertThat(it["visitType"]).isEqualTo(reservedVisit.visitType.name)
@@ -147,7 +148,22 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
         },
         isNull()
       )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
+
+      verify(telemetryClient).trackEvent(
+        eq("visit-changed"),
+        org.mockito.kotlin.check {
+          assertThat(it["reference"]).isEqualTo(visit.reference)
+          assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+          assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+          assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+          assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+          assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+          assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+          assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+        },
+        isNull()
+      )
     }
   }
 
@@ -168,6 +184,23 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
 
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
+
+    verify(telemetryClient).trackEvent(
+      eq("visit-changed"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visit.reference)
+        assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+        assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
   }
 
   @Test
@@ -187,6 +220,23 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
 
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
+
+    verify(telemetryClient).trackEvent(
+      eq("visit-changed"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visit.reference)
+        assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+        assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
   }
 
   @Test
@@ -206,6 +256,23 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
 
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
+
+    verify(telemetryClient).trackEvent(
+      eq("visit-changed"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visit.reference)
+        assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+        assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
   }
 
   @Test
@@ -225,6 +292,22 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
 
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
+
+    verify(telemetryClient).trackEvent(
+      eq("visit-changed"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visit.reference)
+        assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+        assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
   }
 
   @Test
@@ -240,8 +323,8 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     responseSpec.expectStatus().isBadRequest
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
-    verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit-slot-reserved"), any(), isNull())
   }
 
   @Test
@@ -259,7 +342,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     responseSpec.expectStatus().isForbidden
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
   @Test

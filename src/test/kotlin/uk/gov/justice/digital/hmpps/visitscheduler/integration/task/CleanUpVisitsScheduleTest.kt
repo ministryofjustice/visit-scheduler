@@ -1,11 +1,19 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.task
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.check
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
@@ -30,6 +38,9 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
 
   @Autowired
   private lateinit var visitTask: VisitTask
+
+  @SpyBean
+  private lateinit var telemetryClient: TelemetryClient
 
   @Autowired
   private lateinit var testVisitRepository: TestVisitRepository
@@ -66,22 +77,30 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
   fun `delete only expired reservations`() {
 
     // Given
-
     val notExpiredApplicationReference = reservedVisitNotExpired.applicationReference
     val notExpiredApplicationReferenceChangingStatus = reservedVisitNotExpiredChangingStatus.applicationReference
     val visitExpiredApplicationReference = reservedVisitExpired.applicationReference
     val visitExpiredApplicationReferenceChangingStatus = reservedVisitExpiredChangingStatus.applicationReference
 
     // When
-
     visitTask.deleteExpiredReservations()
 
     // Then
-
     assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReference)).isNotNull()
     assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReferenceChangingStatus)).isNotNull()
     assertThat(visitRepository.findByApplicationReference(visitExpiredApplicationReference)).isNull()
     assertThat(visitRepository.findByApplicationReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
+
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-expired-visits-deleted"), any(), isNull())
+
+    verify(telemetryClient).trackEvent(
+      eq("visit-expired-visits-deleted"),
+      check {
+        assertThat(it["applicationReferences"]).contains(visitExpiredApplicationReference)
+        assertThat(it["applicationReferences"]).contains(visitExpiredApplicationReferenceChangingStatus)
+      },
+      isNull()
+    )
   }
 
   private fun createVisit(

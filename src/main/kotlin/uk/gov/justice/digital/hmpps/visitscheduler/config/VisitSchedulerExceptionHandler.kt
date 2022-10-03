@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TemplateNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import javax.validation.ValidationException
 
 @RestControllerAdvice
@@ -31,7 +32,7 @@ class VisitSchedulerExceptionHandler(
       status = HttpStatus.FORBIDDEN,
       userMessage = "Access denied",
     )
-    sendErrorTelemetry("visit-scheduler-prison-visit-access-denied-error", error)
+    sendErrorTelemetry(TelemetryVisitEvents.ACCESS_DENIED_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error)
   }
 
@@ -54,7 +55,7 @@ class VisitSchedulerExceptionHandler(
       status = HttpStatus.INTERNAL_SERVER_ERROR,
       developerMessage = e.message
     )
-    sendErrorTelemetry("visit-scheduler-prison-visit-internal-server-error", error)
+    sendErrorTelemetry(TelemetryVisitEvents.INTERNAL_SERVER_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
   }
 
@@ -66,7 +67,7 @@ class VisitSchedulerExceptionHandler(
       userMessage = "Validation failure: ${e.cause?.message}",
       developerMessage = e.message
     )
-    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
+    sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
@@ -78,7 +79,7 @@ class VisitSchedulerExceptionHandler(
       userMessage = "Missing Request Parameter: ${e.cause?.message}",
       developerMessage = (e.message)
     )
-    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
+    sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
@@ -90,7 +91,7 @@ class VisitSchedulerExceptionHandler(
       userMessage = "Validation failure: ${e.message}",
       developerMessage = e.message
     )
-    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
+    sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
@@ -102,7 +103,7 @@ class VisitSchedulerExceptionHandler(
       userMessage = "Invalid Argument: ${e.cause?.message}",
       developerMessage = e.message
     )
-    sendErrorTelemetry("visit-scheduler-prison-visit-bad-request-error", error)
+    sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
@@ -156,7 +157,7 @@ class VisitSchedulerExceptionHandler(
       userMessage = "Failed to publish event: ${e.cause?.message}",
       developerMessage = e.message
     )
-    sendErrorTelemetry("visit-scheduler-prison-visit-publish-event-error", error)
+    sendErrorTelemetry(TelemetryVisitEvents.PUBLISH_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
   }
 
@@ -167,7 +168,7 @@ class VisitSchedulerExceptionHandler(
       status = HttpStatus.INTERNAL_SERVER_ERROR,
       developerMessage = e.message
     )
-    sendErrorTelemetry("visit-scheduler-prison-visit-internal-server-error", error)
+    sendErrorTelemetry(TelemetryVisitEvents.INTERNAL_SERVER_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
   }
 

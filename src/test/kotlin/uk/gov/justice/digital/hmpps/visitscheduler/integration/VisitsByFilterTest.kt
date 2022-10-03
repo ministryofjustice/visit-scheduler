@@ -340,7 +340,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
   }
 
   @Test
@@ -354,7 +354,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
   }
 
   @Test
@@ -367,7 +367,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isForbidden
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
   @Test

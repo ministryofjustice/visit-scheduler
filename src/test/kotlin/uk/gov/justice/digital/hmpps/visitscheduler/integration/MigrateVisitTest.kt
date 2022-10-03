@@ -145,7 +145,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // And
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-migrated"),
+      eq("visit-migrated"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(reference)
         assertThat(it["prisonerId"]).isEqualTo("FF0000FF")
@@ -159,7 +159,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -228,7 +228,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
     }
 
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -263,14 +263,14 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // And
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-migrated"),
+      eq("visit-migrated"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(reference)
         assertThat(it["outcomeStatus"]).isEqualTo(NOT_RECORDED.name)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -304,7 +304,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -339,7 +339,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -373,7 +373,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -408,7 +408,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -445,7 +445,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -483,7 +483,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -514,7 +514,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -547,7 +547,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-migrated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -568,7 +568,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
   }
 
   @Test
@@ -585,7 +585,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isForbidden
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
   @Test

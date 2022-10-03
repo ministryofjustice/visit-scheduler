@@ -130,7 +130,6 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
-
     val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
@@ -160,14 +159,15 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-updated"),
+      eq("visit-slot-changed"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
@@ -188,12 +188,24 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
-
-    responseSpec
+    val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitStatus").isEqualTo(CHANGING.name)
       .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-slot-changed"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
@@ -214,12 +226,24 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
-
-    responseSpec
+    val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitStatus").isEqualTo(CHANGING.name)
       .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-slot-changed"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
@@ -240,12 +264,24 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
-
-    responseSpec
+    val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitStatus").isEqualTo(RESERVED.name)
       .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-slot-changed"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
@@ -266,17 +302,28 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
-
-    responseSpec
+    val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitStatus").isEqualTo(RESERVED.name)
       .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-slot-changed"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
   fun `change reserved slot by application reference - start date has changed back to match booked slot`() {
-
     // Given
     val visitBooked = createVisit(visitStatus = BOOKED)
     val visitReserved = createVisit(visitStatus = RESERVED, reference = visitBooked.reference)
@@ -292,17 +339,28 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
-
-    responseSpec
+    val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitStatus").isEqualTo(CHANGING.name)
       .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-slot-changed"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
   fun `change reserved slot by application reference - start restriction has changed back to match booked slot`() {
-
     // Given
     val visitBooked = createVisit(visitStatus = BOOKED)
     val visitReserved = createVisit(visitStatus = RESERVED, reference = visitBooked.reference)
@@ -318,19 +376,29 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
-
-    responseSpec
+    val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
       .jsonPath("$.visitStatus").isEqualTo(CHANGING.name)
       .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-slot-changed"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull()
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
   fun `change reserved slot by application reference - only one visit contact allowed`() {
-
     // Given
-
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitTime.plusDays(2),
       endTimestamp = visitTime.plusDays(2).plusHours(1),
@@ -349,9 +417,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
 
   @Test
   fun `change reserved slot - contact`() {
-
     // Given
-
     val updateRequest = ChangeVisitSlotRequestDto(
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
@@ -371,20 +437,20 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-updated"),
+      eq("visit-slot-changed"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
   fun `change reserved slot - amend visitors`() {
-
     // Given
-
     val updateRequest = ChangeVisitSlotRequestDto(
       visitors = setOf(VisitorDto(123L, visitContact = true)),
     )
@@ -404,19 +470,20 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-updated"),
+      eq("visit-slot-changed"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
   fun `change reserved slot - amend support`() {
     // Given
-
     val updateRequest = ChangeVisitSlotRequestDto(
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
@@ -437,13 +504,15 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-updated"),
+      eq("visit-slot-changed"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
@@ -474,7 +543,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     responseSpec.expectStatus().isForbidden
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
   @Test
