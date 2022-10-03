@@ -16,9 +16,9 @@ import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SupportNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TemplateNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import javax.validation.ValidationException
 
 @RestControllerAdvice
