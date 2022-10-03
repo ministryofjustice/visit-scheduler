@@ -36,7 +36,6 @@ import java.time.LocalDateTime
 
 private const val TEST_END_POINT = "/visits"
 
-@Suppress("KotlinDeprecation")
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST /visits")
 class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
@@ -111,7 +110,7 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-created"),
+      eq("visit-slot-reserved"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
@@ -124,7 +123,7 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-reserved"), any(), isNull())
   }
 
   @Test
@@ -152,8 +151,8 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isBadRequest
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
-    verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit-slot-reserved"), any(), isNull())
   }
 
   @Test
@@ -216,8 +215,8 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isBadRequest
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
-    verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit-slot-reserved"), any(), isNull())
   }
 
   @Test
@@ -238,8 +237,8 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isBadRequest
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
-    verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-visit-created"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit-slot-reserved"), any(), isNull())
   }
 
   @Test
@@ -256,7 +255,7 @@ class CreateVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isForbidden
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
   @Test

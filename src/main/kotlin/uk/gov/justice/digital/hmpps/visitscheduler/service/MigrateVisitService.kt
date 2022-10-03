@@ -79,7 +79,7 @@ class MigrateVisitService(
 
   private fun sendTelemetryData(visitEntity: Visit) {
     telemetryClient.trackEvent(
-      "visit-scheduler-prison-visit-migrated",
+      TelemetryVisitEvents.VISIT_MIGRATED_EVENT.eventName,
       mapOf(
         "reference" to visitEntity.reference,
         "prisonerId" to visitEntity.prisonerId,

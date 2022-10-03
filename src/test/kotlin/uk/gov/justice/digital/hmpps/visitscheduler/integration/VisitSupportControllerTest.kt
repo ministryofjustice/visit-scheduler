@@ -41,7 +41,7 @@ class VisitSupportControllerTest : IntegrationTestBase() {
       .exchange()
       .expectStatus().isForbidden
 
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
   @Test

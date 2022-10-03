@@ -47,7 +47,7 @@ class VisitService(
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
     const val MAX_RECORDS = 10000
-    val EXPIRED_VISIT_STATUSES = listOf<VisitStatus>(RESERVED, CHANGING)
+    val EXPIRED_VISIT_STATUSES = listOf(RESERVED, CHANGING)
   }
 
   fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
@@ -92,7 +92,9 @@ class VisitService(
       }
     }
 
-    createVisitTrackEvent(visitEntity)
+    val eventName = if (bookingReference.isBlank()) TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT.eventName else TelemetryVisitEvents.VISIT_CHANGED_EVENT.eventName
+    trackEvent(eventName, createVisitTrackEventFromVisitEntity(visitEntity))
+
     return VisitDto(visitEntity)
   }
 
@@ -163,26 +165,20 @@ class VisitService(
       }
     }
 
-    telemetryClient.trackEvent(
-      "visit-scheduler-prison-visit-updated",
-      listOfNotNull(
+    trackEvent(
+      TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT.eventName,
+      mapOf(
+        "applicationReference" to visitEntity.applicationReference,
         "reference" to visitEntity.reference,
-        "prisonerId" to visitEntity.prisonerId,
-        "prisonId" to visitEntity.prisonId,
-        "visitType" to visitEntity.visitType.name,
-        "visitRoom" to visitEntity.visitRoom,
-        if (changeVisitSlotRequestDto.visitRestriction != null) "visitRestriction" to changeVisitSlotRequestDto.visitRestriction.name else null,
-        if (changeVisitSlotRequestDto.startTimestamp != null) "visitStart" to changeVisitSlotRequestDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME) else null,
         "visitStatus" to visitEntity.visitStatus.name
-      ).toMap(),
-      null
+      )
     )
 
     return VisitDto(visitEntity)
   }
 
   @Suppress("KotlinDeprecation")
-  @Deprecated("this should not be used ")
+  @Deprecated("this should not be used")
   fun createVisit(createVisitRequest: CreateVisitRequestDto): VisitDto {
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
@@ -214,26 +210,9 @@ class VisitService(
       }
     }
 
-    createVisitTrackEvent(visitEntity)
+    trackEvent(TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT.eventName, createVisitTrackEventFromVisitEntity(visitEntity))
 
     return VisitDto(visitEntity)
-  }
-
-  private fun createVisitTrackEvent(visitEntity: Visit) {
-    telemetryClient.trackEvent(
-      "visit-scheduler-prison-visit-created",
-      mapOf(
-        "reference" to visitEntity.reference,
-        "prisonerId" to visitEntity.prisonerId,
-        "prisonId" to visitEntity.prisonId,
-        "visitType" to visitEntity.visitType.name,
-        "visitRoom" to visitEntity.visitRoom,
-        "visitRestriction" to visitEntity.visitRestriction.name,
-        "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
-        "visitStatus" to visitEntity.visitStatus.name
-      ),
-      null
-    )
   }
 
   @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
@@ -259,7 +238,7 @@ class VisitService(
   }
 
   @Suppress("KotlinDeprecation")
-  @Deprecated("this should not be used ")
+  @Deprecated("this should not be used")
   fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
     val visitEntity = visitRepository.findReservedVisit(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
 
@@ -301,7 +280,7 @@ class VisitService(
     }
 
     telemetryClient.trackEvent(
-      "visit-scheduler-prison-visit-updated",
+      TelemetryVisitEvents.VISIT_UPDATED_EVENT.eventName,
       listOfNotNull(
         "reference" to reference,
         if (updateVisitRequest.prisonerId != null) "prisonerId" to updateVisitRequest.prisonerId else null,
@@ -322,15 +301,13 @@ class VisitService(
 
     visitRepository.deleteAllByApplicationReferenceInAndVisitStatusIn(applicationReferences, EXPIRED_VISIT_STATUSES)
 
-    for (applicationReference in applicationReferences) {
-      telemetryClient.trackEvent(
-        "visit-scheduler-prison-visit-deleted",
-        mapOf(
-          "applicationReferences" to applicationReference
-        ),
-        null
-      )
-    }
+    telemetryClient.trackEvent(
+      TelemetryVisitEvents.VISIT_DELETED_EVENT.eventName,
+      mapOf(
+        "applicationReferences" to applicationReferences.joinToString(",")
+      ),
+      null
+    )
   }
 
   fun bookVisit(applicationReference: String): VisitDto {
@@ -351,14 +328,14 @@ class VisitService(
 
     val visit = VisitDto(visitRepository.saveAndFlush(visitToBook))
 
-    // TODO can we change the name of the track event name?
-    telemetryClient.trackEvent(
-      "visit-scheduler-prison-visit-updated",
+    trackEvent(
+      TelemetryVisitEvents.VISIT_BOOKED_EVENT.eventName,
       listOfNotNull(
         "reference" to visitToBook.reference,
         "visitStatus" to visit.visitStatus.name,
-      ).toMap(),
-      null
+        "applicationReference" to visit.applicationReference,
+        "isUpdated" to changedVisit.toString()
+      ).toMap()
     )
 
     if (changedVisit) {
@@ -382,14 +359,17 @@ class VisitService(
 
     visitRepository.saveAndFlush(visitEntity)
 
-    telemetryClient.trackEvent(
-      "visit-scheduler-prison-visit-cancelled",
-      mapOf(
-        "reference" to reference,
-        "visitStatus" to visitEntity.visitStatus.name,
-        "outcomeStatus" to visitEntity.outcomeStatus?.name
-      ),
-      null
+    val eventsMap = mutableMapOf(
+      "reference" to reference,
+      "visitStatus" to visitEntity.visitStatus.name
+    )
+    visitEntity.outcomeStatus?.let {
+      eventsMap.put("outcomeStatus", it.name)
+    }
+
+    trackEvent(
+      TelemetryVisitEvents.VISIT_CANCELLED_EVENT.eventName,
+      eventsMap
     )
 
     val visit = VisitDto(visitEntity)
@@ -436,6 +416,28 @@ class VisitService(
       text = text,
       visit = visit
     )
+  }
+
+  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): Map<String, String> {
+    return mapOf(
+      "reference" to visitEntity.reference,
+      "prisonerId" to visitEntity.prisonerId,
+      "prisonId" to visitEntity.prisonId,
+      "visitType" to visitEntity.visitType.name,
+      "visitRoom" to visitEntity.visitRoom,
+      "visitRestriction" to visitEntity.visitRestriction.name,
+      "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStatus" to visitEntity.visitStatus.name,
+      "applicationReference" to visitEntity.applicationReference
+    )
+  }
+
+  private fun trackEvent(eventName: String, properties: Map<String, String>) {
+    try {
+      telemetryClient.trackEvent(eventName, properties, null)
+    } catch (e: RuntimeException) {
+      log.error("Error occurred in call to telemetry client to log event - $e.toString()")
+    }
   }
 }
 

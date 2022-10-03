@@ -96,7 +96,7 @@ class SnsService(
       )
 
       telemetryClient.trackEvent(
-        "visit-scheduler-${payloadEvent.eventType}-event",
+        "${payloadEvent.eventType}-domain-event",
         mapOf("messageId" to result.messageId, "reference" to payloadEvent.additionalInformation.reference),
         null
       )

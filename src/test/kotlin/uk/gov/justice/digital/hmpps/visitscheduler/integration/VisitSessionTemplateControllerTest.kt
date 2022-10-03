@@ -88,13 +88,13 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
       // And
       val template = objectMapper.readValue(returnResult.responseBody, SessionTemplateDto::class.java)
       verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-session-template-created"),
+        eq("session-template-created"),
         org.mockito.kotlin.check {
           Assertions.assertThat(it["id"]).isEqualTo(template.sessionTemplateId.toString())
         },
         isNull()
       )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-session-template-created"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("session-template-created"), any(), isNull())
     }
 
     @Test
@@ -109,7 +109,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .exchange()
         .expectStatus().isForbidden
 
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
     }
 
     @Test
@@ -136,7 +136,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .exchange()
         .expectStatus().isBadRequest
 
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
     }
 
     @Test
@@ -165,7 +165,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .exchange()
         .expectStatus().isBadRequest
 
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-bad-request-error"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
     }
   }
 
@@ -190,13 +190,13 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .expectStatus().isNotFound
 
       verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-session-template-deleted"),
+        eq("session-template-deleted"),
         org.mockito.kotlin.check {
           Assertions.assertThat(it["id"]).isEqualTo(sessionTemplate.id.toString())
         },
         isNull()
       )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-session-template-deleted"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("session-template-deleted"), any(), isNull())
     }
 
     @Test
@@ -206,7 +206,7 @@ class VisitSessionTemplateControllerTest(@Autowired private val objectMapper: Ob
         .exchange()
         .expectStatus().isOk
 
-      verify(telemetryClient, times(0)).trackEvent(eq("visit-scheduler-prison-session-template-deleted"), any(), isNull())
+      verify(telemetryClient, times(0)).trackEvent(eq("session-template-deleted"), any(), isNull())
     }
   }
 

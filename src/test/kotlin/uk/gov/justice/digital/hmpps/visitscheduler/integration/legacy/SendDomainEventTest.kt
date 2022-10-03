@@ -41,7 +41,6 @@ import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-@Suppress("KotlinDeprecation")
 class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -112,23 +111,23 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
       // And
       verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-visit-updated"),
+        eq("visit-updated"),
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(visit.reference)
           assertThat(it["visitStatus"]).isEqualTo(VisitStatus.BOOKED.name)
         },
         isNull()
       )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-updated"), any(), isNull())
 
       verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-visit.booked-event"),
+        eq("prison-visit.booked-domain-event"),
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(visit.reference)
         },
         isNull()
       )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.booked-domain-event"), any(), isNull())
     }
 
     @Test
@@ -165,7 +164,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
       // And
       verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-visit-cancelled"),
+        eq("visit-cancelled"),
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(visit.reference)
           assertThat(it["visitStatus"]).isEqualTo(VisitStatus.CANCELLED.name)
@@ -173,16 +172,16 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
         },
         isNull()
       )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-cancelled"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-cancelled"), any(), isNull())
 
       verify(telemetryClient).trackEvent(
-        eq("visit-scheduler-prison-visit.cancelled-event"),
+        eq("prison-visit.cancelled-domain-event"),
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(visit.reference)
         },
         isNull()
       )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.cancelled-event"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
     }
   }
 

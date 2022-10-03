@@ -76,27 +76,29 @@ customEvents
 ```
 
 Available custom events
-- `visit-scheduler-prison-session-template-created` - a session template was created. It will contain the template id
-- `visit-scheduler-prison-session-template-deleted` - a session template was deleted. It will contain the template id
+- `session-template-created` - a session template was created. It will contain the template id
+- `session-template-deleted` - a session template was deleted. It will contain the template id
 
-- `visit-scheduler-prison-visit-created` - a visit was created. It will contain the visit reference and basic information about the visit
-- `visit-scheduler-prison-visit-updated` - a visit was updated. It will contain the visit reference and basic updated information about the visit
-- `visit-scheduler-prison-visit-deleted` - a visit was deleted. It will contain the visit reference
-- `visit-scheduler-prison-visit-cancelled` - a visit was cancelled. It will contain the visit reference, status and outcome status
-- `visit-scheduler-prison-visit-migrated` - a visit was migrated. It will contain the visit reference and basic information about the visit
+- `visit-slot-reserved` - a visit slot was reserved. It will contain the visit's application reference and basic information about the visit
+- `visit-slot-changed` - a visit change was started. It will contain the visit's application reference, reference and status
+- `visit-changed` - a booked visit was being changed. It will contain the visit's application reference, reference and basic information about the visit
+- `visit-booked` - a visit was booked. It will contain the visit's application reference, reference, status and an isUpdated flag to denote if it's a new or an updated visit
+- `visit-expired-visits-deleted` - expired visits were deleted. It will contain the list of expired application references that were deleted
+- `visit-cancelled` - a visit was cancelled. It will contain the visit's reference, status and outcome status
+- `visit-migrated` - a visit was migrated. It will contain the visit's reference and basic information about the visit
 
-- `visit-scheduler-prison-visit.booked-event` - indicates a visit booked event was published. It will contain the message id and visit reference
-- `visit-scheduler-prison-visit.cancelled-event` - indicates a visit cancelled event was published. It will contain the message id and visit reference
+- `visit.booked-event` - indicates a visit booked event was published. It will contain the message id and visit reference
+- `visit.cancelled-event` - indicates a visit cancelled event was published. It will contain the message id and visit reference
 
-- `visit-scheduler-prison-visit-publish-event-error` - indicates publish visit event failed. It will contain the available exception message and cause
-- `visit-scheduler-prison-visit-access-denied-error` - Access Denied Error. It will contain the available exception message and cause
-- `visit-scheduler-prison-visit-bad-request-error` - Bad Request Error. It will contain the available exception message and cause
-- `visit-scheduler-prison-visit-internal-server-error` - Internal Error. It will contain the available exception message and cause
+- `visit-publish-event-error` - indicates publish visit event failed. It will contain the available exception message and cause
+- `visit-access-denied-error` - Access Denied Error. It will contain the available exception message and cause
+- `visit-bad-request-error` - Bad Request Error. It will contain the available exception message and cause
+- `visit-internal-server-error` - Internal Error. It will contain the available exception message and cause
 
 ```azure
 customEvents 
 | where cloud_RoleName == 'visit-scheduler' 
-| where name == 'visit-scheduler-prison-visit-migrated'
+| where name == 'visit-migrated'
 | extend reference_ = tostring(customDimensions.reference)
 | extend prisonerId_ = tostring(customDimensions.prisonerId)
 | extend visitStatus_ = tostring(customDimensions.visitStatus)

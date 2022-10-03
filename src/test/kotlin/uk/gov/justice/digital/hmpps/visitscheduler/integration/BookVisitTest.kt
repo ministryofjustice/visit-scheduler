@@ -115,12 +115,11 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
 
-    assertUpdateEvent(visit)
-    assertBookedEvent(visit)
+    assertBookedEvent(visit, false)
   }
 
   @Test
-  fun `Book visit visit by application Reference - change other visit with same reference to canceled`() {
+  fun `Book visit by application Reference - change other visit with same reference to canceled`() {
 
     // Given
     val reference = reservedVisit.reference
@@ -158,7 +157,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
 
-    assertChangedVisitEvent(visit)
+    assertBookedEvent(visit, true)
   }
 
   @Test
@@ -213,7 +212,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     responseSpec.expectStatus().isForbidden
 
     // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-access-denied-error"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
   @Test
@@ -229,38 +228,18 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     responseSpec.expectStatus().isUnauthorized
   }
 
-  private fun assertChangedVisitEvent(visit: VisitDto) {
+  private fun assertBookedEvent(visit: VisitDto, isUpdated: Boolean) {
     verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit.changed-event"),
+      eq("visit-booked"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-      },
-      isNull()
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.changed-event"), any(), isNull())
-  }
-
-  private fun assertBookedEvent(visit: VisitDto) {
-    verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit.booked-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-      },
-      isNull()
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit.booked-event"), any(), isNull())
-  }
-
-  private fun assertUpdateEvent(visit: VisitDto) {
-    verify(telemetryClient).trackEvent(
-      eq("visit-scheduler-prison-visit-updated"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+        Assertions.assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
       },
       isNull()
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-scheduler-prison-visit-updated"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-booked"), any(), isNull())
   }
 
   private fun createVisit(
