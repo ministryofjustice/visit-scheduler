@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.events
 
 import com.amazonaws.services.sqs.model.PurgeQueueRequest
 import org.awaitility.kotlin.await
@@ -12,12 +12,9 @@ import org.springframework.test.context.TestPropertySource
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 
 @TestPropertySource(properties = ["feature.events.sns.enabled=false"])
@@ -26,9 +23,6 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
   companion object {
     val ROLES: List<String> = listOf("ROLE_VISIT_SCHEDULER")
   }
-
-  @Autowired
-  private lateinit var visitRepository: VisitRepository
 
   @Autowired
   protected lateinit var hmppsQueueService: HmppsQueueService
@@ -41,7 +35,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
   internal val testQueueUrl by lazy { testQueue.queueUrl }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @BeforeEach
   fun `clear queues`() {
@@ -52,7 +46,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
   fun `booked visit no event sent`() {
 
     // Given
-    val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
+    val visitEntity = visitEntityHelper.create(visitStatus = VisitStatus.RESERVED)
     val applicationReference = visitEntity.applicationReference
     val authHeader = setAuthorisation(roles = ROLES)
 
@@ -71,7 +65,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
   @Test
   fun `cancelled visit no event sent`() {
     // Given
-    val visitEntity = createVisitAndSave(VisitStatus.BOOKED)
+    val visitEntity = visitEntityHelper.create(visitStatus = VisitStatus.BOOKED)
     val reference = visitEntity.reference
     val authHeader = setAuthorisation(roles = ROLES)
     val outcomeDto = OutcomeDto(
@@ -84,14 +78,6 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
 
     // Then
     assertSNSEventsNotSent()
-  }
-
-  private fun createVisitAndSave(visitStatus: VisitStatus): Visit {
-    val visit = visitCreator(visitRepository)
-      .withVisitStatus(visitStatus)
-      .save()
-    visitRepository.saveAndFlush(visit)
-    return visit
   }
 
   private fun assertSNSEventsNotSent() {

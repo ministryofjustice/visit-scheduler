@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.hamcrest.Matchers
@@ -14,17 +14,14 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
@@ -41,7 +38,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
   private lateinit var telemetryClient: TelemetryClient
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   private var visitMin: Visit? = null
   private var visitFull: Visit? = null
@@ -49,61 +46,28 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @BeforeEach
   internal fun createVisits() {
 
-    visitMin = visitCreator(visitRepository)
-      .withPrisonerId("FF0000AA")
-      .withVisitStart(visitTime)
-      .withPrisonId("MDI")
-      .save()
+    visitMin = visitEntityHelper.create(prisonId = "MDI", visitStart = visitTime, prisonerId = "FF0000AA")
+    visitFull = visitEntityHelper.create(prisonId = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000BB")
 
-    visitFull = visitCreator(visitRepository)
-      .withPrisonerId("FF0000BB")
-      .withVisitStart(visitTime.plusDays(1))
-      .withVisitEnd(visitTime.plusDays(1).plusHours(1))
-      .withPrisonId("LEI")
-      .save()
-
-    visitNoteCreator(visit = visitFull!!, text = "A visit concern", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = visitFull!!, text = "A visit outcome", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = visitFull!!, text = "A visit comment", type = VISIT_COMMENT)
-    visitNoteCreator(visit = visitFull!!, text = "Status has changed", type = STATUS_CHANGED_REASON)
+    visitEntityHelper.createNote(visit = visitFull!!, text = "A visit concern", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = visitFull!!, text = "A visit outcome", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = visitFull!!, text = "A visit comment", type = VISIT_COMMENT)
+    visitEntityHelper.createNote(visit = visitFull!!, text = "Status has changed", type = STATUS_CHANGED_REASON)
 
     visitRepository.saveAndFlush(visitFull!!)
-
-    val visitCC = visitCreator(visitRepository)
-      .withPrisonerId("FF0000CC")
-      .withVisitStart(visitTime.plusDays(2))
-      .withVisitEnd(visitTime.plusDays(2).plusHours(1))
-      .withPrisonId("LEI")
-      .save()
-    visitContactCreator(visit = visitCC, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitCC, nomisPersonId = 123L, visitContact = true)
-    visitSupportCreator(visit = visitCC, name = "OTHER", details = "Some Text")
+    val visitCC = visitEntityHelper.create(
+      prisonId = "LEI", prisonerId = "FF0000CC",
+      visitStart = visitTime.plusDays(2), visitEnd = visitTime.plusDays(2).plusHours(1)
+    )
+    visitEntityHelper.createContact(visit = visitCC, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = visitCC, nomisPersonId = 123L, visitContact = true)
+    visitEntityHelper.createSupport(visit = visitCC, name = "OTHER", details = "Some Text")
 
     visitRepository.saveAndFlush(visitCC)
 
-    visitCreator(visitRepository)
-      .withPrisonerId("GG0000BB")
-      .withVisitStart(visitTime.plusHours(1))
-      .withVisitEnd(visitTime.plusHours(2))
-      .withPrisonId("BEI")
-      .withVisitStatus(VisitStatus.RESERVED)
-      .save()
-
-    visitCreator(visitRepository)
-      .withPrisonerId("GG0000BB")
-      .withVisitStart(visitTime.plusDays(1).plusHours(1))
-      .withVisitEnd(visitTime.plusDays(1).plusHours(2))
-      .withPrisonId("BEI")
-      .withVisitStatus(VisitStatus.BOOKED)
-      .save()
-
-    visitCreator(visitRepository)
-      .withPrisonerId("GG0000BB")
-      .withVisitStart(visitTime.plusDays(2).plusHours(1))
-      .withVisitEnd(visitTime.plusDays(2).plusHours(2))
-      .withPrisonId("BEI")
-      .withVisitStatus(VisitStatus.CANCELLED)
-      .save()
+    visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusHours(1), visitStatus = RESERVED)
+    visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusDays(1).plusHours(1), visitStatus = BOOKED)
+    visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = CANCELLED)
   }
 
   @Test
@@ -176,7 +140,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `get visits by prisoner ID, prison ID and starting on or after a specified date and time`() {
 
     // Given
-    val prisonId = "BEI"
+    val prisonId = "MDI"
     val startTimestamp = "2021-11-01T13:30:45"
     val prisonerId = "GG0000BB"
 
@@ -195,8 +159,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
       )
       .jsonPath("$..prisonId").value(
         Matchers.contains(
-          "BEI",
-          "BEI"
+          "MDI",
+          "MDI"
         )
       )
       .jsonPath("$..prisonerId").value(
@@ -269,7 +233,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @Test
   fun `get visits by status`() {
     // Given
-    val visitStatus = VisitStatus.BOOKED
+    val visitStatus = BOOKED
 
     // When
     val responseSpec = callVisitEndPoint("/visits?visitStatus=$visitStatus")

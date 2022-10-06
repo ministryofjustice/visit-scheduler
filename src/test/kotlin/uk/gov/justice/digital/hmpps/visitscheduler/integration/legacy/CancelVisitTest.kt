@@ -16,25 +16,20 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @DisplayName("Put /visits/{reference}/cancel")
 class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
-  @Autowired
-  private lateinit var visitRepository: VisitRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @Test
   fun `cancel visit by reference with outcome and outcome text`() {
@@ -258,11 +253,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   private fun createVisitAndSave(): Visit {
-    val visit = visitCreator(visitRepository)
-      .withVisitStatus(BOOKED)
-      .save()
-
-    visitRepository.saveAndFlush(visit)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED)
     return visit
   }
 }

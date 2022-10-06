@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
@@ -28,7 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
@@ -66,7 +66,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   private fun createMigrateVisitRequestDto(): MigrateVisitRequestDto {
     return MigrateVisitRequestDto(

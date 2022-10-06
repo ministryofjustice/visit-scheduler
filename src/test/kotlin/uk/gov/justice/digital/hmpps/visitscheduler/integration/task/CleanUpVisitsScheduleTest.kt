@@ -16,7 +16,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -71,7 +70,7 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
   }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @Test
   fun `delete only expired reservations`() {

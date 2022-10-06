@@ -1,16 +1,16 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Import
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplateDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
@@ -28,7 +28,8 @@ import java.time.LocalTime
 
 // System time is altered using the TestClockConfiguration below
 @Import(TestClockConfiguration::class)
-class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+@DisplayName("Get /visit-sessions")
+class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sessionTemplateRepository: SessionTemplateRepository
@@ -37,10 +38,12 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
   private lateinit var visitRepository: VisitRepository
 
   @AfterEach
-  internal fun deleteAllSessionTemplates() = sessionTemplateDeleter(sessionTemplateRepository)
+  internal fun deleteAllSessionTemplates() = sessionTemplateEntityHelper.deleteAll()
 
   @AfterEach
-  internal fun deleteAllVisitSessions() = visitDeleter(visitRepository)
+  internal fun deleteAllVisitSessions() = visitEntityHelper.deleteAll()
+
+  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
   @Test
   fun `visit sessions are returned for a prison for a single schedule`() {
@@ -59,7 +62,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -92,7 +95,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -151,7 +154,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -183,7 +186,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -203,7 +206,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -223,7 +226,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -243,7 +246,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -264,7 +267,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -286,7 +289,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -331,7 +334,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -385,7 +388,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -432,7 +435,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -480,7 +483,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -530,7 +533,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -555,7 +558,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -583,7 +586,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -624,7 +627,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -665,7 +668,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -707,7 +710,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -750,7 +753,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
     // Then
     responseSpec.expectStatus().isOk
@@ -790,7 +793,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
@@ -831,7 +834,7 @@ class VisitSessionsControllerTest(@Autowired private val objectMapper: ObjectMap
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
