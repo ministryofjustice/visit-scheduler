@@ -12,6 +12,8 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
@@ -23,6 +25,12 @@ abstract class IntegrationTestBase {
   @Suppress("unused")
   @Autowired
   lateinit var webTestClient: WebTestClient
+
+  @Autowired
+  protected lateinit var visitEntityHelper: VisitEntityHelper
+
+  @Autowired
+  protected lateinit var sessionTemplateEntityHelper: SessionTemplateEntityHelper
 
   @Autowired
   protected lateinit var jwtAuthHelper: JwtAuthHelper

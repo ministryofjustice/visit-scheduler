@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
@@ -19,30 +19,25 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 
 @DisplayName("Put $VISIT_CANCEL")
 class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
-  @Autowired
-  private lateinit var visitRepository: VisitRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @Test
   fun `cancel visit by reference -  with outcome and outcome text`() {
 
     // Given
-    val visit = createVisitAndSave()
+    val visit = visitEntityHelper.create(visitStatus = BOOKED)
 
     val outcomeDto = OutcomeDto(
       OutcomeStatus.PRISONER_CANCELLED,
@@ -89,7 +84,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `cancel visit by reference -  with outcome and without outcome text`() {
 
     // Given
-    val visit = createVisitAndSave()
+    val visit = visitEntityHelper.create(visitStatus = BOOKED)
 
     val outcomeDto = OutcomeDto(
       outcomeStatus = OutcomeStatus.VISITOR_CANCELLED
@@ -134,7 +129,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `cancel visit by reference - without outcome`() {
 
     // Given
-    val visit = createVisitAndSave()
+    val visit = visitEntityHelper.create(visitStatus = BOOKED)
     val reference = visit.reference
 
     // When
@@ -152,7 +147,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `cancel visit by reference - with outcome status of superseded`() {
 
     // Given
-    val visit = createVisitAndSave()
+    val visit = visitEntityHelper.create(visitStatus = BOOKED)
 
     val outcomeDto = OutcomeDto(
       OutcomeStatus.SUPERSEDED_CANCELLATION,
@@ -258,14 +253,5 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     // Then
     responseSpec.expectStatus().isUnauthorized
-  }
-
-  private fun createVisitAndSave(): Visit {
-    val visit = visitCreator(visitRepository)
-      .withVisitStatus(BOOKED)
-      .save()
-
-    visitRepository.saveAndFlush(visit)
-    return visit
   }
 }

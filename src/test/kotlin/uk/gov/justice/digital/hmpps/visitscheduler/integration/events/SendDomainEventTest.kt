@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.legacy
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.events
 
 import com.amazonaws.services.sqs.model.PurgeQueueRequest
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -19,17 +19,14 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
-import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.HMPPSDomainEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED_DESC
@@ -42,8 +39,6 @@ import java.time.ZoneId
 import java.time.ZonedDateTime
 
 class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
-  @Autowired
-  private lateinit var visitRepository: VisitRepository
 
   @Autowired
   protected lateinit var hmppsQueueService: HmppsQueueService
@@ -56,7 +51,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
   internal val testQueueUrl by lazy { testQueue.queueUrl }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @DisplayName("Publish Domain Event")
   @Nested
@@ -68,10 +63,7 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
     }
 
     private fun createVisitAndSave(visitStatus: VisitStatus): Visit {
-      val visit = visitCreator(visitRepository)
-        .withVisitStatus(visitStatus)
-        .save()
-      visitRepository.saveAndFlush(visit)
+      val visit = visitEntityHelper.create(visitStatus = visitStatus)
       return visit
     }
 
@@ -80,14 +72,11 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
       // Given
       val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
+      val applicationReference = visitEntity.applicationReference
+      val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
       // When
-      val responseSpec = webTestClient.put().uri("/visits/${visitEntity.reference}")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(UpdateVisitRequestDto(visitStatus = VisitStatus.BOOKED))
-        )
-        .exchange()
+      val responseSpec = callVisitBook(webTestClient, authHeader, applicationReference)
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 
@@ -111,14 +100,16 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
 
       // And
       verify(telemetryClient).trackEvent(
-        eq("visit-updated"),
+        eq("visit-booked"),
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(visit.reference)
+          assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
           assertThat(it["visitStatus"]).isEqualTo(VisitStatus.BOOKED.name)
+          assertThat(it["isUpdated"]).isEqualTo("false")
         },
         isNull()
       )
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-updated"), any(), isNull())
+      verify(telemetryClient, times(1)).trackEvent(eq("visit-booked"), any(), isNull())
 
       verify(telemetryClient).trackEvent(
         eq("prison-visit.booked-domain-event"),
@@ -134,14 +125,15 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
     fun `send visit cancelled event`() {
       // Given
       val visitEntity = createVisitAndSave(VisitStatus.BOOKED)
+      val reference = visitEntity.reference
+      val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+      val outcomeDto = OutcomeDto(
+        OutcomeStatus.PRISONER_CANCELLED,
+        "Prisoner got covid"
+      )
 
       // When
-      val responseSpec = webTestClient.patch().uri("/visits/${visitEntity.reference}/cancel")
-        .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
-        .body(
-          BodyInserters.fromValue(OutcomeDto(OutcomeStatus.PRISONER_CANCELLED, "AnyThingWillDo"))
-        )
-        .exchange()
+      val responseSpec = callCancelVisit(webTestClient, authHeader, reference, outcomeDto)
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 

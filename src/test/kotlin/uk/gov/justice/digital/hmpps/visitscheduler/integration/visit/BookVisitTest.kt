@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
@@ -21,21 +21,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitBookUrl
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
@@ -63,19 +56,19 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
 
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedVisit = createVisit()
+    reservedVisit = visitEntityHelper.create()
 
-    visitNoteCreator(visit = reservedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = reservedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = reservedVisit, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = reservedVisit, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = reservedVisit, nomisPersonId = 321L, visitContact = true)
-    visitSupportCreator(visit = reservedVisit, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(reservedVisit)
+    visitEntityHelper.createNote(visit = reservedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = reservedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = reservedVisit, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = reservedVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = reservedVisit, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = reservedVisit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.save(reservedVisit)
   }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @Test
   fun `Book visit visit by application Reference`() {
@@ -124,15 +117,15 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     // Given
     val reference = reservedVisit.reference
 
-    val bookedVisit = createVisit(visitStatus = BOOKED, reference = reference)
+    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, reference = reference)
 
-    visitNoteCreator(visit = bookedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = bookedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = bookedVisit, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = bookedVisit, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = bookedVisit, nomisPersonId = 321L, visitContact = true)
-    visitSupportCreator(visit = bookedVisit, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(bookedVisit)
+    visitEntityHelper.createNote(visit = bookedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = bookedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = bookedVisit, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = bookedVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = bookedVisit, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = bookedVisit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.save(bookedVisit)
 
     val applicationReference = reservedVisit.applicationReference
 
@@ -166,25 +159,25 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     // Given
     val reference = reservedVisit.reference
 
-    val newReservedVisit = createVisit(visitStatus = RESERVED, reference = reference, prisonerId = "THIS IS THE ONE")
+    val newReservedVisit = visitEntityHelper.create(visitStatus = RESERVED, reference = reference, prisonerId = "THIS IS THE ONE")
 
-    visitNoteCreator(visit = newReservedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = newReservedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = newReservedVisit, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = newReservedVisit, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = newReservedVisit, nomisPersonId = 321L, visitContact = true)
-    visitSupportCreator(visit = newReservedVisit, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(newReservedVisit)
+    visitEntityHelper.createNote(visit = newReservedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = newReservedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = newReservedVisit, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = newReservedVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = newReservedVisit, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = newReservedVisit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.save(newReservedVisit)
 
-    val bookedVisit = createVisit(visitStatus = BOOKED, reference = reference)
+    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, reference = reference)
 
-    visitNoteCreator(visit = bookedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = bookedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = bookedVisit, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = bookedVisit, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = bookedVisit, nomisPersonId = 321L, visitContact = true)
-    visitSupportCreator(visit = bookedVisit, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(bookedVisit)
+    visitEntityHelper.createNote(visit = bookedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = bookedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = bookedVisit, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = bookedVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = bookedVisit, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = bookedVisit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.save(bookedVisit)
 
     val applicationReference = newReservedVisit.applicationReference
     // When
@@ -240,32 +233,5 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
       isNull()
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-booked"), any(), isNull())
-  }
-
-  private fun createVisit(
-    visitStatus: VisitStatus = RESERVED,
-    prisonerId: String = "FF0000AA",
-    prisonId: String = "MDI",
-    visitRoom: String = "A1",
-    visitStart: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44),
-    visitEnd: LocalDateTime = visitStart.plusHours(1),
-    visitType: VisitType = VisitType.SOCIAL,
-    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    reference: String = ""
-  ): Visit {
-
-    return visitRepository.saveAndFlush(
-      Visit(
-        visitStatus = visitStatus,
-        prisonerId = prisonerId,
-        prisonId = prisonId,
-        visitRoom = visitRoom,
-        visitStart = visitStart,
-        visitEnd = visitEnd,
-        visitType = visitType,
-        visitRestriction = visitRestriction,
-        _reference = reference
-      )
-    )
   }
 }

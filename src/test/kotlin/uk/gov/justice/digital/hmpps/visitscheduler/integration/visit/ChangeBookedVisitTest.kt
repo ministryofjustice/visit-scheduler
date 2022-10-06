@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
@@ -26,12 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitChangeUrl
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
@@ -39,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -67,32 +63,24 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
 
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    val visit = visitCreator(visitRepository)
-      .withPrisonerId("FF0000FF")
-      .withPrisonId("MDI")
-      .withVisitRoom("B1")
-      .withVisitStart(visitTime.plusDays(2))
-      .withVisitEnd(visitTime.plusDays(2).plusHours(1))
-      .withVisitType(SOCIAL)
-      .withVisitStatus(VisitStatus.BOOKED)
-      .save()
+    val visit = visitEntityHelper.create(visitStatus = BOOKED)
 
-    visitNoteCreator(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = visit, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visit, nomisPersonId = 321L, visitContact = true)
-    visitSupportCreator(visit = visit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = visit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = visit, name = "OTHER", details = "Some Text")
 
-    bookedVisit = visitRepository.saveAndFlush(visit)
+    bookedVisit = visitEntityHelper.save(visit)
   }
 
   @AfterEach
   internal fun deleteAllVisits() {
-    visitDeleter(visitRepository)
+    visitEntityHelper.deleteAll()
   }
 
-  private fun createReserveVisitSlotDto(prisonId: String = "MDI", prisonerId: String = "FF0000FF", startTimestamp: LocalDateTime = bookedVisit.visitStart, visitRestriction: VisitRestriction = OPEN): ReserveVisitSlotDto {
+  private fun createReserveVisitSlotDto(prisonId: String = "MDI", prisonerId: String = "FF0000AA", startTimestamp: LocalDateTime = bookedVisit.visitStart, visitRestriction: VisitRestriction = OPEN): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
       prisonId = prisonId,
       prisonerId = prisonerId,

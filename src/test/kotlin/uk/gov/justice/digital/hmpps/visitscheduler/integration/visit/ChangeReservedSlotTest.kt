@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
@@ -26,22 +26,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitReserveSlotChangeUrl
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitContactCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitDeleter
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitNoteCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitSupportCreator
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.visitVisitorCreator
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
@@ -49,9 +42,6 @@ import java.time.LocalDateTime
 class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
-
-  @Autowired
-  private lateinit var visitRepository: VisitRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -63,52 +53,25 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
   }
 
-  private fun createVisit(
-    visitStatus: VisitStatus = RESERVED,
-    prisonerId: String = "FF0000BB",
-    prisonId: String = "BBB",
-    visitRoom: String = "B1",
-    visitStart: LocalDateTime = visitTime.plusDays(2),
-    visitEnd: LocalDateTime = visitTime.plusDays(2).plusHours(1),
-    visitType: VisitType = VisitType.SOCIAL,
-    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    reference: String = ""
-  ): Visit {
-
-    return visitRepository.saveAndFlush(
-      Visit(
-        visitStatus = visitStatus,
-        prisonerId = prisonerId,
-        prisonId = prisonId,
-        visitRoom = visitRoom,
-        visitStart = visitStart,
-        visitEnd = visitEnd,
-        visitType = visitType,
-        visitRestriction = visitRestriction,
-        _reference = reference
-      )
-    )
-  }
-
   @BeforeEach
   internal fun setUp() {
 
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    visitMin = createVisit(visitStatus = RESERVED)
-    visitFull = createVisit(visitStatus = RESERVED)
+    visitMin = visitEntityHelper.create(visitStatus = RESERVED)
+    visitFull = visitEntityHelper.create(visitStatus = RESERVED)
 
-    visitNoteCreator(visit = visitFull, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitNoteCreator(visit = visitFull, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitNoteCreator(visit = visitFull, text = "Some text comment", type = VISIT_COMMENT)
-    visitContactCreator(visit = visitFull, name = "Jane Doe", phone = "01234 098765")
-    visitVisitorCreator(visit = visitFull, nomisPersonId = 321L, visitContact = true)
-    visitSupportCreator(visit = visitFull, name = "OTHER", details = "Some Text")
-    visitRepository.saveAndFlush(visitFull)
+    visitEntityHelper.createNote(visit = visitFull, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = visitFull, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = visitFull, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = visitFull, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = visitFull, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = visitFull, name = "OTHER", details = "Some Text")
+    visitEntityHelper.save(visitFull)
   }
 
   @AfterEach
-  internal fun deleteAllVisits() = visitDeleter(visitRepository)
+  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @Test
   fun `change reserved slot by application reference - add final details`() {
@@ -174,8 +137,8 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   fun `change reserved slot by application reference - start date has not changed`() {
 
     // Given
-    val visitBooked = createVisit(visitStatus = BOOKED)
-    val visitReserved = createVisit(visitStatus = CHANGING, reference = visitBooked.reference)
+    val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
+    val visitReserved = visitEntityHelper.create(visitStatus = CHANGING, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitBooked.visitStart,
@@ -212,8 +175,8 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   fun `change reserved slot by application reference - start restriction has not changed`() {
 
     // Given
-    val visitBooked = createVisit(visitStatus = BOOKED)
-    val visitReserved = createVisit(visitStatus = CHANGING, reference = visitBooked.reference)
+    val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
+    val visitReserved = visitEntityHelper.create(visitStatus = CHANGING, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       visitRestriction = visitBooked.visitRestriction,
@@ -250,8 +213,8 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   fun `change reserved slot by application reference - start date has changed`() {
 
     // Given
-    val visitBooked = createVisit(visitStatus = BOOKED)
-    val visitReserved = createVisit(visitStatus = CHANGING, reference = visitBooked.reference)
+    val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
+    val visitReserved = visitEntityHelper.create(visitStatus = CHANGING, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitBooked.visitStart.minusDays(1),
@@ -288,8 +251,8 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   fun `change reserved slot by application reference - start restriction has changed`() {
 
     // Given
-    val visitBooked = createVisit(visitStatus = BOOKED)
-    val visitReserved = createVisit(visitStatus = CHANGING, reference = visitBooked.reference)
+    val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
+    val visitReserved = visitEntityHelper.create(visitStatus = CHANGING, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       visitRestriction = VisitRestriction.CLOSED,
@@ -325,8 +288,8 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   @Test
   fun `change reserved slot by application reference - start date has changed back to match booked slot`() {
     // Given
-    val visitBooked = createVisit(visitStatus = BOOKED)
-    val visitReserved = createVisit(visitStatus = RESERVED, reference = visitBooked.reference)
+    val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
+    val visitReserved = visitEntityHelper.create(visitStatus = RESERVED, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitBooked.visitStart,
@@ -362,8 +325,8 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   @Test
   fun `change reserved slot by application reference - start restriction has changed back to match booked slot`() {
     // Given
-    val visitBooked = createVisit(visitStatus = BOOKED)
-    val visitReserved = createVisit(visitStatus = RESERVED, reference = visitBooked.reference)
+    val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
+    val visitReserved = visitEntityHelper.create(visitStatus = RESERVED, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       visitRestriction = visitBooked.visitRestriction,
