@@ -74,6 +74,17 @@ class MigrateVisitService(
 
     sendTelemetryData(visitEntity)
 
+    visitRepository.saveAndFlush(visitEntity)
+
+    migrateVisitRequest.createDateTime?.let {
+      visitRepository.updateCreateTimestamp(it, visitEntity.id)
+    }
+
+    // Do this at end of this method, otherwise modify date would be overridden
+    migrateVisitRequest.modifyDateTime?.let {
+      visitRepository.updateModifyTimestamp(it, visitEntity.id)
+    }
+
     return visitEntity.reference
   }
 

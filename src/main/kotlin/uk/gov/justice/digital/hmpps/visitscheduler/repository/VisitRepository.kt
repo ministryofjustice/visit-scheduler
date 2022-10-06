@@ -3,8 +3,10 @@ package uk.gov.justice.digital.hmpps.visitscheduler.repository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Lock
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
@@ -100,4 +102,20 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT CASE WHEN (COUNT(v) = 1) THEN TRUE ELSE FALSE END  FROM Visit v WHERE v.reference = :bookingReference AND v.visitStatus = 'BOOKED' "
   )
   fun isValidBookingReference(bookingReference: String): Boolean
+
+  @Transactional
+  @Modifying
+  @Query(
+    "Update visit SET  modify_timestamp = :modifyTimestamp WHERE id=:id",
+    nativeQuery = true
+  )
+  fun updateModifyTimestamp(modifyTimestamp: LocalDateTime, id: Long): Int
+
+  @Transactional
+  @Modifying
+  @Query(
+    "Update visit SET  create_timestamp = :createTimestamp WHERE id=:id",
+    nativeQuery = true
+  )
+  fun updateCreateTimestamp(createTimestamp: LocalDateTime, id: Long): Int
 }

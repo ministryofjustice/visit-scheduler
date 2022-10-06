@@ -87,7 +87,9 @@ class MigrateVisitTest : IntegrationTestBase() {
         VisitNoteDto(type = VISIT_COMMENT, "A visit comment"),
         VisitNoteDto(type = STATUS_CHANGED_REASON, "Status has changed")
       ),
-      legacyData = CreateLegacyDataRequestDto(123)
+      legacyData = CreateLegacyDataRequestDto(123),
+      createDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
+      modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30)
     )
   }
 
@@ -95,8 +97,11 @@ class MigrateVisitTest : IntegrationTestBase() {
   fun `migrate visit`() {
 
     // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto()
+
     val jsonBody = BodyInserters.fromValue(
-      createMigrateVisitRequestDto()
+      migrateVisitRequestDto
     )
 
     // When
@@ -122,7 +127,8 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.visitRestriction).isEqualTo(OPEN)
       assertThat(visit.visitContact!!.name).isEqualTo("John Smith")
       assertThat(visit.visitContact!!.telephone).isEqualTo("013448811538")
-      assertThat(visit.createTimestamp).isNotNull
+      assertThat(visit.createTimestamp).isEqualTo(migrateVisitRequestDto.createDateTime)
+      assertThat(visit.modifyTimestamp).isEqualTo(migrateVisitRequestDto.modifyDateTime)
       assertThat(visit.visitors.size).isEqualTo(1)
       assertThat(visit.visitors[0].nomisPersonId).isEqualTo(123)
       assertThat(visit.visitNotes)
@@ -226,6 +232,42 @@ class MigrateVisitTest : IntegrationTestBase() {
     visit?.let {
       assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
       assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
+    }
+
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
+  }
+
+  @Test
+  fun `migrate visit without create and update Date and Time`() {
+
+    // Given
+    val createMigrateVisitRequestDto = MigrateVisitRequestDto(
+      prisonId = "MDI",
+      prisonerId = "FF0000FF",
+      visitRoom = "A1",
+      visitType = SOCIAL,
+      startTimestamp = visitTime,
+      endTimestamp = visitTime.plusHours(1),
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
+
+    val jsonBody = BodyInserters.fromValue(
+      createMigrateVisitRequestDto
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.createTimestamp).isNotNull
+      assertThat(visit.modifyTimestamp).isNotNull
     }
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())

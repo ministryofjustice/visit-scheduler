@@ -17,7 +17,6 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
@@ -41,9 +40,6 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  @Autowired
-  private lateinit var testVisitRepository: TestVisitRepository
-
   private lateinit var reservedVisitNotExpired: Visit
 
   private lateinit var reservedVisitNotExpiredChangingStatus: Visit
@@ -62,11 +58,11 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
 
     reservedVisitExpired = createVisit(prisonerId = "EXPIRED")
     visitRepository.saveAndFlush(reservedVisitExpired)
-    testVisitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
+    visitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
 
     reservedVisitExpiredChangingStatus = createVisit(prisonerId = "EXPIRED", visitStatus = CHANGING)
     visitRepository.saveAndFlush(reservedVisitExpiredChangingStatus)
-    testVisitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
+    visitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
   }
 
   @AfterEach
