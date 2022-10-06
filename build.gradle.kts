@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.5.1"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.5.4"
   kotlin("jvm") version "1.7.10"
   kotlin("plugin.spring") version "1.7.10"
   kotlin("plugin.jpa") version "1.7.10"
@@ -25,7 +25,7 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-kotlin:1.6.11")
   implementation("org.springdoc:springdoc-openapi-data-rest:1.6.11")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:1.1.10")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:1.1.11")
 
   runtimeOnly("org.postgresql:postgresql:42.5.0")
   runtimeOnly("org.flywaydb:flyway-core")
@@ -37,8 +37,8 @@ dependencies {
   testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
 
   testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
-  testImplementation("org.testcontainers:postgresql:1.17.3")
-  testImplementation("org.testcontainers:localstack:1.17.3")
+  testImplementation("org.testcontainers:postgresql:1.17.4")
+  testImplementation("org.testcontainers:localstack:1.17.4")
 }
 
 java {
