@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 @DisplayName("Put /visits/{reference}/cancel")
 class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
@@ -260,10 +261,10 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       "No longer joining."
     )
     // Given
-    val visit = createExpiredVisitAndSave()
+    val expiredVisit = createExpiredVisitAndSave()
 
     // When
-    val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
+    val responseSpec = webTestClient.patch().uri("/visits/${expiredVisit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
         BodyInserters.fromValue(outcomeDto)
@@ -275,7 +276,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to cancel an expired visit")
-      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - ${visit.reference} is in the past, it cannot be cancelled")
+      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - ${expiredVisit.reference} is in the past, it cannot be cancelled")
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
@@ -287,6 +288,6 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   private fun createExpiredVisitAndSave(): Visit {
-    return visitEntityHelper.create(visitStatus = BOOKED, visitStart = LocalDateTime.now().minusDays(2))
+    return visitEntityHelper.create(visitStatus = BOOKED, visitStart = LocalDateTime.now().minusDays(2).truncatedTo(ChronoUnit.SECONDS), reference = "expired-visit")
   }
 }

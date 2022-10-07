@@ -366,7 +366,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   @Test
   fun `change visit that has already expired a day back`() {
     // Given
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = LocalDateTime.now().minusDays(1))
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = LocalDateTime.now().minusDays(1).truncatedTo(ChronoUnit.SECONDS), reference = "expired-visit-1")
 
     val reserveVisitSlotDto = createReserveVisitSlotDto()
 
@@ -383,7 +383,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   @Test
   fun `change visit that has already expired - 2 minutes back`() {
     // Given
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = LocalDateTime.now().minusMinutes(2))
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = LocalDateTime.now().minusMinutes(2).truncatedTo(ChronoUnit.SECONDS), reference = "expired-visit-2")
     val reserveVisitSlotDto = createReserveVisitSlotDto()
 
     // When
