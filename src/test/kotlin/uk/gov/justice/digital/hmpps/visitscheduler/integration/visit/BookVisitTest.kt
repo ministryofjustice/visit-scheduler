@@ -47,10 +47,6 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
 
   private lateinit var reservedVisit: Visit
 
-  companion object {
-    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
-  }
-
   @BeforeEach
   internal fun setUp() {
 
@@ -219,6 +215,35 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
 
     // Then
     responseSpec.expectStatus().isUnauthorized
+  }
+
+  @Test
+  fun `Amend and book expired visit - returns bad request error `() {
+
+    // Given
+    val reference = reservedVisit.reference
+
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, reference = reference, visitStart = LocalDateTime.now().minusDays(2))
+
+    visitEntityHelper.createNote(visit = expiredVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = expiredVisit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = expiredVisit, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = expiredVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = expiredVisit, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = expiredVisit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.save(expiredVisit)
+
+    val applicationReference = reservedVisit.applicationReference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change an expired visit")
+      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be changed")
   }
 
   private fun assertBookedEvent(visit: VisitDto, isUpdated: Boolean) {

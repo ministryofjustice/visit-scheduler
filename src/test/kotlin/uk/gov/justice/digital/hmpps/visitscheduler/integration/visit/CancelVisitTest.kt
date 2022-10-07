@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import java.time.LocalDateTime
 
 @DisplayName("Put $VISIT_CANCEL")
 class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
@@ -253,5 +254,29 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     // Then
     responseSpec.expectStatus().isUnauthorized
+  }
+
+  @Test
+  fun `cancel expired visit returns bad request error`() {
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = LocalDateTime.now().minusDays(2))
+
+    val outcomeDto = OutcomeDto(
+      OutcomeStatus.PRISONER_CANCELLED,
+      "Prisoner got covid"
+    )
+    val reference = expiredVisit.reference
+
+    // When
+    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to cancel an expired visit")
+      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be cancelled")
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit.cancelled-domain-event"), any(), isNull())
   }
 }

@@ -42,6 +42,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 private const val TEST_END_POINT = "/migrate-visits"
 
@@ -159,7 +160,8 @@ class MigrateVisitTest : IntegrationTestBase() {
         assertThat(it["visitType"]).isEqualTo(SOCIAL.name)
         assertThat(it["visitRoom"]).isEqualTo("A1")
         assertThat(it["visitRestriction"]).isEqualTo(OPEN.name)
-        assertThat(it["visitStart"]).isEqualTo(visitTime.toString())
+        assertThat(it["visitStart"]).isNotEmpty
+        assertThat(LocalDateTime.parse(it["visitStart"]).truncatedTo(ChronoUnit.SECONDS)).isEqualTo(visitTime.truncatedTo(ChronoUnit.SECONDS))
         assertThat(it["visitStatus"]).isEqualTo(BOOKED.name)
         assertThat(it["outcomeStatus"]).isEqualTo(COMPLETED_NORMALLY.name)
       },
