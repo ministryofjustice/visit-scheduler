@@ -32,7 +32,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
@@ -220,7 +219,8 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
 
   @Test
   fun `Amend and book expired visit - returns bad request error `() {
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, reference = "expired-visit", visitStart = LocalDateTime.now().minusDays(2).truncatedTo(ChronoUnit.SECONDS))
+    val visitStart = LocalDateTime.of((LocalDateTime.now().year - 1), 11, 1, 12, 30, 44)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, reference = "expired-visit", visitStart = visitStart)
     val reservedVisit = visitEntityHelper.create(reference = expiredVisit.reference)
 
     // Given

@@ -31,7 +31,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $VISIT_RESERVE_SLOT")
@@ -115,9 +114,7 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
         Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isNotEmpty
-        Assertions.assertThat(LocalDateTime.parse(it["visitStart"]).truncatedTo(ChronoUnit.SECONDS))
-          .isEqualTo(visit.startTimestamp.truncatedTo(ChronoUnit.SECONDS))
+        Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()

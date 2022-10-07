@@ -22,7 +22,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import java.time.LocalDateTime
-import java.time.temporal.ChronoUnit
 
 @DisplayName("Put /visits/{reference}/cancel")
 class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
@@ -272,7 +271,6 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to cancel an expired visit")
@@ -288,6 +286,8 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   private fun createExpiredVisitAndSave(): Visit {
-    return visitEntityHelper.create(visitStatus = BOOKED, visitStart = LocalDateTime.now().minusDays(2).truncatedTo(ChronoUnit.SECONDS), reference = "expired-visit")
+    val visitStart = LocalDateTime.of((LocalDateTime.now().year - 1), 11, 1, 12, 30, 44)
+
+    return visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit")
   }
 }

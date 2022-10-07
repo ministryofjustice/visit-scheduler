@@ -18,7 +18,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.temporal.ChronoUnit
 
 @Component
 class VisitEntityHelper(
@@ -30,7 +29,7 @@ class VisitEntityHelper(
     prisonerId: String = "FF0000AA",
     prisonId: String = "MDI",
     visitRoom: String = "A1",
-    visitStart: LocalDateTime = LocalDateTime.now().plusDays(2).truncatedTo(ChronoUnit.SECONDS),
+    visitStart: LocalDateTime = LocalDateTime.of((LocalDateTime.now().year + 1), 11, 1, 12, 30, 44),
     visitEnd: LocalDateTime = visitStart.plusHours(1),
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
