@@ -243,7 +243,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     responseSpec
       .expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change an expired visit")
+      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
       .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be changed")
   }
 

@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_CHANGE")
@@ -127,7 +128,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
           assertThat(it["visitType"]).isEqualTo(reservedVisit.visitType.name)
           assertThat(it["visitRoom"]).isEqualTo(reservedVisit.visitRoom)
           assertThat(it["visitRestriction"]).isEqualTo(reservedVisit.visitRestriction.name)
-          assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.toString())
+          assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
           assertThat(it["visitStatus"]).isEqualTo(VisitStatus.CHANGING.name)
         },
         isNull()
@@ -143,7 +144,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
           assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
           assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
           assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-          assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+          assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
           assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
         },
         isNull()
@@ -180,7 +181,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()
@@ -216,7 +217,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()
@@ -252,7 +253,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()
@@ -287,7 +288,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.toString())
+        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
       isNull()
@@ -371,7 +372,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change an expired visit")
+      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
       .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - ${expiredVisit.reference} is in the past, it cannot be changed")
   }
 }

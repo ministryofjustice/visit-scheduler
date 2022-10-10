@@ -49,18 +49,15 @@ class VisitService(
     val log: Logger = LoggerFactory.getLogger(this::class.java)
     const val MAX_RECORDS = 10000
     val EXPIRED_VISIT_STATUSES = listOf(RESERVED, CHANGING)
+    const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
   }
 
   fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
     val visit = visitRepository.findBookedVisit(bookingReference)
       ?: throw VisitNotFoundException("Visit booking reference $bookingReference not found")
 
-    // check if the visit is in the past
-    if (isBookingStartDateInPast(visit)) throw ExpiredVisitAmendException(
-      "Visit with booking reference - $bookingReference is in the past, it cannot be changed",
-      ExpiredVisitAmendException("trying to change an expired visit")
-    )
-
+    // check if the existing visit is in the past
+    validateVisitStartDate(visit, "changed")
     return reserveVisitSlot(bookingReference, reserveVisitSlotDto)
   }
 
@@ -320,13 +317,9 @@ class VisitService(
     val visitToBook = visitRepository.findByApplicationReference(applicationReference) ?: throw VisitNotFoundException("Could not find reserved visit applicationReference:$applicationReference not found")
     val existingBookedVisit = visitRepository.findBookedVisit(visitToBook.reference)
 
-    // check if the visit being changed is in the past
+    // check if the existing visit is in the past
     existingBookedVisit?.let {
-      if (isBookingStartDateInPast(it))
-        throw ExpiredVisitAmendException(
-          "Visit with booking reference - ${it.reference} is in the past, it cannot be changed",
-          ExpiredVisitAmendException("trying to change an expired visit")
-        )
+      validateVisitStartDate(existingBookedVisit, "changed")
     }
 
     val changedVisit = existingBookedVisit != null
@@ -366,11 +359,7 @@ class VisitService(
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
 
     // check if the visit being cancelled is in the past
-    if (isBookingStartDateInPast(visitEntity))
-      throw ExpiredVisitAmendException(
-        "Visit with booking reference - ${visitEntity.reference} is in the past, it cannot be cancelled",
-        ExpiredVisitAmendException("trying to cancel an expired visit")
-      )
+    validateVisitStartDate(visitEntity, "cancelled")
 
     visitEntity.visitStatus = VisitStatus.CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
@@ -440,8 +429,13 @@ class VisitService(
     )
   }
 
-  private fun isBookingStartDateInPast(visit: Visit): Boolean {
-    return visit.visitStart.isBefore(LocalDateTime.now())
+  private fun validateVisitStartDate(visit: Visit, action: String) {
+    if (visit.visitStart.isBefore(LocalDateTime.now())) {
+      throw ExpiredVisitAmendException(
+        AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
+        ExpiredVisitAmendException("trying to change / cancel an expired visit")
+      )
+    }
   }
 
   private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): Map<String, String> {

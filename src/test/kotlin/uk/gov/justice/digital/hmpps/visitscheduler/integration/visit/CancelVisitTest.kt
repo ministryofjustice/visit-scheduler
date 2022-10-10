@@ -273,7 +273,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to cancel an expired visit")
+      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
       .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be cancelled")
 
     // And
