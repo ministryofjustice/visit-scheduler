@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import java.time.LocalDateTime
 
 @DisplayName("Put /visits/{reference}/cancel")
 class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
@@ -252,8 +253,41 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isUnauthorized
   }
 
+  @Test
+  fun `cancel expired visit returns error`() {
+    val outcomeDto = OutcomeDto(
+      OutcomeStatus.CANCELLATION,
+      "No longer joining."
+    )
+    // Given
+    val expiredVisit = createExpiredVisitAndSave()
+
+    // When
+    val responseSpec = webTestClient.patch().uri("/visits/${expiredVisit.reference}/cancel")
+      .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
+      .body(
+        BodyInserters.fromValue(outcomeDto)
+      )
+      .exchange()
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
+      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - ${expiredVisit.reference} is in the past, it cannot be cancelled")
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("visit.cancelled-domain-event"), any(), isNull())
+  }
+
   private fun createVisitAndSave(): Visit {
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
-    return visit
+    return visitEntityHelper.create(visitStatus = BOOKED)
+  }
+
+  private fun createExpiredVisitAndSave(): Visit {
+    val visitStart = LocalDateTime.of((LocalDateTime.now().year - 1), 11, 1, 12, 30, 44)
+
+    return visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit")
   }
 }

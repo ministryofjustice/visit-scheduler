@@ -29,7 +29,7 @@ class VisitEntityHelper(
     prisonerId: String = "FF0000AA",
     prisonId: String = "MDI",
     visitRoom: String = "A1",
-    visitStart: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44),
+    visitStart: LocalDateTime = LocalDateTime.of((LocalDateTime.now().year + 1), 11, 1, 12, 30, 44),
     visitEnd: LocalDateTime = visitStart.plusHours(1),
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
