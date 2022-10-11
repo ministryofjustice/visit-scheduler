@@ -19,7 +19,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import java.time.Clock
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -36,7 +35,6 @@ class SessionService(
   private val visitRepository: VisitRepository,
   private val prisonApiClient: PrisonApiClient,
   private val visitService: VisitService,
-  private val clock: Clock,
   @Value("\${policy.session.booking-notice-period.minimum-days:2}")
   private val policyNoticeDaysMin: Long,
   @Value("\${policy.session.booking-notice-period.maximum-days:28}")
@@ -60,7 +58,7 @@ class SessionService(
     noticeDaysMin: Long? = null,
     noticeDaysMax: Long? = null
   ): List<VisitSessionDto> {
-    val today = LocalDate.now(clock)
+    val today = LocalDate.now()
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
 

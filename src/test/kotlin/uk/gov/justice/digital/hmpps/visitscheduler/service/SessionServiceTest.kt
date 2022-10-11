@@ -37,7 +37,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import java.time.Clock
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
@@ -46,8 +45,7 @@ import java.time.DayOfWeek.WEDNESDAY
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.ZoneId
-import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 
 @ExtendWith(MockitoExtension::class)
@@ -61,8 +59,7 @@ class SessionServiceTest {
   private lateinit var sessionService: SessionService
 
   // today is Friday Jan 1st
-  private val date = LocalDate.parse("2021-01-01")
-  private val time = LocalTime.parse("11:15")
+  private val date = LocalDate.now()
 
   private val prisonId = "MDI"
   private val noticeDaysMin = 1L
@@ -114,7 +111,6 @@ class SessionServiceTest {
         visitRepository,
         prisonApiClient,
         visitService,
-        Clock.fixed(date.atTime(time).toInstant(ZoneOffset.UTC), ZoneId.systemDefault()),
         policyNoticeDaysMin = noticeDaysMin,
         policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
@@ -142,12 +138,14 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonId)
 
       // Then
+      val fridayAfter = date.with(TemporalAdjusters.next(weeklySession.dayOfWeek)).atTime(weeklySession.startTime)
+
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
-      assertDate(sessions[0].startTimestamp, "2021-01-08T11:30:00", FRIDAY)
-      assertDate(sessions[1].startTimestamp, "2021-01-15T11:30:00", FRIDAY)
-      assertDate(sessions[2].startTimestamp, "2021-01-22T11:30:00", FRIDAY)
-      assertDate(sessions[3].startTimestamp, "2021-01-29T11:30:00", FRIDAY)
-      assertDate(sessions[4].startTimestamp, "2021-02-05T11:30:00", FRIDAY)
+      assertDate(sessions[0].startTimestamp, fridayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
+      assertDate(sessions[1].startTimestamp, fridayAfter.plusWeeks(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
+      assertDate(sessions[2].startTimestamp, fridayAfter.plusWeeks(2).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
+      assertDate(sessions[3].startTimestamp, fridayAfter.plusWeeks(3).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
+      assertDate(sessions[4].startTimestamp, fridayAfter.plusWeeks(4).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
     }
 
     @Test
@@ -170,11 +168,12 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
-      assertDate(sessions[0].startTimestamp, "2021-01-06T11:30:00", WEDNESDAY)
-      assertDate(sessions[1].startTimestamp, "2021-01-13T11:30:00", WEDNESDAY)
-      assertDate(sessions[2].startTimestamp, "2021-01-20T11:30:00", WEDNESDAY)
-      assertDate(sessions[3].startTimestamp, "2021-01-27T11:30:00", WEDNESDAY)
-      assertDate(sessions[4].startTimestamp, "2021-02-03T11:30:00", WEDNESDAY)
+      val wednesdayAfter = date.with(TemporalAdjusters.next(weeklySession.dayOfWeek)).atTime(weeklySession.startTime)
+      assertDate(sessions[0].startTimestamp, wednesdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), WEDNESDAY)
+      assertDate(sessions[1].startTimestamp, wednesdayAfter.plusWeeks(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), WEDNESDAY)
+      assertDate(sessions[2].startTimestamp, wednesdayAfter.plusWeeks(2).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), WEDNESDAY)
+      assertDate(sessions[3].startTimestamp, wednesdayAfter.plusWeeks(3).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), WEDNESDAY)
+      assertDate(sessions[4].startTimestamp, wednesdayAfter.plusWeeks(4).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), WEDNESDAY)
     }
 
     @Test
@@ -195,7 +194,8 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      assertDate(sessions[0].startTimestamp, "2021-01-04T11:30:00", MONDAY)
+      val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
     }
 
     @Test
@@ -410,7 +410,6 @@ class SessionServiceTest {
         visitRepository,
         prisonApiClient,
         visitService,
-        Clock.fixed(date.atTime(time).toInstant(ZoneOffset.UTC), ZoneId.systemDefault()),
         policyNoticeDaysMin = noticeDaysMin,
         policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
@@ -441,8 +440,9 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
 
       // Then
+      val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertThat(sessions).size().isEqualTo(1)
-      assertDate(sessions[0].startTimestamp, "2021-01-04T11:30:00", MONDAY)
+      assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
@@ -482,8 +482,10 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
 
       // Then
+      val fridayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+
       assertThat(sessions).size().isEqualTo(1)
-      assertDate(sessions[0].startTimestamp, "2021-01-08T11:30:00", FRIDAY)
+      assertDate(sessions[0].startTimestamp, fridayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
@@ -517,8 +519,8 @@ class SessionServiceTest {
         )
       )
       val expectedAssociations = listOf(associationId)
-      val startDateTimeFilter = date.plusDays(1).atStartOfDay()
-      val endDateTimeFilter = date.plusDays(1).atTime(LocalTime.MAX)
+      val startDateTimeFilter = date.plusDays(1).with(singleSession.dayOfWeek).atStartOfDay()
+      val endDateTimeFilter = date.plusDays(1).with(singleSession.dayOfWeek).atTime(LocalTime.MAX)
 
       whenever(visitRepository.hasActiveVisits(expectedAssociations, prisonId, startDateTimeFilter, endDateTimeFilter))
         .thenReturn(
@@ -531,7 +533,8 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      assertDate(sessions[0].startTimestamp, "2021-01-02T11:30:00", SATURDAY)
+      val saturdayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), SATURDAY)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
@@ -575,8 +578,9 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
 
       // Then
+      val saturdayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertThat(sessions).size().isEqualTo(1)
-      assertDate(sessions[0].startTimestamp, "2021-01-02T11:30:00", SATURDAY)
+      assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), SATURDAY)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.DOUBLE_BOOKED)
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
@@ -606,8 +610,9 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
 
       // Then
+      val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertThat(sessions).size().isEqualTo(1)
-      assertDate(sessions[0].startTimestamp, "2021-01-04T11:30:00", MONDAY)
+      assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
@@ -652,7 +657,6 @@ class SessionServiceTest {
         visitRepository,
         prisonApiClient,
         visitService,
-        Clock.fixed(date.atTime(time).toInstant(ZoneOffset.UTC), ZoneId.systemDefault()),
         policyNoticeDaysMin = noticeDaysMin,
         policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = true,
@@ -684,7 +688,8 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      assertDate(sessions[0].startTimestamp, "2021-01-04T11:30:00", MONDAY)
+      val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
     }
 
