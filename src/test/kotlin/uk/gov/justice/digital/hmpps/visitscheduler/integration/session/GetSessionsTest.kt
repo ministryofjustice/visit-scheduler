@@ -6,9 +6,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Import
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
@@ -27,8 +25,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 
-// System time is altered using the TestClockConfiguration below
-@Import(TestClockConfiguration::class)
 @DisplayName("Get /visit-sessions")
 class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
@@ -197,8 +193,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val policyNoticeDaysMax = 10
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.parse("2021-01-01"),
-      validToDate = LocalDate.parse("2021-01-01"),
+      validFromDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
+      validToDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
       dayOfWeek = DayOfWeek.SATURDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
@@ -281,8 +277,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions that are no longer valid are not returned`() {
     // Given
     val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.parse("2020-01-01"),
-      validToDate = LocalDate.parse("2020-06-01")
+      validFromDate = LocalDate.now().minusDays(1),
+      validToDate = LocalDate.now().minusDays(1)
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -301,11 +297,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `sessions that start after the max policy notice days after current date are not returned`() {
     // Given
-
-    // System time is altered using the TestClockConfiguration above
     val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.parse("2022-01-01"),
-      validToDate = LocalDate.parse("2022-06-01")
+      validFromDate = LocalDate.now().plusDays(31),
+      validToDate = LocalDate.now().plusDays(120)
     )
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 

@@ -58,7 +58,6 @@ class SessionServiceTest {
 
   private lateinit var sessionService: SessionService
 
-  // today is Friday Jan 1st
   private val date = LocalDate.now()
 
   private val prisonId = "MDI"

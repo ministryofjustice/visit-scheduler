@@ -6,9 +6,10 @@ import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDate
+import java.time.format.DateTimeFormatter
 
 @DisplayName("Get /visit-session-templates")
-class GetSessionTemplate() : IntegrationTestBase() {
+class GetSessionTemplate : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
@@ -34,9 +35,9 @@ class GetSessionTemplate() : IntegrationTestBase() {
   @Test
   fun `all session templates are returned`() {
     // Given
-    sessionTemplateEntityHelper.create(validFromDate = LocalDate.parse("2021-01-01"))
+    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 
-    sessionTemplateEntityHelper.create(validFromDate = LocalDate.parse("2021-02-01"))
+    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates")
@@ -52,7 +53,7 @@ class GetSessionTemplate() : IntegrationTestBase() {
   @Test
   fun `session templates are returned by id`() {
     // Given
-    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.parse("2021-01-01"))
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates/${sessionTemplate.id}")
@@ -67,7 +68,7 @@ class GetSessionTemplate() : IntegrationTestBase() {
       .jsonPath("$.prisonId").isEqualTo("MDI")
       .jsonPath("$.startTime").isEqualTo("09:00:00")
       .jsonPath("$.endTime").isEqualTo("10:00:00")
-      .jsonPath("$.validFromDate").isEqualTo("2021-01-01")
+      .jsonPath("$.validFromDate").isEqualTo(LocalDate.now().format(DateTimeFormatter.ISO_DATE))
       .jsonPath("$.visitType").isEqualTo(VisitType.SOCIAL.name)
       .jsonPath("$.visitRoom").isEqualTo("3B")
       .jsonPath("$.closedCapacity").isEqualTo(5)
