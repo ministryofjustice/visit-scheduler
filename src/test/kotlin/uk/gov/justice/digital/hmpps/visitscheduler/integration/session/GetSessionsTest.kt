@@ -565,9 +565,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
-    val validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
+    val validFromDate = LocalDate.now().plusDays(2)
 
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
@@ -590,8 +590,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
@@ -618,8 +618,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
@@ -658,8 +658,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
@@ -700,8 +700,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
@@ -742,9 +742,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
+    val validFromDate = LocalDate.now().plusDays(2)
 
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
@@ -783,8 +783,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
@@ -824,8 +824,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
