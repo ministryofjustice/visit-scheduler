@@ -236,7 +236,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions are not returned when start date is after policy notice min and max days`() {
     // Given
-    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.parse("2021-01-10"), validToDate = null)
+    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.now().plusDays(2), validToDate = null)
     val policyNoticeDaysMin = 0
     val policyNoticeDaysMax = 1
 
