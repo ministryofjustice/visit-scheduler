@@ -10,12 +10,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @DisplayName("GET $GET_VISIT_BY_REFERENCE")
 class VisitByReferenceTest : IntegrationTestBase() {
 
-  private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
+  private val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 

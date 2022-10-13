@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
@@ -50,7 +51,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   private lateinit var visitFull: Visit
 
   companion object {
-    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
+    val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
   }
 
   @BeforeEach
