@@ -40,21 +40,22 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @AfterEach
   internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
-  private var visitMin: Visit? = null
-  private var visitFull: Visit? = null
+  private lateinit var visitMin: Visit
+  private lateinit var visitFull: Visit
 
   @BeforeEach
   internal fun createVisits() {
 
     visitMin = visitEntityHelper.create(prisonId = "MDI", visitStart = visitTime, prisonerId = "FF0000AA")
+
     visitFull = visitEntityHelper.create(prisonId = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000BB")
 
-    visitEntityHelper.createNote(visit = visitFull!!, text = "A visit concern", type = VISITOR_CONCERN)
-    visitEntityHelper.createNote(visit = visitFull!!, text = "A visit outcome", type = VISIT_OUTCOMES)
-    visitEntityHelper.createNote(visit = visitFull!!, text = "A visit comment", type = VISIT_COMMENT)
-    visitEntityHelper.createNote(visit = visitFull!!, text = "Status has changed", type = STATUS_CHANGED_REASON)
+    visitEntityHelper.createNote(visit = visitFull, text = "A visit concern", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = visitFull, text = "A visit outcome", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = visitFull, text = "A visit comment", type = VISIT_COMMENT)
+    visitEntityHelper.createNote(visit = visitFull, text = "Status has changed", type = STATUS_CHANGED_REASON)
 
-    visitRepository.saveAndFlush(visitFull!!)
+    visitRepository.saveAndFlush(visitFull)
     val visitCC = visitEntityHelper.create(
       prisonId = "LEI", prisonerId = "FF0000CC",
       visitStart = visitTime.plusDays(2), visitEnd = visitTime.plusDays(2).plusHours(1)
@@ -74,10 +75,11 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `get visit by prisoner ID`() {
 
     // Given
+    val prisonId = "LEI"
     val prisonerId = "FF0000BB"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?prisonerId=$prisonerId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId")
 
     // Then
     responseSpec
@@ -85,7 +87,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.length()").isEqualTo(1)
       .jsonPath("$[0].prisonerId").isEqualTo("FF0000BB")
-      .jsonPath("$[0].startTimestamp").isEqualTo(visitFull?.visitStart.toString())
+      .jsonPath("$[0].startTimestamp").isEqualTo(visitFull.visitStart.toString())
       .jsonPath("$[0].reference").exists()
       .jsonPath("$[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
       .jsonPath("$[0].visitNotes[?(@.type=='VISIT_COMMENT')].text").isEqualTo("A visit comment")
@@ -99,7 +101,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "LEI"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?prisonId=$prisonId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -127,7 +129,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val startTimestamp = "2021-11-03T09:00:00"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?prisonId=$prisonId&startTimestamp=$startTimestamp")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&startTimestamp=$startTimestamp")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -145,7 +147,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonerId = "GG0000BB"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?prisonerId=$prisonerId&prisonId=$prisonId&startTimestamp=$startTimestamp")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&startTimestamp=$startTimestamp")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -175,18 +177,18 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `get visits starting before a specified date`() {
     // Given
     val startTimestamp = "2021-11-03T09:00:00"
+    val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?endTimestamp=$startTimestamp")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&endTimestamp=$startTimestamp")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(4)
+      .jsonPath("$.length()").isEqualTo(3)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
           "2021-11-02T13:30:44",
-          "2021-11-02T12:30:44",
           "2021-11-01T13:30:44",
           "2021-11-01T12:30:44"
         )
@@ -198,18 +200,18 @@ class VisitsByFilterTest : IntegrationTestBase() {
     // Given
     val startTimestamp = "2021-11-02T09:00:00"
     val endTimestamp = "2021-11-03T09:00:00"
+    val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?startTimestamp=$startTimestamp&endTimestamp=$endTimestamp")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&startTimestamp=$startTimestamp&endTimestamp=$endTimestamp")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(2)
+      .jsonPath("$.length()").isEqualTo(1)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
-          "2021-11-02T13:30:44",
-          "2021-11-02T12:30:44",
+          "2021-11-02T13:30:44"
         )
       )
   }
@@ -219,9 +221,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     // Given
     val nomisPersonId = 123
+    val prisonId = "LEI"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?nomisPersonId=$nomisPersonId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&nomisPersonId=$nomisPersonId")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -234,9 +237,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `get visits by status`() {
     // Given
     val visitStatus = BOOKED
+    val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?visitStatus=$visitStatus")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&visitStatus=$visitStatus")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -248,32 +252,31 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @Test
   fun `get visits paged`() {
     // Given
-    val size = 4
+    val size = 3
+    val prisonId = "MDI"
 
     // When
-    val responseSpecFirst = callVisitEndPoint("/visits?page=0&size=$size")
-    val responseSpecLast = callVisitEndPoint("/visits?page=1&size=$size")
+    val responseSpecFirst = callVisitGetEndPoint("/visits?prisonId=$prisonId&page=0&size=$size")
+    val responseSpecLast = callVisitGetEndPoint("/visits?prisonId=$prisonId&page=1&size=$size")
 
     // Then - Page 0
     responseSpecFirst.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(4)
+      .jsonPath("$.content.length()").isEqualTo(3)
       .jsonPath("$.content..startTimestamp").value(
         Matchers.contains(
           "2021-11-03T13:30:44",
-          "2021-11-03T12:30:44",
           "2021-11-02T13:30:44",
-          "2021-11-02T12:30:44",
+          "2021-11-01T13:30:44"
         )
       )
 
     // And - Page 1
     responseSpecLast.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(2)
+      .jsonPath("$.content.length()").isEqualTo(1)
       .jsonPath("$.content..startTimestamp").value(
         Matchers.contains(
-          "2021-11-01T13:30:44",
           "2021-11-01T12:30:44",
         )
       )
@@ -283,9 +286,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `no visits found for prisoner`() {
     // Given
     val prisonerId = 12345
+    val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?prisonerId=$prisonerId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -298,9 +302,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     // Given
     val nomisPersonId = "123LL"
+    val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?nomisPersonId=$nomisPersonId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&nomisPersonId=$nomisPersonId")
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -311,10 +316,11 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `get visits by invalid status`() {
     // Given
     val visitStatus = "AnythingWillDo"
+    val prisonId = "MDI"
 
     // When
 
-    val responseSpec = callVisitEndPoint("/visits?visitStatus=$visitStatus")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&visitStatus=$visitStatus")
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -325,9 +331,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `access forbidden when no role`() {
     // Given
     val prisonerId = "FF0000AA"
+    val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitEndPoint("/visits?prisonerId=$prisonerId", listOf())
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId", listOf())
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -338,15 +345,16 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `unauthorised when no token`() {
     // Given
     val prisonerId = "FF0000AA"
+    val prisonId = "MDI"
 
     // When
-    val responseSpec = webTestClient.get().uri("/visits?prisonerId=$prisonerId").exchange()
+    val responseSpec = webTestClient.get().uri("/visits??prisonId=$prisonId&prisonerId=$prisonerId").exchange()
 
     // Then
     responseSpec.expectStatus().isUnauthorized
   }
 
-  fun callVisitEndPoint(url: String, roles: List<String> = listOf("ROLE_VISIT_SCHEDULER")): ResponseSpec {
+  fun callVisitGetEndPoint(url: String, roles: List<String> = listOf("ROLE_VISIT_SCHEDULER")): ResponseSpec {
     return webTestClient.get().uri(url)
       .headers(setAuthorisation(roles = roles))
       .exchange()

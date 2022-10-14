@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
@@ -299,11 +298,11 @@ class VisitController(
       description = "Filter results by prisoner id",
       example = "A12345DC"
     ) prisonerId: String?,
-    @RequestParam(value = "prisonId", required = false)
+    @RequestParam(value = "prisonId", required = true)
     @Parameter(
       description = "Filter results by prison id",
       example = "MDI"
-    ) prisonId: String?,
+    ) prisonId: String,
     @RequestParam(value = "startTimestamp", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
@@ -328,14 +327,12 @@ class VisitController(
     ) visitStatus: VisitStatus?
   ): List<VisitDto> =
     visitService.findVisitsByFilter(
-      VisitFilter(
-        prisonerId = prisonerId?.trim(),
-        prisonId = prisonId?.trim(),
-        startDateTime = startTimestamp,
-        endDateTime = endTimestamp,
-        nomisPersonId = nomisPersonId,
-        visitStatus = visitStatus
-      )
+      prisonerId = prisonerId,
+      prisonId = prisonId,
+      startDateTime = startTimestamp,
+      endDateTime = endTimestamp,
+      nomisPersonId = nomisPersonId,
+      visitStatus = visitStatus
     )
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -371,11 +368,11 @@ class VisitController(
       description = "Filter results by prisoner id",
       example = "A12345DC"
     ) prisonerId: String?,
-    @RequestParam(value = "prisonId", required = false)
+    @RequestParam(value = "prisonId", required = true)
     @Parameter(
       description = "Filter results by prison id",
       example = "MDI"
-    ) prisonId: String?,
+    ) prisonId: String,
     @RequestParam(value = "startTimestamp", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
@@ -402,25 +399,24 @@ class VisitController(
     @Parameter(
       description = "Pagination page number, starting at zero",
       example = "0"
-    ) page: Int?,
+    ) page: Int,
     @RequestParam(value = "size", required = true)
     @Parameter(
       description = "Pagination size per page",
       example = "50"
-    ) size: Int?
-  ): Page<VisitDto> =
-    visitService.findVisitsByFilterPageableDescending(
-      VisitFilter(
-        prisonerId = prisonerId?.trim(),
-        prisonId = prisonId?.trim(),
-        startDateTime = startTimestamp,
-        endDateTime = endTimestamp,
-        nomisPersonId = nomisPersonId,
-        visitStatus = visitStatus
-      ),
+    ) size: Int
+  ): Page<VisitDto> {
+    return visitService.findVisitsByFilterPageableDescending(
+      prisonerId = prisonerId,
+      prisonId = prisonId,
+      startDateTime = startTimestamp,
+      endDateTime = endTimestamp,
+      nomisPersonId = nomisPersonId,
+      visitStatus = visitStatus,
       page,
       size
     )
+  }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_VISIT_BY_REFERENCE)
