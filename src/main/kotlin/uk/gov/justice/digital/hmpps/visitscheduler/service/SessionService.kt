@@ -208,12 +208,12 @@ class SessionService(
   }
 
   private fun sessionHasBooking(session: VisitSessionDto, prisonerId: String): Boolean {
-
     return visitRepository.hasVisits(
       prisonId = session.prisonId,
       prisonerId = prisonerId,
       startDateTime = session.startTimestamp,
-      endDateTime = session.endTimestamp)
+      endDateTime = session.endTimestamp
+    )
   }
 
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {

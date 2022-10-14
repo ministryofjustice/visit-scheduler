@@ -632,8 +632,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-    val returnResult =  responseSpec.expectStatus().isOk
-                        .expectBody()
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
     val visitSessionDtos = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 
     Assertions.assertThat(visitSessionDtos).hasSize(4)
@@ -680,7 +680,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-    val returnResult =  responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val visitSessionDtos = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 
