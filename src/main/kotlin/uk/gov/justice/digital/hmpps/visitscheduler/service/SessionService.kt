@@ -12,8 +12,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDet
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
@@ -215,9 +213,7 @@ class SessionService(
       prisonId = session.prisonId,
       prisonerId = prisonerId,
       startDateTime = session.startTimestamp,
-      endDateTime = session.endTimestamp,
-      visitStatus = listOf(BOOKED, RESERVED)
-    )
+      endDateTime = session.endTimestamp)
   }
 
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {

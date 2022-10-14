@@ -474,7 +474,7 @@ class SessionServiceTest {
           )
         )
       )
-      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -553,7 +553,7 @@ class SessionServiceTest {
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto())
 
-      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -701,7 +701,7 @@ class SessionServiceTest {
         )
       )
 
-      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -740,7 +740,7 @@ class SessionServiceTest {
         )
       )
 
-      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -768,7 +768,7 @@ class SessionServiceTest {
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto())
 
-      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -804,7 +804,7 @@ class SessionServiceTest {
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto())
 
-      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)

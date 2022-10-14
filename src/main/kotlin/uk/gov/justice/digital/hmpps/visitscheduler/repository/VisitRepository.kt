@@ -138,7 +138,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v LEFT JOIN v.visitors as vis " +
-      "WHERE (v.visitStatus in :visitStatus)  AND " +
+      "WHERE (v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED')  AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(v.prisonId = :prisonId) AND " +
       "(v.visitStart >= :startDateTime) AND " +
@@ -148,7 +148,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     @Param("prisonerId") prisonerId: String,
     @Param("prisonId") prisonId: String,
     @Param("startDateTime") startDateTime: LocalDateTime,
-    @Param("endDateTime") endDateTime: LocalDateTime? = null,
-    @Param("visitStatus") visitStatus: List<VisitStatus>
+    @Param("endDateTime") endDateTime: LocalDateTime? = null
   ): Boolean
 }
