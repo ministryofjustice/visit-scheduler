@@ -137,7 +137,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Page<Visit>
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) != 1) THEN TRUE ELSE FALSE END FROM Visit v LEFT JOIN v.visitors as vis " +
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v LEFT JOIN v.visitors as vis " +
       "WHERE (v.visitStatus in :visitStatus)  AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(v.prisonId = :prisonId) AND " +
