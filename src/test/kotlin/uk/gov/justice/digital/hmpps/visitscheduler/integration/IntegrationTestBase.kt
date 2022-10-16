@@ -81,7 +81,6 @@ abstract class IntegrationTestBase {
         registry.add("spring.flyway.url", pgContainer::getJdbcUrl)
         registry.add("spring.flyway.user", pgContainer::getUsername)
         registry.add("spring.flyway.password", pgContainer::getPassword)
-        registry.add("prison.api.url", prisonApiMockServer::baseUrl)
       }
 
       lsContainer?.run {
@@ -92,6 +91,8 @@ abstract class IntegrationTestBase {
             registry.add("hmpps.sqs.region") { it.second }
           }
       }
+
+      registry.add("prison.api.url", prisonApiMockServer::baseUrl)
     }
   }
 }
