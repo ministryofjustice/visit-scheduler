@@ -27,7 +27,6 @@ hmpps.auth.url: http://localhost:8090/auth
 
 prison:
   api:
-    url: http://localhost:8092
     timeout: 5s
 
 policy:

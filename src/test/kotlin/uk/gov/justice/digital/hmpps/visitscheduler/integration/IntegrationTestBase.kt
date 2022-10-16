@@ -81,7 +81,7 @@ abstract class IntegrationTestBase {
         registry.add("spring.flyway.url", pgContainer::getJdbcUrl)
         registry.add("spring.flyway.user", pgContainer::getUsername)
         registry.add("spring.flyway.password", pgContainer::getPassword)
-        registry.add("prison.api.url", { -> "http://localhost:" + prisonApiMockServer.port() })
+        registry.add("prison.api.url", prisonApiMockServer::baseUrl)
       }
 
       lsContainer?.run {
