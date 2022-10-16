@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import org.springframework.http.MediaType
 
-class PrisonApiMockServer : WireMockServer(8092) {
+class PrisonApiMockServer : WireMockServer(0) {
 
   fun stubGetOffenderNonAssociation(offenderNo: String, nonAssociationId: String, effectiveDate: String, expiryDate: String? = null) {
     stubFor(
