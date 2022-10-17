@@ -225,8 +225,8 @@ class VisitService(
     visitStatus: VisitStatus?
   ): List<VisitDto> {
     return findVisitsByFilterPageableDescending(
-      prisonerId = prisonerId?.trim(),
-      prisonId = prisonId.trim(),
+      prisonerId = prisonerId,
+      prisonId = prisonId,
       startDateTime = startDateTime,
       endDateTime = endDateTime,
       nomisPersonId = nomisPersonId,
@@ -249,8 +249,8 @@ class VisitService(
     val page: Pageable = PageRequest.of(pageablePage, pageableSize, Sort.by(Visit::visitStart.name).descending())
 
     return visitRepository.findPageBy(
-      prisonerId = prisonerId?.trim(),
-      prisonId = prisonId.trim(),
+      prisonerId = prisonerId,
+      prisonId = prisonId,
       startDateTime = startDateTime,
       endDateTime = endDateTime,
       nomisPersonId = nomisPersonId,

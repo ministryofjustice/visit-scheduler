@@ -327,8 +327,8 @@ class VisitController(
     ) visitStatus: VisitStatus?
   ): List<VisitDto> =
     visitService.findVisitsByFilter(
-      prisonerId = prisonerId,
-      prisonId = prisonId,
+      prisonerId = prisonerId?.trim(),
+      prisonId = prisonId.trim(),
       startDateTime = startTimestamp,
       endDateTime = endTimestamp,
       nomisPersonId = nomisPersonId,
@@ -407,8 +407,8 @@ class VisitController(
     ) size: Int
   ): Page<VisitDto> {
     return visitService.findVisitsByFilterPageableDescending(
-      prisonerId = prisonerId,
-      prisonId = prisonId,
+      prisonerId = prisonerId?.trim(),
+      prisonId = prisonId.trim(),
       startDateTime = startTimestamp,
       endDateTime = endTimestamp,
       nomisPersonId = nomisPersonId,
