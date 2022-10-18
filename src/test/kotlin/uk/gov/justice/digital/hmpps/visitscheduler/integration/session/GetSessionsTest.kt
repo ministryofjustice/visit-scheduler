@@ -667,8 +667,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visitReserved = Visit(
