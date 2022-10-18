@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
@@ -612,7 +613,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `visit sessions are returned for a prisoner with a future non-association with a booking`() {
+  fun `visit sessions are returned for a prisoner with a future non-association with a booked visit`() {
 
     // Given
     val prisonId = "MDI"
@@ -622,7 +623,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
-    val visit = Visit(
+    val visitBooked = Visit(
       prisonerId = prisonerId,
       prisonId = prisonId,
       visitRoom = sessionTemplate.visitRoom,
@@ -633,7 +634,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN
     )
 
-    visitRepository.saveAndFlush(visit)
+    visitRepository.saveAndFlush(visitBooked)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
@@ -647,9 +648,64 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(4)
+    val visitSessionDtos = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+
+    Assertions.assertThat(visitSessionDtos).hasSize(4)
+    Assertions.assertThat(visitSessionDtos[0].sessionConflicts).hasSize(1)
+    Assertions.assertThat(visitSessionDtos[0].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKED)
+    Assertions.assertThat(visitSessionDtos[1].sessionConflicts).isEmpty()
+    Assertions.assertThat(visitSessionDtos[2].sessionConflicts).isEmpty()
+    Assertions.assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
+  }
+
+  @Test
+  fun `visit sessions are returned for a prisoner with a future non-association with a reserved visit`() {
+
+    // Given
+    val prisonId = "MDI"
+    val prisonerId = "A1234AA"
+    val associationId = "B1234BB"
+    val validFromDate = LocalDate.parse("2021-01-08")
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+
+    val visitReserved = Visit(
+      prisonerId = prisonerId,
+      prisonId = prisonId,
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = validFromDate.atTime(9, 0),
+      visitEnd = validFromDate.atTime(9, 30),
+      visitType = SOCIAL,
+      visitStatus = RESERVED,
+      visitRestriction = OPEN
+    )
+
+    visitRepository.saveAndFlush(visitReserved)
+
+    prisonApiMockServer.stubGetOffenderNonAssociation(
+      prisonerId,
+      associationId,
+      validFromDate.plusMonths(6).toString()
+    )
+
+    // When
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionDtos = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+
+    Assertions.assertThat(visitSessionDtos).hasSize(4)
+    Assertions.assertThat(visitSessionDtos[0].sessionConflicts).hasSize(1)
+    Assertions.assertThat(visitSessionDtos[0].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKED)
+    Assertions.assertThat(visitSessionDtos[1].sessionConflicts).isEmpty()
+    Assertions.assertThat(visitSessionDtos[2].sessionConflicts).isEmpty()
+    Assertions.assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
   }
 
   @Test

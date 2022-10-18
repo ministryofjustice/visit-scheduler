@@ -7,9 +7,9 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.ArgumentMatchers.any
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
@@ -34,7 +34,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
-import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
@@ -474,8 +473,7 @@ class SessionServiceTest {
           )
         )
       )
-
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -557,21 +555,7 @@ class SessionServiceTest {
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto())
 
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
-        .thenReturn(
-          listOf(
-            Visit(
-              prisonerId = prisonId,
-              visitStart = date.plusDays(1).atTime(11, 30),
-              visitEnd = date.plusDays(1).atTime(12, 30),
-              visitType = SOCIAL,
-              prisonId = prisonId,
-              visitStatus = BOOKED,
-              visitRestriction = OPEN,
-              visitRoom = "123c",
-            )
-          )
-        )
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -720,7 +704,8 @@ class SessionServiceTest {
           )
         )
       )
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java))).thenReturn(emptyList())
+
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -759,21 +744,7 @@ class SessionServiceTest {
         )
       )
 
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
-        .thenReturn(
-          listOf(
-            Visit(
-              prisonerId = associationId,
-              visitStart = date.plusDays(2).atTime(10, 30),
-              visitEnd = date.plusDays(2).atTime(11, 30),
-              visitType = SOCIAL,
-              prisonId = prisonId,
-              visitStatus = BOOKED,
-              visitRestriction = OPEN,
-              visitRoom = "123c",
-            )
-          )
-        )
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -801,21 +772,7 @@ class SessionServiceTest {
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto())
 
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
-        .thenReturn(
-          listOf(
-            Visit(
-              prisonerId = prisonId,
-              visitStart = date.plusDays(2).atTime(11, 30),
-              visitEnd = date.plusDays(2).atTime(12, 30),
-              visitType = SOCIAL,
-              prisonId = prisonId,
-              visitStatus = BOOKED,
-              visitRestriction = OPEN,
-              visitRoom = "123c",
-            )
-          )
-        )
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
@@ -851,21 +808,7 @@ class SessionServiceTest {
         prisonApiClient.getOffenderNonAssociation(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto())
 
-      whenever(visitRepository.findAll(any(VisitSpecification::class.java)))
-        .thenReturn(
-          listOf(
-            Visit(
-              prisonerId = prisonId,
-              visitStart = date.plusDays(2).atTime(11, 30),
-              visitEnd = date.plusDays(2).atTime(12, 30),
-              visitType = SOCIAL,
-              prisonId = prisonId,
-              visitStatus = BOOKED,
-              visitRestriction = OPEN,
-              visitRoom = "123c",
-            )
-          )
-        )
+      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonId, prisonerId)

@@ -11,12 +11,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
-import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
@@ -209,16 +206,12 @@ class SessionService(
   }
 
   private fun sessionHasBooking(session: VisitSessionDto, prisonerId: String): Boolean {
-    return visitRepository.findAll(
-      VisitSpecification(
-        VisitFilter(
-          prisonId = session.prisonId,
-          prisonerId = prisonerId,
-          startDateTime = session.startTimestamp,
-          endDateTime = session.endTimestamp
-        )
-      )
-    ).any { isActiveStatus(it.visitStatus) }
+    return visitRepository.hasVisits(
+      prisonId = session.prisonId,
+      prisonerId = prisonerId,
+      startDateTime = session.startTimestamp,
+      endDateTime = session.endTimestamp
+    )
   }
 
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
@@ -243,7 +236,4 @@ class SessionService(
 
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
-
-  private fun isActiveStatus(status: VisitStatus) =
-    status == VisitStatus.BOOKED || status == VisitStatus.RESERVED
 }
