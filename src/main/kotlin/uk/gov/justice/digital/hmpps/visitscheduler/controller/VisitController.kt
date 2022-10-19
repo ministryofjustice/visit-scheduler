@@ -264,8 +264,6 @@ class VisitController(
     return visitService.cancelVisit(reference.trim(), cancelOutcome)
   }
 
-
-
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(params = ["page", "size"], path = [VISIT_CONTROLLER_PATH])
   @Operation(
