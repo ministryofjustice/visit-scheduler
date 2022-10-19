@@ -1,23 +1,29 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
+import java.time.LocalDateTime
 import javax.validation.Valid
 import kotlin.DeprecationLevel.WARNING
 
@@ -28,6 +34,78 @@ import kotlin.DeprecationLevel.WARNING
 class VisitControllerLegacy(
   private val visitService: VisitService
 ) {
+
+  @Deprecated(message = "The consumer of this endpoint should switch to the getVisitsByFilterPageable")
+  @Suppress("KotlinDeprecation")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping()
+  @Operation(
+    summary = "Get visits",
+    description = "Retrieve visits with optional filters, sorted by start timestamp descending",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit Information Returned"
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to Get visits for prisoner",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to retrieve visits",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun getVisitsByFilter(
+    @RequestParam(value = "prisonerId", required = false)
+    @Parameter(
+      description = "Filter results by prisoner id",
+      example = "A12345DC"
+    ) prisonerId: String?,
+    @RequestParam(value = "prisonId", required = true)
+    @Parameter(
+      description = "Filter results by prison id",
+      example = "MDI"
+    ) prisonId: String,
+    @RequestParam(value = "startTimestamp", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Parameter(
+      description = "Filter results by visits that start on or after the given timestamp",
+      example = "2021-11-03T09:00:00"
+    ) startTimestamp: LocalDateTime?,
+    @RequestParam(value = "endTimestamp", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Parameter(
+      description = "Filter results by visits that start on or before the given timestamp",
+      example = "2021-11-03T09:00:00"
+    ) endTimestamp: LocalDateTime?,
+    @RequestParam(value = "nomisPersonId", required = false)
+    @Parameter(
+      description = "Filter results by visitor (contact id)",
+      example = "12322"
+    ) nomisPersonId: Long?,
+    @RequestParam(value = "visitStatus", required = false)
+    @Parameter(
+      description = "Filter results by visit status",
+      example = "BOOKED"
+    ) visitStatus: VisitStatus?
+  ): List<VisitDto> =
+    visitService.findVisitsByFilter(
+      prisonerId = prisonerId?.trim(),
+      prisonId = prisonId.trim(),
+      startDateTime = startTimestamp,
+      endDateTime = endTimestamp,
+      nomisPersonId = nomisPersonId,
+      visitStatus = visitStatus
+    )
 
   @Deprecated("This endpoint should be changed to :$VISIT_CANCEL", ReplaceWith(VISIT_CANCEL), WARNING)
   @Suppress("KotlinDeprecation")

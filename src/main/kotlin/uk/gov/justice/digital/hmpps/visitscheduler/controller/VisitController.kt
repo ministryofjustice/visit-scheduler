@@ -264,77 +264,7 @@ class VisitController(
     return visitService.cancelVisit(reference.trim(), cancelOutcome)
   }
 
-  @Deprecated(message = "The consumer of this endpoint should switch to the getVisitsByFilterPageable")
-  @Suppress("KotlinDeprecation")
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(VISIT_CONTROLLER_PATH)
-  @Operation(
-    summary = "Get visits",
-    description = "Retrieve visits with optional filters, sorted by start timestamp descending",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Visit Information Returned"
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "Incorrect request to Get visits for prisoner",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to retrieve visits",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
-  )
-  fun getVisitsByFilter(
-    @RequestParam(value = "prisonerId", required = false)
-    @Parameter(
-      description = "Filter results by prisoner id",
-      example = "A12345DC"
-    ) prisonerId: String?,
-    @RequestParam(value = "prisonId", required = true)
-    @Parameter(
-      description = "Filter results by prison id",
-      example = "MDI"
-    ) prisonId: String,
-    @RequestParam(value = "startTimestamp", required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @Parameter(
-      description = "Filter results by visits that start on or after the given timestamp",
-      example = "2021-11-03T09:00:00"
-    ) startTimestamp: LocalDateTime?,
-    @RequestParam(value = "endTimestamp", required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @Parameter(
-      description = "Filter results by visits that start on or before the given timestamp",
-      example = "2021-11-03T09:00:00"
-    ) endTimestamp: LocalDateTime?,
-    @RequestParam(value = "nomisPersonId", required = false)
-    @Parameter(
-      description = "Filter results by visitor (contact id)",
-      example = "12322"
-    ) nomisPersonId: Long?,
-    @RequestParam(value = "visitStatus", required = false)
-    @Parameter(
-      description = "Filter results by visit status",
-      example = "BOOKED"
-    ) visitStatus: VisitStatus?
-  ): List<VisitDto> =
-    visitService.findVisitsByFilter(
-      prisonerId = prisonerId?.trim(),
-      prisonId = prisonId.trim(),
-      startDateTime = startTimestamp,
-      endDateTime = endTimestamp,
-      nomisPersonId = nomisPersonId,
-      visitStatus = visitStatus
-    )
+
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(params = ["page", "size"], path = [VISIT_CONTROLLER_PATH])
