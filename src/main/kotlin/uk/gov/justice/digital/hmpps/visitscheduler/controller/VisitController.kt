@@ -264,6 +264,7 @@ class VisitController(
     return visitService.cancelVisit(reference.trim(), cancelOutcome)
   }
 
+  @Deprecated(message = "The consumer of this endpoint should switch to the getVisitsByFilterPageable")
   @Suppress("KotlinDeprecation")
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_CONTROLLER_PATH)
