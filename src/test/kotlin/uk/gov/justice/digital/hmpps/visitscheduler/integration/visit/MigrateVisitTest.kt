@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -676,6 +677,6 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   companion object {
-    val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
+    val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
   }
 }

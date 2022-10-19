@@ -6,9 +6,7 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Import
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
@@ -24,11 +22,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRep
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.TemporalAdjusters
 
-// System time is altered using the TestClockConfiguration below
-@Import(TestClockConfiguration::class)
 @DisplayName("Get /visit-sessions")
 class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
@@ -50,7 +47,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions are returned for a prison for a single schedule`() {
 
     // Given
-    val dateTime = LocalDate.parse("2021-01-08")
+    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
 
     val sessionTemplate = sessionTemplate(
       validFromDate = dateTime,
@@ -70,22 +67,22 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].startTimestamp").isEqualTo("2021-01-08T09:00:00")
-      .jsonPath("$[0].endTimestamp").isEqualTo("2021-01-08T10:00:00")
+      .jsonPath("$[0].startTimestamp").isEqualTo(dateTime.atTime(sessionTemplate.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+      .jsonPath("$[0].endTimestamp").isEqualTo(dateTime.atTime(sessionTemplate.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
   }
 
   @Test
   fun `visit sessions are returned for a prison for a weekly schedule`() {
     // Given
     val sessionTemplate1 = sessionTemplate(
-      validFromDate = LocalDate.parse("2021-01-08"),
+      validFromDate = LocalDate.now().plusWeeks(1),
       dayOfWeek = DayOfWeek.SUNDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
     )
 
     val sessionTemplate2 = sessionTemplate(
-      validFromDate = LocalDate.parse("2021-01-08"),
+      validFromDate = LocalDate.now().plusWeeks(1),
       dayOfWeek = DayOfWeek.MONDAY,
       startTime = LocalTime.parse("10:30"),
       endTime = LocalTime.parse("11:30")
@@ -93,6 +90,13 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate1)
     sessionTemplateRepository.saveAndFlush(sessionTemplate2)
+
+    // 1st valid session after session template 1 starts
+    val firstValidSessionAfterTemplate1Start =
+      sessionTemplate1.validFromDate.with(TemporalAdjusters.next(sessionTemplate1.dayOfWeek))
+    // 1st valid session after session template 2 starts
+    val firstValidSessionAfterTemplate2Start =
+      sessionTemplate2.validFromDate.with(TemporalAdjusters.next(sessionTemplate2.dayOfWeek))
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
@@ -106,35 +110,49 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val visitSessionDto = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 
     Assertions.assertThat(visitSessionDto.size).isEqualTo(6)
-    Assertions.assertThat(visitSessionDto[0].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-10T09:00:00"))
-    Assertions.assertThat(visitSessionDto[0].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-10T10:00:00"))
+    Assertions.assertThat(visitSessionDto[0].startTimestamp).isEqualTo(
+      firstValidSessionAfterTemplate1Start
+        .atTime(sessionTemplate1.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    )
+    Assertions.assertThat(visitSessionDto[0].endTimestamp).isEqualTo(
+      firstValidSessionAfterTemplate1Start
+        .atTime(sessionTemplate1.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    )
     Assertions.assertThat(visitSessionDto[0].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
     Assertions.assertThat(visitSessionDto[0].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
 
-    Assertions.assertThat(visitSessionDto[1].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-11T10:30:00"))
-    Assertions.assertThat(visitSessionDto[1].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-11T11:30:00"))
+    Assertions.assertThat(visitSessionDto[1].startTimestamp).isEqualTo(
+      firstValidSessionAfterTemplate2Start
+        .atTime(sessionTemplate2.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    )
+    Assertions.assertThat(visitSessionDto[1].endTimestamp).isEqualTo(
+      firstValidSessionAfterTemplate2Start
+        .atTime(sessionTemplate2.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    )
     Assertions.assertThat(visitSessionDto[1].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
     Assertions.assertThat(visitSessionDto[1].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
 
-    Assertions.assertThat(visitSessionDto[2].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-17T09:00:00"))
-    Assertions.assertThat(visitSessionDto[2].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-17T10:00:00"))
+    Assertions.assertThat(visitSessionDto[2].startTimestamp).isEqualTo(
+      firstValidSessionAfterTemplate1Start.plusWeeks(1)
+        .atTime(sessionTemplate1.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    )
+    Assertions.assertThat(visitSessionDto[2].endTimestamp).isEqualTo(
+      firstValidSessionAfterTemplate1Start.plusWeeks(1)
+        .atTime(sessionTemplate1.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    )
     Assertions.assertThat(visitSessionDto[2].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
     Assertions.assertThat(visitSessionDto[2].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
 
-    Assertions.assertThat(visitSessionDto[3].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-18T10:30:00"))
-    Assertions.assertThat(visitSessionDto[3].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-18T11:30:00"))
+    Assertions.assertThat(visitSessionDto[3].startTimestamp).isEqualTo(
+      firstValidSessionAfterTemplate2Start.plusWeeks(1)
+        .atTime(sessionTemplate2.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    )
+    Assertions.assertThat(visitSessionDto[3].endTimestamp).isEqualTo(
+      firstValidSessionAfterTemplate2Start.plusWeeks(1)
+        .atTime(sessionTemplate2.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
+    )
     Assertions.assertThat(visitSessionDto[3].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
     Assertions.assertThat(visitSessionDto[3].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
-
-    Assertions.assertThat(visitSessionDto[4].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-24T09:00:00"))
-    Assertions.assertThat(visitSessionDto[4].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-24T10:00:00"))
-    Assertions.assertThat(visitSessionDto[4].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
-    Assertions.assertThat(visitSessionDto[4].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
-
-    Assertions.assertThat(visitSessionDto[5].startTimestamp).isEqualTo(LocalDateTime.parse("2021-01-25T10:30:00"))
-    Assertions.assertThat(visitSessionDto[5].endTimestamp).isEqualTo(LocalDateTime.parse("2021-01-25T11:30:00"))
-    Assertions.assertThat(visitSessionDto[5].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
-    Assertions.assertThat(visitSessionDto[5].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
   }
 
   @Test
@@ -144,8 +162,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val policyNoticeDaysMax = 10
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.parse("2021-01-01"),
-      validToDate = LocalDate.parse("2021-01-01"),
+      validFromDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
+      validToDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
       dayOfWeek = DayOfWeek.FRIDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
@@ -176,8 +194,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val policyNoticeDaysMax = 10
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.parse("2021-01-01"),
-      validToDate = LocalDate.parse("2021-01-01"),
+      validFromDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
+      validToDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
       dayOfWeek = DayOfWeek.SATURDAY,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
@@ -199,7 +217,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions are not returned when policy notice min days is greater than max without valid to date`() {
     // Given
-    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.parse("2021-01-08"), validToDate = null)
+    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)), validToDate = null)
     val policyNoticeDaysMin = 10
     val policyNoticeDaysMax = 1
 
@@ -219,7 +237,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions are not returned when start date is after policy notice min and max days`() {
     // Given
-    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.parse("2021-01-10"), validToDate = null)
+    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.now().plusDays(2), validToDate = null)
     val policyNoticeDaysMin = 0
     val policyNoticeDaysMax = 1
 
@@ -239,7 +257,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions are not returned for when policy notice min days is greater than max with valid to date`() {
     // Given
-    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.parse("2021-01-08"), validToDate = LocalDate.parse("2022-01-20"))
+    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)), validToDate = LocalDate.now().plusMonths(3))
     val policyNoticeDaysMin = 10
     val policyNoticeDaysMax = 1
 
@@ -260,8 +278,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions that are no longer valid are not returned`() {
     // Given
     val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.parse("2020-01-01"),
-      validToDate = LocalDate.parse("2020-06-01")
+      validFromDate = LocalDate.now().minusDays(1),
+      validToDate = LocalDate.now().minusDays(1)
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -280,11 +298,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `sessions that start after the max policy notice days after current date are not returned`() {
     // Given
-
-    // System time is altered using the TestClockConfiguration above
     val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.parse("2022-01-01"),
-      validToDate = LocalDate.parse("2022-06-01")
+      validFromDate = LocalDate.now().plusDays(31),
+      validToDate = LocalDate.now().plusDays(120)
     )
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -303,7 +319,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions include reserved and booked open visit count`() {
 
     // Given
-    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
+    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -350,7 +366,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions exclude visits with changing status in visit count`() {
 
     // Given
-    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
+    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -377,7 +393,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       prisonerId = "AF12345G",
       prisonId = "MDI",
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
+      visitStart = dateTime.with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CHANGING,
@@ -404,7 +420,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions include visit count one matching room name`() {
 
     // Given
-    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
+    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -413,7 +429,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validToDate = dateTime.toLocalDate(),
       startTime = startTime,
       endTime = endTime.toLocalTime(),
-      dayOfWeek = DayOfWeek.FRIDAY
+      dayOfWeek = dateTime.dayOfWeek
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -451,7 +467,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions include reserved and booked closed visit count`() {
 
     // Given
-    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
+    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -499,7 +515,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions visit count includes only visits within session period`() {
 
     // Given
-    val dateTime = LocalDate.parse("2021-01-08").atTime(9, 0)
+    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -550,9 +566,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
-    val validFromDate = LocalDate.parse("2021-01-08")
+    val validFromDate = LocalDate.now().plusDays(2)
 
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
@@ -575,8 +591,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
@@ -603,8 +619,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visitBooked = Visit(
@@ -651,8 +667,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visitReserved = Visit(
@@ -698,8 +714,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
@@ -740,8 +756,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
@@ -782,9 +798,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.parse("2021-01-08")
+    val validFromDate = LocalDate.now().plusDays(2)
 
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
@@ -823,8 +839,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(
@@ -864,8 +880,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.parse("2021-01-08")
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate)
+    val validFromDate = LocalDate.now().plusDays(2)
+    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     val visit = Visit(

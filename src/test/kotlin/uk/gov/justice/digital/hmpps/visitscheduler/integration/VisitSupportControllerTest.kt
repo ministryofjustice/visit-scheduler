@@ -9,10 +9,7 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.boot.test.mock.mockito.SpyBean
-import org.springframework.context.annotation.Import
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 
-@Import(TestClockConfiguration::class)
 @DisplayName("Get /visit-support")
 class VisitSupportControllerTest : IntegrationTestBase() {
 

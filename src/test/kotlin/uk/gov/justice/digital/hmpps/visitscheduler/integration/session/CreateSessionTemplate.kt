@@ -13,19 +13,16 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
-import org.springframework.context.annotation.Import
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateSessionTemplateRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.TestClockConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.DayOfWeek.MONDAY
 import java.time.LocalDate
 import java.time.LocalTime
 
-@Import(TestClockConfiguration::class)
 @DisplayName("POST /visit-session-templates")
 class CreateSessionTemplate(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
@@ -39,8 +36,8 @@ class CreateSessionTemplate(@Autowired private val objectMapper: ObjectMapper) :
     prisonId = "LEI",
     startTime = LocalTime.of(14, 30),
     endTime = LocalTime.of(16, 30),
-    validFromDate = LocalDate.of(2021, 1, 1),
-    validToDate = LocalDate.of(2021, 4, 1),
+    validFromDate = LocalDate.now(),
+    validToDate = LocalDate.now().plusMonths(4),
     visitRoom = "A1",
     visitType = VisitType.SOCIAL,
     openCapacity = 5,
@@ -158,8 +155,8 @@ class CreateSessionTemplate(@Autowired private val objectMapper: ObjectMapper) :
       prisonId = "",
       startTime = LocalTime.of(14, 30),
       endTime = LocalTime.of(16, 30),
-      validFromDate = LocalDate.of(2021, 1, 1),
-      validToDate = LocalDate.of(2021, 4, 1),
+      validFromDate = LocalDate.now(),
+      validToDate = LocalDate.now().plusMonths(4),
       visitRoom = "A1",
       visitType = VisitType.SOCIAL,
       openCapacity = 5,
