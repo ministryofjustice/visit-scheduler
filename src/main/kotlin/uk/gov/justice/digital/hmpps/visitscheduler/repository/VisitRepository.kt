@@ -96,11 +96,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   )
   fun findBookedVisit(reference: String): Visit?
 
-  @Query(
-    "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'RESERVED' "
-  )
-  fun findReservedVisit(reference: String): Visit?
-
   @Transactional
   @Modifying
   @Query(

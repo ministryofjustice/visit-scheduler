@@ -11,10 +11,8 @@ import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
@@ -177,44 +175,6 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  @Suppress("KotlinDeprecation")
-  @Deprecated("this should not be used")
-  fun createVisit(createVisitRequest: CreateVisitRequestDto): VisitDto {
-    val visitEntity = visitRepository.saveAndFlush(
-      Visit(
-        prisonerId = createVisitRequest.prisonerId,
-        prisonId = createVisitRequest.prisonId,
-        visitRoom = createVisitRequest.visitRoom,
-        visitType = createVisitRequest.visitType,
-        visitStatus = RESERVED,
-        visitRestriction = createVisitRequest.visitRestriction,
-        visitStart = createVisitRequest.startTimestamp,
-        visitEnd = createVisitRequest.endTimestamp
-      )
-    )
-
-    createVisitRequest.visitContact?.let {
-      visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
-    }
-
-    createVisitRequest.visitors.forEach {
-      visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
-    }
-
-    createVisitRequest.visitorSupport?.let { supportList ->
-      supportList.forEach {
-        if (!supportTypeRepository.existsByName(it.type)) {
-          throw SupportNotFoundException("Invalid support ${it.type} not found")
-        }
-        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
-      }
-    }
-
-    trackEvent(TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT.eventName, createVisitTrackEventFromVisitEntity(visitEntity))
-
-    return VisitDto(visitEntity)
-  }
-
   @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
   fun findVisitsByFilter(
     prisonerId: String?,
@@ -268,66 +228,6 @@ class VisitService(
 
   fun getReservedExpiredDateAndTime(): LocalDateTime {
     return LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
-  }
-
-  @Suppress("KotlinDeprecation")
-  @Deprecated("this should not be used")
-  fun updateVisit(reference: String, updateVisitRequest: UpdateVisitRequestDto): VisitDto {
-    val visitEntity = visitRepository.findReservedVisit(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
-
-    updateVisitRequest.prisonerId?.let { prisonerId -> visitEntity.prisonerId = prisonerId }
-    updateVisitRequest.prisonId?.let { prisonId -> visitEntity.prisonId = prisonId }
-    updateVisitRequest.visitRoom?.let { visitRoom -> visitEntity.visitRoom = visitRoom }
-    updateVisitRequest.visitType?.let { visitType -> visitEntity.visitType = visitType }
-    updateVisitRequest.visitStatus?.let { status -> visitEntity.visitStatus = status }
-    updateVisitRequest.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
-    updateVisitRequest.startTimestamp?.let { visitStart -> visitEntity.visitStart = visitStart }
-    updateVisitRequest.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
-
-    updateVisitRequest.visitContact?.let { visitContactUpdate ->
-      visitEntity.visitContact?.let { visitContact ->
-        visitContact.name = visitContactUpdate.name
-        visitContact.telephone = visitContactUpdate.telephone
-      } ?: run {
-        visitEntity.visitContact = createVisitContact(visitEntity, visitContactUpdate.name, visitContactUpdate.telephone)
-      }
-    }
-
-    updateVisitRequest.visitors?.let { visitorsUpdate ->
-      visitEntity.visitors.clear()
-      visitRepository.saveAndFlush(visitEntity)
-      visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
-        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
-      }
-    }
-
-    updateVisitRequest.visitorSupport?.let { visitSupportUpdate ->
-      visitEntity.support.clear()
-      visitRepository.saveAndFlush(visitEntity)
-      visitSupportUpdate.forEach {
-        if (!supportTypeRepository.existsByName(it.type)) {
-          throw SupportNotFoundException("Invalid support ${it.type} not found")
-        }
-        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
-      }
-    }
-
-    telemetryClient.trackEvent(
-      TelemetryVisitEvents.VISIT_UPDATED_EVENT.eventName,
-      listOfNotNull(
-        "reference" to reference,
-        if (updateVisitRequest.prisonerId != null) "prisonerId" to updateVisitRequest.prisonerId else null,
-        if (updateVisitRequest.prisonId != null) "prisonId" to updateVisitRequest.prisonId else null,
-        if (updateVisitRequest.visitType != null) "visitType" to updateVisitRequest.visitType.name else null,
-        if (updateVisitRequest.visitRoom != null) "visitRoom" to updateVisitRequest.visitRoom else null,
-        if (updateVisitRequest.visitRestriction != null) "visitRestriction" to updateVisitRequest.visitRestriction.name else null,
-        if (updateVisitRequest.startTimestamp != null) "visitStart" to updateVisitRequest.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME) else null,
-        if (updateVisitRequest.visitStatus != null) "visitStatus" to updateVisitRequest.visitStatus.name else null
-      ).toMap(),
-      null
-    )
-
-    return VisitDto(visitEntity)
   }
 
   fun deleteAllExpiredVisitsByApplicationReference(applicationReferences: List<String>) {

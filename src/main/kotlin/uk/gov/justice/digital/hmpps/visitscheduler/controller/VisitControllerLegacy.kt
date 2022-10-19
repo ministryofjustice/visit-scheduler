@@ -1,29 +1,29 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.PostMapping
-import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
+import java.time.LocalDateTime
 import javax.validation.Valid
 import kotlin.DeprecationLevel.WARNING
 
@@ -32,33 +32,24 @@ import kotlin.DeprecationLevel.WARNING
 @Validated
 @RequestMapping(name = "Visit Resource", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitControllerLegacy(
-  private val visitService: VisitService,
-  private val snsService: SnsService,
+  private val visitService: VisitService
 ) {
 
-  @Deprecated(message = "This endpoint should be changed to :$VISIT_RESERVE_SLOT", ReplaceWith(VISIT_RESERVE_SLOT), WARNING)
+  @Deprecated(message = "The consumer of this endpoint should switch to the getVisitsByFilterPageable")
   @Suppress("KotlinDeprecation")
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PostMapping
-  @ResponseStatus(HttpStatus.CREATED)
+  @GetMapping()
   @Operation(
-    summary = "Create a visit",
-    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
-      content = [
-        Content(
-          mediaType = "application/json",
-          schema = Schema(implementation = CreateVisitRequestDto::class)
-        )
-      ]
-    ),
+    summary = "Get visits",
+    description = "Retrieve visits with optional filters, sorted by start timestamp descending",
     responses = [
       ApiResponse(
-        responseCode = "201",
-        description = "Visit created"
+        responseCode = "200",
+        description = "Visit Information Returned"
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to create a visit",
+        description = "Incorrect request to Get visits for prisoner",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       ),
       ApiResponse(
@@ -68,74 +59,53 @@ class VisitControllerLegacy(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to create a visit",
+        description = "Incorrect permissions to retrieve visits",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       )
     ]
   )
-  fun createVisit(
-    @RequestBody @Valid createVisitRequest: CreateVisitRequestDto
-  ): VisitDto {
-    return visitService.createVisit(createVisitRequest)
-  }
-
-  @Deprecated("This endpoint should be changed to $VISIT_RESERVED_SLOT_CHANGE and to book use the $VISIT_BOOK", ReplaceWith(VISIT_RESERVED_SLOT_CHANGE, VISIT_BOOK), WARNING)
-  @Suppress("KotlinDeprecation")
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PutMapping("/{reference}")
-  @ResponseStatus(HttpStatus.OK)
-  @Operation(
-    summary = "Update an existing visit",
-    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
-      content = [
-        Content(
-          mediaType = "application/json",
-          schema = Schema(implementation = UpdateVisitRequestDto::class)
-        )
-      ]
-    ),
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Visit updated"
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "Incorrect request to update a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to update a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Visit not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
-    ]
-  )
-  fun updateVisit(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String,
-    @RequestBody @Valid updateVisitRequest: UpdateVisitRequestDto
-  ): VisitDto {
-    val visit = visitService.updateVisit(reference.trim(), updateVisitRequest)
-
-    // Updated to BOOKED status - review if POST & PUT are replaced with Reserve, Book & Amend endpoints
-    updateVisitRequest.visitStatus?.run {
-      if (visit.visitStatus == VisitStatus.BOOKED) {
-        snsService.sendVisitBookedEvent(visit)
-      }
-    }
-    return visit
-  }
+  fun getVisitsByFilter(
+    @RequestParam(value = "prisonerId", required = false)
+    @Parameter(
+      description = "Filter results by prisoner id",
+      example = "A12345DC"
+    ) prisonerId: String?,
+    @RequestParam(value = "prisonId", required = true)
+    @Parameter(
+      description = "Filter results by prison id",
+      example = "MDI"
+    ) prisonId: String,
+    @RequestParam(value = "startTimestamp", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Parameter(
+      description = "Filter results by visits that start on or after the given timestamp",
+      example = "2021-11-03T09:00:00"
+    ) startTimestamp: LocalDateTime?,
+    @RequestParam(value = "endTimestamp", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Parameter(
+      description = "Filter results by visits that start on or before the given timestamp",
+      example = "2021-11-03T09:00:00"
+    ) endTimestamp: LocalDateTime?,
+    @RequestParam(value = "nomisPersonId", required = false)
+    @Parameter(
+      description = "Filter results by visitor (contact id)",
+      example = "12322"
+    ) nomisPersonId: Long?,
+    @RequestParam(value = "visitStatus", required = false)
+    @Parameter(
+      description = "Filter results by visit status",
+      example = "BOOKED"
+    ) visitStatus: VisitStatus?
+  ): List<VisitDto> =
+    visitService.findVisitsByFilter(
+      prisonerId = prisonerId?.trim(),
+      prisonId = prisonId.trim(),
+      startDateTime = startTimestamp,
+      endDateTime = endTimestamp,
+      nomisPersonId = nomisPersonId,
+      visitStatus = visitStatus
+    )
 
   @Deprecated("This endpoint should be changed to :$VISIT_CANCEL", ReplaceWith(VISIT_CANCEL), WARNING)
   @Suppress("KotlinDeprecation")
