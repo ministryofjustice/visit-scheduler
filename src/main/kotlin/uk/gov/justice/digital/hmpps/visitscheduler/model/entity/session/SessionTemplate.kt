@@ -1,16 +1,22 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
+package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
 
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.prison.PrisonWing
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.EnumType
 import javax.persistence.Enumerated
+import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.JoinTable
+import javax.persistence.ManyToMany
 import javax.persistence.Table
 
 @Entity
@@ -50,5 +56,13 @@ data class SessionTemplate(
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
-  val dayOfWeek: DayOfWeek
+  val dayOfWeek: DayOfWeek,
+
+  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+  @JoinTable(
+    name = "SESSION_TO_WING",
+    joinColumns = [JoinColumn(name = "session_template_id")],
+    inverseJoinColumns = [JoinColumn(name = "wing_id")]
+  )
+  var prisonWings: MutableList<PrisonWing> = mutableListOf()
 )
