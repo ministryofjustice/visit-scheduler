@@ -3,7 +3,7 @@ spring:
     allow-bean-definition-overriding: true
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/visit_scheduler
+    url: jdbc:postgresql://localhost:5433/visit_scheduler
     username: visit_scheduler
     password: visit_scheduler
 

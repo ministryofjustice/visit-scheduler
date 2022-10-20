@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.task
 
 import com.microsoft.applicationinsights.TelemetryClient
+import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -13,6 +14,7 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
@@ -29,7 +31,7 @@ import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Clean K")
-class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
+class CleanUpVisitsScheduleTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -47,6 +49,9 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
   private lateinit var reservedVisitExpired: Visit
 
   private lateinit var reservedVisitExpiredChangingStatus: Visit
+
+  @MockBean
+  private lateinit var lockProvider: JdbcTemplateLockProvider
 
   @BeforeEach
   internal fun setUp() {
@@ -81,8 +86,8 @@ class CleanUpVisitsScheduleTest() : IntegrationTestBase() {
     visitTask.deleteExpiredReservations()
 
     // Then
-    assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReference)).isNotNull()
-    assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReferenceChangingStatus)).isNotNull()
+    assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReference)).isNotNull
+    assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReferenceChangingStatus)).isNotNull
     assertThat(visitRepository.findByApplicationReference(visitExpiredApplicationReference)).isNull()
     assertThat(visitRepository.findByApplicationReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
 
