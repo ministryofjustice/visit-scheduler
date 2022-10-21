@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -34,6 +34,8 @@ data class SessionTemplateDto(
   val openCapacity: Int,
   @Schema(description = "day of week fpr visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
+  @Schema(description = "List of prison wings associated with the session template, if list is empty then all wings are acceptable!", required = false)
+  val prisonWings: List<SessionPrisonWingDto> = mutableListOf()
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     sessionTemplateId = sessionTemplateEntity.id,
@@ -46,6 +48,7 @@ data class SessionTemplateDto(
     visitRoom = sessionTemplateEntity.visitRoom,
     closedCapacity = sessionTemplateEntity.closedCapacity,
     openCapacity = sessionTemplateEntity.openCapacity,
-    dayOfWeek = sessionTemplateEntity.dayOfWeek
+    dayOfWeek = sessionTemplateEntity.dayOfWeek,
+    prisonWings = sessionTemplateEntity.prisonWings.map { SessionPrisonWingDto(it) }
   )
 }
