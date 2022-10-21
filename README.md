@@ -19,13 +19,6 @@ Run:
 ```
 ./gradlew test 
 ```
-Note: After the introduction of shedlock one of the tests CleanUpVisitsScheduleTest might fail on local environments. 
-To get around this issue, the test needs to run on a seperate DB to your local DEV DB. To get around this a new DB has been
-introduced in docker-compose-local.yml - visit-scheduler-test-db. This DB runs on port 5433. The below change 
-needs to be incorporated in application-test.yml for the tests to run by updating the datasource url as below -
-```
-url: jdbc:postgresql://localhost:5433/visit_scheduler
-```
 
 ## Running
 
@@ -41,13 +34,12 @@ docker-compose -f docker-compose-local.yml up -d
 ```
 Ports
 
-| Service                 | Port |  
-|-------------------------|------|
-| visit-scheduler         | 8080 |
-| visit-scheduler-db      | 5432 |
-| hmpps-auth              | 8090 |
-| prison-api              | 8091 |
-| visit-scheduler-test-db | 5433 |
+| Service            | Port |  
+|--------------------|------|
+| visit-scheduler    | 8080 |
+| visit-scheduler-db | 5432 |
+| hmpps-auth         | 8090 |
+| prison-api         | 8091 |
 
 To create a Token (local):
 ```
