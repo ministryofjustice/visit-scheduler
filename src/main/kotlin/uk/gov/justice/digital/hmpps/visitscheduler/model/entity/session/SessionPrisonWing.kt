@@ -1,6 +1,5 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.prison
+package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
 
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.GeneratedValue
@@ -10,8 +9,8 @@ import javax.persistence.ManyToMany
 import javax.persistence.Table
 
 @Entity
-@Table(name = "PRISON_WING")
-data class PrisonWing(
+@Table(name = "SESSION_PRISON_WING")
+data class SessionPrisonWing(
 
   @Column(nullable = false)
   val prisonId: String,

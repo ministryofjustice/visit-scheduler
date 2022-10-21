@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
 
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.prison.PrisonWing
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -64,5 +63,5 @@ data class SessionTemplate(
     joinColumns = [JoinColumn(name = "session_template_id")],
     inverseJoinColumns = [JoinColumn(name = "wing_id")]
   )
-  var prisonWings: MutableList<PrisonWing> = mutableListOf()
+  var prisonWings: MutableList<SessionPrisonWing> = mutableListOf()
 )
