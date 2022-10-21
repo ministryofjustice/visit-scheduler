@@ -34,7 +34,7 @@ data class SessionTemplateDto(
   val openCapacity: Int,
   @Schema(description = "day of week fpr visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
-  @Schema(description = "List of prison wings associated with the session template", required = false)
+  @Schema(description = "List of prison wings associated with the session template, if list is empty then all wings are acceptable!", required = false)
   val prisonWings: List<SessionPrisonWingDto> = mutableListOf()
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
