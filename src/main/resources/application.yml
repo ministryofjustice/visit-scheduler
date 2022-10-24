@@ -106,7 +106,7 @@ policy:
 task:
   expired-visit:
     enabled: true
-    cron: 0 0 * * * *
+    cron: 0 0/10 * * * *
     validity-minutes: 20
 
 feature:
