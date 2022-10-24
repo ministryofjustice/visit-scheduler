@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
@@ -74,29 +75,25 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions are returned for a prison for a weekly schedule`() {
     // Given
-    val sessionTemplate1 = sessionTemplate(
-      validFromDate = LocalDate.now().plusWeeks(1),
-      dayOfWeek = DayOfWeek.SUNDAY,
+    val nextDay = LocalDate.now().plusDays(1)
+    val dayAfterNext = LocalDate.now().plusDays(2)
+
+    val nextDaySessionTemplate = sessionTemplate(
+      validFromDate = nextDay,
+      dayOfWeek = nextDay.dayOfWeek,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
     )
 
-    val sessionTemplate2 = sessionTemplate(
-      validFromDate = LocalDate.now().plusWeeks(1),
-      dayOfWeek = DayOfWeek.MONDAY,
+    val dayAfterNextSessionTemplate = sessionTemplate(
+      validFromDate = dayAfterNext,
+      dayOfWeek = dayAfterNext.dayOfWeek,
       startTime = LocalTime.parse("10:30"),
       endTime = LocalTime.parse("11:30")
     )
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate1)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate2)
-
-    // 1st valid session after session template 1 starts
-    val firstValidSessionAfterTemplate1Start =
-      sessionTemplate1.validFromDate.with(TemporalAdjusters.next(sessionTemplate1.dayOfWeek))
-    // 1st valid session after session template 2 starts
-    val firstValidSessionAfterTemplate2Start =
-      sessionTemplate2.validFromDate.with(TemporalAdjusters.next(sessionTemplate2.dayOfWeek))
+    sessionTemplateRepository.saveAndFlush(nextDaySessionTemplate)
+    sessionTemplateRepository.saveAndFlush(dayAfterNextSessionTemplate)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
@@ -107,52 +104,16 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
 
-    val visitSessionDto = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+    val visitSessionResults = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 
-    Assertions.assertThat(visitSessionDto.size).isEqualTo(6)
-    Assertions.assertThat(visitSessionDto[0].startTimestamp).isEqualTo(
-      firstValidSessionAfterTemplate1Start
-        .atTime(sessionTemplate1.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-    Assertions.assertThat(visitSessionDto[0].endTimestamp).isEqualTo(
-      firstValidSessionAfterTemplate1Start
-        .atTime(sessionTemplate1.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-    Assertions.assertThat(visitSessionDto[0].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
-    Assertions.assertThat(visitSessionDto[0].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
-
-    Assertions.assertThat(visitSessionDto[1].startTimestamp).isEqualTo(
-      firstValidSessionAfterTemplate2Start
-        .atTime(sessionTemplate2.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-    Assertions.assertThat(visitSessionDto[1].endTimestamp).isEqualTo(
-      firstValidSessionAfterTemplate2Start
-        .atTime(sessionTemplate2.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-    Assertions.assertThat(visitSessionDto[1].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
-    Assertions.assertThat(visitSessionDto[1].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
-
-    Assertions.assertThat(visitSessionDto[2].startTimestamp).isEqualTo(
-      firstValidSessionAfterTemplate1Start.plusWeeks(1)
-        .atTime(sessionTemplate1.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-    Assertions.assertThat(visitSessionDto[2].endTimestamp).isEqualTo(
-      firstValidSessionAfterTemplate1Start.plusWeeks(1)
-        .atTime(sessionTemplate1.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-    Assertions.assertThat(visitSessionDto[2].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
-    Assertions.assertThat(visitSessionDto[2].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.SUNDAY)
-
-    Assertions.assertThat(visitSessionDto[3].startTimestamp).isEqualTo(
-      firstValidSessionAfterTemplate2Start.plusWeeks(1)
-        .atTime(sessionTemplate2.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-    Assertions.assertThat(visitSessionDto[3].endTimestamp).isEqualTo(
-      firstValidSessionAfterTemplate2Start.plusWeeks(1)
-        .atTime(sessionTemplate2.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-    )
-    Assertions.assertThat(visitSessionDto[3].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
-    Assertions.assertThat(visitSessionDto[3].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.MONDAY)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(7)
+    assertSession(visitSessionResults[0], dayAfterNext, dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[1], nextDay.plusWeeks(1), nextDaySessionTemplate)
+    assertSession(visitSessionResults[2], dayAfterNext.plusWeeks(1), dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[3], nextDay.plusWeeks(2), nextDaySessionTemplate)
+    assertSession(visitSessionResults[4], dayAfterNext.plusWeeks(2), dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[5], nextDay.plusWeeks(3), nextDaySessionTemplate)
+    assertSession(visitSessionResults[6], dayAfterNext.plusWeeks(3), dayAfterNextSessionTemplate)
   }
 
   @Test
@@ -913,5 +874,17 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.length()").isEqualTo(4)
+  }
+
+  private fun assertSession(
+    visitSessionResult: VisitSessionDto,
+    testDate: LocalDate,
+    expectedSessionTemplate: SessionTemplate
+  ) {
+    Assertions.assertThat(visitSessionResult.startTimestamp)
+      .isEqualTo(testDate.atTime(expectedSessionTemplate.startTime))
+    Assertions.assertThat(visitSessionResult.endTimestamp).isEqualTo(testDate.atTime(expectedSessionTemplate.endTime))
+    Assertions.assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
+    Assertions.assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
   }
 }
