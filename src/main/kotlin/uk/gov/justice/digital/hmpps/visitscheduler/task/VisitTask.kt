@@ -21,7 +21,7 @@ class VisitTask(
   @Scheduled(cron = "\${task.expired-visit.cron:0 0/15 * * * ?}")
   @SchedulerLock(
     name = "deleteExpiredVisitsTask",
-    lockAtLeastFor = "PT5M", lockAtMostFor = "PT10M"
+    lockAtLeastFor = "PT5M", lockAtMostFor = "PT5M"
   )
   fun deleteExpiredReservations() {
     if (!enabled) {

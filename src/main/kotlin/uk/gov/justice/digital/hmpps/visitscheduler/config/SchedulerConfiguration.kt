@@ -13,8 +13,8 @@ import javax.sql.DataSource
 @EnableScheduling
 @Profile("!test") // prevent scheduler running during integration tests
 @EnableSchedulerLock(
-  defaultLockAtLeastFor = "PT10M",
-  defaultLockAtMostFor = "PT10M"
+  defaultLockAtLeastFor = "PT5M",
+  defaultLockAtMostFor = "PT5M"
 )
 class SchedulerConfiguration {
   @Bean
