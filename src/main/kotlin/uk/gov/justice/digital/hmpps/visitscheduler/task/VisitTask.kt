@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.task
 
+import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -18,6 +19,10 @@ class VisitTask(
   }
 
   @Scheduled(cron = "\${task.expired-visit.cron:0 0/15 * * * ?}")
+  @SchedulerLock(
+    name = "deleteExpiredVisitsTask",
+    lockAtLeastFor = "PT5M", lockAtMostFor = "PT5M"
+  )
   fun deleteExpiredReservations() {
     if (!enabled) {
       return
