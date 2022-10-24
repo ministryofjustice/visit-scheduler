@@ -142,7 +142,7 @@ workflows:
   daily-test-runs:
     triggers:
       - schedule:
-          cron: "*/10 * * * *"
+          cron: "15 * * * *"
           filters:
             branches:
               only:
