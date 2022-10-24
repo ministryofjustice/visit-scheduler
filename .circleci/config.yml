@@ -6,10 +6,10 @@ orbs:
 parameters:
   alerts-slack-channel:
     type: string
-    default: dps_alerts_security
+    default: prison-visit-booking-alerts
   releases-slack-channel:
     type: string
-    default: dps-releases
+    default: prison-visit-booking-alerts
 
 jobs:
   validate:
@@ -142,11 +142,11 @@ workflows:
   daily-test-runs:
     triggers:
       - schedule:
-          cron: "15 * * * *"
+          cron: "0 6 * * *"
           filters:
             branches:
               only:
-                - VB-1340-daily-test-run-on-main-branch
+                - main
     jobs:
       - validate:
           filters:
