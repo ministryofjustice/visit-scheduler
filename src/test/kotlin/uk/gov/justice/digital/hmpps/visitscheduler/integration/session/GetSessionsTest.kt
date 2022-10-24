@@ -6,6 +6,8 @@ import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -22,9 +24,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
+import java.time.DayOfWeek.FRIDAY
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 import java.time.temporal.TemporalAdjusters
 
 @DisplayName("Get /visit-sessions")
@@ -46,13 +48,13 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
   @Test
   fun `visit sessions are returned for a prison for a single schedule`() {
-
     // Given
-    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY))
+
+    val nextFriday = getNextAllowed(FRIDAY)
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = dateTime,
-      validToDate = dateTime,
+      validFromDate = nextFriday,
+      validToDate = nextFriday,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
     )
@@ -60,16 +62,14 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
-    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].startTimestamp").isEqualTo(dateTime.atTime(sessionTemplate.startTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
-      .jsonPath("$[0].endTimestamp").isEqualTo(dateTime.atTime(sessionTemplate.endTime).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME))
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextFriday, sessionTemplate)
   }
 
   @Test
@@ -96,36 +96,34 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     sessionTemplateRepository.saveAndFlush(dayAfterNextSessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(0, 28)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
 
-    val visitSessionResults = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+    val visitSessionResults = getResults(returnResult)
 
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(7)
-    assertSession(visitSessionResults[0], dayAfterNext, dayAfterNextSessionTemplate)
-    assertSession(visitSessionResults[1], nextDay.plusWeeks(1), nextDaySessionTemplate)
-    assertSession(visitSessionResults[2], dayAfterNext.plusWeeks(1), dayAfterNextSessionTemplate)
-    assertSession(visitSessionResults[3], nextDay.plusWeeks(2), nextDaySessionTemplate)
-    assertSession(visitSessionResults[4], dayAfterNext.plusWeeks(2), dayAfterNextSessionTemplate)
-    assertSession(visitSessionResults[5], nextDay.plusWeeks(3), nextDaySessionTemplate)
-    assertSession(visitSessionResults[6], dayAfterNext.plusWeeks(3), dayAfterNextSessionTemplate)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(8)
+    assertSession(visitSessionResults[0], nextDay, nextDaySessionTemplate)
+    assertSession(visitSessionResults[1], dayAfterNext, dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[2], nextDay.plusWeeks(1), nextDaySessionTemplate)
+    assertSession(visitSessionResults[3], dayAfterNext.plusWeeks(1), dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[4], nextDay.plusWeeks(2), nextDaySessionTemplate)
+    assertSession(visitSessionResults[5], dayAfterNext.plusWeeks(2), dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[6], nextDay.plusWeeks(3), nextDaySessionTemplate)
+    assertSession(visitSessionResults[7], dayAfterNext.plusWeeks(3), dayAfterNextSessionTemplate)
   }
 
   @Test
   fun `visit sessions are returned for a prison when day of week is Friday and schedule starts and ends on the same Friday`() {
     // Given
-    val policyNoticeDaysMin = 0
-    val policyNoticeDaysMax = 10
+    val nextFriday = getNextAllowed(FRIDAY)
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
-      validToDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
-      dayOfWeek = DayOfWeek.FRIDAY,
+      validFromDate = nextFriday,
+      validToDate = nextFriday,
+      dayOfWeek = nextFriday.dayOfWeek,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
     )
@@ -133,106 +131,89 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
 
-    val visitSessionDto = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+    val visitSessionResults = getResults(returnResult)
 
-    Assertions.assertThat(visitSessionDto.size).isEqualTo(1)
-    Assertions.assertThat(visitSessionDto[0].startTimestamp.dayOfWeek).isEqualTo(DayOfWeek.FRIDAY)
-    Assertions.assertThat(visitSessionDto[0].endTimestamp.dayOfWeek).isEqualTo(DayOfWeek.FRIDAY)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextFriday, sessionTemplate)
   }
 
   @Test
-  fun `visit sessions are not returned for a prison when day of week is Saturday and schedule starts and ends on previous Friday`() {
+  fun `visit sessions are not returned for a prison when schedule starts and ends on the previous day`() {
     // Given
-    val policyNoticeDaysMin = 0
-    val policyNoticeDaysMax = 10
 
-    val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
-      validToDate = LocalDate.now().with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
-      dayOfWeek = DayOfWeek.SATURDAY,
-      startTime = LocalTime.parse("09:00"),
-      endTime = LocalTime.parse("10:00")
+    val nextFriday = getNextAllowed(FRIDAY)
+    val nextSaturday = nextFriday.plusDays(1)
+
+    sessionTemplateRepository.saveAndFlush(
+      sessionTemplate(
+        validFromDate = nextFriday,
+        validToDate = nextFriday,
+        dayOfWeek = nextSaturday.dayOfWeek,
+        startTime = LocalTime.parse("09:00"),
+        endTime = LocalTime.parse("10:00")
+      )
     )
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
-
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(0)
+    assertNoResponse(responseSpec)
   }
 
   @Test
   fun `visit sessions are not returned when policy notice min days is greater than max without valid to date`() {
     // Given
-    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)), validToDate = null)
-    val policyNoticeDaysMin = 10
+    val policyNoticeDaysMin = 14
     val policyNoticeDaysMax = 1
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    val nextFriday = getNextAllowed(FRIDAY)
+
+    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = nextFriday))
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(0)
+    assertNoResponse(responseSpec)
   }
 
   @Test
   fun `visit sessions are not returned when start date is after policy notice min and max days`() {
     // Given
-    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.now().plusDays(2), validToDate = null)
     val policyNoticeDaysMin = 0
     val policyNoticeDaysMax = 1
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = LocalDate.now().plusDays(2)))
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(0)
+    assertNoResponse(responseSpec)
   }
 
   @Test
-  fun `visit sessions are not returned for when policy notice min days is greater than max with valid to date`() {
+  fun `visit sessions are not returned when policy notice min days is greater than max with valid to date`() {
     // Given
-    val sessionTemplate = sessionTemplate(validFromDate = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)), validToDate = LocalDate.now().plusMonths(3))
-    val policyNoticeDaysMin = 10
+    val policyNoticeDaysMin = 14
     val policyNoticeDaysMax = 1
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    val nextFriday = getNextAllowed(FRIDAY)
+
+    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = nextFriday, validToDate = nextFriday))
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(0)
+    assertNoResponse(responseSpec)
   }
 
   @Test
@@ -246,41 +227,34 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(0)
+    assertNoResponse(responseSpec)
   }
 
   @Test
   fun `sessions that start after the max policy notice days after current date are not returned`() {
     // Given
     val sessionTemplate = sessionTemplate(
-      validFromDate = LocalDate.now().plusDays(31),
-      validToDate = LocalDate.now().plusDays(120)
+      validFromDate = LocalDate.now().plusMonths(6),
+      validToDate = LocalDate.now().plusMonths(10)
     )
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(0)
+    assertNoResponse(responseSpec)
   }
 
   @Test
   fun `visit sessions include reserved and booked open visit count`() {
 
     // Given
-    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
+    val nextFriday = this.getNextAllowed(FRIDAY)
+    val dateTime = nextFriday.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -311,23 +285,18 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     visitRepository.saveAndFlush(visit3)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].openVisitBookedCount").isEqualTo(2)
-      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(0)
+    assertBookCounts(responseSpec, 2, 0)
   }
 
   @Test
   fun `visit sessions exclude visits with changing status in visit count`() {
 
     // Given
-    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
+    val nextFriday = this.getNextAllowed(FRIDAY)
+    val dateTime = nextFriday.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -354,7 +323,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       prisonerId = "AF12345G",
       prisonId = "MDI",
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime.with(TemporalAdjusters.next(DayOfWeek.FRIDAY)),
+      visitStart = dateTime.with(TemporalAdjusters.next(FRIDAY)),
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CHANGING,
@@ -365,23 +334,18 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     visitRepository.saveAndFlush(visit2)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].openVisitBookedCount").isEqualTo(0)
-      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(0)
+    assertBookCounts(responseSpec, 0, 0)
   }
 
   @Test
   fun `visit sessions include visit count one matching room name`() {
 
     // Given
-    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
+    val nextFriday = this.getNextAllowed(FRIDAY)
+    val dateTime = nextFriday.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -412,23 +376,18 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     visitRepository.saveAndFlush(visit2)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].openVisitBookedCount").isEqualTo(1)
-      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(0)
+    assertBookCounts(responseSpec, 1, 0)
   }
 
   @Test
   fun `visit sessions include reserved and booked closed visit count`() {
 
     // Given
-    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
+    val nextFriday = this.getNextAllowed(FRIDAY)
+    val dateTime = nextFriday.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -460,23 +419,18 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     visitRepository.saveAndFlush(visit3)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].openVisitBookedCount").isEqualTo(0)
-      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(2)
+    assertBookCounts(responseSpec, 0, 2)
   }
 
   @Test
   fun `visit sessions visit count includes only visits within session period`() {
 
     // Given
-    val dateTime = LocalDate.now().plusDays(2).with(TemporalAdjusters.next(DayOfWeek.FRIDAY)).atTime(9, 0)
+    val nextFriday = this.getNextAllowed(FRIDAY)
+    val dateTime = nextFriday.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
@@ -510,16 +464,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     visitRepository.saveAndFlush(visit4)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=MDI")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
+    val responseSpec = callGetSessions()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].openVisitBookedCount").isEqualTo(2)
-      .jsonPath("$[0].closedVisitBookedCount").isEqualTo(0)
+    assertBookCounts(responseSpec, 2, 0)
   }
 
   @Test
@@ -527,7 +475,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
-    val validFromDate = LocalDate.now().plusDays(2)
+    val validFromDate = this.getNextAllowed(FRIDAY)
 
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -540,9 +488,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(4)
+    assertResponseLength(responseSpec, 4)
   }
 
   @Test
@@ -552,7 +498,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2)
+    val validFromDate = this.getNextAllowed(FRIDAY)
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -568,9 +514,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(4)
+    assertResponseLength(responseSpec, 4)
   }
 
   @Test
@@ -580,7 +524,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2)
+    val validFromDate = this.getNextAllowed(FRIDAY)
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -611,7 +555,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Then
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-    val visitSessionDtos = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+    val visitSessionDtos =
+      objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 
     Assertions.assertThat(visitSessionDtos).hasSize(4)
     Assertions.assertThat(visitSessionDtos[0].sessionConflicts).hasSize(1)
@@ -628,7 +573,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2)
+    val validFromDate = this.getNextAllowed(FRIDAY)
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -659,7 +604,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Then
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-    val visitSessionDtos = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+    val visitSessionDtos =
+      objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 
     Assertions.assertThat(visitSessionDtos).hasSize(4)
     Assertions.assertThat(visitSessionDtos[0].sessionConflicts).hasSize(1)
@@ -675,7 +621,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2)
+    val validFromDate = this.getNextAllowed(FRIDAY)
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -705,9 +651,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(4)
+    assertResponseLength(responseSpec, 4)
   }
 
   @Test
@@ -717,7 +661,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2)
+    val validFromDate = this.getNextAllowed(FRIDAY)
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -747,9 +691,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(3)
+    assertResponseLength(responseSpec, 3)
   }
 
   @Test
@@ -759,7 +701,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2)
+    val validFromDate = this.getNextAllowed(FRIDAY)
 
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -788,10 +730,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
+
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(4)
+    assertResponseLength(responseSpec, 4)
   }
 
   @Test
@@ -800,7 +741,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2)
+    val validFromDate = this.getNextAllowed(FRIDAY)
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -830,9 +771,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(4)
+    assertResponseLength(responseSpec, 4)
   }
 
   @Test
@@ -841,7 +780,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = LocalDate.now().plusDays(2)
+    val validFromDate = this.getNextAllowed(FRIDAY)
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -871,9 +810,27 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
 
     // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.length()").isEqualTo(4)
+    assertResponseLength(responseSpec, 4)
+  }
+
+  private fun callGetSessions(
+    policyNoticeDaysMin: Int,
+    policyNoticeDaysMax: Int
+  ): ResponseSpec {
+    return webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+  }
+
+  private fun callGetSessions(): ResponseSpec {
+    return webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+  }
+
+  private fun getNextAllowed(dayOfWeek: DayOfWeek): LocalDate {
+    // The two days is based on the default SessionService.policyNoticeDaysMin
+    return LocalDate.now().plusDays(2).with(TemporalAdjusters.next(dayOfWeek))
   }
 
   private fun assertSession(
@@ -886,5 +843,28 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     Assertions.assertThat(visitSessionResult.endTimestamp).isEqualTo(testDate.atTime(expectedSessionTemplate.endTime))
     Assertions.assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     Assertions.assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
+  }
+
+  private fun assertResponseLength(responseSpec: ResponseSpec, length: Int) {
+    responseSpec.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(length)
+  }
+
+  private fun assertNoResponse(responseSpec: ResponseSpec) {
+    assertResponseLength(responseSpec, 0)
+  }
+
+  private fun assertBookCounts(responseSpec: ResponseSpec, openCount: Int, closeCount: Int) {
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[0].openVisitBookedCount).isEqualTo(openCount)
+    Assertions.assertThat(visitSessionResults[0].closedVisitBookedCount).isEqualTo(closeCount)
+  }
+
+  private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> {
+    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
   }
 }
