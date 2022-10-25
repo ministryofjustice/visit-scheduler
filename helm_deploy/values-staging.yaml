@@ -1,0 +1,22 @@
+---
+# Per environment values which override defaults in visit-scheduler/values.yaml
+
+generic-service:
+  replicaCount: 2
+
+  ingress:
+    host: visit-scheduler-dev.prison.service.justice.gov.uk
+    contextColour: green
+    v1_2_enabled: true
+    v0_47_enabled: false
+
+  env:
+    SPRING_PROFILES_ACTIVE: "stdout"
+    HMPPS_AUTH_URL: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
+    PRISON_API_URL: https://api-dev.prison.service.justice.gov.uk
+    APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
+
+# CloudPlatform AlertManager receiver to route promethues alerts to slack
+# See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
+generic-prometheus-alerts:
+  alertSeverity: digital-prison-service-staging
