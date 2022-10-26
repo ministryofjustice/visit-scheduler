@@ -492,11 +492,12 @@ class SessionServiceTest {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
+      val dayOfWeek = date.plusDays(1).dayOfWeek
 
       val singleSession = sessionTemplate(
         validFromDate = date,
         validToDate = date.plusWeeks(1),
-        dayOfWeek = SATURDAY,
+        dayOfWeek = dayOfWeek,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
@@ -531,7 +532,7 @@ class SessionServiceTest {
       // Then
       assertThat(sessions).size().isEqualTo(1)
       val saturdayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
-      assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), SATURDAY)
+      assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
       Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
