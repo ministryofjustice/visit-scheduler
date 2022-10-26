@@ -23,11 +23,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import java.time.DayOfWeek
-import java.time.DayOfWeek.FRIDAY
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.temporal.TemporalAdjusters
 
 @DisplayName("Get /visit-sessions")
 class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
@@ -50,13 +47,14 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions are returned for a prison for a single schedule`() {
     // Given
 
-    val nextFriday = getNextAllowed(FRIDAY)
+    val nextAllowedDay = getNextAllowedDay()
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = nextFriday,
-      validToDate = nextFriday,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
-      endTime = LocalTime.parse("10:00")
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -69,27 +67,27 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .expectBody()
     val visitSessionResults = getResults(returnResult)
     Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextFriday, sessionTemplate)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
   }
 
   @Test
   fun `visit sessions are returned for a prison for a weekly schedule`() {
     // Given
-    val nextDay = LocalDate.now().plusDays(1)
-    val dayAfterNext = LocalDate.now().plusDays(2)
+    val nextAllowedDay = getNextAllowedDay()
+    val dayAfterNextAllowedDay = nextAllowedDay.plusDays(1)
 
     val nextDaySessionTemplate = sessionTemplate(
-      validFromDate = nextDay,
-      dayOfWeek = nextDay.dayOfWeek,
+      validFromDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
-      endTime = LocalTime.parse("10:00")
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek
     )
 
     val dayAfterNextSessionTemplate = sessionTemplate(
-      validFromDate = dayAfterNext,
-      dayOfWeek = dayAfterNext.dayOfWeek,
+      validFromDate = dayAfterNextAllowedDay,
       startTime = LocalTime.parse("10:30"),
-      endTime = LocalTime.parse("11:30")
+      endTime = LocalTime.parse("11:30"),
+      dayOfWeek = dayAfterNextAllowedDay.dayOfWeek,
     )
 
     sessionTemplateRepository.saveAndFlush(nextDaySessionTemplate)
@@ -105,25 +103,25 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val visitSessionResults = getResults(returnResult)
 
     Assertions.assertThat(visitSessionResults.size).isEqualTo(8)
-    assertSession(visitSessionResults[0], nextDay, nextDaySessionTemplate)
-    assertSession(visitSessionResults[1], dayAfterNext, dayAfterNextSessionTemplate)
-    assertSession(visitSessionResults[2], nextDay.plusWeeks(1), nextDaySessionTemplate)
-    assertSession(visitSessionResults[3], dayAfterNext.plusWeeks(1), dayAfterNextSessionTemplate)
-    assertSession(visitSessionResults[4], nextDay.plusWeeks(2), nextDaySessionTemplate)
-    assertSession(visitSessionResults[5], dayAfterNext.plusWeeks(2), dayAfterNextSessionTemplate)
-    assertSession(visitSessionResults[6], nextDay.plusWeeks(3), nextDaySessionTemplate)
-    assertSession(visitSessionResults[7], dayAfterNext.plusWeeks(3), dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[0], nextAllowedDay, nextDaySessionTemplate)
+    assertSession(visitSessionResults[1], dayAfterNextAllowedDay, dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[2], nextAllowedDay.plusWeeks(1), nextDaySessionTemplate)
+    assertSession(visitSessionResults[3], dayAfterNextAllowedDay.plusWeeks(1), dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[4], nextAllowedDay.plusWeeks(2), nextDaySessionTemplate)
+    assertSession(visitSessionResults[5], dayAfterNextAllowedDay.plusWeeks(2), dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[6], nextAllowedDay.plusWeeks(3), nextDaySessionTemplate)
+    assertSession(visitSessionResults[7], dayAfterNextAllowedDay.plusWeeks(3), dayAfterNextSessionTemplate)
   }
 
   @Test
-  fun `visit sessions are returned for a prison when day of week is Friday and schedule starts and ends on the same Friday`() {
+  fun `visit sessions are returned for a prison when day of week and schedule starts and ends on the same Day`() {
     // Given
-    val nextFriday = getNextAllowed(FRIDAY)
+    val nextAllowedDay = getNextAllowedDay()
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = nextFriday,
-      validToDate = nextFriday,
-      dayOfWeek = nextFriday.dayOfWeek,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      dayOfWeek = nextAllowedDay.dayOfWeek,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
     )
@@ -140,21 +138,21 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val visitSessionResults = getResults(returnResult)
 
     Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextFriday, sessionTemplate)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
   }
 
   @Test
   fun `visit sessions are not returned for a prison when schedule starts and ends on the previous day`() {
     // Given
 
-    val nextFriday = getNextAllowed(FRIDAY)
-    val nextSaturday = nextFriday.plusDays(1)
+    val nextAllowedDay = getNextAllowedDay()
+    val previousDay = nextAllowedDay.minusDays(1)
 
     sessionTemplateRepository.saveAndFlush(
       sessionTemplate(
-        validFromDate = nextFriday,
-        validToDate = nextFriday,
-        dayOfWeek = nextSaturday.dayOfWeek,
+        validFromDate = nextAllowedDay,
+        validToDate = nextAllowedDay,
+        dayOfWeek = previousDay.dayOfWeek,
         startTime = LocalTime.parse("09:00"),
         endTime = LocalTime.parse("10:00")
       )
@@ -173,9 +171,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val policyNoticeDaysMin = 14
     val policyNoticeDaysMax = 1
 
-    val nextFriday = getNextAllowed(FRIDAY)
+    val nextAllowedDay = getNextAllowedDay()
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = nextFriday))
+    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = nextAllowedDay))
 
     // When
     val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
@@ -205,9 +203,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val policyNoticeDaysMin = 14
     val policyNoticeDaysMax = 1
 
-    val nextFriday = getNextAllowed(FRIDAY)
+    val nextAllowedDay = getNextAllowedDay()
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = nextFriday, validToDate = nextFriday))
+    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = nextAllowedDay, validToDate = nextAllowedDay))
 
     // When
     val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
@@ -253,16 +251,17 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions include reserved and booked open visit count`() {
 
     // Given
-    val nextFriday = this.getNextAllowed(FRIDAY)
-    val dateTime = nextFriday.atTime(9, 0)
+    val nextAllowedDay = this.getNextAllowedDay()
+    val dateTime = nextAllowedDay.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = dateTime.toLocalDate(),
-      validToDate = dateTime.toLocalDate(),
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
       startTime = startTime,
-      endTime = endTime.toLocalTime()
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
     )
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -295,16 +294,17 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions exclude visits with changing status in visit count`() {
 
     // Given
-    val nextFriday = this.getNextAllowed(FRIDAY)
-    val dateTime = nextFriday.atTime(9, 0)
+    val nextAllowedDay = this.getNextAllowedDay()
+    val dateTime = nextAllowedDay.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = dateTime.toLocalDate(),
-      validToDate = dateTime.toLocalDate(),
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
       startTime = startTime,
-      endTime = endTime.toLocalTime()
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
     )
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -323,7 +323,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       prisonerId = "AF12345G",
       prisonId = "MDI",
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime.with(TemporalAdjusters.next(FRIDAY)),
+      visitStart = dateTime.plusWeeks(1),
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CHANGING,
@@ -344,17 +344,17 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions include visit count one matching room name`() {
 
     // Given
-    val nextFriday = this.getNextAllowed(FRIDAY)
-    val dateTime = nextFriday.atTime(9, 0)
+    val nextAllowedDay = this.getNextAllowedDay()
+    val dateTime = nextAllowedDay.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = dateTime.toLocalDate(),
-      validToDate = dateTime.toLocalDate(),
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
       startTime = startTime,
       endTime = endTime.toLocalTime(),
-      dayOfWeek = dateTime.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -386,16 +386,17 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions include reserved and booked closed visit count`() {
 
     // Given
-    val nextFriday = this.getNextAllowed(FRIDAY)
-    val dateTime = nextFriday.atTime(9, 0)
+    val nextAllowedDay = this.getNextAllowedDay()
+    val dateTime = nextAllowedDay.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = dateTime.toLocalDate(),
-      validToDate = dateTime.toLocalDate(),
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
       startTime = startTime,
-      endTime = endTime.toLocalTime()
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -429,16 +430,17 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions visit count includes only visits within session period`() {
 
     // Given
-    val nextFriday = this.getNextAllowed(FRIDAY)
-    val dateTime = nextFriday.atTime(9, 0)
+    val nextAllowedDay = this.getNextAllowedDay()
+    val dateTime = nextAllowedDay.atTime(9, 0)
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
     val sessionTemplate = sessionTemplate(
-      validFromDate = dateTime.toLocalDate(),
-      validToDate = dateTime.toLocalDate(),
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
       startTime = startTime,
-      endTime = endTime.toLocalTime()
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
     )
 
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -475,7 +477,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
-    val validFromDate = this.getNextAllowed(FRIDAY)
+    val validFromDate = this.getNextAllowedDay()
 
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -498,7 +500,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = this.getNextAllowed(FRIDAY)
+    val validFromDate = this.getNextAllowedDay()
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -524,7 +526,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = this.getNextAllowed(FRIDAY)
+    val validFromDate = this.getNextAllowedDay()
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -573,7 +575,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = this.getNextAllowed(FRIDAY)
+    val validFromDate = this.getNextAllowedDay()
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -621,7 +623,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = this.getNextAllowed(FRIDAY)
+    val validFromDate = this.getNextAllowedDay()
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -661,7 +663,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = this.getNextAllowed(FRIDAY)
+    val validFromDate = this.getNextAllowedDay()
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -701,7 +703,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = this.getNextAllowed(FRIDAY)
+    val validFromDate = this.getNextAllowedDay()
 
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
@@ -741,7 +743,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = this.getNextAllowed(FRIDAY)
+    val validFromDate = this.getNextAllowedDay()
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -780,7 +782,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val prisonId = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = this.getNextAllowed(FRIDAY)
+    val validFromDate = this.getNextAllowedDay()
     val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
     sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
@@ -828,9 +830,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
   }
 
-  private fun getNextAllowed(dayOfWeek: DayOfWeek): LocalDate {
+  private fun getNextAllowedDay(): LocalDate {
     // The two days is based on the default SessionService.policyNoticeDaysMin
-    return LocalDate.now().plusDays(2).with(TemporalAdjusters.next(dayOfWeek))
+    return LocalDate.now().plusDays(2)
   }
 
   private fun assertSession(

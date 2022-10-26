@@ -139,9 +139,12 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
 
     val visits = visitRepository.findAllByReference(reference)
     Assertions.assertThat(visits).hasSize(2)
-    Assertions.assertThat(visits[0].visitStatus).isEqualTo(CANCELLED)
-    Assertions.assertThat(visits[0].outcomeStatus).isEqualTo(OutcomeStatus.SUPERSEDED_CANCELLATION)
-    Assertions.assertThat(visits[1].visitStatus).isEqualTo(BOOKED)
+    val bookedEntity = visits.single { it.id == bookedVisit.id }
+    val reservedEntity = visits.single { it.id == reservedVisit.id }
+
+    Assertions.assertThat(bookedEntity.visitStatus).isEqualTo(CANCELLED)
+    Assertions.assertThat(bookedEntity.outcomeStatus).isEqualTo(OutcomeStatus.SUPERSEDED_CANCELLATION)
+    Assertions.assertThat(reservedEntity.visitStatus).isEqualTo(BOOKED)
 
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
