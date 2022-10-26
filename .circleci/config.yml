@@ -6,10 +6,10 @@ orbs:
 parameters:
   alerts-slack-channel:
     type: string
-    default: dps_alerts_security
+    default: prison-visit-booking-alerts
   releases-slack-channel:
     type: string
-    default: dps-releases
+    default: prison-visit-booking-alerts
 
 jobs:
   validate:
@@ -75,10 +75,22 @@ workflows:
             - validate
             - build_docker
             - helm_lint
-      - request-preprod-approval:
+      - request-staging-approval:
           type: approval
           requires:
             - deploy_dev
+      - hmpps/deploy_env:
+          name: deploy_staging
+          env: "staging"
+          context:
+            - hmpps-common-vars
+            - visit-scheduler-stage
+          requires:
+            - request-staging-approval
+      - request-preprod-approval:
+          type: approval
+          requires:
+            - deploy_staging
       - hmpps/deploy_env:
           name: deploy_preprod
           env: "preprod"
@@ -139,4 +151,18 @@ workflows:
             - veracode-credentials
             - hmpps-common-vars
 
-
+  daily-test-runs:
+    triggers:
+      - schedule:
+          cron: "0 6 * * *"
+          filters:
+            branches:
+              only:
+                - main
+    jobs:
+      - validate:
+          filters:
+            tags:
+              ignore: /.*/
+      - hmpps/helm_lint:
+          name: helm_lint

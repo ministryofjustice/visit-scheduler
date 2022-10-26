@@ -24,6 +24,7 @@ class OpenApiConfiguration(buildProperties: BuildProperties) {
       listOf(
         Server().url("https://visit-scheduler.prison.service.justice.gov.uk").description("Prod"),
         Server().url("https://visit-scheduler-preprod.prison.service.justice.gov.uk").description("PreProd"),
+        Server().url("https://visit-scheduler-staging.prison.service.justice.gov.uk").description("Staging"),
         Server().url("https://visit-scheduler-dev.prison.service.justice.gov.uk").description("Development"),
         Server().url("http://localhost:8080").description("Local"),
       )
