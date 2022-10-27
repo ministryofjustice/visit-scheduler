@@ -191,3 +191,49 @@ To run the CircleCI trivy scan locally download and install trivy, build the vis
 ```
 trivy image visit-scheduler_visit-scheduler
 ```
+
+### DB Port forwarding for development 
+
+###### name-spaces :
+
+- visit-someone-in-prison-backend-svc-dev
+- visit-someone-in-prison-backend-svc-staging
+
+##### Getting RDS Db settings
+```
+	kubectl -n {name space}  get secrets {rds name space} -o json | jq '.data | map_values(@base64d)'
+```
+##### Setting up port forwarding pod
+```
+kubectl \
+-n visit-someone-in-prison-backend-svc-{staging/dev} \
+run port-forward-pod \
+--image=ministryofjustice/port-forward \
+--port=5432 \
+--env="REMOTE_HOST={rds_instance_address}" \
+--env="LOCAL_PORT=5432" \
+--env="REMOTE_PORT=5432"
+```
+
+##### Starting port forwarding
+```
+kubectl \
+-n visit-someone-in-prison-backend-svc-{staging/dev} \
+port-forward \
+port-forward-pod 5433:5432
+```
+
+##### Deleteing port forwarding pod 
+```
+kubectl delete pod port-forward-pod -n visit-someone-in-prison-backend-svc-{staging/dev}
+```
+
+### Copy secrets from one enviroment to another
+
+```
+kubectl get secrets hmpps-domain-events-topic -n visit-someone-in-prison-backend-svc-dev -o json
+```
+put that in a file, then
+```
+kubectl apply -f ./hmpps-domain-events-topic.yaml -n visit-someone-in-prison-backend-svc-staging for example
+```
