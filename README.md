@@ -235,5 +235,6 @@ kubectl get secrets hmpps-domain-events-topic -n visit-someone-in-prison-backend
 ```
 put that in a file, then
 ```
-kubectl apply -f ./hmpps-domain-events-topic.yaml -n visit-someone-in-prison-backend-svc-staging for example
+kubectl apply -f ./hmpps-domain-events-topic.yaml -n visit-someone-in-prison-backend-svc-staging
 ```
+for example.
