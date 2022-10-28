@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import javax.persistence.LockModeType
 
 @Repository
-interface TestRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
+interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
 
   fun findAllByReference(reference: String): List<Visit>
 

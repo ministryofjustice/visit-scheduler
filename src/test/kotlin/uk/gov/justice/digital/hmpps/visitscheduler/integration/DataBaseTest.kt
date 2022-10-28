@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_C
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 
 @Transactional(propagation = REQUIRED)
 @DisplayName("Data base test")
@@ -21,7 +21,7 @@ class DataBaseTest() : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
-  private lateinit var testRepository: TestRepository
+  private lateinit var testVisitRepository: TestVisitRepository
 
   private lateinit var reservedVisit: Visit
 
@@ -48,13 +48,13 @@ class DataBaseTest() : IntegrationTestBase() {
     val applicationReference = reservedVisit.applicationReference
 
     // When
-    val result = testRepository.deleteByApplicationReference(applicationReference)
+    val result = testVisitRepository.deleteByApplicationReference(applicationReference)
 
     // Then
     Assertions.assertThat(result).isEqualTo(1)
-    Assertions.assertThat(testRepository.hasContact(reservedVisit.id)).isFalse()
-    Assertions.assertThat(testRepository.hasNotes(reservedVisit.id)).isFalse()
-    Assertions.assertThat(testRepository.hasVisitors(reservedVisit.id)).isFalse()
-    Assertions.assertThat(testRepository.hasSupport(reservedVisit.id)).isFalse()
+    Assertions.assertThat(testVisitRepository.hasContact(reservedVisit.id)).isFalse()
+    Assertions.assertThat(testVisitRepository.hasNotes(reservedVisit.id)).isFalse()
+    Assertions.assertThat(testVisitRepository.hasVisitors(reservedVisit.id)).isFalse()
+    Assertions.assertThat(testVisitRepository.hasSupport(reservedVisit.id)).isFalse()
   }
 }
