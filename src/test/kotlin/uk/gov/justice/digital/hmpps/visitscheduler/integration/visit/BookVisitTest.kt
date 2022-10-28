@@ -30,7 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
@@ -40,7 +40,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
-  private lateinit var visitRepository: VisitRepository
+  private lateinit var testVisitRepository: TestVisitRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -137,7 +137,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
       .jsonPath("$.prisonerId").isEqualTo(reservedVisit.prisonerId)
       .returnResult()
 
-    val visits = visitRepository.findAllByReference(reference)
+    val visits = testVisitRepository.findAllByReference(reference)
     Assertions.assertThat(visits).hasSize(2)
     val bookedEntity = visits.single { it.id == bookedVisit.id }
     val reservedEntity = visits.single { it.id == reservedVisit.id }
