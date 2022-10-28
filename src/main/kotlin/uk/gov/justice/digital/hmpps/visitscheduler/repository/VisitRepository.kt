@@ -39,8 +39,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   fun findByApplicationReference(applicationReference: String): Visit?
 
-  fun findAllByReference(reference: String): List<Visit>
-
   @Query(
     "SELECT count(v) > 0 FROM Visit v " +
       "WHERE v.prisonerId IN (:prisonerIds) AND " +
