@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
@@ -24,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
@@ -176,47 +178,14 @@ class VisitService(
   }
 
   @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
-  fun findVisitsByFilter(
-    prisonerId: String?,
-    prisonId: String,
-    startDateTime: LocalDateTime?,
-    endDateTime: LocalDateTime?,
-    nomisPersonId: Long?,
-    visitStatus: VisitStatus?
-  ): List<VisitDto> {
-    return findVisitsByFilterPageableDescending(
-      prisonerId = prisonerId,
-      prisonId = prisonId,
-      startDateTime = startDateTime,
-      endDateTime = endDateTime,
-      nomisPersonId = nomisPersonId,
-      visitStatus = visitStatus
-    ).content
+  fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
+    return findVisitsByFilterPageableDescending(visitFilter).content
   }
 
   @Transactional(readOnly = true)
-  fun findVisitsByFilterPageableDescending(
-    prisonerId: String?,
-    prisonId: String,
-    startDateTime: LocalDateTime?,
-    endDateTime: LocalDateTime?,
-    nomisPersonId: Long?,
-    visitStatus: VisitStatus?,
-    pageablePage: Int = 0,
-    pageableSize: Int = MAX_RECORDS
-  ): Page<VisitDto> {
-
-    val page: Pageable = PageRequest.of(pageablePage, pageableSize, Sort.by(Visit::visitStart.name).descending())
-
-    return visitRepository.findPageBy(
-      prisonerId = prisonerId,
-      prisonId = prisonId,
-      startDateTime = startDateTime,
-      endDateTime = endDateTime,
-      nomisPersonId = nomisPersonId,
-      visitStatus = visitStatus,
-      page = page
-    ).map { VisitDto(it) }
+  fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
+    return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
   }
 
   @Transactional(readOnly = true)

@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
-import org.springframework.data.domain.Page
-import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Lock
@@ -109,25 +107,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     nativeQuery = true
   )
   fun updateCreateTimestamp(createTimestamp: LocalDateTime, id: Long): Int
-
-  @Query(
-    "SELECT v FROM Visit v LEFT JOIN v.visitors as vis " +
-      "WHERE (:visitStatus is null OR v.visitStatus = :visitStatus)  AND " +
-      "(:nomisPersonId is null OR vis.nomisPersonId = :nomisPersonId) AND " +
-      "(:prisonerId is null OR v.prisonerId = :prisonerId) AND " +
-      "(:prisonId is null OR v.prisonId = :prisonId) AND " +
-      "(cast(:startDateTime as date) is null OR v.visitStart >= :startDateTime) AND " +
-      "(cast(:endDateTime as date) is null OR v.visitStart < :endDateTime) "
-  )
-  fun findPageBy(
-    @Param("prisonerId") prisonerId: String? = null,
-    @Param("prisonId") prisonId: String,
-    @Param("startDateTime") startDateTime: LocalDateTime? = null,
-    @Param("endDateTime") endDateTime: LocalDateTime? = null,
-    @Param("visitStatus") visitStatus: VisitStatus? = null,
-    @Param("nomisPersonId") nomisPersonId: Long? = null,
-    page: Pageable
-  ): Page<Visit>
 
   @Query(
     "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v LEFT JOIN v.visitors as vis " +

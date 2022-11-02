@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
@@ -336,12 +337,14 @@ class VisitController(
     ) size: Int
   ): Page<VisitDto> {
     return visitService.findVisitsByFilterPageableDescending(
-      prisonerId = prisonerId?.trim(),
-      prisonId = prisonId.trim(),
-      startDateTime = startTimestamp,
-      endDateTime = endTimestamp,
-      nomisPersonId = nomisPersonId,
-      visitStatus = visitStatus,
+      VisitFilter(
+        prisonerId = prisonerId?.trim(),
+        prisonId = prisonId.trim(),
+        startDateTime = startTimestamp,
+        endDateTime = endTimestamp,
+        nomisPersonId = nomisPersonId,
+        visitStatus = visitStatus
+      ),
       page,
       size
     )

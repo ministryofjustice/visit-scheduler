@@ -41,30 +41,41 @@ class VisitsByFilterTest : IntegrationTestBase() {
   internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   private lateinit var visitMin: Visit
-  private lateinit var visitFull: Visit
+  private lateinit var visitFullWithNoVisitors: Visit
+  private lateinit var visitFullWithOneVisitor: Visit
+  private lateinit var visitFullWithMultipleVisitors: Visit
 
   @BeforeEach
   internal fun createVisits() {
 
     visitMin = visitEntityHelper.create(prisonId = "MDI", visitStart = visitTime, prisonerId = "FF0000AA")
 
-    visitFull = visitEntityHelper.create(prisonId = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000BB")
+    visitFullWithNoVisitors = visitEntityHelper.create(prisonId = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000BB")
 
-    visitEntityHelper.createNote(visit = visitFull, text = "A visit concern", type = VISITOR_CONCERN)
-    visitEntityHelper.createNote(visit = visitFull, text = "A visit outcome", type = VISIT_OUTCOMES)
-    visitEntityHelper.createNote(visit = visitFull, text = "A visit comment", type = VISIT_COMMENT)
-    visitEntityHelper.createNote(visit = visitFull, text = "Status has changed", type = STATUS_CHANGED_REASON)
+    visitEntityHelper.createNote(visit = visitFullWithNoVisitors, text = "A visit concern", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = visitFullWithNoVisitors, text = "A visit outcome", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = visitFullWithNoVisitors, text = "A visit comment", type = VISIT_COMMENT)
+    visitEntityHelper.createNote(visit = visitFullWithNoVisitors, text = "Status has changed", type = STATUS_CHANGED_REASON)
+    visitRepository.saveAndFlush(visitFullWithNoVisitors)
 
-    visitRepository.saveAndFlush(visitFull)
-    val visitCC = visitEntityHelper.create(
+    visitFullWithOneVisitor = visitEntityHelper.create(
       prisonId = "LEI", prisonerId = "FF0000CC",
       visitStart = visitTime.plusDays(2), visitEnd = visitTime.plusDays(2).plusHours(1)
     )
-    visitEntityHelper.createContact(visit = visitCC, name = "Jane Doe", phone = "01234 098765")
-    visitEntityHelper.createVisitor(visit = visitCC, nomisPersonId = 123L, visitContact = true)
-    visitEntityHelper.createSupport(visit = visitCC, name = "OTHER", details = "Some Text")
+    visitEntityHelper.createContact(visit = visitFullWithOneVisitor, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createNote(visit = visitFullWithOneVisitor, text = "A visit concern", type = VISITOR_CONCERN)
+    visitEntityHelper.createVisitor(visit = visitFullWithOneVisitor, nomisPersonId = 123L, visitContact = true)
+    visitEntityHelper.createSupport(visit = visitFullWithOneVisitor, name = "OTHER", details = "Some Text")
+    visitRepository.saveAndFlush(visitFullWithOneVisitor)
 
-    visitRepository.saveAndFlush(visitCC)
+    visitFullWithMultipleVisitors = visitEntityHelper.create(prisonId = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000DD")
+    visitEntityHelper.createNote(visit = visitFullWithMultipleVisitors, text = "A visit concern", type = VISITOR_CONCERN)
+    visitEntityHelper.createContact(visit = visitFullWithMultipleVisitors, name = "Jane D", phone = "01111 111111")
+    visitEntityHelper.createVisitor(visit = visitFullWithMultipleVisitors, nomisPersonId = 222L, visitContact = true)
+    visitEntityHelper.createVisitor(visit = visitFullWithMultipleVisitors, nomisPersonId = 444L, visitContact = false)
+    visitEntityHelper.createVisitor(visit = visitFullWithMultipleVisitors, nomisPersonId = 666L, visitContact = false)
+    visitEntityHelper.createSupport(visit = visitFullWithMultipleVisitors, name = "OTHER", details = "Some Text")
+    visitRepository.saveAndFlush(visitFullWithMultipleVisitors)
 
     visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusHours(1), visitStatus = RESERVED)
     visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusDays(1).plusHours(1), visitStatus = BOOKED)
@@ -72,7 +83,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `get visit by prisoner ID`() {
+  fun `get visit by prisoner ID with no visitors`() {
 
     // Given
     val prisonId = "LEI"
@@ -87,12 +98,63 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.length()").isEqualTo(1)
       .jsonPath("$[0].prisonerId").isEqualTo("FF0000BB")
-      .jsonPath("$[0].startTimestamp").isEqualTo(visitFull.visitStart.toString())
+      .jsonPath("$[0].startTimestamp").isEqualTo(visitFullWithNoVisitors.visitStart.toString())
       .jsonPath("$[0].reference").exists()
       .jsonPath("$[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
       .jsonPath("$[0].visitNotes[?(@.type=='VISIT_COMMENT')].text").isEqualTo("A visit comment")
       .jsonPath("$[0].visitNotes[?(@.type=='VISIT_OUTCOMES')].text").isEqualTo("A visit outcome")
       .jsonPath("$[0].visitNotes[?(@.type=='STATUS_CHANGED_REASON')].text").isEqualTo("Status has changed")
+      .jsonPath("$[0].visitors.length()").isEqualTo(0)
+      .jsonPath("$[0].visitContact").doesNotExist()
+      .jsonPath("$[0].visitorSupport.length()").isEqualTo(0)
+  }
+
+  @Test
+  fun `get visit by prisoner ID with one visitor`() {
+
+    // Given
+    val prisonId = "LEI"
+    val prisonerId = "FF0000CC"
+
+    // When
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId")
+
+    // Then
+    responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].prisonerId").isEqualTo("FF0000CC")
+      .jsonPath("$[0].startTimestamp").isEqualTo(visitFullWithOneVisitor.visitStart.toString())
+      .jsonPath("$[0].reference").exists()
+      .jsonPath("$[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
+      .jsonPath("$[0].visitors.length()").isEqualTo(1)
+      .jsonPath("$[0].visitContact.name").isEqualTo("Jane Doe")
+      .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
+  }
+
+  @Test
+  fun `get visit by prisoner ID with multiple visitors`() {
+
+    // Given
+    val prisonId = "LEI"
+    val prisonerId = "FF0000DD"
+
+    // When
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId")
+
+    // Then
+    responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].prisonerId").isEqualTo("FF0000DD")
+      .jsonPath("$[0].startTimestamp").isEqualTo(visitFullWithMultipleVisitors.visitStart.toString())
+      .jsonPath("$[0].reference").exists()
+      .jsonPath("$[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
+      .jsonPath("$[0].visitors.length()").isEqualTo(3)
+      .jsonPath("$[0].visitContact.name").isEqualTo("Jane D")
+      .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
   }
 
   @Test
@@ -106,15 +168,17 @@ class VisitsByFilterTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(2)
+      .jsonPath("$.length()").isEqualTo(3)
       .jsonPath("$..prisonerId").value(
         Matchers.contains(
           "FF0000CC",
           "FF0000BB",
+          "FF0000DD",
         )
       )
       .jsonPath("$..prisonId").value(
         Matchers.contains(
+          "LEI",
           "LEI",
           "LEI"
         )
