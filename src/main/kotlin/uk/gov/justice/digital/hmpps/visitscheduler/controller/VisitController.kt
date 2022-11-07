@@ -298,11 +298,11 @@ class VisitController(
       description = "Filter results by prisoner id",
       example = "A12345DC"
     ) prisonerId: String?,
-    @RequestParam(value = "prisonId", required = true)
+    @RequestParam(value = "prisonId", required = false)
     @Parameter(
       description = "Filter results by prison id",
       example = "MDI"
-    ) prisonId: String,
+    ) prisonId: String?,
     @RequestParam(value = "startTimestamp", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
@@ -339,7 +339,7 @@ class VisitController(
     return visitService.findVisitsByFilterPageableDescending(
       VisitFilter(
         prisonerId = prisonerId?.trim(),
-        prisonId = prisonId.trim(),
+        prisonId = prisonId?.trim(),
         startDateTime = startTimestamp,
         endDateTime = endTimestamp,
         nomisPersonId = nomisPersonId,
