@@ -184,6 +184,11 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
+
+    if (visitFilter.prisonId == null && visitFilter.prisonerId == null) {
+      throw ValidationException("Must have prisonId or prisonerId")
+    }
+
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
     return visitRepository.findAll(VisitSpecification(visitFilter), page).map { VisitDto(it) }
   }

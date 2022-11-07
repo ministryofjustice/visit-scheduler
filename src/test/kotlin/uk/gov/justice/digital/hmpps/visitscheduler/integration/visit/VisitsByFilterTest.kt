@@ -86,11 +86,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `get visit by prisoner ID with no visitors`() {
 
     // Given
-    val prisonId = "LEI"
     val prisonerId = "FF0000BB"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonerId=$prisonerId")
 
     // Then
     responseSpec
@@ -107,6 +106,19 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$[0].visitors.length()").isEqualTo(0)
       .jsonPath("$[0].visitContact").doesNotExist()
       .jsonPath("$[0].visitorSupport.length()").isEqualTo(0)
+  }
+
+  @Test
+  fun `get visit without prisoner ID or prison ID is not allowed`() {
+
+    // Given
+
+    // When
+    val responseSpec = callVisitGetEndPoint("/visits")
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
   }
 
   @Test
