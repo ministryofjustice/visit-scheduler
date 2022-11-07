@@ -21,4 +21,11 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("firstBookableDay") firstBookableDay: LocalDate,
     @Param("lastBookableDay") lastBookableDay: LocalDate
   ): List<SessionTemplate>
+
+  @Query(
+    "select u.prisonId from SessionTemplate u " +
+      "where (u.validToDate is null or u.validToDate >= CURRENT_DATE) " +
+      "and (u.validFromDate <= CURRENT_DATE) group by u.prisonId order by u.prisonId"
+  )
+  fun getSupportedPrisons(): List<String>
 }
