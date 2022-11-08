@@ -26,7 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
 import java.time.LocalTime
 
-@DisplayName("Get /visit-sessions")
+@DisplayName("Get /visit-sessions for prisons without wing based bookings")
 class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   @Autowired
@@ -41,6 +41,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @AfterEach
   internal fun deleteAllVisitSessions() = visitEntityHelper.deleteAll()
 
+  private val internalLocation = "HEI-C-1-007"
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
   @Test
@@ -484,6 +485,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
 
+    prisonApiMockServer.stubGetPrisonerDetails(
+      prisonerId, internalLocation
+    )
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -508,6 +513,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       prisonerId,
       associationId,
       validFromDate.toString()
+    )
+
+    prisonApiMockServer.stubGetPrisonerDetails(
+      prisonerId, internalLocation
     )
 
     // When
@@ -547,6 +556,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       prisonerId,
       associationId,
       validFromDate.plusMonths(6).toString()
+    )
+
+    prisonApiMockServer.stubGetPrisonerDetails(
+      prisonerId, internalLocation
     )
 
     // When
@@ -598,6 +611,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.plusMonths(6).toString()
     )
 
+    prisonApiMockServer.stubGetPrisonerDetails(
+      prisonerId, internalLocation
+    )
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -647,6 +664,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.minusMonths(1).toString()
     )
 
+    prisonApiMockServer.stubGetPrisonerDetails(
+      prisonerId, internalLocation
+    )
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -685,6 +706,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       associationPrisonerId,
       validFromDate.minusMonths(6).toString(),
       validFromDate.plusMonths(1).toString()
+    )
+
+    prisonApiMockServer.stubGetPrisonerDetails(
+      prisonerId, internalLocation
     )
 
     // When
@@ -728,6 +753,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.plusMonths(1).toString()
     )
 
+    prisonApiMockServer.stubGetPrisonerDetails(
+      prisonerId, internalLocation
+    )
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -767,6 +796,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.plusMonths(1).toString()
     )
 
+    prisonApiMockServer.stubGetPrisonerDetails(
+      prisonerId, internalLocation
+    )
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -804,6 +837,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       associationPrisonerId,
       validFromDate.minusYears(1).toString(),
       validFromDate.plusYears(1).toString()
+    )
+
+    prisonApiMockServer.stubGetPrisonerDetails(
+      prisonerId, internalLocation
     )
 
     // When

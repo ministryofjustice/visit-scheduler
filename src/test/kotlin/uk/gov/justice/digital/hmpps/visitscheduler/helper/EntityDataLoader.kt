@@ -168,6 +168,13 @@ class SessionTemplateEntityHelper(
     sessionTemplate.prisonWings.add(prisonWing)
   }
 
+  fun createWings(
+    sessionTemplate: SessionTemplate,
+    names: Set<String>
+  ) {
+    names.forEach { name -> createWings(sessionTemplate, name) }
+  }
+
   fun deleteAll() {
     repository.deleteAll()
     repository.flush()

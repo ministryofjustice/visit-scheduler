@@ -64,4 +64,38 @@ class PrisonApiMockServer : WireMockServer(8092) {
         )
     )
   }
+
+  fun stubGetPrisonerDetails(offenderNo: String, internalLocation: String?) {
+    stubFor(
+      get("/api/prisoners?offenderNo=$offenderNo")
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+            .withStatus(200)
+            .withBody(
+              if (internalLocation.isNullOrEmpty())
+                """
+                [
+                    {
+                        "offenderNo": "$offenderNo",
+                        "firstName": "Test",
+                        "lastName": "User"
+                    }
+                ]
+                """.trimIndent()
+              else
+                """
+                [
+                  {
+                        "offenderNo": "$offenderNo",
+                        "firstName": "Test",
+                        "lastName": "User",
+                        "internalLocation": "$internalLocation"
+                  }
+              ]
+                """.trimIndent()
+            )
+        )
+    )
+  }
 }

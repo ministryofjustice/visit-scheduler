@@ -13,9 +13,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionPrisonWing
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerWingCalculator
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -58,12 +60,25 @@ class SessionService(
     val today = LocalDate.now()
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
+    var prisonerWing: String?
 
-    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
+    // get all the sessions for that prison - wing and non wing based
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
       prisonId,
       requestedBookableStartDate,
       requestedBookableEndDate
     )
+
+    // filter the sessionTemplates to use the ones that are eligible for all wings and sessionTemplates for that wing
+    prisonerId?.also {
+      prisonerWing = getPrisonerWing(it)
+
+      // return all sessions where prison wings list is empty OR
+      // sessions where wings contain the prisoners wing
+      sessionTemplates = sessionTemplates.filter { sessionTemplate ->
+        isSessionEligibleForAllWings(sessionTemplate) || (prisonerWing != null && isSessionEligibleForWing(sessionTemplate, prisonerWing))
+      }
+    }
 
     var sessions = sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, requestedBookableStartDate, requestedBookableEndDate)
@@ -236,4 +251,31 @@ class SessionService(
 
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
+
+  private fun getPrisonerWing(prisonerId: String): String? {
+    // get the prisoner details
+    val prisonerDetails = prisonApiClient.getPrisonerDetails(prisonerId)
+
+    prisonerDetails?.also { prisonerDetailList ->
+      if (prisonerDetailList.isNotEmpty()) {
+        prisonerDetailList[0]?.also { prisonerDetails ->
+          return PrisonerWingCalculator.getPrisonerWingFromLocation(prisonerDetails)
+        }
+      }
+    }
+
+    return null
+  }
+
+  private fun isSessionEligibleForAllWings(sessionTemplate: SessionTemplate): Boolean {
+    return sessionTemplate.prisonWings.isEmpty()
+  }
+
+  private fun isSessionEligibleForWing(sessionTemplate: SessionTemplate, prisonerWing: String?): Boolean {
+    prisonerWing?.also {
+      return sessionTemplate.prisonWings.stream().map(SessionPrisonWing::name).toList().contains(it)
+    }
+
+    return false
+  }
 }
