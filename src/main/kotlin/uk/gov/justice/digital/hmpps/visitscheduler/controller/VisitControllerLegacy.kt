@@ -71,11 +71,11 @@ class VisitControllerLegacy(
       description = "Filter results by prisoner id",
       example = "A12345DC"
     ) prisonerId: String?,
-    @RequestParam(value = "prisonId", required = true)
+    @RequestParam(value = "prisonId", required = false)
     @Parameter(
       description = "Filter results by prison id",
       example = "MDI"
-    ) prisonId: String,
+    ) prisonId: String?,
     @RequestParam(value = "startTimestamp", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
@@ -98,17 +98,18 @@ class VisitControllerLegacy(
       description = "Filter results by visit status",
       example = "BOOKED"
     ) visitStatus: VisitStatus?
-  ): List<VisitDto> =
-    visitService.findVisitsByFilter(
+  ): List<VisitDto> {
+    return visitService.findVisitsByFilter(
       VisitFilter(
         prisonerId = prisonerId?.trim(),
-        prisonId = prisonId.trim(),
+        prisonId = prisonId?.trim(),
         startDateTime = startTimestamp,
         endDateTime = endTimestamp,
         nomisPersonId = nomisPersonId,
         visitStatus = visitStatus
       )
     )
+  }
 
   @Deprecated("This endpoint should be changed to :$VISIT_CANCEL", ReplaceWith(VISIT_CANCEL), WARNING)
   @Suppress("KotlinDeprecation")
