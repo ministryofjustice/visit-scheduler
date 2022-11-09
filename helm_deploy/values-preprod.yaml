@@ -16,6 +16,19 @@ generic-service:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     FEATURE_EVENTS_SNS_ENABLED: true
 
+  allowlist:
+    office: "217.33.148.210/32"
+    health-kick: "35.177.252.195/32"
+    mojvpn: "81.134.202.29/32"
+    cloudplatform-live1-1: "35.178.209.113/32"
+    cloudplatform-live1-2: "3.8.51.207/32"
+    cloudplatform-live1-3: "35.177.252.54/32"
+    petty-france-wifi: "213.121.161.112/28"
+    global-protect: "35.176.93.186/32"
+    ithc-health-check-ip-1: "54.37.241.156/30"
+    ithc-health-check-ip-2: "167.71.136.237/32"
+    ithc-health-check-ip-3: "2001:41d0:800:715::/64"
+
 # CloudPlatform AlertManager receiver to route promethues alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
