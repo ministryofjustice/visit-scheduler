@@ -75,7 +75,7 @@ class VisitControllerLegacy(
     @Parameter(
       description = "Filter results by prison id",
       example = "MDI"
-    ) prisonId: String?,
+    ) prisonCode: String?,
     @RequestParam(value = "startTimestamp", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
@@ -102,7 +102,7 @@ class VisitControllerLegacy(
     return visitService.findVisitsByFilter(
       VisitFilter(
         prisonerId = prisonerId?.trim(),
-        prisonId = prisonId?.trim(),
+        prisonCode = prisonCode?.trim(),
         startDateTime = startTimestamp,
         endDateTime = endTimestamp,
         nomisPersonId = nomisPersonId,

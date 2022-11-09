@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -12,22 +13,28 @@ fun sessionTemplate(
   validToDate: LocalDate? = null,
   closedCapacity: Int = 5,
   openCapacity: Int = 10,
-  prisonId: String = "MDI",
+  prisonCode: String = "MDI",
   visitRoom: String = "1",
   visitType: VisitType = VisitType.SOCIAL,
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY
-) = SessionTemplate(
-  id = id,
-  validFromDate = validFromDate,
-  validToDate = validToDate,
-  closedCapacity = closedCapacity,
-  openCapacity = openCapacity,
-  prisonId = prisonId,
-  visitRoom = visitRoom,
-  visitType = visitType,
-  startTime = startTime,
-  endTime = endTime,
-  dayOfWeek = dayOfWeek
-)
+): SessionTemplate {
+
+  val prison = Prison(id = 0, code = prisonCode, active = true)
+
+  return SessionTemplate(
+    id = id,
+    validFromDate = validFromDate,
+    validToDate = validToDate,
+    closedCapacity = closedCapacity,
+    openCapacity = openCapacity,
+    prisonId = prison.id,
+    prison = prison,
+    visitRoom = visitRoom,
+    visitType = visitType,
+    startTime = startTime,
+    endTime = endTime,
+    dayOfWeek = dayOfWeek
+  )
+}

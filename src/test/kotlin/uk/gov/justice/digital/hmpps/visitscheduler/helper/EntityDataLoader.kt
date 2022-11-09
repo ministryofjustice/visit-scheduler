@@ -1,11 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -13,7 +15,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionPrisonWing
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -21,27 +25,48 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 @Component
+class PrisonEntityHelper(
+  private val prisonRepository: TestPrisonRepository
+) {
+
+  fun create(prisonCode: String = "MDI", activePrison: Boolean = true): Prison {
+    var prison = prisonRepository.findByCode(prisonCode)
+    if (prison == null) {
+      prison = prisonRepository.saveAndFlush(Prison(code = prisonCode, active = activePrison))
+    } else {
+      prison.active = activePrison
+    }
+    return prison!!
+  }
+}
+
+@Component
 class VisitEntityHelper(
-  private val repository: VisitRepository
+  private val visitRepository: VisitRepository,
+  private val prisonEntityHelper: PrisonEntityHelper
 ) {
 
   fun create(
     visitStatus: VisitStatus = RESERVED,
     prisonerId: String = "FF0000AA",
-    prisonId: String = "MDI",
+    prisonCode: String = "MDI",
     visitRoom: String = "A1",
     visitStart: LocalDateTime = LocalDateTime.of((LocalDateTime.now().year + 1), 11, 1, 12, 30, 44),
     visitEnd: LocalDateTime = visitStart.plusHours(1),
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    reference: String = ""
+    reference: String = "",
+    activePrison: Boolean = true
   ): Visit {
 
-    return repository.saveAndFlush(
+    val prison = prisonEntityHelper.create(prisonCode, activePrison)
+
+    return visitRepository.saveAndFlush(
       Visit(
         visitStatus = visitStatus,
         prisonerId = prisonerId,
-        prisonId = prisonId,
+        prisonId = prison.id,
+        prison = prison,
         visitRoom = visitRoom,
         visitStart = visitStart,
         visitEnd = visitEnd,
@@ -50,11 +75,6 @@ class VisitEntityHelper(
         _reference = reference
       )
     )
-  }
-
-  fun deleteAll() {
-    repository.deleteAll()
-    repository.flush()
   }
 
   fun createContact(
@@ -116,13 +136,14 @@ class VisitEntityHelper(
   }
 
   fun save(visit: Visit): Visit {
-    return repository.saveAndFlush(visit)
+    return visitRepository.saveAndFlush(visit)
   }
 }
 
 @Component
 class SessionTemplateEntityHelper(
-  private val repository: SessionTemplateRepository
+  private val sessionRepository: SessionTemplateRepository,
+  private val prisonEntityHelper: PrisonEntityHelper
 ) {
 
   fun create(
@@ -131,22 +152,26 @@ class SessionTemplateEntityHelper(
     validToDate: LocalDate? = null,
     closedCapacity: Int = 5,
     openCapacity: Int = 10,
-    prisonId: String = "MDI",
+    prisonCode: String = "MDI",
     visitRoom: String = "3B",
     visitType: VisitType = VisitType.SOCIAL,
     startTime: LocalTime = LocalTime.parse("09:00"),
     endTime: LocalTime = LocalTime.parse("10:00"),
-    dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY
+    dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
+    activePrison: Boolean = true
   ): SessionTemplate {
 
-    return repository.saveAndFlush(
+    val prison = prisonEntityHelper.create(prisonCode, activePrison)
+
+    return sessionRepository.saveAndFlush(
       SessionTemplate(
         id = id,
         validFromDate = validFromDate,
         validToDate = validToDate,
         closedCapacity = closedCapacity,
         openCapacity = openCapacity,
-        prisonId = prisonId,
+        prisonId = prison.id,
+        prison = prison,
         visitRoom = visitRoom,
         visitType = visitType,
         startTime = startTime,
@@ -167,9 +192,22 @@ class SessionTemplateEntityHelper(
     prisonWing.sessionTemplates.add(sessionTemplate)
     sessionTemplate.prisonWings.add(prisonWing)
   }
+}
+
+@Transactional
+@Component
+class DeleteEntityHelper(
+  private val visitRepository: VisitRepository,
+  private val prisonRepository: PrisonRepository,
+  private val sessionRepository: SessionTemplateRepository,
+) {
 
   fun deleteAll() {
-    repository.deleteAll()
-    repository.flush()
+    sessionRepository.deleteAll()
+    sessionRepository.flush()
+    visitRepository.deleteAllInBatch()
+    visitRepository.flush()
+    prisonRepository.deleteAll()
+    prisonRepository.flush()
   }
 }

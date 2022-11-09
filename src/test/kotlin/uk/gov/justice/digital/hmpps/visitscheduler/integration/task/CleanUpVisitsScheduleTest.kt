@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.task
 import com.microsoft.applicationinsights.TelemetryClient
 import net.javacrumbs.shedlock.provider.jdbctemplate.JdbcTemplateLockProvider
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -70,9 +69,6 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
     visitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
   }
 
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
-
   @Test
   fun `delete only expired reservations`() {
 
@@ -106,7 +102,7 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
   private fun createVisit(
     visitStatus: VisitStatus = RESERVED,
     prisonerId: String = "FF0000AA",
-    prisonId: String = "MDI",
+    prisonCode: String = "MDI",
     visitRoom: String = "A1",
     visitStart: LocalDateTime = LocalDateTime.now().minusDays(3),
     visitEnd: LocalDateTime = visitStart.plusHours(1),
@@ -115,18 +111,16 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
     reference: String = ""
   ): Visit {
 
-    return visitRepository.saveAndFlush(
-      Visit(
-        visitStatus = visitStatus,
-        prisonerId = prisonerId,
-        prisonId = prisonId,
-        visitRoom = visitRoom,
-        visitStart = visitStart,
-        visitEnd = visitEnd,
-        visitType = visitType,
-        visitRestriction = visitRestriction,
-        _reference = reference
-      )
+    return visitEntityHelper.create(
+      visitStatus = visitStatus,
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      visitRoom = visitRoom,
+      visitStart = visitStart,
+      visitEnd = visitEnd,
+      visitType = visitType,
+      visitRestriction = visitRestriction,
+      reference = reference
     )
   }
 }

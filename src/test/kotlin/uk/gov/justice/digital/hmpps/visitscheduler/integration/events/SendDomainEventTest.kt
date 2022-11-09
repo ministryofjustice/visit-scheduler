@@ -7,7 +7,6 @@ import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
@@ -49,9 +48,6 @@ class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : I
   internal val testQueue by lazy { hmppsQueueService.findByQueueId("domaineventsqueue") ?: throw RuntimeException("Queue with name domaineventstestqueue doesn't exist") }
   internal val testSqsClient by lazy { testQueue.sqsClient }
   internal val testQueueUrl by lazy { testQueue.queueUrl }
-
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @DisplayName("Publish Domain Event")
   @Nested

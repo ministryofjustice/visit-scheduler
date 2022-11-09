@@ -40,21 +40,21 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Query(
     "SELECT count(v) > 0 FROM Visit v " +
       "WHERE v.prisonerId IN (:prisonerIds) AND " +
-      "v.prisonId = :prisonId AND " +
+      "v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
       "v.visitStart < :endDateTime AND " +
       " (v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED') "
   )
   fun hasActiveVisits(
     prisonerIds: List<String>,
-    prisonId: String,
+    prisonCode: String,
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime
   ): Boolean
 
   @Query(
     "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
-      "WHERE v.prisonId = :prisonId AND " +
+      "WHERE v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
       "v.visitStart < :endDateTime AND " +
       "v.visitRoom = :visitRoom AND " +
@@ -63,7 +63,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "GROUP BY v.visitRestriction"
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
-    prisonId: String,
+    prisonCode: String,
     visitRoom: String,
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime
@@ -71,7 +71,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
-      "WHERE v.prisonId = :prisonId AND " +
+      "WHERE v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
       "v.visitStart < :endDateTime AND " +
       "v.visitRoom = :visitRoom AND " +
@@ -80,7 +80,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "GROUP BY v.visitRestriction"
   )
   fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
-    prisonId: String,
+    prisonCode: String,
     visitRoom: String,
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime,
@@ -112,13 +112,13 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v LEFT JOIN v.visitors as vis " +
       "WHERE (v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED')  AND " +
       "(v.prisonerId = :prisonerId) AND " +
-      "(v.prisonId = :prisonId) AND " +
+      "(v.prison.code = :prisonCode) AND " +
       "(v.visitStart >= :startDateTime) AND " +
       "(cast(:endDateTime as date) is null OR v.visitStart < :endDateTime) "
   )
   fun hasVisits(
     @Param("prisonerId") prisonerId: String,
-    @Param("prisonId") prisonId: String,
+    @Param("prisonCode") prisonCode: String,
     @Param("startDateTime") startDateTime: LocalDateTime,
     @Param("endDateTime") endDateTime: LocalDateTime? = null
   ): Boolean

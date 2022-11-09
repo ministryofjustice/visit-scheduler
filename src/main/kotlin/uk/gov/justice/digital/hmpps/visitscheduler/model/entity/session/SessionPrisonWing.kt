@@ -13,7 +13,7 @@ import javax.persistence.Table
 data class SessionPrisonWing(
 
   @Column(nullable = false)
-  val prisonId: String,
+  val prisonId: Long,
 
   @Column(nullable = false)
   val name: String,

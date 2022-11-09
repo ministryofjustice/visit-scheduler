@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -18,19 +17,16 @@ class GetSupportedPrisonsTest(
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
-  @AfterEach
-  internal fun deleteAllSessionTemplates() = sessionTemplateEntityHelper.deleteAll()
-
   @Test
   fun `all supported prisons are returned in correct order`() {
     // Given
     val today = LocalDate.now()
 
-    sessionTemplateEntityHelper.create(validFromDate = today, prisonId = "AWE")
-    sessionTemplateEntityHelper.create(validFromDate = today, validToDate = today, prisonId = "GRE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(1), prisonId = "CDE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(1), validToDate = today, prisonId = "BDE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(2), validToDate = today.plusDays(1), prisonId = "WDE")
+    sessionTemplateEntityHelper.create(validFromDate = today, prisonCode = "AWE")
+    sessionTemplateEntityHelper.create(validFromDate = today, validToDate = today, prisonCode = "GRE")
+    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(1), prisonCode = "CDE")
+    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(1), validToDate = today, prisonCode = "BDE")
+    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(2), validToDate = today.plusDays(1), prisonCode = "WDE")
 
     // When
     val responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
@@ -51,11 +47,10 @@ class GetSupportedPrisonsTest(
   }
 
   @Test
-  fun `supported prisons that have exspired are not returned`() {
+  fun `sessions with inactive prisons are not returned`() {
     // Given
-    val today = LocalDate.now()
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(2), validToDate = today.minusDays(1), prisonId = "GRE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(1), validToDate = today.minusDays(1), prisonId = "CDE")
+    sessionTemplateEntityHelper.create(prisonCode = "GRE", activePrison = false)
+    sessionTemplateEntityHelper.create(prisonCode = "CDE", activePrison = false)
 
     // When
     val responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)

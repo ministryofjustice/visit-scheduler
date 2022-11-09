@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -20,9 +19,6 @@ class GetSessionTemplate(
 ) : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
-
-  @AfterEach
-  internal fun deleteAllSessionTemplates() = sessionTemplateEntityHelper.deleteAll()
 
   @Test
   fun `all session templates are returned empty list`() {
@@ -74,7 +70,7 @@ class GetSessionTemplate(
     val sessionTemplateDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
 
     Assertions.assertThat(sessionTemplateDto.sessionTemplateId).isEqualTo(sessionTemplate.id)
-    Assertions.assertThat(sessionTemplateDto.prisonId).isEqualTo(sessionTemplate.prisonId)
+    Assertions.assertThat(sessionTemplateDto.prisonCode).isEqualTo(sessionTemplate.prison.code)
     Assertions.assertThat(sessionTemplateDto.startTime).isEqualTo(sessionTemplate.startTime)
     Assertions.assertThat(sessionTemplateDto.endTime).isEqualTo(sessionTemplate.endTime)
     Assertions.assertThat(sessionTemplateDto.validFromDate).isEqualTo(LocalDate.now().format(DateTimeFormatter.ISO_DATE))

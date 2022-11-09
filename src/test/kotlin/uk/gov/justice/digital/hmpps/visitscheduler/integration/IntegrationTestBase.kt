@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.junit.jupiter.api.AfterAll
+import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
 import org.springframework.beans.factory.annotation.Autowired
@@ -11,6 +12,7 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
@@ -33,6 +35,9 @@ abstract class IntegrationTestBase {
   protected lateinit var sessionTemplateEntityHelper: SessionTemplateEntityHelper
 
   @Autowired
+  protected lateinit var deleteEntityHelper: DeleteEntityHelper
+
+  @Autowired
   protected lateinit var jwtAuthHelper: JwtAuthHelper
 
   init {
@@ -43,6 +48,11 @@ abstract class IntegrationTestBase {
   @BeforeEach
   fun resetStubs() {
     prisonApiMockServer.resetAll()
+  }
+
+  @AfterEach
+  internal fun deleteAll() {
+    deleteEntityHelper.deleteAll()
   }
 
   internal fun setAuthorisation(

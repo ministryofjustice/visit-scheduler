@@ -26,10 +26,6 @@ class SessionTemplateService(
     return sessionTemplateRepository.findById(sessionTemplateId).map { SessionTemplateDto(it) }
       .orElseThrow(TemplateNotFoundException("Template id $sessionTemplateId not found"))
   }
-
-  fun getSupportedPrisons(): List<String> {
-    return sessionTemplateRepository.getSupportedPrisons()
-  }
 }
 
 class TemplateNotFoundException(message: String? = null, cause: Throwable? = null) :

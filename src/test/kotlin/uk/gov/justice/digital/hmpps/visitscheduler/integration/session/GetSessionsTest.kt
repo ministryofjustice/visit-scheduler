@@ -2,14 +2,12 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
@@ -19,27 +17,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
 import java.time.LocalTime
 
 @DisplayName("Get /visit-sessions")
 class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
-
-  @Autowired
-  private lateinit var sessionTemplateRepository: SessionTemplateRepository
-
-  @Autowired
-  private lateinit var visitRepository: VisitRepository
-
-  @AfterEach
-  internal fun deleteAllSessionTemplates() = sessionTemplateEntityHelper.deleteAll()
-
-  @AfterEach
-  internal fun deleteAllVisitSessions() = visitEntityHelper.deleteAll()
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
@@ -49,15 +32,13 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     val nextAllowedDay = getNextAllowedDay()
 
-    val sessionTemplate = sessionTemplate(
+    val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek
     )
-
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     // When
     val responseSpec = callGetSessions()
@@ -76,22 +57,19 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val nextAllowedDay = getNextAllowedDay()
     val dayAfterNextAllowedDay = nextAllowedDay.plusDays(1)
 
-    val nextDaySessionTemplate = sessionTemplate(
+    val nextDaySessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek
     )
 
-    val dayAfterNextSessionTemplate = sessionTemplate(
+    val dayAfterNextSessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = dayAfterNextAllowedDay,
       startTime = LocalTime.parse("10:30"),
       endTime = LocalTime.parse("11:30"),
       dayOfWeek = dayAfterNextAllowedDay.dayOfWeek,
     )
-
-    sessionTemplateRepository.saveAndFlush(nextDaySessionTemplate)
-    sessionTemplateRepository.saveAndFlush(dayAfterNextSessionTemplate)
 
     // When
     val responseSpec = callGetSessions(0, 28)
@@ -118,15 +96,13 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
     val nextAllowedDay = getNextAllowedDay()
 
-    val sessionTemplate = sessionTemplate(
+    val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00")
     )
-
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     // When
     val responseSpec = callGetSessions()
@@ -148,14 +124,12 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val nextAllowedDay = getNextAllowedDay()
     val previousDay = nextAllowedDay.minusDays(1)
 
-    sessionTemplateRepository.saveAndFlush(
-      sessionTemplate(
-        validFromDate = nextAllowedDay,
-        validToDate = nextAllowedDay,
-        dayOfWeek = previousDay.dayOfWeek,
-        startTime = LocalTime.parse("09:00"),
-        endTime = LocalTime.parse("10:00")
-      )
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      dayOfWeek = previousDay.dayOfWeek,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00")
     )
 
     // When
@@ -173,7 +147,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     val nextAllowedDay = getNextAllowedDay()
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = nextAllowedDay))
+    sessionTemplateEntityHelper.create(validFromDate = nextAllowedDay)
 
     // When
     val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
@@ -188,7 +162,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val policyNoticeDaysMin = 0
     val policyNoticeDaysMax = 1
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = LocalDate.now().plusDays(2)))
+    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now().plusDays(2))
 
     // When
     val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
@@ -205,7 +179,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     val nextAllowedDay = getNextAllowedDay()
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate(validFromDate = nextAllowedDay, validToDate = nextAllowedDay))
+    sessionTemplateEntityHelper.create(validFromDate = nextAllowedDay, validToDate = nextAllowedDay)
 
     // When
     val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
@@ -217,12 +191,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions that are no longer valid are not returned`() {
     // Given
-    val sessionTemplate = sessionTemplate(
+    sessionTemplateEntityHelper.create(
       validFromDate = LocalDate.now().minusDays(1),
       validToDate = LocalDate.now().minusDays(1)
     )
-
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     // When
     val responseSpec = callGetSessions()
@@ -234,11 +206,10 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `sessions that start after the max policy notice days after current date are not returned`() {
     // Given
-    val sessionTemplate = sessionTemplate(
+    sessionTemplateEntityHelper.create(
       validFromDate = LocalDate.now().plusMonths(6),
       validToDate = LocalDate.now().plusMonths(10)
     )
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
     // When
     val responseSpec = callGetSessions()
@@ -256,18 +227,17 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
-    val sessionTemplate = sessionTemplate(
+    val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime,
       endTime = endTime.toLocalTime(),
       dayOfWeek = nextAllowedDay.dayOfWeek
     )
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
-    val visit1 = Visit(
+    this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonId = "MDI",
+      prisonCode = "MDI",
       visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
@@ -276,12 +246,27 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN
     )
 
-    val visit2 = visit1.copy(visitStatus = BOOKED)
-    val visit3 = visit1.copy(visitStatus = CANCELLED)
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
 
-    visitRepository.saveAndFlush(visit1)
-    visitRepository.saveAndFlush(visit2)
-    visitRepository.saveAndFlush(visit3)
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = CANCELLED,
+      visitRestriction = OPEN
+    )
 
     // When
     val responseSpec = callGetSessions()
@@ -299,18 +284,17 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
-    val sessionTemplate = sessionTemplate(
+    val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime,
       endTime = endTime.toLocalTime(),
       dayOfWeek = nextAllowedDay.dayOfWeek
     )
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
 
-    val visit1 = Visit(
+    this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonId = "MDI",
+      prisonCode = "MDI",
       visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
@@ -319,9 +303,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN
     )
 
-    val visit2 = Visit(
+    this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonId = "MDI",
+      prisonCode = "MDI",
       visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime.plusWeeks(1),
       visitEnd = endTime,
@@ -329,9 +313,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = CHANGING,
       visitRestriction = CLOSED
     )
-
-    visitRepository.saveAndFlush(visit1)
-    visitRepository.saveAndFlush(visit2)
 
     // When
     val responseSpec = callGetSessions()
@@ -349,7 +330,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
-    val sessionTemplate = sessionTemplate(
+    val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime,
@@ -357,11 +338,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       dayOfWeek = nextAllowedDay.dayOfWeek
     )
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
-
-    val visit1 = Visit(
+    this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonId = "MDI",
+      prisonCode = "MDI",
       visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
@@ -370,10 +349,16 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN
     )
 
-    val visit2 = visit1.copy(visitRoom = sessionTemplate.visitRoom + "Anythingwilldo")
-
-    visitRepository.saveAndFlush(visit1)
-    visitRepository.saveAndFlush(visit2)
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = sessionTemplate.visitRoom + "Anythingwilldo",
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
 
     // When
     val responseSpec = callGetSessions()
@@ -391,7 +376,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
-    val sessionTemplate = sessionTemplate(
+    val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime,
@@ -399,11 +384,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       dayOfWeek = nextAllowedDay.dayOfWeek
     )
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
-
-    val visit1 = Visit(
+    this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonId = "MDI",
+      prisonCode = "MDI",
       visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
@@ -411,13 +394,27 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = RESERVED,
       visitRestriction = CLOSED
     )
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = CLOSED
+    )
 
-    val visit2 = visit1.copy(visitStatus = BOOKED, visitRestriction = CLOSED)
-    val visit3 = visit1.copy(visitStatus = CANCELLED, visitRestriction = CLOSED)
-
-    visitRepository.saveAndFlush(visit1)
-    visitRepository.saveAndFlush(visit2)
-    visitRepository.saveAndFlush(visit3)
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = CANCELLED,
+      visitRestriction = CLOSED
+    )
 
     // When
     val responseSpec = callGetSessions()
@@ -435,7 +432,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
-    val sessionTemplate = sessionTemplate(
+    val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime,
@@ -443,11 +440,9 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       dayOfWeek = nextAllowedDay.dayOfWeek
     )
 
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
-
-    val visit1 = Visit(
+    this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonId = "MDI",
+      prisonCode = "MDI",
       visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime.minusHours(1),
       visitEnd = endTime,
@@ -456,14 +451,36 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN
     )
 
-    val visit2 = visit1.copy(visitStart = dateTime, visitEnd = dateTime.plusMinutes(30))
-    val visit3 = visit1.copy(visitStart = dateTime.plusMinutes(30), visitEnd = dateTime.plusHours(1))
-    val visit4 = visit1.copy(visitStart = dateTime.plusHours(1), visitEnd = dateTime.plusHours(2))
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime, visitEnd = dateTime.plusMinutes(30),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
 
-    visitRepository.saveAndFlush(visit1)
-    visitRepository.saveAndFlush(visit2)
-    visitRepository.saveAndFlush(visit3)
-    visitRepository.saveAndFlush(visit4)
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime.plusMinutes(30),
+      visitEnd = dateTime.plusHours(1),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime.plusHours(1), visitEnd = dateTime.plusHours(2),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
 
     // When
     val responseSpec = callGetSessions()
@@ -475,17 +492,16 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions are returned for a prisoner without any non-associations`() {
     // Given
-    val prisonId = "MDI"
+    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val validFromDate = this.getNextAllowedDay()
 
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -497,12 +513,11 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions are returned for a prisoner with a valid non-association without a booking`() {
 
     // Given
-    val prisonId = "MDI"
+    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
@@ -511,7 +526,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -523,16 +538,15 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions are returned for a prisoner with a future non-association with a booked visit`() {
 
     // Given
-    val prisonId = "MDI"
+    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
-    val visitBooked = Visit(
+    this.visitEntityHelper.create(
       prisonerId = prisonerId,
-      prisonId = prisonId,
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
@@ -541,8 +555,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN
     )
 
-    visitRepository.saveAndFlush(visitBooked)
-
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
@@ -550,7 +562,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -572,16 +584,15 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions are returned for a prisoner with a future non-association with a reserved visit`() {
 
     // Given
-    val prisonId = "MDI"
+    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
-    val visitReserved = Visit(
+    this.visitEntityHelper.create(
       prisonerId = prisonerId,
-      prisonId = prisonId,
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
@@ -590,8 +601,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN
     )
 
-    visitRepository.saveAndFlush(visitReserved)
-
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
@@ -599,7 +608,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -620,16 +629,15 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions are returned for a prisoner with an expired non-association with a booking`() {
     // Given
-    val prisonId = "MDI"
+    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
-    val visit = Visit(
+    this.visitEntityHelper.create(
       prisonerId = prisonerId,
-      prisonId = prisonId,
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
@@ -637,8 +645,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = BOOKED,
       visitRestriction = OPEN
     )
-
-    visitRepository.saveAndFlush(visit)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
@@ -648,7 +654,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -660,16 +666,15 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking`() {
 
     // Given
-    val prisonId = "MDI"
+    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
-    val visit = Visit(
+    this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
-      prisonId = prisonId,
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
@@ -677,8 +682,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = BOOKED,
       visitRestriction = OPEN
     )
-
-    visitRepository.saveAndFlush(visit)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
@@ -688,7 +691,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -700,17 +703,16 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking CANCELLED`() {
 
     // Given
-    val prisonId = "MDI"
+    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
 
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
-    val visit = Visit(
+    this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
-      prisonId = prisonId,
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
@@ -718,8 +720,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = CANCELLED,
       visitRestriction = OPEN
     )
-
-    visitRepository.saveAndFlush(visit)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
@@ -729,7 +729,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -740,16 +740,15 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking in the past`() {
     // Given
-    val prisonId = "MDI"
+    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
-    val visit = Visit(
+    this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
-      prisonId = prisonId,
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.minusMonths(6).atTime(9, 0),
       visitEnd = validFromDate.minusMonths(6).atTime(9, 30),
@@ -757,8 +756,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = BOOKED,
       visitRestriction = OPEN
     )
-
-    visitRepository.saveAndFlush(visit)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
@@ -768,7 +765,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -779,16 +776,15 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking in the future`() {
     // Given
-    val prisonId = "MDI"
+    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplate(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
-    sessionTemplateRepository.saveAndFlush(sessionTemplate)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
-    val visit = Visit(
+    this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
-      prisonId = prisonId,
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.plusMonths(6).atTime(9, 0),
       visitEnd = validFromDate.plusMonths(6).atTime(9, 30),
@@ -796,8 +792,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitStatus = BOOKED,
       visitRestriction = OPEN
     )
-
-    visitRepository.saveAndFlush(visit)
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
@@ -807,7 +801,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 

@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -24,9 +23,6 @@ class VisitByReferenceTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
-
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @Test
   fun `Booked visit by reference`() {

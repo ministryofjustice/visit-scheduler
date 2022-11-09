@@ -19,6 +19,8 @@ import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.OneToOne
 import javax.persistence.PostPersist
@@ -32,8 +34,12 @@ data class Visit(
   @Column(nullable = false)
   var prisonerId: String,
 
-  @Column(nullable = false)
-  var prisonId: String,
+  @Column(name = "PRISON_ID", nullable = false)
+  val prisonId: Long,
+
+  @ManyToOne
+  @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
+  val prison: Prison,
 
   @Column(nullable = false)
   var visitRoom: String,

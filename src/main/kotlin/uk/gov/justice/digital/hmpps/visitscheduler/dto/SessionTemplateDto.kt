@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -12,9 +13,10 @@ import javax.validation.constraints.NotNull
 data class SessionTemplateDto(
   @Schema(description = "session id", example = "123", required = true)
   val sessionTemplateId: Long,
+  @JsonProperty("prisonId")
   @Schema(description = "prisonId", example = "MDI", required = true)
   @field:NotBlank
-  val prisonId: String,
+  val prisonCode: String,
   @Schema(description = "The start time of the generated visit session(s)", example = "13:45", required = true)
   val startTime: LocalTime,
   @Schema(description = "The end time of the generated visit session(s)", example = "13:45", required = true)
@@ -39,7 +41,7 @@ data class SessionTemplateDto(
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     sessionTemplateId = sessionTemplateEntity.id,
-    prisonId = sessionTemplateEntity.prisonId,
+    prisonCode = sessionTemplateEntity.prison.code,
     startTime = sessionTemplateEntity.startTime,
     endTime = sessionTemplateEntity.endTime,
     visitType = sessionTemplateEntity.visitType,

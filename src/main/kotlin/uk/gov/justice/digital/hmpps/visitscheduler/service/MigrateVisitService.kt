@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.util.Locale
 
@@ -21,6 +22,7 @@ import java.util.Locale
 class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
+  private val prisonRepository: PrisonRepository,
   private val telemetryClient: TelemetryClient,
 ) {
 
@@ -29,10 +31,13 @@ class MigrateVisitService(
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
+    val prison = prisonRepository.findByCode(migrateVisitRequest.prisonCode)
+
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
-        prisonId = migrateVisitRequest.prisonId,
+        prison = prison,
+        prisonId = prison.id,
         visitRoom = migrateVisitRequest.visitRoom,
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
@@ -94,7 +99,7 @@ class MigrateVisitService(
       mapOf(
         "reference" to visitEntity.reference,
         "prisonerId" to visitEntity.prisonerId,
-        "prisonId" to visitEntity.prisonId,
+        "prisonId" to visitEntity.prison.code,
         "visitType" to visitEntity.visitType.name,
         "visitRoom" to visitEntity.visitRoom,
         "visitRestriction" to visitEntity.visitRestriction.name,

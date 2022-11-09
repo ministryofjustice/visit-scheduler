@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -63,9 +62,6 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
     visitEntityHelper.save(reservedVisit)
   }
 
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
-
   @Test
   fun `Book visit visit by application Reference`() {
 
@@ -83,7 +79,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
       .jsonPath("$.reference").isEqualTo(reservedVisit.reference)
       .jsonPath("$.applicationReference").isEqualTo(reservedVisit.applicationReference)
       .jsonPath("$.prisonerId").isEqualTo(reservedVisit.prisonerId)
-      .jsonPath("$.prisonId").isEqualTo(reservedVisit.prisonId)
+      .jsonPath("$.prisonId").isEqualTo(reservedVisit.prison.code)
       .jsonPath("$.visitRoom").isEqualTo(reservedVisit.visitRoom)
       .jsonPath("$.startTimestamp").isEqualTo(reservedVisit.visitStart.toString())
       .jsonPath("$.endTimestamp").isEqualTo(reservedVisit.visitEnd.toString())

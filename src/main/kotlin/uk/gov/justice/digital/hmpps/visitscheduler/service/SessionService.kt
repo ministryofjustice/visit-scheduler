@@ -50,7 +50,7 @@ class SessionService(
 
   @Transactional(readOnly = true)
   fun getVisitSessions(
-    prisonId: String,
+    prisonCode: String,
     prisonerId: String? = null,
     noticeDaysMin: Long? = null,
     noticeDaysMax: Long? = null
@@ -60,7 +60,7 @@ class SessionService(
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
 
     val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
-      prisonId,
+      prisonCode,
       requestedBookableStartDate,
       requestedBookableEndDate
     )
@@ -95,7 +95,7 @@ class SessionService(
         .map { date ->
           VisitSessionDto(
             sessionTemplateId = sessionTemplate.id,
-            prisonId = sessionTemplate.prisonId,
+            prisonCode = sessionTemplate.prison.code,
             startTimestamp = LocalDateTime.of(date, sessionTemplate.startTime),
             openVisitCapacity = sessionTemplate.openCapacity,
             closedVisitCapacity = sessionTemplate.closedCapacity,
@@ -182,7 +182,7 @@ class SessionService(
 
       // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
       // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
-      return visitRepository.hasActiveVisits(nonAssociationPrisonerIds, session.prisonId, startDateTimeFilter, endDateTimeFilter)
+      return visitRepository.hasActiveVisits(nonAssociationPrisonerIds, session.prisonCode, startDateTimeFilter, endDateTimeFilter)
     }
 
     return false
@@ -207,7 +207,7 @@ class SessionService(
 
   private fun sessionHasBooking(session: VisitSessionDto, prisonerId: String): Boolean {
     return visitRepository.hasVisits(
-      prisonId = session.prisonId,
+      prisonCode = session.prisonCode,
       prisonerId = prisonerId,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp
@@ -217,7 +217,7 @@ class SessionService(
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
 
     val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
-      prisonId = session.prisonId,
+      prisonCode = session.prisonCode,
       visitRoom = session.visitRoomName,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp,
@@ -225,7 +225,7 @@ class SessionService(
     )
 
     val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
-      prisonId = session.prisonId,
+      prisonCode = session.prisonCode,
       visitRoom = session.visitRoomName,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp

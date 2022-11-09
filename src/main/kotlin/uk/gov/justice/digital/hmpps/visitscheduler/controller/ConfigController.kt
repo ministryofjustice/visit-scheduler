@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.ConfigService
 
 const val CONFIG_CONTROLLER_PATH: String = "/config"
 const val SUPPORTED_PRISONS: String = "$CONFIG_CONTROLLER_PATH/supported-prisons"
@@ -22,7 +22,7 @@ const val SUPPORTED_PRISONS: String = "$CONFIG_CONTROLLER_PATH/supported-prisons
 @Validated
 @RequestMapping(name = "Configuration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class ConfigController(
-  private val sessionTemplateService: SessionTemplateService
+  private val configService: ConfigService
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -57,6 +57,6 @@ class ConfigController(
     ]
   )
   fun getSupportedPrisons(): List<String> {
-    return sessionTemplateService.getSupportedPrisons()
+    return configService.getSupportedPrisons()
   }
 }

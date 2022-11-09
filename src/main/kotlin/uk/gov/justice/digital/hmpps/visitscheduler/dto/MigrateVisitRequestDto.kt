@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -15,9 +16,10 @@ data class MigrateVisitRequestDto(
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   @field:NotBlank
   val prisonerId: String,
+  @JsonProperty("prisonId")
   @Schema(description = "Prison Id", example = "MDI", required = true)
   @field:NotBlank
-  val prisonId: String,
+  val prisonCode: String,
   @Schema(description = "Visit Room", example = "A1", required = true)
   @field:NotBlank
   val visitRoom: String,

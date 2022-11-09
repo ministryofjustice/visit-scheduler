@@ -50,7 +50,7 @@ class VisitSessionController(
     @Parameter(
       description = "Query by NOMIS Prison Identifier",
       example = "MDI"
-    ) prisonId: String,
+    ) prisonCode: String,
     @RequestParam(value = "prisonerId", required = false)
     @Parameter(
       description = "Filter results by prisoner id",
@@ -67,5 +67,5 @@ class VisitSessionController(
       example = "28"
     ) max: Long?
   ): List<VisitSessionDto> =
-    sessionService.getVisitSessions(prisonId, prisonerId, min, max)
+    sessionService.getVisitSessions(prisonCode, prisonerId, min, max)
 }

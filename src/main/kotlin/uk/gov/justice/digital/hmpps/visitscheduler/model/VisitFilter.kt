@@ -4,7 +4,7 @@ import java.time.LocalDateTime
 
 data class VisitFilter(
   val prisonerId: String? = null,
-  val prisonId: String? = null,
+  val prisonCode: String? = null,
   val visitRoom: String? = null,
   val nomisPersonId: Long? = null,
   val startDateTime: LocalDateTime? = null,

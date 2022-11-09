@@ -4,7 +4,6 @@ import com.amazonaws.services.sqs.model.PurgeQueueRequest
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -33,9 +32,6 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
   }
   internal val testSqsClient by lazy { testQueue.sqsClient }
   internal val testQueueUrl by lazy { testQueue.queueUrl }
-
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @BeforeEach
   fun `clear queues`() {

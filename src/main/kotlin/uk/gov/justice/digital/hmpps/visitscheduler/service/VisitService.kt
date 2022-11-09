@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
@@ -38,6 +39,7 @@ import javax.validation.ValidationException
 class VisitService(
   private val visitRepository: VisitRepository,
   private val supportTypeRepository: SupportTypeRepository,
+  private val prisonRepository: PrisonRepository,
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int
@@ -61,10 +63,13 @@ class VisitService(
 
   fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
 
+    val prison = prisonRepository.findByCode(reserveVisitSlotDto.prisonCode)
+
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = reserveVisitSlotDto.prisonerId,
-        prisonId = reserveVisitSlotDto.prisonId,
+        prison = prison,
+        prisonId = prison.id,
         visitRoom = reserveVisitSlotDto.visitRoom,
         visitType = reserveVisitSlotDto.visitType,
         visitStatus = getStartingStatus(bookingReference, reserveVisitSlotDto),
@@ -103,7 +108,7 @@ class VisitService(
     val bookedVisit = this.visitRepository.findBookedVisit(bookingReference)
 
     if (bookedVisit == null ||
-      (bookedVisit.prisonId != reserveVisitSlotDto.prisonId) ||
+      (bookedVisit.prison.code != reserveVisitSlotDto.prisonCode) ||
       (bookedVisit.prisonerId != reserveVisitSlotDto.prisonerId) ||
       (bookedVisit.visitRestriction != reserveVisitSlotDto.visitRestriction) ||
       (bookedVisit.visitStart.compareTo(reserveVisitSlotDto.startTimestamp) != 0)
@@ -185,7 +190,7 @@ class VisitService(
   @Transactional(readOnly = true)
   fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
 
-    if (visitFilter.prisonId == null && visitFilter.prisonerId == null) {
+    if (visitFilter.prisonCode == null && visitFilter.prisonerId == null) {
       throw ValidationException("Must have prisonId or prisonerId")
     }
 
@@ -347,7 +352,7 @@ class VisitService(
     return mapOf(
       "reference" to visitEntity.reference,
       "prisonerId" to visitEntity.prisonerId,
-      "prisonId" to visitEntity.prisonId,
+      "prisonId" to visitEntity.prison.code,
       "visitType" to visitEntity.visitType.name,
       "visitRoom" to visitEntity.visitRoom,
       "visitRestriction" to visitEntity.visitRestriction.name,

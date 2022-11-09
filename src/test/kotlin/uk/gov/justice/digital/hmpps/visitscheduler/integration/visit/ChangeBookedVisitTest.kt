@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -24,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitChangeUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -52,6 +52,9 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   @Autowired
   private lateinit var visitRepository: VisitRepository
 
+  @Autowired
+  private lateinit var prisonEntityHelper: PrisonEntityHelper
+
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
@@ -72,14 +75,9 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
     bookedVisit = visitEntityHelper.save(visit)
   }
 
-  @AfterEach
-  internal fun deleteAllVisits() {
-    visitEntityHelper.deleteAll()
-  }
-
   private fun createReserveVisitSlotDto(prisonId: String = "MDI", prisonerId: String = "FF0000AA", startTimestamp: LocalDateTime = bookedVisit.visitStart, visitRestriction: VisitRestriction = OPEN): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
-      prisonId = prisonId,
+      prisonCode = prisonId,
       prisonerId = prisonerId,
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -124,7 +122,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
           assertThat(it["applicationReference"]).isNotEqualTo(bookedVisit.applicationReference)
           assertThat(it["applicationReference"]).isEqualTo(reservedVisit.applicationReference)
           assertThat(it["prisonerId"]).isEqualTo(reservedVisit.prisonerId)
-          assertThat(it["prisonId"]).isEqualTo(reservedVisit.prisonId)
+          assertThat(it["prisonId"]).isEqualTo(reservedVisit.prison.code)
           assertThat(it["visitType"]).isEqualTo(reservedVisit.visitType.name)
           assertThat(it["visitRoom"]).isEqualTo(reservedVisit.visitRoom)
           assertThat(it["visitRestriction"]).isEqualTo(reservedVisit.visitRestriction.name)
@@ -140,7 +138,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(visit.reference)
           assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-          assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+          assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
           assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
           assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
           assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
@@ -156,8 +154,8 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   fun `changed booked visit creates new visit when prisonId has changed`() {
     // Given
     val reference = bookedVisit.reference
-    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonId = "NEW" + bookedVisit.prisonId)
-
+    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonId = "NEW")
+    prisonEntityHelper.create(reserveVisitSlotDto.prisonCode, true)
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
 
@@ -177,7 +175,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visit.reference)
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
@@ -213,7 +211,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visit.reference)
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
@@ -249,7 +247,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visit.reference)
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
@@ -284,7 +282,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visit.reference)
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)

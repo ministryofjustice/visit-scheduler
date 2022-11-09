@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -30,9 +29,6 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
-
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @Test
   fun `cancel visit by reference -  with outcome and outcome text`() {

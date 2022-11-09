@@ -12,20 +12,13 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "select u from SessionTemplate u " +
-      "where u.prisonId = :prisonId " +
+      "where u.prison.code = :prisonCode " +
       "and (u.validToDate is null or u.validToDate >= :firstBookableDay) " +
       "and (u.validFromDate <= :lastBookableDay)"
   )
   fun findValidSessionTemplatesByPrisonId(
-    @Param("prisonId") prisonId: String,
+    @Param("prisonCode") prisonCode: String,
     @Param("firstBookableDay") firstBookableDay: LocalDate,
     @Param("lastBookableDay") lastBookableDay: LocalDate
   ): List<SessionTemplate>
-
-  @Query(
-    "select u.prisonId from SessionTemplate u " +
-      "where (u.validToDate is null or u.validToDate >= CURRENT_DATE) " +
-      "and (u.validFromDate <= CURRENT_DATE) group by u.prisonId order by u.prisonId"
-  )
-  fun getSupportedPrisons(): List<String>
 }
