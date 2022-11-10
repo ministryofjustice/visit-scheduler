@@ -269,7 +269,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
     // Given
     val visitStart = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit")
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
 
     // When
     val responseSpec = webTestClient.patch().uri("/visits/${expiredVisit.reference}/cancel")
@@ -301,7 +301,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
     // Given
     val visitStart = LocalDateTime.now().minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS).withHour(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit")
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
 
     // When
     val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
@@ -339,7 +339,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
     // Given
     val visitStart = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit")
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
 
     // When
     val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
@@ -377,7 +377,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
     // Given
     val visitStart = LocalDateTime.now().plusDays(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit")
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
 
     // When
     val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
@@ -429,7 +429,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       )
       // Given
       val visitStart = LocalDateTime.now().plusDays(1)
-      val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit")
+      val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
 
       // When
       val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
@@ -468,7 +468,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       )
       // Given
       val visitStart = LocalDateTime.now().plusDays(1)
-      val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit")
+      val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
 
       // When
       val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
@@ -498,7 +498,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       // visit has expired based on current date
       // as the configured limit is -2 which is incorrect - any cancellations before current time sohuld be allowed
       val visitStart = LocalDateTime.now().minusMinutes(10)
-      val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit")
+      val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
 
       // When
       val responseSpec = webTestClient.patch().uri("/visits/${expiredVisit.reference}/cancel")
