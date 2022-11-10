@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeReposit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.function.Supplier
 import javax.validation.ValidationException
 
@@ -40,7 +41,8 @@ class VisitService(
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
-  @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int
+  @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
+  @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
 ) {
 
   companion object {
@@ -263,8 +265,12 @@ class VisitService(
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
 
+    var visitCancellationDateAllowed = LocalDateTime.now()
     // check if the visit being cancelled is in the past
-    validateVisitStartDate(visitEntity, "cancelled")
+    if (visitCancellationDayLimit > 0) {
+      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit.toLong()).truncatedTo(ChronoUnit.DAYS)
+    }
+    validateVisitStartDate(visitEntity, "cancelled", visitCancellationDateAllowed)
 
     visitEntity.visitStatus = VisitStatus.CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
@@ -334,8 +340,12 @@ class VisitService(
     )
   }
 
-  private fun validateVisitStartDate(visit: Visit, action: String) {
-    if (visit.visitStart.isBefore(LocalDateTime.now())) {
+  private fun validateVisitStartDate(
+    visit: Visit,
+    action: String,
+    allowedVisitStartDate: LocalDateTime = LocalDateTime.now()
+  ) {
+    if (visit.visitStart.isBefore(allowedVisitStartDate)) {
       throw ExpiredVisitAmendException(
         AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
         ExpiredVisitAmendException("trying to change / cancel an expired visit")
