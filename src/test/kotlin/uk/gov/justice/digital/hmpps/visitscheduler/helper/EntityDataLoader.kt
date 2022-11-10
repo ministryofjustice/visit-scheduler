@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionPrisonWing
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
@@ -179,18 +178,6 @@ class SessionTemplateEntityHelper(
         dayOfWeek = dayOfWeek
       )
     )
-  }
-
-  fun createWings(
-    sessionTemplate: SessionTemplate,
-    name: String
-  ) {
-    val prisonWing = SessionPrisonWing(
-      prisonId = sessionTemplate.prisonId,
-      name = name
-    )
-    prisonWing.sessionTemplates.add(sessionTemplate)
-    sessionTemplate.prisonWings.add(prisonWing)
   }
 }
 

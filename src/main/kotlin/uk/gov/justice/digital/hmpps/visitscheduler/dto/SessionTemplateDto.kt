@@ -35,9 +35,7 @@ data class SessionTemplateDto(
   @Schema(description = "open capacity", example = "50", required = true)
   val openCapacity: Int,
   @Schema(description = "day of week fpr visit", example = "MONDAY", required = false)
-  val dayOfWeek: DayOfWeek?,
-  @Schema(description = "List of prison wings associated with the session template, if list is empty then all wings are acceptable!", required = false)
-  val prisonWings: List<SessionPrisonWingDto> = mutableListOf()
+  val dayOfWeek: DayOfWeek?
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     sessionTemplateId = sessionTemplateEntity.id,
@@ -50,7 +48,6 @@ data class SessionTemplateDto(
     visitRoom = sessionTemplateEntity.visitRoom,
     closedCapacity = sessionTemplateEntity.closedCapacity,
     openCapacity = sessionTemplateEntity.openCapacity,
-    dayOfWeek = sessionTemplateEntity.dayOfWeek,
-    prisonWings = sessionTemplateEntity.prisonWings.map { SessionPrisonWingDto(it) }
+    dayOfWeek = sessionTemplateEntity.dayOfWeek
   )
 }
