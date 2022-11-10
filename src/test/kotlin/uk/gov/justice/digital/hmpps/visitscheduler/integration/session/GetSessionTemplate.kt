@@ -62,7 +62,6 @@ class GetSessionTemplate(
     // Given
     val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 
-    sessionTemplateEntityHelper.createWings(sessionTemplate, "A")
     repository.save(sessionTemplate)
 
     // When
@@ -82,7 +81,5 @@ class GetSessionTemplate(
     Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(sessionTemplate.visitRoom)
     Assertions.assertThat(sessionTemplateDto.closedCapacity).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionTemplateDto.openCapacity).isEqualTo(sessionTemplate.openCapacity)
-    Assertions.assertThat(sessionTemplateDto.prisonWings).hasSize(1)
-    Assertions.assertThat(sessionTemplateDto.prisonWings[0].name).isEqualTo("A")
   }
 }

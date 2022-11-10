@@ -1,0 +1,1 @@
+DROP TABLE session_prison_wing, session_to_wing;
