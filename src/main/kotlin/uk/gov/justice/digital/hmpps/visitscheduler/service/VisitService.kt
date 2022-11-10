@@ -265,11 +265,9 @@ class VisitService(
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
 
-    var visitCancellationDateAllowed = LocalDateTime.now()
-    // check if the visit being cancelled is in the past
-    if (visitCancellationDayLimit > 0) {
-      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit.toLong()).truncatedTo(ChronoUnit.DAYS)
-    }
+    val visitCancellationDateAllowed = getAllowedCancellationDate(
+      LocalDateTime.now(), visitCancellationDayLimit = visitCancellationDayLimit.toLong()
+    )
     validateVisitStartDate(visitEntity, "cancelled", visitCancellationDateAllowed)
 
     visitEntity.visitStatus = VisitStatus.CANCELLED
@@ -351,6 +349,16 @@ class VisitService(
         ExpiredVisitAmendException("trying to change / cancel an expired visit")
       )
     }
+  }
+
+  private fun getAllowedCancellationDate(currentDateTime: LocalDateTime, visitCancellationDayLimit: Long): LocalDateTime {
+    var visitCancellationDateAllowed = currentDateTime
+    // check if the visit being cancelled is in the past
+    if (visitCancellationDayLimit > 0) {
+      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS)
+    }
+
+    return visitCancellationDateAllowed
   }
 
   private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): Map<String, String> {
