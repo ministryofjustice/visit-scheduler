@@ -5,7 +5,6 @@ import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
-import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
@@ -66,7 +65,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
-    assertTelemetryClientEvents(visitCancelled)
+    assertTelemetryClientEvents(visitCancelled, telemetryClient)
   }
 
   @Test
@@ -92,7 +91,7 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertVisitCancellation(visitCancelled, OutcomeStatus.VISITOR_CANCELLED)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(0)
-    assertTelemetryClientEvents(visitCancelled)
+    assertTelemetryClientEvents(visitCancelled, telemetryClient)
   }
 
   @Test
@@ -307,138 +306,44 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION)
   }
 
-  private fun assertVisitCancellation(
-    cancelledVisit: VisitDto,
-    expectedOutcomeStatus: OutcomeStatus
-  ) {
-    Assertions.assertThat(cancelledVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
-    Assertions.assertThat(cancelledVisit.outcomeStatus).isEqualTo(expectedOutcomeStatus)
-  }
-
-  private fun assertTelemetryClientEvents(
-    cancelledVisit: VisitDto
-  ) {
-    verify(telemetryClient).trackEvent(
-      eq("visit-cancelled"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
-        Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
-      },
-      isNull()
-    )
-
-    val eventsMap = mutableMapOf(
-      "reference" to cancelledVisit.reference,
-      "visitStatus" to cancelledVisit.visitStatus.name,
-      "outcomeStatus" to cancelledVisit.outcomeStatus!!.name
-    )
-    verify(telemetryClient, times(1)).trackEvent("visit-cancelled", eventsMap, null)
-
-    verify(telemetryClient).trackEvent(
-      eq("prison-visit.cancelled-domain-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
-      },
-      isNull()
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
-  }
-
-  @Nested
-  @DisplayName("Cancellation days have been set as zero")
-  @TestPropertySource(properties = ["visit.cancel.day-limit=0"])
-  inner class ZeroCancellationDays {
-    @Value("\${visit.cancel.day-limit}")
-    var visitCancellationDayLimit: Long = -7
-
-    @AfterEach
-    internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
-
-    @Test
-    fun `when cancel day limit configured as zero cancel future visit does not return error`() {
-      val outcomeDto = OutcomeDto(
-        OutcomeStatus.CANCELLATION,
-        "No longer joining."
-      )
-      // Given
-      val visitStart = LocalDateTime.now().plusDays(1)
-      val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
-
-      // When
-      val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, outcomeDto)
-
-      // Then
-      Assertions.assertThat(visitCancellationDayLimit).isEqualTo(0)
-
-      val returnResult = responseSpec.expectStatus().isOk
-        .expectBody()
-        .returnResult()
-
-      // And
-      val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-      assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION)
-    }
-  }
-
-  @Nested
-  @DisplayName("Cancellation days have been set as a negative value")
-  @TestPropertySource(properties = ["visit.cancel.day-limit=-2"])
-  inner class NegativeCancellationDays {
-    @Value("\${visit.cancel.day-limit}")
-    var visitCancellationDayLimit: Long = -7
-
-    @AfterEach
-    internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
-
-    @Test
-    fun `when cancel day limit configured as a negative value cancel future visit does not return error`() {
-      val outcomeDto = OutcomeDto(
-        OutcomeStatus.CANCELLATION,
-        "No longer joining."
-      )
-      // Given
-      val visitStart = LocalDateTime.now().plusDays(1)
-      val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
-
-      // When
-      val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, outcomeDto)
-
-      // Then
-      Assertions.assertThat(visitCancellationDayLimit).isEqualTo(-2)
-
-      val returnResult = responseSpec.expectStatus().isOk
-        .expectBody()
-        .returnResult()
-
-      // And
-      val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-      assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION)
+  companion object {
+    fun assertVisitCancellation(
+      cancelledVisit: VisitDto,
+      expectedOutcomeStatus: OutcomeStatus
+    ) {
+      Assertions.assertThat(cancelledVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
+      Assertions.assertThat(cancelledVisit.outcomeStatus).isEqualTo(expectedOutcomeStatus)
     }
 
-    @Test
-    fun `cancel expired visit before current time returns error when cancel day limit configured as a negative value`() {
-      val outcomeDto = OutcomeDto(
-        OutcomeStatus.CANCELLATION,
-        "No longer joining."
+    fun assertTelemetryClientEvents(
+      cancelledVisit: VisitDto,
+      telemetryClient: TelemetryClient
+    ) {
+      verify(telemetryClient).trackEvent(
+        eq("visit-cancelled"),
+        org.mockito.kotlin.check {
+          Assertions.assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
+          Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
+          Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
+        },
+        isNull()
       )
-      // Given
-      // visit has expired based on current date
-      // as the configured limit is 0 - any cancellations before current time should be allowed
-      val visitStart = LocalDateTime.now().minusMinutes(10)
-      val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
 
-      // When
-      val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, outcomeDto)
+      val eventsMap = mutableMapOf(
+        "reference" to cancelledVisit.reference,
+        "visitStatus" to cancelledVisit.visitStatus.name,
+        "outcomeStatus" to cancelledVisit.outcomeStatus!!.name
+      )
+      verify(telemetryClient, times(1)).trackEvent("visit-cancelled", eventsMap, null)
 
-      // Then
-      val returnResult = responseSpec.expectStatus().isOk
-        .expectBody()
-        .returnResult()
-
-      // And
-      val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-      assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION)
+      verify(telemetryClient).trackEvent(
+        eq("prison-visit.cancelled-domain-event"),
+        org.mockito.kotlin.check {
+          Assertions.assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
+        },
+        isNull()
+      )
+      verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
     }
   }
 }
