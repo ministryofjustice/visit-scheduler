@@ -56,9 +56,9 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     prisonEntityHelper.create("MDI", true)
   }
 
-  private fun createReserveVisitSlotDto(): ReserveVisitSlotDto {
+  private fun createReserveVisitSlotDto(prisonCode: String = "MDI"): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -123,6 +123,21 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       isNull()
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-reserved"), any(), isNull())
+  }
+
+  @Test
+  fun `error message when reserve visit slot uses an unknown prison`() {
+
+    // Given
+    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonCode = "AWE")
+
+    // When
+    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Prison code AWE not found!")
   }
 
   @Test

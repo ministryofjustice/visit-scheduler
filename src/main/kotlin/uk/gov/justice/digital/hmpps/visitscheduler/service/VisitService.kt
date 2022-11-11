@@ -26,7 +26,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
@@ -40,9 +39,9 @@ import javax.validation.ValidationException
 class VisitService(
   private val visitRepository: VisitRepository,
   private val supportTypeRepository: SupportTypeRepository,
-  private val prisonRepository: PrisonRepository,
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
+  private val prisonConfigService: PrisonConfigService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
 ) {
@@ -65,7 +64,7 @@ class VisitService(
 
   fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
 
-    val prison = prisonRepository.findByCode(reserveVisitSlotDto.prisonCode)
+    val prison = prisonConfigService.findPrisonByCode(reserveVisitSlotDto.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(

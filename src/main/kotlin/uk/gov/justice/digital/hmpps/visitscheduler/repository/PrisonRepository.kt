@@ -7,7 +7,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 
 @Repository
 interface PrisonRepository : JpaRepository<Prison, Long> {
-  fun findByCode(prisonCode: String): Prison
+
+  fun findByCode(prisonCode: String): Prison?
 
   @Query(
     "select p.code from Prison p " +

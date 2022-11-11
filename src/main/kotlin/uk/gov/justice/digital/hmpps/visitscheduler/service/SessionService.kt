@@ -59,7 +59,7 @@ class SessionService(
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
 
-    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
+    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
       prisonCode,
       requestedBookableStartDate,
       requestedBookableEndDate
