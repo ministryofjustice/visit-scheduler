@@ -388,9 +388,6 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     @Value("\${visit.cancel.day-limit}")
     var visitCancellationDayLimit: Long = -7
 
-    @AfterEach
-    internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
-
     @Test
     fun `when cancel day limit configured as zero cancel future visit does not return error`() {
       val outcomeDto = OutcomeDto(
@@ -428,9 +425,6 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   inner class NegativeCancellationDays {
     @Value("\${visit.cancel.day-limit}")
     var visitCancellationDayLimit: Long = -7
-
-    @AfterEach
-    internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
     @Test
     fun `when cancel day limit configured as a negative value cancel future visit does not return error`() {
