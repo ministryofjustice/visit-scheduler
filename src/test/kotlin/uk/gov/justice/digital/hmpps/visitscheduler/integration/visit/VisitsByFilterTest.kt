@@ -182,7 +182,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.length()").isEqualTo(3)
       .jsonPath("$..prisonerId").value(
-        Matchers.contains(
+        Matchers.containsInAnyOrder(
           "FF0000CC",
           "FF0000BB",
           "FF0000DD",
