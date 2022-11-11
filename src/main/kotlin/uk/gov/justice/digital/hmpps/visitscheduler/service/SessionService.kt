@@ -60,7 +60,6 @@ class SessionService(
     val today = LocalDate.now()
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
-    var prisonerWing: String?
 
     // get all the sessions for that prison - wing and non wing based
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
@@ -70,13 +69,13 @@ class SessionService(
     )
 
     // filter the sessionTemplates to use the ones that are eligible for all wings and sessionTemplates for that wing
-    prisonerId?.also {
-      prisonerWing = getPrisonerWing(it)
+    prisonerId?.let {
+      val prisonerWing = getPrisonerWing(it)
 
       // return all sessions where prison wings list is empty OR
       // sessions where wings contain the prisoners wing
       sessionTemplates = sessionTemplates.filter { sessionTemplate ->
-        isSessionEligibleForAllWings(sessionTemplate) || (prisonerWing != null && isSessionEligibleForWing(sessionTemplate, prisonerWing))
+        isSessionEligibleForAllPrisoners(sessionTemplate) || (prisonerWing?.let { wing -> isSessionEligibleForPrisonerWing(sessionTemplate, wing) } == true)
       }
     }
 
@@ -256,9 +255,9 @@ class SessionService(
     // get the prisoner details
     val prisonerDetails = prisonApiClient.getPrisonerDetails(prisonerId)
 
-    prisonerDetails?.also { prisonerDetailList ->
+    prisonerDetails?.let { prisonerDetailList ->
       if (prisonerDetailList.isNotEmpty()) {
-        prisonerDetailList[0]?.also { prisonerDetails ->
+        prisonerDetailList[0]?.let { prisonerDetails ->
           return PrisonerWingCalculator.getPrisonerWingFromLocation(prisonerDetails)
         }
       }
@@ -267,12 +266,12 @@ class SessionService(
     return null
   }
 
-  private fun isSessionEligibleForAllWings(sessionTemplate: SessionTemplate): Boolean {
+  private fun isSessionEligibleForAllPrisoners(sessionTemplate: SessionTemplate): Boolean {
     return sessionTemplate.prisonWings.isEmpty()
   }
 
-  private fun isSessionEligibleForWing(sessionTemplate: SessionTemplate, prisonerWing: String?): Boolean {
-    prisonerWing?.also {
+  private fun isSessionEligibleForPrisonerWing(sessionTemplate: SessionTemplate, prisonerWing: String?): Boolean {
+    prisonerWing?.let {
       return sessionTemplate.prisonWings.stream().map(SessionPrisonWing::name).toList().contains(it)
     }
 
