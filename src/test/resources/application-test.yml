@@ -62,3 +62,6 @@ feature:
     sns:
       enabled: true
 
+visit:
+  cancel:
+    day-limit: 28
