@@ -145,5 +145,4 @@ class PrisonApiServiceTest {
     // Then
     Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
   }
-
 }
