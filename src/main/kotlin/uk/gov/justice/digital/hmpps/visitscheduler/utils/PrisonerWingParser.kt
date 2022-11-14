@@ -5,7 +5,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDetailDto
 /**
  * this is only a temporary solution till we can get it from an API
  */
-class PrisonerWingCalculator {
+class PrisonerWingParser {
   private enum class WingElementByPrison(
     val prisonCode: String,
     val expectedElements: Int,
@@ -23,8 +23,8 @@ class PrisonerWingCalculator {
      * This information will later need to come from some other API like the Prison API.
      * Since the location style differs between prison getting this information only for Bristol.
      */
-    fun getPrisonerWingFromLocation(prisonerDetailDto: PrisonerDetailDto): String? {
-      if (prisonerDetailDto.internalLocation.isNotEmpty()) {
+    fun getPrisonerWingFromLocation(prisonerDetailDto: PrisonerDetailDto?): String? {
+      if (prisonerDetailDto != null && !prisonerDetailDto.internalLocation.isNullOrBlank()) {
         val values = prisonerDetailDto.internalLocation.split(LOCATION_DELIMITER)
 
         // the first element is always the prison Code

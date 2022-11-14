@@ -8,5 +8,5 @@ open class PrisonerDetailDto(
   val offenderNo: String,
 
   @Schema(description = "Name of the location where the prisoner resides (if in prison)", example = "WRI-B-3-018")
-  val internalLocation: String
+  val internalLocation: String?
 )

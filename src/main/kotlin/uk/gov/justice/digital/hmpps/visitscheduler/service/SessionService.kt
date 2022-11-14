@@ -3,11 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
@@ -17,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionP
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerWingCalculator
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -32,7 +28,7 @@ import javax.validation.constraints.NotNull
 class SessionService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
-  private val prisonApiClient: PrisonApiClient,
+  private val prisonApiService: PrisonApiService,
   private val visitService: VisitService,
   @Value("\${policy.session.booking-notice-period.minimum-days:2}")
   private val policyNoticeDaysMin: Long,
@@ -70,12 +66,12 @@ class SessionService(
 
     // filter the sessionTemplates to use the ones that are eligible for all wings and sessionTemplates for that wing
     prisonerId?.let {
-      val prisonerWing = getPrisonerWing(it)
+      val prisonerWing = prisonApiService.getPrisonerWing(it)
 
       // return all sessions where prison wings list is empty OR
       // sessions where wings contain the prisoners wing
       sessionTemplates = sessionTemplates.filter { sessionTemplate ->
-        isSessionEligibleForAllPrisoners(sessionTemplate) || (prisonerWing?.let { wing -> isSessionEligibleForPrisonerWing(sessionTemplate, wing) } == true)
+        isSessionEligibleForAllPrisoners(sessionTemplate) || (prisonerWing?.let { wing -> isSessionEligibleForPrisonersWing(sessionTemplate, wing) } == true)
       }
     }
 
@@ -84,7 +80,7 @@ class SessionService(
     }.flatten()
 
     if (!prisonerId.isNullOrBlank()) {
-      val offenderNonAssociationList = getOffenderNonAssociationList(prisonerId)
+      val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
 
       sessions = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
       populateConflict(sessions, prisonerId, offenderNonAssociationList)
@@ -202,19 +198,6 @@ class SessionService(
     return false
   }
 
-  private fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
-    try {
-      val offenderNonAssociationList = prisonApiClient.getOffenderNonAssociation(prisonerId)?.nonAssociations ?: emptyList()
-      LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${offenderNonAssociationList.size} non associations!")
-      return offenderNonAssociationList
-    } catch (e: WebClientResponseException) {
-      if (e.statusCode != HttpStatus.NOT_FOUND)
-        throw e
-    }
-
-    return emptyList()
-  }
-
   private fun getNonAssociationPrisonerIds(startTimestamp: LocalDate, @NotNull offenderNonAssociationList: List<OffenderNonAssociationDetailDto>): List<String> {
     return offenderNonAssociationList.filter { isDateWithinRange(startTimestamp, it.effectiveDate, it.expiryDate) }.map { it.offenderNonAssociation.offenderNo }
   }
@@ -251,30 +234,11 @@ class SessionService(
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
 
-  private fun getPrisonerWing(prisonerId: String): String? {
-    // get the prisoner details
-    val prisonerDetails = prisonApiClient.getPrisonerDetails(prisonerId)
-
-    prisonerDetails?.let { prisonerDetailList ->
-      if (prisonerDetailList.isNotEmpty()) {
-        prisonerDetailList[0]?.let { prisonerDetails ->
-          return PrisonerWingCalculator.getPrisonerWingFromLocation(prisonerDetails)
-        }
-      }
-    }
-
-    return null
-  }
-
   private fun isSessionEligibleForAllPrisoners(sessionTemplate: SessionTemplate): Boolean {
     return sessionTemplate.prisonWings.isEmpty()
   }
 
-  private fun isSessionEligibleForPrisonerWing(sessionTemplate: SessionTemplate, prisonerWing: String?): Boolean {
-    prisonerWing?.let {
-      return sessionTemplate.prisonWings.stream().map(SessionPrisonWing::name).toList().contains(it)
-    }
-
-    return false
+  private fun isSessionEligibleForPrisonersWing(sessionTemplate: SessionTemplate, prisonerWing: String): Boolean {
+    return sessionTemplate.prisonWings.stream().map(SessionPrisonWing::name).toList().contains(prisonerWing)
   }
 }
