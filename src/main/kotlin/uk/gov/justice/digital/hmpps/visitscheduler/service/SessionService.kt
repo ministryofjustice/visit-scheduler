@@ -3,11 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.reactive.function.client.WebClientResponseException
-import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
@@ -30,7 +27,7 @@ import javax.validation.constraints.NotNull
 class SessionService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
-  private val prisonApiClient: PrisonApiClient,
+  private val prisonApiService: PrisonApiService,
   private val visitService: VisitService,
   @Value("\${policy.session.booking-notice-period.minimum-days:2}")
   private val policyNoticeDaysMin: Long,
@@ -70,7 +67,7 @@ class SessionService(
     }.flatten()
 
     if (!prisonerId.isNullOrBlank()) {
-      val offenderNonAssociationList = getOffenderNonAssociationList(prisonerId)
+      val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
 
       sessions = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
       populateConflict(sessions, prisonerId, offenderNonAssociationList)
@@ -186,19 +183,6 @@ class SessionService(
     }
 
     return false
-  }
-
-  private fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
-    try {
-      val offenderNonAssociationList = prisonApiClient.getOffenderNonAssociation(prisonerId)?.nonAssociations ?: emptyList()
-      LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${offenderNonAssociationList.size} non associations!")
-      return offenderNonAssociationList
-    } catch (e: WebClientResponseException) {
-      if (e.statusCode != HttpStatus.NOT_FOUND)
-        throw e
-    }
-
-    return emptyList()
   }
 
   private fun getNonAssociationPrisonerIds(startTimestamp: LocalDate, @NotNull offenderNonAssociationList: List<OffenderNonAssociationDetailDto>): List<String> {
