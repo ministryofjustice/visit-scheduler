@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -28,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
@@ -59,20 +59,21 @@ class MigrateVisitTest : IntegrationTestBase() {
   @Autowired
   private lateinit var legacyDataRepository: LegacyDataRepository
 
+  @Autowired
+  private lateinit var prisonEntityHelper: PrisonEntityHelper
+
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   @BeforeEach
   internal fun setUp() {
+    prisonEntityHelper.create("MDI", true)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_MIGRATE_VISITS"))
   }
 
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
-
   private fun createMigrateVisitRequestDto(): MigrateVisitRequestDto {
     return MigrateVisitRequestDto(
-      prisonId = "MDI",
+      prisonCode = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -118,7 +119,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     visit?.let {
 
       assertThat(visit.reference).isEqualTo(reference)
-      assertThat(visit.prisonId).isEqualTo("MDI")
+      assertThat(visit.prison.code).isEqualTo("MDI")
       assertThat(visit.prisonerId).isEqualTo("FF0000FF")
       assertThat(visit.visitRoom).isEqualTo("A1")
       assertThat(visit.visitType).isEqualTo(SOCIAL)
@@ -175,7 +176,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Given
     val createMigrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonId = "MDI",
+      prisonCode = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -208,7 +209,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Given
     val createMigrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonId = "MDI",
+      prisonCode = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -244,7 +245,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Given
     val createMigrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonId = "MDI",
+      prisonCode = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -280,7 +281,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // Given
     val migrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonId = "MDI",
+      prisonCode = "MDI",
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,

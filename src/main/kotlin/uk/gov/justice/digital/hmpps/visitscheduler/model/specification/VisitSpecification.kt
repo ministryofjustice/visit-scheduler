@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.specification
 
 import org.springframework.data.jpa.domain.Specification
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import javax.persistence.criteria.CriteriaBuilder
@@ -21,8 +22,12 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
       predicates.add(criteriaBuilder.equal(root.get<String>(Visit::prisonerId.name), this))
     }
 
-    filter.prisonId?.run {
-      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::prisonId.name), this))
+    filter.prisonCode?.run {
+      val innerJoinFromVisitToVisitors =
+        root.join<Visit, MutableList<Prison>>(Visit::prison.name).get<VisitVisitor>(
+          Prison::code.name
+        )
+      predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, this))
     }
 
     filter.startDateTime?.run {

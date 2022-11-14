@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -24,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitReserveSlotUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -40,6 +40,9 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
+  @Autowired
+  private lateinit var prisonEntityHelper: PrisonEntityHelper
+
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
@@ -50,14 +53,12 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+    prisonEntityHelper.create("MDI", true)
   }
 
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
-
-  private fun createReserveVisitSlotDto(): ReserveVisitSlotDto {
+  private fun createReserveVisitSlotDto(prisonCode: String = "MDI"): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
-      prisonId = "MDI",
+      prisonCode = prisonCode,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -112,7 +113,7 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonId)
+        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
@@ -125,12 +126,27 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
+  fun `error message when reserve visit slot uses an unknown prison`() {
+
+    // Given
+    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonCode = "AWE")
+
+    // When
+    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Prison code AWE not found!")
+  }
+
+  @Test
   fun `when reserve visit slot has no visitors then bad request is returned`() {
 
     // Given
     val createReservationRequest = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
-      prisonId = "MDI",
+      prisonCode = "MDI",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitType = SOCIAL,
@@ -158,7 +174,7 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     val createReservationRequest = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
-      prisonId = "MDI",
+      prisonCode = "MDI",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitType = SOCIAL,
@@ -187,7 +203,7 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     // Given
     val reserveVisitSlotDto = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
-      prisonId = "MDI",
+      prisonCode = "MDI",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitType = SOCIAL,

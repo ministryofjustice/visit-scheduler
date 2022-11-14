@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -21,9 +20,6 @@ import java.time.LocalDateTime
 class CancelZeroDayLimitConfiguredTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
   @Value("\${visit.cancel.day-limit}")
   var visitCancellationDayLimit: Long = 28
-
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
 
   @Test
   fun `when cancel day limit configured as zero cancel future visit does not return error`() {

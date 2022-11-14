@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.hamcrest.Matchers
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -37,9 +36,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
-
   private lateinit var visitMin: Visit
   private lateinit var visitFullWithNoVisitors: Visit
   private lateinit var visitFullWithOneVisitor: Visit
@@ -48,9 +44,9 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @BeforeEach
   internal fun createVisits() {
 
-    visitMin = visitEntityHelper.create(prisonId = "MDI", visitStart = visitTime, prisonerId = "FF0000AA")
+    visitMin = visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime, prisonerId = "FF0000AA")
 
-    visitFullWithNoVisitors = visitEntityHelper.create(prisonId = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000BB")
+    visitFullWithNoVisitors = visitEntityHelper.create(prisonCode = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000BB")
 
     visitEntityHelper.createNote(visit = visitFullWithNoVisitors, text = "A visit concern", type = VISITOR_CONCERN)
     visitEntityHelper.createNote(visit = visitFullWithNoVisitors, text = "A visit outcome", type = VISIT_OUTCOMES)
@@ -59,7 +55,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     visitRepository.saveAndFlush(visitFullWithNoVisitors)
 
     visitFullWithOneVisitor = visitEntityHelper.create(
-      prisonId = "LEI", prisonerId = "FF0000CC",
+      prisonCode = "LEI", prisonerId = "FF0000CC",
       visitStart = visitTime.plusDays(2), visitEnd = visitTime.plusDays(2).plusHours(1)
     )
     visitEntityHelper.createContact(visit = visitFullWithOneVisitor, name = "Jane Doe", phone = "01234 098765")
@@ -68,7 +64,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     visitEntityHelper.createSupport(visit = visitFullWithOneVisitor, name = "OTHER", details = "Some Text")
     visitRepository.saveAndFlush(visitFullWithOneVisitor)
 
-    visitFullWithMultipleVisitors = visitEntityHelper.create(prisonId = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000DD")
+    visitFullWithMultipleVisitors = visitEntityHelper.create(prisonCode = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000DD")
     visitEntityHelper.createNote(visit = visitFullWithMultipleVisitors, text = "A visit concern", type = VISITOR_CONCERN)
     visitEntityHelper.createContact(visit = visitFullWithMultipleVisitors, name = "Jane D", phone = "01111 111111")
     visitEntityHelper.createVisitor(visit = visitFullWithMultipleVisitors, nomisPersonId = 222L, visitContact = true)

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -17,8 +18,9 @@ data class VisitDto(
   val reference: String,
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   val prisonerId: String,
+  @JsonProperty("prisonId")
   @Schema(description = "Prison Id", example = "MDI", required = true)
-  val prisonId: String,
+  val prisonCode: String,
   @Schema(description = "Visit Room", example = "A1 L3", required = true)
   val visitRoom: String,
   @Schema(description = "Visit Type", example = "SOCIAL", required = true)
@@ -55,7 +57,7 @@ data class VisitDto(
     applicationReference = visitEntity.applicationReference,
     reference = visitEntity.reference,
     prisonerId = visitEntity.prisonerId,
-    prisonId = visitEntity.prisonId,
+    prisonCode = visitEntity.prison.code,
     visitRoom = visitEntity.visitRoom,
     visitStatus = visitEntity.visitStatus,
     outcomeStatus = visitEntity.outcomeStatus,

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -22,8 +23,9 @@ data class VisitSessionDto(
   @Schema(description = "The type of visits taking place within this session", example = "SOCIAL", required = true)
   val visitType: VisitType,
 
+  @JsonProperty("prisonId")
   @Schema(description = "The prison id", example = "LEI", required = true)
-  val prisonId: String,
+  val prisonCode: String,
 
   @Schema(
     description = "The number of concurrent visits which may take place within this session",

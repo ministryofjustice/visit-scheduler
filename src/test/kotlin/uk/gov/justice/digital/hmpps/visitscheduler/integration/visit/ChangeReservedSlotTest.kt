@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
-import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -71,9 +70,6 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
     visitEntityHelper.save(visitFull)
   }
 
-  @AfterEach
-  internal fun deleteAllVisits() = visitEntityHelper.deleteAll()
-
   @Test
   fun `change reserved slot by application reference - add final details`() {
 
@@ -100,7 +96,7 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
       .jsonPath("$.reference").isEqualTo(visitFull.reference)
       .jsonPath("$.applicationReference").isEqualTo(applicationReference)
       .jsonPath("$.prisonerId").isEqualTo(visitFull.prisonerId)
-      .jsonPath("$.prisonId").isEqualTo(visitFull.prisonId)
+      .jsonPath("$.prisonId").isEqualTo(visitFull.prison.code)
       .jsonPath("$.visitRoom").isEqualTo(visitFull.visitRoom)
       .jsonPath("$.startTimestamp").isEqualTo(updateRequest.startTimestamp.toString())
       .jsonPath("$.endTimestamp").isEqualTo(updateRequest.endTimestamp.toString())

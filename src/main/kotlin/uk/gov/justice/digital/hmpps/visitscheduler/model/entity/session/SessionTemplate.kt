@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
 
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -11,6 +12,8 @@ import javax.persistence.Enumerated
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
+import javax.persistence.JoinColumn
+import javax.persistence.ManyToOne
 import javax.persistence.Table
 
 @Entity
@@ -20,8 +23,12 @@ data class SessionTemplate(
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   val id: Long = 0,
 
-  @Column(nullable = false)
-  val prisonId: String,
+  @Column(name = "PRISON_ID", nullable = false)
+  val prisonId: Long,
+
+  @ManyToOne
+  @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
+  val prison: Prison,
 
   @Column(nullable = false)
   val visitRoom: String,

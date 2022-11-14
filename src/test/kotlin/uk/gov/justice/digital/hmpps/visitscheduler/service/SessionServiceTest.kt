@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.UNKNOW
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -59,14 +60,14 @@ class SessionServiceTest {
 
   private val date = LocalDate.now()
 
-  private val prisonId = "MDI"
+  private val prisonCode = "MDI"
   private val noticeDaysMin = 1L
   private val noticeDaysMax = 100L
 
   private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>) {
     whenever(
-      sessionTemplateRepository.findValidSessionTemplatesByPrisonId(
-        prisonId,
+      sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
+        prisonCode,
         date.plusDays(noticeDaysMin),
         date.plusDays(noticeDaysMax)
       )
@@ -79,7 +80,7 @@ class SessionServiceTest {
 
     whenever(
       visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
-        sessionTemplate.prisonId,
+        sessionTemplate.prison.code,
         sessionTemplate.visitRoom,
         startDateTime,
         endDateTime
@@ -133,7 +134,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(weeklySession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId)
+      val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
       val fridayAfter = date.with(TemporalAdjusters.next(weeklySession.dayOfWeek)).atTime(weeklySession.startTime)
@@ -162,7 +163,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(weeklySession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId)
+      val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
@@ -188,7 +189,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId)
+      val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -208,7 +209,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(dailySession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId)
+      val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
@@ -227,7 +228,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId)
+      val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -248,12 +249,19 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
+      val prison = Prison(
+        id = 1,
+        code = "HEI",
+        active = true
+      )
+
       val openVisit1 = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = date.atTime(11, 30),
         visitEnd = date.atTime(12, 30),
         visitType = SOCIAL,
-        prisonId = prisonId,
+        prisonId = prison.id,
+        prison = prison,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
         visitRoom = "1"
@@ -264,7 +272,8 @@ class SessionServiceTest {
         visitStart = date.atTime(11, 30),
         visitEnd = date.atTime(12, 30),
         visitType = SOCIAL,
-        prisonId = prisonId,
+        prisonId = prison.id,
+        prison = prison,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
         visitRoom = "1"
@@ -275,7 +284,8 @@ class SessionServiceTest {
         visitStart = date.atTime(11, 30),
         visitEnd = date.atTime(12, 30),
         visitType = SOCIAL,
-        prisonId = prisonId,
+        prisonId = prison.id,
+        prison = prison,
         visitStatus = BOOKED,
         visitRestriction = CLOSED,
         visitRoom = "1"
@@ -283,7 +293,7 @@ class SessionServiceTest {
       mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId)
+      val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -303,12 +313,19 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
+      val prison = Prison(
+        id = 1,
+        code = "HEI",
+        active = true
+      )
+
       val openVisit = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = date.atTime(11, 30),
         visitEnd = date.atTime(12, 30),
         visitType = SOCIAL,
-        prisonId = prisonId,
+        prisonId = prison.id,
+        prison = prison,
         visitStatus = RESERVED,
         visitRestriction = OPEN,
         visitRoom = "1"
@@ -319,7 +336,8 @@ class SessionServiceTest {
         visitStart = date.atTime(11, 30),
         visitEnd = date.atTime(12, 30),
         visitType = SOCIAL,
-        prisonId = prisonId,
+        prisonId = prison.id,
+        prison = prison,
         visitStatus = RESERVED,
         visitRestriction = CLOSED,
         visitRoom = "1"
@@ -327,7 +345,7 @@ class SessionServiceTest {
       mockVisitRepositoryCountResponse(listOf(openVisit, closedVisit), singleSession)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId)
+      val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -346,12 +364,19 @@ class SessionServiceTest {
         endTime = LocalTime.parse("12:30") // future time
       )
 
+      val prison = Prison(
+        id = 1,
+        code = "HEI",
+        active = true
+      )
+
       val closedVisit = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = date.atTime(11, 30),
         visitEnd = date.atTime(12, 30),
         visitType = SOCIAL,
-        prisonId = prisonId,
+        prisonId = prison.id,
+        prison = prison,
         visitStatus = RESERVED,
         visitRestriction = UNKNOWN,
         visitRoom = "1"
@@ -362,7 +387,7 @@ class SessionServiceTest {
       mockVisitRepositoryCountResponse(listOf(closedVisit), singleSession)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId)
+      val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -388,7 +413,7 @@ class SessionServiceTest {
       mockVisitRepositoryCountResponse(noVisitsBookedOrReserved, singleSession)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId)
+      val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -435,7 +460,7 @@ class SessionServiceTest {
       ).thenReturn(OffenderNonAssociationDetailsDto())
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
@@ -476,7 +501,7 @@ class SessionServiceTest {
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       val fridayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
@@ -520,14 +545,14 @@ class SessionServiceTest {
       val startDateTimeFilter = date.plusDays(1).with(singleSession.dayOfWeek).atStartOfDay()
       val endDateTimeFilter = date.plusDays(1).with(singleSession.dayOfWeek).atTime(LocalTime.MAX)
 
-      whenever(visitRepository.hasActiveVisits(expectedAssociations, prisonId, startDateTimeFilter, endDateTimeFilter))
+      whenever(visitRepository.hasActiveVisits(expectedAssociations, prisonCode, startDateTimeFilter, endDateTimeFilter))
         .thenReturn(
           true,
           false
         )
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -559,7 +584,7 @@ class SessionServiceTest {
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       val saturdayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
@@ -591,7 +616,7 @@ class SessionServiceTest {
       )
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
@@ -622,7 +647,7 @@ class SessionServiceTest {
 
       // When
       assertThrows<WebClientResponseException> {
-        sessionService.getVisitSessions(prisonId, prisonerId)
+        sessionService.getVisitSessions(prisonCode, prisonerId)
       }
 
       // Then
@@ -668,7 +693,7 @@ class SessionServiceTest {
       ).thenReturn(OffenderNonAssociationDetailsDto())
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -709,7 +734,7 @@ class SessionServiceTest {
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -748,7 +773,7 @@ class SessionServiceTest {
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
@@ -776,7 +801,7 @@ class SessionServiceTest {
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
@@ -812,7 +837,7 @@ class SessionServiceTest {
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonId, prisonerId)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
