@@ -31,7 +31,7 @@ import kotlin.DeprecationLevel.WARNING
 @Suppress("KotlinDeprecation")
 @RestController
 @Validated
-@RequestMapping(name = "Visit Resource", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(name = "Visit Resource Legacy", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitControllerLegacy(
   private val visitService: VisitService
 ) {
