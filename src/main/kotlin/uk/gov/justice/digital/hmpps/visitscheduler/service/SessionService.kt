@@ -69,13 +69,6 @@ class SessionService(
 
     if (!prisonerId.isNullOrBlank()) {
       val offenderNonAssociationList = getOffenderNonAssociationList(prisonerId)
-      val prisonerDetails = getPrisonerDetails(prisonerId)
-      prisonerDetails?.let {
-        println(prisonerDetails.nomsId)
-        println(prisonerDetails.unitCode1)
-        println(prisonerDetails.unitCode2)
-        println(prisonerDetails.unitCode3)
-      }
 
       sessions = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
       populateConflict(sessions, prisonerId, offenderNonAssociationList)

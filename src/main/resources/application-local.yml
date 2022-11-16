@@ -20,12 +20,14 @@ spring:
   jpa:
     show-sql: true
 
-hmpps.auth.url: http://localhost:8090/auth
+#hmpps.auth.url: http://localhost:8090/auth
+hmpps.auth.url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
 
 prison:
   api:
-    url: http://localhost:8091
-    timeout: 10s
+    #url: http://localhost:8091
+    url: https://api-dev.prison.service.justice.gov.uk
+    timeout: 90s
 
 task:
   expired-visit:
