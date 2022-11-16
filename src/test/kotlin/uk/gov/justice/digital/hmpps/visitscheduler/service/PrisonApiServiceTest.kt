@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDetailDto
 import java.time.LocalDate
 
 @ExtendWith(MockitoExtension::class)
@@ -144,5 +145,64 @@ class PrisonApiServiceTest {
 
     // Then
     Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+  }
+
+  @Test
+  fun `prisoner details are returned for a valid prisoner`() {
+    val prisonerId = "AA1234BB"
+    val unitCodes = arrayOf("Level 1", "Level 2", "Level 3")
+    val prisonerDetailDto = PrisonerDetailDto(prisonerId, unitCode1 = unitCodes[0], unitCode2 = unitCodes[1], unitCode3 = unitCodes[2])
+
+    whenever(
+      prisonApiClient.getPrisonerDetails(prisonerId)
+    ).thenReturn(prisonerDetailDto)
+
+    // When
+    val prisonerDetails = prisonApiService.getPrisonerDetails(prisonerId)
+
+    // Then
+    assertThat(prisonerDetails).isNotNull
+    assertThat(prisonerDetails!!.nomsId).isEqualTo(prisonerId)
+    assertThat(prisonerDetails.unitCode1).isEqualTo(unitCodes[0])
+    assertThat(prisonerDetails.unitCode2).isEqualTo(unitCodes[1])
+    assertThat(prisonerDetails.unitCode3).isEqualTo(unitCodes[2])
+    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+  }
+
+  @Test
+  fun `null value is returned when prison api call for prisoner details returns NOT FOUND`() {
+    val prisonerId = "AA1234BB"
+
+    whenever(
+      prisonApiClient.getPrisonerDetails(prisonerId)
+    ).thenThrow(
+      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+    )
+
+    // When
+    val prisonerDetails = prisonApiService.getPrisonerDetails(prisonerId)
+
+    // Then
+    assertThat(prisonerDetails).isNull()
+    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+  }
+
+  @Test
+  fun `get prisoner details throws WebClientResponseException for BAD REQUEST`() {
+    val prisonerId = "AA1234BB"
+
+    whenever(
+      prisonApiClient.getPrisonerDetails(prisonerId)
+    ).thenThrow(
+      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+    )
+
+    // When
+    assertThrows<WebClientResponseException> {
+      prisonApiService.getPrisonerDetails(prisonerId)
+    }
+
+    // Then
+    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
   }
 }
