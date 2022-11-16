@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
+import uk.gov.justice.digital.hmpps.visitscheduler.model.PermittedType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import java.time.LocalDateTime
 import javax.persistence.Column
 import javax.persistence.Entity
@@ -10,6 +12,7 @@ import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.JoinColumn
+import javax.persistence.ManyToMany
 import javax.persistence.ManyToOne
 import javax.persistence.Table
 import javax.persistence.TemporalType
@@ -23,12 +26,18 @@ data class PermittedSessionLocation(
   @Column(name = "ID")
   val id: Long = 0,
 
-  @Column(name = "SESSION_TEMPLATE_ID", nullable = false)
-  val sessionTemplateID: Long,
+  @Column(name = "PRISON_ID", nullable = false)
+  val prisonId: Long,
 
   @ManyToOne
-  @JoinColumn(name = "SESSION_TEMPLATE_ID", updatable = false, insertable = false)
-  val sessionTemplate: SessionTemplate,
+  @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
+  val prison: Prison,
+
+  @Column(name = "TYPE", nullable = false)
+  val type: PermittedType,
+
+  @ManyToMany(mappedBy = "permittedSessionLocations")
+  var sessionTemplates: MutableSet<SessionTemplate> = mutableSetOf(),
 
   @Column(name = "LEVEL_ONE_CODE", unique = false, nullable = false)
   var levelOneCode: String,

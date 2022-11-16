@@ -15,8 +15,9 @@ import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.JoinColumn
+import javax.persistence.JoinTable
+import javax.persistence.ManyToMany
 import javax.persistence.ManyToOne
-import javax.persistence.OneToMany
 import javax.persistence.Table
 
 @Entity
@@ -36,9 +37,13 @@ data class SessionTemplate(
   @Column(nullable = false)
   val visitRoom: String,
 
-  @Column(nullable = true)
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "sessionTemplate", orphanRemoval = true)
-  val permittedSessionLocations: List<PermittedSessionLocation>,
+  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+  @JoinTable(
+    name = "SESSION_TO_PERMITTED_LOCATION",
+    joinColumns = [JoinColumn(name = "session_template_id")],
+    inverseJoinColumns = [JoinColumn(name = "permitted_session_location_id")]
+  )
+  val permittedSessionLocations: List<PermittedSessionLocation>? = mutableListOf(),
 
   @Column
   @Enumerated(EnumType.STRING)
