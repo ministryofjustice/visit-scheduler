@@ -25,7 +25,7 @@ class PrisonApiService(
       return offenderNonAssociationList
     } catch (e: WebClientResponseException) {
       if (e.statusCode != HttpStatus.NOT_FOUND) {
-        LOG.error("Exception thrown from call to prison API : $e")
+        LOG.error("Exception thrown on prison API call - /api/offenders/$prisonerId/non-association-details", e)
         throw e
       }
     }
@@ -38,7 +38,7 @@ class PrisonApiService(
       return prisonApiClient.getPrisonerDetails(prisonerId)
     } catch (e: WebClientResponseException) {
       if (e.statusCode != HttpStatus.NOT_FOUND) {
-        LOG.error("Exception thrown from call to prison API : $e")
+        LOG.error("Exception thrown on prison API call - /api/prisoners/$prisonerId/full-status", e)
         throw e
       }
     }

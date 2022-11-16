@@ -6,7 +6,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -68,7 +67,7 @@ class SessionService(
     }.flatten()
 
     if (!prisonerId.isNullOrBlank()) {
-      val offenderNonAssociationList = getOffenderNonAssociationList(prisonerId)
+      val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
 
       sessions = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
       populateConflict(sessions, prisonerId, offenderNonAssociationList)
@@ -221,21 +220,4 @@ class SessionService(
 
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
-
-  private fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
-    return try {
-      prisonApiService.getOffenderNonAssociationList(prisonerId)
-    } catch (e: Exception) {
-      LOG.error("Exception occurred in call to prisonApiService getOffenderNonAssociationList: $e")
-      return emptyList()
-    }
-  }
-  private fun getPrisonerDetails(prisonerId: String): PrisonerDetailDto? {
-    return try {
-      prisonApiService.getPrisonerDetails(prisonerId)
-    } catch (e: Exception) {
-      LOG.error("Exception occurred in call to prisonApiService getPrisonerDetails: $e")
-      return null
-    }
-  }
 }
