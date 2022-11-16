@@ -5,7 +5,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
@@ -624,13 +623,15 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `get sessions throws WebClientResponseException for BAD REQUEST`() {
+    fun `get sessions does not throw WebClientResponseException for BAD REQUEST`() {
 
       // Given
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
         validFromDate = date,
+        validToDate = date.plusWeeks(1),
+        dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30")
       )
@@ -643,9 +644,8 @@ class SessionServiceTest {
       )
 
       // When
-      assertThrows<WebClientResponseException> {
-        sessionService.getVisitSessions(prisonCode, prisonerId)
-      }
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
+      assertThat(sessions).size().isEqualTo(1)
 
       // Then
       Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
