@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
-import uk.gov.justice.digital.hmpps.visitscheduler.model.PermittedType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import java.time.LocalDateTime
 import javax.persistence.Column
@@ -32,9 +31,6 @@ data class PermittedSessionLocation(
   @ManyToOne
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison,
-
-  @Column(name = "TYPE", nullable = false)
-  val type: PermittedType,
 
   @ManyToMany(mappedBy = "permittedSessionLocations")
   var sessionTemplates: MutableSet<SessionTemplate> = mutableSetOf(),
