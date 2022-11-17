@@ -24,8 +24,8 @@ data class PermittedSessionLocationDto(
   constructor(permittedSessionLocationEntity: PermittedSessionLocation) : this(
     id = permittedSessionLocationEntity.id,
     levelOneCode = permittedSessionLocationEntity.levelOneCode,
-    levelTwoCode = permittedSessionLocationEntity.levelOneCode,
-    levelThreeCode = permittedSessionLocationEntity.levelOneCode,
-    levelFourCode = permittedSessionLocationEntity.levelOneCode
+    levelTwoCode = permittedSessionLocationEntity.levelTwoCode,
+    levelThreeCode = permittedSessionLocationEntity.levelThreeCode,
+    levelFourCode = permittedSessionLocationEntity.levelFourCode
   )
 }
