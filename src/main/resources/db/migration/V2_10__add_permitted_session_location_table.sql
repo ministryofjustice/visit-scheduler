@@ -1,7 +1,6 @@
 CREATE TABLE public.permitted_session_location (
     id  serial NOT NULL PRIMARY KEY,
     prison_id int8 NOT NULL,
-    description varchar(50) NOT NULL,
 	level_one_code varchar(10) NOT NULL,
 	level_two_code varchar(10) NULL,
     level_three_code varchar(10) NULL,
