@@ -38,11 +38,11 @@ data class PermittedSessionLocation(
   @Column(name = "LEVEL_ONE_CODE", unique = false, nullable = false)
   var levelOneCode: String,
   @Column(name = "LEVEL_TWO_CODE", unique = false)
-  var levelTwoCode: String?=null,
+  var levelTwoCode: String? = null,
   @Column(name = "LEVEL_THREE_CODE", unique = false)
-  var levelThreeCode: String?=null,
+  var levelThreeCode: String? = null,
   @Column(name = "LEVEL_FOUR_CODE", unique = false)
-  var levelFourCode: String?=null,
+  var levelFourCode: String? = null,
 
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)
