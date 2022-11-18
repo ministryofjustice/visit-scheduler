@@ -33,7 +33,7 @@ data class PermittedSessionLocation(
   val prison: Prison,
 
   @ManyToMany(mappedBy = "permittedSessionLocations")
-  var sessionTemplates: MutableSet<SessionTemplate> = mutableSetOf(),
+  var sessionTemplates: MutableList<SessionTemplate> = mutableListOf(),
 
   @Column(name = "LEVEL_ONE_CODE", unique = false, nullable = false)
   var levelOneCode: String,

@@ -43,7 +43,7 @@ data class SessionTemplate(
     joinColumns = [JoinColumn(name = "session_template_id")],
     inverseJoinColumns = [JoinColumn(name = "permitted_session_location_id")]
   )
-  val permittedSessionLocations: List<PermittedSessionLocation>? = mutableListOf(),
+  val permittedSessionLocations: MutableList<PermittedSessionLocation>? = mutableListOf(),
 
   @Column
   @Enumerated(EnumType.STRING)
