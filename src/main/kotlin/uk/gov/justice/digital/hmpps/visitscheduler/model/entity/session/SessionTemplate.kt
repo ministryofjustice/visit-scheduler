@@ -5,14 +5,18 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.EnumType
 import javax.persistence.Enumerated
+import javax.persistence.FetchType
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
 import javax.persistence.JoinColumn
+import javax.persistence.JoinTable
+import javax.persistence.ManyToMany
 import javax.persistence.ManyToOne
 import javax.persistence.Table
 
@@ -32,6 +36,14 @@ data class SessionTemplate(
 
   @Column(nullable = false)
   val visitRoom: String,
+
+  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+  @JoinTable(
+    name = "SESSION_TO_PERMITTED_LOCATION",
+    joinColumns = [JoinColumn(name = "session_template_id")],
+    inverseJoinColumns = [JoinColumn(name = "permitted_session_location_id")]
+  )
+  val permittedSessionLocations: MutableList<PermittedSessionLocation>? = mutableListOf(),
 
   @Column
   @Enumerated(EnumType.STRING)

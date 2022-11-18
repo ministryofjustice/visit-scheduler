@@ -13,9 +13,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
@@ -140,6 +142,32 @@ class VisitEntityHelper(
 }
 
 @Component
+class PermittedSessionLocationHelper(
+  private val sessionRepository: SessionTemplateRepository,
+  private val repository: TestPermittedSessionLocationRepository
+) {
+
+  fun create(sessionTemplate: SessionTemplate): PermittedSessionLocation {
+    val permittedSessionLocation = repository.saveAndFlush(
+      PermittedSessionLocation(
+        sessionTemplates = mutableListOf(sessionTemplate),
+        prisonId = sessionTemplate.prison.id,
+        prison = sessionTemplate.prison,
+        levelOneCode = "A",
+        levelTwoCode = "1",
+        levelThreeCode = "W",
+        levelFourCode = "001"
+      )
+    )
+
+    sessionTemplate.permittedSessionLocations?.add(permittedSessionLocation)
+    sessionRepository.saveAndFlush(sessionTemplate)
+
+    return permittedSessionLocation
+  }
+}
+
+@Component
 class SessionTemplateEntityHelper(
   private val sessionRepository: SessionTemplateRepository,
   private val prisonEntityHelper: PrisonEntityHelper
@@ -162,7 +190,7 @@ class SessionTemplateEntityHelper(
 
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
-    return sessionRepository.saveAndFlush(
+    val sessionTemplate = sessionRepository.saveAndFlush(
       SessionTemplate(
         id = id,
         validFromDate = validFromDate,
@@ -178,6 +206,8 @@ class SessionTemplateEntityHelper(
         dayOfWeek = dayOfWeek
       )
     )
+
+    return sessionTemplate
   }
 }
 
@@ -187,6 +217,7 @@ class DeleteEntityHelper(
   private val visitRepository: VisitRepository,
   private val prisonRepository: PrisonRepository,
   private val sessionRepository: SessionTemplateRepository,
+  private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository
 ) {
 
   fun deleteAll() {
@@ -194,6 +225,8 @@ class DeleteEntityHelper(
     sessionRepository.flush()
     visitRepository.deleteAllInBatch()
     visitRepository.flush()
+    permittedSessionLocationRepository.deleteAll()
+    permittedSessionLocationRepository.flush()
     prisonRepository.deleteAll()
     prisonRepository.flush()
   }
