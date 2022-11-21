@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -18,7 +19,8 @@ fun sessionTemplate(
   visitType: VisitType = VisitType.SOCIAL,
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
-  dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY
+  dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
+  permittedSessionLocations: MutableList<PermittedSessionLocation> = mutableListOf()
 ): SessionTemplate {
 
   val prison = Prison(id = 0, code = prisonCode, active = true)
@@ -35,6 +37,7 @@ fun sessionTemplate(
     visitType = visitType,
     startTime = startTime,
     endTime = endTime,
-    dayOfWeek = dayOfWeek
+    dayOfWeek = dayOfWeek,
+    permittedSessionLocations = permittedSessionLocations
   )
 }

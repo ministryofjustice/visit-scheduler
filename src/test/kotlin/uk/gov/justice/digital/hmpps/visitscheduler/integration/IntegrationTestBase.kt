@@ -14,6 +14,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PermittedSessionLocationHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
@@ -33,6 +34,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var sessionTemplateEntityHelper: SessionTemplateEntityHelper
+
+  @Autowired
+  protected lateinit var permittedSessionLocationHelper: PermittedSessionLocationHelper
 
   @Autowired
   protected lateinit var deleteEntityHelper: DeleteEntityHelper

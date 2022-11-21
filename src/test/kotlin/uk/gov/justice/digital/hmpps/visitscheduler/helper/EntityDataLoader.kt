@@ -165,6 +165,30 @@ class PermittedSessionLocationHelper(
 
     return permittedSessionLocation
   }
+
+  fun create(sessionTemplate: SessionTemplate, prisonHierarchies: List<AllowedPrisonHierarchy>): MutableList<PermittedSessionLocation> {
+    val permittedSessionLocations = mutableListOf<PermittedSessionLocation>()
+
+    for (prisonHierarchy in prisonHierarchies) {
+      val permittedSessionLocation = repository.saveAndFlush(
+        PermittedSessionLocation(
+          sessionTemplates = mutableListOf(sessionTemplate),
+          prisonId = sessionTemplate.prison.id,
+          prison = sessionTemplate.prison,
+          levelOneCode = prisonHierarchy.level1,
+          levelTwoCode = prisonHierarchy.level2,
+          levelThreeCode = prisonHierarchy.level3,
+          levelFourCode = prisonHierarchy.level4
+        )
+      )
+
+      permittedSessionLocations.add(permittedSessionLocation)
+    }
+    sessionTemplate.permittedSessionLocations?.addAll(permittedSessionLocations)
+    sessionRepository.saveAndFlush(sessionTemplate)
+
+    return permittedSessionLocations
+  }
 }
 
 @Component
@@ -185,12 +209,13 @@ class SessionTemplateEntityHelper(
     startTime: LocalTime = LocalTime.parse("09:00"),
     endTime: LocalTime = LocalTime.parse("10:00"),
     dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
-    activePrison: Boolean = true
+    activePrison: Boolean = true,
+    permittedSessionLocations: MutableList<PermittedSessionLocation>? = mutableListOf()
   ): SessionTemplate {
 
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
-    val sessionTemplate = sessionRepository.saveAndFlush(
+    return sessionRepository.saveAndFlush(
       SessionTemplate(
         id = id,
         validFromDate = validFromDate,
@@ -203,11 +228,10 @@ class SessionTemplateEntityHelper(
         visitType = visitType,
         startTime = startTime,
         endTime = endTime,
-        dayOfWeek = dayOfWeek
+        dayOfWeek = dayOfWeek,
+        permittedSessionLocations = permittedSessionLocations
       )
     )
-
-    return sessionTemplate
   }
 }
 
@@ -231,3 +255,10 @@ class DeleteEntityHelper(
     prisonRepository.flush()
   }
 }
+
+class AllowedPrisonHierarchy(
+  val level1: String,
+  val level2: String?,
+  val level3: String?,
+  val level4: String?,
+)

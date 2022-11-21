@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -55,12 +57,20 @@ class SessionService(
     val today = LocalDate.now()
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
+    var prisonerDetailDto: PrisonerDetailDto?
 
-    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
       prisonCode,
       requestedBookableStartDate,
       requestedBookableEndDate
     )
+
+    prisonerId?.let { prisonerIdVal ->
+      prisonerDetailDto = prisonApiService.getPrisonerDetails(prisonerIdVal)
+      prisonerDetailDto?.let { prisonerDetail ->
+        sessionTemplates = sessionTemplates.filter { sessionTemplate -> PrisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail, sessionTemplate) }
+      }
+    }
 
     var sessions = sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, requestedBookableStartDate, requestedBookableEndDate)
