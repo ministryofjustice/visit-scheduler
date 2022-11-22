@@ -6,6 +6,10 @@ plugins {
   idea
 }
 
+springBoot {
+  mainClass.value("uk.gov.justice.digital.hmpps.visitscheduler.VisitSchedulerApplicationKt")
+}
+
 configurations {
   testImplementation { exclude(group = "org.junit.vintage") }
 }
