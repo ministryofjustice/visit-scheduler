@@ -9,7 +9,7 @@ class PrisonerLevelMatcher : BiPredicate<MutableList<PermittedSessionLocation>?,
     permittedSessionLocationsList: MutableList<PermittedSessionLocation>?,
     prisonerDetailDto: PrisonerDetailDto
   ): Boolean {
-    permittedSessionLocationsList?.let {permittedSessionLocations ->
+    permittedSessionLocationsList?.let { permittedSessionLocations ->
       for (permittedSessionLocation in permittedSessionLocations) {
         val result = LevelMatcher().test(permittedSessionLocation.levelOneCode, prisonerDetailDto.unitCode1)
           .and(LevelMatcher().test(permittedSessionLocation.levelTwoCode, prisonerDetailDto.unitCode2))
