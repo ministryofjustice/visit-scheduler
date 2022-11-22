@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
@@ -54,6 +55,7 @@ class SessionServiceTest {
   private val visitRepository = mock<VisitRepository>()
   private val prisonApiService = mock<PrisonApiService>()
   private val visitService = mock<VisitService>()
+  private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
 
   private lateinit var sessionService: SessionService
 
@@ -113,7 +115,8 @@ class SessionServiceTest {
         policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
-        policyNonAssociationWholeDay = true
+        policyNonAssociationWholeDay = true,
+        sessionValidator = prisonerSessionValidator
       )
     }
 
@@ -436,7 +439,8 @@ class SessionServiceTest {
         policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
-        policyNonAssociationWholeDay = true
+        policyNonAssociationWholeDay = true,
+        sessionValidator = prisonerSessionValidator
       )
     }
 
@@ -667,7 +671,8 @@ class SessionServiceTest {
         policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = true,
         policyFilterNonAssociation = true,
-        policyNonAssociationWholeDay = true
+        policyNonAssociationWholeDay = true,
+        sessionValidator = prisonerSessionValidator
       )
     }
 

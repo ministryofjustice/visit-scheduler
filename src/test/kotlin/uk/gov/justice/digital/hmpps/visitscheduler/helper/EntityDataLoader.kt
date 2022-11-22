@@ -175,10 +175,10 @@ class PermittedSessionLocationHelper(
           sessionTemplates = mutableListOf(sessionTemplate),
           prisonId = sessionTemplate.prison.id,
           prison = sessionTemplate.prison,
-          levelOneCode = prisonHierarchy.level1,
-          levelTwoCode = prisonHierarchy.level2,
-          levelThreeCode = prisonHierarchy.level3,
-          levelFourCode = prisonHierarchy.level4
+          levelOneCode = prisonHierarchy.levelOneCode,
+          levelTwoCode = prisonHierarchy.levelTwoCode,
+          levelThreeCode = prisonHierarchy.levelThreeCode,
+          levelFourCode = prisonHierarchy.levelFourCode
         )
       )
 
@@ -257,8 +257,8 @@ class DeleteEntityHelper(
 }
 
 class AllowedPrisonHierarchy(
-  val level1: String,
-  val level2: String?,
-  val level3: String?,
-  val level4: String?,
+  val levelOneCode: String,
+  val levelTwoCode: String?,
+  val levelThreeCode: String?,
+  val levelFourCode: String?,
 )
