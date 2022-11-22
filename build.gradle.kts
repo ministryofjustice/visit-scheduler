@@ -28,6 +28,7 @@ dependencies {
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:1.1.12")
   implementation("net.javacrumbs.shedlock:shedlock-spring:4.42.0")
   implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:4.42.0")
+  implementation("org.apache.commons:commons-csv:1.9.0")
 
   runtimeOnly("org.postgresql:postgresql:42.5.0")
   runtimeOnly("org.flywaydb:flyway-core")

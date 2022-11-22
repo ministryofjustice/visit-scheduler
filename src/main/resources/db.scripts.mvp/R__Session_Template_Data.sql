@@ -1,41 +1,184 @@
--- Data for prisons visit schedule
-
--- Start a transaction
+-- This script clears certain tables and re-set auto id's to zero!
+-- WARNING if the session template id's are used in other tables this script might have to change!
+-- This is a temporary solution, and should be replaced by a JSON admin API!
 BEGIN;
 
-SET SCHEMA 'public';
+    SET SCHEMA 'public';
 
--- use TRUNCATE rather than delete so indexes are re-set
-TRUNCATE TABLE session_to_permitted_location RESTART IDENTITY CASCADE;
-TRUNCATE TABLE  session_template  RESTART IDENTITY CASCADE;
-TRUNCATE TABLE  permitted_session_location  RESTART IDENTITY CASCADE;
-
--- System Template section
-
--- HEWELL
-
--- start_date MONDAY and then repeat weekly on Monday!
-INSERT INTO session_template (prison_id, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week)
-SELECT id,'Visits Main Room', 'SOCIAL', 30, 2, '13:45:00', '14:45:00', '2022-05-30', null, 'MONDAY'  FROM prison WHERE code = 'HEI';
-
--- start_date WEDNESDAY and then repeat weekly on WEDNESDAY!
-INSERT INTO session_template (prison_id, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week)
-SELECT id,'Visits Main Room', 'SOCIAL', 30, 2, '13:45:00', '14:45:00', '2022-06-01', null, 'WEDNESDAY'  FROM prison WHERE code = 'HEI';
-
--- start_date FRIDAY then and repeat weekly on FRIDAY!
-INSERT INTO session_template (prison_id, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week)
-SELECT id, 'Visits Main Room', 'SOCIAL', 30, 2, '09:00:00', '10:00:00', '2022-06-03', null, 'FRIDAY'  FROM prison WHERE code = 'HEI';
-
--- start_date SATURDAY then and repeat weekly on SATURDAY!
-INSERT INTO session_template (prison_id, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week)
-SELECT id, 'Visits Main Room', 'SOCIAL', 30, 2, '13:45:00', '14:45:00', '2022-06-04', null, 'SATURDAY'  FROM prison WHERE code = 'HEI';
-
--- start_date SUNDAY then and repeat weekly on SUNDAY!
-INSERT INTO session_template (prison_id, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week)
-SELECT id, 'Visits Main Room', 'SOCIAL', 30, 2, '13:45:00', '14:45:00', '2022-06-05', null, 'SUNDAY'  FROM prison WHERE code = 'HEI';
+    -- Use TRUNCATE rather than delete so indexes are re-set
+    TRUNCATE TABLE session_to_permitted_location RESTART IDENTITY CASCADE;
+    TRUNCATE TABLE session_template  RESTART IDENTITY CASCADE;
+    TRUNCATE TABLE permitted_session_location  RESTART IDENTITY CASCADE;
 
 
--- Bristol
---  TODO
--- Commit the change
+    -- Creating session template data
+    CREATE TEMP TABLE tmp_session_template(
+         id                serial        NOT NULL PRIMARY KEY,
+         locationKeys      VARCHAR       ,
+         prison_code       VARCHAR(6)    NOT NULL,
+         prison_id         int    ,
+         visit_room        VARCHAR(255)  NOT NULL,
+         visit_type        VARCHAR(80)   NOT NULL,
+         open_capacity     integer       NOT NULL,
+         closed_capacity   integer       NOT NULL,
+         start_time        time          NOT NULL,
+         end_time          time          NOT NULL,
+         valid_from_date   date          NOT NULL,
+         valid_to_date     date          ,
+         day_of_week       VARCHAR(40)
+        );
+
+    INSERT INTO tmp_session_template (locationKeys,prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week)
+    VALUES
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-05-30', null, 'MONDAY'),
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-06-01', null, 'WEDNESDAY'),
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '09:00', '14:00', '2022-06-03', null, 'FRIDAY'),
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-06-04', null, 'SATURDAY'),
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-06-05', null, 'SUNDAY'),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-16', null, 'TUESDAY'),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-16', null, 'TUESDAY'),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-16', null, 'WEDNESDAY'),
+        ('BLI_G2','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-16', null, 'WEDNESDAY'),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '16:00', '2022-11-16', null, 'FRIDAY'),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-16', null, 'SATURDAY'),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-16', null, 'SATURDAY'),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-16', null, 'SUNDAY'),
+        ('BLI_G2','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-16', null, 'SUNDAY');
+
+    UPDATE tmp_session_template SET prison_id = prison.id FROM prison WHERE tmp_session_template.prison_code = prison.code;
+
+    INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id)
+    SELECT id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id FROM tmp_session_template;
+    ALTER SEQUENCE session_template_id_seq RESTART WITH 15;
+
+
+    -- Create permitted session location data
+    CREATE TABLE tmp_permitted_session_location (
+                                                    id                serial        NOT NULL PRIMARY KEY,
+                                                    key               VARCHAR(20)   NOT NULL,
+                                                    prison_code       VARCHAR(6)    NOT NULL,
+                                                    prison_id         int,
+                                                    level_one_code    VARCHAR(10) NOT NULL,
+                                                    level_two_code    VARCHAR(10),
+                                                    level_three_code  VARCHAR(10),
+                                                    level_four_code   VARCHAR(10)
+    );
+
+    INSERT INTO tmp_permitted_session_location (key,prison_code,level_one_code,level_two_code,level_three_code,level_four_code)
+    VALUES
+        ('BLI_G1','BLI','A',null,null,null),
+        ('BLI_G1','BLI','B',null,null,null),
+        ('BLI_G1','BLI','G',null,null,null),
+        ('BLI_G1','BLI','F',null,null,null),
+        ('BLI_G1','BLI','E',null,null,null),
+        ('BLI_G1','BLI','H',null,null,null),
+        ('BLI_G1','BLI','C','1','001',null),
+        ('BLI_G1','BLI','C','1','009',null),
+        ('BLI_G1','BLI','C','1','010',null),
+        ('BLI_G1','BLI','C','1','011',null),
+        ('BLI_G1','BLI','C','1','012',null),
+        ('BLI_G1','BLI','C','1','013',null),
+        ('BLI_G1','BLI','C','1','014',null),
+        ('BLI_G1','BLI','C','1','015',null),
+        ('BLI_G1','BLI','C','1','016',null),
+        ('BLI_G1','BLI','C','1','017',null),
+        ('BLI_G1','BLI','C','1','018',null),
+        ('BLI_G1','BLI','C','1','019',null),
+        ('BLI_G1','BLI','C','1','020',null),
+        ('BLI_G1','BLI','C','1','021',null),
+        ('BLI_G1','BLI','C','1','022',null),
+        ('BLI_G1','BLI','C','1','023',null),
+        ('BLI_G1','BLI','C','1','024',null),
+        ('BLI_G1','BLI','C','1','025',null),
+        ('BLI_G1','BLI','C','1','026',null),
+        ('BLI_G1','BLI','C','1','027',null),
+        ('BLI_G1','BLI','C','1','028',null),
+        ('BLI_G1','BLI','C','1','029',null),
+        ('BLI_G1','BLI','C','1','030',null),
+        ('BLI_G1','BLI','C','1','031',null),
+        ('BLI_G1','BLI','C','1','032',null),
+        ('BLI_G1','BLI','C','2','001',null),
+        ('BLI_G1','BLI','C','2','002',null),
+        ('BLI_G1','BLI','C','2','003',null),
+        ('BLI_G1','BLI','C','2','004',null),
+        ('BLI_G1','BLI','C','2','005',null),
+        ('BLI_G1','BLI','C','2','006',null),
+        ('BLI_G1','BLI','C','2','007',null),
+        ('BLI_G1','BLI','C','2','008',null),
+        ('BLI_G1','BLI','C','2','009',null),
+        ('BLI_G1','BLI','C','2','010',null),
+        ('BLI_G1','BLI','C','2','011',null),
+        ('BLI_G1','BLI','C','2','012',null),
+        ('BLI_G1','BLI','C','2','013',null),
+        ('BLI_G1','BLI','C','2','014',null),
+        ('BLI_G1','BLI','C','2','015',null),
+        ('BLI_G1','BLI','C','2','016',null),
+        ('BLI_G1','BLI','C','2','017',null),
+        ('BLI_G1','BLI','C','2','018',null),
+        ('BLI_G1','BLI','C','2','019',null),
+        ('BLI_G1','BLI','C','2','020',null),
+        ('BLI_G1','BLI','C','2','021',null),
+        ('BLI_G1','BLI','C','2','022',null),
+        ('BLI_G1','BLI','C','2','023',null),
+        ('BLI_G1','BLI','C','2','024',null),
+        ('BLI_G1','BLI','C','3','001',null),
+        ('BLI_G1','BLI','C','3','002',null),
+        ('BLI_G1','BLI','C','3','003',null),
+        ('BLI_G1','BLI','C','3','004',null),
+        ('BLI_G1','BLI','C','3','005',null),
+        ('BLI_G1','BLI','C','3','006',null),
+        ('BLI_G1','BLI','C','3','007',null),
+        ('BLI_G1','BLI','C','3','008',null),
+        ('BLI_G1','BLI','C','3','009',null),
+        ('BLI_G1','BLI','C','3','010',null),
+        ('BLI_G1','BLI','C','3','011',null),
+        ('BLI_G1','BLI','C','3','012',null),
+        ('BLI_G1','BLI','C','3','013',null),
+        ('BLI_G1','BLI','C','3','014',null),
+        ('BLI_G1','BLI','C','3','015',null),
+        ('BLI_G1','BLI','C','3','016',null),
+        ('BLI_G1','BLI','C','3','017',null),
+        ('BLI_G1','BLI','C','3','018',null),
+        ('BLI_G1','BLI','C','3','019',null),
+        ('BLI_G1','BLI','C','3','020',null),
+        ('BLI_G1','BLI','C','3','021',null),
+        ('BLI_G1','BLI','C','3','022',null),
+        ('BLI_G1','BLI','C','3','023',null),
+        ('BLI_G1','BLI','C','3','024',null),
+        ('BLI_G2','BLI','D',null,null,null),
+        ('BLI_G2','BLI','F',null,null,null),
+        ('BLI_G2','BLI','C','1','002',null),
+        ('BLI_G2','BLI','C','1','003',null),
+        ('BLI_G2','BLI','C','1','004',null),
+        ('BLI_G2','BLI','C','1','005',null),
+        ('BLI_G2','BLI','C','1','006',null),
+        ('BLI_G2','BLI','C','1','007',null),
+        ('BLI_G2','BLI','C','1','008',null),
+        ('BLI_G2','BLI','C','2','025',null),
+        ('BLI_G2','BLI','C','2','026',null),
+        ('BLI_G2','BLI','C','2','027',null),
+        ('BLI_G2','BLI','C','2','028',null),
+        ('BLI_G2','BLI','C','2','029',null),
+        ('BLI_G2','BLI','C','2','030',null),
+        ('BLI_G2','BLI','C','2','031',null),
+        ('BLI_G2','BLI','C','2','032',null);
+
+    UPDATE tmp_permitted_session_location SET prison_id = prison.id FROM prison WHERE tmp_permitted_session_location.prison_code = prison.code;
+
+    INSERT INTO permitted_session_location(id,prison_id,level_one_code,level_two_code,level_three_code,level_four_code)
+    SELECT id,prison_id,level_one_code,level_two_code,level_three_code,level_four_code FROM tmp_permitted_session_location;
+
+    ALTER SEQUENCE permitted_session_location_id_seq RESTART WITH 97;
+
+
+    -- Create link table data
+    INSERT INTO session_to_permitted_location(session_template_id, permitted_session_location_id)
+    SELECT st.id, l.id FROM tmp_session_template st
+                                JOIN tmp_permitted_session_location l ON POSITION(l.key  IN st.locationKeys)<>0 ORDER BY st.id,l.id;
+
+
+    -- Drop temporary tables
+    DROP TABLE tmp_session_template;
+    DROP TABLE tmp_permitted_session_location;
+
 END;
