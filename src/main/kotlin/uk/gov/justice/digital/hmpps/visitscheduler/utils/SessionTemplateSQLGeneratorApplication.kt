@@ -3,21 +3,21 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.CLOSED
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.DAY_OF_WEEK
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.END_DATE
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.END_TIME
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.LOCATION_KEYS
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.ROOM
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.START_DATE
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.START_TIME
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_COLUMNS.TYPE
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_LOCATION_COLUMNS.KEY
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_LOCATION_COLUMNS.LEVEL_FOUR
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_LOCATION_COLUMNS.LEVEL_ONE
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_LOCATION_COLUMNS.LEVEL_THREE
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SESSION_LOCATION_COLUMNS.LEVEL_TWO
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.DAY_OF_WEEK
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_TIME
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.LOCATION_KEYS
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.ROOM
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.START_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.START_TIME
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.TYPE
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.KEY
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.LEVEL_FOUR
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.LEVEL_ONE
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.LEVEL_THREE
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.LEVEL_TWO
 import java.io.File
 import java.io.FileReader
 import java.io.Reader
@@ -29,11 +29,11 @@ import kotlin.collections.ArrayList
 
 class SessionTemplateSQLGenerator {
 
-  enum class SESSION_COLUMNS {
+  private enum class SessionColumnNames {
     PRISON, ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, LOCATION_KEYS;
   }
 
-  enum class SESSION_LOCATION_COLUMNS {
+  private enum class SessionLocationColumnNames {
     PRISON, KEY, LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR;
   }
 
@@ -52,7 +52,7 @@ class SessionTemplateSQLGenerator {
       .build()
 
     fun toList(value: String? = null): List<String> {
-      val values = value?.let { it.uppercase().split(DELIMITER).toSet() } ?: run { listOf<String>() }
+      val values = value?.uppercase()?.split(DELIMITER)?.toSet() ?: run { listOf<String>() }
       return values.stream().map(String::trim).collect(Collectors.toList())
     }
   }
@@ -71,7 +71,7 @@ class SessionTemplateSQLGenerator {
     val locationKeys: String?
   ) {
     constructor(sessionRecord: CSVRecord) : this(
-      prison = sessionRecord.get(SESSION_COLUMNS.PRISON.name).uppercase(),
+      prison = sessionRecord.get(SessionColumnNames.PRISON.name).uppercase(),
       room = sessionRecord.get(ROOM.name),
       type = VisitType.valueOf(sessionRecord.get(TYPE.name).uppercase()),
       open = Integer.parseInt(sessionRecord.get(OPEN.name)),
@@ -81,7 +81,7 @@ class SessionTemplateSQLGenerator {
       startDate = LocalDate.parse(sessionRecord.get(START_DATE.name)),
       endDate = sessionRecord.get(END_DATE.name)?.let { LocalDate.parse(it) },
       dayOfWeek = DayOfWeek.valueOf(sessionRecord.get(DAY_OF_WEEK.name).uppercase()),
-      locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.let { it.uppercase() }
+      locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase()
     )
   }
 
@@ -94,7 +94,7 @@ class SessionTemplateSQLGenerator {
     val levelFour: List<String> = listOf<String>(),
   ) {
     constructor(sessionRecord: CSVRecord) : this(
-      prison = sessionRecord.get(SESSION_LOCATION_COLUMNS.PRISON.name).uppercase(),
+      prison = sessionRecord.get(SessionLocationColumnNames.PRISON.name).uppercase(),
       key = sessionRecord.get(KEY.name).uppercase(),
       levelOne = toList(sessionRecord.get(LEVEL_ONE.name)),
       levelTwo = toList(sessionRecord.get(LEVEL_TWO.name)),
@@ -346,7 +346,7 @@ class SessionTemplateSQLGenerator {
   }
 }
 
-fun main(args: Array<String>) {
+fun main() {
   val path = "src/main/resources/session-template-data/"
   val sessionDataFile = File(path, "session-data.csv")
   val sessionLocationDataFile = File(path, "session-location-data.csv")
@@ -358,5 +358,5 @@ fun main(args: Array<String>) {
 
   val sql = sessionTemplateSQLGenerator.createSql(sessionRecords, sessionLocationItems)
 
-  System.out.print(sql)
+  print(sql)
 }
