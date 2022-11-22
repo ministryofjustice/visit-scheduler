@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.PermittedSessionLocationHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
@@ -16,8 +15,8 @@ import java.time.format.DateTimeFormatter
 @DisplayName("Get /visit-session-templates")
 class GetSessionTemplate(
   @Autowired private val objectMapper: ObjectMapper,
-  @Autowired private val repository: SessionTemplateRepository,
-  @Autowired private val permittedSessionLocationHelper: PermittedSessionLocationHelper
+  @Autowired private val repository: SessionTemplateRepository
+
 ) : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")

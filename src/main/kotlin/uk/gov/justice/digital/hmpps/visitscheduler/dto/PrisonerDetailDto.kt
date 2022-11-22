@@ -14,5 +14,7 @@ open class PrisonerDetailDto(
   val unitCode2: String?,
 
   @Schema(description = "Level 3 from the prisoner's internal location", example = "008")
-  val unitCode3: String?
+  val unitCode3: String?,
+
+  val unitCode4: String? = null
 )

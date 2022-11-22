@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -39,8 +40,8 @@ class SessionService(
   private val policyFilterNonAssociation: Boolean,
   @Value("\${policy.session.non-association.whole-day:true}")
   private val policyNonAssociationWholeDay: Boolean,
+  private val sessionValidator: PrisonerSessionValidator
 ) {
-
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
@@ -56,11 +57,13 @@ class SessionService(
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
 
-    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
       prisonCode,
       requestedBookableStartDate,
       requestedBookableEndDate
     )
+
+    sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)
 
     var sessions = sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, requestedBookableStartDate, requestedBookableEndDate)
@@ -141,6 +144,17 @@ class SessionService(
     }
 
     return validToDate
+  }
+
+  private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?): List<SessionTemplate> {
+    prisonerId?.let { prisonerIdVal ->
+      val prisonerDetailDto = prisonApiService.getPrisonerDetails(prisonerIdVal)
+      prisonerDetailDto?.let { prisonerDetail ->
+        return sessionTemplates.filter { sessionTemplate -> sessionValidator.isSessionAvailableToPrisoner(prisonerDetail, sessionTemplate) }
+      }
+    }
+
+    return sessionTemplates
   }
 
   private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String, offenderNonAssociationList: List<OffenderNonAssociationDetailDto>): List<VisitSessionDto> {
