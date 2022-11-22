@@ -7,7 +7,7 @@ plugins {
 }
 
 springBoot {
-  mainClass.value("uk.gov.justice.digital.hmpps.visitscheduler.VisitScheduler")
+  mainClass.value("uk.gov.justice.digital.hmpps.visitscheduler.VisitSchedulerApplicationKt")
 }
 
 configurations {
