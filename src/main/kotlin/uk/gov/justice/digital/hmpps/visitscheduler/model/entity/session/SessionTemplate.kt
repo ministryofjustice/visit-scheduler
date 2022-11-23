@@ -67,8 +67,8 @@ data class SessionTemplate(
   @Column(nullable = false)
   val openCapacity: Int,
 
-  @Column(name = "biWeekly")
-  var biWeekly: Boolean,
+  @Column(name = "bi_weekly", nullable = false)
+  val biWeekly: Boolean = false,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
