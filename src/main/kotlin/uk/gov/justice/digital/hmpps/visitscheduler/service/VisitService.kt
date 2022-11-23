@@ -247,15 +247,10 @@ class VisitService(
 
     val visit = VisitDto(visitRepository.saveAndFlush(visitToBook))
 
-    trackEvent(
-      TelemetryVisitEvents.VISIT_BOOKED_EVENT.eventName,
-      listOfNotNull(
-        "reference" to visitToBook.reference,
-        "visitStatus" to visit.visitStatus.name,
-        "applicationReference" to visit.applicationReference,
-        "isUpdated" to changedVisit.toString()
-      ).toMap()
-    )
+    val bookEvent = createVisitTrackEventFromVisitEntity(visitToBook)
+    bookEvent["isUpdated"] = changedVisit.toString()
+
+    trackEvent(TelemetryVisitEvents.VISIT_BOOKED_EVENT.eventName, bookEvent)
 
     if (changedVisit) {
       snsService.sendChangedVisitBookedEvent(visit)
@@ -283,10 +278,7 @@ class VisitService(
 
     visitRepository.saveAndFlush(visitEntity)
 
-    val eventsMap = mutableMapOf(
-      "reference" to reference,
-      "visitStatus" to visitEntity.visitStatus.name
-    )
+    val eventsMap = createVisitTrackEventFromVisitEntity(visitEntity)
     visitEntity.outcomeStatus?.let {
       eventsMap.put("outcomeStatus", it.name)
     }
@@ -365,8 +357,8 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
-  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): Map<String, String> {
-    return mapOf(
+  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): MutableMap<String, String> {
+    return mutableMapOf(
       "reference" to visitEntity.reference,
       "prisonerId" to visitEntity.prisonerId,
       "prisonId" to visitEntity.prison.code,

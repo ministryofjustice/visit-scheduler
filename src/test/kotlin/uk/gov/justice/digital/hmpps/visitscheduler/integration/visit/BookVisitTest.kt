@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
@@ -252,6 +253,12 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
+        Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+        Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
         Assertions.assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
       },

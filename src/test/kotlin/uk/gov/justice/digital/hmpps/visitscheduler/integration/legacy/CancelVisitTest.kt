@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 @DisplayName("Put /visits/{reference}/cancel")
@@ -358,6 +359,13 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       eq("visit-cancelled"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(cancelledVisit.applicationReference)
+        Assertions.assertThat(it["prisonerId"]).isEqualTo(cancelledVisit.prisonerId)
+        Assertions.assertThat(it["prisonId"]).isEqualTo(cancelledVisit.prisonCode)
+        Assertions.assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
+        Assertions.assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
+        Assertions.assertThat(it["visitRestriction"]).isEqualTo(cancelledVisit.visitRestriction.name)
+        Assertions.assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
       },
@@ -366,6 +374,13 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     val eventsMap = mutableMapOf(
       "reference" to cancelledVisit.reference,
+      "applicationReference" to cancelledVisit.applicationReference,
+      "prisonerId" to cancelledVisit.prisonerId,
+      "prisonId" to cancelledVisit.prisonCode,
+      "visitType" to cancelledVisit.visitType.name,
+      "visitRoom" to cancelledVisit.visitRoom,
+      "visitRestriction" to cancelledVisit.visitRestriction.name,
+      "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,
       "outcomeStatus" to cancelledVisit.outcomeStatus!!.name
     )
