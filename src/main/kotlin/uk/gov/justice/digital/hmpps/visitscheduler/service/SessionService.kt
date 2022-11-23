@@ -14,11 +14,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.Period
 import java.time.temporal.TemporalAdjusters
 import java.util.stream.Stream
 import javax.validation.constraints.NotNull
@@ -26,6 +26,7 @@ import javax.validation.constraints.NotNull
 @Service
 @Transactional
 class SessionService(
+  private val sessionDatesUtil: SessionDatesUtil,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
   private val prisonApiService: PrisonApiService,
@@ -42,9 +43,6 @@ class SessionService(
   private val policyNonAssociationWholeDay: Boolean,
   private val sessionValidator: PrisonerSessionValidator
 ) {
-  companion object {
-    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-  }
 
   @Transactional(readOnly = true)
   fun getVisitSessions(
@@ -91,7 +89,7 @@ class SessionService(
 
     if (firstBookableSessionDay <= lastBookableSessionDay) {
 
-      return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay)
+      return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
         .map { date ->
           VisitSessionDto(
             sessionTemplateId = sessionTemplate.id,
@@ -110,10 +108,8 @@ class SessionService(
     return emptyList()
   }
 
-  private fun calculateDates(firstBookableSessionDay: LocalDate, lastBookableSessionDay: LocalDate): Stream<LocalDate> {
-    return firstBookableSessionDay.datesUntil(
-      lastBookableSessionDay.plusDays(1), Period.ofWeeks(1)
-    )
+  private fun calculateDates(firstBookableSessionDay: LocalDate, lastBookableSessionDay: LocalDate, sessionTemplate: SessionTemplate): Stream<LocalDate> {
+    return sessionDatesUtil.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
   }
 
   private fun getFirstBookableSessionDay(
