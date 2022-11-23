@@ -39,6 +39,7 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(startDate).isEqualTo(LocalDate.parse("2022-11-16"))
       assertThat(endDate).isNull()
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
+      assertThat(biWeekly).isFalse()
       assertThat(locationKeys).isEqualTo("BLI_G1")
     }
     with(sessionRecords[1]) {
@@ -52,6 +53,7 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(startDate).isEqualTo(LocalDate.parse("2022-11-17"))
       assertThat(endDate).isEqualTo(LocalDate.parse("2022-12-17"))
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.WEDNESDAY)
+      assertThat(biWeekly).isTrue()
       assertThat(locationKeys).isEqualTo("BLI_G2")
     }
   }
@@ -122,6 +124,7 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
       assertThat(locationKeys).isEqualTo("BLI_G1")
+      assertThat(biWeekly).isFalse()
     }
   }
 
