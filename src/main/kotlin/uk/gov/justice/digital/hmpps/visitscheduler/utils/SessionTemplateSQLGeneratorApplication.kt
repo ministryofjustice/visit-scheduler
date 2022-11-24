@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.BI_WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.DAY_OF_WEEK
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_DATE
@@ -30,7 +31,7 @@ import kotlin.collections.ArrayList
 class SessionTemplateSQLGenerator {
 
   private enum class SessionColumnNames {
-    PRISON, ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, LOCATION_KEYS;
+    PRISON, ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS;
   }
 
   private enum class SessionLocationColumnNames {
@@ -68,7 +69,8 @@ class SessionTemplateSQLGenerator {
     val startDate: LocalDate,
     val endDate: LocalDate?,
     val dayOfWeek: DayOfWeek,
-    val locationKeys: String?
+    val locationKeys: String?,
+    val biWeekly: Boolean = false
   ) {
     constructor(sessionRecord: CSVRecord) : this(
       prison = sessionRecord.get(SessionColumnNames.PRISON.name).uppercase(),
@@ -81,7 +83,8 @@ class SessionTemplateSQLGenerator {
       startDate = LocalDate.parse(sessionRecord.get(START_DATE.name)),
       endDate = sessionRecord.get(END_DATE.name)?.let { LocalDate.parse(it) },
       dayOfWeek = DayOfWeek.valueOf(sessionRecord.get(DAY_OF_WEEK.name).uppercase()),
-      locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase()
+      locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase(),
+      biWeekly = sessionRecord.get(BI_WEEKLY.name)?.uppercase().toBoolean()
     )
   }
 
@@ -179,6 +182,7 @@ class SessionTemplateSQLGenerator {
     addLineNoTab("-- This script clears certain tables and re-set auto id's to zero!", output)
     addLineNoTab("-- WARNING if the session template id's are used in other tables this script might have to change!", output)
     addLineNoTab("-- This is a temporary solution, and should be replaced by a JSON admin API!", output)
+    addLineNoTab("-- Make sure prison table has the concerned prisons inserted before running this script!", output)
     addLineNoTab("BEGIN;", output)
     addLine(buffer = output)
     addLine("SET SCHEMA 'public';", output)
@@ -227,18 +231,19 @@ class SessionTemplateSQLGenerator {
     addLine(" end_time          time          NOT NULL,", sqlInsertBuilder)
     addLine(" valid_from_date   date          NOT NULL,", sqlInsertBuilder)
     addLine(" valid_to_date     date          ,", sqlInsertBuilder)
-    addLine(" day_of_week       VARCHAR(40)", sqlInsertBuilder)
+    addLine(" day_of_week       VARCHAR(40)   NOT NULL,", sqlInsertBuilder)
+    addLine(" bi_weekly         BOOLEAN       NOT NULL", sqlInsertBuilder)
     addLine(");", sqlInsertBuilder)
     addLine(buffer = sqlInsertBuilder)
     addLine(
-      "INSERT INTO tmp_session_template (locationKeys,prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week) ",
+      "INSERT INTO tmp_session_template (locationKeys,prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week,bi_weekly) ",
       sqlInsertBuilder
     )
     addLine("VALUES", sqlInsertBuilder)
     for (sessionRecord in sessionRecords) {
       with(sessionRecord) {
         val valueRow = StringBuilder()
-        valueRow.append("(${addStringValueSql(locationKeys)},'$prison','$room', '$type', $open, $closed, '$startTime', '$endTime', '$startDate', $endDate, '$dayOfWeek')")
+        valueRow.append("(${addStringValueSql(locationKeys)},'$prison','$room', '$type', $open, $closed, '$startTime', '$endTime', '$startDate', $endDate, '$dayOfWeek',$biWeekly)")
         if (sessionRecords.last() != sessionRecord) {
           valueRow.append(",")
         } else {
@@ -251,8 +256,8 @@ class SessionTemplateSQLGenerator {
     addLine(buffer = sqlInsertBuilder)
     addLine("UPDATE tmp_session_template SET prison_id = prison.id FROM prison WHERE tmp_session_template.prison_code = prison.code;", sqlInsertBuilder)
     addLine(buffer = sqlInsertBuilder)
-    addLine("INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id)", sqlInsertBuilder)
-    addLine("   SELECT id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id FROM tmp_session_template;", sqlInsertBuilder)
+    addLine("INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly)", sqlInsertBuilder)
+    addLine("   SELECT id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly FROM tmp_session_template;", sqlInsertBuilder)
 
     addLine("ALTER SEQUENCE session_template_id_seq RESTART WITH ${sessionRecords.size + 1};", sqlInsertBuilder)
 
@@ -321,8 +326,8 @@ class SessionTemplateSQLGenerator {
   private fun createLinkTableDataSql(): String {
     val sqlInsertBuilder = StringBuilder()
     addLine("-- Create link table data", sqlInsertBuilder)
-    addLine("INSERT INTO session_to_permitted_location(session_template_id, permitted_session_location_id)", sqlInsertBuilder)
-    addLine("  SELECT st.id, l.id FROM tmp_session_template st ", sqlInsertBuilder)
+    addLine("INSERT INTO session_to_permitted_location(session_template_id, location_group ,permitted_session_location_id)", sqlInsertBuilder)
+    addLine("  SELECT st.id, l.key, l.id FROM tmp_session_template st ", sqlInsertBuilder)
     addLine("     JOIN tmp_permitted_session_location l ON POSITION(l.key  IN st.locationKeys)<>0 ORDER BY st.id,l.id;", sqlInsertBuilder)
     return sqlInsertBuilder.toString()
   }
