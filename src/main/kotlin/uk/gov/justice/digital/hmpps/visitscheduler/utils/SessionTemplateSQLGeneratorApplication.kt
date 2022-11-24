@@ -326,8 +326,8 @@ class SessionTemplateSQLGenerator {
   private fun createLinkTableDataSql(): String {
     val sqlInsertBuilder = StringBuilder()
     addLine("-- Create link table data", sqlInsertBuilder)
-    addLine("INSERT INTO session_to_permitted_location(session_template_id, permitted_session_location_id)", sqlInsertBuilder)
-    addLine("  SELECT st.id, l.id FROM tmp_session_template st ", sqlInsertBuilder)
+    addLine("INSERT INTO session_to_permitted_location(session_template_id, location_group ,permitted_session_location_id)", sqlInsertBuilder)
+    addLine("  SELECT st.id, l.key, l.id FROM tmp_session_template st ", sqlInsertBuilder)
     addLine("     JOIN tmp_permitted_session_location l ON POSITION(l.key  IN st.locationKeys)<>0 ORDER BY st.id,l.id;", sqlInsertBuilder)
     return sqlInsertBuilder.toString()
   }
