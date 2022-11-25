@@ -153,7 +153,7 @@ class SessionTemplateSQLGeneratorTest() {
   }
 
   @Test()
-  fun `Data parsed - session template levelTwo cant have to parents validated correctly`() {
+  fun `Data parsed - session template levelTwo cant have two parents validated correctly`() {
 
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
