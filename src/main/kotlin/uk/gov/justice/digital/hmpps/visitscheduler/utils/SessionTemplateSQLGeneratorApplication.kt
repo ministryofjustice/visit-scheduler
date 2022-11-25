@@ -25,8 +25,11 @@ import java.io.Reader
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.function.BiPredicate
 import java.util.stream.Collectors
 import kotlin.collections.ArrayList
+
+private const val maxCapacity = 200
 
 class SessionTemplateSQLGenerator {
 
@@ -86,6 +89,10 @@ class SessionTemplateSQLGenerator {
       locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase(),
       biWeekly = sessionRecord.get(BI_WEEKLY.name)?.uppercase().toBoolean()
     )
+
+    fun getLocationList(): List<String> {
+      return toList(locationKeys)
+    }
   }
 
   data class SessionLocationColumns(
@@ -106,6 +113,65 @@ class SessionTemplateSQLGenerator {
     )
   }
 
+  fun validateSessionLocation(sessionLocationColumns: List<SessionLocationColumns>) {
+
+    val childHasMoreThanOneParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
+      parentLevel.size> 1 && childlevel.isNotEmpty()
+    }
+
+    val childCantHaveEmptyParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
+      parentLevel.isEmpty() && childlevel.isNotEmpty()
+    }
+
+    sessionLocationColumns.forEach { sessionLocationColumn ->
+      with(sessionLocationColumn) {
+
+        if (levelOne.isEmpty()) {
+          throw IllegalArgumentException("Location : must have at least one level one element (prison:$prison key:$key)!")
+        }
+
+        if (childHasMoreThanOneParent.test(levelOne, levelTwo) ||
+          childHasMoreThanOneParent.test(levelTwo, levelThree) ||
+          childHasMoreThanOneParent.test(levelThree, levelFour)
+        ) {
+          throw IllegalArgumentException("Location : Child can't have more than one parent (prison:$prison key:$key)!")
+        }
+
+        if (childCantHaveEmptyParent.test(levelTwo, levelThree) ||
+          childCantHaveEmptyParent.test(levelThree, levelFour)
+        ) {
+          throw IllegalArgumentException("Location : Child can't have empty parent (prison:$prison key:$key)!")
+        }
+      }
+    }
+  }
+
+  fun validateSessionTemplate(sessionLocationItems: List<SessionLocationItem>, sessionTemplateColumns: List<SessionTemplateColumns>) {
+
+    val levelsByGroups = sessionLocationItems.associateBy({ it.key }, { it })
+
+    sessionTemplateColumns.forEach { sessionTemplateColumn ->
+      with(sessionTemplateColumn) {
+        getLocationList().forEach { locationKey ->
+          if (levelsByGroups.containsKey(locationKey)) {
+            val sessionLocationColumns = levelsByGroups.get(locationKey)!!
+            if (sessionLocationColumns.prison != prison) {
+              throw IllegalArgumentException("Session Template : Prison $prison does not match ${sessionLocationColumns.prison} for (prison:$prison key:$locationKeys)!")
+            }
+          } else {
+            throw IllegalArgumentException("Session Template : Location key does not exist $locationKey for (prison:$prison key:$locationKeys)!")
+          }
+        }
+        if (open <0 || closed <0) {
+          throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity be cant be less than zero for (prison:$prison key:$locationKeys)!")
+        }
+        if (open> maxCapacity || closed> maxCapacity) {
+          throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity seems a little high for (prison:$prison key:$locationKeys)!")
+        }
+      }
+    }
+  }
+
   data class SessionLocationItem(
     val prison: String,
     val key: String,
@@ -123,6 +189,7 @@ class SessionTemplateSQLGenerator {
     }
     return prisonTemplateRecords.toList()
   }
+
   fun getSessionLocationItems(csvFile: File): List<SessionLocationItem> {
     val reader: Reader = FileReader(csvFile)
     val records: Iterable<CSVRecord> = CVS_FORMAT.parse(reader)
@@ -131,6 +198,8 @@ class SessionTemplateSQLGenerator {
     for (record in records) {
       prisonTemplateRecords.add(SessionLocationColumns(record))
     }
+
+    validateSessionLocation(prisonTemplateRecords)
 
     val sessionLocationItems = ArrayList<SessionLocationItem>()
     prisonTemplateRecords.forEach { sessionLocationItems.addAll(createPermittedSessionLocationItems(it)) }
@@ -360,6 +429,8 @@ fun main() {
 
   val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(sessionLocationDataFile)
   val sessionRecords = sessionTemplateSQLGenerator.getSessionRecordsRecords(sessionDataFile)
+
+  sessionTemplateSQLGenerator.validateSessionTemplate(sessionLocationItems, sessionRecords)
 
   val sql = sessionTemplateSQLGenerator.createSql(sessionRecords, sessionLocationItems)
 
