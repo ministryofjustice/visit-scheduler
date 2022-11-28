@@ -1,8 +1,12 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
+import freemarker.template.Configuration
+import freemarker.template.Configuration.VERSION_2_3_0
+import freemarker.template.Template
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.BI_WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.DAY_OF_WEEK
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_DATE
@@ -21,16 +25,19 @@ import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGener
 import java.io.File
 import java.io.FileReader
 import java.io.Reader
+import java.io.StringWriter
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.function.BiPredicate
 import java.util.stream.Collectors
-import kotlin.collections.ArrayList
+
+private const val maxCapacity = 200
 
 class SessionTemplateSQLGenerator {
 
   private enum class SessionColumnNames {
-    PRISON, ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, LOCATION_KEYS;
+    PRISON, ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS;
   }
 
   private enum class SessionLocationColumnNames {
@@ -39,8 +46,6 @@ class SessionTemplateSQLGenerator {
 
   companion object {
     private const val DELIMITER = ":"
-    const val SPACE_TAB = '\t'
-    val LINE_SEPARATOR: String = System.getProperty("line.separator")
     val CVS_FORMAT: CSVFormat = CSVFormat.DEFAULT.builder()
       .setNullString("")
       .setIgnoreEmptyLines(true)
@@ -68,7 +73,8 @@ class SessionTemplateSQLGenerator {
     val startDate: LocalDate,
     val endDate: LocalDate?,
     val dayOfWeek: DayOfWeek,
-    val locationKeys: String?
+    val locationKeys: String?,
+    val biWeekly: Boolean = false
   ) {
     constructor(sessionRecord: CSVRecord) : this(
       prison = sessionRecord.get(SessionColumnNames.PRISON.name).uppercase(),
@@ -81,8 +87,13 @@ class SessionTemplateSQLGenerator {
       startDate = LocalDate.parse(sessionRecord.get(START_DATE.name)),
       endDate = sessionRecord.get(END_DATE.name)?.let { LocalDate.parse(it) },
       dayOfWeek = DayOfWeek.valueOf(sessionRecord.get(DAY_OF_WEEK.name).uppercase()),
-      locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase()
+      locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase(),
+      biWeekly = sessionRecord.get(BI_WEEKLY.name)?.uppercase().toBoolean()
     )
+
+    fun getLocationList(): List<String> {
+      return toList(locationKeys)
+    }
   }
 
   data class SessionLocationColumns(
@@ -103,6 +114,65 @@ class SessionTemplateSQLGenerator {
     )
   }
 
+  fun validateSessionLocation(sessionLocationColumns: List<SessionLocationColumns>) {
+
+    val childHasMoreThanOneParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
+      parentLevel.size> 1 && childlevel.isNotEmpty()
+    }
+
+    val childCantHaveEmptyParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
+      parentLevel.isEmpty() && childlevel.isNotEmpty()
+    }
+
+    sessionLocationColumns.forEach { sessionLocationColumn ->
+      with(sessionLocationColumn) {
+
+        if (levelOne.isEmpty()) {
+          throw IllegalArgumentException("Location : must have at least one level one element (prison:$prison key:$key)!")
+        }
+
+        if (childHasMoreThanOneParent.test(levelOne, levelTwo) ||
+          childHasMoreThanOneParent.test(levelTwo, levelThree) ||
+          childHasMoreThanOneParent.test(levelThree, levelFour)
+        ) {
+          throw IllegalArgumentException("Location : Child can't have more than one parent (prison:$prison key:$key)!")
+        }
+
+        if (childCantHaveEmptyParent.test(levelTwo, levelThree) ||
+          childCantHaveEmptyParent.test(levelThree, levelFour)
+        ) {
+          throw IllegalArgumentException("Location : Child can't have empty parent (prison:$prison key:$key)!")
+        }
+      }
+    }
+  }
+
+  fun validateSessionTemplate(sessionLocationItems: List<SessionLocationItem>, sessionTemplateColumns: List<SessionTemplateColumns>) {
+
+    val levelsByGroups = sessionLocationItems.associateBy({ it.key }, { it })
+
+    sessionTemplateColumns.forEach { sessionTemplateColumn ->
+      with(sessionTemplateColumn) {
+        getLocationList().forEach { locationKey ->
+          if (levelsByGroups.containsKey(locationKey)) {
+            val sessionLocationColumns = levelsByGroups.get(locationKey)!!
+            if (sessionLocationColumns.prison != prison) {
+              throw IllegalArgumentException("Session Template : Prison $prison does not match ${sessionLocationColumns.prison} for (prison:$prison key:$locationKeys)!")
+            }
+          } else {
+            throw IllegalArgumentException("Session Template : Location key does not exist $locationKey for (prison:$prison key:$locationKeys)!")
+          }
+        }
+        if (open <0 || closed <0) {
+          throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity be cant be less than zero for (prison:$prison key:$locationKeys)!")
+        }
+        if (open> maxCapacity || closed> maxCapacity) {
+          throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity seems a little high for (prison:$prison key:$locationKeys)!")
+        }
+      }
+    }
+  }
+
   data class SessionLocationItem(
     val prison: String,
     val key: String,
@@ -120,6 +190,7 @@ class SessionTemplateSQLGenerator {
     }
     return prisonTemplateRecords.toList()
   }
+
   fun getSessionLocationItems(csvFile: File): List<SessionLocationItem> {
     val reader: Reader = FileReader(csvFile)
     val records: Iterable<CSVRecord> = CVS_FORMAT.parse(reader)
@@ -128,6 +199,8 @@ class SessionTemplateSQLGenerator {
     for (record in records) {
       prisonTemplateRecords.add(SessionLocationColumns(record))
     }
+
+    validateSessionLocation(prisonTemplateRecords)
 
     val sessionLocationItems = ArrayList<SessionLocationItem>()
     prisonTemplateRecords.forEach { sessionLocationItems.addAll(createPermittedSessionLocationItems(it)) }
@@ -171,178 +244,17 @@ class SessionTemplateSQLGenerator {
   }
 
   fun createSql(
+    template: Template,
     sessionRecords: List<SessionTemplateColumns>,
     sessionLocationItems: List<SessionLocationItem>,
   ): String {
-    val output = StringBuilder()
-    addLineNoTab(buffer = output)
-    addLineNoTab("-- This script clears certain tables and re-set auto id's to zero!", output)
-    addLineNoTab("-- WARNING if the session template id's are used in other tables this script might have to change!", output)
-    addLineNoTab("-- This is a temporary solution, and should be replaced by a JSON admin API!", output)
-    addLineNoTab("BEGIN;", output)
-    addLine(buffer = output)
-    addLine("SET SCHEMA 'public';", output)
-    addLine(buffer = output)
-    addLine(createTruncateSQL(), output)
-    addLine(buffer = output)
-    addLineNoTab(createSessionTemplateInsertSQLs(sessionRecords), output)
-    addLine(buffer = output)
-    addLineNoTab(createPermittedSessionLocationInsertSQL(sessionLocationItems), output)
-    addLine(buffer = output)
-    addLineNoTab(createLinkTableDataSql(), output)
-    addLine(buffer = output)
-    addLine("-- Drop temporary tables", output)
-    addLine("DROP TABLE tmp_session_template;", output)
-    addLine("DROP TABLE tmp_permitted_session_location;", output)
-    addLineNoTab(buffer = output)
-    addLineNoTab("END;", output)
-    addLineNoTab(buffer = output)
+    val input = mutableMapOf<String, Any>()
+    input.put("sessionRecords", sessionRecords)
+    input.put("locations", sessionLocationItems)
 
-    return output.toString()
-  }
-
-  private fun createTruncateSQL(): String {
-    val sqlInsertBuilder = StringBuilder()
-    addLine("-- Use TRUNCATE rather than delete so indexes are re-set", sqlInsertBuilder)
-    addLine(" TRUNCATE TABLE session_to_permitted_location RESTART IDENTITY CASCADE;", sqlInsertBuilder)
-    addLine(" TRUNCATE TABLE session_template  RESTART IDENTITY CASCADE;", sqlInsertBuilder)
-    addLine(" TRUNCATE TABLE permitted_session_location  RESTART IDENTITY CASCADE;", sqlInsertBuilder)
-    return sqlInsertBuilder.toString()
-  }
-
-  private fun createSessionTemplateInsertSQLs(sessionRecords: List<SessionTemplateColumns>): String {
-
-    val sqlInsertBuilder = StringBuilder()
-    addLine("-- Creating session template data", sqlInsertBuilder)
-    addLine("CREATE TEMP TABLE tmp_session_template(", sqlInsertBuilder)
-    addLine(" id                serial        NOT NULL PRIMARY KEY,", sqlInsertBuilder)
-    addLine(" locationKeys      VARCHAR       ,", sqlInsertBuilder)
-    addLine(" prison_code       VARCHAR(6)    NOT NULL,", sqlInsertBuilder)
-    addLine(" prison_id         int    ,", sqlInsertBuilder)
-    addLine(" visit_room        VARCHAR(255)  NOT NULL,", sqlInsertBuilder)
-    addLine(" visit_type        VARCHAR(80)   NOT NULL,", sqlInsertBuilder)
-    addLine(" open_capacity     integer       NOT NULL,", sqlInsertBuilder)
-    addLine(" closed_capacity   integer       NOT NULL,", sqlInsertBuilder)
-    addLine(" start_time        time          NOT NULL,", sqlInsertBuilder)
-    addLine(" end_time          time          NOT NULL,", sqlInsertBuilder)
-    addLine(" valid_from_date   date          NOT NULL,", sqlInsertBuilder)
-    addLine(" valid_to_date     date          ,", sqlInsertBuilder)
-    addLine(" day_of_week       VARCHAR(40)", sqlInsertBuilder)
-    addLine(");", sqlInsertBuilder)
-    addLine(buffer = sqlInsertBuilder)
-    addLine(
-      "INSERT INTO tmp_session_template (locationKeys,prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week) ",
-      sqlInsertBuilder
-    )
-    addLine("VALUES", sqlInsertBuilder)
-    for (sessionRecord in sessionRecords) {
-      with(sessionRecord) {
-        val valueRow = StringBuilder()
-        valueRow.append("(${addStringValueSql(locationKeys)},'$prison','$room', '$type', $open, $closed, '$startTime', '$endTime', '$startDate', $endDate, '$dayOfWeek')")
-        if (sessionRecords.last() != sessionRecord) {
-          valueRow.append(",")
-        } else {
-          valueRow.append(";")
-        }
-        addLine(valueRow.toString(), sqlInsertBuilder)
-      }
-    }
-
-    addLine(buffer = sqlInsertBuilder)
-    addLine("UPDATE tmp_session_template SET prison_id = prison.id FROM prison WHERE tmp_session_template.prison_code = prison.code;", sqlInsertBuilder)
-    addLine(buffer = sqlInsertBuilder)
-    addLine("INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id)", sqlInsertBuilder)
-    addLine("   SELECT id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id FROM tmp_session_template;", sqlInsertBuilder)
-
-    addLine("ALTER SEQUENCE session_template_id_seq RESTART WITH ${sessionRecords.size + 1};", sqlInsertBuilder)
-
-    return sqlInsertBuilder.toString()
-  }
-
-  private fun createPermittedSessionLocationInsertSQL(sessionLocationItems: List<SessionLocationItem>): String {
-
-    val sqlInsertBuilder = StringBuilder()
-    addLine("-- Create permitted session location data", sqlInsertBuilder)
-    addLine("CREATE TABLE tmp_permitted_session_location (", sqlInsertBuilder)
-    addLine(" id                serial        NOT NULL PRIMARY KEY,", sqlInsertBuilder)
-    addLine(" key               VARCHAR(20)   NOT NULL,", sqlInsertBuilder)
-    addLine(" prison_code       VARCHAR(6)    NOT NULL,", sqlInsertBuilder)
-    addLine(" prison_id         int,", sqlInsertBuilder)
-    addLine(" level_one_code    VARCHAR(10) NOT NULL,", sqlInsertBuilder)
-    addLine(" level_two_code    VARCHAR(10),", sqlInsertBuilder)
-    addLine(" level_three_code  VARCHAR(10),", sqlInsertBuilder)
-    addLine(" level_four_code   VARCHAR(10)", sqlInsertBuilder)
-    addLine(");", sqlInsertBuilder)
-    addLine(buffer = sqlInsertBuilder)
-
-    val columns = StringBuilder()
-    columns.append("INSERT INTO tmp_permitted_session_location (key,prison_code,level_one_code")
-    columns.append(',').append("level_two_code")
-    columns.append(',').append("level_three_code")
-    columns.append(',').append("level_four_code")
-    columns.append(") ")
-    addLine(columns.toString(), sqlInsertBuilder)
-    addLine("VALUES", sqlInsertBuilder)
-
-    sessionLocationItems.forEach { sessionLocationItem ->
-      run {
-
-        with(sessionLocationItem) {
-          val values = StringBuilder()
-          values.append("('$key',")
-          values.append("'$prison'")
-          values.append(',').append(addStringValueSql(levelOne))
-          values.append(',').append(addStringValueSql(levelTwo))
-          values.append(',').append(addStringValueSql(levelThree))
-          values.append(',').append(addStringValueSql(levelFour))
-          values.append(')')
-          if (sessionLocationItems.last() != sessionLocationItem) {
-            values.append(",")
-          } else {
-            values.append(";")
-          }
-          addLine(values.toString(), sqlInsertBuilder)
-        }
-      }
-    }
-
-    addLine(buffer = sqlInsertBuilder)
-    addLine("UPDATE tmp_permitted_session_location SET prison_id = prison.id FROM prison WHERE tmp_permitted_session_location.prison_code = prison.code;", sqlInsertBuilder)
-    addLine(buffer = sqlInsertBuilder)
-    addLine("INSERT INTO permitted_session_location(id,prison_id,level_one_code,level_two_code,level_three_code,level_four_code)", sqlInsertBuilder)
-    addLine("   SELECT id,prison_id,level_one_code,level_two_code,level_three_code,level_four_code FROM tmp_permitted_session_location;", sqlInsertBuilder)
-
-    addLine(buffer = sqlInsertBuilder)
-    addLine("ALTER SEQUENCE permitted_session_location_id_seq RESTART WITH ${sessionLocationItems.size + 1};", sqlInsertBuilder)
-
-    return sqlInsertBuilder.toString()
-  }
-
-  private fun createLinkTableDataSql(): String {
-    val sqlInsertBuilder = StringBuilder()
-    addLine("-- Create link table data", sqlInsertBuilder)
-    addLine("INSERT INTO session_to_permitted_location(session_template_id, permitted_session_location_id)", sqlInsertBuilder)
-    addLine("  SELECT st.id, l.id FROM tmp_session_template st ", sqlInsertBuilder)
-    addLine("     JOIN tmp_permitted_session_location l ON POSITION(l.key  IN st.locationKeys)<>0 ORDER BY st.id,l.id;", sqlInsertBuilder)
-    return sqlInsertBuilder.toString()
-  }
-
-  private fun addStringValueSql(value: String?): String {
-    value?.let {
-      return "'$value'"
-    } ?: run {
-      return "null"
-    }
-  }
-
-  private fun addLineNoTab(value: String? = null, buffer: StringBuilder) {
-    value?.let { buffer.append(value) }
-    buffer.append(LINE_SEPARATOR)
-  }
-
-  private fun addLine(value: String? = null, buffer: StringBuilder) {
-    value?.let { buffer.append(SPACE_TAB) }
-    addLineNoTab(value, buffer)
+    val stringWriter = StringWriter()
+    template.process(input, stringWriter)
+    return stringWriter.toString()
   }
 }
 
@@ -351,12 +263,17 @@ fun main() {
   val sessionDataFile = File(path, "session-data.csv")
   val sessionLocationDataFile = File(path, "session-location-data.csv")
 
+  val cfg = Configuration(VERSION_2_3_0)
+  cfg.setDirectoryForTemplateLoading(File(path))
+  val template = cfg.getTemplate("template.ftl")
+
   val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
 
   val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(sessionLocationDataFile)
   val sessionRecords = sessionTemplateSQLGenerator.getSessionRecordsRecords(sessionDataFile)
 
-  val sql = sessionTemplateSQLGenerator.createSql(sessionRecords, sessionLocationItems)
+  sessionTemplateSQLGenerator.validateSessionTemplate(sessionLocationItems, sessionRecords)
 
+  val sql = sessionTemplateSQLGenerator.createSql(template, sessionRecords, sessionLocationItems)
   print(sql)
 }

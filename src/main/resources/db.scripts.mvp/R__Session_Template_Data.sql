@@ -1,6 +1,7 @@
 -- This script clears certain tables and re-set auto id's to zero!
 -- WARNING if the session template id's are used in other tables this script might have to change!
 -- This is a temporary solution, and should be replaced by a JSON admin API!
+-- Make sure prison table has the concerned prisons inserted before running this script!
 BEGIN;
 
     SET SCHEMA 'public';
@@ -25,31 +26,40 @@ BEGIN;
          end_time          time          NOT NULL,
          valid_from_date   date          NOT NULL,
          valid_to_date     date          ,
-         day_of_week       VARCHAR(40)
+         day_of_week       VARCHAR(40)   NOT NULL,
+         bi_weekly         BOOLEAN       NOT NULL
         );
 
-    INSERT INTO tmp_session_template (locationKeys,prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week)
+    INSERT INTO tmp_session_template (locationKeys,prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week,bi_weekly)
     VALUES
-        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-05-30', null, 'MONDAY'),
-        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-06-01', null, 'WEDNESDAY'),
-        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '09:00', '14:00', '2022-06-03', null, 'FRIDAY'),
-        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-06-04', null, 'SATURDAY'),
-        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-06-05', null, 'SUNDAY'),
-        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-16', null, 'TUESDAY'),
-        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-16', null, 'TUESDAY'),
-        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-16', null, 'WEDNESDAY'),
-        ('BLI_G2','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-16', null, 'WEDNESDAY'),
-        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '16:00', '2022-11-16', null, 'FRIDAY'),
-        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-16', null, 'SATURDAY'),
-        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-16', null, 'SATURDAY'),
-        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-16', null, 'SUNDAY'),
-        ('BLI_G2','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-16', null, 'SUNDAY');
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-05-30', null, 'MONDAY',false),
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-06-01', null, 'WEDNESDAY',false),
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '09:00', '10:00', '2022-06-03', null, 'FRIDAY',false),
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-06-04', null, 'SATURDAY',false),
+        (null,'HEI','Visits Main Room', 'SOCIAL', 30, 2, '13:45', '14:45', '2022-06-05', null, 'SUNDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-23', null, 'TUESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-23', null, 'TUESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-23', null, 'WEDNESDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-23', null, 'WEDNESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '16:00', '2022-11-23', null, 'FRIDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-23', null, 'SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-23', null, 'SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-23', null, 'SUNDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-23', null, 'SUNDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-30', null, 'TUESDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-30', null, 'TUESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '16:00', '2022-11-30', null, 'WEDNESDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '16:00', '2022-11-30', null, 'FRIDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-30', null, 'SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-30', null, 'SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '14:00', '15:00', '2022-11-30', null, 'SUNDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall', 'SOCIAL', 20, 1, '15:30', '16:30', '2022-11-30', null, 'SUNDAY',true);
 
     UPDATE tmp_session_template SET prison_id = prison.id FROM prison WHERE tmp_session_template.prison_code = prison.code;
 
-    INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id)
-    SELECT id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id FROM tmp_session_template;
-    ALTER SEQUENCE session_template_id_seq RESTART WITH 15;
+    INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly)
+    SELECT id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly FROM tmp_session_template;
+    ALTER SEQUENCE session_template_id_seq RESTART WITH 23;
 
 
     -- Create permitted session location data

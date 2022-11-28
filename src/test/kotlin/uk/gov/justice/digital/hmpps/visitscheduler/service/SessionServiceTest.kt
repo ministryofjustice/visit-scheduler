@@ -37,6 +37,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
@@ -56,6 +57,7 @@ class SessionServiceTest {
   private val prisonApiService = mock<PrisonApiService>()
   private val visitService = mock<VisitService>()
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
+  private val sessionDatesUtil = SessionDatesUtil()
 
   private lateinit var sessionService: SessionService
 
@@ -107,6 +109,7 @@ class SessionServiceTest {
     @BeforeEach
     fun setUp() {
       sessionService = SessionService(
+        sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
         prisonApiService,
@@ -431,6 +434,7 @@ class SessionServiceTest {
     @BeforeEach
     fun setUp() {
       sessionService = SessionService(
+        sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
         prisonApiService,
@@ -663,6 +667,7 @@ class SessionServiceTest {
     @BeforeEach
     fun setUp() {
       sessionService = SessionService(
+        sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
         prisonApiService,

@@ -24,15 +24,16 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
-  implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.12")
-  implementation("org.springdoc:springdoc-openapi-ui:1.6.12")
-  implementation("org.springdoc:springdoc-openapi-kotlin:1.6.12")
-  implementation("org.springdoc:springdoc-openapi-data-rest:1.6.12")
+  implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.13")
+  implementation("org.springdoc:springdoc-openapi-ui:1.6.13")
+  implementation("org.springdoc:springdoc-openapi-kotlin:1.6.13")
+  implementation("org.springdoc:springdoc-openapi-data-rest:1.6.13")
 
   implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:1.1.12")
   implementation("net.javacrumbs.shedlock:shedlock-spring:4.42.0")
   implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:4.42.0")
   implementation("org.apache.commons:commons-csv:1.9.0")
+  implementation("org.freemarker:freemarker:2.3.31")
 
   runtimeOnly("org.postgresql:postgresql:42.5.0")
   runtimeOnly("org.flywaydb:flyway-core")
@@ -44,8 +45,8 @@ dependencies {
   testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
 
   testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
-  testImplementation("org.testcontainers:postgresql:1.17.4")
-  testImplementation("org.testcontainers:localstack:1.17.4")
+  testImplementation("org.testcontainers:postgresql:1.17.6")
+  testImplementation("org.testcontainers:localstack:1.17.6")
 }
 
 java {

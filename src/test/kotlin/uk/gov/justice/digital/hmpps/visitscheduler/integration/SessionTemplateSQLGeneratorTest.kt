@@ -1,10 +1,14 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions.assertThrows
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.Mockito
+import org.mockito.Mockito.mock
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumns
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationItem
 import java.io.File
 import java.time.DayOfWeek
@@ -39,6 +43,7 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(startDate).isEqualTo(LocalDate.parse("2022-11-16"))
       assertThat(endDate).isNull()
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
+      assertThat(biWeekly).isFalse()
       assertThat(locationKeys).isEqualTo("BLI_G1")
     }
     with(sessionRecords[1]) {
@@ -52,6 +57,7 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(startDate).isEqualTo(LocalDate.parse("2022-11-17"))
       assertThat(endDate).isEqualTo(LocalDate.parse("2022-12-17"))
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.WEDNESDAY)
+      assertThat(biWeekly).isTrue()
       assertThat(locationKeys).isEqualTo("BLI_G2")
     }
   }
@@ -105,12 +111,10 @@ class SessionTemplateSQLGeneratorTest() {
   fun `Data parsed - session template lower case data is converted to correct case when required`() {
 
     // Given
-    // Given
     val path = "src/test/resources/session-template-data/"
     val sessionDataFile = File(path, "session-data_lower_case.csv")
 
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-
     // When
     val sessionRecords = sessionTemplateSQLGenerator.getSessionRecordsRecords(sessionDataFile)
 
@@ -122,7 +126,151 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
       assertThat(locationKeys).isEqualTo("BLI_G1")
+      assertThat(biWeekly).isFalse()
     }
+  }
+
+  @Test()
+  fun `Data parsed - session template levelOne validated correctly`() {
+
+    // Given
+    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
+    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+
+    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
+    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf())
+    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
+    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
+    sessionLocationList.add(sessionLocationColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Location : must have at least one level one element (prison:prison1 key:key1)!")
+  }
+
+  @Test()
+  fun `Data parsed - session template levelTwo cant have two parents validated correctly`() {
+
+    // Given
+    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
+    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+
+    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
+    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one", "one"))
+    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf("child"))
+    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
+    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
+    sessionLocationList.add(sessionLocationColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Location : Child can't have more than one parent (prison:prison1 key:key1)!")
+  }
+
+  @Test()
+  fun `Data parsed - session template levelThree cant have to parents validated correctly`() {
+
+    // Given
+    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
+    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+
+    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
+    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one"))
+    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf("two", "two"))
+    Mockito.`when`(sessionLocationColumns.levelThree).thenReturn(listOf("three"))
+    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
+    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
+    sessionLocationList.add(sessionLocationColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Location : Child can't have more than one parent (prison:prison1 key:key1)!")
+  }
+
+  @Test()
+  fun `Data parsed - session template levelFour cant have to parents validated correctly`() {
+
+    // Given
+    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
+    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+
+    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
+    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one"))
+    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf("two"))
+    Mockito.`when`(sessionLocationColumns.levelThree).thenReturn(listOf("three", "three"))
+    Mockito.`when`(sessionLocationColumns.levelFour).thenReturn(listOf("four"))
+    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
+    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
+    sessionLocationList.add(sessionLocationColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Location : Child can't have more than one parent (prison:prison1 key:key1)!")
+  }
+
+  @Test()
+  fun `Data parsed - session template levelThree cant have empty parent validated correctly`() {
+
+    // Given
+    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
+    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+
+    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
+    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one"))
+    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf())
+    Mockito.`when`(sessionLocationColumns.levelThree).thenReturn(listOf("three"))
+    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
+    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
+    sessionLocationList.add(sessionLocationColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Location : Child can't have empty parent (prison:prison1 key:key1)!")
+  }
+
+  @Test()
+  fun `Data parsed - session template levelFour cant have empty parent validated correctly`() {
+
+    // Given
+    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
+    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+
+    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
+    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one"))
+    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf("two"))
+    Mockito.`when`(sessionLocationColumns.levelThree).thenReturn(listOf())
+    Mockito.`when`(sessionLocationColumns.levelFour).thenReturn(listOf("four"))
+    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
+    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
+    sessionLocationList.add(sessionLocationColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Location : Child can't have empty parent (prison:prison1 key:key1)!")
   }
 
   private fun assertSessionLocation(
