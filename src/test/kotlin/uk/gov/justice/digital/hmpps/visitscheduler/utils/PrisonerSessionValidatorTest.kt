@@ -8,7 +8,7 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import reactor.util.function.Tuple2
 import reactor.util.function.Tuples
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerUnitCodeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedPrisonHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -20,6 +20,7 @@ import java.time.LocalDate
 class PrisonerSessionValidatorTest {
   private val prisonerLevelMatcher = PrisonerLevelMatcher()
   private val prisonerSessionValidator = PrisonerSessionValidator(prisonerLevelMatcher)
+
   @Nested
   @DisplayName("Tests when a prisoner exists in a prison which has 3 levels")
   inner class Level3PrisonTest {
@@ -27,11 +28,12 @@ class PrisonerSessionValidatorTest {
 
     // prisoner details are as follows
     // level 1 - "C", level 2 - "1", level 3 - "004" and no level 4
-    private val prisonerDetail3LevelPrison = PrisonerDetailDto("A4000001", unitCode1 = "C", unitCode2 = "1", unitCode3 = "004", unitCode4 = null)
+    private val prisonerDetail3LevelPrison = PrisonerUnitCodeDto("A4000001", unitCode1 = "C", unitCode2 = "1", unitCode3 = "004", unitCode4 = null)
+
     @Test
     fun `session available to all prisoners when permitted session location is empty`() {
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = mutableListOf())
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -41,7 +43,7 @@ class PrisonerSessionValidatorTest {
       val allowed = Tuples.of(AllowedPrisonHierarchy("C", null, null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -54,7 +56,7 @@ class PrisonerSessionValidatorTest {
       val allowed4 = Tuples.of(AllowedPrisonHierarchy("D", null, null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed1, allowed2, allowed3, allowed4))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -67,7 +69,7 @@ class PrisonerSessionValidatorTest {
       val allowed4 = Tuples.of(AllowedPrisonHierarchy("E", null, null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed1, allowed2, allowed3, allowed4))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isFalse
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison.getLevels(), sessionTemplate)).isFalse
     }
 
     @Test
@@ -77,7 +79,7 @@ class PrisonerSessionValidatorTest {
       val allowed = Tuples.of(AllowedPrisonHierarchy("C", "1", null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -90,7 +92,7 @@ class PrisonerSessionValidatorTest {
       val allowed4 = Tuples.of(AllowedPrisonHierarchy("C", "2", "001", null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed1, allowed2, allowed3, allowed4))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -103,7 +105,7 @@ class PrisonerSessionValidatorTest {
       val allowed4 = Tuples.of(AllowedPrisonHierarchy("C", "3", null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed1, allowed2, allowed3, allowed4))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isFalse
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison.getLevels(), sessionTemplate)).isFalse
     }
 
     @Test
@@ -125,7 +127,7 @@ class PrisonerSessionValidatorTest {
         )
       )
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -140,7 +142,7 @@ class PrisonerSessionValidatorTest {
 
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed1, allowed2, allowed3, allowed4, allowed5))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isFalse
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison.getLevels(), sessionTemplate)).isFalse
     }
   }
 
@@ -151,11 +153,11 @@ class PrisonerSessionValidatorTest {
     // level 1 - "C", level 2 - "1", level 3 - "004" and level 4 = "10000"
     val prison: Prison = Prison(code = "BLI", active = true)
 
-    private val prisonerDetail3LevelPrison = PrisonerDetailDto("A4000001", unitCode1 = "C", unitCode2 = "1", unitCode3 = "004", unitCode4 = null)
+    private val prisonerDetail4LevelPrison = PrisonerUnitCodeDto("A4000001", unitCode1 = "C", unitCode2 = "1", unitCode3 = "004", unitCode4 = null)
     @Test
     fun `session available to all prisoners when permitted session location is empty`() {
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = mutableListOf())
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -165,7 +167,7 @@ class PrisonerSessionValidatorTest {
       val allowed = Tuples.of(AllowedPrisonHierarchy("C", null, null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -178,7 +180,7 @@ class PrisonerSessionValidatorTest {
       val allowed4 = Tuples.of(AllowedPrisonHierarchy("D", null, null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed1, allowed2, allowed3, allowed4))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -191,7 +193,7 @@ class PrisonerSessionValidatorTest {
       val allowed4 = Tuples.of(AllowedPrisonHierarchy("E", null, null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed1, allowed2, allowed3, allowed4))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isFalse
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isFalse
     }
 
     @Test
@@ -201,7 +203,7 @@ class PrisonerSessionValidatorTest {
       val allowed = Tuples.of(AllowedPrisonHierarchy("C", "1", null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -214,7 +216,7 @@ class PrisonerSessionValidatorTest {
       val allowed4 = Tuples.of(AllowedPrisonHierarchy("C", "2", "001", null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed1, allowed2, allowed3, allowed4))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -227,7 +229,7 @@ class PrisonerSessionValidatorTest {
       val allowed4 = Tuples.of(AllowedPrisonHierarchy("C", "3", null, null), prison)
       val permittedSessionLocationList = createPermittedSessionLocationList(listOf(allowed1, allowed2, allowed3, allowed4))
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isFalse
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isFalse
     }
 
     @Test
@@ -249,7 +251,7 @@ class PrisonerSessionValidatorTest {
         )
       )
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -269,7 +271,7 @@ class PrisonerSessionValidatorTest {
         )
       )
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isFalse
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isFalse
     }
 
     @Test
@@ -297,7 +299,7 @@ class PrisonerSessionValidatorTest {
         )
       )
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
 
     @Test
@@ -324,7 +326,7 @@ class PrisonerSessionValidatorTest {
         )
       )
       val sessionTemplate = createSessionTemplate(permittedSessionLocations = permittedSessionLocationList)
-      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail3LevelPrison, sessionTemplate)).isTrue
+      assertThat(prisonerSessionValidator.isSessionAvailableToPrisoner(prisonerDetail4LevelPrison.getLevels(), sessionTemplate)).isTrue
     }
   }
 

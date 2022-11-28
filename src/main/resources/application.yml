@@ -92,6 +92,12 @@ prison:
   api:
     timeout: 10s
 
+    #determines which endpoint to use to get levels for the prisoner
+    #FULL_STATUS or HOUSING_LOCATION (case-sensitive values)
+    #FULL_STATUS makes a call to /api/prisoners/{offenderNo}/full-status
+    #HOUSING_LOCATION makes a call to /api/offenders/{offenderNo}/housing-location
+    levels-endpoint: HOUSING_LOCATION
+
 policy:
   session:
     non-association:

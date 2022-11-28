@@ -6,9 +6,12 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Value
+import org.springframework.test.context.TestPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonApiGetLevelsEndpoint
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedPrisonHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -19,11 +22,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import java.time.LocalDate
 import java.time.LocalTime
 
-@DisplayName("Get /visit-sessions")
-class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
-
+@DisplayName("Get /visit-sessions with call to prison API full status")
+@TestPropertySource(properties = ["prison.api.levels-endpoint=FULL_STATUS"])
+class GetSessionsWithLevelsFullStatusMatcherTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
   private val prison: Prison = Prison(code = "MDI", active = true)
+
+  @Value("\${prison.api.levels-endpoint}")
+  private lateinit var prisonApiGetLevelsEndpoint: PrisonApiGetLevelsEndpoint
 
   private val nextAllowedDay = getNextAllowedDay()
 
@@ -158,9 +164,8 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-1-100-1"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
-      prisonerId, prisonerInternalLocation
-    )
+    getPrisonerLevels(prisonerId, prisonerInternalLocation)
+
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
 
@@ -187,9 +192,10 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-2-100-3"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
+
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
 
@@ -214,9 +220,10 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-2-100-2"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
+
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
 
@@ -239,9 +246,10 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-1-100"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
+
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
 
@@ -264,7 +272,7 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-1"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
 
@@ -290,7 +298,7 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
 
@@ -314,7 +322,7 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-B"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
 
@@ -338,7 +346,7 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-B-1-100-1"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
 
@@ -369,7 +377,7 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-B-1"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
 
@@ -400,7 +408,7 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-C-100-1"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
 
@@ -423,7 +431,7 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-D-100-1"
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
 
@@ -467,9 +475,10 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
       LocalDate.now().plusMonths(6).toString()
     )
 
-    prisonApiMockServer.stubGetPrisonerDetails(
+    getPrisonerLevels(
       prisonerId, prisonerInternalLocation
     )
+
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
 
@@ -513,5 +522,13 @@ class GetSessionsWithLevelsTest(@Autowired private val objectMapper: ObjectMappe
 
   private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> {
     return objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+  }
+
+  private fun getPrisonerLevels(prisonerId: String, prisonerInternalLocation: String) {
+    if (prisonApiGetLevelsEndpoint == PrisonApiGetLevelsEndpoint.FULL_STATUS) {
+      prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerInternalLocation)
+    } else {
+      prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    }
   }
 }

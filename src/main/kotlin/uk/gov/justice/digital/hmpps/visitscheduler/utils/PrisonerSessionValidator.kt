@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.util.function.Predicate
 
@@ -13,12 +13,12 @@ class PrisonerSessionValidator(
     Predicate<SessionTemplate> { sessionTemplate -> sessionTemplate.permittedSessionLocations.isNullOrEmpty() }
 
   fun isSessionAvailableToPrisoner(
-    prisonerDetails: PrisonerDetailDto,
+    prisonerLevels: Map<PrisonerHousingLevels, String?>,
     sessionTemplate: SessionTemplate
   ): Boolean {
     val isSessionAvailableToAllPrisoners = sessionAllPrisonersMatcher.test(sessionTemplate)
     if (!isSessionAvailableToAllPrisoners) {
-      return levelMatcher.test(sessionTemplate.permittedSessionLocations, prisonerDetails)
+      return levelMatcher.test(sessionTemplate.permittedSessionLocations, prisonerLevels)
     }
 
     return true
