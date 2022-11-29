@@ -145,7 +145,7 @@ class SessionService(
       val prisonerDetailDto = prisonApiService.getPrisonerHousingLocation(prisonerIdVal)
       prisonerDetailDto?.let { prisonerDetail ->
         return sessionTemplates.filter { sessionTemplate ->
-          sessionValidator.isSessionAvailableToPrisoner(prisonerDetail.getLevels(), sessionTemplate)
+          sessionValidator.isSessionAvailableToPrisoner(prisonApiService.getLevelsMapForPrisoner(prisonerDetail), sessionTemplate)
         }
       }
     }

@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import java.time.LocalDate
 
@@ -166,9 +167,10 @@ class PrisonApiServiceTest {
 
     // Then
     assertThat(prisonerDetails).isNotNull
-    assertThat(prisonerDetails!!.getHousingLevelByLevelNumber(1)).isEqualTo(level1)
-    assertThat(prisonerDetails.getHousingLevelByLevelNumber(2)).isEqualTo(level2)
-    assertThat(prisonerDetails.getHousingLevelByLevelNumber(3)).isEqualTo(level3)
+    assertThat(getLevel(prisonerDetails!!, PrisonerHousingLevels.LEVEL_ONE)).isEqualTo(level1.code)
+    assertThat(getLevel(prisonerDetails, PrisonerHousingLevels.LEVEL_TWO)).isEqualTo(level2.code)
+    assertThat(getLevel(prisonerDetails, PrisonerHousingLevels.LEVEL_THREE)).isEqualTo(level3.code)
+    assertThat(getLevel(prisonerDetails, PrisonerHousingLevels.LEVEL_FOUR)).isNull()
     Mockito.verify(prisonApiClient, times(1)).getPrisonerHousingLocation(prisonerId)
   }
 
@@ -225,10 +227,10 @@ class PrisonApiServiceTest {
     // Then
     assertThat(prisonerHousingLevels).isNotNull
     assertThat(prisonerHousingLevels!!.levels).isNotEmpty
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(1)).isEqualTo(level1)
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(2)).isNull()
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(3)).isNull()
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(4)).isNull()
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_ONE)).isEqualTo(level1.code)
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_TWO)).isNull()
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_THREE)).isNull()
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_FOUR)).isNull()
 
     Mockito.verify(prisonApiClient, times(1)).getPrisonerHousingLocation(prisonerId)
   }
@@ -252,10 +254,10 @@ class PrisonApiServiceTest {
     // Then
     assertThat(prisonerHousingLevels).isNotNull
     assertThat(prisonerHousingLevels!!.levels).isNotEmpty
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(1)).isEqualTo(level1)
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(2)).isEqualTo(level2)
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(3)).isEqualTo(level3)
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(4)).isEqualTo(level4)
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_ONE)).isEqualTo(level1.code)
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_TWO)).isEqualTo(level2.code)
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_THREE)).isEqualTo(level3.code)
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_FOUR)).isEqualTo(level4.code)
 
     Mockito.verify(prisonApiClient, times(1)).getPrisonerHousingLocation(prisonerId)
   }
@@ -275,10 +277,10 @@ class PrisonApiServiceTest {
     // Then
     assertThat(prisonerHousingLevels).isNotNull
     assertThat(prisonerHousingLevels!!.levels).isEmpty()
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(1)).isNull()
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(2)).isNull()
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(3)).isNull()
-    assertThat(prisonerHousingLevels.getHousingLevelByLevelNumber(4)).isNull()
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_ONE)).isNull()
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_TWO)).isNull()
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_THREE)).isNull()
+    assertThat(getLevel(prisonerHousingLevels, PrisonerHousingLevels.LEVEL_FOUR)).isNull()
 
     Mockito.verify(prisonApiClient, times(1)).getPrisonerHousingLocation(prisonerId)
   }
@@ -317,5 +319,10 @@ class PrisonApiServiceTest {
 
     // Then
     Mockito.verify(prisonApiClient, times(1)).getPrisonerHousingLocation(prisonerId)
+  }
+
+  private fun getLevel(prisonerHousingLocationsDto: PrisonerHousingLocationsDto, level: PrisonerHousingLevels): String? {
+    val levels = prisonApiService.getLevelsMapForPrisoner(prisonerHousingLocationsDto)
+    return levels[level]
   }
 }
