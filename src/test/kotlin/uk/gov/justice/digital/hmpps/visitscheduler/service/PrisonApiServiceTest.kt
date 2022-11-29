@@ -18,7 +18,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerUnitCodeDto
 import java.time.LocalDate
 
 @ExtendWith(MockitoExtension::class)
@@ -152,23 +151,25 @@ class PrisonApiServiceTest {
   @Test
   fun `when valid prisoner then prisoner details are returned`() {
     val prisonerId = "AA1234BB"
-    val unitCodes = arrayOf("Level 1", "Level 2", "Level 3")
-    val prisonerUnitCodeDto = PrisonerUnitCodeDto(prisonerId, unitCode1 = unitCodes[0], unitCode2 = unitCodes[1], unitCode3 = unitCodes[2])
+
+    val level1 = PrisonerHousingLevelDto(level = 1, code = "A", description = "level 1")
+    val level2 = PrisonerHousingLevelDto(level = 2, code = "B", description = "level 2")
+    val level3 = PrisonerHousingLevelDto(level = 3, code = "C", description = "level 3")
+    val prisonerHousingLocationsDto = PrisonerHousingLocationsDto(listOf(level1, level2, level3))
 
     whenever(
-      prisonApiClient.getPrisonerDetails(prisonerId)
-    ).thenReturn(prisonerUnitCodeDto)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId)
+    ).thenReturn(prisonerHousingLocationsDto)
 
     // When
-    val prisonerDetails = prisonApiService.getPrisonerFullStatus(prisonerId)
+    val prisonerDetails = prisonApiService.getPrisonerHousingLocation(prisonerId)
 
     // Then
     assertThat(prisonerDetails).isNotNull
-    assertThat(prisonerDetails!!.nomsId).isEqualTo(prisonerId)
-    assertThat(prisonerDetails.unitCode1).isEqualTo(unitCodes[0])
-    assertThat(prisonerDetails.unitCode2).isEqualTo(unitCodes[1])
-    assertThat(prisonerDetails.unitCode3).isEqualTo(unitCodes[2])
-    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+    assertThat(prisonerDetails!!.getHousingLevelByLevelNumber(1)).isEqualTo(level1)
+    assertThat(prisonerDetails.getHousingLevelByLevelNumber(2)).isEqualTo(level2)
+    assertThat(prisonerDetails.getHousingLevelByLevelNumber(3)).isEqualTo(level3)
+    Mockito.verify(prisonApiClient, times(1)).getPrisonerHousingLocation(prisonerId)
   }
 
   @Test
@@ -176,17 +177,17 @@ class PrisonApiServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerDetails(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId)
     ).thenThrow(
       WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
     )
 
     // When
-    val prisonerDetails = prisonApiService.getPrisonerFullStatus(prisonerId)
+    val prisonerDetails = prisonApiService.getPrisonerHousingLocation(prisonerId)
 
     // Then
     assertThat(prisonerDetails).isNull()
-    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+    Mockito.verify(prisonApiClient, times(1)).getPrisonerHousingLocation(prisonerId)
   }
 
   @Test
@@ -194,18 +195,18 @@ class PrisonApiServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerDetails(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId)
     ).thenThrow(
       WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
     )
 
     // When
     assertThrows<WebClientResponseException> {
-      prisonApiService.getPrisonerFullStatus(prisonerId)
+      prisonApiService.getPrisonerHousingLocation(prisonerId)
     }
 
     // Then
-    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+    Mockito.verify(prisonApiClient, times(1)).getPrisonerHousingLocation(prisonerId)
   }
 
   @Test

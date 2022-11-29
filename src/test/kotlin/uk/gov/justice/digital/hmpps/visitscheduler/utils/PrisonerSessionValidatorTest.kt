@@ -8,7 +8,8 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import reactor.util.function.Tuple2
 import reactor.util.function.Tuples
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerUnitCodeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedPrisonHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -27,7 +28,10 @@ class PrisonerSessionValidatorTest {
 
     // prisoner details are as follows
     // level 1 - "C", level 2 - "1", level 3 - "004" and no level 4
-    private val prisonerDetail3LevelPrison = PrisonerUnitCodeDto("A4000001", unitCode1 = "C", unitCode2 = "1", unitCode3 = "004", unitCode4 = null)
+    private val level1 = PrisonerHousingLevelDto(level = 1, code = "C", description = "level 1")
+    private val level2 = PrisonerHousingLevelDto(level = 2, code = "1", description = "level 2")
+    private val level3 = PrisonerHousingLevelDto(level = 3, code = "004", description = "level 3")
+    private val prisonerDetail3LevelPrison = PrisonerHousingLocationsDto(listOf(level1, level2, level3))
 
     @Test
     fun `session available to all prisoners when permitted session location is empty`() {
@@ -198,7 +202,10 @@ class PrisonerSessionValidatorTest {
     // level 1 - "C", level 2 - "1", level 3 - "004" and level 4 = "10000"
     val prison: Prison = Prison(code = "BLI", active = true)
 
-    private val prisonerDetail4LevelPrison = PrisonerUnitCodeDto("A4000001", unitCode1 = "C", unitCode2 = "1", unitCode3 = "004", unitCode4 = null)
+    private val level1 = PrisonerHousingLevelDto(level = 1, code = "C", description = "level 1")
+    private val level2 = PrisonerHousingLevelDto(level = 2, code = "1", description = "level 2")
+    private val level3 = PrisonerHousingLevelDto(level = 3, code = "004", description = "level 3")
+    private val prisonerDetail4LevelPrison = PrisonerHousingLocationsDto(listOf(level1, level2, level3))
     @Test
     fun `session available to all prisoners when permitted session location is empty`() {
       // Given

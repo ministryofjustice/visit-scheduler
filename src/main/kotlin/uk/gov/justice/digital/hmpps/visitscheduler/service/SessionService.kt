@@ -142,7 +142,7 @@ class SessionService(
 
   private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?): List<SessionTemplate> {
     prisonerId?.let { prisonerIdVal ->
-      val prisonerDetailDto = prisonApiService.getPrisonerDetails(prisonerIdVal)
+      val prisonerDetailDto = prisonApiService.getPrisonerHousingLocation(prisonerIdVal)
       prisonerDetailDto?.let { prisonerDetail ->
         return sessionTemplates.filter { sessionTemplate ->
           sessionValidator.isSessionAvailableToPrisoner(prisonerDetail.getLevels(), sessionTemplate)

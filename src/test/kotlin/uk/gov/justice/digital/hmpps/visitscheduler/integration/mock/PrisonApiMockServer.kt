@@ -1,11 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.mock
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerUnitCodeDto
 import java.lang.StringBuilder
 
 class PrisonApiMockServer : WireMockServer(8092) {
@@ -73,30 +71,6 @@ class PrisonApiMockServer : WireMockServer(8092) {
     )
   }
 
-  fun stubGetPrisonerDetails(offenderNo: String, internalLocation: String?) {
-    val levels = getLevels(internalLocation)
-
-    stubFor(
-      get("/api/prisoners/$offenderNo/full-status")
-        .willReturn(
-          aResponse()
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-            .withStatus(200)
-            .withBody(
-              getPrisonerDetailDtoAsJson(
-                PrisonerUnitCodeDto(
-                  offenderNo,
-                  levels.get(1),
-                  levels.get(2),
-                  levels.get(3),
-                  levels.get(4)
-                )
-              )
-            )
-        )
-    )
-  }
-
   fun stubGetPrisonerHousingLocation(offenderNo: String, internalLocation: String?) {
     val levels = getLevels(internalLocation)
 
@@ -157,10 +131,6 @@ class PrisonApiMockServer : WireMockServer(8092) {
           "description" : "level $level"
         }
     """.trimIndent()
-  }
-
-  private fun getPrisonerDetailDtoAsJson(prisonerDetailsDto: PrisonerUnitCodeDto): String {
-    return ObjectMapper().writer().withDefaultPrettyPrinter().writeValueAsString(prisonerDetailsDto)
   }
 
   private fun getLevels(internalLocation: String?): Map<Int, String?> {

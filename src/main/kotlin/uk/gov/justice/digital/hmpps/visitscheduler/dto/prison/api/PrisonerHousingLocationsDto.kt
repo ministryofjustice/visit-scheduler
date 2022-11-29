@@ -4,7 +4,7 @@ import net.minidev.json.annotate.JsonIgnore
 
 class PrisonerHousingLocationsDto(
   val levels: List<PrisonerHousingLevelDto> = listOf()
-) : PrisonerDetailsDto {
+) {
   @JsonIgnore
   private val levelsMap: MutableMap<PrisonerHousingLevels, String?> = mutableMapOf()
   init {
@@ -18,7 +18,7 @@ class PrisonerHousingLocationsDto(
     return levels.stream().filter { level -> level.level == housingLevel }.findFirst().orElse(null)
   }
 
-  override fun getLevels(): Map<PrisonerHousingLevels, String?> {
+  fun getLevels(): Map<PrisonerHousingLevels, String?> {
     return levelsMap.toMap()
   }
 }
