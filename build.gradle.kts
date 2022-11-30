@@ -35,7 +35,7 @@ dependencies {
   implementation("org.apache.commons:commons-csv:1.9.0")
   implementation("org.freemarker:freemarker:2.3.31")
 
-  runtimeOnly("org.postgresql:postgresql:42.5.0")
+  runtimeOnly("org.postgresql:postgresql:42.5.1")
   runtimeOnly("org.flywaydb:flyway-core")
 
   testImplementation("org.springframework.security:spring-security-test")
