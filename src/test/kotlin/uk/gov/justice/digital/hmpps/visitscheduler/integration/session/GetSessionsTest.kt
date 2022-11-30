@@ -18,8 +18,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import java.time.DayOfWeek.MONDAY
+import java.time.DayOfWeek.SUNDAY
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.temporal.TemporalAdjusters
 
 @DisplayName("Get /visit-sessions")
 class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
@@ -49,6 +52,42 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val visitSessionResults = getResults(returnResult)
     Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+  }
+
+  @Test
+  fun `bi weekly schedule - test week (Sunday) change boundary`() {
+    // If this test is run on a weekend it will FAIL...
+
+    // Given
+    val startFromWeek1 = LocalDate.now().with(TemporalAdjusters.next(MONDAY)).minusWeeks(2)
+    sessionTemplateEntityHelper.create(
+      validFromDate = startFromWeek1,
+      startTime = LocalTime.parse("06:00"),
+      endTime = LocalTime.parse("06:30"),
+      dayOfWeek = SUNDAY,
+      biWeekly = true
+    )
+
+    val startFromWeek2 = LocalDate.now().with(TemporalAdjusters.next(MONDAY)).minusWeeks(1)
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = startFromWeek2,
+      startTime = LocalTime.parse("15:00"),
+      endTime = LocalTime.parse("15:30"),
+      dayOfWeek = SUNDAY,
+      biWeekly = true
+    )
+
+    // When
+    val responseSpec = callGetSessions()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults[0].startTimestamp.hour).isEqualTo(15)
+    Assertions.assertThat(visitSessionResults[1].startTimestamp.hour).isEqualTo(6)
   }
 
   @Test
