@@ -6,14 +6,15 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 
 @Service
 class PrisonApiService(
   private val prisonApiClient: PrisonApiClient
 ) {
-
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
@@ -33,16 +34,31 @@ class PrisonApiService(
     return emptyList()
   }
 
-  fun getPrisonerDetails(prisonerId: String): PrisonerDetailDto? {
+  fun getPrisonerHousingLocation(prisonerId: String): PrisonerHousingLocationsDto? {
     try {
-      return prisonApiClient.getPrisonerDetails(prisonerId)
+      return prisonApiClient.getPrisonerHousingLocation(prisonerId)
     } catch (e: WebClientResponseException) {
       if (e.statusCode != HttpStatus.NOT_FOUND) {
-        LOG.error("Exception thrown on prison API call - /api/prisoners/$prisonerId/full-status", e)
+        LOG.error("Exception thrown on prison API call - /api/offenders/$prisonerId/housing-location", e)
         throw e
       }
     }
 
     return null
+  }
+
+  fun getLevelsMapForPrisoner(prisonerHousingLocationsDto: PrisonerHousingLocationsDto): Map<PrisonerHousingLevels, String?> {
+    val levelsMap: MutableMap<PrisonerHousingLevels, String?> = mutableMapOf()
+
+    levelsMap[PrisonerHousingLevels.LEVEL_ONE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_ONE.level)?.code
+    levelsMap[PrisonerHousingLevels.LEVEL_TWO] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_TWO.level)?.code
+    levelsMap[PrisonerHousingLevels.LEVEL_THREE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_THREE.level)?.code
+    levelsMap[PrisonerHousingLevels.LEVEL_FOUR] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_FOUR.level)?.code
+
+    return levelsMap.toMap()
+  }
+
+  private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: Int): PrisonerHousingLevelDto? {
+    return levels.stream().filter { level -> level.level == housingLevel }.findFirst().orElse(null)
   }
 }

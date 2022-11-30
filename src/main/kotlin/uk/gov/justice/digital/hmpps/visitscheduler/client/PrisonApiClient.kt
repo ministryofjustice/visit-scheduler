@@ -5,8 +5,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import java.time.Duration
 
 @Component
@@ -16,7 +16,7 @@ class PrisonApiClient(
 ) {
   private val offenderNonAssociationDetails = object : ParameterizedTypeReference<OffenderNonAssociationDetailsDto>() {}
 
-  private val prisonerDetail = object : ParameterizedTypeReference<PrisonerDetailDto>() {}
+  private val prisonerHousingLocationsDto = object : ParameterizedTypeReference<PrisonerHousingLocationsDto>() {}
 
   fun getOffenderNonAssociation(offenderNo: String): OffenderNonAssociationDetailsDto? {
     return webClient.get()
@@ -26,11 +26,11 @@ class PrisonApiClient(
       .block(apiTimeout)
   }
 
-  fun getPrisonerDetails(offenderNo: String): PrisonerDetailDto? {
+  fun getPrisonerHousingLocation(offenderNo: String): PrisonerHousingLocationsDto? {
     return webClient.get()
-      .uri("/api/prisoners/$offenderNo/full-status")
+      .uri("/api/offenders/$offenderNo/housing-location")
       .retrieve()
-      .bodyToMono(prisonerDetail)
+      .bodyToMono(prisonerHousingLocationsDto)
       .block(apiTimeout)
   }
 }

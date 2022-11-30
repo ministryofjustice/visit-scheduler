@@ -3,8 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
@@ -142,9 +142,11 @@ class SessionService(
 
   private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?): List<SessionTemplate> {
     prisonerId?.let { prisonerIdVal ->
-      val prisonerDetailDto = prisonApiService.getPrisonerDetails(prisonerIdVal)
+      val prisonerDetailDto = prisonApiService.getPrisonerHousingLocation(prisonerIdVal)
       prisonerDetailDto?.let { prisonerDetail ->
-        return sessionTemplates.filter { sessionTemplate -> sessionValidator.isSessionAvailableToPrisoner(prisonerDetail, sessionTemplate) }
+        return sessionTemplates.filter { sessionTemplate ->
+          sessionValidator.isSessionAvailableToPrisoner(prisonApiService.getLevelsMapForPrisoner(prisonerDetail), sessionTemplate)
+        }
       }
     }
 
