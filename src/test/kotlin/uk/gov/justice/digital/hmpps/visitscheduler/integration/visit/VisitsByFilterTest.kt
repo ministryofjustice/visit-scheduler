@@ -13,6 +13,7 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_SEARCH_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
@@ -328,30 +329,26 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpecFirst = callVisitGetEndPoint("/visits?prisonId=$prisonId&page=0&size=$size")
-    val responseSpecLast = callVisitGetEndPoint("/visits?prisonId=$prisonId&page=1&size=$size")
+    val responseSpecFirst = callVisitGetEndPoint("$VISIT_CONTROLLER_SEARCH_PATH?prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED&page=0&size=$size")
+    val responseSpecLast = callVisitGetEndPoint("$VISIT_CONTROLLER_SEARCH_PATH?prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED&page=1&size=$size")
 
     // Then - Page 0
     responseSpecFirst.expectStatus().isOk
       .expectBody()
       .jsonPath("$.content.length()").isEqualTo(3)
-      .jsonPath("$.content..startTimestamp").value(
-        Matchers.contains(
-          "2021-11-03T13:30:44",
-          "2021-11-02T13:30:44",
-          "2021-11-01T13:30:44"
-        )
-      )
+      .jsonPath("$.content[0].startTimestamp").isEqualTo("2021-11-03T13:30:44")
+      .jsonPath("$.content[0].visitStatus").isEqualTo(CANCELLED.name)
+      .jsonPath("$.content[1].startTimestamp").isEqualTo("2021-11-02T13:30:44")
+      .jsonPath("$.content[1].visitStatus").isEqualTo(BOOKED.name)
+      .jsonPath("$.content[2].startTimestamp").isEqualTo("2021-11-01T13:30:44")
+      .jsonPath("$.content[2].visitStatus").isEqualTo(RESERVED.name)
 
     // And - Page 1
     responseSpecLast.expectStatus().isOk
       .expectBody()
       .jsonPath("$.content.length()").isEqualTo(1)
-      .jsonPath("$.content..startTimestamp").value(
-        Matchers.contains(
-          "2021-11-01T12:30:44",
-        )
-      )
+      .jsonPath("$.content[0].startTimestamp").isEqualTo("2021-11-01T12:30:44")
+      .jsonPath("$.content[0].visitStatus").isEqualTo(RESERVED.name)
   }
 
   @Test
