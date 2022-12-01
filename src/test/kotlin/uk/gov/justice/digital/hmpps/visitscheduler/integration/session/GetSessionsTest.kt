@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 import java.time.LocalTime
@@ -25,6 +26,8 @@ import java.time.LocalTime
 class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+
+  private val prison: Prison = Prison(code = "MDI", active = true)
 
   @Test
   fun `visit sessions are returned for a prison for a single schedule`() {
@@ -500,6 +503,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
 
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -524,6 +529,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       associationId,
       validFromDate.toString()
     )
+
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
@@ -560,6 +567,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       associationId,
       validFromDate.plusMonths(6).toString()
     )
+
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
@@ -607,6 +616,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.plusMonths(6).toString()
     )
 
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -653,6 +664,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.minusMonths(1).toString()
     )
 
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -689,6 +702,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.minusMonths(6).toString(),
       validFromDate.plusMonths(1).toString()
     )
+
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
@@ -728,6 +743,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.plusMonths(1).toString()
     )
 
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -764,6 +781,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.plusMonths(1).toString()
     )
 
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
+
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
@@ -799,6 +818,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       validFromDate.minusYears(1).toString(),
       validFromDate.plusYears(1).toString()
     )
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
@@ -807,6 +827,28 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     // Then
     assertResponseLength(responseSpec, 4)
+  }
+
+  @Test
+  fun `when get visit session is called with prison id different to prisoners establishment code bad request error is returned`() {
+    val prisonCode = "MDI"
+    val incorrectPrisonCode = "ABC"
+    val prisonerId = "A1234AA"
+
+    // prisoner is in prison with code MDI
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    // When
+    // get sessions call is being made with the incorrect prison Code
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$incorrectPrisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Validation failure: prisoner's establishment and prison code passed do not match")
+      .jsonPath("$.developerMessage").isEqualTo("Prisoner with ID - $prisonerId is not in prison - $incorrectPrisonCode")
   }
 
   private fun callGetSessions(

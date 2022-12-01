@@ -39,7 +39,8 @@ class SessionService(
   private val policyFilterNonAssociation: Boolean,
   @Value("\${policy.session.non-association.whole-day:true}")
   private val policyNonAssociationWholeDay: Boolean,
-  private val sessionValidator: PrisonerSessionValidator
+  private val sessionValidator: PrisonerSessionValidator,
+  private val prisonerValidationService: PrisonerValidationService
 ) {
 
   @Transactional(readOnly = true)
@@ -53,28 +54,40 @@ class SessionService(
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
 
+    // ensure the prisoner - if supplied belongs to the same prison as supplied prisonCode
+    prisonerId?.let {
+      prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
+    }
+
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
       prisonCode,
       requestedBookableStartDate,
       requestedBookableEndDate
     )
-
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)
 
     var sessions = sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, requestedBookableStartDate, requestedBookableEndDate)
     }.flatten()
 
-    if (!prisonerId.isNullOrBlank()) {
-      val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
-
-      sessions = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
-      populateConflict(sessions, prisonerId, offenderNonAssociationList)
+    prisonerId?.let {
+      sessions = filterSessionsByPrisonerId(sessions, prisonerId)
     }
 
     populateBookedCount(sessions)
 
     return sessions.sortedWith(compareBy { it.startTimestamp })
+  }
+
+  private fun filterSessionsByPrisonerId(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
+    return if (sessions.isNotEmpty()) {
+      val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
+
+      val sessionsByPrisonerId = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
+      populateConflict(sessionsByPrisonerId, prisonerId, offenderNonAssociationList)
+      sessionsByPrisonerId
+    } else
+      sessions
   }
 
   private fun buildVisitSessionsUsingTemplate(

@@ -21,6 +21,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -55,6 +56,7 @@ class SessionServiceTest {
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val visitRepository = mock<VisitRepository>()
   private val prisonApiService = mock<PrisonApiService>()
+  private val prisonerValidationService = mock<PrisonerValidationService>()
   private val visitService = mock<VisitService>()
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
   private val sessionDatesUtil = SessionDatesUtil()
@@ -119,7 +121,8 @@ class SessionServiceTest {
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
         policyNonAssociationWholeDay = true,
-        sessionValidator = prisonerSessionValidator
+        sessionValidator = prisonerSessionValidator,
+        prisonerValidationService = prisonerValidationService
       )
     }
 
@@ -444,7 +447,8 @@ class SessionServiceTest {
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
         policyNonAssociationWholeDay = true,
-        sessionValidator = prisonerSessionValidator
+        sessionValidator = prisonerSessionValidator,
+        prisonerValidationService = prisonerValidationService
       )
     }
 
@@ -658,6 +662,27 @@ class SessionServiceTest {
       // Then
       Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
+
+    @Test
+    fun `when prisonId and prisonerId do not match get sessions throws PrisonerNotInSuppliedPrisonException`() {
+
+      // Given
+      val prisonerId = "A1234AA"
+      val incorrectPrisonCode = "ABC"
+
+      whenever(
+        prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, incorrectPrisonCode)
+      ).thenThrow(PrisonerNotInSuppliedPrisonException())
+
+      // When
+      // the prison code being passed is not the same as the prisoners details on Prison API
+      assertThrows<PrisonerNotInSuppliedPrisonException> {
+        sessionService.getVisitSessions(incorrectPrisonCode, prisonerId)
+      }
+
+      // Then
+      Mockito.verify(prisonerValidationService, times(1)).validatePrisonerIsFromPrison(prisonerId, incorrectPrisonCode)
+    }
   }
 
   @Nested
@@ -677,7 +702,8 @@ class SessionServiceTest {
         policyFilterDoubleBooking = true,
         policyFilterNonAssociation = true,
         policyNonAssociationWholeDay = true,
-        sessionValidator = prisonerSessionValidator
+        sessionValidator = prisonerSessionValidator,
+        prisonerValidationService = prisonerValidationService
       )
     }
 
