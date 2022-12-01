@@ -325,7 +325,7 @@ class VisitController(
     @Parameter(
       description = "Filter results by visit status",
       example = "BOOKED"
-    ) visitStatusList: List<VisitStatus> = listOf(),
+    ) visitStatusList: List<VisitStatus>,
     @RequestParam(value = "page", required = true)
     @Parameter(
       description = "Pagination page number, starting at zero",
