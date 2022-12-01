@@ -251,8 +251,8 @@ class SessionTemplateSQLGenerator {
     val input = mutableMapOf<String, Any>()
     input.put("sessionRecords", sessionRecords)
     input.put("locations", sessionLocationItems)
-    input.put("permitted_session_location_index", sessionLocationItems.size)
-    input.put("session_template_id_index", sessionRecords.size)
+    input.put("permitted_session_location_index", sessionLocationItems.size+1)
+    input.put("session_template_id_index", sessionRecords.size+1)
 
     val stringWriter = StringWriter()
     template.process(input, stringWriter)
