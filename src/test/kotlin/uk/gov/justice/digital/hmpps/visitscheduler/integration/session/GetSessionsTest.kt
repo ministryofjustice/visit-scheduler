@@ -18,7 +18,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import java.time.DayOfWeek
 import java.time.DayOfWeek.MONDAY
+import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
 import java.time.LocalDate
 import java.time.LocalTime
@@ -55,25 +57,25 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `bi weekly schedule - test week (Sunday) change boundary`() {
-    // If this test is run on a weekend it will FAIL...
+  fun `bi weekly schedule - test for sunday change boundary`() {
+
+    val today = LocalDate.now()
+    val todayIsTheWeekEnd = today.dayOfWeek in listOf<DayOfWeek>(SUNDAY, SATURDAY)
 
     // Given
-    val startFromWeek1 = LocalDate.now().with(TemporalAdjusters.next(MONDAY)).minusWeeks(2)
+    val startFromWeek1 = today.with(TemporalAdjusters.next(MONDAY)).minusWeeks(1)
     sessionTemplateEntityHelper.create(
       validFromDate = startFromWeek1,
-      startTime = LocalTime.parse("06:00"),
-      endTime = LocalTime.parse("06:30"),
+      visitRoom = "Alternate 1",
       dayOfWeek = SUNDAY,
       biWeekly = true
     )
 
-    val startFromWeek2 = LocalDate.now().with(TemporalAdjusters.next(MONDAY)).minusWeeks(1)
+    val startFromWeek2 = LocalDate.now().with(TemporalAdjusters.next(MONDAY)).minusWeeks(2)
 
     sessionTemplateEntityHelper.create(
       validFromDate = startFromWeek2,
-      startTime = LocalTime.parse("15:00"),
-      endTime = LocalTime.parse("15:30"),
+      visitRoom = "Alternate 2",
       dayOfWeek = SUNDAY,
       biWeekly = true
     )
@@ -86,8 +88,14 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .expectBody()
 
     val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults[0].startTimestamp.hour).isEqualTo(15)
-    Assertions.assertThat(visitSessionResults[1].startTimestamp.hour).isEqualTo(6)
+    if (todayIsTheWeekEnd) {
+      // On the weekend it skips to the other session template / schedule because we cannot book with in 24 hrs
+      Assertions.assertThat(visitSessionResults[0].visitRoomName).isEqualTo("Alternate 2")
+      Assertions.assertThat(visitSessionResults[1].visitRoomName).isEqualTo("Alternate 1")
+    } else {
+      Assertions.assertThat(visitSessionResults[0].visitRoomName).isEqualTo("Alternate 1")
+      Assertions.assertThat(visitSessionResults[1].visitRoomName).isEqualTo("Alternate 2")
+    }
   }
 
   @Test
