@@ -93,11 +93,11 @@ class VisitControllerLegacy(
       description = "Filter results by visitor (contact id)",
       example = "12322"
     ) visitorId: Long?,
-    @RequestParam(value = "visitStatus", required = false)
+    @RequestParam(value = "visitStatus", required = true)
     @Parameter(
       description = "Filter results by visit status",
       example = "BOOKED"
-    ) visitStatusList: List<VisitStatus>?,
+    ) visitStatusList: List<VisitStatus>,
   ): List<VisitDto> {
     return visitService.findVisitsByFilter(
       VisitFilter(
@@ -106,7 +106,7 @@ class VisitControllerLegacy(
         startDateTime = startDateTime,
         endDateTime = endDateTime,
         visitorId = visitorId,
-        visitStatusList = visitStatusList?.let { visitStatusList } ?: run { listOf() }
+        visitStatusList = visitStatusList
       )
     )
   }

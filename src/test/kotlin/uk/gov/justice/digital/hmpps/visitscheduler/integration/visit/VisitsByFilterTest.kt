@@ -86,7 +86,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonerId = "FF0000BB"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonerId=$prisonerId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec
@@ -126,7 +126,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonerId = "FF0000CC"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec
@@ -150,7 +150,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonerId = "FF0000DD"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec
@@ -172,7 +172,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "LEI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -202,7 +202,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val startTimestamp = "2021-11-03T09:00:00"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&startTimestamp=$startTimestamp")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&startTimestamp=$startTimestamp&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -220,7 +220,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonerId = "GG0000BB"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&startTimestamp=$startTimestamp")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&startTimestamp=$startTimestamp&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -253,7 +253,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&endTimestamp=$startTimestamp")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&endTimestamp=$startTimestamp&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -276,7 +276,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&startTimestamp=$startTimestamp&endTimestamp=$endTimestamp")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&startTimestamp=$startTimestamp&endTimestamp=$endTimestamp&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -297,7 +297,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "LEI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&nomisPersonId=$nomisPersonId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&nomisPersonId=$nomisPersonId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -358,7 +358,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId")
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -403,7 +403,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId", listOf())
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED", listOf())
 
     // Then
     responseSpec.expectStatus().isForbidden
