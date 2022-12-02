@@ -41,7 +41,7 @@ UPDATE tmp_session_template SET prison_id = prison.id FROM prison WHERE tmp_sess
 
 INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly)
 SELECT id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly FROM tmp_session_template order by id;
-ALTER SEQUENCE session_template_id_seq RESTART WITH 23;
+ALTER SEQUENCE session_template_id_seq RESTART WITH  ${session_template_id_index};
 
 
 -- Create permitted session location data
@@ -67,7 +67,7 @@ UPDATE tmp_permitted_session_location SET prison_id = prison.id FROM prison WHER
 INSERT INTO permitted_session_location(id,prison_id,level_one_code,level_two_code,level_three_code,level_four_code)
 SELECT id,prison_id,level_one_code,level_two_code,level_three_code,level_four_code FROM tmp_permitted_session_location order by id;
 
-ALTER SEQUENCE permitted_session_location_id_seq RESTART WITH 97;
+ALTER SEQUENCE permitted_session_location_id_seq RESTART WITH ${permitted_session_location_index};
 
 
 -- Create link table data
