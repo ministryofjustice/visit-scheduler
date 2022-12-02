@@ -64,30 +64,23 @@ class SessionService(
       requestedBookableStartDate,
       requestedBookableEndDate
     )
+
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)
 
     var sessions = sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, requestedBookableStartDate, requestedBookableEndDate)
     }.flatten()
 
-    prisonerId?.let {
-      sessions = filterSessionsByPrisonerId(sessions, prisonerId)
+    if (!prisonerId.isNullOrBlank()) {
+      val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
+
+      sessions = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
+      populateConflict(sessions, prisonerId, offenderNonAssociationList)
     }
 
     populateBookedCount(sessions)
 
     return sessions.sortedWith(compareBy { it.startTimestamp })
-  }
-
-  private fun filterSessionsByPrisonerId(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
-    return if (sessions.isNotEmpty()) {
-      val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
-
-      val sessionsByPrisonerId = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
-      populateConflict(sessionsByPrisonerId, prisonerId, offenderNonAssociationList)
-      sessionsByPrisonerId
-    } else
-      sessions
   }
 
   private fun buildVisitSessionsUsingTemplate(
