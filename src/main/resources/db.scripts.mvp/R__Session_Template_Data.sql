@@ -32,11 +32,25 @@ BEGIN;
 
     INSERT INTO tmp_session_template (locationKeys,prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week,bi_weekly)
     VALUES
-        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-05-30',NULL,'MONDAY',false),
-        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-06-01',NULL,'WEDNESDAY',false),
-        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','10:00','2022-06-03',NULL,'FRIDAY',false),
-        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-06-04',NULL,'SATURDAY',false),
-        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-06-05',NULL,'SUNDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-05-30','2022-12-18','MONDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-06-01','2022-12-18','WEDNESDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','10:00','2022-06-03','2022-12-18','FRIDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-06-04','2022-12-18','SATURDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-06-05','2022-12-18','SUNDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-19','2022-12-24','MONDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-21','2022-12-24','WEDNESDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','11:00','2022-12-23','2022-12-24','FRIDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-24','2022-12-24','SATURDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-28','2023-01-02','WEDNESDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','11:00','2022-12-30','2023-01-02','FRIDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-31','2023-01-02','SATURDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2023-01-01','2023-01-02','SUNDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2023-01-02','2023-01-02','MONDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-09',NULL,'MONDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-04',NULL,'WEDNESDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','10:00','2023-01-06',NULL,'FRIDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-07',NULL,'SATURDAY',false),
+        (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-08',NULL,'SUNDAY',false),
         ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05',NULL,'TUESDAY',true),
         ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05',NULL,'TUESDAY',true),
         ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05',NULL,'WEDNESDAY',true),
@@ -53,14 +67,15 @@ BEGIN;
         ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28',NULL,'SATURDAY',true),
         ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28',NULL,'SATURDAY',true),
         ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28',NULL,'SUNDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28',NULL,'SUNDAY',true);
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28',NULL,'SUNDAY',true)
+    ;
 
 
     UPDATE tmp_session_template SET prison_id = prison.id FROM prison WHERE tmp_session_template.prison_code = prison.code;
 
     INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly)
     SELECT id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly FROM tmp_session_template order by id;
-    ALTER SEQUENCE session_template_id_seq RESTART WITH 23;
+    ALTER SEQUENCE session_template_id_seq RESTART WITH  37;
 
 
     -- Create permitted session location data
@@ -172,7 +187,8 @@ BEGIN;
         ('BLI_G2','BLI','C','2','029', NULL),
         ('BLI_G2','BLI','C','2','030', NULL),
         ('BLI_G2','BLI','C','2','031', NULL),
-        ('BLI_G2','BLI','C','2','032', NULL);
+        ('BLI_G2','BLI','C','2','032', NULL)
+    ;
 
     UPDATE tmp_permitted_session_location SET prison_id = prison.id FROM prison WHERE tmp_permitted_session_location.prison_code = prison.code;
 
