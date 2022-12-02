@@ -14,6 +14,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
@@ -31,7 +34,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.function.Supplier
 import javax.validation.ValidationException
 
 @Service
@@ -377,29 +379,5 @@ class VisitService(
     } catch (e: RuntimeException) {
       log.error("Error occurred in call to telemetry client to log event - $e.toString()")
     }
-  }
-}
-
-class VisitNotFoundException(message: String? = null, cause: Throwable? = null) :
-  RuntimeException(message, cause),
-  Supplier<VisitNotFoundException> {
-  override fun get(): VisitNotFoundException {
-    return VisitNotFoundException(message, cause)
-  }
-}
-
-class SupportNotFoundException(message: String? = null, cause: Throwable? = null) :
-  RuntimeException(message, cause),
-  Supplier<SupportNotFoundException> {
-  override fun get(): SupportNotFoundException {
-    return SupportNotFoundException(message, cause)
-  }
-}
-class ExpiredVisitAmendException(message: String? = null, cause: Throwable? = null) :
-  ValidationException(message, cause),
-  Supplier<ExpiredVisitAmendException> {
-
-  override fun get(): ExpiredVisitAmendException {
-    return ExpiredVisitAmendException(message, cause)
   }
 }

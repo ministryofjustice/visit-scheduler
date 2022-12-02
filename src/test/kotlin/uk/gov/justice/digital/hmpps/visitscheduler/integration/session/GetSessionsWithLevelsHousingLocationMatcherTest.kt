@@ -156,7 +156,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-1-100-1"
 
-    getPrisonerLevels(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -184,9 +185,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-2-100-3"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -212,9 +212,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-2-100-2"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -238,9 +237,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-1-100"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -264,9 +262,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-1"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -290,9 +287,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -314,9 +310,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-B"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -338,9 +333,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-B-1-100-1"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -369,9 +363,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-B-1"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -400,9 +393,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-C-100-1"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -423,9 +415,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-D-100-1"
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -467,9 +458,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
       LocalDate.now().plusMonths(6).toString()
     )
 
-    getPrisonerLevels(
-      prisonerId, prisonerInternalLocation
-    )
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -514,9 +504,5 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
 
   private fun getResults(returnResult: WebTestClient.BodyContentSpec): Array<VisitSessionDto> {
     return objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
-  }
-
-  private fun getPrisonerLevels(prisonerId: String, prisonerInternalLocation: String) {
-    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
   }
 }

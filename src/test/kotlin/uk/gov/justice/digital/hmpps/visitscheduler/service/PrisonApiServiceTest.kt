@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
@@ -150,7 +151,7 @@ class PrisonApiServiceTest {
   }
 
   @Test
-  fun `when valid prisoner then prisoner details are returned`() {
+  fun `when valid prisoner then prisoner gousing location is returned`() {
     val prisonerId = "AA1234BB"
 
     val level1 = PrisonerHousingLevelDto(level = 1, code = "A", description = "level 1")
@@ -175,7 +176,7 @@ class PrisonApiServiceTest {
   }
 
   @Test
-  fun `when prison api call for prisoner details returns NOT FOUND null value is returned`() {
+  fun `when prison api call for housing location returns NOT FOUND null value is returned`() {
     val prisonerId = "AA1234BB"
 
     whenever(
@@ -193,7 +194,7 @@ class PrisonApiServiceTest {
   }
 
   @Test
-  fun `when prison API throws WebClientResponseException for BAD REQUEST get prisoner details throws WebClientResponseException`() {
+  fun `when prison API throws WebClientResponseException for BAD REQUEST get housing location throws WebClientResponseException`() {
     val prisonerId = "AA1234BB"
 
     whenever(
@@ -319,6 +320,63 @@ class PrisonApiServiceTest {
 
     // Then
     Mockito.verify(prisonApiClient, times(1)).getPrisonerHousingLocation(prisonerId)
+  }
+
+  @Test
+  fun `when valid prisoner then prisoner details are returned`() {
+    val prisonerId = "AA1234BB"
+    val prisonerDetailsDto = PrisonerDetailsDto(prisonerId, establishmentCode = "MDI")
+
+    whenever(
+      prisonApiClient.getPrisonerDetails(prisonerId)
+    ).thenReturn(prisonerDetailsDto)
+
+    // When
+    val prisonerDetails = prisonApiService.getPrisonerFullStatus(prisonerId)
+
+    // Then
+    assertThat(prisonerDetails).isNotNull
+    assertThat(prisonerDetails!!.nomsId).isEqualTo(prisonerId)
+    assertThat(prisonerDetails.establishmentCode).isEqualTo("MDI")
+
+    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+  }
+
+  @Test
+  fun `when prison api call for prisoner details returns NOT FOUND null value is returned`() {
+    val prisonerId = "AA1234BB"
+
+    whenever(
+      prisonApiClient.getPrisonerDetails(prisonerId)
+    ).thenThrow(
+      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+    )
+
+    // When
+    val prisonerDetails = prisonApiService.getPrisonerFullStatus(prisonerId)
+
+    // Then
+    assertThat(prisonerDetails).isNull()
+    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+  }
+
+  @Test
+  fun `when prison API throws WebClientResponseException for BAD REQUEST get prisoner details throws WebClientResponseException`() {
+    val prisonerId = "AA1234BB"
+
+    whenever(
+      prisonApiClient.getPrisonerDetails(prisonerId)
+    ).thenThrow(
+      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+    )
+
+    // When
+    assertThrows<WebClientResponseException> {
+      prisonApiService.getPrisonerFullStatus(prisonerId)
+    }
+
+    // Then
+    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
   }
 
   private fun getLevel(prisonerHousingLocationsDto: PrisonerHousingLocationsDto, level: PrisonerHousingLevels): String? {

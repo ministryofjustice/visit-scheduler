@@ -39,7 +39,8 @@ class SessionService(
   private val policyFilterNonAssociation: Boolean,
   @Value("\${policy.session.non-association.whole-day:true}")
   private val policyNonAssociationWholeDay: Boolean,
-  private val sessionValidator: PrisonerSessionValidator
+  private val sessionValidator: PrisonerSessionValidator,
+  private val prisonerValidationService: PrisonerValidationService
 ) {
 
   @Transactional(readOnly = true)
@@ -52,6 +53,11 @@ class SessionService(
     val today = LocalDate.now()
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
+
+    // ensure the prisoner - if supplied belongs to the same prison as supplied prisonCode
+    prisonerId?.let {
+      prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
+    }
 
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
       prisonCode,
