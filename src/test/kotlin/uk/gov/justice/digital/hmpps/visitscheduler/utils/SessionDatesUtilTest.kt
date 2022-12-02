@@ -7,6 +7,8 @@ import org.mockito.InjectMocks
 import org.mockito.junit.jupiter.MockitoExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import java.time.DayOfWeek.FRIDAY
+import java.time.DayOfWeek.MONDAY
+import java.time.DayOfWeek.SUNDAY
 import java.time.LocalDate
 import java.time.temporal.TemporalAdjusters
 import java.util.stream.Collectors
@@ -195,5 +197,57 @@ class SessionDatesUtilTest {
     assertThat(dates[2].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
     assertThat(dates[3]).isEqualTo(firstBookableSessionDay.plusWeeks(7))
     assertThat(dates[3].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
+  }
+
+  @Test
+  fun `Dont not SkipWeek on Monday on first week`() {
+    // Given
+    val validFromDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+    val firstBookableSessionDay = validFromDate
+
+    // When
+    val skip = toTest.isSkipWeek(validFromDate, firstBookableSessionDay)
+
+    // Then
+    assertThat(skip).isFalse
+  }
+
+  @Test
+  fun `Dont not SkipWeek on Sunday on first week`() {
+    // Given
+    val validFromDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+    val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(SUNDAY))
+
+    // When
+    val skip = toTest.isSkipWeek(validFromDate, firstBookableSessionDay)
+
+    // Then
+    assertThat(skip).isFalse
+  }
+
+  @Test
+  fun `SkipWeek on Monday on second week`() {
+    // Given
+    val validFromDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+    val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(MONDAY))
+
+    // When
+    val skip = toTest.isSkipWeek(validFromDate, firstBookableSessionDay)
+
+    // Then
+    assertThat(skip).isTrue
+  }
+
+  @Test
+  fun `SkipWeek on Sunday on second week`() {
+    // Given
+    val validFromDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+    val firstBookableSessionDay = validFromDate.plusWeeks(1).with(TemporalAdjusters.next(SUNDAY))
+
+    // When
+    val skip = toTest.isSkipWeek(validFromDate, firstBookableSessionDay)
+
+    // Then
+    assertThat(skip).isTrue
   }
 }
