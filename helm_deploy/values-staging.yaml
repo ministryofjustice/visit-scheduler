@@ -16,7 +16,6 @@ generic-service:
     PRISON_API_URL: https://api-dev.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     FEATURE_EVENTS_SNS_ENABLED: false
-    BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 28
 
 
 # CloudPlatform AlertManager receiver to route promethues alerts to slack
