@@ -2,6 +2,7 @@
 -- WARNING if the session template id's are used in other tables this script might have to change!
 -- This is a temporary solution, and should be replaced by a JSON admin API!
 -- Make sure prison table has the concerned prisons inserted before running this script!
+-- See for instructions https://dsdmoj.atlassian.net/wiki/spaces/PSCH/pages/4239622317/SQL+SessionTemplate+Generator
 BEGIN;
 
 SET SCHEMA 'public';

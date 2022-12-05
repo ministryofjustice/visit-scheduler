@@ -2,6 +2,7 @@
 -- WARNING if the session template id's are used in other tables this script might have to change!
 -- This is a temporary solution, and should be replaced by a JSON admin API!
 -- Make sure prison table has the concerned prisons inserted before running this script!
+-- See for instructions https://dsdmoj.atlassian.net/wiki/spaces/PSCH/pages/4239622317/SQL+SessionTemplate+Generator
 BEGIN;
 
     SET SCHEMA 'public';
@@ -51,23 +52,56 @@ BEGIN;
         (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','10:00','2023-01-06',NULL,'FRIDAY',false),
         (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-07',NULL,'SATURDAY',false),
         (NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-08',NULL,'SUNDAY',false),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05',NULL,'TUESDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05',NULL,'TUESDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05',NULL,'WEDNESDAY',true),
-        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05',NULL,'WEDNESDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2022-12-05',NULL,'FRIDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05',NULL,'SATURDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05',NULL,'SATURDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05',NULL,'SUNDAY',true),
-        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05',NULL,'SUNDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28',NULL,'TUESDAY',true),
-        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28',NULL,'TUESDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2022-11-28',NULL,'WEDNESDAY',true),
-        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2022-11-28',NULL,'FRIDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28',NULL,'SATURDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28',NULL,'SATURDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28',NULL,'SUNDAY',true),
-        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28',NULL,'SUNDAY',true)
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05','2022-12-18','TUESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05','2022-12-18','TUESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05','2022-12-18','WEDNESDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05','2022-12-18','WEDNESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2022-12-05','2022-12-18','FRIDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05','2022-12-18','SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05','2022-12-18','SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05','2022-12-18','SUNDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05','2022-12-18','SUNDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28','2022-12-18','TUESDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28','2022-12-18','TUESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2022-11-28','2022-12-18','WEDNESDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2022-11-28','2022-12-18','FRIDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28','2022-12-18','SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28','2022-12-18','SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28','2022-12-18','SUNDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28','2022-12-18','SUNDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-20','2022-12-20','TUESDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-20','2022-12-20','TUESDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-21','2022-12-21','WEDNESDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-21','2022-12-21','WEDNESDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2022-12-23','2022-12-23','FRIDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-24','2022-12-24','SATURDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-24','2022-12-24','SATURDAY',false),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2022-12-27','2022-12-27','TUESDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2022-12-28','2022-12-28','WEDNESDAY',false),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2022-12-30','2022-12-30','FRIDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'09:30','10:30','2022-12-31','2022-12-31','SATURDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2022-12-31','2022-12-31','SATURDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2023-01-01','2023-01-01','SUNDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2023-01-01','2023-01-01','SUNDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2023-01-03','2023-01-03','TUESDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2023-01-03','2023-01-03','TUESDAY',false),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2023-01-04',NULL,'TUESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2023-01-04',NULL,'TUESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2023-01-04',NULL,'WEDNESDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2023-01-04',NULL,'WEDNESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2023-01-04',NULL,'FRIDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2023-01-04',NULL,'SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2023-01-04',NULL,'SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2023-01-04',NULL,'SUNDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2023-01-04',NULL,'SUNDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2023-01-09',NULL,'TUESDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2023-01-09',NULL,'TUESDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2023-01-09',NULL,'WEDNESDAY',true),
+        ('BLI_G2','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','16:00','2023-01-09',NULL,'FRIDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2023-01-09',NULL,'SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2023-01-09',NULL,'SATURDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'14:00','15:00','2023-01-09',NULL,'SUNDAY',true),
+        ('BLI_G1','BLI','Main Visits Hall','SOCIAL',20,1,'15:30','16:30','2023-01-09',NULL,'SUNDAY',true)
     ;
 
 
@@ -75,7 +109,7 @@ BEGIN;
 
     INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly)
     SELECT id,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly FROM tmp_session_template order by id;
-    ALTER SEQUENCE session_template_id_seq RESTART WITH  37;
+    ALTER SEQUENCE session_template_id_seq RESTART WITH  70;
 
 
     -- Create permitted session location data
