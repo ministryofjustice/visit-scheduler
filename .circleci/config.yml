@@ -113,6 +113,40 @@ workflows:
             - visit-scheduler-prod
           requires:
             - request-prod-approval
+  build-test:
+    jobs:
+      - validate:
+          filters:
+            tags:
+              ignore: /.*/
+      - hmpps/helm_lint:
+          name: helm_lint
+      - hmpps/build_docker:
+          name: build_docker
+          filters:
+            branches:
+              only:
+                - develop
+      - hmpps/deploy_env:
+          name: deploy_dev
+          env: "dev"
+          context: hmpps-common-vars
+          requires:
+            - validate
+            - build_docker
+            - helm_lint
+      - request-staging-approval:
+          type: approval
+          requires:
+            - deploy_dev
+      - hmpps/deploy_env:
+          name: deploy_staging
+          env: "staging"
+          context:
+            - hmpps-common-vars
+            - visit-scheduler-stage
+          requires:
+            - request-staging-approval
 
   security:
     triggers:
