@@ -322,7 +322,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val responseSpec = callGetSessions()
 
     // Then
-    assertBookCounts(responseSpec, openCount =  2, closeCount = 0)
+    assertBookCounts(responseSpec, openCount = 2, closeCount = 0)
   }
 
   @Test
@@ -398,7 +398,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     )
 
     // When
-    val responseSpec = callGetSessions(2,40)
+    val responseSpec = callGetSessions(2, 40)
 
     // Then
     val visitSessionResults = getResults(responseSpec.expectBody())
@@ -620,7 +620,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val responseSpec = callGetSessions()
 
     // Then
-    assertBookCounts(responseSpec, openCount = 2, closeCount =  0)
+    assertBookCounts(responseSpec, openCount = 2, closeCount = 0)
   }
 
   @Test
@@ -1031,7 +1031,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     Assertions.assertThat(visitSessionResults.size).isEqualTo(resultSize)
     Assertions.assertThat(visitSessionResults[0].openVisitBookedCount).isEqualTo(openCount)
     Assertions.assertThat(visitSessionResults[0].closedVisitBookedCount).isEqualTo(closeCount)
-    if (resultSize==2) {
+    if (resultSize == 2) {
       Assertions.assertThat(visitSessionResults[1].openVisitBookedCount).isEqualTo(openCount)
       Assertions.assertThat(visitSessionResults[1].closedVisitBookedCount).isEqualTo(closeCount)
     }
