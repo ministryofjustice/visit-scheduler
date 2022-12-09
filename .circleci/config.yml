@@ -120,7 +120,8 @@ workflows:
   build-test-develop-flow:
     when:
       and:
-        - equal: [ develop, << pipeline.git.branch >> ]
+        - not:
+            equal: [ master, << pipeline.git.branch >> ]
     jobs:
       - validate:
           filters:
