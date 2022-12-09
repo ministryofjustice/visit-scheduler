@@ -117,11 +117,10 @@ workflows:
             - visit-scheduler-prod
           requires:
             - request-prod-approval
-  build-test-devlope-flow:
+  build-test-develop-flow:
     when:
       and:
-        - not:
-            equal: [ master, << pipeline.git.branch >> ]
+        - equal: [ develop, << pipeline.git.branch >> ]
     jobs:
       - validate:
           filters:
@@ -135,6 +134,8 @@ workflows:
             branches:
               only:
                 - develop
+      - request-dev-approval:
+          type: approval
       - hmpps/deploy_env:
           name: deploy_dev
           env: "dev"
@@ -144,6 +145,7 @@ workflows:
               only:
                 - develop
           requires:
+            - request-dev-approval
             - validate
             - build_docker
             - helm_lint
