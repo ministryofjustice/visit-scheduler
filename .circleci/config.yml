@@ -139,6 +139,10 @@ workflows:
           name: deploy_dev
           env: "dev"
           context: hmpps-common-vars
+          filters:
+            branches:
+              only:
+                - develop
           requires:
             - validate
             - build_docker
