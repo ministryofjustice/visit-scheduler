@@ -49,7 +49,12 @@ jobs:
 
 workflows:
   version: 2
-  build-test-and-deploy:
+
+  build-test-and-deploy-flow:
+    when:
+      and:
+        - not:
+            equal: [ develop, << pipeline.git.branch >> ]
     jobs:
       - validate:
           filters:
@@ -113,6 +118,50 @@ workflows:
             - visit-scheduler-prod
           requires:
             - request-prod-approval
+  build-test-develop-flow:
+    when:
+      and:
+         - equal: [ develop, << pipeline.git.branch >> ]
+    jobs:
+      - validate:
+          filters:
+            tags:
+              ignore: /.*/
+      - hmpps/helm_lint:
+          name: helm_lint
+      - hmpps/build_docker:
+          name: build_docker
+          filters:
+            branches:
+              only:
+                - develop
+      - request-dev-approval:
+          type: approval
+      - hmpps/deploy_env:
+          name: deploy_dev
+          env: "dev"
+          context: hmpps-common-vars
+          filters:
+            branches:
+              only:
+                - develop
+          requires:
+            - validate
+            - build_docker
+            - helm_lint
+            - request-dev-approval
+      - request-staging-approval:
+          type: approval
+          requires:
+            - deploy_dev
+      - hmpps/deploy_env:
+          name: deploy_staging
+          env: "staging"
+          context:
+            - hmpps-common-vars
+            - visit-scheduler-stage
+          requires:
+            - request-staging-approval
 
   security:
     triggers:

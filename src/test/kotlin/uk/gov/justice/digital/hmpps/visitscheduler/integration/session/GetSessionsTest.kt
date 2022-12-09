@@ -322,7 +322,91 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val responseSpec = callGetSessions()
 
     // Then
-    assertBookCounts(responseSpec, 2, 0)
+    assertBookCounts(responseSpec, openCount = 2, closeCount = 0)
+  }
+
+  @Test
+  fun `visit sessions closed and booked counts exclude visits that have a different room name from the session`() {
+
+    // Given
+    val nextAllowedDay = this.getNextAllowedDay()
+    val dateTime = nextAllowedDay.atTime(14, 0)
+    val startTime = dateTime.toLocalTime()
+    val endTime = dateTime.plusHours(1)
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = startTime,
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = "I dont know what I am!",
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = "I dont know what I am!",
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = CLOSED
+    )
+
+    val startTime2 = endTime.plusHours(30)
+    val endTime2 = startTime2.plusHours(1)
+
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = startTime2.toLocalTime(),
+      endTime = endTime2.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = "I dont know what I am!",
+      visitStart = startTime2,
+      visitEnd = endTime2,
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = "I dont know what I am!",
+      visitStart = startTime2,
+      visitEnd = endTime2,
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = CLOSED
+    )
+
+    // When
+    val responseSpec = callGetSessions(2, 40)
+
+    // Then
+    val visitSessionResults = getResults(responseSpec.expectBody())
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
+    Assertions.assertThat(visitSessionResults[0].openVisitBookedCount).isEqualTo(0)
+    Assertions.assertThat(visitSessionResults[0].closedVisitBookedCount).isEqualTo(0)
+    Assertions.assertThat(visitSessionResults[1].openVisitBookedCount).isEqualTo(0)
+    Assertions.assertThat(visitSessionResults[1].closedVisitBookedCount).isEqualTo(0)
   }
 
   @Test
@@ -368,7 +452,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val responseSpec = callGetSessions()
 
     // Then
-    assertBookCounts(responseSpec, 0, 0)
+    assertBookCounts(responseSpec, openCount = 0, closeCount = 0)
   }
 
   @Test
@@ -414,7 +498,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val responseSpec = callGetSessions()
 
     // Then
-    assertBookCounts(responseSpec, 1, 0)
+    assertBookCounts(responseSpec, openCount = 1, closeCount = 0)
   }
 
   @Test
@@ -470,7 +554,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val responseSpec = callGetSessions()
 
     // Then
-    assertBookCounts(responseSpec, 0, 2)
+    assertBookCounts(responseSpec, openCount = 0, closeCount = 2)
   }
 
   @Test
@@ -536,7 +620,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val responseSpec = callGetSessions()
 
     // Then
-    assertBookCounts(responseSpec, 2, 0)
+    assertBookCounts(responseSpec, openCount = 2, closeCount = 0)
   }
 
   @Test
@@ -940,13 +1024,17 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     assertResponseLength(responseSpec, 0)
   }
 
-  private fun assertBookCounts(responseSpec: ResponseSpec, openCount: Int, closeCount: Int) {
+  private fun assertBookCounts(responseSpec: ResponseSpec, resultSize: Int? = 1, openCount: Int, closeCount: Int) {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(resultSize)
     Assertions.assertThat(visitSessionResults[0].openVisitBookedCount).isEqualTo(openCount)
     Assertions.assertThat(visitSessionResults[0].closedVisitBookedCount).isEqualTo(closeCount)
+    if (resultSize == 2) {
+      Assertions.assertThat(visitSessionResults[1].openVisitBookedCount).isEqualTo(openCount)
+      Assertions.assertThat(visitSessionResults[1].closedVisitBookedCount).isEqualTo(closeCount)
+    }
   }
 
   private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> {
