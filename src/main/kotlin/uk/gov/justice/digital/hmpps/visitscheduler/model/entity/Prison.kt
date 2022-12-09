@@ -14,7 +14,7 @@ import javax.persistence.TemporalType
 
 @Entity
 @Table(name = "PRISON")
-data class Prison(
+class Prison(
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "ID")
@@ -35,4 +35,20 @@ data class Prison(
   @Temporal(TemporalType.TIMESTAMP)
   @Column
   val modifyTimestamp: LocalDateTime? = null
-)
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is Prison) return false
+
+    if (id != other.id) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
+
+  override fun toString(): String {
+    return this::class.simpleName + "(id=$id, code= '$code')"
+  }
+}

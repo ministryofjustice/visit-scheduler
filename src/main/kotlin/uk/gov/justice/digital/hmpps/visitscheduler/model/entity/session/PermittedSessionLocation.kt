@@ -18,7 +18,7 @@ import javax.persistence.TemporalType
 
 @Entity
 @Table(name = "PERMITTED_SESSION_LOCATION")
-data class PermittedSessionLocation(
+class PermittedSessionLocation(
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -53,4 +53,20 @@ data class PermittedSessionLocation(
   @Temporal(TemporalType.TIMESTAMP)
   @Column
   val modifyTimestamp: LocalDateTime? = null
-)
+) {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is PermittedSessionLocation) return false
+
+    if (id != other.id) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
+
+  override fun toString(): String {
+    return this::class.simpleName + "(id=$id)"
+  }
+}
