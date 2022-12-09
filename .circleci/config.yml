@@ -145,10 +145,10 @@ workflows:
               only:
                 - develop
           requires:
-            - request-dev-approval
             - validate
             - build_docker
             - helm_lint
+            - request-dev-approval
       - request-staging-approval:
           type: approval
           requires:
