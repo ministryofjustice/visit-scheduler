@@ -104,6 +104,7 @@ class Visit(
   @Column
   @NaturalId(mutable = true)
   var applicationReference: String = ""
+    private set
 
   @PostPersist
   fun createReference() {
