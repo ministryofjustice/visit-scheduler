@@ -168,6 +168,26 @@ class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
+  fun `when reserve visit slot has more than 10 visitors then bad request is returned`() {
+
+    // Given
+    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonCode = "AWE")
+    reserveVisitSlotDto.visitors = setOf(
+      VisitorDto(1, true), VisitorDto(2, false),
+      VisitorDto(3, true), VisitorDto(4, false),
+      VisitorDto(5, false), VisitorDto(6, false),
+      VisitorDto(7, false), VisitorDto(8, false),
+      VisitorDto(9, false), VisitorDto(10, false),
+      VisitorDto(11, false), VisitorDto(12, false)
+    )
+
+    // When
+    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+    // Then
+    responseSpec.expectStatus().isBadRequest
+  }
+
+  @Test
   fun `reserve visit slot - only one visit contact allowed`() {
 
     // Given
