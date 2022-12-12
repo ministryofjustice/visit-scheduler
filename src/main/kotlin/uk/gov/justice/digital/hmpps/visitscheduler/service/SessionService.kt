@@ -82,8 +82,6 @@ class SessionService(
     return sessions.sortedWith(compareBy { it.startTimestamp })
   }
 
-
-
   private fun buildVisitSessionsUsingTemplate(
     sessionTemplate: SessionTemplate,
     requestedBookableStartDate: LocalDate,
