@@ -72,15 +72,21 @@ class SessionService(
     }.flatten()
 
     if (!prisonerId.isNullOrBlank()) {
-      val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
-
-      sessions = filterPrisonerConflict(sessions, prisonerId, offenderNonAssociationList)
-      populateConflict(sessions, prisonerId, offenderNonAssociationList)
+      val noAssociationConflictSessions = getNoAssociationConflictSessions(sessions, prisonerId)
+      sessions = filterPrisonerConflict(sessions, prisonerId, noAssociationConflictSessions)
+      populateConflict(sessions, prisonerId, noAssociationConflictSessions)
     }
 
     populateBookedCount(sessions)
 
     return sessions.sortedWith(compareBy { it.startTimestamp })
+  }
+
+  private fun getNoAssociationConflictSessions(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
+    val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
+    return sessions.filter {
+      sessionHasNonAssociation(it, offenderNonAssociationList)
+    }
   }
 
   private fun buildVisitSessionsUsingTemplate(
@@ -150,8 +156,9 @@ class SessionService(
     prisonerId?.let { prisonerIdVal ->
       val prisonerDetailDto = prisonApiService.getPrisonerHousingLocation(prisonerIdVal)
       prisonerDetailDto?.let { prisonerDetail ->
+        val prisonerLevels = prisonApiService.getLevelsMapForPrisoner(prisonerDetail)
         return sessionTemplates.filter { sessionTemplate ->
-          sessionValidator.isSessionAvailableToPrisoner(prisonApiService.getLevelsMapForPrisoner(prisonerDetail), sessionTemplate)
+          sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
         }
       }
     }
@@ -159,16 +166,16 @@ class SessionService(
     return sessionTemplates
   }
 
-  private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String, offenderNonAssociationList: List<OffenderNonAssociationDetailDto>): List<VisitSessionDto> {
+  private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String, noAssociationConflictSessions: List<VisitSessionDto>): List<VisitSessionDto> {
     return sessions.filterNot {
-      (policyFilterNonAssociation && offenderNonAssociationList.isNotEmpty() && sessionHasNonAssociation(it, offenderNonAssociationList)) ||
+      (policyFilterNonAssociation && noAssociationConflictSessions.contains(it)) ||
         (policyFilterDoubleBooking && sessionHasBooking(it, prisonerId))
     }
   }
 
-  private fun populateConflict(sessions: List<VisitSessionDto>, prisonerId: String, offenderNonAssociationList: List<OffenderNonAssociationDetailDto>) {
+  private fun populateConflict(sessions: List<VisitSessionDto>, prisonerId: String, noAssociationConflictSessions: List<VisitSessionDto>) {
     sessions.forEach {
-      if (!policyFilterNonAssociation && offenderNonAssociationList.isNotEmpty() && sessionHasNonAssociation(it, offenderNonAssociationList))
+      if (!policyFilterNonAssociation && noAssociationConflictSessions.contains(it))
         it.sessionConflicts?.add(SessionConflict.NON_ASSOCIATION)
       if (!policyFilterDoubleBooking && sessionHasBooking(it, prisonerId))
         it.sessionConflicts?.add(SessionConflict.DOUBLE_BOOKED)
