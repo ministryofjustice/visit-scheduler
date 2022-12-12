@@ -82,12 +82,7 @@ class SessionService(
     return sessions.sortedWith(compareBy { it.startTimestamp })
   }
 
-  private fun getNoAssociationConflictSessions(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
-    val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
-    return sessions.filter {
-      sessionHasNonAssociation(it, offenderNonAssociationList)
-    }
-  }
+
 
   private fun buildVisitSessionsUsingTemplate(
     sessionTemplate: SessionTemplate,
@@ -192,6 +187,13 @@ class SessionService(
 
   private fun getCountsByVisitRestriction(visitRestriction: VisitRestriction, visitRestrictionStatsList: List<VisitRestrictionStats>): Int {
     return visitRestrictionStatsList.stream().filter { visitRestriction == it.visitRestriction }.mapToInt(VisitRestrictionStats::count).sum()
+  }
+
+  private fun getNoAssociationConflictSessions(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
+    val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
+    return sessions.filter {
+      sessionHasNonAssociation(it, offenderNonAssociationList)
+    }
   }
 
   private fun sessionHasNonAssociation(session: VisitSessionDto, offenderNonAssociationList: @NotNull List<OffenderNonAssociationDetailDto>): Boolean {
