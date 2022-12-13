@@ -5,16 +5,7 @@ import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import java.time.LocalDateTime
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToMany
-import javax.persistence.ManyToOne
-import javax.persistence.Table
-import javax.persistence.TemporalType
+import javax.persistence.*
 
 @Entity
 @Table(name = "PERMITTED_SESSION_LOCATION")
@@ -32,7 +23,7 @@ class PermittedSessionLocation(
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison,
 
-  @ManyToMany(mappedBy = "permittedSessionLocations")
+  @ManyToMany(mappedBy = "permittedSessionLocations", fetch = FetchType.LAZY)
   var sessionTemplates: MutableList<SessionTemplate> = mutableListOf(),
 
   @Column(name = "LEVEL_ONE_CODE", unique = false, nullable = false)
