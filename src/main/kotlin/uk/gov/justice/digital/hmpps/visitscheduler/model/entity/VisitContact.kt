@@ -12,7 +12,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "VISIT_CONTACT")
-data class VisitContact(
+class VisitContact(
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
