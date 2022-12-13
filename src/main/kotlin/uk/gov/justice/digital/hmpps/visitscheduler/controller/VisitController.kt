@@ -32,7 +32,6 @@ import java.time.LocalDateTime
 import javax.validation.Valid
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
-const val VISIT_CONTROLLER_SEARCH_PATH: String = "$VISIT_CONTROLLER_PATH/search"
 const val VISIT_RESERVE_SLOT: String = "$VISIT_CONTROLLER_PATH/slot/reserve"
 const val VISIT_RESERVED_SLOT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/slot/change"
 const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/change"
@@ -267,7 +266,7 @@ class VisitController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(params = ["page", "size"], path = [VISIT_CONTROLLER_SEARCH_PATH])
+  @GetMapping(params = ["page", "size"], path = [VISIT_CONTROLLER_PATH])
   @Operation(
     summary = "Get visits",
     description = "Retrieve visits with optional filters, sorted by start timestamp descending",
@@ -301,31 +300,31 @@ class VisitController(
     ) prisonerId: String?,
     @RequestParam(value = "prisonId", required = false)
     @Parameter(
-      description = "Filter results by prison id/code",
+      description = "Filter results by prison id",
       example = "MDI"
     ) prisonCode: String?,
-    @RequestParam(value = "startDateTime", required = false)
+    @RequestParam(value = "startTimestamp", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
       description = "Filter results by visits that start on or after the given timestamp",
       example = "2021-11-03T09:00:00"
-    ) startDateTime: LocalDateTime?,
-    @RequestParam(value = "endDateTime", required = false)
+    ) startTimestamp: LocalDateTime?,
+    @RequestParam(value = "endTimestamp", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
       description = "Filter results by visits that start on or before the given timestamp",
       example = "2021-11-03T09:00:00"
-    ) endDateTime: LocalDateTime?,
-    @RequestParam(value = "visitorId", required = false)
+    ) endTimestamp: LocalDateTime?,
+    @RequestParam(value = "nomisPersonId", required = false)
     @Parameter(
       description = "Filter results by visitor (contact id)",
       example = "12322"
-    ) visitorId: Long?,
-    @RequestParam(value = "visitStatus", required = true)
+    ) nomisPersonId: Long?,
+    @RequestParam(value = "visitStatus", required = false)
     @Parameter(
       description = "Filter results by visit status",
       example = "BOOKED"
-    ) visitStatusList: List<VisitStatus>,
+    ) visitStatus: VisitStatus?,
     @RequestParam(value = "page", required = true)
     @Parameter(
       description = "Pagination page number, starting at zero",
@@ -341,10 +340,10 @@ class VisitController(
       VisitFilter(
         prisonerId = prisonerId?.trim(),
         prisonCode = prisonCode?.trim(),
-        startDateTime = startDateTime,
-        endDateTime = endDateTime,
-        visitorId = visitorId,
-        visitStatusList = visitStatusList
+        startDateTime = startTimestamp,
+        endDateTime = endTimestamp,
+        nomisPersonId = nomisPersonId,
+        visitStatus = visitStatus
       ),
       page,
       size

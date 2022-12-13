@@ -73,7 +73,7 @@ class VisitControllerLegacy(
     ) prisonerId: String?,
     @RequestParam(value = "prisonId", required = false)
     @Parameter(
-      description = "Filter results by prison id/code",
+      description = "Filter results by prison id",
       example = "MDI"
     ) prisonCode: String?,
     @RequestParam(value = "startTimestamp", required = false)
@@ -81,32 +81,32 @@ class VisitControllerLegacy(
     @Parameter(
       description = "Filter results by visits that start on or after the given timestamp",
       example = "2021-11-03T09:00:00"
-    ) startDateTime: LocalDateTime?,
+    ) startTimestamp: LocalDateTime?,
     @RequestParam(value = "endTimestamp", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
       description = "Filter results by visits that start on or before the given timestamp",
       example = "2021-11-03T09:00:00"
-    ) endDateTime: LocalDateTime?,
+    ) endTimestamp: LocalDateTime?,
     @RequestParam(value = "nomisPersonId", required = false)
     @Parameter(
       description = "Filter results by visitor (contact id)",
       example = "12322"
-    ) visitorId: Long?,
-    @RequestParam(value = "visitStatus", required = true)
+    ) nomisPersonId: Long?,
+    @RequestParam(value = "visitStatus", required = false)
     @Parameter(
       description = "Filter results by visit status",
       example = "BOOKED"
-    ) visitStatusList: List<VisitStatus>,
+    ) visitStatus: VisitStatus?
   ): List<VisitDto> {
     return visitService.findVisitsByFilter(
       VisitFilter(
         prisonerId = prisonerId?.trim(),
         prisonCode = prisonCode?.trim(),
-        startDateTime = startDateTime,
-        endDateTime = endDateTime,
-        visitorId = visitorId,
-        visitStatusList = visitStatusList
+        startDateTime = startTimestamp,
+        endDateTime = endTimestamp,
+        nomisPersonId = nomisPersonId,
+        visitStatus = visitStatus
       )
     )
   }

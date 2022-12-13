@@ -18,40 +18,54 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
   ): Predicate? {
     val predicates = mutableListOf<Predicate>()
 
-    with(filter) {
-      prisonerId?.run {
-        predicates.add(criteriaBuilder.equal(root.get<String>(Visit::prisonerId.name), prisonerId))
-      }
-
-      prisonCode?.run {
-        val innerJoinFromVisitToVisitors =
-          root.join<Visit, MutableList<Prison>>(Visit::prison.name).get<VisitVisitor>(
-            Prison::code.name
-          )
-        predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, prisonCode))
-      }
-
-      startDateTime?.run {
-        predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(Visit::visitStart.name), startDateTime))
-      }
-
-      endDateTime?.run {
-        predicates.add(criteriaBuilder.lessThan(root.get(Visit::visitStart.name), endDateTime))
-      }
-
-      visitorId?.run {
-        val innerJoinFromVisitToVisitors =
-          root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitor>(
-            VisitVisitor::nomisPersonId.name
-          )
-        predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, visitorId))
-      }
-
-      if (visitStatusList.isNotEmpty()) {
-        val visitStatusPath = root.get<String>(Visit::visitStatus.name)
-        predicates.add(visitStatusPath.`in`(visitStatusList))
-      }
+    filter.prisonerId?.run {
+      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::prisonerId.name), this))
     }
+
+    filter.prisonCode?.run {
+      val innerJoinFromVisitToVisitors =
+        root.join<Visit, MutableList<Prison>>(Visit::prison.name).get<VisitVisitor>(
+          Prison::code.name
+        )
+      predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, this))
+    }
+
+    filter.startDateTime?.run {
+      predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(Visit::visitStart.name), this))
+    }
+
+    filter.endDateTime?.run {
+      predicates.add(criteriaBuilder.lessThan(root.get(Visit::visitStart.name), this))
+    }
+
+    filter.visitRoom?.run {
+      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::visitRoom.name), this))
+    }
+
+    filter.nomisPersonId?.run {
+      val innerJoinFromVisitToVisitors =
+        root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitor>(
+          VisitVisitor::nomisPersonId.name
+        )
+      predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, this))
+    }
+
+    filter.visitStatus?.run {
+      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::visitStatus.name), this))
+    }
+
+    filter.visitRestriction?.run {
+      predicates.add(criteriaBuilder.equal(root.get<String>(Visit::visitRestriction.name), this))
+    }
+
+    filter.createTimestamp?.run {
+      predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::createTimestamp.name), this))
+    }
+
+    filter.modifyTimestamp?.run {
+      predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::modifyTimestamp.name), this))
+    }
+
     return criteriaBuilder.and(*predicates.toTypedArray())
   }
 }

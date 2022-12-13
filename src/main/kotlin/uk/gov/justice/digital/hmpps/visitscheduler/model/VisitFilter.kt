@@ -5,8 +5,12 @@ import java.time.LocalDateTime
 data class VisitFilter(
   val prisonerId: String? = null,
   val prisonCode: String? = null,
+  val visitRoom: String? = null,
+  val nomisPersonId: Long? = null,
   val startDateTime: LocalDateTime? = null,
   val endDateTime: LocalDateTime? = null,
-  val visitorId: Long? = null,
-  val visitStatusList: List<VisitStatus>
+  val visitStatus: VisitStatus? = null,
+  val visitRestriction: VisitRestriction? = null,
+  val createTimestamp: LocalDateTime? = null,
+  val modifyTimestamp: LocalDateTime? = null,
 )
