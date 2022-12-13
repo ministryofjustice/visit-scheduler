@@ -99,12 +99,10 @@ class Visit(
 
   @Column
   var reference = _reference
-    private set
 
   @Column
   @NaturalId(mutable = true)
   var applicationReference: String = ""
-    private set
 
   @PostPersist
   fun createReference() {
