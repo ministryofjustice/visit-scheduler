@@ -18,7 +18,7 @@ import javax.persistence.UniqueConstraint
     UniqueConstraint(columnNames = ["VISIT_ID", "TYPE"])
   ]
 )
-data class VisitSupport(
+class VisitSupport(
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
