@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdE
 import java.time.LocalDateTime
 import javax.persistence.Column
 import javax.persistence.Entity
+import javax.persistence.FetchType
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.Table
@@ -14,12 +15,12 @@ import javax.persistence.TemporalType
 
 @Entity
 @Table(name = "PERMITTED_SESSION_LOCATION")
-data class PermittedSessionLocation(
+class PermittedSessionLocation(
 
   @Column(name = "GROUP_ID", nullable = false)
   val groupId: Long,
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "GROUP_ID", updatable = false, insertable = false)
   val sessionLocationGroup: SessionLocationGroup,
 

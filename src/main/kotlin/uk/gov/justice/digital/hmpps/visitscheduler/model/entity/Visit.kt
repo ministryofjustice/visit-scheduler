@@ -25,7 +25,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "VISIT")
-data class Visit(
+class Visit(
 
   @Column(nullable = false)
   var prisonerId: String,
@@ -88,12 +88,10 @@ data class Visit(
 
   @Column
   var reference = _reference
-    private set
 
   @Column
   @NaturalId(mutable = true)
   var applicationReference: String = ""
-    private set
 
   @PostPersist
   fun createReference() {
@@ -103,5 +101,22 @@ data class Visit(
     if (applicationReference.isBlank()) {
       applicationReference = QuotableEncoder(minLength = 8, chunkSize = 3).encode(id)
     }
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is Visit) return false
+
+    if (id != other.id) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
+
+  override fun toString(): String {
+    return "Visit(id=$id,reference='$reference')"
   }
 }

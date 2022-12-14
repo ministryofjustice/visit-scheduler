@@ -10,7 +10,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "LEGACY_DATA")
-data class LegacyData(
+class LegacyData(
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)

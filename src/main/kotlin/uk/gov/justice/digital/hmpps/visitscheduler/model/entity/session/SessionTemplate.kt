@@ -20,7 +20,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "SESSION_TEMPLATE")
-data class SessionTemplate(
+class SessionTemplate(
 
   @Column(name = "PRISON_ID", nullable = false)
   val prisonId: Long,
@@ -68,5 +68,20 @@ data class SessionTemplate(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   val dayOfWeek: DayOfWeek
+) : AbstractReferenceEntity() {
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is SessionTemplate) return false
 
-) : AbstractReferenceEntity()
+    if (id != other.id) return false
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return id.hashCode()
+  }
+
+  override fun toString(): String {
+    return this::class.simpleName + "(id=$id)"
+  }
+}
