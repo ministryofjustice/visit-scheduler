@@ -10,7 +10,7 @@ class PrisonerSessionValidator(
   private val levelMatcher: PrisonerLevelMatcher
 ) {
   private val sessionAllPrisonersMatcher =
-    Predicate<SessionTemplate> { sessionTemplate -> sessionTemplate.permittedSessionLocations.isNullOrEmpty() }
+    Predicate<SessionTemplate> { sessionTemplate -> sessionTemplate.permittedSessionGroups.isEmpty() }
 
   fun isSessionAvailableToPrisoner(
     prisonerLevels: Map<PrisonerHousingLevels, String?>,
@@ -18,7 +18,7 @@ class PrisonerSessionValidator(
   ): Boolean {
     val isSessionAvailableToAllPrisoners = sessionAllPrisonersMatcher.test(sessionTemplate)
     if (!isSessionAvailableToAllPrisoners) {
-      return levelMatcher.test(sessionTemplate.permittedSessionLocations, prisonerLevels)
+      return sessionTemplate.permittedSessionGroups.any { levelMatcher.test(it, prisonerLevels) }
     }
 
     return true

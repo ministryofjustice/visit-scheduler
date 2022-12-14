@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
@@ -334,7 +334,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
-    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+    sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime,
@@ -367,7 +367,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime2 = endTime.plusHours(30)
     val endTime2 = startTime2.plusHours(1)
 
-    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+    sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime2.toLocalTime(),

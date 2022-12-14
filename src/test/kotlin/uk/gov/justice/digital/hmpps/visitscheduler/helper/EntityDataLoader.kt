@@ -14,8 +14,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
@@ -142,52 +144,59 @@ class VisitEntityHelper(
 }
 
 @Component
-class PermittedSessionLocationHelper(
+class SessionLocationGroupHelper(
   private val sessionRepository: SessionTemplateRepository,
-  private val repository: TestPermittedSessionLocationRepository
+  private val repository: TestPermittedSessionLocationRepository,
+  private val sessionLocationGroupRepository: SessionLocationGroupRepository
 ) {
 
-  fun create(sessionTemplate: SessionTemplate): PermittedSessionLocation {
-    val permittedSessionLocation = repository.saveAndFlush(
-      PermittedSessionLocation(
-        sessionTemplates = mutableListOf(sessionTemplate),
-        prisonId = sessionTemplate.prison.id,
-        prison = sessionTemplate.prison,
+  fun create(sessionTemplate: SessionTemplate): SessionLocationGroup {
+
+    val sessionLocations = mutableListOf(
+      AllowedPrisonHierarchy(
         levelOneCode = "A",
         levelTwoCode = "1",
         levelThreeCode = "W",
         levelFourCode = "001"
       )
     )
-
-    sessionTemplate.permittedSessionLocations?.add(permittedSessionLocation)
-    sessionRepository.saveAndFlush(sessionTemplate)
-
-    return permittedSessionLocation
+    return create(sessionTemplate, sessionLocations)
   }
 
-  fun create(sessionTemplate: SessionTemplate, prisonHierarchies: List<AllowedPrisonHierarchy>): MutableList<PermittedSessionLocation> {
-    val permittedSessionLocations = mutableListOf<PermittedSessionLocation>()
+  fun create(sessionTemplate: SessionTemplate, prisonHierarchies: List<AllowedPrisonHierarchy>): SessionLocationGroup {
+
+    val group = sessionLocationGroupRepository.saveAndFlush(
+      SessionLocationGroup(
+        prison = sessionTemplate.prison,
+        prisonId = sessionTemplate.prisonId,
+        name = "Group A"
+      )
+    )
+
+    val permittedGroupLocations = mutableListOf<PermittedSessionLocation>()
 
     for (prisonHierarchy in prisonHierarchies) {
       val permittedSessionLocation = repository.saveAndFlush(
         PermittedSessionLocation(
-          sessionTemplates = mutableListOf(sessionTemplate),
-          prisonId = sessionTemplate.prison.id,
-          prison = sessionTemplate.prison,
+          groupId = group.id,
+          sessionLocationGroup = group,
           levelOneCode = prisonHierarchy.levelOneCode,
           levelTwoCode = prisonHierarchy.levelTwoCode,
           levelThreeCode = prisonHierarchy.levelThreeCode,
           levelFourCode = prisonHierarchy.levelFourCode
         )
       )
-
-      permittedSessionLocations.add(permittedSessionLocation)
+      permittedGroupLocations.add(permittedSessionLocation)
     }
-    sessionTemplate.permittedSessionLocations?.addAll(permittedSessionLocations)
+
+    group.sessionLocations.addAll(permittedGroupLocations)
+
+    val savedGroup = sessionLocationGroupRepository.saveAndFlush(group)
+
+    sessionTemplate.permittedSessionGroups.add(savedGroup)
     sessionRepository.saveAndFlush(sessionTemplate)
 
-    return permittedSessionLocations
+    return savedGroup
   }
 }
 
@@ -198,7 +207,6 @@ class SessionTemplateEntityHelper(
 ) {
 
   fun create(
-    id: Long = 123,
     validFromDate: LocalDate = LocalDate.of(2021, 10, 23),
     validToDate: LocalDate? = null,
     closedCapacity: Int = 5,
@@ -210,7 +218,7 @@ class SessionTemplateEntityHelper(
     endTime: LocalTime = LocalTime.parse("10:00"),
     dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
     activePrison: Boolean = true,
-    permittedSessionLocations: MutableList<PermittedSessionLocation>? = mutableListOf(),
+    permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
   ): SessionTemplate {
 
@@ -218,7 +226,6 @@ class SessionTemplateEntityHelper(
 
     return sessionRepository.saveAndFlush(
       SessionTemplate(
-        id = id,
         validFromDate = validFromDate,
         validToDate = validToDate,
         closedCapacity = closedCapacity,
@@ -230,7 +237,7 @@ class SessionTemplateEntityHelper(
         startTime = startTime,
         endTime = endTime,
         dayOfWeek = dayOfWeek,
-        permittedSessionLocations = permittedSessionLocations,
+        permittedSessionGroups = permittedSessionGroups,
         biWeekly = biWeekly
       )
     )
@@ -243,16 +250,19 @@ class DeleteEntityHelper(
   private val visitRepository: VisitRepository,
   private val prisonRepository: PrisonRepository,
   private val sessionRepository: SessionTemplateRepository,
-  private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository
+  private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository,
+  private val sessionLocationGroupRepository: SessionLocationGroupRepository
 ) {
 
   fun deleteAll() {
     sessionRepository.deleteAll()
     sessionRepository.flush()
-    visitRepository.deleteAllInBatch()
-    visitRepository.flush()
+    sessionLocationGroupRepository.deleteAll()
+    sessionLocationGroupRepository.flush()
     permittedSessionLocationRepository.deleteAll()
     permittedSessionLocationRepository.flush()
+    visitRepository.deleteAllInBatch()
+    visitRepository.flush()
     prisonRepository.deleteAll()
     prisonRepository.flush()
   }

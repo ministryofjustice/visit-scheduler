@@ -5,7 +5,7 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
@@ -58,7 +58,7 @@ class GetSessionTemplate(
   fun `Session templates are returned with permittedSessionLocations`() {
     // Given
     val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
-    val permittedSessionLocation = permittedSessionLocationHelper.create(sessionTemplate)
+    val sessionLocationGroup = sessionLocationGroupHelper.create(sessionTemplate)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates/${sessionTemplate.id}")
@@ -68,11 +68,14 @@ class GetSessionTemplate(
     // Then
     val sessionTemplateDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
 
-    Assertions.assertThat(sessionTemplateDto.permittedLocations).hasSize(1)
-    Assertions.assertThat(sessionTemplateDto.permittedLocations?.get(0)?.levelOneCode).isEqualTo(permittedSessionLocation.levelOneCode)
-    Assertions.assertThat(sessionTemplateDto.permittedLocations?.get(0)?.levelTwoCode).isEqualTo(permittedSessionLocation.levelTwoCode)
-    Assertions.assertThat(sessionTemplateDto.permittedLocations?.get(0)?.levelThreeCode).isEqualTo(permittedSessionLocation.levelThreeCode)
-    Assertions.assertThat(sessionTemplateDto.permittedLocations?.get(0)?.id).isEqualTo(permittedSessionLocation.id)
+    val group = sessionTemplateDto.permittedLocationGroups.get(0)
+    val permittedLocation = group.locations[0]
+
+    Assertions.assertThat(group.locations).hasSize(1)
+    Assertions.assertThat(permittedLocation.levelOneCode).isEqualTo(sessionLocationGroup.sessionLocations[0].levelOneCode)
+    Assertions.assertThat(permittedLocation.levelTwoCode).isEqualTo(sessionLocationGroup.sessionLocations[0].levelTwoCode)
+    Assertions.assertThat(permittedLocation.levelThreeCode).isEqualTo(sessionLocationGroup.sessionLocations[0].levelThreeCode)
+    Assertions.assertThat(permittedLocation.levelFourCode).isEqualTo(sessionLocationGroup.sessionLocations[0].levelFourCode)
   }
 
   @Test

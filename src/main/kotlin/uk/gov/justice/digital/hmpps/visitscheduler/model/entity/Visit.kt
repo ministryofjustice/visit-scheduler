@@ -3,11 +3,11 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.NaturalId
 import org.hibernate.annotations.UpdateTimestamp
-import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDateTime
 import javax.persistence.CascadeType
@@ -16,16 +16,12 @@ import javax.persistence.Entity
 import javax.persistence.EnumType
 import javax.persistence.Enumerated
 import javax.persistence.FetchType
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.OneToOne
 import javax.persistence.PostPersist
 import javax.persistence.Table
-import javax.persistence.TemporalType
 
 @Entity
 @Table(name = "VISIT")
@@ -78,24 +74,17 @@ data class Visit(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var visitNotes: MutableList<VisitNote> = mutableListOf(),
 
-  @CreationTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column
-  val createTimestamp: LocalDateTime? = null,
-
-  @UpdateTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column
-  val modifyTimestamp: LocalDateTime? = null,
-
   @Transient
   private val _reference: String = ""
-) {
+) : AbstractIdEntity() {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "ID")
-  val id: Long = 0
+  @CreationTimestamp
+  @Column
+  val createTimestamp: LocalDateTime? = null
+
+  @UpdateTimestamp
+  @Column
+  val modifyTimestamp: LocalDateTime? = null
 
   @Column
   var reference = _reference

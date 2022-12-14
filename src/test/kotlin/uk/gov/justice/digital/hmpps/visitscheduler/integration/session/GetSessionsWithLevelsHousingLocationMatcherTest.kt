@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedPrisonHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -62,7 +62,7 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
       AllowedPrisonHierarchy("E", null, null, null),
       AllowedPrisonHierarchy("F", null, null, null),
     )
-    permittedSessionLocationHelper.create(sessionTemplateForSomeLevel1s, allowedPermittedLocations)
+    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel1s, allowedPermittedLocations)
 
     // this session template is available to levels A-1,A-2,A-3 and B-1
     sessionTemplateForSomeLevel2s = sessionTemplateEntityHelper.create(
@@ -81,7 +81,7 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
       AllowedPrisonHierarchy("A", "3", null, null),
       AllowedPrisonHierarchy("B", "1", null, null),
     )
-    permittedSessionLocationHelper.create(sessionTemplateForSomeLevel2s, allowedPermittedLocations)
+    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel2s, allowedPermittedLocations)
 
     // this session template is available to levels A-1-100, A-1-200, and B-1
     sessionTemplateForSomeLevel3sAnd1Level2 = sessionTemplateEntityHelper.create(
@@ -99,7 +99,7 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
       AllowedPrisonHierarchy("A", "2", "200", null),
       AllowedPrisonHierarchy("B", "1", null, null)
     )
-    permittedSessionLocationHelper.create(sessionTemplateForSomeLevel3sAnd1Level2, allowedPermittedLocations)
+    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel3sAnd1Level2, allowedPermittedLocations)
 
     sessionTemplateForSomeLevel4sAnd2s = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
@@ -116,7 +116,7 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
       AllowedPrisonHierarchy("A", "2", "100", "3"),
       AllowedPrisonHierarchy("B", "1", null, null)
     )
-    permittedSessionLocationHelper.create(sessionTemplateForSomeLevel4sAnd2s, allowedPermittedLocations)
+    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel4sAnd2s, allowedPermittedLocations)
   }
 
   @Test
