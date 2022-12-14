@@ -12,16 +12,15 @@ import javax.persistence.PostPersist
 abstract class AbstractReferenceEntity : AbstractIdEntity() {
 
   @Column
-  var reference = ""
-    private set
+  open var reference = ""
 
   @CreationTimestamp
   @Column
-  val createTimestamp: LocalDateTime? = null
+  open val createTimestamp: LocalDateTime? = null
 
   @UpdateTimestamp
   @Column
-  val modifyTimestamp: LocalDateTime? = null
+  open val modifyTimestamp: LocalDateTime? = null
 
   @PostPersist
   fun createReference() {

@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import javax.validation.Valid
 
@@ -229,5 +230,39 @@ class VisitSessionAdminController(
   )
   fun createSessionTemplate(@RequestBody @Valid createSessionTemplateDto: CreateSessionTemplateDto): SessionTemplateDto {
     return sessionTemplateService.createSessionTemplate(createSessionTemplateDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PatchMapping(SESSION_TEMPLATES_PATH)
+  @Operation(
+    summary = "Update a session template",
+    description = "Update a session templates",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = UpdateSessionTemplateDto::class)
+        )
+      ]
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session templates updated"
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to update session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun updateSessionTemplate(@RequestBody @Valid updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
+    return sessionTemplateService.updateSessionTemplate(updateSessionTemplateDto)
   }
 }

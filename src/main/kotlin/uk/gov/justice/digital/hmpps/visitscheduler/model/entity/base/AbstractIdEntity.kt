@@ -7,12 +7,12 @@ import javax.persistence.Id
 import javax.persistence.MappedSuperclass
 
 @MappedSuperclass
-abstract class AbstractIdEntity {
+open abstract class AbstractIdEntity {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   @Column(name = "ID")
-  val id: Long = 0
+  open val id: Long = 0
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
