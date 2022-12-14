@@ -21,4 +21,6 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("firstBookableDay") firstBookableDay: LocalDate,
     @Param("lastBookableDay") lastBookableDay: LocalDate
   ): List<SessionTemplate>
+
+  fun findByReference(sessionTemplateId: String): SessionTemplate?
 }

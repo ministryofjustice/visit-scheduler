@@ -27,8 +27,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateServic
 import javax.validation.Valid
 
 const val SESSION_TEMPLATES_PATH: String = "/visit-session-templates"
-const val SESSION_TEMPLATE: String = "$SESSION_TEMPLATES_PATH/{templateId}"
+const val SESSION_TEMPLATE: String = "$SESSION_TEMPLATES_PATH/{reference}"
 const val SESSION_TEMPLATE_LOCATION_GROUPS: String = "$SESSION_TEMPLATES_PATH/location/groups"
+const val SESSION_TEMPLATE_LOCATION_GROUP: String = "$SESSION_TEMPLATES_PATH/location/group/{reference}"
 
 @RestController
 @Validated
@@ -86,10 +87,10 @@ class VisitSessionAdminController(
     ]
   )
   fun getSessionTemplate(
-    @Schema(description = "Template id", example = "45645", required = true)
-    @PathVariable templateId: Long
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String,
   ): SessionTemplateDto {
-    return sessionTemplateService.getSessionTemplates(templateId)
+    return sessionTemplateService.getSessionTemplates(reference)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -161,7 +162,7 @@ class VisitSessionAdminController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PatchMapping(SESSION_TEMPLATE_LOCATION_GROUPS)
+  @PatchMapping(SESSION_TEMPLATE_LOCATION_GROUP)
   @Operation(
     summary = "Update session location group",
     description = "Update existing location group",
@@ -233,7 +234,7 @@ class VisitSessionAdminController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PatchMapping(SESSION_TEMPLATES_PATH)
+  @PatchMapping(SESSION_TEMPLATE)
   @Operation(
     summary = "Update a session template",
     description = "Update a session templates",
@@ -262,7 +263,11 @@ class VisitSessionAdminController(
       )
     ]
   )
-  fun updateSessionTemplate(@RequestBody @Valid updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
-    return sessionTemplateService.updateSessionTemplate(updateSessionTemplateDto)
+  fun updateSessionTemplate(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String,
+    @RequestBody @Valid updateSessionTemplateDto: UpdateSessionTemplateDto
+  ): SessionTemplateDto {
+    return sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto)
   }
 }

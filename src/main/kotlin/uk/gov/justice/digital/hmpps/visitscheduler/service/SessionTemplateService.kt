@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGr
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import java.util.function.Supplier
@@ -32,9 +33,11 @@ class SessionTemplateService(
     return sessionTemplateRepository.findAll().sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
   }
 
-  fun getSessionTemplates(sessionTemplateId: Long): SessionTemplateDto {
-    return sessionTemplateRepository.findById(sessionTemplateId).map { SessionTemplateDto(it) }
-      .orElseThrow(TemplateNotFoundException("Template id $sessionTemplateId not found"))
+  fun getSessionTemplates(reference: String): SessionTemplateDto {
+    val sessionTemplate = sessionTemplateRepository.findByReference(reference)
+      ?: TemplateNotFoundException("Template id $reference not found")
+
+    return SessionTemplateDto(sessionTemplate as SessionTemplate)
   }
 
   fun getSessionLocationGroup(prisonId: String): List<SessionLocationGroupDto> {
@@ -94,7 +97,7 @@ class SessionTemplateService(
       .orElseThrow(TemplateNotFoundException("Template id $sessionTemplateId not found"))
   }
 
-  fun updateSessionTemplate(updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
+  fun updateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
     val sessionTemplateId = 1L
     // TODO this is just for the spike
     return sessionTemplateRepository.findById(sessionTemplateId).map { SessionTemplateDto(it) }

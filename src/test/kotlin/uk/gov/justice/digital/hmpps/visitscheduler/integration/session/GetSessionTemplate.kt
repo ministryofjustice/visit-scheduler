@@ -61,7 +61,7 @@ class GetSessionTemplate(
     val sessionLocationGroup = sessionLocationGroupHelper.create(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates/${sessionTemplate.id}")
+    val responseSpec = webTestClient.get().uri("/visit-session-templates/${sessionTemplate.reference}")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -79,14 +79,14 @@ class GetSessionTemplate(
   }
 
   @Test
-  fun `session templates are returned by id`() {
+  fun `session templates are returned by reference`() {
     // Given
     val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 
     repository.save(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates/${sessionTemplate.id}")
+    val responseSpec = webTestClient.get().uri("/visit-session-templates/${sessionTemplate.reference}")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
