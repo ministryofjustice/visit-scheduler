@@ -33,6 +33,6 @@ data class UpdateSessionTemplateDto(
   @Schema(description = "open capacity", example = "50", required = true)
   val openCapacity: Int,
 
-  @Schema(description = "list of references for permitted session location groups", required = false)
-  val referencesForPermittedLocationGroups: List<String>? = listOf()
+  @Schema(description = "list of group references for permitted session location groups", required = false)
+  val locationGroupReferences : List<String>? = listOf()
 )
