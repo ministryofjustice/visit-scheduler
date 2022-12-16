@@ -6,7 +6,6 @@ import javax.validation.constraints.NotBlank
 
 data class CreateLocationGroupDto(
 
-  @JsonProperty("name")
   @Schema(description = "Group name", example = "Main group", required = true)
   @field:NotBlank
   val name: String,

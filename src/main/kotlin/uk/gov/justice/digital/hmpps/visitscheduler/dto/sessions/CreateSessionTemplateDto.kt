@@ -10,6 +10,10 @@ import javax.validation.constraints.NotNull
 
 data class CreateSessionTemplateDto(
 
+  @Schema(description = "Name for Session template", example = "Monday Xmas", required = true)
+  @field:NotBlank
+  val name: String,
+
   @JsonProperty("prisonId")
   @Schema(description = "prisonId", example = "MDI", required = true)
   @field:NotBlank
@@ -39,6 +43,6 @@ data class CreateSessionTemplateDto(
   @Schema(description = "day of week fpr visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
 
-  @Schema(description = "list of references for permitted session location groups", example = "af-ed-cb-fc", required = false)
+  @Schema(description = "list of references for permitted session location groups", required = false)
   val referencesForPermittedLocationGroups: List<String>? = listOf()
 )

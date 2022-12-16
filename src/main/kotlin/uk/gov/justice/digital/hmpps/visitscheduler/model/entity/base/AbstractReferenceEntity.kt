@@ -9,7 +9,14 @@ import javax.persistence.MappedSuperclass
 import javax.persistence.PostPersist
 
 @MappedSuperclass
-abstract class AbstractReferenceEntity : AbstractIdEntity() {
+abstract class AbstractReferenceEntity(
+  @Transient
+  private val delimiter: String = "-",
+  @Transient
+  private val minLength: Int = 8,
+  @Transient
+  private val chunkSize: Int = 2
+) : AbstractIdEntity() {
 
   @Column
   open var reference = ""
@@ -25,7 +32,7 @@ abstract class AbstractReferenceEntity : AbstractIdEntity() {
   @PostPersist
   fun createReference() {
     if (reference.isBlank()) {
-      reference = QuotableEncoder(minLength = 8).encode(id)
+      reference = QuotableEncoder(minLength = minLength, delimiter = delimiter, chunkSize = chunkSize).encode(id)
     }
   }
 

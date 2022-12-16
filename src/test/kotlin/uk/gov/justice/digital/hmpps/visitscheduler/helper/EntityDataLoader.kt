@@ -207,6 +207,7 @@ class SessionTemplateEntityHelper(
 ) {
 
   fun create(
+    name: String = "sessionTemplate_",
     validFromDate: LocalDate = LocalDate.of(2021, 10, 23),
     validToDate: LocalDate? = null,
     closedCapacity: Int = 5,
@@ -226,6 +227,7 @@ class SessionTemplateEntityHelper(
 
     return sessionRepository.saveAndFlush(
       SessionTemplate(
+        name = name + dayOfWeek,
         validFromDate = validFromDate,
         validToDate = validToDate,
         closedCapacity = closedCapacity,

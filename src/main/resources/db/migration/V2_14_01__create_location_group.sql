@@ -9,7 +9,7 @@ CREATE TABLE session_location_group
 );
 
 INSERT INTO session_location_group (reference, name, prison_id)
-    SELECT REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY location_group))+2951597050), '(.{2})(?!$)', '\1-','g') as reference,
+    SELECT REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY location_group))+2951597050), '(.{3})(?!$)', '\1~','g') as reference,
            link.location_group as name,
            st.prison_id
     FROM session_to_permitted_location link
@@ -46,14 +46,23 @@ DROP TABLE session_to_permitted_location;
 
 ALTER TABLE session_template ADD create_timestamp timestamp;
 ALTER TABLE session_template ADD modify_timestamp timestamp;
+ALTER TABLE session_template ADD name varchar(100) ;
 ALTER TABLE session_template ADD reference text UNIQUE ;
+
 
 UPDATE session_template
     SET reference = subquery.reference
-        FROM (SELECT id,REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{2})(?!$)', '\1-','g') as reference
+        FROM (SELECT id,REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{3})(?!$)', '\1.','g') as reference
                     FROM session_template st) AS subquery
     WHERE session_template.id = subquery.id;
-
 ALTER TABLE session_template ALTER COLUMN reference SET NOT NULL;
+
+UPDATE session_template
+    SET name = subquery.name
+        FROM (SELECT st.id, concat(p.code,' ',st.id,' ',st.day_of_week) as name
+                FROM session_template st JOIN prison p on p.id = st.prison_id ) AS subquery
+    WHERE session_template.id = subquery.id;
+
+ALTER TABLE session_template ALTER COLUMN name SET NOT NULL;
 
 ALTER TABLE permitted_session_location DROP prison_id;

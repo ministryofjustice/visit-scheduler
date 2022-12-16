@@ -13,6 +13,9 @@ import javax.validation.constraints.NotNull
 data class SessionTemplateDto(
   @Schema(description = "session id", example = "123", required = true)
   val sessionTemplateId: Long,
+  @Schema(description = "name", example = "Monday Session", required = true)
+  @field:NotBlank
+  val name: String,
   @JsonProperty("prisonId")
   @Schema(description = "prisonId", example = "MDI", required = true)
   @field:NotBlank
@@ -41,6 +44,7 @@ data class SessionTemplateDto(
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     sessionTemplateId = sessionTemplateEntity.id,
+    name = sessionTemplateEntity.name,
     prisonCode = sessionTemplateEntity.prison.code,
     startTime = sessionTemplateEntity.startTime,
     endTime = sessionTemplateEntity.endTime,

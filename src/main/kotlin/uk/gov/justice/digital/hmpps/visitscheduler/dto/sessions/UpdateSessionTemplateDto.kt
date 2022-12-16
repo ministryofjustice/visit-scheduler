@@ -3,9 +3,14 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
 import java.time.LocalTime
+import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
 data class UpdateSessionTemplateDto(
+
+  @Schema(description = "Name for Session template", example = "Monday Xmas", required = true)
+  @field:NotBlank
+  val name: String,
 
   @Schema(description = "The start time of the generated visit session(s)", example = "13:45", required = true)
   val startTime: LocalTime,
@@ -28,6 +33,6 @@ data class UpdateSessionTemplateDto(
   @Schema(description = "open capacity", example = "50", required = true)
   val openCapacity: Int,
 
-  @Schema(description = "list of references for permitted session location groups", example = "af-ed-cb-fc", required = false)
+  @Schema(description = "list of references for permitted session location groups", required = false)
   val referencesForPermittedLocationGroups: List<String>? = listOf()
 )

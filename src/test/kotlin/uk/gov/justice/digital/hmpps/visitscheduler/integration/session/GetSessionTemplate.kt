@@ -61,7 +61,7 @@ class GetSessionTemplate(
     val sessionLocationGroup = sessionLocationGroupHelper.create(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates/${sessionTemplate.reference}")
+    val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -86,13 +86,14 @@ class GetSessionTemplate(
     repository.save(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates/${sessionTemplate.reference}")
+    val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
     // Then
     val sessionTemplateDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
 
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(sessionTemplate.name)
     Assertions.assertThat(sessionTemplateDto.sessionTemplateId).isEqualTo(sessionTemplate.id)
     Assertions.assertThat(sessionTemplateDto.prisonCode).isEqualTo(sessionTemplate.prison.code)
     Assertions.assertThat(sessionTemplateDto.startTime).isEqualTo(sessionTemplate.startTime)

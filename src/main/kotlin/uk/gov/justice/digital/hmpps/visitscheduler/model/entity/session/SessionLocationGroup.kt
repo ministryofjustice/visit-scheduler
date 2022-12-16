@@ -25,7 +25,7 @@ data class SessionLocationGroup(
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison
-) : AbstractReferenceEntity() {
+) : AbstractReferenceEntity(delimiter = "~", chunkSize = 3) {
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
   @JoinColumn(name = "GROUP_ID", updatable = false, insertable = true)

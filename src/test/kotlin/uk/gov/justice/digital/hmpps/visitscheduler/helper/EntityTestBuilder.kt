@@ -9,6 +9,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 fun sessionTemplate(
+  name: String = "sessionTemplate_",
   validFromDate: LocalDate,
   validToDate: LocalDate? = null,
   closedCapacity: Int = 5,
@@ -26,6 +27,7 @@ fun sessionTemplate(
   val prison = Prison(id = 0, code = prisonCode, active = true)
 
   return SessionTemplate(
+    name = name + dayOfWeek,
     validFromDate = validFromDate,
     validToDate = validToDate,
     closedCapacity = closedCapacity,

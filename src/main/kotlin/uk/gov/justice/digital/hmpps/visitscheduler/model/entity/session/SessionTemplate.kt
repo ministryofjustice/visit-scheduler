@@ -30,6 +30,9 @@ class SessionTemplate(
   val prison: Prison,
 
   @Column(nullable = false)
+  val name: String,
+
+  @Column(nullable = false)
   val visitRoom: String,
 
   @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
@@ -68,4 +71,4 @@ class SessionTemplate(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   val dayOfWeek: DayOfWeek
-) : AbstractReferenceEntity()
+) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)
