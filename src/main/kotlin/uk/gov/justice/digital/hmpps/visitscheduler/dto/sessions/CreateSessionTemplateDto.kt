@@ -44,5 +44,5 @@ data class CreateSessionTemplateDto(
   val dayOfWeek: DayOfWeek?,
 
   @Schema(description = "list of group references for permitted session location groups", required = false)
-  val locationGroupReferences : List<String>? = listOf()
+  val locationGroupReferences: List<String>? = listOf()
 )
