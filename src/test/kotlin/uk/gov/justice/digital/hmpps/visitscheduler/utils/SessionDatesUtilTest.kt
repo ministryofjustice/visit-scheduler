@@ -59,7 +59,7 @@ class SessionDatesUtilTest {
   @Test
   fun `biWeeklyDates - When first bookable day is this week and last bookable day is same week`() {
     // Given
-    val validFromDate = LocalDate.now()
+    val validFromDate = getStartOfWeek()
     val sessionTemplate = sessionTemplate(biWeekly = true, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
     val firstBookableSessionDay = sessionTemplate.validFromDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
@@ -78,7 +78,7 @@ class SessionDatesUtilTest {
   @Test
   fun `biWeeklyDates - When first bookable day is next week and last bookable day is same week`() {
     // Given
-    val validFromDate = LocalDate.now()
+    val validFromDate = getStartOfWeek()
     val sessionTemplate = sessionTemplate(biWeekly = true, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
     val firstBookableSessionDay = sessionTemplate.validFromDate.plusWeeks(1).with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
@@ -96,7 +96,7 @@ class SessionDatesUtilTest {
   @Test
   fun `biWeeklyDates - When first bookable session day is this week`() {
     // Given
-    val validFromDate = LocalDate.now()
+    val validFromDate = getStartOfWeek()
     val sessionTemplate = sessionTemplate(biWeekly = true, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
     val firstBookableSessionDay = sessionTemplate.validFromDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
@@ -124,7 +124,7 @@ class SessionDatesUtilTest {
   @Test
   fun `biWeeklyDates - When first bookable session day is next week`() {
     // Given
-    val validFromDate = LocalDate.now()
+    val validFromDate = getStartOfWeek()
     val sessionTemplate = sessionTemplate(biWeekly = true, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
     val firstBookableSessionDay = sessionTemplate.validFromDate.plusWeeks(1).with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
@@ -150,7 +150,7 @@ class SessionDatesUtilTest {
   @Test
   fun `biWeeklyDates - When first bookable session day is next week and validFromDate is in the past`() {
     // Given
-    val validFromDate = LocalDate.now().plusWeeks(-3)
+    val validFromDate = LocalDate.now().plusWeeks(-3).with(TemporalAdjusters.next(MONDAY))
     val sessionTemplate = sessionTemplate(biWeekly = true, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
     val firstBookableSessionDay = sessionTemplate.validFromDate.plusWeeks(1).with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
@@ -176,7 +176,8 @@ class SessionDatesUtilTest {
   @Test
   fun `biWeeklyDates - When first bookable session day is next week and validFromDate is in the future`() {
     // Given
-    val validFromDate = LocalDate.now().plusWeeks(3)
+    val validFromDate = LocalDate.now().plusWeeks(3).with(TemporalAdjusters.next(MONDAY))
+
     val sessionTemplate = sessionTemplate(biWeekly = true, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
     val firstBookableSessionDay = sessionTemplate.validFromDate.plusWeeks(1).with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
@@ -202,7 +203,7 @@ class SessionDatesUtilTest {
   @Test
   fun `Dont not SkipWeek on Monday on first week`() {
     // Given
-    val validFromDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+    val validFromDate = getStartOfWeek()
     val firstBookableSessionDay = validFromDate
 
     // When
@@ -215,7 +216,7 @@ class SessionDatesUtilTest {
   @Test
   fun `Dont not SkipWeek on Sunday on first week`() {
     // Given
-    val validFromDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+    val validFromDate = getStartOfWeek()
     val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(SUNDAY))
 
     // When
@@ -228,7 +229,7 @@ class SessionDatesUtilTest {
   @Test
   fun `SkipWeek on Monday on second week`() {
     // Given
-    val validFromDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+    val validFromDate = getStartOfWeek()
     val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(MONDAY))
 
     // When
@@ -241,7 +242,7 @@ class SessionDatesUtilTest {
   @Test
   fun `SkipWeek on Sunday on second week`() {
     // Given
-    val validFromDate = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+    val validFromDate = getStartOfWeek()
     val firstBookableSessionDay = validFromDate.plusWeeks(1).with(TemporalAdjusters.next(SUNDAY))
 
     // When
@@ -250,4 +251,6 @@ class SessionDatesUtilTest {
     // Then
     assertThat(skip).isTrue
   }
+
+  private fun getStartOfWeek() = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
 }
