@@ -94,7 +94,7 @@ class GetSessionTemplate(
     val sessionTemplateDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
 
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(sessionTemplate.name)
-    Assertions.assertThat(sessionTemplateDto.sessionTemplateId).isEqualTo(sessionTemplate.id)
+    Assertions.assertThat(sessionTemplateDto.reference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(sessionTemplateDto.prisonCode).isEqualTo(sessionTemplate.prison.code)
     Assertions.assertThat(sessionTemplateDto.startTime).isEqualTo(sessionTemplate.startTime)
     Assertions.assertThat(sessionTemplateDto.endTime).isEqualTo(sessionTemplate.endTime)

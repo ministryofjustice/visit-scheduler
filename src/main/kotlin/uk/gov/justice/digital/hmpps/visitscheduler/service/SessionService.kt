@@ -95,7 +95,7 @@ class SessionService(
       return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
         .map { date ->
           VisitSessionDto(
-            sessionTemplateId = sessionTemplate.id,
+            sessionTemplateReference = sessionTemplate.reference,
             prisonCode = sessionTemplate.prison.code,
             startTimestamp = LocalDateTime.of(date, sessionTemplate.startTime),
             openVisitCapacity = sessionTemplate.openCapacity,

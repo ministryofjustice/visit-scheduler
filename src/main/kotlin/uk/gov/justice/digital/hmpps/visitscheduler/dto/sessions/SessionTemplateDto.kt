@@ -11,8 +11,9 @@ import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
 data class SessionTemplateDto(
-  @Schema(description = "session id", example = "123", required = true)
-  val sessionTemplateId: Long,
+
+  @Schema(description = "Reference", example = "v9d.7ed.7u", required = true)
+  val reference: String,
   @Schema(description = "name", example = "Monday Session", required = true)
   @field:NotBlank
   val name: String,
@@ -43,7 +44,7 @@ data class SessionTemplateDto(
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf()
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
-    sessionTemplateId = sessionTemplateEntity.id,
+    reference = sessionTemplateEntity.reference,
     name = sessionTemplateEntity.name,
     prisonCode = sessionTemplateEntity.prison.code,
     startTime = sessionTemplateEntity.startTime,

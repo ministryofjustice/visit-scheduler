@@ -10,8 +10,8 @@ import javax.validation.Valid
 @Schema(description = "Visit Session")
 data class VisitSessionDto(
 
-  @Schema(description = "session id", example = "123", required = true)
-  val sessionTemplateId: Long,
+  @Schema(description = "Session Template Reference", example = "v9d.7ed.7u", required = true)
+  val sessionTemplateReference: String,
 
   @Schema(
     description = "The Name of the visit room in which this visit session takes place",
