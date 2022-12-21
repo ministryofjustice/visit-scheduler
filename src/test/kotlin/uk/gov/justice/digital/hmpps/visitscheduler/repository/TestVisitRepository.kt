@@ -14,6 +14,8 @@ interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExec
 
   fun findAllByReference(reference: String): List<Visit>
 
+  fun findByApplicationReference(reference: String): Visit?
+
   @Lock(LockModeType.PESSIMISTIC_WRITE)
   fun deleteByApplicationReference(applicationReference: String): Long
 

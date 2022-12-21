@@ -105,6 +105,21 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
   }
 
   @Test
+  fun `Book visit - Application becomes a Booking when booked - can't be booked twice`() {
+
+    // Given
+    val applicationReference = reservedVisit.applicationReference
+
+    // When
+    val responseSpecFirstCall = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+    val responseSpecSecondCall = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpecFirstCall.expectStatus().isOk
+    responseSpecSecondCall.expectStatus().isNotFound
+  }
+
+  @Test
   fun `Book visit by application Reference - change other visit with same reference to canceled`() {
 
     // Given
