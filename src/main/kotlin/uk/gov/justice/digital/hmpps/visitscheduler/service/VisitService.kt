@@ -135,7 +135,7 @@ class VisitService(
   }
 
   fun changeVisitSlot(applicationReference: String, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitDto {
-    val visitEntity = visitRepository.findApplication(applicationReference) ?: throw VisitNotFoundException("Reserved application (reference $applicationReference) not found")
+    val visitEntity = visitRepository.findApplication(applicationReference) ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
 
     changeVisitSlotRequestDto.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
     changeVisitSlotRequestDto.startTimestamp?.let {
@@ -227,7 +227,7 @@ class VisitService(
 
   fun bookVisit(applicationReference: String): VisitDto {
 
-    val visitToBook = visitRepository.findApplication(applicationReference) ?: throw VisitNotFoundException("Reserved application (reference $applicationReference) not found")
+    val visitToBook = visitRepository.findApplication(applicationReference) ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
     val existingBookedVisit = visitRepository.findBookedVisit(visitToBook.reference)
 
     // check if the existing visit is in the past
