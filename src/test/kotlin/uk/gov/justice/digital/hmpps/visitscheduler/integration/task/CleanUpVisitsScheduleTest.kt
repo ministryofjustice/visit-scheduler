@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
 import java.time.LocalDateTime
@@ -34,6 +35,9 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
+
+  @Autowired
+  private lateinit var testVisitRepository: TestVisitRepository
 
   @Autowired
   private lateinit var visitTask: VisitTask
@@ -82,10 +86,10 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
     visitTask.deleteExpiredReservations()
 
     // Then
-    assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReference)).isNotNull
-    assertThat(visitRepository.findByApplicationReference(notExpiredApplicationReferenceChangingStatus)).isNotNull
-    assertThat(visitRepository.findByApplicationReference(visitExpiredApplicationReference)).isNull()
-    assertThat(visitRepository.findByApplicationReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
+    assertThat(testVisitRepository.findByApplicationReference(notExpiredApplicationReference)).isNotNull
+    assertThat(testVisitRepository.findByApplicationReference(notExpiredApplicationReferenceChangingStatus)).isNotNull
+    assertThat(testVisitRepository.findByApplicationReference(visitExpiredApplicationReference)).isNull()
+    assertThat(testVisitRepository.findByApplicationReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-expired-visits-deleted"), any(), isNull())
 
