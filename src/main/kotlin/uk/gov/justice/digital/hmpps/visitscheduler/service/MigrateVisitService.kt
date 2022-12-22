@@ -11,9 +11,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitTimeSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitTimeSlotRepository
 import java.util.Locale
 
 @Service
@@ -21,6 +23,7 @@ import java.util.Locale
 class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
+  private val visitTimeSlotRepository: VisitTimeSlotRepository,
   private val prisonConfigService: PrisonConfigService,
   private val telemetryClient: TelemetryClient,
 ) {
@@ -31,19 +34,42 @@ class MigrateVisitService(
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
     val prison = prisonConfigService.findPrisonByCode(migrateVisitRequest.prisonCode)
+    val visitDate = migrateVisitRequest.startTimestamp.toLocalDate()
+    val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
+
+    var visitTimeSlot = visitTimeSlotRepository.getTimeSlot(
+                    prisonId = prison.id,
+                    startTime = startTime,
+                    endTime = endTime,
+                    dayOfWeek = visitDate.dayOfWeek,
+                    visitType = migrateVisitRequest.visitType)
+
+    visitTimeSlot?.let {
+      visitTimeSlot = visitTimeSlotRepository.saveAndFlush(
+        VisitTimeSlot(
+          prison = prison,
+          prisonId = prison.id,
+          visitType = migrateVisitRequest.visitType,
+          visitRoom = migrateVisitRequest.visitRoom,
+          startTime = startTime,
+          endTime   = endTime,
+          dayOfWeek = visitDate.dayOfWeek
+        )
+      )
+    }
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
-        prison = prison,
         prisonId = prison.id,
-        visitRoom = migrateVisitRequest.visitRoom,
-        visitType = migrateVisitRequest.visitType,
+        prison = prison,
         visitStatus = migrateVisitRequest.visitStatus,
         outcomeStatus = outcomeStatus,
         visitRestriction = migrateVisitRequest.visitRestriction,
-        visitStart = migrateVisitRequest.startTimestamp,
-        visitEnd = migrateVisitRequest.endTimestamp
+        visitDate = visitDate,
+        timeSlot = visitTimeSlot!!,
+        visitTimeSlotId = visitTimeSlot!!.id
       )
     )
 
@@ -76,7 +102,7 @@ class MigrateVisitService(
       saveLegacyData(visitEntity, null)
     }
 
-    sendTelemetryData(visitEntity)
+    sendTelemetryData(visitEntity,visitTimeSlot!!)
 
     visitRepository.saveAndFlush(visitEntity)
 
@@ -92,17 +118,17 @@ class MigrateVisitService(
     return visitEntity.reference
   }
 
-  private fun sendTelemetryData(visitEntity: Visit) {
+  private fun sendTelemetryData(visitEntity: Visit, visitTimeSlot: VisitTimeSlot) {
     telemetryClient.trackEvent(
       TelemetryVisitEvents.VISIT_MIGRATED_EVENT.eventName,
       mapOf(
         "reference" to visitEntity.reference,
         "prisonerId" to visitEntity.prisonerId,
         "prisonId" to visitEntity.prison.code,
-        "visitType" to visitEntity.visitType.name,
-        "visitRoom" to visitEntity.visitRoom,
+        "visitType" to visitTimeSlot.visitType.name,
+        "visitRoom" to visitTimeSlot.visitRoom,
         "visitRestriction" to visitEntity.visitRestriction.name,
-        "visitStart" to visitEntity.visitStart.toString(),
+        "visitStart" to visitEntity.visitDate.toString(),
         "visitStatus" to visitEntity.visitStatus.name,
         "outcomeStatus" to visitEntity.outcomeStatus?.name
       ),

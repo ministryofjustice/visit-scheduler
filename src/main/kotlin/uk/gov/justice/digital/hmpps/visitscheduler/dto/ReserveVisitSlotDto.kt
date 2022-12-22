@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import java.time.LocalDate
 import java.time.LocalDateTime
 import javax.validation.Valid
 import javax.validation.constraints.NotBlank
@@ -12,6 +13,10 @@ import javax.validation.constraints.NotEmpty
 import javax.validation.constraints.NotNull
 
 data class ReserveVisitSlotDto(
+
+  @Schema(description = "Session Template Reference Id", example = "AF34567G", required = true)
+  @field:NotBlank
+  val sessionTemplateReference: String,
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   @field:NotBlank
   val prisonerId: String,
@@ -30,10 +35,7 @@ data class ReserveVisitSlotDto(
   val visitRestriction: VisitRestriction,
   @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
   @field:NotNull
-  val startTimestamp: LocalDateTime,
-  @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = true)
-  @field:NotNull
-  val endTimestamp: LocalDateTime,
+  val visitDate: LocalDate,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
   val visitContact: ContactDto?,
@@ -44,3 +46,4 @@ data class ReserveVisitSlotDto(
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: Set<@Valid VisitorSupportDto>? = setOf(),
 )
+

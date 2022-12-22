@@ -9,13 +9,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
+import java.time.LocalDate
 import java.time.LocalDateTime
-import javax.persistence.CascadeType
+import javax.persistence.CascadeType.ALL
 import javax.persistence.Column
 import javax.persistence.Entity
-import javax.persistence.EnumType
+import javax.persistence.EnumType.STRING
 import javax.persistence.Enumerated
-import javax.persistence.FetchType
+import javax.persistence.FetchType.LAZY
 import javax.persistence.GeneratedValue
 import javax.persistence.GenerationType
 import javax.persistence.Id
@@ -25,7 +26,7 @@ import javax.persistence.OneToMany
 import javax.persistence.OneToOne
 import javax.persistence.PostPersist
 import javax.persistence.Table
-import javax.persistence.TemporalType
+import javax.persistence.TemporalType.TIMESTAMP
 
 @Entity
 @Table(name = "VISIT")
@@ -42,54 +43,50 @@ class Visit(
   val prison: Prison,
 
   @Column(nullable = false)
-  var visitRoom: String,
-
-  @Column(nullable = false)
-  var visitStart: LocalDateTime,
-
-  @Column(nullable = false)
-  var visitEnd: LocalDateTime,
-
-  @Column(nullable = false)
-  @Enumerated(EnumType.STRING)
-  var visitType: VisitType,
-
-  @Column(nullable = false)
-  @Enumerated(EnumType.STRING)
+  @Enumerated(STRING)
   var visitStatus: VisitStatus,
 
   @Column(nullable = true)
-  @Enumerated(EnumType.STRING)
+  @Enumerated(STRING)
   var outcomeStatus: OutcomeStatus? = null,
 
   @Column(nullable = false)
-  @Enumerated(EnumType.STRING)
+  @Enumerated(STRING)
   var visitRestriction: VisitRestriction,
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  @OneToOne(fetch = LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   var visitContact: VisitContact? = null,
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  @OneToMany(fetch = LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   var visitors: MutableList<VisitVisitor> = mutableListOf(),
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  @OneToMany(fetch = LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   var support: MutableList<VisitSupport> = mutableListOf(),
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  @OneToMany(fetch = LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   var visitNotes: MutableList<VisitNote> = mutableListOf(),
 
   @CreationTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
+  @Temporal(TIMESTAMP)
   @Column
   val createTimestamp: LocalDateTime? = null,
 
   @UpdateTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
+  @Temporal(TIMESTAMP)
   @Column
   val modifyTimestamp: LocalDateTime? = null,
 
   @Transient
-  private val _reference: String = ""
+  private val _reference: String = "",
+
+  @Column
+  val visitDate: LocalDate,
+  @ManyToOne
+  @JoinColumn(name = "VISIT_TIME_SLOT_ID", updatable = false, insertable = false)
+  val timeSlot: VisitTimeSlot,
+
+  @Column
+  val visitTimeSlotId: Long
 ) {
 
   @Id

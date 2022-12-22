@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitTimeSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -20,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRep
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitTimeSlotRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -44,10 +46,12 @@ class PrisonEntityHelper(
 @Component
 class VisitEntityHelper(
   private val visitRepository: VisitRepository,
+  private val visitTimeSlotRepository : VisitTimeSlotRepository,
   private val prisonEntityHelper: PrisonEntityHelper
 ) {
 
   fun create(
+    sessionTemplateReference : String,
     visitStatus: VisitStatus = RESERVED,
     prisonerId: String = "FF0000AA",
     prisonCode: String = "MDI",
@@ -62,18 +66,32 @@ class VisitEntityHelper(
 
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
+    var visitTimeSlot = visitTimeSlotRepository.getTimeSlotBySessionTemplateReference(sessionTemplateReference)
+    visitTimeSlot?.let {
+      visitTimeSlot = visitTimeSlotRepository.saveAndFlush(
+        VisitTimeSlot(
+          sessionTemplateReference = sessionTemplateReference,
+          prison = prison,
+          prisonId = prison.id,
+          visitType = visitType,
+          visitRoom = visitRoom,
+          startTime = visitStart.toLocalTime(),
+          endTime = visitEnd.toLocalTime(),
+          dayOfWeek = visitStart.dayOfWeek
+        )
+      )
+    }
+
     return visitRepository.saveAndFlush(
       Visit(
-        visitStatus = visitStatus,
         prisonerId = prisonerId,
         prisonId = prison.id,
         prison = prison,
-        visitRoom = visitRoom,
-        visitStart = visitStart,
-        visitEnd = visitEnd,
-        visitType = visitType,
+        visitStatus = visitStatus,
         visitRestriction = visitRestriction,
-        _reference = reference
+        _reference = reference,
+        timeSlot = visitTimeSlot!!,
+        visitDate = visitStart.toLocalDate()
       )
     )
   }

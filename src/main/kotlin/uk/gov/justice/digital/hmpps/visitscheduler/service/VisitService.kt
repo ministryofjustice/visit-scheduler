@@ -21,16 +21,19 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitTimeSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitTimeSlotRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -39,7 +42,9 @@ import javax.validation.ValidationException
 @Service
 @Transactional
 class VisitService(
+  private val sessionTemplateService: SessionTemplateService,
   private val visitRepository: VisitRepository,
+  private val visitTimeSlotRepository: VisitTimeSlotRepository,
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
@@ -66,22 +71,40 @@ class VisitService(
 
   fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
 
-    val prison = prisonConfigService.findPrisonByCode(reserveVisitSlotDto.prisonCode)
+    val sessionTemplate = sessionTemplateService.getSessionTemplateByReference(reserveVisitSlotDto.sessionTemplateReference)
+
+    val prison = prisonConfigService.findPrisonByCode(sessionTemplate.prisonCode)
+
+    var visitTimeSlot = visitTimeSlotRepository.getTimeSlotBySessionTemplateReference(reserveVisitSlotDto.sessionTemplateReference)
+    visitTimeSlot?.let {
+      visitTimeSlot = visitTimeSlotRepository.saveAndFlush(
+        VisitTimeSlot(
+          sessionTemplateReference = reserveVisitSlotDto.sessionTemplateReference,
+          prison = prison,
+          prisonId = prison.id,
+          visitType = sessionTemplate.visitType,
+          visitRoom = sessionTemplate.visitRoom,
+          startTime = sessionTemplate.startTime,
+          endTime = sessionTemplate.endTime,
+          dayOfWeek = reserveVisitSlotDto.visitDate.dayOfWeek
+        )
+      )
+    }
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = reserveVisitSlotDto.prisonerId,
         prison = prison,
         prisonId = prison.id,
-        visitRoom = reserveVisitSlotDto.visitRoom,
-        visitType = reserveVisitSlotDto.visitType,
         visitStatus = getStartingStatus(bookingReference, reserveVisitSlotDto),
         visitRestriction = reserveVisitSlotDto.visitRestriction,
-        visitStart = reserveVisitSlotDto.startTimestamp,
-        visitEnd = reserveVisitSlotDto.endTimestamp,
+        visitDate = reserveVisitSlotDto.visitDate,
+        visitTimeSlotId = visitTimeSlot!!.id,
+        timeSlot = visitTimeSlot!!,
         _reference = bookingReference
       )
     )
+
 
     reserveVisitSlotDto.visitContact?.let {
       visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)

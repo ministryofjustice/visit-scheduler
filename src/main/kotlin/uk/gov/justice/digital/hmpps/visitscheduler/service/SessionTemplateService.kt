@@ -26,6 +26,11 @@ class SessionTemplateService(
     return sessionTemplateRepository.findById(sessionTemplateId).map { SessionTemplateDto(it) }
       .orElseThrow(TemplateNotFoundException("Template id $sessionTemplateId not found"))
   }
+
+  fun getSessionTemplateByReference(sessionTemplateReference: String): SessionTemplateDto {
+    return sessionTemplateRepository.findById(1).map { SessionTemplateDto(it) }
+      .orElseThrow(TemplateNotFoundException("Template id $1 not found"))
+  }
 }
 
 class TemplateNotFoundException(message: String? = null, cause: Throwable? = null) :
