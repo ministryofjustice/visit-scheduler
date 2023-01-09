@@ -75,7 +75,7 @@ class VisitService(
 
     val prison = prisonConfigService.findPrisonByCode(sessionTemplate.prisonCode)
 
-    var visitTimeSlot = visitTimeSlotRepository.getTimeSlotBySessionTemplateReference(reserveVisitSlotDto.sessionTemplateReference)
+    var visitTimeDatewSlot = visitTimeSlotRepository.getTimeSlotBySessionTemplateReference(reserveVisitSlotDto.sessionTemplateReference)
     visitTimeSlot?.let {
       visitTimeSlot = visitTimeSlotRepository.saveAndFlush(
         VisitTimeSlot(
@@ -84,9 +84,8 @@ class VisitService(
           prisonId = prison.id,
           visitType = sessionTemplate.visitType,
           visitRoom = sessionTemplate.visitRoom,
-          startTime = sessionTemplate.startTime,
-          endTime = sessionTemplate.endTime,
-          dayOfWeek = reserveVisitSlotDto.visitDate.dayOfWeek
+          startTimeDate = sessionTemplate.startTime,
+          endTimeDate = sessionTemplate.endTime,
         )
       )
     }
@@ -94,11 +93,8 @@ class VisitService(
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = reserveVisitSlotDto.prisonerId,
-        prison = prison,
-        prisonId = prison.id,
         visitStatus = getStartingStatus(bookingReference, reserveVisitSlotDto),
         visitRestriction = reserveVisitSlotDto.visitRestriction,
-        visitDate = reserveVisitSlotDto.visitDate,
         visitTimeSlotId = visitTimeSlot!!.id,
         timeSlot = visitTimeSlot!!,
         _reference = bookingReference
