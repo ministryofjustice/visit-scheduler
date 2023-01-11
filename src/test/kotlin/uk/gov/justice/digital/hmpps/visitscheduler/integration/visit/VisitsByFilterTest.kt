@@ -79,8 +79,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
     visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusDays(1).plusHours(1), visitStatus = BOOKED)
     visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = CANCELLED)
 
-    visitEntityHelper.create(prisonerId = "GG0000BAA", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = BOOKED)
-    visitEntityHelper.create(prisonerId = "GG0000BAA", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = CANCELLED, outcomeStatus = SUPERSEDED_CANCELLATION)
+    visitEntityHelper.create(prisonCode = "AWE", prisonerId = "GG0000BAA", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = BOOKED)
+    visitEntityHelper.create(prisonCode = "AWE", prisonerId = "GG0000BAA", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = CANCELLED, outcomeStatus = SUPERSEDED_CANCELLATION)
   }
 
   @Test
@@ -201,7 +201,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @Test
   fun `gets only one visit when visit has been superseded`() {
     // Given
-    val prisonId = "MDI"
+    val prisonId = "AWE"
     val prisonerId = "GG0000BAA"
 
     // When
