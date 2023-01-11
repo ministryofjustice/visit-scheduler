@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -57,7 +58,8 @@ class VisitEntityHelper(
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     reference: String = "",
-    activePrison: Boolean = true
+    activePrison: Boolean = true,
+    outcomeStatus: OutcomeStatus? = null,
   ): Visit {
 
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
@@ -73,7 +75,8 @@ class VisitEntityHelper(
         visitEnd = visitEnd,
         visitType = visitType,
         visitRestriction = visitRestriction,
-        _reference = reference
+        _reference = reference,
+        outcomeStatus = outcomeStatus
       )
     )
   }
