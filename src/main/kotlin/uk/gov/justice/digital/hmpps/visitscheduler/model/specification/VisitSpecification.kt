@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.specification
 
 import org.springframework.data.jpa.domain.Specification
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -51,6 +52,16 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
         val visitStatusPath = root.get<String>(Visit::visitStatus.name)
         predicates.add(visitStatusPath.`in`(visitStatusList))
       }
+
+      val outcomeStatusPath = root.get<String>(Visit::outcomeStatus.name)
+      predicates.add(
+        criteriaBuilder.and(
+          criteriaBuilder.or(
+            criteriaBuilder.isNull(outcomeStatusPath),
+            criteriaBuilder.notEqual(outcomeStatusPath, OutcomeStatus.SUPERSEDED_CANCELLATION)
+          ),
+        )
+      )
     }
     return criteriaBuilder.and(*predicates.toTypedArray())
   }
