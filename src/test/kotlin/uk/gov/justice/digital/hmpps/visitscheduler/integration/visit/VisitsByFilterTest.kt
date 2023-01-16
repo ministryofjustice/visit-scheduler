@@ -15,6 +15,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_SEARCH_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
@@ -77,6 +78,9 @@ class VisitsByFilterTest : IntegrationTestBase() {
     visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusHours(1), visitStatus = RESERVED)
     visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusDays(1).plusHours(1), visitStatus = BOOKED)
     visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = CANCELLED)
+
+    visitEntityHelper.create(prisonCode = "AWE", prisonerId = "GG0000BAA", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = BOOKED)
+    visitEntityHelper.create(prisonCode = "AWE", prisonerId = "GG0000BAA", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = CANCELLED, outcomeStatus = SUPERSEDED_CANCELLATION)
   }
 
   @Test
@@ -192,6 +196,22 @@ class VisitsByFilterTest : IntegrationTestBase() {
           "LEI"
         )
       )
+  }
+
+  @Test
+  fun `gets only one visit when visit has been superseded`() {
+    // Given
+    val prisonId = "AWE"
+    val prisonerId = "GG0000BAA"
+
+    // When
+    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED")
+
+    // Then
+    responseSpec.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$[0].visitStatus").isEqualTo("BOOKED")
   }
 
   @Test

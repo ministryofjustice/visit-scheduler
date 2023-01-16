@@ -1,8 +1,8 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.7.1"
-  kotlin("jvm") version "1.7.20"
-  kotlin("plugin.spring") version "1.7.20"
-  kotlin("plugin.jpa") version "1.7.20"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "4.8.1"
+  kotlin("jvm") version "1.8.0"
+  kotlin("plugin.spring") version "1.8.0"
+  kotlin("plugin.jpa") version "1.8.0"
   idea
 }
 
@@ -24,14 +24,14 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 
-  implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.13")
-  implementation("org.springdoc:springdoc-openapi-ui:1.6.13")
-  implementation("org.springdoc:springdoc-openapi-kotlin:1.6.13")
-  implementation("org.springdoc:springdoc-openapi-data-rest:1.6.13")
+  implementation("org.springdoc:springdoc-openapi-webmvc-core:1.6.14")
+  implementation("org.springdoc:springdoc-openapi-ui:1.6.14")
+  implementation("org.springdoc:springdoc-openapi-kotlin:1.6.14")
+  implementation("org.springdoc:springdoc-openapi-data-rest:1.6.14")
 
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:1.1.12")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:4.42.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:4.42.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:1.2.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:5.0.1")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.0.1")
   implementation("org.apache.commons:commons-csv:1.9.0")
   implementation("org.freemarker:freemarker:2.3.31")
 
@@ -41,7 +41,7 @@ dependencies {
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("io.jsonwebtoken:jjwt:0.9.1")
 
-  testImplementation("org.mockito:mockito-inline:4.8.0")
+  testImplementation("org.mockito:mockito-inline:4.11.0")
   testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
 
   testImplementation("com.github.tomakehurst:wiremock-standalone:2.27.2")
@@ -59,4 +59,8 @@ tasks {
       jvmTarget = "17"
     }
   }
+}
+
+allOpen {
+  annotation("javax.persistence.Entity")
 }

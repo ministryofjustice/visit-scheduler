@@ -37,7 +37,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -50,7 +50,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
   lateinit var bookedVisit: Visit
 
   @Autowired
-  private lateinit var visitRepository: VisitRepository
+  private lateinit var testVisitRepository: TestVisitRepository
 
   @Autowired
   private lateinit var prisonEntityHelper: PrisonEntityHelper
@@ -109,7 +109,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
 
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    val reservedVisit = visitRepository.findByApplicationReference(visit.applicationReference)
+    val reservedVisit = testVisitRepository.findByApplicationReference(visit.applicationReference)
 
     assertThat(reservedVisit).isNotNull
     reservedVisit?.let {
@@ -166,7 +166,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       .returnResult()
 
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+    assertThat(testVisitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
 
@@ -202,7 +202,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       .returnResult()
 
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+    assertThat(testVisitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
 
@@ -238,7 +238,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       .returnResult()
 
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+    assertThat(testVisitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
 
@@ -274,7 +274,7 @@ class ChangeBookedVisitTest(@Autowired private val objectMapper: ObjectMapper) :
       .returnResult()
 
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertThat(visitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
+    assertThat(testVisitRepository.findByApplicationReference(visit.applicationReference)!!.visitStatus).isEqualTo(VisitStatus.RESERVED)
     verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
