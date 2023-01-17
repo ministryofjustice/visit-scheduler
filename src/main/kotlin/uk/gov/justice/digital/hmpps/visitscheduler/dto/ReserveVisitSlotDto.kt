@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDateTime
@@ -39,8 +40,9 @@ data class ReserveVisitSlotDto(
   val visitContact: ContactDto?,
   @Schema(description = "List of visitors associated with the visit", required = true)
   @field:NotEmpty
+  @field: VisitorCountValidation
   @field:VisitorContactValidation
-  val visitors: Set<@Valid VisitorDto>,
+  var visitors: Set<@Valid VisitorDto>,
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: Set<@Valid VisitorSupportDto>? = setOf(),
 )
