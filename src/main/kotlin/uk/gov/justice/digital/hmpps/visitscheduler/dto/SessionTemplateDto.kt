@@ -30,6 +30,8 @@ data class SessionTemplateDto(
   val visitType: VisitType,
   @Schema(description = "visit room", example = "A1", required = true)
   val visitRoom: String,
+  @Schema(description = "enhanced privilege", example = "true", required = true)
+  val enhanced: Boolean,
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
@@ -52,6 +54,6 @@ data class SessionTemplateDto(
     openCapacity = sessionTemplateEntity.openCapacity,
     dayOfWeek = sessionTemplateEntity.dayOfWeek,
     permittedLocations = sessionTemplateEntity.permittedSessionLocations?.map { PermittedSessionLocationDto(it) },
-
+    enhanced = sessionTemplateEntity.enhanced
   )
 }

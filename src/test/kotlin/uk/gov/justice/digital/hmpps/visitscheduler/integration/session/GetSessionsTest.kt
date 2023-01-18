@@ -60,6 +60,40 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
+  fun `visit sessions are returned for enhanced prisoner a prison for a single schedule`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = true
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+  }
+
+  @Test
   fun `bi weekly schedule - test for sunday change boundary`() {
 
     val today = LocalDate.now()
@@ -334,7 +368,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
-    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+    sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime,
@@ -367,7 +401,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime2 = endTime.plusHours(30)
     val endTime2 = startTime2.plusHours(1)
 
-    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+    sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime2.toLocalTime(),
@@ -634,7 +668,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")

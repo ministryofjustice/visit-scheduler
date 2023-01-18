@@ -72,6 +72,11 @@ class PrisonApiService(
     return levelsMap.toMap()
   }
 
+  fun hasPrisonerGotEnhancedPrivilege(prisonerId: String): Boolean {
+    // TODO This must implemented by another technical task this is just a dummy call
+    return true
+  }
+
   private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: Int): PrisonerHousingLevelDto? {
     return levels.stream().filter { level -> level.level == housingLevel }.findFirst().orElse(null)
   }
