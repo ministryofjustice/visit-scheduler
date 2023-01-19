@@ -59,10 +59,10 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
     }
 
-    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
-      prisonCode,
-      requestedBookableStartDate,
-      requestedBookableEndDate
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
+      prisonCode = prisonCode,
+      rangeStartDate = requestedBookableStartDate,
+      rangeEndDate = requestedBookableEndDate
     )
 
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)

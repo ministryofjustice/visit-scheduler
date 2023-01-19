@@ -25,9 +25,10 @@ class GetSessionTemplate(
   fun `all session templates are returned empty list`() {
 
     // Given
+    val prisonCode = "MDI"
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates")
+    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -40,11 +41,13 @@ class GetSessionTemplate(
   @Test
   fun `all session templates are returned`() {
     // Given
-    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
-    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
+    val prisonCode = "MDI"
+
+    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), prisonCode = prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates")
+    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 

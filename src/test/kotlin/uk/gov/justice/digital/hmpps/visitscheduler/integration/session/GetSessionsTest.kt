@@ -91,6 +91,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .expectBody()
 
     val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isGreaterThan(2)
     if (todayIsTheWeekEnd) {
       // On the weekend it skips to the other session template / schedule because we cannot book with in 24 hrs
       Assertions.assertThat(visitSessionResults[0].visitRoomName).isEqualTo("Alternate 2")

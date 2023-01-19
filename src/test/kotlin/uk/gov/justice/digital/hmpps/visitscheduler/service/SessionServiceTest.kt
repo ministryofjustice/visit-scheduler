@@ -71,10 +71,10 @@ class SessionServiceTest {
 
   private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>) {
     whenever(
-      sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
-        prisonCode,
-        date.plusDays(noticeDaysMin),
-        date.plusDays(noticeDaysMax)
+      sessionTemplateRepository.findValidSessionTemplatesBy(
+        prisonCode = prisonCode,
+        rangeStartDate = date.plusDays(noticeDaysMin),
+        rangeEndDate = date.plusDays(noticeDaysMax)
       )
     ).thenReturn(response)
   }

@@ -1,9 +1,11 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
@@ -13,12 +15,15 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
+import java.time.DayOfWeek
+import java.time.LocalDate
 import javax.validation.Valid
 
 const val SESSION_TEMPLATES_PATH: String = "/visit-session-templates"
@@ -54,8 +59,31 @@ class VisitSessionAdminController(
       )
     ]
   )
-  fun getSessionTemplates(): List<SessionTemplateDto> {
-    return sessionTemplateService.getSessionTemplates()
+  fun getSessionTemplates(
+    @RequestParam(value = "prisonCode", required = true)
+    @Parameter(
+      description = "Filter results by prison id/code",
+      example = "MDI"
+    ) prisonCode: String,
+    @RequestParam(value = "dayOfWeek", required = false)
+    @Parameter(
+      description = "Filter results by day of week",
+      example = "MONDAY"
+    ) dayOfWeek: DayOfWeek?,
+    @RequestParam(value = "validFrom", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Parameter(
+      description = "Filter results by that when the session template is valid from",
+      example = "2021-11-03"
+    ) rangeStartDate: LocalDate?,
+    @RequestParam(value = "validTo", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @Parameter(
+      description = "Filter results by that when the session template is valid to",
+      example = "2021-11-03"
+    ) rangeEndDate: LocalDate?
+  ): List<SessionTemplateDto> {
+    return sessionTemplateService.getSessionTemplates(prisonCode, dayOfWeek, rangeStartDate, rangeEndDate)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

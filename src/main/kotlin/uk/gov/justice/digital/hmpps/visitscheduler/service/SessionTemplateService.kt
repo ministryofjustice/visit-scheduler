@@ -15,6 +15,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.util.function.Supplier
 
 @Service
@@ -29,8 +31,16 @@ class SessionTemplateService(
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun getSessionTemplates(): List<SessionTemplateDto> {
-    return sessionTemplateRepository.findAll().sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
+  fun getSessionTemplates(prisonCode: String, dayOfWeek: DayOfWeek?, rangeStartDate: LocalDate?, rangeEndDate: LocalDate?): List<SessionTemplateDto> {
+
+    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
+      prisonCode = prisonCode,
+      rangeStartDate = rangeStartDate,
+      rangeEndDate = rangeEndDate,
+      dayOfWeek = dayOfWeek
+    )
+
+    return sessionTemplates.sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
   }
 
   fun getSessionTemplates(reference: String): SessionTemplateDto {
