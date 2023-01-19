@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.validation.NullableNotEmpty
 import java.time.LocalDateTime
@@ -19,6 +20,7 @@ data class ChangeVisitSlotRequestDto(
   val visitContact: ContactDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false)
   @field:NullableNotEmpty
+  @field: VisitorCountValidation
   @field:VisitorContactValidation
   val visitors: Set<@Valid VisitorDto>? = null,
   @Schema(description = "List of additional support associated with the visit", required = false)

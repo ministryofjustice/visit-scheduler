@@ -376,6 +376,55 @@ class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) 
   }
 
   @Test
+  fun `when change reserved slot has no visitors then bad request is returned`() {
+
+    // Given
+    val updateRequest = ChangeVisitSlotRequestDto(
+      startTimestamp = visitFull.visitStart,
+      endTimestamp = visitFull.visitEnd,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitors = emptySet(),
+      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+    )
+    val applicationReference = visitFull.applicationReference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+  }
+
+  @Test
+  fun `when change reserved slot has more than 10 visitors then bad request is returned`() {
+
+    // Given
+    val updateRequest = ChangeVisitSlotRequestDto(
+      startTimestamp = visitFull.visitStart,
+      endTimestamp = visitFull.visitEnd,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitors = setOf(
+        VisitorDto(1, true), VisitorDto(2, false),
+        VisitorDto(3, true), VisitorDto(4, false),
+        VisitorDto(5, false), VisitorDto(6, false),
+        VisitorDto(7, false), VisitorDto(8, false),
+        VisitorDto(9, false), VisitorDto(10, false),
+        VisitorDto(11, false), VisitorDto(12, false)
+      ),
+      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+    )
+    val applicationReference = visitFull.applicationReference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+  }
+
+  @Test
   fun `change reserved slot - contact`() {
     // Given
     val updateRequest = ChangeVisitSlotRequestDto(
