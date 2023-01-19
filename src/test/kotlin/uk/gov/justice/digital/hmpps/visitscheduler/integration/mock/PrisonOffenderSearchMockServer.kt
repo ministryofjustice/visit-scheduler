@@ -5,9 +5,9 @@ import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisoner.offender.search.CurrentIncentiveDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisoner.offender.search.IncentiveLevelDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisoner.offender.search.PrisonerIncentiveLevelDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.CurrentIncentiveDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.IncentiveLevelDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerIncentiveLevelDto
 import java.time.LocalDate
 import java.time.LocalDateTime
 

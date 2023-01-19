@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.dto.prisoner.offender.search
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch
 
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDate
