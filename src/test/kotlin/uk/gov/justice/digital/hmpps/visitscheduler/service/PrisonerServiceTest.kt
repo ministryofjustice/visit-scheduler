@@ -13,6 +13,7 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
+import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
@@ -23,11 +24,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import java.time.LocalDate
 
 @ExtendWith(MockitoExtension::class)
-class PrisonApiServiceTest {
+class PrisonerServiceTest {
 
   private val prisonApiClient = mock<PrisonApiClient>()
+  private val prisonerOffenderSearchClient = mock<PrisonerOffenderSearchClient>()
 
-  private val prisonApiService: PrisonApiService = PrisonApiService(prisonApiClient = prisonApiClient)
+  private val prisonerService: PrisonerService = PrisonerService(prisonApiClient, prisonerOffenderSearchClient)
 
   @Test
   fun `when prisoner has no non associations no non associations are returned `() {
@@ -38,7 +40,7 @@ class PrisonApiServiceTest {
     ).thenReturn(OffenderNonAssociationDetailsDto())
 
     // When
-    val offenderNonAssociations = prisonApiService.getOffenderNonAssociationList(prisonerId)
+    val offenderNonAssociations = prisonerService.getOffenderNonAssociationList(prisonerId)
 
     // Then
     assertThat(offenderNonAssociations).isEmpty()
@@ -65,7 +67,7 @@ class PrisonApiServiceTest {
     )
 
     // When
-    val offenderNonAssociations = prisonApiService.getOffenderNonAssociationList(prisonerId)
+    val offenderNonAssociations = prisonerService.getOffenderNonAssociationList(prisonerId)
 
     // Then
     assertThat(offenderNonAssociations.size).isEqualTo(1)
@@ -104,7 +106,7 @@ class PrisonApiServiceTest {
     )
 
     // When
-    val offenderNonAssociations = prisonApiService.getOffenderNonAssociationList(prisonerId)
+    val offenderNonAssociations = prisonerService.getOffenderNonAssociationList(prisonerId)
 
     // Then
     assertThat(offenderNonAssociations.size).isEqualTo(3)
@@ -124,7 +126,7 @@ class PrisonApiServiceTest {
     )
 
     // When
-    val offenderNonAssociations = prisonApiService.getOffenderNonAssociationList(prisonerId)
+    val offenderNonAssociations = prisonerService.getOffenderNonAssociationList(prisonerId)
 
     // Then
     assertThat(offenderNonAssociations).isEmpty()
@@ -143,7 +145,7 @@ class PrisonApiServiceTest {
 
     // When
     assertThrows<WebClientResponseException> {
-      prisonApiService.getOffenderNonAssociationList(prisonerId)
+      prisonerService.getOffenderNonAssociationList(prisonerId)
     }
 
     // Then
@@ -151,7 +153,7 @@ class PrisonApiServiceTest {
   }
 
   @Test
-  fun `when valid prisoner then prisoner gousing location is returned`() {
+  fun `when valid prisoner then prisoner housing location is returned`() {
     val prisonerId = "AA1234BB"
 
     val level1 = PrisonerHousingLevelDto(level = 1, code = "A", description = "level 1")
@@ -164,7 +166,7 @@ class PrisonApiServiceTest {
     ).thenReturn(prisonerHousingLocationsDto)
 
     // When
-    val prisonerDetails = prisonApiService.getPrisonerHousingLocation(prisonerId)
+    val prisonerDetails = prisonerService.getPrisonerHousingLocation(prisonerId)
 
     // Then
     assertThat(prisonerDetails).isNotNull
@@ -186,7 +188,7 @@ class PrisonApiServiceTest {
     )
 
     // When
-    val prisonerDetails = prisonApiService.getPrisonerHousingLocation(prisonerId)
+    val prisonerDetails = prisonerService.getPrisonerHousingLocation(prisonerId)
 
     // Then
     assertThat(prisonerDetails).isNull()
@@ -205,7 +207,7 @@ class PrisonApiServiceTest {
 
     // When
     assertThrows<WebClientResponseException> {
-      prisonApiService.getPrisonerHousingLocation(prisonerId)
+      prisonerService.getPrisonerHousingLocation(prisonerId)
     }
 
     // Then
@@ -223,7 +225,7 @@ class PrisonApiServiceTest {
     ).thenReturn(prisonerHousingLocationsDto)
 
     // When
-    val prisonerHousingLevels = prisonApiService.getPrisonerHousingLocation(prisonerId)
+    val prisonerHousingLevels = prisonerService.getPrisonerHousingLocation(prisonerId)
 
     // Then
     assertThat(prisonerHousingLevels).isNotNull
@@ -250,7 +252,7 @@ class PrisonApiServiceTest {
     ).thenReturn(prisonerHousingLocationsDto)
 
     // When
-    val prisonerHousingLevels = prisonApiService.getPrisonerHousingLocation(prisonerId)
+    val prisonerHousingLevels = prisonerService.getPrisonerHousingLocation(prisonerId)
 
     // Then
     assertThat(prisonerHousingLevels).isNotNull
@@ -273,7 +275,7 @@ class PrisonApiServiceTest {
     ).thenReturn(prisonerHousingLocationsDto)
 
     // When
-    val prisonerHousingLevels = prisonApiService.getPrisonerHousingLocation(prisonerId)
+    val prisonerHousingLevels = prisonerService.getPrisonerHousingLocation(prisonerId)
 
     // Then
     assertThat(prisonerHousingLevels).isNotNull
@@ -297,7 +299,7 @@ class PrisonApiServiceTest {
     )
 
     // When
-    val prisonerHousingLevels = prisonApiService.getPrisonerHousingLocation(prisonerId)
+    val prisonerHousingLevels = prisonerService.getPrisonerHousingLocation(prisonerId)
 
     // Then
     assertThat(prisonerHousingLevels).isNull()
@@ -315,7 +317,7 @@ class PrisonApiServiceTest {
 
     // When
     assertThrows<WebClientResponseException> {
-      prisonApiService.getPrisonerHousingLocation(prisonerId)
+      prisonerService.getPrisonerHousingLocation(prisonerId)
     }
 
     // Then
@@ -332,7 +334,7 @@ class PrisonApiServiceTest {
     ).thenReturn(prisonerDetailsDto)
 
     // When
-    val prisonerDetails = prisonApiService.getPrisonerFullStatus(prisonerId)
+    val prisonerDetails = prisonerService.getPrisonerFullStatus(prisonerId)
 
     // Then
     assertThat(prisonerDetails).isNotNull
@@ -353,7 +355,7 @@ class PrisonApiServiceTest {
     )
 
     // When
-    val prisonerDetails = prisonApiService.getPrisonerFullStatus(prisonerId)
+    val prisonerDetails = prisonerService.getPrisonerFullStatus(prisonerId)
 
     // Then
     assertThat(prisonerDetails).isNull()
@@ -372,7 +374,7 @@ class PrisonApiServiceTest {
 
     // When
     assertThrows<WebClientResponseException> {
-      prisonApiService.getPrisonerFullStatus(prisonerId)
+      prisonerService.getPrisonerFullStatus(prisonerId)
     }
 
     // Then
@@ -380,7 +382,7 @@ class PrisonApiServiceTest {
   }
 
   private fun getLevel(prisonerHousingLocationsDto: PrisonerHousingLocationsDto, level: PrisonerHousingLevels): String? {
-    val levels = prisonApiService.getLevelsMapForPrisoner(prisonerHousingLocationsDto)
+    val levels = prisonerService.getLevelsMapForPrisoner(prisonerHousingLocationsDto)
     return levels[level]
   }
 }

@@ -27,6 +27,16 @@ prison:
     url: http://localhost:8091
     timeout: 10s
 
+prisoner-offender-search:
+  url: http://localhost:8092
+  timeout: 10s
+
+policy:
+  session:
+    booking-notice-period:
+      minimum-days: 2
+      maximum-days: 28
+
 task:
   expired-visit:
     enabled: true

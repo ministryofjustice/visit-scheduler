@@ -19,7 +19,8 @@ import org.springframework.web.reactive.function.client.WebClient
 
 @Configuration
 class WebClientConfiguration(
-  @Value("\${prison.api.url}") private val prisonApiBaseUrl: String
+  @Value("\${prison.api.url}") private val prisonApiBaseUrl: String,
+  @Value("\${prisoner-offender-search.url}") private val prisonOffenderSearchBaseUrl: String,
 ) {
 
   @Bean
@@ -36,8 +37,26 @@ class WebClientConfiguration(
   }
 
   @Bean
+  fun prisonerOffenderSearchWebClient(): WebClient {
+    val exchangeStrategies = ExchangeStrategies.builder()
+      .codecs { configurer: ClientCodecConfigurer -> configurer.defaultCodecs().maxInMemorySize(-1) }
+      .build()
+
+    return WebClient.builder()
+      .baseUrl(prisonOffenderSearchBaseUrl)
+      .filter(addAuthHeaderFilterFunction())
+      .exchangeStrategies(exchangeStrategies)
+      .build()
+  }
+
+  @Bean
   fun prisonApiHealthWebClient(): WebClient {
     return WebClient.builder().baseUrl(prisonApiBaseUrl).build()
+  }
+
+  @Bean
+  fun prisonOffenderSearchHealthWebClient(): WebClient {
+    return WebClient.builder().baseUrl(prisonOffenderSearchBaseUrl).build()
   }
 
   @Bean

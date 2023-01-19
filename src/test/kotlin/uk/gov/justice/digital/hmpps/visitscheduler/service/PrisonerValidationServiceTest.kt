@@ -10,6 +10,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
+import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 
@@ -17,10 +18,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppli
 class PrisonerValidationServiceTest {
 
   private val prisonApiClient = mock<PrisonApiClient>()
+  private val prisonerOffenderSearchClient = mock<PrisonerOffenderSearchClient>()
 
-  private val prisonApiService = PrisonApiService(prisonApiClient = prisonApiClient)
+  private val prisonerService = PrisonerService(prisonApiClient, prisonerOffenderSearchClient)
 
-  private val prisonerValidationService = PrisonerValidationService(prisonApiService)
+  private val prisonerValidationService = PrisonerValidationService(prisonerService)
 
   @Test
   fun `when prison code passed matches prisoners establishment code no exceptions are thrown`() {
@@ -28,7 +30,7 @@ class PrisonerValidationServiceTest {
     val prisonCode = "MDI"
     val prisonerDetails = PrisonerDetailsDto(prisonerId, prisonCode)
     whenever(
-      prisonApiService.getPrisonerFullStatus(prisonerId)
+      prisonerService.getPrisonerFullStatus(prisonerId)
     ).thenReturn(prisonerDetails)
 
     // When
@@ -46,7 +48,7 @@ class PrisonerValidationServiceTest {
     val prisonCode = "MDI"
     val prisonerDetails = PrisonerDetailsDto(prisonerId, prisonCode)
     whenever(
-      prisonApiService.getPrisonerFullStatus(prisonerId)
+      prisonerService.getPrisonerFullStatus(prisonerId)
     ).thenReturn(prisonerDetails)
 
     assertThrows<PrisonerNotInSuppliedPrisonException> {
