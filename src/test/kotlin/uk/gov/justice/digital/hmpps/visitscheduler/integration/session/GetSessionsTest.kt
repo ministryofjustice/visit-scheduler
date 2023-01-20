@@ -334,7 +334,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime = dateTime.toLocalTime()
     val endTime = dateTime.plusHours(1)
 
-    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+    sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime,
@@ -367,7 +367,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val startTime2 = endTime.plusHours(30)
     val endTime2 = startTime2.plusHours(1)
 
-    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+    sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = startTime2.toLocalTime(),
