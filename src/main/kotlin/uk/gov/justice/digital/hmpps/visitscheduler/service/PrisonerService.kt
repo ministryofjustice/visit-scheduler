@@ -20,7 +20,7 @@ class PrisonerService(
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    const val ENHANCED_INCENTIVE_PRIVILEGE = "ENH"
+    private const val ENHANCED_INCENTIVE_PRIVILEGE = "ENH"
   }
 
   fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {

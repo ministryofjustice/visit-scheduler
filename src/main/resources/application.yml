@@ -92,8 +92,10 @@ prison:
   api:
     timeout: 10s
 
-prisoner-offender-search:
-  timeout: 10s
+prisoner:
+  offender:
+    search:
+      timeout: 10s
 
 policy:
   session:

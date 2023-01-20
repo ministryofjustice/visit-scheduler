@@ -10,8 +10,8 @@ data class CurrentIncentiveDto(
   val level: IncentiveLevelDto,
 
   @Schema(description = "Date time of the incentive", example = "2021-07-05T10:35:17", required = true)
-  val dateTime: LocalDateTime?,
+  val dateTime: LocalDateTime,
 
   @Schema(description = "Schedule new review date", example = "2022-11-10", required = true)
-  val nextReviewDate: LocalDate?,
+  val nextReviewDate: LocalDate? = null,
 )

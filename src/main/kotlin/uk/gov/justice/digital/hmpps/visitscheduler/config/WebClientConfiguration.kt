@@ -20,9 +20,8 @@ import org.springframework.web.reactive.function.client.WebClient
 @Configuration
 class WebClientConfiguration(
   @Value("\${prison.api.url}") private val prisonApiBaseUrl: String,
-  @Value("\${prisoner-offender-search.url}") private val prisonOffenderSearchBaseUrl: String,
+  @Value("\${prisoner.offender.search.url}") private val prisonOffenderSearchBaseUrl: String,
 ) {
-
   @Bean
   fun prisonApiWebClient(): WebClient {
     val exchangeStrategies = ExchangeStrategies.builder()

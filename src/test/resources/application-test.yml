@@ -30,9 +30,11 @@ prison:
     url: http://localhost:8092
     timeout: 5s
 
-prisoner-offender-search:
-  url: http://localhost:8093
-  timeout: 5s
+prisoner:
+  offender:
+    search:
+      url: http://localhost:8093
+      timeout: 5s
 
 policy:
   session:
