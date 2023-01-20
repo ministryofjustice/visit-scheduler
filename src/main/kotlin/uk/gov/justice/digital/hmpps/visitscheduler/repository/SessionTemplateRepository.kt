@@ -15,12 +15,12 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "where u.prison.code = :prisonCode " +
       "and (u.validToDate is null or u.validToDate >= :firstBookableDay) " +
       "and (u.validFromDate <= :lastBookableDay) " +
-      "and (:enhancedPrivilege = true or u.enhanced = false)"
+      "and (:inclEnhancedPrivilegeTemplates = true or u.enhanced = false)"
   )
   fun findValidSessionTemplatesByPrisonCode(
     @Param("prisonCode") prisonCode: String,
     @Param("firstBookableDay") firstBookableDay: LocalDate,
     @Param("lastBookableDay") lastBookableDay: LocalDate,
-    @Param("enhancedPrivilege") enhancedPrivilege: Boolean
+    @Param("inclEnhancedPrivilegeTemplates") inclEnhancedPrivilegeTemplates: Boolean
   ): List<SessionTemplate>
 }
