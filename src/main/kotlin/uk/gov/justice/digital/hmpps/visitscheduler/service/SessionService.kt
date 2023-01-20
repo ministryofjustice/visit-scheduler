@@ -59,7 +59,7 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
     }
 
-    val inclEnhancedPrivilegeTemplates = prisonerId?.let { prisonApiService.hasPrisonerGotEnhancedPrivilege(prisonerId) } ?: run { true }
+    val inclEnhancedPrivilegeTemplates = prisonerId?.let { prisonerService.hasPrisonerGotEnhancedPrivilege(prisonerId) } ?: run { true }
 
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
       prisonCode,

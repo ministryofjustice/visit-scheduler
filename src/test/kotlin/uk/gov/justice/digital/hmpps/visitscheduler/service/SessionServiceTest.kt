@@ -73,7 +73,7 @@ class SessionServiceTest {
   private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incEnhancedPrivilege: Boolean = true) {
 
     whenever(
-      prisonApiService.hasPrisonerGotEnhancedPrivilege(any())
+      prisonerService.hasPrisonerGotEnhancedPrivilege(any())
     ).thenReturn(incEnhancedPrivilege)
 
     whenever(
