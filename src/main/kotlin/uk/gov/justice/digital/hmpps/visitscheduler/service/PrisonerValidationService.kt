@@ -5,7 +5,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppli
 
 @Service
 class PrisonerValidationService(
-  private val prisonApiService: PrisonApiService
+  private val prisonerService: PrisonerService
 ) {
   companion object {
     const val PRISON_CODE_DEV_ERROR_MESSAGE = "Prisoner with ID - %s is not in prison - %s"
@@ -16,7 +16,7 @@ class PrisonerValidationService(
    * Gets the prisoners prison code from Prison API and checks against the passed prison code.
    */
   fun validatePrisonerIsFromPrison(prisonerId: String, prisonCode: String) {
-    val prisonerDetails = prisonApiService.getPrisonerFullStatus(prisonerId)
+    val prisonerDetails = prisonerService.getPrisonerFullStatus(prisonerId)
 
     if (prisonCode != prisonerDetails?.establishmentCode) {
       val message = PRISON_CODE_DEV_ERROR_MESSAGE.format(prisonerId, prisonCode)

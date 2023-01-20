@@ -27,7 +27,7 @@ class SessionService(
   private val sessionDatesUtil: SessionDatesUtil,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
-  private val prisonApiService: PrisonApiService,
+  private val prisonerService: PrisonerService,
   private val visitService: VisitService,
   @Value("\${policy.session.booking-notice-period.minimum-days:2}")
   private val policyNoticeDaysMin: Long,
@@ -150,9 +150,9 @@ class SessionService(
 
   private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?): List<SessionTemplate> {
     prisonerId?.let { prisonerIdVal ->
-      val prisonerDetailDto = prisonApiService.getPrisonerHousingLocation(prisonerIdVal)
+      val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerIdVal)
       prisonerDetailDto?.let { prisonerDetail ->
-        val prisonerLevels = prisonApiService.getLevelsMapForPrisoner(prisonerDetail)
+        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
         return sessionTemplates.filter { sessionTemplate ->
           sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
         }
@@ -191,7 +191,7 @@ class SessionService(
   }
 
   private fun getNoAssociationConflictSessions(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
-    val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
+    val offenderNonAssociationList = prisonerService.getOffenderNonAssociationList(prisonerId)
     return sessions.filter {
       sessionHasNonAssociation(it, offenderNonAssociationList)
     }

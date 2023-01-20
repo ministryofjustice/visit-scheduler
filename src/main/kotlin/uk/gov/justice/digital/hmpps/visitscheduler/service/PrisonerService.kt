@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
+import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
@@ -13,11 +14,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 
 @Service
-class PrisonApiService(
-  private val prisonApiClient: PrisonApiClient
+class PrisonerService(
+  private val prisonApiClient: PrisonApiClient,
+  private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+    private const val ENHANCED_INCENTIVE_PRIVILEGE = "ENH"
   }
 
   fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
@@ -79,5 +82,19 @@ class PrisonApiService(
 
   private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: Int): PrisonerHousingLevelDto? {
     return levels.stream().filter { level -> level.level == housingLevel }.findFirst().orElse(null)
+  }
+
+  fun hasPrisonerGotEnhancedPrivilege(prisonerId: String): Boolean {
+    try {
+      val prisonerIncentiveLevel = prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId)
+      return ENHANCED_INCENTIVE_PRIVILEGE == prisonerIncentiveLevel?.currentIncentive?.level?.code
+    } catch (e: WebClientResponseException) {
+      if (e.statusCode != HttpStatus.NOT_FOUND) {
+        LOG.error("Exception thrown on prisoner offender search call - /prisoner/$prisonerId", e)
+        throw e
+      }
+    }
+
+    return false
   }
 }
