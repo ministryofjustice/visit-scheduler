@@ -13,6 +13,7 @@ generic-service:
   env:
     HMPPS_AUTH_URL: https://sign-in.hmpps.service.justice.gov.uk/auth
     PRISON_API_URL: https://api.prison.service.justice.gov.uk
+    PRISONER_OFFENDER_SEARCH_URL: https://prisoner-offender-search.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     FEATURE_EVENTS_SNS_ENABLED: true
 

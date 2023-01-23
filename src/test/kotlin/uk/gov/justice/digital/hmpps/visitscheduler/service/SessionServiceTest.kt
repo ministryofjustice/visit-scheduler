@@ -9,6 +9,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
@@ -55,7 +56,7 @@ class SessionServiceTest {
 
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val visitRepository = mock<VisitRepository>()
-  private val prisonApiService = mock<PrisonApiService>()
+  private val prisonerService = mock<PrisonerService>()
   private val prisonerValidationService = mock<PrisonerValidationService>()
   private val visitService = mock<VisitService>()
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
@@ -69,12 +70,18 @@ class SessionServiceTest {
   private val noticeDaysMin = 1L
   private val noticeDaysMax = 100L
 
-  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>) {
+  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incEnhancedPrivilege: Boolean = true) {
+
+    whenever(
+      prisonerService.hasPrisonerGotEnhancedPrivilege(any())
+    ).thenReturn(incEnhancedPrivilege)
+
     whenever(
       sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
         prisonCode,
         date.plusDays(noticeDaysMin),
-        date.plusDays(noticeDaysMax)
+        date.plusDays(noticeDaysMax),
+        incEnhancedPrivilege
       )
     ).thenReturn(response)
   }
@@ -114,7 +121,7 @@ class SessionServiceTest {
         sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
-        prisonApiService,
+        prisonerService,
         visitService,
         policyNoticeDaysMin = noticeDaysMin,
         policyNoticeDaysMax = noticeDaysMax,
@@ -440,7 +447,7 @@ class SessionServiceTest {
         sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
-        prisonApiService,
+        prisonerService,
         visitService,
         policyNoticeDaysMin = noticeDaysMin,
         policyNoticeDaysMax = noticeDaysMax,
@@ -467,7 +474,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
 
       // When
@@ -478,7 +485,7 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -497,7 +504,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(
         OffenderNonAssociationDetailsDto(
           listOf(
@@ -520,7 +527,7 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, fridayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -540,7 +547,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(
         OffenderNonAssociationDetailsDto(
           listOf(
@@ -571,7 +578,7 @@ class SessionServiceTest {
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -589,7 +596,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
@@ -603,7 +610,7 @@ class SessionServiceTest {
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), SATURDAY)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.DOUBLE_BOOKED)
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -621,7 +628,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(emptyList())
 
       // When
@@ -632,7 +639,7 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -649,7 +656,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenThrow(
         WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
       )
@@ -660,7 +667,7 @@ class SessionServiceTest {
       }
 
       // Then
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -695,7 +702,7 @@ class SessionServiceTest {
         sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
-        prisonApiService,
+        prisonerService,
         visitService,
         policyNoticeDaysMin = noticeDaysMin,
         policyNoticeDaysMax = noticeDaysMax,
@@ -722,7 +729,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
 
       // When
@@ -732,7 +739,7 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -751,7 +758,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(
         OffenderNonAssociationDetailsDto(
           listOf(
@@ -771,7 +778,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -790,7 +797,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(
         OffenderNonAssociationDetailsDto(
           listOf(
@@ -810,7 +817,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -828,7 +835,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
@@ -838,7 +845,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
 
     @Test
@@ -864,7 +871,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(firstSession, secondSession))
 
       whenever(
-        prisonApiService.getOffenderNonAssociationList(prisonerId)
+        prisonerService.getOffenderNonAssociationList(prisonerId)
       ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
@@ -874,7 +881,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
-      Mockito.verify(prisonApiService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
     }
   }
 
