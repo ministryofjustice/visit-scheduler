@@ -12,7 +12,6 @@ TRUNCATE TABLE session_to_permitted_location RESTART IDENTITY CASCADE;
 TRUNCATE TABLE session_template  RESTART IDENTITY CASCADE;
 TRUNCATE TABLE permitted_session_location  RESTART IDENTITY CASCADE;
 
-
 -- Creating session template data
 CREATE TEMP TABLE tmp_session_template(
 		 id                serial        NOT NULL PRIMARY KEY,
