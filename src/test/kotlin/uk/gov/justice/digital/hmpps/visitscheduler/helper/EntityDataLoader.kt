@@ -215,6 +215,7 @@ class SessionTemplateEntityHelper(
     activePrison: Boolean = true,
     permittedSessionLocations: MutableList<PermittedSessionLocation>? = mutableListOf(),
     biWeekly: Boolean = false,
+    enhanced: Boolean = false
   ): SessionTemplate {
 
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
@@ -234,7 +235,8 @@ class SessionTemplateEntityHelper(
         endTime = endTime,
         dayOfWeek = dayOfWeek,
         permittedSessionLocations = permittedSessionLocations,
-        biWeekly = biWeekly
+        biWeekly = biWeekly,
+        enhanced = enhanced
       )
     )
   }

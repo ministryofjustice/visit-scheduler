@@ -89,7 +89,6 @@ class PrisonerService(
         throw e
       }
     }
-
     return false
   }
 }
