@@ -59,10 +59,13 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
     }
 
+    val inclEnhancedPrivilegeTemplates = prisonerId?.let { prisonerService.hasPrisonerGotEnhancedPrivilege(prisonerId) } ?: run { true }
+
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
       prisonCode = prisonCode,
       rangeStartDate = requestedBookableStartDate,
-      rangeEndDate = requestedBookableEndDate
+      rangeEndDate = requestedBookableEndDate,
+      inclEnhancedPrivilegeTemplates = inclEnhancedPrivilegeTemplates
     )
 
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)

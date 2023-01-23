@@ -66,8 +66,3 @@ hmpps.sqs:
   topics:
     domainevents:
       arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
-
-policy:
-  session:
-    booking-notice-period:
-      maximum-days: 28

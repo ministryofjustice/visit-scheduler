@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -67,17 +68,20 @@ abstract class IntegrationTestBase {
 
   companion object {
     internal val prisonApiMockServer = PrisonApiMockServer()
+    internal val prisonOffenderSearchMockServer = PrisonOffenderSearchMockServer()
 
     @BeforeAll
     @JvmStatic
     fun startMocks() {
       prisonApiMockServer.start()
+      prisonOffenderSearchMockServer.start()
     }
 
     @AfterAll
     @JvmStatic
     fun stopMocks() {
       prisonApiMockServer.stop()
+      prisonOffenderSearchMockServer.stop()
     }
 
     private val pgContainer = PostgresContainer.instance

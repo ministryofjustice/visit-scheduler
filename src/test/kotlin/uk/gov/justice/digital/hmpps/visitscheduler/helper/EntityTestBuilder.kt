@@ -22,6 +22,7 @@ fun sessionTemplate(
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
   biWeekly: Boolean = false,
+  enhanced: Boolean = true,
 ): SessionTemplate {
 
   val prison = Prison(id = 0, code = prisonCode, active = true)
@@ -40,6 +41,7 @@ fun sessionTemplate(
     endTime = endTime,
     dayOfWeek = dayOfWeek,
     permittedSessionGroups = permittedSessionGroups,
-    biWeekly = biWeekly
+    biWeekly = biWeekly,
+    enhanced = enhanced
   )
 }

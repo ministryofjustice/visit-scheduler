@@ -224,6 +224,7 @@ class SessionTemplateEntityHelper(
     activePrison: Boolean = true,
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
+    enhanced: Boolean = false
   ): SessionTemplate {
 
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
@@ -243,7 +244,8 @@ class SessionTemplateEntityHelper(
         endTime = endTime,
         dayOfWeek = dayOfWeek,
         permittedSessionGroups = permittedSessionGroups,
-        biWeekly = biWeekly
+        biWeekly = biWeekly,
+        enhanced = enhanced
       )
     )
   }
@@ -268,6 +270,8 @@ class DeleteEntityHelper(
     permittedSessionLocationRepository.flush()
     visitRepository.deleteAllInBatch()
     visitRepository.flush()
+    permittedSessionLocationRepository.deleteAll()
+    permittedSessionLocationRepository.flush()
     prisonRepository.deleteAll()
     prisonRepository.flush()
   }

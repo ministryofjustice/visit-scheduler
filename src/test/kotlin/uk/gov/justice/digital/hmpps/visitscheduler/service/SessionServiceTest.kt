@@ -9,6 +9,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
 import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
@@ -69,12 +70,18 @@ class SessionServiceTest {
   private val noticeDaysMin = 1L
   private val noticeDaysMax = 100L
 
-  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>) {
+  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incEnhancedPrivilege: Boolean = true) {
+
+    whenever(
+      prisonerService.hasPrisonerGotEnhancedPrivilege(any())
+    ).thenReturn(incEnhancedPrivilege)
+
     whenever(
       sessionTemplateRepository.findValidSessionTemplatesBy(
         prisonCode = prisonCode,
         rangeStartDate = date.plusDays(noticeDaysMin),
-        rangeEndDate = date.plusDays(noticeDaysMax)
+        rangeEndDate = date.plusDays(noticeDaysMax),
+        inclEnhancedPrivilegeTemplates = incEnhancedPrivilege
       )
     ).thenReturn(response)
   }

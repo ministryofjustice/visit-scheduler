@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,6 +35,11 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
   private val prison: Prison = Prison(code = "MDI", active = true)
 
+  @BeforeEach
+  internal fun setUpTests() {
+  }
+
+// PrisonOffenderSearchMockServer
   @Test
   fun `visit sessions are returned for a prison for a single schedule`() {
     // Given
@@ -57,6 +63,109 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val visitSessionResults = getResults(returnResult)
     Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+  }
+
+  @Test
+  fun `visit sessions are returned for enhanced prisoner a prison for a single schedule`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerIncentiveLevel(prisonerId, prisonCode, "ENH")
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = true
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+  }
+
+  @Test
+  fun `visit sessions are returned for a standard prisoner for a schedule that is not enhanced`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerIncentiveLevel(prisonerId, prisonCode, "STD")
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = false
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+  }
+
+  @Test
+  fun `no visit sessions are returned for a standard prisoner for a schedule that is enhanced`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerIncentiveLevel(prisonerId, prisonCode, "STD")
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = true
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
   }
 
   @Test
@@ -635,7 +744,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
@@ -944,6 +1053,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN
     )
 
+    prisonOffenderSearchMockServer.stubGetPrisonerIncentiveLevel(prisonerId, prison.code, "")
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationPrisonerId,

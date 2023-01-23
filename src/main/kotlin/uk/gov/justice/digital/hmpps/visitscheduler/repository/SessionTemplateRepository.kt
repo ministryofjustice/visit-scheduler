@@ -16,13 +16,15 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "where u.prison.code = :prisonCode " +
       "and (cast(:rangeEndDate as date) is null or u.validFromDate <= :rangeEndDate) " +
       "and (cast(:rangeStartDate as date) is null or (u.validToDate is null or u.validToDate >= :rangeStartDate)) " +
-      "and (:dayOfWeek is null or u.dayOfWeek = :dayOfWeek) "
+      "and (:dayOfWeek is null or u.dayOfWeek = :dayOfWeek) " +
+      "and (:inclEnhancedPrivilegeTemplates is null or :inclEnhancedPrivilegeTemplates = true or u.enhanced = false)"
   )
   fun findValidSessionTemplatesBy(
     @Param("prisonCode") prisonCode: String,
     @Param("rangeStartDate") rangeStartDate: LocalDate? = null,
     @Param("rangeEndDate") rangeEndDate: LocalDate? = null,
-    @Param("dayOfWeek") dayOfWeek: DayOfWeek? = null
+    @Param("dayOfWeek") dayOfWeek: DayOfWeek? = null,
+    @Param("inclEnhancedPrivilegeTemplates") inclEnhancedPrivilegeTemplates: Boolean? = null
   ): List<SessionTemplate>
 
   fun findByReference(sessionTemplateId: String): SessionTemplate?
