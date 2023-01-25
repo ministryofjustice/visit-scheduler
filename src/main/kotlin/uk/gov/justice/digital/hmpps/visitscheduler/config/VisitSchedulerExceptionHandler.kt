@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
@@ -116,6 +117,20 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
           userMessage = "Visit not found: ${e.cause?.message}",
+          developerMessage = e.message
+        )
+      )
+  }
+
+  @ExceptionHandler(CapacityNotFoundException::class)
+  fun handleCapacityNotFoundException(e: CapacityNotFoundException): ResponseEntity<ErrorResponse?>? {
+    log.debug("Capacity not found exception caught: {}", e.message)
+    return ResponseEntity
+      .status(HttpStatus.NOT_FOUND)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.NOT_FOUND,
+          userMessage = "Capacity not found",
           developerMessage = e.message
         )
       )

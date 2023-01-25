@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGener
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.DAY_OF_WEEK
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_TIME
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.ENHANCED
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.LOCATION_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.ROOM
@@ -37,7 +38,7 @@ private const val maxCapacity = 200
 class SessionTemplateSQLGenerator {
 
   private enum class SessionColumnNames {
-    PRISON, ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS;
+    PRISON, ROOM, TYPE, OPEN, CLOSED, ENHANCED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS;
   }
 
   private enum class SessionLocationColumnNames {
@@ -68,6 +69,7 @@ class SessionTemplateSQLGenerator {
     val type: VisitType,
     val open: Int,
     val closed: Int,
+    val enhanced: Boolean = false,
     val startTime: LocalTime,
     val endTime: LocalTime,
     val startDate: LocalDate,
@@ -82,6 +84,7 @@ class SessionTemplateSQLGenerator {
       type = VisitType.valueOf(sessionRecord.get(TYPE.name).uppercase()),
       open = Integer.parseInt(sessionRecord.get(OPEN.name)),
       closed = Integer.parseInt(sessionRecord.get(CLOSED.name)),
+      enhanced = sessionRecord.get(ENHANCED.name)?.uppercase().toBoolean(),
       startTime = LocalTime.parse(sessionRecord.get(START_TIME.name)),
       endTime = LocalTime.parse(sessionRecord.get(END_TIME.name)),
       startDate = LocalDate.parse(sessionRecord.get(START_DATE.name)),
@@ -186,6 +189,9 @@ class SessionTemplateSQLGenerator {
     val records: Iterable<CSVRecord> = CVS_FORMAT.parse(FileReader(csvFile))
     val prisonTemplateRecords = ArrayList<SessionTemplateColumns>()
     for (record in records) {
+      if (record.size() != SessionColumnNames.values().size) {
+        throw IllegalArgumentException("Some session columns are missing line number: ${record.recordNumber}, exspected ${SessionColumnNames.values().size} but got ${record.size()}")
+      }
       prisonTemplateRecords.add(SessionTemplateColumns(record))
     }
     return prisonTemplateRecords.toList()
@@ -197,6 +203,9 @@ class SessionTemplateSQLGenerator {
     val prisonTemplateRecords = ArrayList<SessionLocationColumns>()
 
     for (record in records) {
+      if (record.size() != SessionLocationColumnNames.values().size) {
+        throw IllegalArgumentException("Some location columns are missing line number: ${record.recordNumber}, exspected ${SessionLocationColumnNames.values().size} but got ${record.size()}")
+      }
       prisonTemplateRecords.add(SessionLocationColumns(record))
     }
 

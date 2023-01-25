@@ -93,7 +93,6 @@ class SessionServiceTest {
     whenever(
       visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
         sessionTemplate.prison.code,
-        sessionTemplate.visitRoom,
         startDateTime,
         endDateTime
       )
