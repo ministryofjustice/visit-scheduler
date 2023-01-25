@@ -253,7 +253,7 @@ class SessionService(
 
     val dayOfWeek = sessionDate.dayOfWeek
 
-    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
       prisonCode,
       sessionDate,
       sessionStartTime,
@@ -261,13 +261,22 @@ class SessionService(
       dayOfWeek
     )
 
+    sessionTemplates = filterSessionsTemplatesForDate(sessionDate, sessionTemplates)
+
     if (sessionTemplates.isEmpty()) {
       throw CapacityNotFoundException("Session capacity not found prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
     }
     if (sessionTemplates.size > 1) {
+
       throw java.lang.IllegalStateException("Session capacity has more than one session template prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
     }
 
     return SessionCapacityDto(sessionTemplates.get(0))
+  }
+
+  private fun filterSessionsTemplatesForDate(date: LocalDate, sessionTemplates: List<SessionTemplate>): List<SessionTemplate> {
+    return sessionTemplates.filter { sessionTemplate ->
+      sessionDatesUtil.isBiWeeklySessionActiveForDate(date, sessionTemplate)
+    }
   }
 }

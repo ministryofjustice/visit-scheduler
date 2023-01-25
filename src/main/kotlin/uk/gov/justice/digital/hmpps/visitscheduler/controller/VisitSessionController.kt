@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.dto.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.controller
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter

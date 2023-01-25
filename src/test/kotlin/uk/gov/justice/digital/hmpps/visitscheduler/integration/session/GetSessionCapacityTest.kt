@@ -7,8 +7,8 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_SESSION_CAPACITY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionCapacityDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.controller.GET_SESSION_CAPACITY
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDate
 import java.time.LocalTime
@@ -41,6 +41,43 @@ class GetSessionCapacityTest(@Autowired private val objectMapper: ObjectMapper) 
     val sessionCapacity = getResults(returnResult)
     Assertions.assertThat(sessionCapacity.closed).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionCapacity.open).isEqualTo(sessionTemplate.openCapacity)
+  }
+
+  @Test
+  fun `get session capacity for BI Weekly sessions`() {
+    // Given
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      openCapacity = 20,
+      closedCapacity = 0,
+      biWeekly = true
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay.plusWeeks(1),
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      openCapacity = 0,
+      closedCapacity = 10,
+      biWeekly = true
+    )
+
+    // When
+    val responseSpec = callGetSessionCapacity(sessionTemplate1.prison.code, sessionTemplate1.validFromDate, sessionTemplate1.startTime, sessionTemplate1.endTime)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionCapacity = getResults(returnResult)
+    Assertions.assertThat(sessionCapacity.closed).isEqualTo(sessionTemplate1.closedCapacity)
+    Assertions.assertThat(sessionCapacity.open).isEqualTo(sessionTemplate1.openCapacity)
   }
 
   @Test
