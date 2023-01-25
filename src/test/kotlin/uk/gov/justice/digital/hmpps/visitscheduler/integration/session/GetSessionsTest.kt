@@ -378,6 +378,57 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
+  fun `visit sessions book counts for over lapping sessions`() {
+
+    // Given
+    val nextAllowedDay = this.getNextAllowedDay()
+    val dateTime = nextAllowedDay.atTime(9, 0)
+    val startTime = dateTime.toLocalTime()
+    val endTime = dateTime.plusHours(1)
+    val endTimeOverlapping = dateTime.plusHours(2)
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = startTime,
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = startTime,
+      endTime = endTimeOverlapping.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
+    )
+
+    this.visitEntityHelper.create(
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitStatus = BOOKED
+    )
+    this.visitEntityHelper.create(
+      visitStart = dateTime,
+      visitEnd = endTimeOverlapping,
+      visitStatus = BOOKED
+    )
+
+    this.visitEntityHelper.create(
+      visitStart = dateTime,
+      visitEnd = endTimeOverlapping,
+      visitStatus = BOOKED,
+      visitRestriction = CLOSED
+    )
+
+    // When
+    val responseSpec = callGetSessions()
+
+    // Then
+    assertBookCounts(responseSpec, resultSize = 2, openCount = 2, closeCount = 1)
+  }
+
+  @Test
   fun `visit sessions include reserved and booked open visit count`() {
 
     // Given
