@@ -25,6 +25,14 @@ class SessionDatesUtil {
     return firstBookableSessionDay.datesUntil(lastBookableSessionDay.plusDays(1), Period.ofWeeks(1))
   }
 
+  fun isBiWeeklySessionActiveForDate(date: LocalDate, sessionTemplate: SessionTemplate): Boolean {
+    if (sessionTemplate.biWeekly) {
+      val validFromMonday = getValidFromMonday(sessionTemplate)
+      return !isBiWeeklySkipDate(validFromMonday, date)
+    }
+    return true
+  }
+
   private fun biWeeklyDates(
     firstBookableSessionDay: LocalDate,
     sessionTemplate: SessionTemplate,
@@ -35,7 +43,7 @@ class SessionDatesUtil {
     val validFromMonday = getValidFromMonday(sessionTemplate)
 
     var biWeeklyFirstBookableSessionDay = firstBookableSessionDay
-    if (isSkipWeek(validFromMonday, firstBookableSessionDay)) {
+    if (isBiWeeklySkipDate(validFromMonday, firstBookableSessionDay)) {
       biWeeklyFirstBookableSessionDay = firstBookableSessionDay.plusWeeks(1)
     }
     val adjustedLastBookableSessionDay = lastBookableSessionDay.plusDays(1)
@@ -55,7 +63,7 @@ class SessionDatesUtil {
     return sessionTemplate.validFromDate
   }
 
-  fun isSkipWeek(
+  fun isBiWeeklySkipDate(
     validFromDate: LocalDate,
     firstBookableSessionDay: LocalDate
   ) = WEEKS.between(validFromDate, firstBookableSessionDay).toInt() % 2 != 0
