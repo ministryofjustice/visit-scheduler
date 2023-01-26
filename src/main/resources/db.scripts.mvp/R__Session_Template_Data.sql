@@ -12,6 +12,7 @@ BEGIN;
     TRUNCATE TABLE session_template  RESTART IDENTITY CASCADE;
     TRUNCATE TABLE permitted_session_location  RESTART IDENTITY CASCADE;
 
+
     -- Creating session template data
     CREATE TEMP TABLE tmp_session_template(
              id                serial        NOT NULL PRIMARY KEY,
@@ -122,9 +123,8 @@ BEGIN;
         (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'TUESDAY',false),
         (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'TUESDAY',false),
         (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'15:30','16:30','2023-01-23',NULL,'TUESDAY',false),
-        (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:30','11:30','2023-01-23',NULL,'WEDNESDAY',false),
-        (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'WEDNESDAY',false),
-        (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'15:30','16:30','2023-01-23',NULL,'WEDNESDAY',false),
+        (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'WEDNESDAY',false),
+        (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'WEDNESDAY',false),
         (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'THURSDAY',false),
         (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'THURSDAY',false),
         (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'THURSDAY',false),
@@ -156,7 +156,7 @@ BEGIN;
 
     INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,enhanced,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly)
     SELECT id,visit_room,visit_type,open_capacity,closed_capacity,enhanced,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly FROM tmp_session_template order by id;
-    ALTER SEQUENCE session_template_id_seq RESTART WITH  117;
+    ALTER SEQUENCE session_template_id_seq RESTART WITH  116;
 
 
     -- Create permitted session location data

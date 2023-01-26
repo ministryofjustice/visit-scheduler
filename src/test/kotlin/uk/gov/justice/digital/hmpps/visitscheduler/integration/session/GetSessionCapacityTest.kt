@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_SESSION_CAPACITY
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDate
 import java.time.LocalTime
