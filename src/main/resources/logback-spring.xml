@@ -25,36 +25,11 @@
         <appender name="logAppender" class="com.microsoft.applicationinsights.logback.ApplicationInsightsAppender"/>
     </springProfile>
 
-    <logger name="uk.gov.justice.digital.hmpps.visitscheduler.VisitSchedulerApplicationKt" additivity="false"
-            level="DEBUG">
+
+
+    <root level="DEBUG">
         <appender-ref ref="logAppender"/>
         <appender-ref ref="consoleAppender"/>
-    </logger>
-
-    <logger name="uk.gov.justice.digital.hmpps" additivity="false" level="DEBUG">
-        <appender-ref ref="logAppender"/>
-    </logger>
-
-    <logger name="org.springframework" additivity="false" level="INFO">
-        <appender-ref ref="logAppender"/>
-    </logger>
-
-    <logger name="com.microsoft.applicationinsights" additivity="false" level="INFO">
-        <appender-ref ref="logAppender"/>
-    </logger>
-
-    <logger name="org.apache.catalina" additivity="false" level="INFO">
-        <appender-ref ref="logAppender"/>
-        <appender-ref ref="consoleAppender"/>
-    </logger>
-
-    <logger name="org.springframework.boot" additivity="false" level="INFO">
-        <appender-ref ref="logAppender"/>
-        <appender-ref ref="consoleAppender"/>
-    </logger>
-
-    <root level="INFO">
-        <appender-ref ref="logAppender"/>
     </root>
 
 </configuration>

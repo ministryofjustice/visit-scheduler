@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateLocationGroupDto
@@ -64,6 +66,41 @@ class LocationGroupAdminController(
     ) prisonCode: String,
   ): List<SessionLocationGroupDto> {
     return sessionTemplateService.getSessionLocationGroup(prisonCode)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Get location group",
+    description = "Get location group by reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Location groups returned for given prison"
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to view session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Location group not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+    ]
+  )
+  fun getLocationGroup(
+    @Schema(description = "reference", example = "afe~dcb~fc", required = true)
+    @PathVariable reference: String
+  ): SessionLocationGroupDto {
+    return sessionTemplateService.getSessionLocationGroupByReference(reference)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

@@ -30,7 +30,7 @@ class SessionTemplate(
   val prison: Prison,
 
   @Column(nullable = false)
-  val name: String,
+  var name: String,
 
   @Column(nullable = false)
   val visitRoom: String,

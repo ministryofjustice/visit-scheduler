@@ -46,7 +46,7 @@ DROP TABLE session_to_permitted_location;
 
 ALTER TABLE session_template ADD create_timestamp timestamp;
 ALTER TABLE session_template ADD modify_timestamp timestamp;
-ALTER TABLE session_template ADD name varchar(100) ;
+ALTER TABLE session_template ADD name varchar(100);
 ALTER TABLE session_template ADD reference text UNIQUE ;
 
 

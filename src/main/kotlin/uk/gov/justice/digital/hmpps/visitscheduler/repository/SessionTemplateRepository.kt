@@ -45,5 +45,5 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("dayOfWeek") dayOfWeek: DayOfWeek
   ): List<SessionTemplate>
 
-  fun findByReference(sessionTemplateId: String): SessionTemplate?
+  fun findByReference(reference: String): SessionTemplate?
 }

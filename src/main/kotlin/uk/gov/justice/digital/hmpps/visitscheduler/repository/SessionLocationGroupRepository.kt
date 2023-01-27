@@ -17,5 +17,5 @@ interface SessionLocationGroupRepository : JpaRepository<SessionLocationGroup, L
     @Param("prisonCode") prisonCode: String,
   ): List<SessionLocationGroup>
 
-  fun findByReference(reference: String): SessionLocationGroup
+  fun findByReference(reference: String): SessionLocationGroup?
 }

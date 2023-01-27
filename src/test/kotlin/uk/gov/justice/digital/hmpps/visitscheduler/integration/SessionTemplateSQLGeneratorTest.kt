@@ -8,7 +8,7 @@ import org.mockito.Mockito
 import org.mockito.Mockito.mock
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumns
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.LocationGroupsColumns
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationItem
 import java.io.File
 import java.time.DayOfWeek
@@ -33,7 +33,7 @@ class SessionTemplateSQLGeneratorTest() {
     // Then
     assertThat(sessionRecords.size).isEqualTo(4)
     with(sessionRecords[0]) {
-      assertThat(prison).isEqualTo("BL1")
+      assertThat(prisonCode).isEqualTo("BL1")
       assertThat(room).isEqualTo("Room 1")
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(open).isEqualTo(10)
@@ -48,7 +48,7 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(locationKeys).isEqualTo("BLI_G1")
     }
     with(sessionRecords[1]) {
-      assertThat(prison).isEqualTo("BL2")
+      assertThat(prisonCode).isEqualTo("BL2")
       assertThat(room).isEqualTo("Room 2")
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(open).isEqualTo(20)
@@ -74,7 +74,9 @@ class SessionTemplateSQLGeneratorTest() {
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
 
     // When
-    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(sessionLocationDataFile)
+
+    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionLocationColumns(sessionLocationDataFile)
+    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(prisonTemplateRecords)
 
     // Then
     assertThat(sessionLocationItems.size).isEqualTo(12)
@@ -102,7 +104,8 @@ class SessionTemplateSQLGeneratorTest() {
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
 
     // When
-    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(sessionLocationDataFile)
+    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionLocationColumns(sessionLocationDataFile)
+    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(prisonTemplateRecords)
 
     // Then
     assertThat(sessionLocationItems.size).isEqualTo(1)
@@ -123,7 +126,7 @@ class SessionTemplateSQLGeneratorTest() {
     // Then
     assertThat(sessionRecords.size).isEqualTo(1)
     with(sessionRecords[0]) {
-      assertThat(prison).isEqualTo("BL1")
+      assertThat(prisonCode).isEqualTo("BL1")
       assertThat(room).isEqualTo("room 1")
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(enhanced).isFalse()
@@ -138,13 +141,13 @@ class SessionTemplateSQLGeneratorTest() {
 
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+    val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
-    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf())
-    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
-    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
-    sessionLocationList.add(sessionLocationColumns)
+    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
+    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf())
+    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
+    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
@@ -160,14 +163,14 @@ class SessionTemplateSQLGeneratorTest() {
 
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+    val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
-    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one", "one"))
-    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf("child"))
-    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
-    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
-    sessionLocationList.add(sessionLocationColumns)
+    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
+    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one", "one"))
+    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf("child"))
+    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
+    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
@@ -183,15 +186,15 @@ class SessionTemplateSQLGeneratorTest() {
 
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+    val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
-    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one"))
-    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf("two", "two"))
-    Mockito.`when`(sessionLocationColumns.levelThree).thenReturn(listOf("three"))
-    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
-    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
-    sessionLocationList.add(sessionLocationColumns)
+    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
+    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one"))
+    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf("two", "two"))
+    Mockito.`when`(locationGroupsColumns.levelThree).thenReturn(listOf("three"))
+    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
+    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
@@ -207,16 +210,16 @@ class SessionTemplateSQLGeneratorTest() {
 
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+    val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
-    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one"))
-    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf("two"))
-    Mockito.`when`(sessionLocationColumns.levelThree).thenReturn(listOf("three", "three"))
-    Mockito.`when`(sessionLocationColumns.levelFour).thenReturn(listOf("four"))
-    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
-    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
-    sessionLocationList.add(sessionLocationColumns)
+    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
+    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one"))
+    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf("two"))
+    Mockito.`when`(locationGroupsColumns.levelThree).thenReturn(listOf("three", "three"))
+    Mockito.`when`(locationGroupsColumns.levelFour).thenReturn(listOf("four"))
+    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
+    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
@@ -232,15 +235,15 @@ class SessionTemplateSQLGeneratorTest() {
 
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+    val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
-    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one"))
-    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf())
-    Mockito.`when`(sessionLocationColumns.levelThree).thenReturn(listOf("three"))
-    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
-    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
-    sessionLocationList.add(sessionLocationColumns)
+    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
+    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one"))
+    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf())
+    Mockito.`when`(locationGroupsColumns.levelThree).thenReturn(listOf("three"))
+    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
+    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
@@ -256,16 +259,16 @@ class SessionTemplateSQLGeneratorTest() {
 
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-    val sessionLocationList = mutableListOf<SessionLocationColumns>()
+    val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val sessionLocationColumns = mock(SessionLocationColumns::class.java)
-    Mockito.`when`(sessionLocationColumns.levelOne).thenReturn(listOf("one"))
-    Mockito.`when`(sessionLocationColumns.levelTwo).thenReturn(listOf("two"))
-    Mockito.`when`(sessionLocationColumns.levelThree).thenReturn(listOf())
-    Mockito.`when`(sessionLocationColumns.levelFour).thenReturn(listOf("four"))
-    Mockito.`when`(sessionLocationColumns.prison).thenReturn("prison1")
-    Mockito.`when`(sessionLocationColumns.key).thenReturn("key1")
-    sessionLocationList.add(sessionLocationColumns)
+    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
+    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one"))
+    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf("two"))
+    Mockito.`when`(locationGroupsColumns.levelThree).thenReturn(listOf())
+    Mockito.`when`(locationGroupsColumns.levelFour).thenReturn(listOf("four"))
+    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
+    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {

@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -44,14 +45,27 @@ class SessionTemplateService(
   }
 
   fun getSessionTemplates(reference: String): SessionTemplateDto {
-    val sessionTemplate = sessionTemplateRepository.findByReference(reference)
-      ?: TemplateNotFoundException("Template id $reference not found")
+    return SessionTemplateDto(getSessionTemplate(reference))
+  }
 
-    return SessionTemplateDto(sessionTemplate as SessionTemplate)
+  fun getSessionLocationGroupByReference(reference: String): SessionLocationGroupDto {
+    return SessionLocationGroupDto(getLocationGroupByReference(reference))
   }
 
   fun getSessionLocationGroup(prisonId: String): List<SessionLocationGroupDto> {
     return sessionLocationGroupRepository.findByPrisonCode(prisonId).map { SessionLocationGroupDto(it) }
+  }
+
+  private fun getLocationGroupByReference(reference: String): SessionLocationGroup {
+    val sessionLocationGroup = sessionLocationGroupRepository.findByReference(reference)
+      ?: NotFoundException("SessionLocationGroup reference $reference not found")
+    return sessionLocationGroup as SessionLocationGroup
+  }
+
+  private fun getSessionTemplate(reference: String): SessionTemplate {
+    val sessionTemplate = sessionTemplateRepository.findByReference(reference)
+      ?: TemplateNotFoundException("Template id $reference not found")
+    return sessionTemplate as SessionTemplate
   }
 
   fun createSessionLocationGroup(createLocationSessionGroup: CreateLocationGroupDto): SessionLocationGroupDto {
@@ -81,7 +95,7 @@ class SessionTemplateService(
   }
 
   fun updateSessionLocationGroup(reference: String, updateLocationSessionGroup: UpdateLocationGroupDto): SessionLocationGroupDto {
-    val sessionLocationGroup = sessionLocationGroupRepository.findByReference(reference)
+    val sessionLocationGroup = getLocationGroupByReference(reference)
     sessionLocationGroup.name = updateLocationSessionGroup.name
     sessionLocationGroup.sessionLocations.clear()
     val sessionLocations = updateLocationSessionGroup.locations.map {
