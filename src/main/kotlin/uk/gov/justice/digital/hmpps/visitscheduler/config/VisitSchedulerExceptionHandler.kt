@@ -15,7 +15,6 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.NotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
@@ -151,20 +150,6 @@ class VisitSchedulerExceptionHandler(
       )
   }
 
-  @ExceptionHandler(NotFoundException::class)
-  fun handleNotFoundException(e: NotFoundException): ResponseEntity<ErrorResponse?>? {
-    log.debug("Not found exception caught: {}", e.message)
-    return ResponseEntity
-      .status(HttpStatus.NOT_FOUND)
-      .body(
-        ErrorResponse(
-          status = HttpStatus.NOT_FOUND,
-          userMessage = "Not found: ${e.cause?.message}",
-          developerMessage = e.message
-        )
-      )
-  }
-
   @ExceptionHandler(SupportNotFoundException::class)
   fun handleSupportNotFoundException(e: SupportNotFoundException): ResponseEntity<ErrorResponse?>? {
     log.debug("Support not found exception caught: {}", e.message)
@@ -189,6 +174,20 @@ class VisitSchedulerExceptionHandler(
     )
     sendErrorTelemetry(TelemetryVisitEvents.PUBLISH_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
+  }
+
+  @ExceptionHandler(uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException::class)
+  fun handleNotFoundException(e: uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException): ResponseEntity<ErrorResponse?>? {
+    log.debug("Not found exception caught: {}", e.message)
+    return ResponseEntity
+      .status(HttpStatus.NOT_FOUND)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.NOT_FOUND,
+          userMessage = "Not found: ${e.cause?.message}",
+          developerMessage = e.message
+        )
+      )
   }
 
   @ExceptionHandler(java.lang.Exception::class)

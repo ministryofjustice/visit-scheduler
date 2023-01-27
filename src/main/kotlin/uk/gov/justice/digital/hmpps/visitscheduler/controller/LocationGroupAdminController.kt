@@ -93,7 +93,7 @@ class LocationGroupAdminController(
         responseCode = "404",
         description = "Location group not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      ),
+      )
     ]
   )
   fun getLocationGroup(
@@ -165,6 +165,11 @@ class LocationGroupAdminController(
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to update location group",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Location group not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       )
     ]

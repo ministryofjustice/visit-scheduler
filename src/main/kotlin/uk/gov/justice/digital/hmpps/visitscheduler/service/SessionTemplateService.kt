@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.NotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -58,7 +58,7 @@ class SessionTemplateService(
 
   private fun getLocationGroupByReference(reference: String): SessionLocationGroup {
     val sessionLocationGroup = sessionLocationGroupRepository.findByReference(reference)
-      ?: NotFoundException("SessionLocationGroup reference $reference not found")
+      ?: ItemNotFoundException("SessionLocationGroup reference $reference not found")
     return sessionLocationGroup as SessionLocationGroup
   }
 
