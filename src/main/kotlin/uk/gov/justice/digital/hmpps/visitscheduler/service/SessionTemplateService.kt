@@ -58,14 +58,14 @@ class SessionTemplateService(
 
   private fun getLocationGroupByReference(reference: String): SessionLocationGroup {
     val sessionLocationGroup = sessionLocationGroupRepository.findByReference(reference)
-      ?: ItemNotFoundException("SessionLocationGroup reference $reference not found")
-    return sessionLocationGroup as SessionLocationGroup
+      ?: throw ItemNotFoundException("SessionLocationGroup reference:$reference not found")
+    return sessionLocationGroup
   }
 
   private fun getSessionTemplate(reference: String): SessionTemplate {
     val sessionTemplate = sessionTemplateRepository.findByReference(reference)
-      ?: TemplateNotFoundException("Template id $reference not found")
-    return sessionTemplate as SessionTemplate
+      ?: throw TemplateNotFoundException("Template reference:$reference not found")
+    return sessionTemplate
   }
 
   fun createSessionLocationGroup(createLocationSessionGroup: CreateLocationGroupDto): SessionLocationGroupDto {
