@@ -117,7 +117,7 @@ class SessionTemplateSQLGenerator {
       levelTwo = toList(sessionRecord.get(LEVEL_TWO.name)),
       levelThree = toList(sessionRecord.get(LEVEL_THREE.name)),
       levelFour = toList(sessionRecord.get(LEVEL_FOUR.name)),
-      name = sessionRecord.get(NAME.name)
+      name = sessionRecord.get(NAME.name).uppercase()
     )
   }
 
@@ -216,7 +216,7 @@ class SessionTemplateSQLGenerator {
 
     for (record in records) {
       if (record.size() != SessionLocationColumnNames.values().size) {
-        throw IllegalArgumentException("Some location columns are missing line number: ${record.recordNumber}, exspected ${SessionLocationColumnNames.values().size} but got ${record.size()}")
+        throw IllegalArgumentException("Some location columns are missing ${csvFile.name} line number: ${record.recordNumber}, exspected ${SessionLocationColumnNames.values().size} but got ${record.size()}")
       }
       prisonTemplateRecords.add(LocationGroupsColumns(record))
     }
