@@ -207,7 +207,7 @@ class SessionDatesUtilTest {
     val firstBookableSessionDay = validFromDate
 
     // When
-    val skip = toTest.isSkipWeek(validFromDate, firstBookableSessionDay)
+    val skip = toTest.isBiWeeklySkipDate(validFromDate, firstBookableSessionDay)
 
     // Then
     assertThat(skip).isFalse
@@ -220,7 +220,7 @@ class SessionDatesUtilTest {
     val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(SUNDAY))
 
     // When
-    val skip = toTest.isSkipWeek(validFromDate, firstBookableSessionDay)
+    val skip = toTest.isBiWeeklySkipDate(validFromDate, firstBookableSessionDay)
 
     // Then
     assertThat(skip).isFalse
@@ -233,7 +233,7 @@ class SessionDatesUtilTest {
     val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(MONDAY))
 
     // When
-    val skip = toTest.isSkipWeek(validFromDate, firstBookableSessionDay)
+    val skip = toTest.isBiWeeklySkipDate(validFromDate, firstBookableSessionDay)
 
     // Then
     assertThat(skip).isTrue
@@ -246,7 +246,7 @@ class SessionDatesUtilTest {
     val firstBookableSessionDay = validFromDate.plusWeeks(1).with(TemporalAdjusters.next(SUNDAY))
 
     // When
-    val skip = toTest.isSkipWeek(validFromDate, firstBookableSessionDay)
+    val skip = toTest.isBiWeeklySkipDate(validFromDate, firstBookableSessionDay)
 
     // Then
     assertThat(skip).isTrue

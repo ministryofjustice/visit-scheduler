@@ -92,6 +92,11 @@ prison:
   api:
     timeout: 10s
 
+prisoner:
+  offender:
+    search:
+      timeout: 10s
+
 policy:
   session:
     non-association:
@@ -101,7 +106,7 @@ policy:
       filter: false
     booking-notice-period:
       minimum-days: 2
-      maximum-days: ${BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS}
+      maximum-days: ${BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS:#{28}}
 
 task:
   expired-visit:

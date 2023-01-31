@@ -3,8 +3,10 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
@@ -27,7 +29,7 @@ class SessionService(
   private val sessionDatesUtil: SessionDatesUtil,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
-  private val prisonApiService: PrisonApiService,
+  private val prisonerService: PrisonerService,
   private val visitService: VisitService,
   @Value("\${policy.session.booking-notice-period.minimum-days:2}")
   private val policyNoticeDaysMin: Long,
@@ -59,10 +61,13 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
     }
 
+    val inclEnhancedPrivilegeTemplates = prisonerId?.let { prisonerService.hasPrisonerGotEnhancedPrivilege(prisonerId) } ?: run { true }
+
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
       prisonCode,
       requestedBookableStartDate,
-      requestedBookableEndDate
+      requestedBookableEndDate,
+      inclEnhancedPrivilegeTemplates
     )
 
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)
@@ -147,9 +152,9 @@ class SessionService(
 
   private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?): List<SessionTemplate> {
     prisonerId?.let { prisonerIdVal ->
-      val prisonerDetailDto = prisonApiService.getPrisonerHousingLocation(prisonerIdVal)
+      val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerIdVal)
       prisonerDetailDto?.let { prisonerDetail ->
-        val prisonerLevels = prisonApiService.getLevelsMapForPrisoner(prisonerDetail)
+        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
         return sessionTemplates.filter { sessionTemplate ->
           sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
         }
@@ -188,7 +193,7 @@ class SessionService(
   }
 
   private fun getNoAssociationConflictSessions(sessions: List<VisitSessionDto>, prisonerId: String): List<VisitSessionDto> {
-    val offenderNonAssociationList = prisonApiService.getOffenderNonAssociationList(prisonerId)
+    val offenderNonAssociationList = prisonerService.getOffenderNonAssociationList(prisonerId)
     return sessions.filter {
       sessionHasNonAssociation(it, offenderNonAssociationList)
     }
@@ -225,7 +230,6 @@ class SessionService(
 
     val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
       prisonCode = session.prisonCode,
-      visitRoom = session.visitRoomName,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp,
       expiredDateAndTime = visitService.getReservedExpiredDateAndTime()
@@ -233,7 +237,6 @@ class SessionService(
 
     val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
       prisonCode = session.prisonCode,
-      visitRoom = session.visitRoomName,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp
     )
@@ -243,4 +246,35 @@ class SessionService(
 
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
+
+  fun getSessionCapacity(prisonCode: String, sessionDate: LocalDate, sessionStartTime: LocalTime, sessionEndTime: LocalTime): SessionCapacityDto {
+
+    val dayOfWeek = sessionDate.dayOfWeek
+
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
+      prisonCode,
+      sessionDate,
+      sessionStartTime,
+      sessionEndTime,
+      dayOfWeek
+    )
+
+    sessionTemplates = filterSessionsTemplatesForDate(sessionDate, sessionTemplates)
+
+    if (sessionTemplates.isEmpty()) {
+      throw CapacityNotFoundException("Session capacity not found prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
+    }
+    if (sessionTemplates.size > 1) {
+
+      throw java.lang.IllegalStateException("Session capacity has more than one session template prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
+    }
+
+    return SessionCapacityDto(sessionTemplates.get(0))
+  }
+
+  private fun filterSessionsTemplatesForDate(date: LocalDate, sessionTemplates: List<SessionTemplate>): List<SessionTemplate> {
+    return sessionTemplates.filter { sessionTemplate ->
+      sessionDatesUtil.isBiWeeklySessionActiveForDate(date, sessionTemplate)
+    }
+  }
 }

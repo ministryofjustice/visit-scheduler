@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -34,6 +35,11 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
   private val prison: Prison = Prison(code = "MDI", active = true)
 
+  @BeforeEach
+  internal fun setUpTests() {
+  }
+
+// PrisonOffenderSearchMockServer
   @Test
   fun `visit sessions are returned for a prison for a single schedule`() {
     // Given
@@ -57,6 +63,109 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     val visitSessionResults = getResults(returnResult)
     Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+  }
+
+  @Test
+  fun `visit sessions are returned for enhanced prisoner a prison for a single schedule`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerIncentiveLevel(prisonerId, prisonCode, "ENH")
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = true
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+  }
+
+  @Test
+  fun `visit sessions are returned for a standard prisoner for a schedule that is not enhanced`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerIncentiveLevel(prisonerId, prisonCode, "STD")
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = false
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+  }
+
+  @Test
+  fun `no visit sessions are returned for a standard prisoner for a schedule that is enhanced`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerIncentiveLevel(prisonerId, prisonCode, "STD")
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = true
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
   }
 
   @Test
@@ -269,6 +378,57 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
+  fun `visit sessions book counts for over lapping sessions`() {
+
+    // Given
+    val nextAllowedDay = this.getNextAllowedDay()
+    val dateTime = nextAllowedDay.atTime(9, 0)
+    val startTime = dateTime.toLocalTime()
+    val endTime = dateTime.plusHours(1)
+    val endTimeOverlapping = dateTime.plusHours(2)
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = startTime,
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = startTime,
+      endTime = endTimeOverlapping.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek
+    )
+
+    this.visitEntityHelper.create(
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitStatus = BOOKED
+    )
+    this.visitEntityHelper.create(
+      visitStart = dateTime,
+      visitEnd = endTimeOverlapping,
+      visitStatus = BOOKED
+    )
+
+    this.visitEntityHelper.create(
+      visitStart = dateTime,
+      visitEnd = endTimeOverlapping,
+      visitStatus = BOOKED,
+      visitRestriction = CLOSED
+    )
+
+    // When
+    val responseSpec = callGetSessions()
+
+    // Then
+    assertBookCounts(responseSpec, resultSize = 2, openCount = 2, closeCount = 1)
+  }
+
+  @Test
   fun `visit sessions include reserved and booked open visit count`() {
 
     // Given
@@ -326,90 +486,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   }
 
   @Test
-  fun `visit sessions closed and booked counts exclude visits that have a different room name from the session`() {
-
-    // Given
-    val nextAllowedDay = this.getNextAllowedDay()
-    val dateTime = nextAllowedDay.atTime(14, 0)
-    val startTime = dateTime.toLocalTime()
-    val endTime = dateTime.plusHours(1)
-
-    val sessionTemplate1 = sessionTemplateEntityHelper.create(
-      validFromDate = nextAllowedDay,
-      validToDate = nextAllowedDay,
-      startTime = startTime,
-      endTime = endTime.toLocalTime(),
-      dayOfWeek = nextAllowedDay.dayOfWeek
-    )
-
-    this.visitEntityHelper.create(
-      prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = "I dont know what I am!",
-      visitStart = dateTime,
-      visitEnd = endTime,
-      visitType = SOCIAL,
-      visitStatus = BOOKED,
-      visitRestriction = OPEN
-    )
-
-    this.visitEntityHelper.create(
-      prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = "I dont know what I am!",
-      visitStart = dateTime,
-      visitEnd = endTime,
-      visitType = SOCIAL,
-      visitStatus = BOOKED,
-      visitRestriction = CLOSED
-    )
-
-    val startTime2 = endTime.plusHours(30)
-    val endTime2 = startTime2.plusHours(1)
-
-    val sessionTemplate2 = sessionTemplateEntityHelper.create(
-      validFromDate = nextAllowedDay,
-      validToDate = nextAllowedDay,
-      startTime = startTime2.toLocalTime(),
-      endTime = endTime2.toLocalTime(),
-      dayOfWeek = nextAllowedDay.dayOfWeek
-    )
-
-    this.visitEntityHelper.create(
-      prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = "I dont know what I am!",
-      visitStart = startTime2,
-      visitEnd = endTime2,
-      visitType = SOCIAL,
-      visitStatus = BOOKED,
-      visitRestriction = OPEN
-    )
-
-    this.visitEntityHelper.create(
-      prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = "I dont know what I am!",
-      visitStart = startTime2,
-      visitEnd = endTime2,
-      visitType = SOCIAL,
-      visitStatus = BOOKED,
-      visitRestriction = CLOSED
-    )
-
-    // When
-    val responseSpec = callGetSessions(2, 40)
-
-    // Then
-    val visitSessionResults = getResults(responseSpec.expectBody())
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
-    Assertions.assertThat(visitSessionResults[0].openVisitBookedCount).isEqualTo(0)
-    Assertions.assertThat(visitSessionResults[0].closedVisitBookedCount).isEqualTo(0)
-    Assertions.assertThat(visitSessionResults[1].openVisitBookedCount).isEqualTo(0)
-    Assertions.assertThat(visitSessionResults[1].closedVisitBookedCount).isEqualTo(0)
-  }
-
-  @Test
   fun `visit sessions exclude visits with changing status in visit count`() {
 
     // Given
@@ -453,52 +529,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     // Then
     assertBookCounts(responseSpec, openCount = 0, closeCount = 0)
-  }
-
-  @Test
-  fun `visit sessions include visit count one matching room name`() {
-
-    // Given
-    val nextAllowedDay = this.getNextAllowedDay()
-    val dateTime = nextAllowedDay.atTime(9, 0)
-    val startTime = dateTime.toLocalTime()
-    val endTime = dateTime.plusHours(1)
-
-    val sessionTemplate = sessionTemplateEntityHelper.create(
-      validFromDate = nextAllowedDay,
-      validToDate = nextAllowedDay,
-      startTime = startTime,
-      endTime = endTime.toLocalTime(),
-      dayOfWeek = nextAllowedDay.dayOfWeek
-    )
-
-    this.visitEntityHelper.create(
-      prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = endTime,
-      visitType = SOCIAL,
-      visitStatus = BOOKED,
-      visitRestriction = OPEN
-    )
-
-    this.visitEntityHelper.create(
-      prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom + "Anythingwilldo",
-      visitStart = dateTime,
-      visitEnd = endTime,
-      visitType = SOCIAL,
-      visitStatus = BOOKED,
-      visitRestriction = OPEN
-    )
-
-    // When
-    val responseSpec = callGetSessions()
-
-    // Then
-    assertBookCounts(responseSpec, openCount = 1, closeCount = 0)
   }
 
   @Test
@@ -634,7 +664,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
@@ -943,6 +973,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       visitRestriction = OPEN
     )
 
+    prisonOffenderSearchMockServer.stubGetPrisonerIncentiveLevel(prisonerId, prison.code, "")
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationPrisonerId,

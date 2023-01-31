@@ -37,6 +37,9 @@ class SessionTemplate(
   @Column(nullable = false)
   val visitRoom: String,
 
+  @Column(nullable = false)
+  val enhanced: Boolean = false,
+
   @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
   @JoinTable(
     name = "SESSION_TO_PERMITTED_LOCATION",
