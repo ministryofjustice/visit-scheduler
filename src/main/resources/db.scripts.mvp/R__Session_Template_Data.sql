@@ -105,20 +105,21 @@ BEGIN;
 			('BLI_G1','BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-09',NULL,'SATURDAY',true,'SATURDAY, 2023-01-09, 15:30'),
 			('BLI_G1','BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-09',NULL,'SUNDAY',true,'SUNDAY, 2023-01-09, 14:00'),
 			('BLI_G1','BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-09',NULL,'SUNDAY',true,'SUNDAY, 2023-01-09, 15:30'),
-			(NULL,'CFI','Visits Main Hall','SOCIAL',35,0,false,'13:45','15:45','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 13:45'),
-			(NULL,'CFI','Visits Main Hall','SOCIAL',35,0,false,'13:45','15:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 13:45'),
+			(NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 13:45'),
+			(NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 13:45'),
 			(NULL,'CFI','Visits Main Hall','SOCIAL',0,2,false,'13:45','14:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 13:45'),
 			(NULL,'CFI','Visits Main Hall','SOCIAL',15,0,true,'18:00','18:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 18:00'),
-			(NULL,'CFI','Visits Main Hall','SOCIAL',35,0,false,'13:45','15:45','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 13:45'),
+			(NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 13:45'),
 			(NULL,'CFI','Visits Main Hall','SOCIAL',0,2,false,'13:45','14:45','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 13:45'),
-			(NULL,'CFI','Visits Main Hall','SOCIAL',35,0,false,'13:45','15:45','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 13:45'),
+			(NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 13:45'),
 			(NULL,'CFI','Visits Main Hall','SOCIAL',0,2,false,'13:45','14:45','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 13:45'),
-			(NULL,'CFI','Visits Main Hall','SOCIAL',35,0,false,'13:45','15:45','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 13:45'),
+			(NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 13:45'),
 			(NULL,'CFI','Visits Main Hall','SOCIAL',0,2,false,'13:45','14:45','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 13:45'),
-			(NULL,'CFI','Visits Main Hall','SOCIAL',35,0,false,'09:30','11:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 09:30'),
-			(NULL,'CFI','Visits Main Hall','SOCIAL',35,0,false,'13:45','15:45','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 13:45'),
-			(NULL,'CFI','Visits Main Hall','SOCIAL',35,0,false,'13:45','15:45','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 13:45'),
-			(NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:30','11:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 09:30'),
+			(NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'09:30','11:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 09:30'),
+			(NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 13:45'),
+			(NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 13:45'),
+			(NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 09:00'),
+			(NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 10:30'),
 			(NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 13:30'),
 			(NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'15:30','16:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 15:30'),
 			(NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 09:00'),
@@ -161,9 +162,9 @@ BEGIN;
 	SELECT id,REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{3})(?!$)', '\1.','g') as reference,visit_room,visit_type,open_capacity,closed_capacity,enhanced,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name FROM tmp_session_template order by id;
 
 	-- Sequence updated manually as id's were inserted from temp table
-	ALTER SEQUENCE session_template_id_seq RESTART WITH  116;
+	ALTER SEQUENCE session_template_id_seq RESTART WITH  117;
 
-	-- Need to create group table STILL WORKING ON THIS!
+	-- Create temporary group table
 
 	CREATE TABLE tmp_session_location_group (
 		id                	serial        NOT NULL PRIMARY KEY,
@@ -175,8 +176,8 @@ BEGIN;
 
 	INSERT INTO tmp_session_location_group (prison_code,key,name)
 	VALUES
-		('BLI','BLI_G1','Base Group, C 1 Group, C 2 Group, C 3 Group'),
-			('BLI','BLI_G2','Alternate Group 1, Group 2')
+		('BLI','BLI_G1','BASE GROUP, C 1 GROUP, C 2 GROUP, C 3 GROUP'),
+			('BLI','BLI_G2','ALTERNATE GROUP 1, GROUP 2')
 	;
 
 	-- update tmp location group table with correct prison id for given code.

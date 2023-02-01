@@ -77,6 +77,10 @@ class SessionServiceTest {
     ).thenReturn(incEnhancedPrivilege)
 
     whenever(
+      prisonerService.hasPrisonerGotEnhancedPrivilege(any())
+    ).thenReturn(incEnhancedPrivilege)
+
+    whenever(
       sessionTemplateRepository.findValidSessionTemplatesBy(
         prisonCode = prisonCode,
         rangeStartDate = date.plusDays(noticeDaysMin),
