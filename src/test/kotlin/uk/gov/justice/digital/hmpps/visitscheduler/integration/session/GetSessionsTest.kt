@@ -1,11 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
@@ -29,7 +27,7 @@ import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
 
 @DisplayName("Get /visit-sessions")
-class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class GetSessionsTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 

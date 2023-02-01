@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -35,7 +34,7 @@ import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
-class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class BookVisitTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -91,7 +90,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
       .jsonPath("$.visitContact.telephone").isEqualTo(reservedVisit.visitContact!!.telephone)
       .jsonPath("$.visitors.length()").isEqualTo(reservedVisit.visitors.size)
       .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(reservedVisit.visitors[0].nomisPersonId)
-      .jsonPath("$.visitors[0].visitContact").isEqualTo(reservedVisit.visitors[0].visitContact)
+      .jsonPath("$.visitors[0].visitContact").isEqualTo(reservedVisit.visitors[0].visitContact!!)
       .jsonPath("$.visitorSupport.length()").isEqualTo(reservedVisit.support.size)
       .jsonPath("$.visitorSupport[0].type").isEqualTo(reservedVisit.support.first().type)
       .jsonPath("$.visitorSupport[0].text").isEqualTo(reservedVisit.support.first().text!!)

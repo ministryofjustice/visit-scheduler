@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
@@ -46,4 +47,40 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   ): List<SessionTemplate>
 
   fun findByReference(reference: String): SessionTemplate?
+
+  @Modifying
+  @Query("update SessionTemplate s set s.name = :name WHERE s.reference = :reference")
+  fun updateNameByReference(reference: String, name: String): Int
+
+  @Modifying
+  @Query("Update SessionTemplate s set s.startTime = :startTime WHERE s.reference = :reference")
+  fun updateStartTimeByReference(reference: String, startTime: LocalTime): Int
+
+  @Modifying
+  @Query("Update SessionTemplate s set s.endTime = :endTime WHERE s.reference = :reference")
+  fun updateEndTimeByReference(reference: String, endTime: LocalTime): Int
+
+  @Modifying
+  @Query("Update SessionTemplate s set s.validFromDate = :validFromDate WHERE s.reference = :reference")
+  fun updateValidFromDateByReference(reference: String, validFromDate: LocalDate): Int
+
+  @Modifying
+  @Query("Update SessionTemplate s set s.validToDate = :validToDate WHERE s.reference = :reference")
+  fun updateValidToDateByReference(reference: String, validToDate: LocalDate): Int
+
+  @Modifying
+  @Query("Update SessionTemplate s set s.closedCapacity = :closedCapacity WHERE s.reference = :reference")
+  fun updateClosedCapacityByReference(reference: String, closedCapacity: Int): Int
+
+  @Modifying
+  @Query("Update SessionTemplate s set s.openCapacity = :openCapacity WHERE s.reference = :reference")
+  fun updateOpenCapacityByReference(reference: String, openCapacity: Int): Int
+
+  @Modifying
+  @Query("Update SessionTemplate s set s.enhanced = :enhanced WHERE s.reference = :reference")
+  fun updateEnhancedByReference(reference: String, enhanced: Boolean): Int
+
+  @Modifying
+  @Query("Update SessionTemplate s set s.biWeekly = :biWeekly WHERE s.reference = :reference")
+  fun updateBiWeeklyByReference(reference: String, biWeekly: Boolean): Int
 }

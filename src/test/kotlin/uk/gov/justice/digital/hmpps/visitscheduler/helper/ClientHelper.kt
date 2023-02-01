@@ -5,6 +5,11 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.LOCATION_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_LOCATION_GROUPS_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_LOCATION_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_SESSION_TEMPLATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
@@ -13,6 +18,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 
 fun callCancelVisit(
   webTestClient: WebTestClient,
@@ -112,16 +121,124 @@ fun callVisitByReference(
   reference: String,
   authHttpHeaders: (HttpHeaders) -> Unit
 ): ResponseSpec {
-  return webTestClient.get().uri(getVisitByReferenceUrl(reference))
+  return callGet(webTestClient, getVisitByReferenceUrl(reference), authHttpHeaders)
+}
+
+fun callCreateSessionGroup(
+  webTestClient: WebTestClient,
+  dto: CreateLocationGroupDto? = null,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+
+  return callPost(
+    dto,
+    webTestClient,
+    LOCATION_GROUP_ADMIN_PATH,
+    authHttpHeaders
+  )
+}
+
+fun callCreateSessionTemplate(
+  webTestClient: WebTestClient,
+  dto: CreateSessionTemplateDto? = null,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+
+  return callPost(
+    dto,
+    webTestClient,
+    SESSION_TEMPLATE_PATH,
+    authHttpHeaders
+  )
+}
+
+fun callUpdateSessionTemplateByReference(
+  webTestClient: WebTestClient,
+  reference: String,
+  dto: UpdateSessionTemplateDto? = null,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+
+  return callPut(
+    dto,
+    webTestClient,
+    getSessionTemplateByReferenceUrl(reference),
+    authHttpHeaders
+  )
+}
+
+fun callGetGroupsByPrisonId(
+  webTestClient: WebTestClient,
+  prisonCode: String,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+
+  return callGet(
+    webTestClient,
+    getPrisonIdUrl(PRISON_LOCATION_GROUPS_ADMIN_PATH, prisonCode),
+    authHttpHeaders
+  )
+}
+
+fun callGetGroupByReference(
+  webTestClient: WebTestClient,
+  prisonCode: String,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+
+  return callGet(
+    webTestClient,
+    getReferenceUrl(REFERENCE_LOCATION_GROUP_ADMIN_PATH, prisonCode),
+    authHttpHeaders
+  )
+}
+
+fun callUpdateLoctionSessionGroupByReference(
+  webTestClient: WebTestClient,
+  reference: String,
+  dto: UpdateLocationGroupDto,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+
+  return callPut(
+    dto,
+    webTestClient,
+    getSessionLocationGroupByReferenceUrl(reference),
+    authHttpHeaders
+  )
+}
+
+fun callGet(
+  webTestClient: WebTestClient,
+  url: String,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+  return webTestClient.get().uri(url)
     .headers(authHttpHeaders)
     .exchange()
 }
 
-fun getVisitByReferenceUrl(reference: String): String {
-  return GET_VISIT_BY_REFERENCE.replace("{reference}", reference)
+fun getPrisonIdUrl(url: String, prisonId: String): String {
+  return url.replace("{prisonId}", prisonId)
 }
 
-private fun callPut(
+fun getReferenceUrl(url: String, reference: String): String {
+  return url.replace("{reference}", reference)
+}
+
+fun getVisitByReferenceUrl(reference: String): String {
+  return getReferenceUrl(GET_VISIT_BY_REFERENCE, reference)
+}
+
+fun getSessionTemplateByReferenceUrl(reference: String): String {
+  return getReferenceUrl(REFERENCE_SESSION_TEMPLATE_PATH, reference)
+}
+
+fun getSessionLocationGroupByReferenceUrl(reference: String): String {
+  return getReferenceUrl(REFERENCE_LOCATION_GROUP_ADMIN_PATH, reference)
+}
+
+fun callPut(
   bodyValue: Any? = null,
   webTestClient: WebTestClient,
   url: String,
@@ -139,7 +256,7 @@ private fun callPut(
   }
 }
 
-private fun callPost(
+fun callPost(
   bodyValue: Any? = null,
   webTestClient: WebTestClient,
   url: String,

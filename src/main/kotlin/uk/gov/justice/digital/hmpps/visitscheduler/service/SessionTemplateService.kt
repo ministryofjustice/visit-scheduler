@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationG
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -25,7 +26,7 @@ import java.util.function.Supplier
 class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonConfigService: PrisonConfigService
 ) {
 
   companion object {
@@ -98,6 +99,7 @@ class SessionTemplateService(
     val sessionLocationGroup = getLocationGroupByReference(reference)
     sessionLocationGroup.name = updateLocationSessionGroup.name
     sessionLocationGroup.sessionLocations.clear()
+
     val sessionLocations = updateLocationSessionGroup.locations.map {
       PermittedSessionLocation(
         groupId = sessionLocationGroup.id,
@@ -115,17 +117,85 @@ class SessionTemplateService(
   }
 
   fun createSessionTemplate(createSessionTemplateDto: CreateSessionTemplateDto): SessionTemplateDto {
-    val sessionTemplateId = 1L
-    // TODO this is just for the spike
-    return sessionTemplateRepository.findById(sessionTemplateId).map { SessionTemplateDto(it) }
-      .orElseThrow(TemplateNotFoundException("Template id $sessionTemplateId not found"))
+    log.info("Creating session template for prison")
+
+    val prison = prisonConfigService.findPrisonByCode(createSessionTemplateDto.prisonCode)
+
+    val sessionTemplateEntity = SessionTemplate(
+      prisonId = prison.id,
+      prison = prison,
+      name = createSessionTemplateDto.name,
+      startTime = createSessionTemplateDto.startTime,
+      endTime = createSessionTemplateDto.endTime,
+      validFromDate = createSessionTemplateDto.validFromDate,
+      validToDate = createSessionTemplateDto.validToDate,
+      visitRoom = createSessionTemplateDto.visitRoom,
+      closedCapacity = createSessionTemplateDto.closedCapacity,
+      openCapacity = createSessionTemplateDto.openCapacity,
+      biWeekly = createSessionTemplateDto.biWeekly,
+      enhanced = createSessionTemplateDto.enhanced,
+      dayOfWeek = createSessionTemplateDto.dayOfWeek,
+      visitType = VisitType.SOCIAL
+    )
+
+    createSessionTemplateDto.locationGroupReferences?.let {
+      it.forEach { ref -> sessionTemplateEntity.permittedSessionGroups.add(this.getLocationGroupByReference(ref)) }
+    }
+
+    val sessionTemplateEntitySave = sessionTemplateRepository.saveAndFlush(sessionTemplateEntity)
+
+    return SessionTemplateDto(
+      sessionTemplateEntitySave
+    )
   }
 
   fun updateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
-    val sessionTemplateId = 1L
-    // TODO this is just for the spike
-    return sessionTemplateRepository.findById(sessionTemplateId).map { SessionTemplateDto(it) }
-      .orElseThrow(TemplateNotFoundException("Template id $sessionTemplateId not found"))
+
+    with(updateSessionTemplateDto) {
+      name?.let {
+        sessionTemplateRepository.updateNameByReference(reference, name)
+      }
+
+      startTime?.let {
+        sessionTemplateRepository.updateStartTimeByReference(reference, startTime)
+      }
+
+      endTime?.let {
+        sessionTemplateRepository.updateEndTimeByReference(reference, endTime)
+      }
+
+      validFromDate?.let {
+        sessionTemplateRepository.updateValidFromDateByReference(reference, validFromDate)
+      }
+
+      validToDate?.let {
+        sessionTemplateRepository.updateValidToDateByReference(reference, validToDate)
+      }
+
+      closedCapacity?.let {
+        sessionTemplateRepository.updateClosedCapacityByReference(reference, closedCapacity)
+      }
+
+      openCapacity?.let {
+        sessionTemplateRepository.updateOpenCapacityByReference(reference, openCapacity)
+      }
+
+      enhanced?.let {
+        sessionTemplateRepository.updateEnhancedByReference(reference, enhanced)
+      }
+
+      biWeekly?.let {
+        sessionTemplateRepository.updateBiWeeklyByReference(reference, biWeekly)
+      }
+    }
+
+    val updatedSessionTemplateEntity = getSessionTemplate(reference)
+
+    updateSessionTemplateDto.locationGroupReferences?.let {
+      it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionGroups.add(this.getLocationGroupByReference(ref)) }
+    }
+
+    return SessionTemplateDto(updatedSessionTemplateEntity)
   }
 }
 

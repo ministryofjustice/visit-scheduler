@@ -50,7 +50,7 @@ BEGIN;
 	-- Sequence updated manually as id's were inserted from temp table
 	ALTER SEQUENCE session_template_id_seq RESTART WITH  ${session_template_id_index};
 
-	-- Need to create group table STILL WORKING ON THIS!
+	-- Create temporary group table
 
 	CREATE TABLE tmp_session_location_group (
 		id                	serial        NOT NULL PRIMARY KEY,

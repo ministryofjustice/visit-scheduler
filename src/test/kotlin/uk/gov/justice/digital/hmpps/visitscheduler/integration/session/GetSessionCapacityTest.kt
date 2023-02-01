@@ -1,10 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_SESSION_CAPACITY
@@ -14,7 +12,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @DisplayName("Get /visit-sessions")
-class GetSessionCapacityTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class GetSessionCapacityTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 

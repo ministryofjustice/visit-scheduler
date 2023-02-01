@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller
 
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -15,7 +14,6 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
@@ -26,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateServic
 import javax.validation.Valid
 
 const val LOCATION_GROUPS_ADMIN_PATH: String = "/location-groups"
+const val PRISON_LOCATION_GROUPS_ADMIN_PATH: String = "$LOCATION_GROUPS_ADMIN_PATH/{prisonId}"
 const val LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUPS_ADMIN_PATH/group"
 const val REFERENCE_LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUP_ADMIN_PATH/{reference}"
 
@@ -37,7 +36,7 @@ class LocationGroupAdminController(
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(LOCATION_GROUPS_ADMIN_PATH)
+  @GetMapping(PRISON_LOCATION_GROUPS_ADMIN_PATH)
   @Operation(
     summary = "Get location groups",
     description = "Get all location groups for given prison",
@@ -59,13 +58,10 @@ class LocationGroupAdminController(
     ]
   )
   fun getLocationGroups(
-    @RequestParam(value = "prisonId", required = true)
-    @Parameter(
-      description = "Filter results by prison id/code",
-      example = "MDI"
-    ) prisonCode: String,
+    @Schema(description = "prisonId", example = "MDI", required = true)
+    @PathVariable prisonId: String
   ): List<SessionLocationGroupDto> {
-    return sessionTemplateService.getSessionLocationGroup(prisonCode)
+    return sessionTemplateService.getSessionLocationGroup(prisonId)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

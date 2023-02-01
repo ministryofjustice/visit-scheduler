@@ -37,11 +37,13 @@ data class SessionTemplateDto(
   val visitRoom: String,
   @Schema(description = "enhanced privilege", example = "true", required = true)
   val enhanced: Boolean,
+  @Schema(description = "biWeekly", example = "true", required = true)
+  val biWeekly: Boolean,
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
   val openCapacity: Int,
-  @Schema(description = "day of week fpr visit", example = "MONDAY", required = false)
+  @Schema(description = "day of week for visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
   @Schema(description = "list of permitted session location groups", required = false)
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf()
@@ -60,6 +62,7 @@ data class SessionTemplateDto(
     openCapacity = sessionTemplateEntity.openCapacity,
     dayOfWeek = sessionTemplateEntity.dayOfWeek,
     permittedLocationGroups = sessionTemplateEntity.permittedSessionGroups.map { SessionLocationGroupDto(it) },
+    biWeekly = sessionTemplateEntity.biWeekly,
     enhanced = sessionTemplateEntity.enhanced
   )
 }

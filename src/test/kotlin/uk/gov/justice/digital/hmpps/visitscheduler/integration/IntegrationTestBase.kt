@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
@@ -12,8 +13,13 @@ import org.springframework.test.context.ActiveProfiles
 import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionLocationGroupHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
@@ -31,10 +37,16 @@ abstract class IntegrationTestBase {
   lateinit var webTestClient: WebTestClient
 
   @Autowired
+  protected lateinit var objectMapper: ObjectMapper
+
+  @Autowired
   protected lateinit var visitEntityHelper: VisitEntityHelper
 
   @Autowired
   protected lateinit var sessionTemplateEntityHelper: SessionTemplateEntityHelper
+
+  @Autowired
+  lateinit var prisonEntityHelper: PrisonEntityHelper
 
   @Autowired
   protected lateinit var sessionLocationGroupHelper: SessionLocationGroupHelper
@@ -59,6 +71,18 @@ abstract class IntegrationTestBase {
   internal fun deleteAll() {
     deleteEntityHelper.deleteAll()
   }
+
+  fun getSessionTemplate(responseSpec: ResponseSpec) =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
+
+  fun getSessionLocationGroup(responseSpec: ResponseSpec) =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionLocationGroupDto::class.java)
+
+  fun getSessionLocationGroups(responseSpec: ResponseSpec) =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionLocationGroupDto>::class.java)
+
+  fun getErrorResponse(responseSpec: ResponseSpec) =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ErrorResponse::class.java)
 
   internal fun setAuthorisation(
     user: String = "AUTH_ADM",

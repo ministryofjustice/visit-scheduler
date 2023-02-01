@@ -1,19 +1,15 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.config
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.SUPPORTED_PRISONS
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import java.time.LocalDate
 
 @DisplayName("Get $SUPPORTED_PRISONS")
-class GetSupportedPrisonsTest(
-  @Autowired private val objectMapper: ObjectMapper
-) : IntegrationTestBase() {
+class GetSupportedPrisonsTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 

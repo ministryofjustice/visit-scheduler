@@ -19,9 +19,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -148,7 +148,7 @@ class VisitEntityHelper(
 
 @Component
 class SessionLocationGroupHelper(
-  private val sessionRepository: SessionTemplateRepository,
+  private val sessionRepository: TestSessionTemplateRepository,
   private val repository: TestPermittedSessionLocationRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository
 ) {
@@ -156,7 +156,7 @@ class SessionLocationGroupHelper(
   fun create(sessionTemplate: SessionTemplate): SessionLocationGroup {
 
     val sessionLocations = mutableListOf(
-      AllowedPrisonHierarchy(
+      AllowedSessionLocationHierarchy(
         levelOneCode = "A",
         levelTwoCode = "1",
         levelThreeCode = "W",
@@ -166,12 +166,16 @@ class SessionLocationGroupHelper(
     return create(sessionTemplate, sessionLocations)
   }
 
-  fun create(sessionTemplate: SessionTemplate, prisonHierarchies: List<AllowedPrisonHierarchy>): SessionLocationGroup {
+  fun create(sessionTemplate: SessionTemplate, prisonHierarchies: List<AllowedSessionLocationHierarchy>): SessionLocationGroup {
+    return create(prison = sessionTemplate.prison, sessionTemplate = sessionTemplate, prisonHierarchies = prisonHierarchies)
+  }
+
+  fun create(name: String ? = "Group A", prison: Prison, sessionTemplate: SessionTemplate ? = null, prisonHierarchies: List<AllowedSessionLocationHierarchy>): SessionLocationGroup {
 
     val group = sessionLocationGroupRepository.saveAndFlush(
       SessionLocationGroup(
-        prison = sessionTemplate.prison,
-        prisonId = sessionTemplate.prisonId,
+        prison = prison,
+        prisonId = prison.id,
         name = "Group A"
       )
     )
@@ -196,8 +200,10 @@ class SessionLocationGroupHelper(
 
     val savedGroup = sessionLocationGroupRepository.saveAndFlush(group)
 
-    sessionTemplate.permittedSessionGroups.add(savedGroup)
-    sessionRepository.saveAndFlush(sessionTemplate)
+    sessionTemplate?.let {
+      sessionTemplate.permittedSessionGroups.add(savedGroup)
+      sessionRepository.saveAndFlush(sessionTemplate)
+    }
 
     return savedGroup
   }
@@ -205,7 +211,7 @@ class SessionLocationGroupHelper(
 
 @Component
 class SessionTemplateEntityHelper(
-  private val sessionRepository: SessionTemplateRepository,
+  private val sessionRepository: TestSessionTemplateRepository,
   private val prisonEntityHelper: PrisonEntityHelper
 ) {
 
@@ -256,7 +262,7 @@ class SessionTemplateEntityHelper(
 class DeleteEntityHelper(
   private val visitRepository: VisitRepository,
   private val prisonRepository: PrisonRepository,
-  private val sessionRepository: SessionTemplateRepository,
+  private val sessionRepository: TestSessionTemplateRepository,
   private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository
 ) {
@@ -277,9 +283,9 @@ class DeleteEntityHelper(
   }
 }
 
-class AllowedPrisonHierarchy(
+class AllowedSessionLocationHierarchy(
   val levelOneCode: String,
-  val levelTwoCode: String?,
-  val levelThreeCode: String?,
-  val levelFourCode: String?,
+  val levelTwoCode: String? = null,
+  val levelThreeCode: String? = null,
+  val levelFourCode: String? = null,
 )

@@ -40,9 +40,15 @@ data class CreateSessionTemplateDto(
   @Schema(description = "open capacity", example = "50", required = true)
   val openCapacity: Int,
 
-  @Schema(description = "day of week fpr visit", example = "MONDAY", required = false)
-  val dayOfWeek: DayOfWeek?,
+  @Schema(description = "day of week fpr visit", example = "MONDAY", required = true)
+  val dayOfWeek: DayOfWeek,
 
   @Schema(description = "list of group references for permitted session location groups", required = false)
-  val locationGroupReferences: List<String>? = listOf()
+  val locationGroupReferences: List<String>? = listOf(),
+
+  @Schema(description = "enhanced privilege", example = "true", required = true)
+  val enhanced: Boolean,
+
+  @Schema(description = "biWeekly time table", example = "true", required = true)
+  val biWeekly: Boolean,
 )
