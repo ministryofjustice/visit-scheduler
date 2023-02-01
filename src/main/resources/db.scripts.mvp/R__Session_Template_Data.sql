@@ -116,7 +116,8 @@ BEGIN;
         (NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'09:30','11:30','2023-01-23',NULL,'SATURDAY',false),
         (NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'SATURDAY',false),
         (NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'SUNDAY',false),
-        (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:30','11:30','2023-01-23',NULL,'MONDAY',false),
+        (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'MONDAY',false),
+        (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'MONDAY',false),
         (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'MONDAY',false),
         (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'15:30','16:30','2023-01-23',NULL,'MONDAY',false),
         (NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'TUESDAY',false),
@@ -156,7 +157,7 @@ BEGIN;
 
     INSERT INTO session_template(id,visit_room,visit_type,open_capacity,closed_capacity,enhanced,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly)
     SELECT id,visit_room,visit_type,open_capacity,closed_capacity,enhanced,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly FROM tmp_session_template order by id;
-    ALTER SEQUENCE session_template_id_seq RESTART WITH  116;
+    ALTER SEQUENCE session_template_id_seq RESTART WITH  117;
 
 
     -- Create permitted session location data
