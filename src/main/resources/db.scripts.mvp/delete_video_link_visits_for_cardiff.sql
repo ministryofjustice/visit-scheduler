@@ -16,11 +16,11 @@ INSERT INTO tmp_cfi_visit_ids_to_be_deleted (visit_id) (
     and v.id in (select ld.visit_id from legacy_data ld)
 );
 
-DELETE FROM visit_contact WHERE visit_id IN (SELECT visit_id FROM legacy_data)  and visit_id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
-DELETE FROM visit_notes WHERE visit_id IN (SELECT visit_id FROM legacy_data)  and visit_id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
-DELETE FROM visit_support WHERE visit_id IN (SELECT visit_id FROM legacy_data) and visit_id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
-DELETE FROM visit_visitor WHERE visit_id IN (SELECT visit_id FROM legacy_data) and visit_id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
-DELETE FROM visit WHERE id IN (SELECT visit_id FROM legacy_data) and id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
+DELETE FROM visit_contact WHERE visit_id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
+DELETE FROM visit_notes WHERE visit_id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
+DELETE FROM visit_support WHERE visit_id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
+DELETE FROM visit_visitor WHERE visit_id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
+DELETE FROM visit WHERE id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
 DELETE FROM legacy_data d where visit_id in (select visit_id FROM tmp_cfi_visit_ids_to_be_deleted);
 
 -- Drop temporary tables
