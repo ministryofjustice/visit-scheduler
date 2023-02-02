@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Propagation.REQUIRED
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
@@ -29,10 +30,12 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 @Component
+@Transactional
 class PrisonEntityHelper(
   private val prisonRepository: TestPrisonRepository
 ) {
 
+  @Transactional(propagation = REQUIRED)
   fun create(prisonCode: String = "MDI", activePrison: Boolean = true): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
     if (prison == null) {
@@ -45,6 +48,7 @@ class PrisonEntityHelper(
 }
 
 @Component
+@Transactional
 class VisitEntityHelper(
   private val visitRepository: VisitRepository,
   private val prisonEntityHelper: PrisonEntityHelper
@@ -147,6 +151,7 @@ class VisitEntityHelper(
 }
 
 @Component
+@Transactional
 class SessionLocationGroupHelper(
   private val sessionRepository: TestSessionTemplateRepository,
   private val repository: TestPermittedSessionLocationRepository,
@@ -210,6 +215,7 @@ class SessionLocationGroupHelper(
 }
 
 @Component
+@Transactional
 class SessionTemplateEntityHelper(
   private val sessionRepository: TestSessionTemplateRepository,
   private val prisonEntityHelper: PrisonEntityHelper
@@ -234,6 +240,42 @@ class SessionTemplateEntityHelper(
   ): SessionTemplate {
 
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
+
+    return create(
+      name = name + dayOfWeek,
+      validFromDate = validFromDate,
+      validToDate = validToDate,
+      closedCapacity = closedCapacity,
+      openCapacity = openCapacity,
+      prison = prison,
+      visitRoom = visitRoom,
+      visitType = visitType,
+      startTime = startTime,
+      endTime = endTime,
+      dayOfWeek = dayOfWeek,
+      permittedSessionGroups = permittedSessionGroups,
+      biWeekly = biWeekly,
+      enhanced = enhanced
+    )
+  }
+
+  fun create(
+    name: String = "sessionTemplate_",
+    validFromDate: LocalDate = LocalDate.of(2021, 10, 23),
+    validToDate: LocalDate? = null,
+    closedCapacity: Int = 5,
+    openCapacity: Int = 10,
+    prison: Prison,
+    visitRoom: String = "3B",
+    visitType: VisitType = VisitType.SOCIAL,
+    startTime: LocalTime = LocalTime.parse("09:00"),
+    endTime: LocalTime = LocalTime.parse("10:00"),
+    dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
+    activePrison: Boolean = true,
+    permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
+    biWeekly: Boolean = false,
+    enhanced: Boolean = false
+  ): SessionTemplate {
 
     return sessionRepository.saveAndFlush(
       SessionTemplate(

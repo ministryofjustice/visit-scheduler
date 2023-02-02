@@ -12,7 +12,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @DisplayName("Get /visit-session-templates")
-class GetSessionTemplate(
+class GetSessionTemplateTest(
   @Autowired private val repository: TestSessionTemplateRepository
 ) : IntegrationTestBase() {
 

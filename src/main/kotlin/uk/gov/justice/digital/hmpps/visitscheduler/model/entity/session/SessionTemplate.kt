@@ -25,7 +25,7 @@ class SessionTemplate(
   @Column(name = "PRISON_ID", nullable = false)
   val prisonId: Long,
 
-  @ManyToOne
+  @ManyToOne(cascade = [CascadeType.DETACH])
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison,
 
@@ -41,8 +41,8 @@ class SessionTemplate(
   @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
   @JoinTable(
     name = "SESSION_TO_LOCATION_GROUP",
-    joinColumns = [JoinColumn(name = "session_template_id")],
-    inverseJoinColumns = [JoinColumn(name = "group_id")]
+    joinColumns = [JoinColumn(name = "session_template_id",)],
+    inverseJoinColumns = [JoinColumn(name = "group_id")],
   )
   val permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
 

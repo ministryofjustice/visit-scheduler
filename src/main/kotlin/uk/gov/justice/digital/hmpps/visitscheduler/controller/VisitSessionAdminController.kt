@@ -6,9 +6,12 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.springframework.format.annotation.DateTimeFormat
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -105,6 +108,11 @@ class VisitSessionAdminController(
         responseCode = "403",
         description = "Incorrect permissions to view session templates",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Session Template not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       )
     ]
   )
@@ -113,6 +121,41 @@ class VisitSessionAdminController(
     @PathVariable reference: String,
   ): SessionTemplateDto {
     return sessionTemplateService.getSessionTemplates(reference)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH)
+  @Operation(
+    summary = "delete session template by reference",
+    description = "Get all session templates",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session templates deleted"
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to view session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Session Template not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun deleteSessionTemplate(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String,
+  ): ResponseEntity<String> {
+    sessionTemplateService.deleteSessionTemplates(reference)
+    return ResponseEntity.status(HttpStatus.OK).body("Session Template Deleted $reference!")
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -175,6 +218,11 @@ class VisitSessionAdminController(
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to update session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Session Template not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       )
     ]

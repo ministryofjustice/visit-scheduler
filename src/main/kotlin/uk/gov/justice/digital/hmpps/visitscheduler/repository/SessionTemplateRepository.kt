@@ -49,6 +49,9 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   fun findByReference(reference: String): SessionTemplate?
 
   @Modifying
+  fun deleteByReference(reference: String): Int
+
+  @Modifying
   @Query("update SessionTemplate s set s.name = :name WHERE s.reference = :reference")
   fun updateNameByReference(reference: String, name: String): Int
 

@@ -5,15 +5,15 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateLoctionSessionGroupByReference
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateLocationSessionGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createPermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.updateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 
-@DisplayName("Get /visit-sessions")
-class UdateSessionGroupTest : IntegrationTestBase() {
+@DisplayName("Put update groups")
+class UpdateSessionGroupTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
@@ -37,7 +37,7 @@ class UdateSessionGroupTest : IntegrationTestBase() {
     val dto = updateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
 
     // When
-    val responseSpec = callUpdateLoctionSessionGroupByReference(webTestClient, sessionGroup.reference, dto, setAuthorisation(roles = requiredRole))
+    val responseSpec = callUpdateLocationSessionGroupByReference(webTestClient, sessionGroup.reference, dto, setAuthorisation(roles = requiredRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -61,7 +61,7 @@ class UdateSessionGroupTest : IntegrationTestBase() {
     val reference = "Ref1234"
 
     // When
-    val responseSpec = callUpdateLoctionSessionGroupByReference(webTestClient, reference, dto, setAuthorisation(roles = requiredRole))
+    val responseSpec = callUpdateLocationSessionGroupByReference(webTestClient, reference, dto, setAuthorisation(roles = requiredRole))
 
     // Then
     responseSpec.expectStatus().isNotFound

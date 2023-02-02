@@ -10,6 +10,7 @@ import javax.persistence.JoinColumn
 import javax.persistence.ManyToMany
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
+import javax.persistence.PreRemove
 import javax.persistence.Table
 
 @Entity
@@ -22,7 +23,7 @@ data class SessionLocationGroup(
   @Column(nullable = false)
   var name: String,
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.DETACH])
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison
 ) : AbstractReferenceEntity(delimiter = "~", chunkSize = 3) {
@@ -31,6 +32,13 @@ data class SessionLocationGroup(
   @JoinColumn(name = "GROUP_ID", updatable = false, insertable = true)
   val sessionLocations: MutableList<PermittedSessionLocation> = mutableListOf()
 
-  @ManyToMany(mappedBy = "permittedSessionGroups", fetch = FetchType.LAZY)
+  @ManyToMany(mappedBy = "permittedSessionGroups", fetch = FetchType.LAZY, cascade = [CascadeType.DETACH])
   val sessionTemplates: MutableList<SessionTemplate> = mutableListOf()
+
+  @PreRemove
+  private fun removeGroupsFromUsers() {
+    for (s in sessionTemplates) {
+      s.permittedSessionGroups.remove(this)
+    }
+  }
 }

@@ -33,7 +33,7 @@ class Visit(
   @Column(name = "PRISON_ID", nullable = false)
   val prisonId: Long,
 
-  @ManyToOne
+  @ManyToOne(cascade = [CascadeType.DETACH])
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison,
 

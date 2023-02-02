@@ -6,8 +6,10 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
+import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.DeleteMapping
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
@@ -133,6 +135,41 @@ class LocationGroupAdminController(
     @RequestBody @Valid createLocationSessionGroup: CreateLocationGroupDto
   ): SessionLocationGroupDto {
     return sessionTemplateService.createSessionLocationGroup(createLocationSessionGroup)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @DeleteMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
+  @Operation(
+    summary = "delete location group",
+    description = "delete location group",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session templates deleted"
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to view session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Session location group not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun deleteSessionLocationGroup(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable reference: String,
+  ): ResponseEntity<String> {
+    sessionTemplateService.deleteSessionLocationGroup(reference)
+    return ResponseEntity.status(HttpStatus.OK).body("Session location group Deleted $reference!")
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

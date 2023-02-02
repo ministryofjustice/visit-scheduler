@@ -37,7 +37,6 @@ class GetSessionsTest : IntegrationTestBase() {
   internal fun setUpTests() {
   }
 
-// PrisonOffenderSearchMockServer
   @Test
   fun `visit sessions are returned for a prison for a single schedule`() {
     // Given
@@ -970,8 +969,8 @@ class GetSessionsTest : IntegrationTestBase() {
       .exchange()
   }
 
-  private fun callGetSessions(): ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+  private fun callGetSessions(prisonId: String? = "MDI"): ResponseSpec {
+    return webTestClient.get().uri("/visit-sessions?prisonId=$prisonId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }

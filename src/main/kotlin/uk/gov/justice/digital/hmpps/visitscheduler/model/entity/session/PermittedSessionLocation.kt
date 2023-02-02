@@ -5,6 +5,7 @@ import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import java.time.LocalDateTime
+import javax.persistence.CascadeType
 import javax.persistence.Column
 import javax.persistence.Entity
 import javax.persistence.FetchType
@@ -20,7 +21,7 @@ class PermittedSessionLocation(
   @Column(name = "GROUP_ID", nullable = false)
   val groupId: Long,
 
-  @ManyToOne(fetch = FetchType.LAZY)
+  @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.DETACH])
   @JoinColumn(name = "GROUP_ID", updatable = false, insertable = false)
   val sessionLocationGroup: SessionLocationGroup,
 

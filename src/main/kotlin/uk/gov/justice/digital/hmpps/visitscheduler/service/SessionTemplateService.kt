@@ -197,6 +197,32 @@ class SessionTemplateService(
 
     return SessionTemplateDto(updatedSessionTemplateEntity)
   }
+
+  fun deleteSessionTemplates(reference: String) {
+    val deleted = sessionTemplateRepository.deleteByReference(reference)
+    if (deleted == 0) {
+      throw ItemNotFoundException("Session template not found : $reference")
+    }
+    if (deleted > 1) {
+      throw java.lang.IllegalStateException("More than one Session Template $reference was deleted!")
+    }
+  }
+
+  fun deleteSessionLocationGroup(reference: String) {
+
+    val group = getLocationGroupByReference(reference)
+    if (group.sessionTemplates.isNotEmpty()) {
+      throw java.lang.IllegalStateException("Group cannot be deleted $reference because session templates are using it!")
+    }
+
+    val deleted = sessionLocationGroupRepository.deleteByReference(reference)
+    if (deleted == 0) {
+      throw ItemNotFoundException("Session location group not found : $reference")
+    }
+    if (deleted > 1) {
+      throw java.lang.IllegalStateException("More than one Session location group $reference was deleted!")
+    }
+  }
 }
 
 class TemplateNotFoundException(message: String? = null, cause: Throwable? = null) :

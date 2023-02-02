@@ -193,7 +193,33 @@ fun callGetGroupByReference(
   )
 }
 
-fun callUpdateLoctionSessionGroupByReference(
+fun callDeleteGroupByReference(
+  webTestClient: WebTestClient,
+  prisonCode: String,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+
+  return callDelete(
+    webTestClient,
+    getReferenceUrl(REFERENCE_LOCATION_GROUP_ADMIN_PATH, prisonCode),
+    authHttpHeaders
+  )
+}
+
+fun callDeleteSessionTemplateByReference(
+  webTestClient: WebTestClient,
+  prisonCode: String,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+
+  return callDelete(
+    webTestClient,
+    getReferenceUrl(REFERENCE_SESSION_TEMPLATE_PATH, prisonCode),
+    authHttpHeaders
+  )
+}
+
+fun callUpdateLocationSessionGroupByReference(
   webTestClient: WebTestClient,
   reference: String,
   dto: UpdateLocationGroupDto,
@@ -206,16 +232,6 @@ fun callUpdateLoctionSessionGroupByReference(
     getSessionLocationGroupByReferenceUrl(reference),
     authHttpHeaders
   )
-}
-
-fun callGet(
-  webTestClient: WebTestClient,
-  url: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
-): ResponseSpec {
-  return webTestClient.get().uri(url)
-    .headers(authHttpHeaders)
-    .exchange()
 }
 
 fun getPrisonIdUrl(url: String, prisonId: String): String {
@@ -236,6 +252,26 @@ fun getSessionTemplateByReferenceUrl(reference: String): String {
 
 fun getSessionLocationGroupByReferenceUrl(reference: String): String {
   return getReferenceUrl(REFERENCE_LOCATION_GROUP_ADMIN_PATH, reference)
+}
+
+fun callGet(
+  webTestClient: WebTestClient,
+  url: String,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+  return webTestClient.get().uri(url)
+    .headers(authHttpHeaders)
+    .exchange()
+}
+
+fun callDelete(
+  webTestClient: WebTestClient,
+  url: String,
+  authHttpHeaders: (HttpHeaders) -> Unit
+): ResponseSpec {
+  return webTestClient.delete().uri(url)
+    .headers(authHttpHeaders)
+    .exchange()
 }
 
 fun callPut(
