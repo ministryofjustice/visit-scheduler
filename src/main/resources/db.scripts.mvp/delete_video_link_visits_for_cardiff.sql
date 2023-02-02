@@ -6,13 +6,12 @@ CREATE TEMP TABLE tmp_cfi_visit_ids_to_be_deleted(
     visit_id         int
 );
 
---selection criteria is CFI visits with a 30 minute window and room name as 'Video Link'
+--selection criteria is CFI visits with room name as 'Video Link'
 --these visits should not be on VSIP as these are video calls and not VSIP visits
 INSERT INTO tmp_cfi_visit_ids_to_be_deleted (visit_id) (
     select v.id from visit v, prison p
     where v.prison_id = p.id
     and p.code = 'CFI'
-    and v.visit_start + interval '30 minutes' = v.visit_end
     and visit_room = 'Video Link'
     and v.id in (select ld.visit_id from legacy_data ld)
 );
