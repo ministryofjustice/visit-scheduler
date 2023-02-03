@@ -71,3 +71,4 @@ ecr.repo
 **/Chart.lock
 
 .DS_Store
+/src/main/resources/session-template-data/R__Session_Template_Data.sql

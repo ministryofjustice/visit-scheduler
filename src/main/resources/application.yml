@@ -6,6 +6,12 @@ info.app:
     name: Visit Someone in Prison
     email: prisonvisitsbooking@digital.justice.gov.uk
 
+springdoc:
+  swagger-ui:
+    tagsSorter: alpha
+  writer-with-order-by-keys: true
+
+
 spring:
   application:
     name: visit-scheduler

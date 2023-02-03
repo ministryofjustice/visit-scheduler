@@ -1,14 +1,12 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
@@ -29,7 +27,7 @@ import java.time.LocalTime
 import java.time.temporal.TemporalAdjusters
 
 @DisplayName("Get /visit-sessions")
-class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class GetSessionsTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
@@ -39,7 +37,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
   internal fun setUpTests() {
   }
 
-// PrisonOffenderSearchMockServer
   @Test
   fun `visit sessions are returned for a prison for a single schedule`() {
     // Given
@@ -200,6 +197,7 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .expectBody()
 
     val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isGreaterThan(2)
     if (todayIsTheWeekEnd) {
       // On the weekend it skips to the other session template / schedule because we cannot book with in 24 hrs
       Assertions.assertThat(visitSessionResults[0].visitRoomName).isEqualTo("Alternate 2")
@@ -375,57 +373,6 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
 
     // Then
     assertNoResponse(responseSpec)
-  }
-
-  @Test
-  fun `visit sessions book counts for over lapping sessions`() {
-
-    // Given
-    val nextAllowedDay = this.getNextAllowedDay()
-    val dateTime = nextAllowedDay.atTime(9, 0)
-    val startTime = dateTime.toLocalTime()
-    val endTime = dateTime.plusHours(1)
-    val endTimeOverlapping = dateTime.plusHours(2)
-
-    sessionTemplateEntityHelper.create(
-      validFromDate = nextAllowedDay,
-      validToDate = nextAllowedDay,
-      startTime = startTime,
-      endTime = endTime.toLocalTime(),
-      dayOfWeek = nextAllowedDay.dayOfWeek
-    )
-
-    sessionTemplateEntityHelper.create(
-      validFromDate = nextAllowedDay,
-      validToDate = nextAllowedDay,
-      startTime = startTime,
-      endTime = endTimeOverlapping.toLocalTime(),
-      dayOfWeek = nextAllowedDay.dayOfWeek
-    )
-
-    this.visitEntityHelper.create(
-      visitStart = dateTime,
-      visitEnd = endTime,
-      visitStatus = BOOKED
-    )
-    this.visitEntityHelper.create(
-      visitStart = dateTime,
-      visitEnd = endTimeOverlapping,
-      visitStatus = BOOKED
-    )
-
-    this.visitEntityHelper.create(
-      visitStart = dateTime,
-      visitEnd = endTimeOverlapping,
-      visitStatus = BOOKED,
-      visitRestriction = CLOSED
-    )
-
-    // When
-    val responseSpec = callGetSessions()
-
-    // Then
-    assertBookCounts(responseSpec, resultSize = 2, openCount = 2, closeCount = 1)
   }
 
   @Test
@@ -1022,8 +969,8 @@ class GetSessionsTest(@Autowired private val objectMapper: ObjectMapper) : Integ
       .exchange()
   }
 
-  private fun callGetSessions(): ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions?prisonId=MDI")
+  private fun callGetSessions(prisonId: String? = "MDI"): ResponseSpec {
+    return webTestClient.get().uri("/visit-sessions?prisonId=$prisonId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }

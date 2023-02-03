@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek
@@ -11,8 +12,12 @@ import javax.validation.constraints.NotBlank
 import javax.validation.constraints.NotNull
 
 data class SessionTemplateDto(
-  @Schema(description = "session id", example = "123", required = true)
-  val sessionTemplateId: Long,
+
+  @Schema(description = "Reference", example = "v9d.7ed.7u", required = true)
+  val reference: String,
+  @Schema(description = "name", example = "Monday Session", required = true)
+  @field:NotBlank
+  val name: String,
   @JsonProperty("prisonId")
   @Schema(description = "prisonId", example = "MDI", required = true)
   @field:NotBlank
@@ -32,17 +37,20 @@ data class SessionTemplateDto(
   val visitRoom: String,
   @Schema(description = "enhanced privilege", example = "true", required = true)
   val enhanced: Boolean,
+  @Schema(description = "biWeekly", example = "true", required = true)
+  val biWeekly: Boolean,
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
   val openCapacity: Int,
-  @Schema(description = "day of week fpr visit", example = "MONDAY", required = false)
+  @Schema(description = "day of week for visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
-  @Schema(description = "list of permitted session locations", required = false)
-  val permittedLocations: List<PermittedSessionLocationDto>? = listOf()
+  @Schema(description = "list of permitted session location groups", required = false)
+  val permittedLocationGroups: List<SessionLocationGroupDto> = listOf()
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
-    sessionTemplateId = sessionTemplateEntity.id,
+    reference = sessionTemplateEntity.reference,
+    name = sessionTemplateEntity.name,
     prisonCode = sessionTemplateEntity.prison.code,
     startTime = sessionTemplateEntity.startTime,
     endTime = sessionTemplateEntity.endTime,
@@ -53,7 +61,8 @@ data class SessionTemplateDto(
     closedCapacity = sessionTemplateEntity.closedCapacity,
     openCapacity = sessionTemplateEntity.openCapacity,
     dayOfWeek = sessionTemplateEntity.dayOfWeek,
-    permittedLocations = sessionTemplateEntity.permittedSessionLocations?.map { PermittedSessionLocationDto(it) },
+    permittedLocationGroups = sessionTemplateEntity.permittedSessionGroups.map { SessionLocationGroupDto(it) },
+    biWeekly = sessionTemplateEntity.biWeekly,
     enhanced = sessionTemplateEntity.enhanced
   )
 }

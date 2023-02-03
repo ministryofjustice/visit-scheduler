@@ -15,7 +15,9 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
@@ -174,6 +176,34 @@ class VisitSchedulerExceptionHandler(
     )
     sendErrorTelemetry(TelemetryVisitEvents.PUBLISH_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
+  }
+
+  @ExceptionHandler(ItemNotFoundException::class)
+  fun handleItemNotFoundException(e: ItemNotFoundException): ResponseEntity<ErrorResponse?>? {
+    log.debug("Not found exception caught: {}", e.message)
+    return ResponseEntity
+      .status(HttpStatus.NOT_FOUND)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.NOT_FOUND,
+          userMessage = "Not found",
+          developerMessage = e.message
+        )
+      )
+  }
+
+  @ExceptionHandler(VSiPValidationException::class)
+  fun handleVSiPValidationException(e: VSiPValidationException): ResponseEntity<ErrorResponse?>? {
+    log.error("Validation exception", e)
+    return ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.BAD_REQUEST,
+          userMessage = "Validation failed",
+          developerMessage = e.message
+        )
+      )
   }
 
   @ExceptionHandler(java.lang.Exception::class)

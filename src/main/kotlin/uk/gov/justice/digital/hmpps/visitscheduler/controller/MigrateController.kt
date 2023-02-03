@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -20,7 +21,8 @@ import javax.validation.Valid
 
 @RestController
 @Validated
-@RequestMapping(name = "Visit Resource", path = ["/migrate-visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "7. Visit migration rest controller")
+@RequestMapping(name = "Visit Migration Resource", path = ["/migrate-visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class MigrateController(
   private val migrateVisitService: MigrateVisitService
 ) {

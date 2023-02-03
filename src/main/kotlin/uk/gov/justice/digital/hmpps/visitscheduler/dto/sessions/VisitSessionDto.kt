@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.dto
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
@@ -10,8 +10,8 @@ import javax.validation.Valid
 @Schema(description = "Visit Session")
 data class VisitSessionDto(
 
-  @Schema(description = "session id", example = "123", required = true)
-  val sessionTemplateId: Long,
+  @Schema(description = "Session Template Reference", example = "v9d.7ed.7u", required = true)
+  val sessionTemplateReference: String,
 
   @Schema(
     description = "The Name of the visit room in which this visit session takes place",

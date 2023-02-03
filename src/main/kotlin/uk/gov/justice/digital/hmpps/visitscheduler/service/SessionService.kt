@@ -3,9 +3,9 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionCapacityDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -63,11 +63,11 @@ class SessionService(
 
     val inclEnhancedPrivilegeTemplates = prisonerId?.let { prisonerService.hasPrisonerGotEnhancedPrivilege(prisonerId) } ?: run { true }
 
-    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
-      prisonCode,
-      requestedBookableStartDate,
-      requestedBookableEndDate,
-      inclEnhancedPrivilegeTemplates
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
+      prisonCode = prisonCode,
+      rangeStartDate = requestedBookableStartDate,
+      rangeEndDate = requestedBookableEndDate,
+      inclEnhancedPrivilegeTemplates = inclEnhancedPrivilegeTemplates
     )
 
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)
@@ -100,7 +100,7 @@ class SessionService(
       return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
         .map { date ->
           VisitSessionDto(
-            sessionTemplateId = sessionTemplate.id,
+            sessionTemplateReference = sessionTemplate.reference,
             prisonCode = sessionTemplate.prison.code,
             startTimestamp = LocalDateTime.of(date, sessionTemplate.startTime),
             openVisitCapacity = sessionTemplate.openCapacity,

@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
@@ -20,6 +21,7 @@ const val SUPPORTED_PRISONS: String = "$CONFIG_CONTROLLER_PATH/prisons/supported
 
 @RestController
 @Validated
+@Tag(name = "6. Prison admin rest controller")
 @RequestMapping(name = "Prison Configuration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonConfigController(
   private val prisonConfigService: PrisonConfigService

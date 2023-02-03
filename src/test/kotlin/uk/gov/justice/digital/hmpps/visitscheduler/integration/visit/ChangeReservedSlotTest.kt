@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -11,7 +10,6 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -39,7 +37,7 @@ import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_RESERVED_SLOT_CHANGE")
-class ChangeReservedSlotTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class ChangeReservedSlotTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 

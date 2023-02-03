@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
 
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractReferenceEntity
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -11,9 +12,6 @@ import javax.persistence.Entity
 import javax.persistence.EnumType
 import javax.persistence.Enumerated
 import javax.persistence.FetchType
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.JoinTable
 import javax.persistence.ManyToMany
@@ -23,16 +21,16 @@ import javax.persistence.Table
 @Entity
 @Table(name = "SESSION_TEMPLATE")
 class SessionTemplate(
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  val id: Long = 0,
 
   @Column(name = "PRISON_ID", nullable = false)
   val prisonId: Long,
 
-  @ManyToOne
+  @ManyToOne(cascade = [CascadeType.DETACH])
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison,
+
+  @Column(nullable = false)
+  var name: String,
 
   @Column(nullable = false)
   val visitRoom: String,
@@ -40,13 +38,13 @@ class SessionTemplate(
   @Column(nullable = false)
   val enhanced: Boolean = false,
 
-  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
+  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
   @JoinTable(
-    name = "SESSION_TO_PERMITTED_LOCATION",
-    joinColumns = [JoinColumn(name = "session_template_id")],
-    inverseJoinColumns = [JoinColumn(name = "permitted_session_location_id")]
+    name = "SESSION_TO_LOCATION_GROUP",
+    joinColumns = [JoinColumn(name = "session_template_id",)],
+    inverseJoinColumns = [JoinColumn(name = "group_id")],
   )
-  val permittedSessionLocations: MutableList<PermittedSessionLocation>? = mutableListOf(),
+  val permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
 
   @Column
   @Enumerated(EnumType.STRING)
@@ -76,20 +74,4 @@ class SessionTemplate(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   val dayOfWeek: DayOfWeek
-) {
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is SessionTemplate) return false
-
-    if (id != other.id) return false
-    return true
-  }
-
-  override fun hashCode(): Int {
-    return id.hashCode()
-  }
-
-  override fun toString(): String {
-    return this::class.simpleName + "(id=$id)"
-  }
-}
+) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

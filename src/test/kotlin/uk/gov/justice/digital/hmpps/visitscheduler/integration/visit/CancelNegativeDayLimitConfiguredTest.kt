@@ -1,10 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.context.TestPropertySource
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
@@ -17,7 +15,7 @@ import java.time.LocalDateTime
 
 @DisplayName("Cancellation days have been set as zero")
 @TestPropertySource(properties = ["visit.cancel.day-limit=-2"])
-class CancelNegativeDayLimitConfiguredTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
   @Value("\${visit.cancel.day-limit}")
   var visitCancellationDayLimit: Long = -7
 

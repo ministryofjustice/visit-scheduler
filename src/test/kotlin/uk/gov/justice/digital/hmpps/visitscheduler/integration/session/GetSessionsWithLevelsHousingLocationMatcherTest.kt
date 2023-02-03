@@ -1,14 +1,12 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.web.reactive.server.WebTestClient
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedPrisonHierarchy
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -19,7 +17,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @DisplayName("Get /visit-sessions")
-class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
   private val prison: Prison = Prison(code = "MDI", active = true)
 
@@ -55,14 +53,14 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
       visitRoom = "session available to some level 1"
     )
 
-    var allowedPermittedLocations: List<AllowedPrisonHierarchy> = listOf(
-      AllowedPrisonHierarchy("A", null, null, null),
-      AllowedPrisonHierarchy("B", null, null, null),
-      AllowedPrisonHierarchy("D", null, null, null),
-      AllowedPrisonHierarchy("E", null, null, null),
-      AllowedPrisonHierarchy("F", null, null, null),
+    var allowedPermittedLocations: List<AllowedSessionLocationHierarchy> = listOf(
+      AllowedSessionLocationHierarchy("A", null, null, null),
+      AllowedSessionLocationHierarchy("B", null, null, null),
+      AllowedSessionLocationHierarchy("D", null, null, null),
+      AllowedSessionLocationHierarchy("E", null, null, null),
+      AllowedSessionLocationHierarchy("F", null, null, null),
     )
-    permittedSessionLocationHelper.create(sessionTemplateForSomeLevel1s, allowedPermittedLocations)
+    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel1s, allowedPermittedLocations)
 
     // this session template is available to levels A-1,A-2,A-3 and B-1
     sessionTemplateForSomeLevel2s = sessionTemplateEntityHelper.create(
@@ -76,12 +74,12 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     )
 
     allowedPermittedLocations = listOf(
-      AllowedPrisonHierarchy("A", "1", null, null),
-      AllowedPrisonHierarchy("A", "2", null, null),
-      AllowedPrisonHierarchy("A", "3", null, null),
-      AllowedPrisonHierarchy("B", "1", null, null),
+      AllowedSessionLocationHierarchy("A", "1", null, null),
+      AllowedSessionLocationHierarchy("A", "2", null, null),
+      AllowedSessionLocationHierarchy("A", "3", null, null),
+      AllowedSessionLocationHierarchy("B", "1", null, null),
     )
-    permittedSessionLocationHelper.create(sessionTemplateForSomeLevel2s, allowedPermittedLocations)
+    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel2s, allowedPermittedLocations)
 
     // this session template is available to levels A-1-100, A-1-200, and B-1
     sessionTemplateForSomeLevel3sAnd1Level2 = sessionTemplateEntityHelper.create(
@@ -95,11 +93,11 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     )
 
     allowedPermittedLocations = listOf(
-      AllowedPrisonHierarchy("A", "1", "100", null),
-      AllowedPrisonHierarchy("A", "2", "200", null),
-      AllowedPrisonHierarchy("B", "1", null, null)
+      AllowedSessionLocationHierarchy("A", "1", "100", null),
+      AllowedSessionLocationHierarchy("A", "2", "200", null),
+      AllowedSessionLocationHierarchy("B", "1", null, null)
     )
-    permittedSessionLocationHelper.create(sessionTemplateForSomeLevel3sAnd1Level2, allowedPermittedLocations)
+    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel3sAnd1Level2, allowedPermittedLocations)
 
     sessionTemplateForSomeLevel4sAnd2s = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
@@ -112,11 +110,11 @@ class GetSessionsWithLevelsHousingLocationMatcherTest(@Autowired private val obj
     )
 
     allowedPermittedLocations = listOf(
-      AllowedPrisonHierarchy("A", "1", "100", "1"),
-      AllowedPrisonHierarchy("A", "2", "100", "3"),
-      AllowedPrisonHierarchy("B", "1", null, null)
+      AllowedSessionLocationHierarchy("A", "1", "100", "1"),
+      AllowedSessionLocationHierarchy("A", "2", "100", "3"),
+      AllowedSessionLocationHierarchy("B", "1", null, null)
     )
-    permittedSessionLocationHelper.create(sessionTemplateForSomeLevel4sAnd2s, allowedPermittedLocations)
+    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel4sAnd2s, allowedPermittedLocations)
   }
 
   @Test

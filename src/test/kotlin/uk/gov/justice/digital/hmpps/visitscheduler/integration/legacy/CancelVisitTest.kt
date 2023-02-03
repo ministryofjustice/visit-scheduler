@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.legacy
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
@@ -10,7 +9,6 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.context.TestPropertySource
@@ -28,7 +26,7 @@ import java.time.temporal.ChronoUnit
 
 @DisplayName("Put /visits/{reference}/cancel")
 @TestPropertySource(properties = ["visit.cancel.day-limit=7"])
-class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class CancelVisitTest : IntegrationTestBase() {
 
   @Value("\${visit.cancel.day-limit:14}")
   var visitCancellationDayLimit: Long = 14

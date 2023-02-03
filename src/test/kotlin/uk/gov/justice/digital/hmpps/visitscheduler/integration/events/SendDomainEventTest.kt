@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.events
 
 import com.amazonaws.services.sqs.model.PurgeQueueRequest
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.await
@@ -37,7 +36,7 @@ import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import java.time.ZoneId
 import java.time.ZonedDateTime
 
-class SendDomainEventTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class SendDomainEventTest : IntegrationTestBase() {
 
   @Autowired
   protected lateinit var hmppsQueueService: HmppsQueueService

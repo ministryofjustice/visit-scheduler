@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -11,7 +10,6 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -23,7 +21,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitReserveSlotUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -36,12 +33,9 @@ import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $VISIT_RESERVE_SLOT")
-class ReserveSlotTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class ReserveSlotTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
-
-  @Autowired
-  private lateinit var prisonEntityHelper: PrisonEntityHelper
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
