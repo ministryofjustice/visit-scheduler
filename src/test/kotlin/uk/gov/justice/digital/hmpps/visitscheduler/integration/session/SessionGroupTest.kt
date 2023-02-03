@@ -144,7 +144,7 @@ class SessionGroupTest(
   }
 
   @Test
-  fun `delete session group when session template uses the group`() {
+  fun `delete session group when session template uses the group should throw an exception`() {
 
     // Given
     val reference = sessionGroup1.reference
@@ -153,6 +153,9 @@ class SessionGroupTest(
     val responseSpec = callDeleteGroupByReference(webTestClient, reference, setAuthorisation(roles = requiredRole))
 
     // Then
-    responseSpec.expectStatus().is5xxServerError
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Validation failed")
+      .jsonPath("$.developerMessage").isEqualTo("Group cannot be deleted $reference because session templates are using it!")
   }
 }

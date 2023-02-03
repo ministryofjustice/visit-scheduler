@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationG
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
@@ -212,7 +213,7 @@ class SessionTemplateService(
 
     val group = getLocationGroupByReference(reference)
     if (group.sessionTemplates.isNotEmpty()) {
-      throw java.lang.IllegalStateException("Group cannot be deleted $reference because session templates are using it!")
+      throw VSiPValidationException("Group cannot be deleted $reference because session templates are using it!")
     }
 
     val deleted = sessionLocationGroupRepository.deleteByReference(reference)

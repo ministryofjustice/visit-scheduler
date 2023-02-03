@@ -80,17 +80,22 @@ class DataBaseTest(
 
   @Transactional(propagation = REQUIRES_NEW)
   @Test
-  fun `When sessionTemplate deleted - location groups are not`() {
+  fun `When sessionTemplate deleted - location groups are not but join is`() {
 
     // Given
     val reference = sessionTemplate.reference
+    val sessionId = sessionTemplate.id
+    val grp1Id = sessionTemplate.permittedSessionGroups[0].id
+    val grp2Id = sessionTemplate.permittedSessionGroups[1].id
 
     // When
     val result = testTemplateRepository.deleteByReference(reference)
 
     // Then
     Assertions.assertThat(result).isEqualTo(1)
-    Assertions.assertThat(testSessionLocationGroupRepository.hasById(sessionTemplate.permittedSessionGroups[0].id)).isTrue()
-    Assertions.assertThat(testSessionLocationGroupRepository.hasById(sessionTemplate.permittedSessionGroups[1].id)).isTrue()
+    Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp1Id)).isTrue()
+    Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp2Id)).isTrue()
+    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTableBeen(sessionId, grp1Id)).isFalse
+    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTableBeen(sessionId, grp2Id)).isFalse
   }
 }
