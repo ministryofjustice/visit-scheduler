@@ -15,7 +15,7 @@ import javax.persistence.Table
 
 @Entity
 @Table(name = "SESSION_LOCATION_GROUP")
-data class SessionLocationGroup(
+class SessionLocationGroup(
 
   @Column(name = "PRISON_ID", nullable = false)
   val prisonId: Long,
