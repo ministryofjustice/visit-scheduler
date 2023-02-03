@@ -72,13 +72,13 @@ abstract class IntegrationTestBase {
     deleteEntityHelper.deleteAll()
   }
 
-  fun getSessionTemplate(responseSpec: ResponseSpec) =
+  fun getSessionTemplate(responseSpec: ResponseSpec): SessionTemplateDto =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
 
-  fun getSessionLocationGroup(responseSpec: ResponseSpec) =
+  fun getSessionLocationGroup(responseSpec: ResponseSpec): SessionLocationGroupDto =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionLocationGroupDto::class.java)
 
-  fun getSessionLocationGroups(responseSpec: ResponseSpec) =
+  fun getSessionLocationGroups(responseSpec: ResponseSpec): Array<SessionLocationGroupDto> =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionLocationGroupDto>::class.java)
 
   fun getErrorResponse(responseSpec: ResponseSpec) =

@@ -74,7 +74,7 @@ BEGIN;
 				SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY key))+2951597050), '(.{3})(?!$)', '\1~','g')) as reference,prison_id,name FROM tmp_session_location_group order by id;
 
 	-- Sequence updated manually as id's were inserted from temp table
-	ALTER SEQUENCE tmp_session_location_group_id_seq RESTART WITH  ${session_location_group_id_index};
+	ALTER SEQUENCE session_location_group_id_seq RESTART WITH  ${session_location_group_id_index};
 
 
 	-- Create permitted session location data
