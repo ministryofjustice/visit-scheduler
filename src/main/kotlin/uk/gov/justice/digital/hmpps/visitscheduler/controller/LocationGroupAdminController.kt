@@ -140,8 +140,8 @@ class LocationGroupAdminController(
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @DeleteMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
   @Operation(
-    summary = "delete location group",
-    description = "delete location group by reference",
+    summary = "Delete location group",
+    description = "Delete location group by reference",
     responses = [
       ApiResponse(
         responseCode = "200",

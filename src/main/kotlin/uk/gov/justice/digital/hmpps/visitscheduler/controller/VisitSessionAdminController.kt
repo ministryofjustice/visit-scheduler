@@ -126,8 +126,8 @@ class VisitSessionAdminController(
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH)
   @Operation(
-    summary = "delete session template by reference",
-    description = "Get all session templates",
+    summary = "Delete session template by reference",
+    description = "Delete session template by reference",
     responses = [
       ApiResponse(
         responseCode = "200",
