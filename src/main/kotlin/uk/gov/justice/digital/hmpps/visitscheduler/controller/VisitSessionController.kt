@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -26,6 +27,7 @@ const val GET_SESSION_CAPACITY: String = "$VISIT_SESSION_CONTROLLER_PATH/capacit
 @RestController
 @Validated
 @RequestMapping(name = "Session Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "2. Visit session rest controller")
 class VisitSessionController(
   private val sessionService: SessionService
 ) {

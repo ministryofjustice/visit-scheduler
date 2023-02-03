@@ -34,6 +34,7 @@ class SessionTemplateService(
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
+  @Transactional(readOnly = true)
   fun getSessionTemplates(prisonCode: String, dayOfWeek: DayOfWeek?, rangeStartDate: LocalDate?, rangeEndDate: LocalDate?): List<SessionTemplateDto> {
 
     val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
@@ -46,14 +47,17 @@ class SessionTemplateService(
     return sessionTemplates.sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
   }
 
+  @Transactional(readOnly = true)
   fun getSessionTemplates(reference: String): SessionTemplateDto {
     return SessionTemplateDto(getSessionTemplate(reference))
   }
 
+  @Transactional(readOnly = true)
   fun getSessionLocationGroupByReference(reference: String): SessionLocationGroupDto {
     return SessionLocationGroupDto(getLocationGroupByReference(reference))
   }
 
+  @Transactional(readOnly = true)
   fun getSessionLocationGroup(prisonCode: String): List<SessionLocationGroupDto> {
     return sessionLocationGroupRepository.findByPrisonCode(prisonCode).map { SessionLocationGroupDto(it) }
   }
@@ -203,9 +207,6 @@ class SessionTemplateService(
     val deleted = sessionTemplateRepository.deleteByReference(reference)
     if (deleted == 0) {
       throw ItemNotFoundException("Session template not found : $reference")
-    }
-    if (deleted > 1) {
-      throw java.lang.IllegalStateException("More than one Session Template $reference was deleted!")
     }
   }
 

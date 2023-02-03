@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
@@ -36,6 +37,7 @@ const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{ref
 @RestController
 @Validated
 @RequestMapping(name = "Session Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "4. Session admin rest controller")
 class VisitSessionAdminController(
   private val sessionTemplateService: SessionTemplateService
 ) {
@@ -44,7 +46,7 @@ class VisitSessionAdminController(
   @GetMapping(SESSION_TEMPLATES_PATH)
   @Operation(
     summary = "Get session templates",
-    description = "Get all session templates",
+    description = "Get session templates by given parameters",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -93,7 +95,7 @@ class VisitSessionAdminController(
   @GetMapping(REFERENCE_SESSION_TEMPLATE_PATH)
   @Operation(
     summary = "Get session template",
-    description = "Get all session templates",
+    description = "Get session template by reference",
     responses = [
       ApiResponse(
         responseCode = "200",

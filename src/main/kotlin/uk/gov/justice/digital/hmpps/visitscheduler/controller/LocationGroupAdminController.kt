@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -32,6 +33,7 @@ const val REFERENCE_LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUP_ADMIN_P
 
 @RestController
 @Validated
+@Tag(name = "5. Location group admin rest controller")
 @RequestMapping(name = "Location group resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class LocationGroupAdminController(
   private val sessionTemplateService: SessionTemplateService

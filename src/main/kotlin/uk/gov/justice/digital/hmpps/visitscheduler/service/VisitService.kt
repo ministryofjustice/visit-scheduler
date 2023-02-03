@@ -185,6 +185,7 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
+  @Transactional(readOnly = true)
   @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
   fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
     return findVisitsByFilterPageableDescending(visitFilter).content

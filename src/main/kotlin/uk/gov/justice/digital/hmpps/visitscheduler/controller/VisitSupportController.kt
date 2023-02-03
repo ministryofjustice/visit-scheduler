@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
@@ -17,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SupportService
 @RestController
 @Validated
 @RequestMapping(name = "Support Resource", path = ["/visit-support"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "3. Visit support rest controller")
 class VisitSupportController(
   private val supportService: SupportService
 ) {
