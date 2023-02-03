@@ -54,8 +54,8 @@ class SessionTemplateService(
     return SessionLocationGroupDto(getLocationGroupByReference(reference))
   }
 
-  fun getSessionLocationGroup(prisonId: String): List<SessionLocationGroupDto> {
-    return sessionLocationGroupRepository.findByPrisonCode(prisonId).map { SessionLocationGroupDto(it) }
+  fun getSessionLocationGroup(prisonCode: String): List<SessionLocationGroupDto> {
+    return sessionLocationGroupRepository.findByPrisonCode(prisonCode).map { SessionLocationGroupDto(it) }
   }
 
   private fun getLocationGroupByReference(reference: String): SessionLocationGroup {

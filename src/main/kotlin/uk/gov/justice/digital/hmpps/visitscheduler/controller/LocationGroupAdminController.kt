@@ -26,7 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateServic
 import javax.validation.Valid
 
 const val LOCATION_GROUPS_ADMIN_PATH: String = "/location-groups"
-const val PRISON_LOCATION_GROUPS_ADMIN_PATH: String = "$LOCATION_GROUPS_ADMIN_PATH/{prisonId}"
+const val PRISON_LOCATION_GROUPS_ADMIN_PATH: String = "$LOCATION_GROUPS_ADMIN_PATH/{prisonCode}"
 const val LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUPS_ADMIN_PATH/group"
 const val REFERENCE_LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUP_ADMIN_PATH/{reference}"
 
@@ -60,10 +60,10 @@ class LocationGroupAdminController(
     ]
   )
   fun getLocationGroups(
-    @Schema(description = "prisonId", example = "MDI", required = true)
-    @PathVariable prisonId: String
+    @Schema(description = "prisonCode", example = "MDI", required = true)
+    @PathVariable prisonCode: String
   ): List<SessionLocationGroupDto> {
-    return sessionTemplateService.getSessionLocationGroup(prisonId)
+    return sessionTemplateService.getSessionLocationGroup(prisonCode)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -141,7 +141,7 @@ class LocationGroupAdminController(
   @DeleteMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
   @Operation(
     summary = "delete location group",
-    description = "delete location group",
+    description = "delete location group by reference",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -176,7 +176,7 @@ class LocationGroupAdminController(
   @PutMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
   @Operation(
     summary = "Update location group",
-    description = "Update existing location group",
+    description = "Update existing location group by reference",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(

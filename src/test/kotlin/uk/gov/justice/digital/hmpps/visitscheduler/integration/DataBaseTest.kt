@@ -72,15 +72,15 @@ class DataBaseTest(
     // Then
     Assertions.assertThat(didExist).isTrue
     Assertions.assertThat(result).isEqualTo(1)
-    Assertions.assertThat(testVisitRepository.hasContact(reservedVisit.id)).isFalse()
-    Assertions.assertThat(testVisitRepository.hasNotes(reservedVisit.id)).isFalse()
-    Assertions.assertThat(testVisitRepository.hasVisitors(reservedVisit.id)).isFalse()
-    Assertions.assertThat(testVisitRepository.hasSupport(reservedVisit.id)).isFalse()
+    Assertions.assertThat(testVisitRepository.hasContact(reservedVisit.id)).isFalse
+    Assertions.assertThat(testVisitRepository.hasNotes(reservedVisit.id)).isFalse
+    Assertions.assertThat(testVisitRepository.hasVisitors(reservedVisit.id)).isFalse
+    Assertions.assertThat(testVisitRepository.hasSupport(reservedVisit.id)).isFalse
   }
 
   @Transactional(propagation = REQUIRES_NEW)
   @Test
-  fun `When sessionTemplate deleted - location groups are not but join is`() {
+  fun `When sessionTemplate deleted - location groups are not deleted but join is`() {
 
     // Given
     val reference = sessionTemplate.reference
@@ -93,9 +93,9 @@ class DataBaseTest(
 
     // Then
     Assertions.assertThat(result).isEqualTo(1)
-    Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp1Id)).isTrue()
-    Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp2Id)).isTrue()
-    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTableBeen(sessionId, grp1Id)).isFalse
-    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTableBeen(sessionId, grp2Id)).isFalse
+    Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp1Id)).isTrue
+    Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp2Id)).isTrue
+    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionId, grp1Id)).isFalse
+    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionId, grp2Id)).isFalse
   }
 }

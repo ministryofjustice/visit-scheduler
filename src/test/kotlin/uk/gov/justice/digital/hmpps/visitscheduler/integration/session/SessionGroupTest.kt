@@ -144,7 +144,7 @@ class SessionGroupTest(
   }
 
   @Test
-  fun `delete session group when session template uses the group should throw an exception`() {
+  fun `delete session group when session template uses the group exception is thrown`() {
 
     // Given
     val reference = sessionGroup1.reference

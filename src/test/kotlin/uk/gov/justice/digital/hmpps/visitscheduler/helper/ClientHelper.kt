@@ -235,7 +235,7 @@ fun callUpdateLocationSessionGroupByReference(
 }
 
 fun getPrisonIdUrl(url: String, prisonId: String): String {
-  return url.replace("{prisonId}", prisonId)
+  return url.replace("{prisonCode}", prisonId)
 }
 
 fun getReferenceUrl(url: String, reference: String): String {

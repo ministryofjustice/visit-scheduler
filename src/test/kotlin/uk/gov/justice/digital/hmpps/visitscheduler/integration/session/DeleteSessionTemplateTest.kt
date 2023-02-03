@@ -61,7 +61,7 @@ class DeleteSessionTemplateTest(
     Assertions.assertThat(testTemplateRepository.hasSessionTemplate(sessionTemplate.id)).isFalse
     Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp1Id)).isTrue
     Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp2Id)).isTrue
-    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTableBeen(sessionTemplate.id, sessionGroup1.id)).isFalse
-    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTableBeen(sessionTemplate.id, sessionGroup2.id)).isFalse
+    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionTemplate.id, sessionGroup1.id)).isFalse
+    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionTemplate.id, sessionGroup2.id)).isFalse
   }
 }
