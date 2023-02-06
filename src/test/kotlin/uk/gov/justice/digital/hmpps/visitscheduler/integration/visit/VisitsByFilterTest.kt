@@ -90,23 +90,23 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonerId = "FF0000BB"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].prisonerId").isEqualTo("FF0000BB")
-      .jsonPath("$[0].startTimestamp").isEqualTo(visitFullWithNoVisitors.visitStart.toString())
-      .jsonPath("$[0].reference").exists()
-      .jsonPath("$[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
-      .jsonPath("$[0].visitNotes[?(@.type=='VISIT_COMMENT')].text").isEqualTo("A visit comment")
-      .jsonPath("$[0].visitNotes[?(@.type=='VISIT_OUTCOMES')].text").isEqualTo("A visit outcome")
-      .jsonPath("$[0].visitNotes[?(@.type=='STATUS_CHANGED_REASON')].text").isEqualTo("Status has changed")
-      .jsonPath("$[0].visitors.length()").isEqualTo(0)
-      .jsonPath("$[0].visitContact").doesNotExist()
-      .jsonPath("$[0].visitorSupport.length()").isEqualTo(0)
+      .jsonPath("$.content.length()").isEqualTo(1)
+      .jsonPath("$.content[0].prisonerId").isEqualTo("FF0000BB")
+      .jsonPath("$.content[0].startTimestamp").isEqualTo(visitFullWithNoVisitors.visitStart.toString())
+      .jsonPath("$.content[0].reference").exists()
+      .jsonPath("$.content[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
+      .jsonPath("$.content[0].visitNotes[?(@.type=='VISIT_COMMENT')].text").isEqualTo("A visit comment")
+      .jsonPath("$.content[0].visitNotes[?(@.type=='VISIT_OUTCOMES')].text").isEqualTo("A visit outcome")
+      .jsonPath("$.content[0].visitNotes[?(@.type=='STATUS_CHANGED_REASON')].text").isEqualTo("Status has changed")
+      .jsonPath("$.content[0].visitors.length()").isEqualTo(0)
+      .jsonPath("$.content[0].visitContact").doesNotExist()
+      .jsonPath("$.content[0].visitorSupport.length()").isEqualTo(0)
   }
 
   @Test
@@ -115,7 +115,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     // Given
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits")
+    val responseSpec = callSearchVisitEndPoint("/visits")
 
     // Then
     responseSpec
@@ -130,20 +130,20 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonerId = "FF0000CC"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].prisonerId").isEqualTo("FF0000CC")
-      .jsonPath("$[0].startTimestamp").isEqualTo(visitFullWithOneVisitor.visitStart.toString())
-      .jsonPath("$[0].reference").exists()
-      .jsonPath("$[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
-      .jsonPath("$[0].visitors.length()").isEqualTo(1)
-      .jsonPath("$[0].visitContact.name").isEqualTo("Jane Doe")
-      .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
+      .jsonPath("$.content.length()").isEqualTo(1)
+      .jsonPath("$.content[0].prisonerId").isEqualTo("FF0000CC")
+      .jsonPath("$.content[0].startTimestamp").isEqualTo(visitFullWithOneVisitor.visitStart.toString())
+      .jsonPath("$.content[0].reference").exists()
+      .jsonPath("$.content[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
+      .jsonPath("$.content[0].visitors.length()").isEqualTo(1)
+      .jsonPath("$.content[0].visitContact.name").isEqualTo("Jane Doe")
+      .jsonPath("$.content[0].visitorSupport.length()").isEqualTo(1)
   }
 
   @Test
@@ -154,20 +154,20 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonerId = "FF0000DD"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec
       .expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].prisonerId").isEqualTo("FF0000DD")
-      .jsonPath("$[0].startTimestamp").isEqualTo(visitFullWithMultipleVisitors.visitStart.toString())
-      .jsonPath("$[0].reference").exists()
-      .jsonPath("$[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
-      .jsonPath("$[0].visitors.length()").isEqualTo(3)
-      .jsonPath("$[0].visitContact.name").isEqualTo("Jane D")
-      .jsonPath("$[0].visitorSupport.length()").isEqualTo(1)
+      .jsonPath("$.content.length()").isEqualTo(1)
+      .jsonPath("$.content[0].prisonerId").isEqualTo("FF0000DD")
+      .jsonPath("$.content[0].startTimestamp").isEqualTo(visitFullWithMultipleVisitors.visitStart.toString())
+      .jsonPath("$.content[0].reference").exists()
+      .jsonPath("$.content[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
+      .jsonPath("$.content[0].visitors.length()").isEqualTo(3)
+      .jsonPath("$.content[0].visitContact.name").isEqualTo("Jane D")
+      .jsonPath("$.content[0].visitorSupport.length()").isEqualTo(1)
   }
 
   @Test
@@ -176,12 +176,12 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "LEI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(3)
+      .jsonPath("$.content.length()").isEqualTo(3)
       .jsonPath("$..prisonerId").value(
         Matchers.containsInAnyOrder(
           "FF0000CC",
@@ -205,13 +205,13 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonerId = "GG0000BAA"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].visitStatus").isEqualTo("BOOKED")
+      .jsonPath("$.content.length()").isEqualTo(1)
+      .jsonPath("$.content[0].visitStatus").isEqualTo("BOOKED")
   }
 
   @Test
@@ -219,16 +219,16 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     // Given
     val prisonId = "LEI"
-    val startTimestamp = "2021-11-03T09:00:00"
+    val startDateTime = "2021-11-03T09:00:00"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&startTimestamp=$startTimestamp&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&startDateTime=$startDateTime&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].startTimestamp").isEqualTo(visitTime.plusDays(2).toString())
+      .jsonPath("$.content.length()").isEqualTo(1)
+      .jsonPath("$.content[0].startTimestamp").isEqualTo(visitTime.plusDays(2).toString())
   }
 
   @Test
@@ -236,16 +236,16 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     // Given
     val prisonId = "MDI"
-    val startTimestamp = "2021-11-01T13:30:45"
+    val startDateTime = "2021-11-01T13:30:45"
     val prisonerId = "GG0000BB"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&startTimestamp=$startTimestamp&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&prisonerId=$prisonerId&startDateTime=$startDateTime&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(2)
+      .jsonPath("$.content.length()").isEqualTo(2)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
           "2021-11-03T13:30:44",
@@ -269,16 +269,16 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @Test
   fun `get visits starting before a specified date`() {
     // Given
-    val startTimestamp = "2021-11-03T09:00:00"
+    val endDateTime = "2021-11-03T09:00:00"
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&endTimestamp=$startTimestamp&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&endDateTime=$endDateTime&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(3)
+      .jsonPath("$.content.length()").isEqualTo(3)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
           "2021-11-02T13:30:44",
@@ -291,17 +291,17 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @Test
   fun `get visits starting within a date range`() {
     // Given
-    val startTimestamp = "2021-11-02T09:00:00"
-    val endTimestamp = "2021-11-03T09:00:00"
+    val startDateTime = "2021-11-02T09:00:00"
+    val endDateTime = "2021-11-03T09:00:00"
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&startTimestamp=$startTimestamp&endTimestamp=$endTimestamp&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&startDateTime=$startDateTime&endDateTime=$endDateTime&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
+      .jsonPath("$.content.length()").isEqualTo(1)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
           "2021-11-02T13:30:44"
@@ -313,17 +313,17 @@ class VisitsByFilterTest : IntegrationTestBase() {
   fun `get visits by visitor`() {
 
     // Given
-    val nomisPersonId = 123
+    val visitorId = 123
     val prisonId = "LEI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&nomisPersonId=$nomisPersonId&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&visitorId=$visitorId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].prisonerId").isEqualTo("FF0000CC")
+      .jsonPath("$.content.length()").isEqualTo(1)
+      .jsonPath("$.content[0].prisonerId").isEqualTo("FF0000CC")
   }
 
   @Test
@@ -333,13 +333,13 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&visitStatus=$visitStatus")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&visitStatus=$visitStatus")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(1)
-      .jsonPath("$[0].prisonerId").isEqualTo("GG0000BB")
+      .jsonPath("$.content.length()").isEqualTo(1)
+      .jsonPath("$.content[0].prisonerId").isEqualTo("GG0000BB")
   }
 
   @Test
@@ -349,8 +349,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpecFirst = callVisitGetEndPoint("$VISIT_CONTROLLER_SEARCH_PATH?prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED&page=0&size=$size")
-    val responseSpecLast = callVisitGetEndPoint("$VISIT_CONTROLLER_SEARCH_PATH?prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED&page=1&size=$size")
+    val responseSpecFirst = callSearchVisitEndPoint("prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED&page=0&size=$size")
+    val responseSpecLast = callSearchVisitEndPoint("prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED&page=1&size=$size")
 
     // Then - Page 0
     responseSpecFirst.expectStatus().isOk
@@ -378,12 +378,12 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED")
 
     // Then
     responseSpec.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.length()").isEqualTo(0)
+      .jsonPath("$.content.length()").isEqualTo(0)
   }
 
   @Test
@@ -394,7 +394,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&nomisPersonId=$nomisPersonId")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&nomisPersonId=$nomisPersonId")
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -409,7 +409,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&visitStatus=$visitStatus")
+    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&visitStatus=$visitStatus")
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -423,7 +423,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpec = callVisitGetEndPoint("/visits?prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED", listOf())
+    val responseSpec = callSearchVisitEndPoint(params = "prisonId=$prisonId&prisonerId=$prisonerId&visitStatus=BOOKED,CANCELLED,RESERVED", roles = listOf())
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -437,14 +437,21 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpec = webTestClient.get().uri("/visits??prisonId=$prisonId&prisonerId=$prisonerId").exchange()
+    val responseSpec = webTestClient.get().uri("prisonId=$prisonId&prisonerId=$prisonerId").exchange()
 
     // Then
     responseSpec.expectStatus().isUnauthorized
   }
 
-  fun callVisitGetEndPoint(url: String, roles: List<String> = listOf("ROLE_VISIT_SCHEDULER")): ResponseSpec {
-    return webTestClient.get().uri(url)
+  fun callSearchVisitEndPoint(
+    params: String,
+    page: Int = 0,
+    pageSize: Int = 100,
+    roles: List<String> = listOf("ROLE_VISIT_SCHEDULER")
+  ): ResponseSpec {
+
+    val uri = "$VISIT_CONTROLLER_SEARCH_PATH?$params&page=$page&size=$pageSize"
+    return webTestClient.get().uri(uri)
       .headers(setAuthorisation(roles = roles))
       .exchange()
   }
