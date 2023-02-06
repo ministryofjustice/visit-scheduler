@@ -186,12 +186,6 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
-  fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
-    return findVisitsByFilterPageableDescending(visitFilter).content
-  }
-
-  @Transactional(readOnly = true)
   fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
 
     if (visitFilter.prisonCode == null && visitFilter.prisonerId == null) {
