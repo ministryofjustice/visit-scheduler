@@ -90,7 +90,7 @@ class CancelVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `cancel visit twice by reference - just on event sent`() {
+  fun `cancel visit twice by reference - just send one event`() {
 
     // Given
     val visit = visitEntityHelper.create(visitStatus = BOOKED)

@@ -104,7 +104,7 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Booked visit twice by application reference - just one event sent`() {
+  fun `Booked visit twice by application reference - just send one event`() {
 
     // Given
     val applicationReference = reservedVisit.applicationReference
