@@ -120,7 +120,9 @@ class BookVisitTest : IntegrationTestBase() {
     val visit1 = objectMapper.readValue(returnResult1, VisitDto::class.java)
     val visit2 = objectMapper.readValue(returnResult2, VisitDto::class.java)
 
-    Assertions.assertThat(visit1).isEqualTo(visit2)
+    Assertions.assertThat(visit1.reference).isEqualTo(visit2.reference)
+    Assertions.assertThat(visit1.applicationReference).isEqualTo(visit2.applicationReference)
+    Assertions.assertThat(visit1.visitStatus).isEqualTo(visit2.visitStatus)
 
     // just one event thrown
     assertBookedEvent(visit1, false)

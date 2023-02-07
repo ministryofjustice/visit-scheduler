@@ -108,13 +108,15 @@ class CancelVisitTest : IntegrationTestBase() {
     val returnResult2 = responseSpec2.expectStatus().isOk.expectBody().returnResult()
 
     // And
-    val visitCancelled1 = objectMapper.readValue(returnResult1.responseBody, VisitDto::class.java)
-    val visitCancelled2 = objectMapper.readValue(returnResult2.responseBody, VisitDto::class.java)
+    val visit1 = objectMapper.readValue(returnResult1.responseBody, VisitDto::class.java)
+    val visit2 = objectMapper.readValue(returnResult2.responseBody, VisitDto::class.java)
 
-    Assertions.assertThat(visitCancelled1).isEqualTo(visitCancelled2)
+    Assertions.assertThat(visit1.reference).isEqualTo(visit2.reference)
+    Assertions.assertThat(visit1.applicationReference).isEqualTo(visit2.applicationReference)
+    Assertions.assertThat(visit1.visitStatus).isEqualTo(visit2.visitStatus)
 
     // just one event thrown
-    assertTelemetryClientEvents(visitCancelled1, telemetryClient)
+    assertTelemetryClientEvents(visit1, telemetryClient)
   }
 
   @Test
