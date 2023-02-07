@@ -90,6 +90,34 @@ class CancelVisitTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `cancel visit twice by reference - just on event sent`() {
+
+    // Given
+    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+    val reference = visit.reference
+    val outcomeDto = OutcomeDto(
+      outcomeStatus = OutcomeStatus.VISITOR_CANCELLED
+    )
+
+    // When
+    val responseSpec1 = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+    val responseSpec2 = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+
+    // Then
+    val returnResult1 = responseSpec1.expectStatus().isOk.expectBody().returnResult()
+    val returnResult2 = responseSpec2.expectStatus().isOk.expectBody().returnResult()
+
+    // And
+    val visitCancelled1 = objectMapper.readValue(returnResult1.responseBody, VisitDto::class.java)
+    val visitCancelled2 = objectMapper.readValue(returnResult2.responseBody, VisitDto::class.java)
+
+    Assertions.assertThat(visitCancelled1).isEqualTo(visitCancelled2)
+
+    // just one event thrown
+    assertTelemetryClientEvents(visitCancelled1, telemetryClient)
+  }
+
+  @Test
   fun `cancel visit by reference - without outcome`() {
 
     // Given

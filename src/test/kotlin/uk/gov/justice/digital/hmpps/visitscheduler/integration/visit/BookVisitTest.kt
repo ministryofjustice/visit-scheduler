@@ -104,18 +104,26 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Book visit - Application becomes a Booking when booked - can't be booked twice`() {
+  fun `Booked visit twice by application reference - just one event sent`() {
 
     // Given
     val applicationReference = reservedVisit.applicationReference
 
     // When
-    val responseSpecFirstCall = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
-    val responseSpecSecondCall = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+    val responseSpec1 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+    val responseSpec2 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    responseSpecFirstCall.expectStatus().isOk
-    responseSpecSecondCall.expectStatus().isNotFound
+    val returnResult1 = responseSpec1.expectStatus().isOk.expectBody().returnResult().responseBody
+    val returnResult2 = responseSpec2.expectStatus().isOk.expectBody().returnResult().responseBody
+
+    val visit1 = objectMapper.readValue(returnResult1, VisitDto::class.java)
+    val visit2 = objectMapper.readValue(returnResult2, VisitDto::class.java)
+
+    Assertions.assertThat(visit1).isEqualTo(visit2)
+
+    // just one event thrown
+    assertBookedEvent(visit1, false)
   }
 
   @Test
