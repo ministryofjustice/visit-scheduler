@@ -23,7 +23,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 const val VISIT_SESSION_CONTROLLER_PATH: String = "/visit-sessions"
-const val VISIT_SESSION_SCHEDULE_CONTROLLER_PATH: String = "/visit-session/schedule"
+const val VISIT_SESSION_SCHEDULE_CONTROLLER_PATH: String = "/visit-sessions/schedule"
 const val GET_SESSION_CAPACITY: String = "$VISIT_SESSION_CONTROLLER_PATH/capacity"
 
 @RestController
@@ -109,7 +109,7 @@ class VisitSessionController(
       description = "Query by NOMIS Prison Identifier",
       example = "MDI"
     ) prisonCode: String,
-    @RequestParam(value = "sessionDate", required = false)
+    @RequestParam(value = "sessionDate", required = true)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @Parameter(
       description = "Query by session scheduled date",
