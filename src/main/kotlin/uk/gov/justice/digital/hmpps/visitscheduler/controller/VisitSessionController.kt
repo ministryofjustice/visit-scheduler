@@ -23,7 +23,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 const val VISIT_SESSION_CONTROLLER_PATH: String = "/visit-sessions"
-const val VISIT_SESSION_SCHEDULE_CONTROLLER_PATH: String = "/visit-sessions/schedule"
+const val GET_SESSION_SCHEDULE: String = "$VISIT_SESSION_CONTROLLER_PATH/schedule"
 const val GET_SESSION_CAPACITY: String = "$VISIT_SESSION_CONTROLLER_PATH/capacity"
 
 @RestController
@@ -82,7 +82,7 @@ class VisitSessionController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(VISIT_SESSION_SCHEDULE_CONTROLLER_PATH)
+  @GetMapping(GET_SESSION_SCHEDULE)
   @Operation(
     summary = "Returns session scheduled for given prison and date",
     description = "Retrieve all visits for a specified prisoner",

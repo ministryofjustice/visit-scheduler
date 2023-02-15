@@ -6,14 +6,14 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_SCHEDULE_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_SESSION_SCHEDULE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
 import java.time.LocalDate
 import java.time.LocalTime
 
-@DisplayName("Get $VISIT_SESSION_SCHEDULE_CONTROLLER_PATH")
+@DisplayName("Get $GET_SESSION_SCHEDULE")
 class GetSessionScheduleTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
@@ -226,7 +226,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     prisonCode: String = "MDI",
     sessionDate: LocalDate
   ): ResponseSpec {
-    return webTestClient.get().uri("$VISIT_SESSION_SCHEDULE_CONTROLLER_PATH/?prisonId=$prisonCode&sessionDate=$sessionDate")
+    return webTestClient.get().uri("$GET_SESSION_SCHEDULE/?prisonId=$prisonCode&sessionDate=$sessionDate")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }
