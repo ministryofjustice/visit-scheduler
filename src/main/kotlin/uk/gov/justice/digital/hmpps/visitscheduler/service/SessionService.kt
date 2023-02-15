@@ -21,7 +21,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.temporal.ChronoUnit
+import java.time.temporal.ChronoUnit.DAYS
 import java.time.temporal.TemporalAdjusters
 import java.util.stream.Stream
 import javax.validation.constraints.NotNull
@@ -307,13 +307,20 @@ class SessionService(
 
     val firstSessionDate = adjustDateByDayOfWeek(sessionTemplate.dayOfWeek, sessionTemplate.validFromDate)
 
-    if (sessionTemplate.validToDate != null && ChronoUnit.DAYS.between(firstSessionDate, sessionTemplate.validToDate) <8) {
+    if (isNotMoreThanAWeek(firstSessionDate, sessionTemplate)) {
       return SessionTemplateFrequency.ONE_OFF
     }
     if (sessionTemplate.biWeekly) {
       return SessionTemplateFrequency.BI_WEEKLY
     }
     return SessionTemplateFrequency.WEEKLY
+  }
+
+  private fun isNotMoreThanAWeek(
+    firstSessionDate: LocalDate,
+    sessionTemplate: SessionTemplate
+  ): Boolean {
+    return sessionTemplate.validToDate != null && DAYS.between(firstSessionDate, sessionTemplate.validToDate) < 8
   }
 
   private fun adjustDateByDayOfWeek(dayOfWeek: DayOfWeek, startDate: LocalDate): LocalDate {
