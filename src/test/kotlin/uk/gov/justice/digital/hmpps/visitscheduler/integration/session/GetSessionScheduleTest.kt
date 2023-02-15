@@ -152,6 +152,27 @@ class GetSessionScheduleTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `BiWeekly session schedule are not returned for a prison when BiWeekly not for this week`() {
+    // Given
+    val sessionDate = LocalDate.now()
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = sessionDate.minusWeeks(1),
+      validToDate = sessionDate.plusMonths(4),
+      dayOfWeek = sessionDate.dayOfWeek,
+      biWeekly = true
+    )
+    // When
+    val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionScheduleResults = getResults(returnResult)
+    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(0)
+  }
+
+  @Test
   fun `BiWeekly configured session schedule are returned for a prison as one off if not more than a week`() {
     // Given
     val sessionDate = LocalDate.now()
