@@ -84,12 +84,12 @@ class VisitSessionController(
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_SESSION_SCHEDULE_CONTROLLER_PATH)
   @Operation(
-    summary = "Returns all visit sessions which are within the reservable time period - whether or not they are full",
+    summary = "Returns session scheduled for given prison and date",
     description = "Retrieve all visits for a specified prisoner",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit session information returned"
+        description = "Session scheduled information returned"
       ),
       ApiResponse(
         responseCode = "401",
@@ -98,7 +98,7 @@ class VisitSessionController(
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to Get visit sessions ",
+        description = "Incorrect request to get session scheduled",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
       )
     ]
@@ -112,7 +112,7 @@ class VisitSessionController(
     @RequestParam(value = "sessionDate", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @Parameter(
-      description = "Filter results by prisoner id",
+      description = "Query by session scheduled date",
       example = "2020-11-01"
     ) sessionDate: LocalDate,
   ): List<SessionScheduleDto> {
