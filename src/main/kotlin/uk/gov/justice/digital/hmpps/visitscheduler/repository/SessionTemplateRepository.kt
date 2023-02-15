@@ -46,6 +46,19 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("dayOfWeek") dayOfWeek: DayOfWeek
   ): List<SessionTemplate>
 
+  @Query(
+    "select u from SessionTemplate u " +
+      "where u.prison.code = :prisonCode " +
+      "and (u.validToDate is null or u.validToDate >= :sessionDate) " +
+      "and (u.validFromDate <= :sessionDate) " +
+      "and (u.dayOfWeek = :dayOfWeek)"
+  )
+  fun findValidSessionTemplatesForSession(
+    @Param("prisonCode") prisonCode: String,
+    @Param("sessionDate") sessionDate: LocalDate,
+    @Param("dayOfWeek") dayOfWeek: DayOfWeek
+  ): List<SessionTemplate>
+
   fun findByReference(reference: String): SessionTemplate?
 
   @Modifying

@@ -57,8 +57,11 @@ class GetSessionTemplateTest(
   @Test
   fun `Session templates are returned with permittedSessionLocations`() {
     // Given
-    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
-    val sessionLocationGroup = sessionLocationGroupHelper.create(sessionTemplate)
+    val sessionLocationGroup = sessionLocationGroupHelper.create()
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now(),
+      permittedSessionGroups = mutableListOf(sessionLocationGroup)
+    )
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")

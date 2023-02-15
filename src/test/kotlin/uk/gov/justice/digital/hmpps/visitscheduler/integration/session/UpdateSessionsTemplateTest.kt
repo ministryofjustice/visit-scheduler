@@ -30,7 +30,7 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
 
     // Given
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
-    val sessionGroup = sessionLocationGroupHelper.create(prison = prison, prisonHierarchies = allowedPermittedLocations)
+    val sessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
 
     val dto = createUpdateSessionTemplateDto(
       name = sessionTemplate.name + " Updated",

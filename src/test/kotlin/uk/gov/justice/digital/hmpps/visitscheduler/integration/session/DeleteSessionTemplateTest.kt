@@ -32,9 +32,9 @@ class DeleteSessionTemplateTest(
     sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
-    sessionGroup1 = sessionLocationGroupHelper.create(prison = sessionTemplate.prison, prisonHierarchies = allowedPermittedLocations1)
+    sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, prisonHierarchies = allowedPermittedLocations1)
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))
-    sessionGroup2 = sessionLocationGroupHelper.create(prison = sessionTemplate.prison, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
+    sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
 
     sessionTemplate.permittedSessionGroups.add(sessionGroup1)
     sessionTemplate.permittedSessionGroups.add(sessionGroup2)

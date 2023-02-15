@@ -26,7 +26,7 @@ class UpdateSessionGroupTest : IntegrationTestBase() {
     prison = prisonEntityHelper.create(prison.code, prison.active)
 
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
-    sessionGroup = sessionLocationGroupHelper.create(prison = prison, prisonHierarchies = allowedPermittedLocations)
+    sessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
   }
 
   @Test

@@ -274,7 +274,11 @@ class SessionTemplateSQLGenerator {
     sessionLocationGroups: List<SessionLocationGroup>,
     sessionLocationItems: List<SessionLocationItem>,
   ): String {
+
+    val prisonCodes = sessionRecords.associateBy({ it.prisonCode }, { it.prisonCode })
+
     val input = mutableMapOf<String, Any>()
+    input.put("prisonCodes", prisonCodes.values)
     input.put("sessionRecords", sessionRecords)
     input.put("groups", sessionLocationGroups)
     input.put("locations", sessionLocationItems)

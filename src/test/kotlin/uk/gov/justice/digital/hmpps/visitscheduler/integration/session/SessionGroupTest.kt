@@ -40,9 +40,9 @@ class SessionGroupTest(
 
     prison = prisonEntityHelper.create(prison.code, prison.active)
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
-    sessionGroup1 = sessionLocationGroupHelper.create(prison = prison, prisonHierarchies = allowedPermittedLocations1)
+    sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations1)
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))
-    sessionGroup2 = sessionLocationGroupHelper.create(prison = prison, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
+    sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
 
     sessionTemplateWithGrps.permittedSessionGroups.add(sessionGroup1)
     sessionTemplateWithGrps.permittedSessionGroups.add(sessionGroup2)
@@ -50,7 +50,7 @@ class SessionGroupTest(
     testTemplateRepository.saveAndFlush(sessionTemplateWithGrps)
 
     val allowedPermittedLocations3 = listOf(AllowedSessionLocationHierarchy("B"))
-    sessionGroupWithNoTemplate = sessionLocationGroupHelper.create(prison = prison, name = "get 3", prisonHierarchies = allowedPermittedLocations3)
+    sessionGroupWithNoTemplate = sessionLocationGroupHelper.create(prisonCode = prison.code, name = "get 3", prisonHierarchies = allowedPermittedLocations3)
   }
 
   @Test
