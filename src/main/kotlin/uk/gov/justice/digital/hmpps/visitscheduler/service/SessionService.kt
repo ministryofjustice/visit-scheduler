@@ -320,7 +320,7 @@ class SessionService(
     firstSessionDate: LocalDate,
     sessionTemplate: SessionTemplate
   ): Boolean {
-    return sessionTemplate.validToDate != null && DAYS.between(firstSessionDate, sessionTemplate.validToDate) < 8
+    return sessionTemplate.validToDate != null && DAYS.between(firstSessionDate, sessionTemplate.validToDate) < 7
   }
 
   private fun adjustDateByDayOfWeek(dayOfWeek: DayOfWeek, startDate: LocalDate): LocalDate {

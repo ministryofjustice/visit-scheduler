@@ -33,7 +33,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = sessionDate,
-      validToDate = sessionDate.plusDays(8),
+      validToDate = sessionDate.plusDays(7),
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = sessionDate.dayOfWeek,
@@ -65,7 +65,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
 
     val sessionTemplate1 = sessionTemplateEntityHelper.create(
       validFromDate = sessionDate,
-      validToDate = sessionDate.plusDays(8),
+      validToDate = sessionDate.plusDays(7),
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = sessionDate.dayOfWeek,
@@ -73,7 +73,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
 
     val sessionTemplate2 = sessionTemplateEntityHelper.create(
       validFromDate = sessionDate,
-      validToDate = sessionDate.plusDays(8),
+      validToDate = sessionDate.plusDays(7),
       startTime = LocalTime.parse("11:00"),
       endTime = LocalTime.parse("12:00"),
       dayOfWeek = sessionDate.dayOfWeek,
@@ -114,7 +114,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
 
     sessionTemplateEntityHelper.create(
       validFromDate = sessionDate,
-      validToDate = sessionDate.plusDays(7),
+      validToDate = sessionDate.plusDays(6),
       dayOfWeek = sessionDate.dayOfWeek
     )
 
@@ -205,7 +205,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
 
     sessionTemplateEntityHelper.create(
       validFromDate = sessionDate,
-      validToDate = sessionDate.plusDays(8),
+      validToDate = sessionDate.plusDays(7),
       dayOfWeek = sessionDate.dayOfWeek,
       permittedSessionGroups = mutableListOf(sessionLocationGroup1, sessionLocationGroup2)
     )
