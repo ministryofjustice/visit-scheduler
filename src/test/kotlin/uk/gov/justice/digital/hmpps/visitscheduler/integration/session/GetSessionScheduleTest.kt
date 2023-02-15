@@ -94,6 +94,20 @@ class GetSessionScheduleTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `When no schedules none are returned`() {
+    // Given
+    val sessionDate = LocalDate.now()
+
+    // When
+    val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val sessionScheduleResults = getResults(returnResult)
+    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(0)
+  }
+
+  @Test
   fun `One off session schedule are returned for a prison`() {
     // Given
     val sessionDate = LocalDate.now()
