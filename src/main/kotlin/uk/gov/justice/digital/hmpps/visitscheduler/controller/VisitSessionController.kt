@@ -16,12 +16,14 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import java.time.LocalDate
 import java.time.LocalTime
 
 const val VISIT_SESSION_CONTROLLER_PATH: String = "/visit-sessions"
+const val GET_SESSION_SCHEDULE: String = "$VISIT_SESSION_CONTROLLER_PATH/schedule"
 const val GET_SESSION_CAPACITY: String = "$VISIT_SESSION_CONTROLLER_PATH/capacity"
 
 @RestController
@@ -77,6 +79,44 @@ class VisitSessionController(
     ) max: Long?
   ): List<VisitSessionDto> {
     return sessionService.getVisitSessions(prisonCode, prisonerId, min, max)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(GET_SESSION_SCHEDULE)
+  @Operation(
+    summary = "Returns session scheduled for given prison and date",
+    description = "Retrieve all visits for a specified prisoner",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session scheduled information returned"
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to get session scheduled",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun getSessionSchedule(
+    @RequestParam(value = "prisonId", required = true)
+    @Parameter(
+      description = "Query by NOMIS Prison Identifier",
+      example = "MDI"
+    ) prisonCode: String,
+    @RequestParam(value = "sessionDate", required = true)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @Parameter(
+      description = "Query by session scheduled date",
+      example = "2020-11-01"
+    ) sessionDate: LocalDate,
+  ): List<SessionScheduleDto> {
+    return sessionService.getSessionSchedule(prisonCode, sessionDate)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

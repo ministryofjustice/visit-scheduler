@@ -153,12 +153,11 @@ class VisitEntityHelper(
 @Component
 @Transactional
 class SessionLocationGroupHelper(
-  private val sessionRepository: TestSessionTemplateRepository,
-  private val repository: TestPermittedSessionLocationRepository,
-  private val sessionLocationGroupRepository: SessionLocationGroupRepository
+  private val sessionLocationGroupRepository: SessionLocationGroupRepository,
+  private val prisonEntityHelper: PrisonEntityHelper
 ) {
 
-  fun create(sessionTemplate: SessionTemplate): SessionLocationGroup {
+  fun create(name: String? = "Group A", prisonCode: String = "MDI"): SessionLocationGroup {
 
     val sessionLocations = mutableListOf(
       AllowedSessionLocationHierarchy(
@@ -168,27 +167,25 @@ class SessionLocationGroupHelper(
         levelFourCode = "001"
       )
     )
-    return create(sessionTemplate, sessionLocations)
+    return create(name = name, prisonCode = prisonCode, sessionLocations)
   }
 
-  fun create(sessionTemplate: SessionTemplate, prisonHierarchies: List<AllowedSessionLocationHierarchy>): SessionLocationGroup {
-    return create(prison = sessionTemplate.prison, sessionTemplate = sessionTemplate, prisonHierarchies = prisonHierarchies)
-  }
+  fun create(name: String? = "Group A", prisonCode: String = "MDI", prisonHierarchies: List<AllowedSessionLocationHierarchy>): SessionLocationGroup {
 
-  fun create(name: String ? = "Group A", prison: Prison, sessionTemplate: SessionTemplate ? = null, prisonHierarchies: List<AllowedSessionLocationHierarchy>): SessionLocationGroup {
+    val prison = prisonEntityHelper.create(prisonCode, true)
 
     val group = sessionLocationGroupRepository.saveAndFlush(
       SessionLocationGroup(
         prison = prison,
         prisonId = prison.id,
-        name = "Group A"
+        name = name!!
       )
     )
 
     val permittedGroupLocations = mutableListOf<PermittedSessionLocation>()
 
     for (prisonHierarchy in prisonHierarchies) {
-      val permittedSessionLocation = repository.saveAndFlush(
+      val permittedSessionLocation =
         PermittedSessionLocation(
           groupId = group.id,
           sessionLocationGroup = group,
@@ -197,20 +194,12 @@ class SessionLocationGroupHelper(
           levelThreeCode = prisonHierarchy.levelThreeCode,
           levelFourCode = prisonHierarchy.levelFourCode
         )
-      )
       permittedGroupLocations.add(permittedSessionLocation)
     }
 
     group.sessionLocations.addAll(permittedGroupLocations)
 
-    val savedGroup = sessionLocationGroupRepository.saveAndFlush(group)
-
-    sessionTemplate?.let {
-      sessionTemplate.permittedSessionGroups.add(savedGroup)
-      sessionRepository.saveAndFlush(sessionTemplate)
-    }
-
-    return savedGroup
+    return group
   }
 }
 

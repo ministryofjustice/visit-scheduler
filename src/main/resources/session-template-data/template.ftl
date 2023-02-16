@@ -13,6 +13,9 @@ BEGIN;
 	TRUNCATE TABLE session_template  RESTART IDENTITY CASCADE;
 	TRUNCATE TABLE permitted_session_location  RESTART IDENTITY CASCADE;
 
+<#list prisonCodes as pc>
+	INSERT INTO prison(code, active) SELECT '${pc}', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = '${pc}');
+</#list>
 
 	-- Creating session template data
 	CREATE TEMP TABLE tmp_session_template(
@@ -56,7 +59,7 @@ BEGIN;
 		id                	serial        NOT NULL PRIMARY KEY,
 		prison_code       	VARCHAR(6)    NOT NULL,
 		prison_id         	int,
-		key          	VARCHAR(10)  NOT NULL,
+		key          		VARCHAR(50)  NOT NULL,
 		name          	    VARCHAR(100)  NOT NULL
 	);
 

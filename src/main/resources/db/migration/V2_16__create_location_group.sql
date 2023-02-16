@@ -20,9 +20,9 @@ INSERT INTO session_location_group (reference, name, prison_id)
 CREATE TABLE session_to_location_group (
     session_template_id integer NOT NULL,
     group_id integer NOT NULL,
-    CONSTRAINT session_to_group_id_pkey PRIMARY KEY (session_template_id, group_id),
+    PRIMARY KEY (session_template_id, group_id),
     CONSTRAINT template_must_exist  FOREIGN KEY (session_template_id) REFERENCES session_template(id),
-    CONSTRAINT group_must_exist      FOREIGN KEY (group_id) REFERENCES session_location_group(id)
+    CONSTRAINT group_must_exist     FOREIGN KEY (group_id) REFERENCES session_location_group(id)
 );
 
 INSERT INTO session_to_location_group (session_template_id, group_id)

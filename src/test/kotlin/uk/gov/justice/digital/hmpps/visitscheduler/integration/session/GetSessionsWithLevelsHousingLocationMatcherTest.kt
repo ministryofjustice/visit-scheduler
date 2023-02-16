@@ -43,16 +43,6 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
     )
 
     // this session template is available to levels A,B,D, E and F but not for C
-    sessionTemplateForSomeLevel1s = sessionTemplateEntityHelper.create(
-      validFromDate = nextAllowedDay,
-      validToDate = nextAllowedDay,
-      startTime = LocalTime.parse("10:01"),
-      endTime = LocalTime.parse("11:00"),
-      dayOfWeek = nextAllowedDay.dayOfWeek,
-      prisonCode = prison.code,
-      visitRoom = "session available to some level 1"
-    )
-
     var allowedPermittedLocations: List<AllowedSessionLocationHierarchy> = listOf(
       AllowedSessionLocationHierarchy("A", null, null, null),
       AllowedSessionLocationHierarchy("B", null, null, null),
@@ -60,9 +50,29 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       AllowedSessionLocationHierarchy("E", null, null, null),
       AllowedSessionLocationHierarchy("F", null, null, null),
     )
-    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel1s, allowedPermittedLocations)
+
+    val location1 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+
+    sessionTemplateForSomeLevel1s = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("10:01"),
+      endTime = LocalTime.parse("11:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prison.code,
+      visitRoom = "session available to some level 1",
+      permittedSessionGroups = mutableListOf(location1)
+    )
 
     // this session template is available to levels A-1,A-2,A-3 and B-1
+    allowedPermittedLocations = listOf(
+      AllowedSessionLocationHierarchy("A", "1", null, null),
+      AllowedSessionLocationHierarchy("A", "2", null, null),
+      AllowedSessionLocationHierarchy("A", "3", null, null),
+      AllowedSessionLocationHierarchy("B", "1", null, null),
+    )
+    val location2 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+
     sessionTemplateForSomeLevel2s = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
@@ -70,18 +80,18 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       endTime = LocalTime.parse("12:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
-      visitRoom = "session available to some level 2s"
+      visitRoom = "session available to some level 2s",
+      permittedSessionGroups = mutableListOf(location2)
     )
-
-    allowedPermittedLocations = listOf(
-      AllowedSessionLocationHierarchy("A", "1", null, null),
-      AllowedSessionLocationHierarchy("A", "2", null, null),
-      AllowedSessionLocationHierarchy("A", "3", null, null),
-      AllowedSessionLocationHierarchy("B", "1", null, null),
-    )
-    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel2s, allowedPermittedLocations)
 
     // this session template is available to levels A-1-100, A-1-200, and B-1
+    allowedPermittedLocations = listOf(
+      AllowedSessionLocationHierarchy("A", "1", "100", null),
+      AllowedSessionLocationHierarchy("A", "2", "200", null),
+      AllowedSessionLocationHierarchy("B", "1", null, null)
+    )
+    val location3 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+
     sessionTemplateForSomeLevel3sAnd1Level2 = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
@@ -89,15 +99,16 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       endTime = LocalTime.parse("13:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
-      visitRoom = "session available to some level 3s and level 2s"
+      visitRoom = "session available to some level 3s and level 2s",
+      permittedSessionGroups = mutableListOf(location3)
     )
 
     allowedPermittedLocations = listOf(
-      AllowedSessionLocationHierarchy("A", "1", "100", null),
-      AllowedSessionLocationHierarchy("A", "2", "200", null),
+      AllowedSessionLocationHierarchy("A", "1", "100", "1"),
+      AllowedSessionLocationHierarchy("A", "2", "100", "3"),
       AllowedSessionLocationHierarchy("B", "1", null, null)
     )
-    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel3sAnd1Level2, allowedPermittedLocations)
+    val location4 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
 
     sessionTemplateForSomeLevel4sAnd2s = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
@@ -106,15 +117,9 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       endTime = LocalTime.parse("14:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
-      visitRoom = "session available to some level 4s and level 2s"
+      visitRoom = "session available to some level 4s and level 2s",
+      permittedSessionGroups = mutableListOf(location4)
     )
-
-    allowedPermittedLocations = listOf(
-      AllowedSessionLocationHierarchy("A", "1", "100", "1"),
-      AllowedSessionLocationHierarchy("A", "2", "100", "3"),
-      AllowedSessionLocationHierarchy("B", "1", null, null)
-    )
-    sessionLocationGroupHelper.create(sessionTemplateForSomeLevel4sAnd2s, allowedPermittedLocations)
   }
 
   @Test

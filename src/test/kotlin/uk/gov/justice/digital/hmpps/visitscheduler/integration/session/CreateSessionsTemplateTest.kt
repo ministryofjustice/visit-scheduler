@@ -28,7 +28,7 @@ class CreateSessionsTemplateTest : IntegrationTestBase() {
 
     // Given
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
-    val sessionGroup = sessionLocationGroupHelper.create(prison = prison, prisonHierarchies = allowedPermittedLocations)
+    val sessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
 
     val dto = createSessionTemplateDto(validToDate = LocalDate.now().plusDays(1), locationGroupReferences = mutableListOf(sessionGroup.reference))
 
