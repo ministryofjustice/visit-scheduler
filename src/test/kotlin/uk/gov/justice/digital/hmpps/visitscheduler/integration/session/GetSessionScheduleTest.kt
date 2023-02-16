@@ -10,8 +10,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_SESSION_SCHEDU
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
+import java.time.DayOfWeek.MONDAY
+import java.time.DayOfWeek.TUESDAY
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.temporal.TemporalAdjusters
 
 @DisplayName("Get $GET_SESSION_SCHEDULE")
 class GetSessionScheduleTest : IntegrationTestBase() {
@@ -108,18 +111,20 @@ class GetSessionScheduleTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `One off session schedule are returned for a prison`() {
+  fun `One off session schedule are returned for a schedules that only have one session between valid from to valid to dates`() {
     // Given
-    val sessionDate = LocalDate.now()
+    val nextMonday = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
+    val firstSessionDate = nextMonday.with(TemporalAdjusters.next(TUESDAY))
+    val nextMondayAfterFirstSessionDate = firstSessionDate.with(TemporalAdjusters.next(MONDAY))
 
     sessionTemplateEntityHelper.create(
-      validFromDate = sessionDate,
-      validToDate = sessionDate.plusDays(6),
-      dayOfWeek = sessionDate.dayOfWeek
+      validFromDate = nextMonday,
+      validToDate = nextMondayAfterFirstSessionDate,
+      dayOfWeek = firstSessionDate.dayOfWeek
     )
 
     // When
-    val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
+    val responseSpec = callGetSessionSchedule(prisonCode, firstSessionDate)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
