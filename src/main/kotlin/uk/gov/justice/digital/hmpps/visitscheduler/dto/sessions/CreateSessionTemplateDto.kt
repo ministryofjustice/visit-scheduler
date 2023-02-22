@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonFormat.Shape
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.DayOfWeek
@@ -19,8 +21,10 @@ data class CreateSessionTemplateDto(
   @field:NotBlank
   val prisonCode: String,
 
+  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
   @Schema(description = "The start time of the generated visit session(s)", example = "13:45", required = true)
   val startTime: LocalTime,
+  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
   @Schema(description = "The end time of the generated visit session(s)", example = "13:45", required = true)
   val endTime: LocalTime,
 
