@@ -85,7 +85,7 @@ class VisitSessionController(
   @GetMapping(GET_SESSION_SCHEDULE)
   @Operation(
     summary = "Returns session scheduled for given prison and date",
-    description = "Retrieve all visits for a specified prisoner",
+    description = "Returns session scheduled for given prison and date",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -109,14 +109,14 @@ class VisitSessionController(
       description = "Query by NOMIS Prison Identifier",
       example = "MDI"
     ) prisonCode: String,
-    @RequestParam(value = "sessionDate", required = true)
+    @RequestParam(value = "date", required = true)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @Parameter(
       description = "Query by session scheduled date",
       example = "2020-11-01"
-    ) sessionDate: LocalDate,
+    ) scheduleDate: LocalDate,
   ): List<SessionScheduleDto> {
-    return sessionService.getSessionSchedule(prisonCode, sessionDate)
+    return sessionService.getSessionSchedule(prisonCode, scheduleDate)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
