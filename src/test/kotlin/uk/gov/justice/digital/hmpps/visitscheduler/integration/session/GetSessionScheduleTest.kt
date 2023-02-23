@@ -229,9 +229,9 @@ class GetSessionScheduleTest : IntegrationTestBase() {
 
   private fun callGetSessionSchedule(
     prisonCode: String = "MDI",
-    sessionDate: LocalDate
+    scheduleDate: LocalDate
   ): ResponseSpec {
-    return webTestClient.get().uri("$GET_SESSION_SCHEDULE/?prisonId=$prisonCode&sessionDate=$sessionDate")
+    return webTestClient.get().uri("$GET_SESSION_SCHEDULE/?prisonId=$prisonCode&date=$scheduleDate")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }

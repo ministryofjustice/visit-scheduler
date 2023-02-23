@@ -276,15 +276,15 @@ class SessionService(
     }
   }
 
-  fun getSessionSchedule(prisonCode: String, sessionDate: LocalDate): List<SessionScheduleDto> {
+  fun getSessionSchedule(prisonCode: String, scheduleDate: LocalDate): List<SessionScheduleDto> {
 
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
       prisonCode,
-      sessionDate,
-      sessionDate.dayOfWeek
+      scheduleDate,
+      scheduleDate.dayOfWeek
     )
 
-    sessionTemplates = filterSessionsTemplatesForDate(sessionDate, sessionTemplates)
+    sessionTemplates = filterSessionsTemplatesForDate(scheduleDate, sessionTemplates)
 
     return sessionTemplates.map { sessionTemplate -> createSessionInfoDto(sessionTemplate) }.toList()
   }

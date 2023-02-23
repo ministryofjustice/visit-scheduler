@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
+import com.fasterxml.jackson.annotation.JsonFormat
+import com.fasterxml.jackson.annotation.JsonFormat.Shape
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
 import java.time.LocalDate
@@ -11,10 +13,12 @@ data class SessionScheduleDto(
   @Schema(description = "Session Template Reference", example = "v9d.7ed.7u", required = true)
   val sessionTemplateReference: String,
 
-  @Schema(description = "The start time for this visit session", example = "12:00:00", required = true)
+  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
+  @Schema(description = "The start time for this visit session", example = "12:00", required = true)
   val startTime: LocalTime,
 
-  @Schema(description = "The end timestamp for this visit session", example = "14:30:00", required = true)
+  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
+  @Schema(description = "The end timestamp for this visit session", example = "14:30", required = true)
   val endTime: LocalTime,
 
   @Schema(
