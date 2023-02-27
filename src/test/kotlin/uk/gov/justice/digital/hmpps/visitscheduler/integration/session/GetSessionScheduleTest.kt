@@ -40,7 +40,8 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = sessionDate.dayOfWeek,
-      permittedSessionGroups = mutableListOf(sessionLocationGroup)
+      permittedSessionGroups = mutableListOf(sessionLocationGroup),
+      enhanced = true
     )
 
     // When
@@ -59,6 +60,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[0].capacity.open).isEqualTo(sessionTemplate.openCapacity)
     Assertions.assertThat(sessionScheduleResults[0].capacity.closed).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[0]).isEqualTo(sessionLocationGroup.name)
+    Assertions.assertThat(sessionScheduleResults[0].enhanced).isTrue
   }
 
   @Test
