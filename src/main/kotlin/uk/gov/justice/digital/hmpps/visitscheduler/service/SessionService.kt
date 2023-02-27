@@ -299,7 +299,8 @@ class SessionService(
       capacity = SessionCapacityDto(sessionTemplate),
       prisonerLocationGroupNames = sessionTemplate.permittedSessionGroups.map { it.name }.toList(),
       sessionTemplateFrequency = sessionTemplateFrequency,
-      sessionTemplateEndDate = sessionTemplate.validToDate
+      sessionTemplateEndDate = sessionTemplate.validToDate,
+      enhanced = sessionTemplate.enhanced
     )
   }
 
