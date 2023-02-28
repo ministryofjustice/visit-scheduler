@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
@@ -35,7 +34,7 @@ import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
-class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class BookVisitTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -91,7 +90,7 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
       .jsonPath("$.visitContact.telephone").isEqualTo(reservedVisit.visitContact!!.telephone)
       .jsonPath("$.visitors.length()").isEqualTo(reservedVisit.visitors.size)
       .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(reservedVisit.visitors[0].nomisPersonId)
-      .jsonPath("$.visitors[0].visitContact").isEqualTo(reservedVisit.visitors[0].visitContact)
+      .jsonPath("$.visitors[0].visitContact").isEqualTo(reservedVisit.visitors[0].visitContact!!)
       .jsonPath("$.visitorSupport.length()").isEqualTo(reservedVisit.support.size)
       .jsonPath("$.visitorSupport[0].type").isEqualTo(reservedVisit.support.first().type)
       .jsonPath("$.visitorSupport[0].text").isEqualTo(reservedVisit.support.first().text!!)
@@ -105,18 +104,28 @@ class BookVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integra
   }
 
   @Test
-  fun `Book visit - Application becomes a Booking when booked - can't be booked twice`() {
+  fun `Booked visit twice by application reference - just send one event`() {
 
     // Given
     val applicationReference = reservedVisit.applicationReference
 
     // When
-    val responseSpecFirstCall = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
-    val responseSpecSecondCall = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+    val responseSpec1 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+    val responseSpec2 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    responseSpecFirstCall.expectStatus().isOk
-    responseSpecSecondCall.expectStatus().isNotFound
+    val returnResult1 = responseSpec1.expectStatus().isOk.expectBody().returnResult().responseBody
+    val returnResult2 = responseSpec2.expectStatus().isOk.expectBody().returnResult().responseBody
+
+    val visit1 = objectMapper.readValue(returnResult1, VisitDto::class.java)
+    val visit2 = objectMapper.readValue(returnResult2, VisitDto::class.java)
+
+    Assertions.assertThat(visit1.reference).isEqualTo(visit2.reference)
+    Assertions.assertThat(visit1.applicationReference).isEqualTo(visit2.applicationReference)
+    Assertions.assertThat(visit1.visitStatus).isEqualTo(visit2.visitStatus)
+
+    // just one event thrown
+    assertBookedEvent(visit1, false)
   }
 
   @Test

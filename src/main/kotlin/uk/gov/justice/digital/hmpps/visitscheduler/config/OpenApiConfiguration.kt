@@ -4,10 +4,22 @@ import io.swagger.v3.oas.models.OpenAPI
 import io.swagger.v3.oas.models.info.Contact
 import io.swagger.v3.oas.models.info.Info
 import io.swagger.v3.oas.models.servers.Server
+import org.springdoc.core.SpringDocUtils
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.info.BuildProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+
+@Configuration
+class SwaggerConfig {
+  init {
+    val schema = io.swagger.v3.oas.models.media.Schema<LocalTime>()
+    schema.example(LocalTime.now().format(DateTimeFormatter.ofPattern("HH:mm"))).type("string").format("HH:mm").example("13:45")
+    SpringDocUtils.getConfig().replaceWithSchema(LocalTime::class.java, schema)
+  }
+}
 
 @Configuration
 class OpenApiConfiguration(buildProperties: BuildProperties) {

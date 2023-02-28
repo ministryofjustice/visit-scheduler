@@ -2,12 +2,11 @@ package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Lock
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import javax.persistence.LockModeType
 
 @Repository
 interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
@@ -16,8 +15,13 @@ interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExec
 
   fun findByApplicationReference(reference: String): Visit?
 
-  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Modifying
   fun deleteByApplicationReference(applicationReference: String): Long
+
+  @Query(
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.id = :visitId "
+  )
+  fun hasVisit(@Param("visitId") visitId: Long): Boolean
 
   @Query(
     "SELECT CASE WHEN (COUNT(vv) > 0) THEN TRUE ELSE FALSE END FROM VisitVisitor vv WHERE vv.visitId = :visitId "

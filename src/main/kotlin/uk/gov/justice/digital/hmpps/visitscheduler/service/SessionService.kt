@@ -3,11 +3,13 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionCapacityDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -19,6 +21,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit.DAYS
 import java.time.temporal.TemporalAdjusters
 import java.util.stream.Stream
 import javax.validation.constraints.NotNull
@@ -63,11 +66,11 @@ class SessionService(
 
     val inclEnhancedPrivilegeTemplates = prisonerId?.let { prisonerService.hasPrisonerGotEnhancedPrivilege(prisonerId) } ?: run { true }
 
-    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesByPrisonCode(
-      prisonCode,
-      requestedBookableStartDate,
-      requestedBookableEndDate,
-      inclEnhancedPrivilegeTemplates
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
+      prisonCode = prisonCode,
+      rangeStartDate = requestedBookableStartDate,
+      rangeEndDate = requestedBookableEndDate,
+      inclEnhancedPrivilegeTemplates = inclEnhancedPrivilegeTemplates
     )
 
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)
@@ -100,7 +103,7 @@ class SessionService(
       return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
         .map { date ->
           VisitSessionDto(
-            sessionTemplateId = sessionTemplate.id,
+            sessionTemplateReference = sessionTemplate.reference,
             prisonCode = sessionTemplate.prison.code,
             startTimestamp = LocalDateTime.of(date, sessionTemplate.startTime),
             openVisitCapacity = sessionTemplate.openCapacity,
@@ -123,19 +126,15 @@ class SessionService(
   private fun getFirstBookableSessionDay(
     bookablePeriodStartDate: LocalDate,
     sessionStartDate: LocalDate,
-    sessionDayOfWeek: DayOfWeek?
+    sessionDayOfWeek: DayOfWeek
   ): LocalDate {
 
     var firstBookableSessionDate = sessionStartDate
     if (bookablePeriodStartDate.isAfter(firstBookableSessionDate)) {
       firstBookableSessionDate = bookablePeriodStartDate
     }
-    sessionDayOfWeek?.let {
-      if (firstBookableSessionDate.dayOfWeek != sessionDayOfWeek) {
-        firstBookableSessionDate = firstBookableSessionDate.with(TemporalAdjusters.next(sessionDayOfWeek))
-      }
-    }
-    return firstBookableSessionDate
+
+    return adjustDateByDayOfWeek(sessionDayOfWeek, firstBookableSessionDate)
   }
 
   private fun getLastBookableSession(
@@ -265,7 +264,6 @@ class SessionService(
       throw CapacityNotFoundException("Session capacity not found prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
     }
     if (sessionTemplates.size > 1) {
-
       throw java.lang.IllegalStateException("Session capacity has more than one session template prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
     }
 
@@ -276,5 +274,60 @@ class SessionService(
     return sessionTemplates.filter { sessionTemplate ->
       sessionDatesUtil.isBiWeeklySessionActiveForDate(date, sessionTemplate)
     }
+  }
+
+  fun getSessionSchedule(prisonCode: String, scheduleDate: LocalDate): List<SessionScheduleDto> {
+
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
+      prisonCode,
+      scheduleDate,
+      scheduleDate.dayOfWeek
+    )
+
+    sessionTemplates = filterSessionsTemplatesForDate(scheduleDate, sessionTemplates)
+
+    return sessionTemplates.map { sessionTemplate -> createSessionInfoDto(sessionTemplate) }.toList()
+  }
+
+  private fun createSessionInfoDto(sessionTemplate: SessionTemplate): SessionScheduleDto {
+    val sessionTemplateFrequency = getSessionTemplateFrequency(sessionTemplate)
+
+    return SessionScheduleDto(
+      sessionTemplateReference = sessionTemplate.reference,
+      startTime = sessionTemplate.startTime,
+      endTime = sessionTemplate.endTime,
+      capacity = SessionCapacityDto(sessionTemplate),
+      prisonerLocationGroupNames = sessionTemplate.permittedSessionGroups.map { it.name }.toList(),
+      sessionTemplateFrequency = sessionTemplateFrequency,
+      sessionTemplateEndDate = sessionTemplate.validToDate,
+      enhanced = sessionTemplate.enhanced
+    )
+  }
+
+  private fun getSessionTemplateFrequency(sessionTemplate: SessionTemplate): SessionTemplateFrequency {
+
+    val firstSessionDate = adjustDateByDayOfWeek(sessionTemplate.dayOfWeek, sessionTemplate.validFromDate)
+
+    if (isNotMoreThanAWeek(firstSessionDate, sessionTemplate)) {
+      return SessionTemplateFrequency.ONE_OFF
+    }
+    if (sessionTemplate.biWeekly) {
+      return SessionTemplateFrequency.BI_WEEKLY
+    }
+    return SessionTemplateFrequency.WEEKLY
+  }
+
+  private fun isNotMoreThanAWeek(
+    firstSessionDate: LocalDate,
+    sessionTemplate: SessionTemplate
+  ): Boolean {
+    return sessionTemplate.validToDate != null && DAYS.between(firstSessionDate, sessionTemplate.validToDate) < 7
+  }
+
+  private fun adjustDateByDayOfWeek(dayOfWeek: DayOfWeek, startDate: LocalDate): LocalDate {
+    if (startDate.dayOfWeek != dayOfWeek) {
+      return startDate.with(TemporalAdjusters.next(dayOfWeek))
+    }
+    return startDate
   }
 }

@@ -63,7 +63,6 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
         )
       )
     }
-
     return criteriaBuilder.and(*predicates.toTypedArray())
   }
 }

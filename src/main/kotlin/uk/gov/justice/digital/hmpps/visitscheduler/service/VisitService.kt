@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -49,7 +50,7 @@ class VisitService(
 ) {
 
   companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val MAX_RECORDS = 10000
     val EXPIRED_VISIT_STATUSES = listOf(RESERVED, CHANGING)
     const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
@@ -185,11 +186,6 @@ class VisitService(
     return VisitDto(visitEntity)
   }
 
-  @Deprecated("See find visits pageable", ReplaceWith("findVisitsByFilterPageableDescending(visitFilter).content"))
-  fun findVisitsByFilter(visitFilter: VisitFilter): List<VisitDto> {
-    return findVisitsByFilterPageableDescending(visitFilter).content
-  }
-
   @Transactional(readOnly = true)
   fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
 
@@ -204,7 +200,7 @@ class VisitService(
   @Transactional(readOnly = true)
   fun findExpiredApplicationReferences(): List<String> {
     val localDateTime = getReservedExpiredDateAndTime()
-    log.debug("Entered findExpiredApplicationReferences : $localDateTime")
+    LOG.debug("Entered findExpiredApplicationReferences : $localDateTime")
     return visitRepository.findExpiredApplicationReferences(localDateTime)
   }
 
@@ -227,6 +223,13 @@ class VisitService(
 
   fun bookVisit(applicationReference: String): VisitDto {
 
+    if (visitRepository.isApplicationBooked(applicationReference)) {
+      LOG.debug("The application $applicationReference has already been booked!")
+      // If already booked then just return object and do nothing more!
+      val bookedApplication = visitRepository.findBookedApplication(applicationReference)!!
+      return VisitDto(bookedApplication)
+    }
+
     val visitToBook = visitRepository.findApplication(applicationReference) ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
     val existingBookedVisit = visitRepository.findBookedVisit(visitToBook.reference)
 
@@ -239,7 +242,7 @@ class VisitService(
     if (changedVisit) {
       // the existing booking should always be saved before the new booking, see VisitRepository.findByReference
       existingBookedVisit?.let {
-        it.visitStatus = VisitStatus.CANCELLED
+        it.visitStatus = CANCELLED
         it.outcomeStatus = SUPERSEDED_CANCELLATION
         visitRepository.saveAndFlush(it)
       }
@@ -264,14 +267,21 @@ class VisitService(
   }
 
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
-    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
 
+    if (visitRepository.isBookingCancelled(reference)) {
+      // If already canceled then just return object and do nothing more!
+      LOG.debug("The visit $reference has already been canceled!")
+      val canceledVisit = visitRepository.findByReference(reference)!!
+      return VisitDto(canceledVisit)
+    }
+
+    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
     val visitCancellationDateAllowed = getAllowedCancellationDate(
       LocalDateTime.now(), visitCancellationDayLimit = visitCancellationDayLimit.toLong()
     )
     validateVisitStartDate(visitEntity, "cancelled", visitCancellationDateAllowed)
 
-    visitEntity.visitStatus = VisitStatus.CANCELLED
+    visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {
@@ -292,6 +302,7 @@ class VisitService(
 
     val visit = VisitDto(visitEntity)
     snsService.sendVisitCancelledEvent(visit)
+
     return visit
   }
 
@@ -377,7 +388,7 @@ class VisitService(
     try {
       telemetryClient.trackEvent(eventName, properties, null)
     } catch (e: RuntimeException) {
-      log.error("Error occurred in call to telemetry client to log event - $e.toString()")
+      LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
     }
   }
 }

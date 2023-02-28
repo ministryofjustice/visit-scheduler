@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
@@ -10,7 +9,6 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.context.TestPropertySource
@@ -30,7 +28,7 @@ import java.time.temporal.ChronoUnit
 
 @DisplayName("Put $VISIT_CANCEL")
 @TestPropertySource(properties = ["visit.cancel.day-limit=7"])
-class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : IntegrationTestBase() {
+class CancelVisitTest : IntegrationTestBase() {
   @Value("\${visit.cancel.day-limit:14}")
   var visitCancellationDayLimit: Long = 14
 
@@ -89,6 +87,36 @@ class CancelVisitTest(@Autowired private val objectMapper: ObjectMapper) : Integ
     assertVisitCancellation(visitCancelled, OutcomeStatus.VISITOR_CANCELLED)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(0)
     assertTelemetryClientEvents(visitCancelled, telemetryClient)
+  }
+
+  @Test
+  fun `cancel visit twice by reference - just send one event`() {
+
+    // Given
+    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+    val reference = visit.reference
+    val outcomeDto = OutcomeDto(
+      outcomeStatus = OutcomeStatus.VISITOR_CANCELLED
+    )
+
+    // When
+    val responseSpec1 = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+    val responseSpec2 = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+
+    // Then
+    val returnResult1 = responseSpec1.expectStatus().isOk.expectBody().returnResult()
+    val returnResult2 = responseSpec2.expectStatus().isOk.expectBody().returnResult()
+
+    // And
+    val visit1 = objectMapper.readValue(returnResult1.responseBody, VisitDto::class.java)
+    val visit2 = objectMapper.readValue(returnResult2.responseBody, VisitDto::class.java)
+
+    Assertions.assertThat(visit1.reference).isEqualTo(visit2.reference)
+    Assertions.assertThat(visit1.applicationReference).isEqualTo(visit2.applicationReference)
+    Assertions.assertThat(visit1.visitStatus).isEqualTo(visit2.visitStatus)
+
+    // just one event thrown
+    assertTelemetryClientEvents(visit1, telemetryClient)
   }
 
   @Test

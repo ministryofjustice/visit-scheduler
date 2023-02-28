@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
+import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -14,18 +15,21 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionCapacityDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import java.time.LocalDate
 import java.time.LocalTime
 
 const val VISIT_SESSION_CONTROLLER_PATH: String = "/visit-sessions"
+const val GET_SESSION_SCHEDULE: String = "$VISIT_SESSION_CONTROLLER_PATH/schedule"
 const val GET_SESSION_CAPACITY: String = "$VISIT_SESSION_CONTROLLER_PATH/capacity"
 
 @RestController
 @Validated
 @RequestMapping(name = "Session Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "2. Visit session rest controller")
 class VisitSessionController(
   private val sessionService: SessionService
 ) {
@@ -75,6 +79,44 @@ class VisitSessionController(
     ) max: Long?
   ): List<VisitSessionDto> {
     return sessionService.getVisitSessions(prisonCode, prisonerId, min, max)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(GET_SESSION_SCHEDULE)
+  @Operation(
+    summary = "Returns session scheduled for given prison and date",
+    description = "Returns session scheduled for given prison and date",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session scheduled information returned"
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to get session scheduled",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+      )
+    ]
+  )
+  fun getSessionSchedule(
+    @RequestParam(value = "prisonId", required = true)
+    @Parameter(
+      description = "Query by NOMIS Prison Identifier",
+      example = "MDI"
+    ) prisonCode: String,
+    @RequestParam(value = "date", required = true)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @Parameter(
+      description = "Query by session scheduled date",
+      example = "2020-11-01"
+    ) scheduleDate: LocalDate,
+  ): List<SessionScheduleDto> {
+    return sessionService.getSessionSchedule(prisonCode, scheduleDate)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

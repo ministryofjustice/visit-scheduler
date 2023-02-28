@@ -27,7 +27,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
@@ -58,9 +57,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var legacyDataRepository: LegacyDataRepository
-
-  @Autowired
-  private lateinit var prisonEntityHelper: PrisonEntityHelper
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient

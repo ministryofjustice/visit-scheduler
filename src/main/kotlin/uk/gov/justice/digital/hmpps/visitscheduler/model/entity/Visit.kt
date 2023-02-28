@@ -3,11 +3,11 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.NaturalId
 import org.hibernate.annotations.UpdateTimestamp
-import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDateTime
 import javax.persistence.CascadeType
@@ -16,16 +16,12 @@ import javax.persistence.Entity
 import javax.persistence.EnumType
 import javax.persistence.Enumerated
 import javax.persistence.FetchType
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
 import javax.persistence.JoinColumn
 import javax.persistence.ManyToOne
 import javax.persistence.OneToMany
 import javax.persistence.OneToOne
 import javax.persistence.PostPersist
 import javax.persistence.Table
-import javax.persistence.TemporalType
 
 @Entity
 @Table(name = "VISIT")
@@ -37,7 +33,7 @@ class Visit(
   @Column(name = "PRISON_ID", nullable = false)
   val prisonId: Long,
 
-  @ManyToOne
+  @ManyToOne(cascade = [CascadeType.DETACH])
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison,
 
@@ -78,24 +74,17 @@ class Visit(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var visitNotes: MutableList<VisitNote> = mutableListOf(),
 
-  @CreationTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column
-  val createTimestamp: LocalDateTime? = null,
-
-  @UpdateTimestamp
-  @Temporal(TemporalType.TIMESTAMP)
-  @Column
-  val modifyTimestamp: LocalDateTime? = null,
-
   @Transient
   private val _reference: String = ""
-) {
+) : AbstractIdEntity() {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "ID")
-  val id: Long = 0
+  @CreationTimestamp
+  @Column
+  val createTimestamp: LocalDateTime? = null
+
+  @UpdateTimestamp
+  @Column
+  val modifyTimestamp: LocalDateTime? = null
 
   @Column
   var reference = _reference
@@ -112,19 +101,6 @@ class Visit(
     if (applicationReference.isBlank()) {
       applicationReference = QuotableEncoder(minLength = 8, chunkSize = 3).encode(id)
     }
-  }
-
-  override fun equals(other: Any?): Boolean {
-    if (this === other) return true
-    if (other !is Visit) return false
-
-    if (id != other.id) return false
-
-    return true
-  }
-
-  override fun hashCode(): Int {
-    return id.hashCode()
   }
 
   override fun toString(): String {
