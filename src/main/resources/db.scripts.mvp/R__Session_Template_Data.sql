@@ -181,12 +181,12 @@ BEGIN;
 
 	INSERT INTO tmp_session_location_group (prison_code,key,name)
 	VALUES
-		('BLI','BLI_G1_WING','WINGS A, B, G, F, E AND H'),
-			('BLI','BLI_G1_C1','WING C - LANDING 1 -  CELLS 1 TO 32'),
-			('BLI','BLI_G1_C2','WING C - LANDING 2 -  CELLS 9 TO 24'),
-			('BLI','BLI_G1_C3','WING C - LANDING 3 -  CELLS 1 TO 24'),
-			('BLI','BLI_G2_WING','WINGS D AND F'),
-			('BLI','BLI_G2_C2','WING C - LANDING 2 -  CELLS 1 TO 8 AND 25 TO 32')
+		('BLI','BLI_G1_WING','Wings A, B, G, F, E and H'),
+			('BLI','BLI_G1_C1','Wing C - Landing 1 - Cells 1 to 32'),
+			('BLI','BLI_G1_C2','Wing C - Landing 2 - Cells 9 to 24'),
+			('BLI','BLI_G1_C3','Wing C - Landing 3 - Cells 1 to 24'),
+			('BLI','BLI_G2_WING','Wings D and F'),
+			('BLI','BLI_G2_C2','Wing C - Landing 2 - Cells 1 to 8 and 25 to 32')
 	;
 
 	-- update tmp location group table with correct prison id for given code.
