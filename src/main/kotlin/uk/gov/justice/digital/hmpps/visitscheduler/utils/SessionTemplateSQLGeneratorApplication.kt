@@ -117,7 +117,7 @@ class SessionTemplateSQLGenerator {
       levelTwo = toList(sessionRecord.get(LEVEL_TWO.name)),
       levelThree = toList(sessionRecord.get(LEVEL_THREE.name)),
       levelFour = toList(sessionRecord.get(LEVEL_FOUR.name)),
-      name = sessionRecord.get(NAME.name).uppercase()
+      name = sessionRecord.get(NAME.name)
     )
   }
 

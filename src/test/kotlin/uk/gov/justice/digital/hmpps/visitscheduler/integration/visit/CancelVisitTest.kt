@@ -14,9 +14,14 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.context.TestPropertySource
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
@@ -168,6 +173,57 @@ class CancelVisitTest : IntegrationTestBase() {
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner has updated the existing booking")
     Assertions.assertThat(visitCancelled.updatedBy).isNotNull
+  }
+
+  @Test
+  fun `cancel an updated visit by reference`() {
+    // Given
+    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED)
+    val roles = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+
+    // update the visit
+    // first create a reserveVisitSlotDto with same details as the booked visit
+    val reserveVisitSlotDto = ReserveVisitSlotDto(
+      prisonerId = bookedVisit.prisonerId,
+      prisonCode = bookedVisit.prison.code,
+      visitRoom = bookedVisit.visitRoom,
+      visitType = bookedVisit.visitType,
+      visitRestriction = bookedVisit.visitRestriction,
+      startTimestamp = bookedVisit.visitStart,
+      endTimestamp = bookedVisit.visitEnd,
+      visitContact = ContactDto("John Smith", "011223344"),
+      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false))
+    )
+
+    // call visit change and then book the visit
+    val responseSpecChange = callVisitChange(webTestClient, roles, reserveVisitSlotDto, bookedVisit.reference)
+    val responseSpecChangeResult = responseSpecChange
+      .expectBody()
+      .returnResult()
+    val visit = objectMapper.readValue(responseSpecChangeResult.responseBody, VisitDto::class.java)
+    callVisitBook(webTestClient, roles, visit.applicationReference)
+
+    // finally cancel the updated visit
+    val outcomeDto = OutcomeDto(
+      OutcomeStatus.PRISONER_CANCELLED,
+      "Prisoner got covid"
+    )
+    val reference = bookedVisit.reference
+
+    // When
+    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, outcomeDto)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+      .returnResult()
+
+    // And
+    val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED)
+    Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
+    Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
+    assertTelemetryClientEvents(visitCancelled, telemetryClient)
   }
 
   @Test
