@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.tags.Tag
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -77,5 +78,8 @@ class VisitControllerLegacy(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String,
     @RequestBody @Valid cancelOutcome: OutcomeDto
-  ): VisitDto = visitService.cancelVisit(reference.trim(), cancelOutcome)
+  ): VisitDto {
+    val principal = SecurityContextHolder.getContext().authentication.principal.toString()
+    return visitService.cancelVisit(reference.trim(), cancelOutcome, principal)
+  }
 }

@@ -11,6 +11,7 @@ import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
+import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -217,7 +218,8 @@ class VisitController(
     @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
     @PathVariable applicationReference: String
   ): VisitDto {
-    return visitService.bookVisit(applicationReference.trim())
+    val principal = SecurityContextHolder.getContext().authentication.principal.toString()
+    return visitService.bookVisit(applicationReference.trim(), actionedBy = principal)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -265,7 +267,8 @@ class VisitController(
     @PathVariable reference: String,
     @RequestBody @Valid cancelOutcome: OutcomeDto
   ): VisitDto {
-    return visitService.cancelVisit(reference.trim(), cancelOutcome)
+    val principal = SecurityContextHolder.getContext().authentication.principal.toString()
+    return visitService.cancelVisit(reference.trim(), cancelOutcome, principal)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

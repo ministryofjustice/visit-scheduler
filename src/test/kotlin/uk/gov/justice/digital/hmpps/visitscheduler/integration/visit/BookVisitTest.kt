@@ -72,7 +72,6 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-
     val returnResult = responseSpec
       .expectStatus().isOk
       .expectBody()
@@ -94,6 +93,7 @@ class BookVisitTest : IntegrationTestBase() {
       .jsonPath("$.visitorSupport.length()").isEqualTo(reservedVisit.support.size)
       .jsonPath("$.visitorSupport[0].type").isEqualTo(reservedVisit.support.first().type)
       .jsonPath("$.visitorSupport[0].text").isEqualTo(reservedVisit.support.first().text!!)
+      .jsonPath("$.createdBy").isNotEmpty
       .jsonPath("$.createdTimestamp").isNotEmpty
       .returnResult()
 
@@ -166,6 +166,9 @@ class BookVisitTest : IntegrationTestBase() {
     Assertions.assertThat(bookedEntity.visitStatus).isEqualTo(CANCELLED)
     Assertions.assertThat(bookedEntity.outcomeStatus).isEqualTo(OutcomeStatus.SUPERSEDED_CANCELLATION)
     Assertions.assertThat(reservedEntity.visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(reservedEntity.createdBy).isNotNull
+    Assertions.assertThat(reservedEntity.createdBy).isEqualTo(bookedEntity.createdBy)
+    Assertions.assertThat(reservedEntity.updatedBy).isNotNull
 
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)

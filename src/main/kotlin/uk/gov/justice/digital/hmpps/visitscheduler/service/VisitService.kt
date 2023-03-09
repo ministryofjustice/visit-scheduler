@@ -221,7 +221,7 @@ class VisitService(
     )
   }
 
-  fun bookVisit(applicationReference: String): VisitDto {
+  fun bookVisit(applicationReference: String, actionedBy: String?): VisitDto {
 
     if (visitRepository.isApplicationBooked(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
@@ -246,6 +246,10 @@ class VisitService(
         it.outcomeStatus = SUPERSEDED_CANCELLATION
         visitRepository.saveAndFlush(it)
       }
+      visitToBook.createdBy = existingBookedVisit?.createdBy
+      visitToBook.updatedBy = actionedBy
+    } else {
+      visitToBook.createdBy = actionedBy
     }
 
     visitToBook.visitStatus = VisitStatus.BOOKED
@@ -266,7 +270,7 @@ class VisitService(
     return visit
   }
 
-  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
+  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto, actionedBy: String?): VisitDto {
 
     if (visitRepository.isBookingCancelled(reference)) {
       // If already canceled then just return object and do nothing more!
@@ -283,6 +287,7 @@ class VisitService(
 
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
+    visitEntity.updatedBy = actionedBy
 
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
