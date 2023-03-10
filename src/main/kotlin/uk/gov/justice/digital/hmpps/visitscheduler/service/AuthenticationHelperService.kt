@@ -13,7 +13,7 @@ class AuthenticationHelperService {
     const val UNEXPECTED_PRINCIPAL = "NOT_KNOWN"
   }
 
-  val currentUserName: String?
+  val currentUserName: String
     get() {
       val userPrincipal = userPrincipal
 

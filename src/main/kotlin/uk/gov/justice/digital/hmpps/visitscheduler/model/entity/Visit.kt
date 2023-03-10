@@ -75,7 +75,7 @@ class Visit(
   var visitNotes: MutableList<VisitNote> = mutableListOf(),
 
   @Column
-  var createdBy: String? = null,
+  var createdBy: String,
 
   @Column
   var updatedBy: String? = null,

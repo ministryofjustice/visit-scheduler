@@ -66,7 +66,7 @@ class VisitEntityHelper(
     reference: String = "",
     activePrison: Boolean = true,
     outcomeStatus: OutcomeStatus? = null,
-    createdBy: String? = "CREATED_BY",
+    createdBy: String = "CREATED_BY",
     updatedBy: String? = null,
   ): Visit {
 

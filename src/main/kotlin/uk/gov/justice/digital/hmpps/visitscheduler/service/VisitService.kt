@@ -67,7 +67,7 @@ class VisitService(
   }
 
   fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
-
+    val actionedBy = authenticationHelperService.currentUserName
     val prison = prisonConfigService.findPrisonByCode(reserveVisitSlotDto.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
@@ -81,7 +81,8 @@ class VisitService(
         visitRestriction = reserveVisitSlotDto.visitRestriction,
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
-        _reference = bookingReference
+        _reference = bookingReference,
+        createdBy = actionedBy
       )
     )
 
@@ -247,8 +248,8 @@ class VisitService(
         it.visitStatus = CANCELLED
         it.outcomeStatus = SUPERSEDED_CANCELLATION
         visitRepository.saveAndFlush(it)
+        visitToBook.createdBy = it.createdBy
       }
-      visitToBook.createdBy = existingBookedVisit?.createdBy
       visitToBook.updatedBy = actionedBy
     } else {
       visitToBook.createdBy = actionedBy
