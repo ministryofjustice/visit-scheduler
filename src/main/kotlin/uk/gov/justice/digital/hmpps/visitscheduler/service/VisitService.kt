@@ -45,6 +45,7 @@ class VisitService(
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
   private val prisonConfigService: PrisonConfigService,
+  private val authenticationHelperService: AuthenticationHelperService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
 ) {
@@ -221,7 +222,8 @@ class VisitService(
     )
   }
 
-  fun bookVisit(applicationReference: String, actionedBy: String?): VisitDto {
+  fun bookVisit(applicationReference: String): VisitDto {
+    val actionedBy = authenticationHelperService.currentUserName
 
     if (visitRepository.isApplicationBooked(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
@@ -270,7 +272,8 @@ class VisitService(
     return visit
   }
 
-  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto, actionedBy: String?): VisitDto {
+  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
+    val actionedBy = authenticationHelperService.currentUserName
 
     if (visitRepository.isBookingCancelled(reference)) {
       // If already canceled then just return object and do nothing more!
