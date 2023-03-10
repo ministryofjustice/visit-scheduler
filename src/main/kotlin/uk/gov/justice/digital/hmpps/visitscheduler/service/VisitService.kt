@@ -280,14 +280,11 @@ class VisitService(
     }
 
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
-    val visitCancellationDateAllowed = getAllowedCancellationDate(
-      LocalDateTime.now(), visitCancellationDayLimit = visitCancellationDayLimit.toLong()
-    )
-    validateVisitStartDate(visitEntity, "cancelled", visitCancellationDateAllowed)
+    validateVisitStartDate(visitEntity, "cancelled", getAllowedCancellationDate(visitCancellationDayLimit = visitCancellationDayLimit))
 
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
-    visitEntity.updatedBy = actionedBy
+    visitEntity.cancelledBy = actionedBy
 
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
@@ -365,11 +362,11 @@ class VisitService(
     }
   }
 
-  private fun getAllowedCancellationDate(currentDateTime: LocalDateTime, visitCancellationDayLimit: Long): LocalDateTime {
+  private fun getAllowedCancellationDate(currentDateTime: LocalDateTime = LocalDateTime.now(), visitCancellationDayLimit: Int): LocalDateTime {
     var visitCancellationDateAllowed = currentDateTime
     // check if the visit being cancelled is in the past
     if (visitCancellationDayLimit > 0) {
-      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS)
+      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit.toLong()).truncatedTo(ChronoUnit.DAYS)
     }
 
     return visitCancellationDateAllowed

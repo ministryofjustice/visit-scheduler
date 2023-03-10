@@ -65,7 +65,8 @@ class CancelVisitTest : IntegrationTestBase() {
     assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
-    Assertions.assertThat(visitCancelled.updatedBy).isNotNull
+    Assertions.assertThat(visitCancelled.updatedBy).isNull()
+    Assertions.assertThat(visitCancelled.cancelledBy).isNotNull
     assertTelemetryClientEvents(visitCancelled, telemetryClient)
   }
 
@@ -91,7 +92,8 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertVisitCancellation(visitCancelled, OutcomeStatus.VISITOR_CANCELLED)
-    Assertions.assertThat(visitCancelled.updatedBy).isNotNull
+    Assertions.assertThat(visitCancelled.updatedBy).isNull()
+    Assertions.assertThat(visitCancelled.cancelledBy).isNotNull
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(0)
     assertTelemetryClientEvents(visitCancelled, telemetryClient)
   }
@@ -172,7 +174,8 @@ class CancelVisitTest : IntegrationTestBase() {
     assertVisitCancellation(visitCancelled, OutcomeStatus.SUPERSEDED_CANCELLATION)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner has updated the existing booking")
-    Assertions.assertThat(visitCancelled.updatedBy).isNotNull
+    Assertions.assertThat(visitCancelled.updatedBy).isNull()
+    Assertions.assertThat(visitCancelled.cancelledBy).isNotNull
   }
 
   @Test
@@ -223,6 +226,8 @@ class CancelVisitTest : IntegrationTestBase() {
     assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
+    Assertions.assertThat(visitCancelled.updatedBy).isNotNull
+    Assertions.assertThat(visitCancelled.cancelledBy).isNotNull
     assertTelemetryClientEvents(visitCancelled, telemetryClient)
   }
 

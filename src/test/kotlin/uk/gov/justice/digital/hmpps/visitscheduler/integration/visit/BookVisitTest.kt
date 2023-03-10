@@ -169,6 +169,7 @@ class BookVisitTest : IntegrationTestBase() {
     Assertions.assertThat(reservedEntity.createdBy).isNotNull
     Assertions.assertThat(reservedEntity.createdBy).isEqualTo(bookedEntity.createdBy)
     Assertions.assertThat(reservedEntity.updatedBy).isNotNull
+    Assertions.assertThat(reservedEntity.cancelledBy).isNull()
 
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)

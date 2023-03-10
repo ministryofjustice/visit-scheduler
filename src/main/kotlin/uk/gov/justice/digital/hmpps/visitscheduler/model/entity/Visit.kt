@@ -80,6 +80,9 @@ class Visit(
   @Column
   var updatedBy: String? = null,
 
+  @Column
+  var cancelledBy: String? = null,
+
   @Transient
   private val _reference: String = ""
 ) : AbstractIdEntity() {

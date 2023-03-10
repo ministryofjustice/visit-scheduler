@@ -47,8 +47,10 @@ data class VisitDto(
   val visitorSupport: List<VisitorSupportDto> = listOf(),
   @Schema(description = "Actioned By - NOMIS ID for the user who created the visit", example = "AB12345A", required = false)
   val createdBy: String?,
-  @Schema(description = "Cancelled By - NOMIS ID for the user who cancelled the visit", example = "AB12345A", required = false)
+  @Schema(description = "Updated By - NOMIS ID for the user who updated the visit", example = "AB12345A", required = false)
   val updatedBy: String?,
+  @Schema(description = "Cancelled By - NOMIS ID for the user who cancelled the visit", example = "AB12345A", required = false)
+  val cancelledBy: String?,
   @Schema(description = "The visit created date and time", example = "2018-12-01T13:45:00", required = true)
   @field:NotBlank
   val createdTimestamp: LocalDateTime,
@@ -75,6 +77,7 @@ data class VisitDto(
     visitorSupport = visitEntity.support.map { VisitorSupportDto(it) },
     createdBy = visitEntity.createdBy,
     updatedBy = visitEntity.updatedBy,
+    cancelledBy = visitEntity.cancelledBy,
     createdTimestamp = visitEntity.createTimestamp!!,
     modifiedTimestamp = visitEntity.modifyTimestamp!!
   )
