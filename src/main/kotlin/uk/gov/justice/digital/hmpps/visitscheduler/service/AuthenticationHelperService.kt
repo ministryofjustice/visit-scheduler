@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class AuthenticationHelperService {
-  companion object{
+  companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val UNEXPECTED_PRINCIPAL = "NOT_KNOWN"
   }
@@ -18,7 +18,7 @@ class AuthenticationHelperService {
       val userPrincipal = userPrincipal
 
       return if (userPrincipal is String) userPrincipal else {
-        LOG.info("unexpected user principal - ${userPrincipal.toString()}")
+        LOG.info("unexpected user principal - $userPrincipal")
         UNEXPECTED_PRINCIPAL
       }
     }
