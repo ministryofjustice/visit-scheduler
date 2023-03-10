@@ -45,6 +45,7 @@ class VisitService(
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
   private val prisonConfigService: PrisonConfigService,
+  private val authenticationHelperService: AuthenticationHelperService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
 ) {
@@ -66,7 +67,7 @@ class VisitService(
   }
 
   fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
-
+    val actionedBy = authenticationHelperService.currentUserName
     val prison = prisonConfigService.findPrisonByCode(reserveVisitSlotDto.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
@@ -80,7 +81,8 @@ class VisitService(
         visitRestriction = reserveVisitSlotDto.visitRestriction,
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
-        _reference = bookingReference
+        _reference = bookingReference,
+        createdBy = actionedBy
       )
     )
 
@@ -222,6 +224,7 @@ class VisitService(
   }
 
   fun bookVisit(applicationReference: String): VisitDto {
+    val actionedBy = authenticationHelperService.currentUserName
 
     if (visitRepository.isApplicationBooked(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
@@ -245,7 +248,11 @@ class VisitService(
         it.visitStatus = CANCELLED
         it.outcomeStatus = SUPERSEDED_CANCELLATION
         visitRepository.saveAndFlush(it)
+        visitToBook.createdBy = it.createdBy
       }
+      visitToBook.updatedBy = actionedBy
+    } else {
+      visitToBook.createdBy = actionedBy
     }
 
     visitToBook.visitStatus = VisitStatus.BOOKED
@@ -267,6 +274,7 @@ class VisitService(
   }
 
   fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
+    val actionedBy = authenticationHelperService.currentUserName
 
     if (visitRepository.isBookingCancelled(reference)) {
       // If already canceled then just return object and do nothing more!
@@ -276,13 +284,11 @@ class VisitService(
     }
 
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
-    val visitCancellationDateAllowed = getAllowedCancellationDate(
-      LocalDateTime.now(), visitCancellationDayLimit = visitCancellationDayLimit.toLong()
-    )
-    validateVisitStartDate(visitEntity, "cancelled", visitCancellationDateAllowed)
+    validateVisitStartDate(visitEntity, "cancelled", getAllowedCancellationDate(visitCancellationDayLimit = visitCancellationDayLimit))
 
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
+    visitEntity.cancelledBy = actionedBy
 
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
@@ -360,11 +366,11 @@ class VisitService(
     }
   }
 
-  private fun getAllowedCancellationDate(currentDateTime: LocalDateTime, visitCancellationDayLimit: Long): LocalDateTime {
+  private fun getAllowedCancellationDate(currentDateTime: LocalDateTime = LocalDateTime.now(), visitCancellationDayLimit: Int): LocalDateTime {
     var visitCancellationDateAllowed = currentDateTime
     // check if the visit being cancelled is in the past
     if (visitCancellationDayLimit > 0) {
-      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS)
+      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit.toLong()).truncatedTo(ChronoUnit.DAYS)
     }
 
     return visitCancellationDateAllowed

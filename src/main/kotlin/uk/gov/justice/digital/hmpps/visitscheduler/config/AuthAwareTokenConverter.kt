@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.core.convert.converter.Converter
 import org.springframework.security.authentication.AbstractAuthenticationToken
 import org.springframework.security.core.GrantedAuthority
@@ -16,6 +18,10 @@ class AuthAwareTokenConverter : Converter<Jwt, AbstractAuthenticationToken> {
     val claims = jwt.claims
     val principal = findPrincipal(claims)
     val authorities = extractAuthorities(jwt)
+
+    // TODO - remove this later - only adding as a temporary thing
+    LOG.info("claims information for logged in user - $claims")
+
     return AuthAwareAuthenticationToken(jwt, principal, authorities)
   }
 
@@ -44,6 +50,7 @@ class AuthAwareTokenConverter : Converter<Jwt, AbstractAuthenticationToken> {
     const val CLAIM_USER_ID = "user_id"
     const val CLAIM_CLIENT_ID = "client_id"
     const val CLAIM_AUTHORITY = "authorities"
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 }
 

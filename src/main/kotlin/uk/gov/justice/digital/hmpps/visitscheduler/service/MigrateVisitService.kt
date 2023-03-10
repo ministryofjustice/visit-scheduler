@@ -22,11 +22,12 @@ class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
   private val prisonConfigService: PrisonConfigService,
+  private val authenticationHelperService: AuthenticationHelperService,
   private val telemetryClient: TelemetryClient,
 ) {
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
-
+    val actionedBy = authenticationHelperService.currentUserName
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
@@ -43,7 +44,8 @@ class MigrateVisitService(
         outcomeStatus = outcomeStatus,
         visitRestriction = migrateVisitRequest.visitRestriction,
         visitStart = migrateVisitRequest.startTimestamp,
-        visitEnd = migrateVisitRequest.endTimestamp
+        visitEnd = migrateVisitRequest.endTimestamp,
+        createdBy = actionedBy
       )
     )
 

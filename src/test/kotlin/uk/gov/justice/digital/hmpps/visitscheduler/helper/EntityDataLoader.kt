@@ -66,6 +66,8 @@ class VisitEntityHelper(
     reference: String = "",
     activePrison: Boolean = true,
     outcomeStatus: OutcomeStatus? = null,
+    createdBy: String = "CREATED_BY",
+    updatedBy: String? = null,
   ): Visit {
 
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
@@ -82,7 +84,9 @@ class VisitEntityHelper(
         visitType = visitType,
         visitRestriction = visitRestriction,
         _reference = reference,
-        outcomeStatus = outcomeStatus
+        outcomeStatus = outcomeStatus,
+        createdBy = createdBy,
+        updatedBy = updatedBy
       )
     )
   }

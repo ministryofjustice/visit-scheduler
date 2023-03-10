@@ -282,7 +282,8 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
-        visitRoom = "1"
+        visitRoom = "1",
+        createdBy = "TEST-USER"
       )
 
       val openVisit2 = Visit(
@@ -294,7 +295,8 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
-        visitRoom = "1"
+        visitRoom = "1",
+        createdBy = "TEST-USER"
       )
 
       val closedVisit = Visit(
@@ -306,7 +308,8 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = BOOKED,
         visitRestriction = CLOSED,
-        visitRoom = "1"
+        visitRoom = "1",
+        createdBy = "TEST-USER"
       )
       mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession)
 
@@ -346,7 +349,8 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = OPEN,
-        visitRoom = "1"
+        visitRoom = "1",
+        createdBy = "TEST-USER"
       )
 
       val closedVisit = Visit(
@@ -358,7 +362,8 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = CLOSED,
-        visitRoom = "1"
+        visitRoom = "1",
+        createdBy = "TEST-USER"
       )
       mockVisitRepositoryCountResponse(listOf(openVisit, closedVisit), singleSession)
 
@@ -397,7 +402,8 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = UNKNOWN,
-        visitRoom = "1"
+        visitRoom = "1",
+        createdBy = "TEST-USER"
       )
 
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
