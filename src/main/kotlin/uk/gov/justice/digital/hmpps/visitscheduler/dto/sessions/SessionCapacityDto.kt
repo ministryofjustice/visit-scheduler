@@ -8,10 +8,13 @@ data class SessionCapacityDto(
   @Schema(description = "closed capacity", example = "10", required = true)
   val closed: Int,
   @Schema(description = "open capacity", example = "50", required = true)
-  val open: Int
+  val open: Int,
+  @Schema(description = "enhanced privilege", example = "true", required = true)
+  val enhanced: Boolean,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     closed = sessionTemplateEntity.closedCapacity,
     open = sessionTemplateEntity.openCapacity,
+    enhanced = sessionTemplateEntity.enhanced,
   )
 }

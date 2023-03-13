@@ -535,6 +535,89 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `over lapping visit sessions visit count correctly`() {
+
+    // Given
+    val nextAllowedDay = this.getNextAllowedDay()
+    val dateTime = nextAllowedDay.atTime(9, 0)
+    val startTime = dateTime.toLocalTime()
+    val endTime = dateTime.plusHours(1)
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = startTime,
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      openCapacity = 10,
+      closedCapacity = 0
+    )
+
+    this.sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = startTime,
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      openCapacity = 0,
+      closedCapacity = 7
+    )
+
+    this.sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = startTime,
+      endTime = endTime.toLocalTime(),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      openCapacity = 3,
+      closedCapacity = 0,
+      enhanced = true
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "BF12345G",
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "CF12345G",
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitStatus = BOOKED,
+      visitRestriction = CLOSED
+    )
+
+    // When
+    val responseSpec = callGetSessions()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(3)
+    Assertions.assertThat(visitSessionResults[0].openVisitBookedCount).isEqualTo(2)
+    Assertions.assertThat(visitSessionResults[0].closedVisitBookedCount).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[0].enhanced).isFalse
+    Assertions.assertThat(visitSessionResults[1].openVisitBookedCount).isEqualTo(2)
+    Assertions.assertThat(visitSessionResults[1].closedVisitBookedCount).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[1].enhanced).isFalse
+    Assertions.assertThat(visitSessionResults[2].openVisitBookedCount).isEqualTo(2)
+    Assertions.assertThat(visitSessionResults[2].closedVisitBookedCount).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults[2].enhanced).isTrue
+  }
+
+  @Test
   fun `visit sessions visit count includes only visits within session period`() {
 
     // Given

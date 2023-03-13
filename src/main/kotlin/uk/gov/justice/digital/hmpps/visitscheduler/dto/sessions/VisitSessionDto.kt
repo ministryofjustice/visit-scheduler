@@ -63,4 +63,7 @@ data class VisitSessionDto(
 
   @Schema(description = "Session conflicts", required = false)
   val sessionConflicts: MutableSet<@Valid SessionConflict>? = mutableSetOf(),
+
+  @Schema(description = "enhanced privilege", example = "true", required = true)
+  val enhanced: Boolean,
 )
