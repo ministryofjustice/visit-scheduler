@@ -45,7 +45,6 @@ class VisitService(
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
   private val prisonConfigService: PrisonConfigService,
-  private val authenticationHelperService: AuthenticationHelperService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
 ) {
@@ -55,19 +54,19 @@ class VisitService(
     const val MAX_RECORDS = 10000
     val EXPIRED_VISIT_STATUSES = listOf(RESERVED, CHANGING)
     const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
+    const val ACTIONED_BY_NOT_KNOWN = "NOT_KNOWN"
   }
 
-  fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
+  fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto, userName: String?): VisitDto {
     val visit = visitRepository.findBookedVisit(bookingReference)
       ?: throw VisitNotFoundException("Visit booking reference $bookingReference not found")
 
     // check if the existing visit is in the past
     validateVisitStartDate(visit, "changed")
-    return reserveVisitSlot(bookingReference, reserveVisitSlotDto)
+    return reserveVisitSlot(bookingReference, reserveVisitSlotDto, userName)
   }
 
-  fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
-    val actionedBy = authenticationHelperService.currentUserName
+  fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto, userName: String?): VisitDto {
     val prison = prisonConfigService.findPrisonByCode(reserveVisitSlotDto.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
@@ -82,7 +81,7 @@ class VisitService(
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
         _reference = bookingReference,
-        createdBy = actionedBy
+        createdBy = getActionedBy(userName)
       )
     )
 
@@ -223,8 +222,8 @@ class VisitService(
     )
   }
 
-  fun bookVisit(applicationReference: String): VisitDto {
-    val actionedBy = authenticationHelperService.currentUserName
+  fun bookVisit(applicationReference: String, userName: String?): VisitDto {
+    val actionedBy = getActionedBy(userName)
 
     if (visitRepository.isApplicationBooked(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
@@ -273,8 +272,8 @@ class VisitService(
     return visit
   }
 
-  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
-    val actionedBy = authenticationHelperService.currentUserName
+  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto, userName: String?): VisitDto {
+    val actionedBy = getActionedBy(userName)
 
     if (visitRepository.isBookingCancelled(reference)) {
       // If already canceled then just return object and do nothing more!
@@ -396,5 +395,9 @@ class VisitService(
     } catch (e: RuntimeException) {
       LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
     }
+  }
+
+  private fun getActionedBy(userName: String?): String {
+    return userName ?: ACTIONED_BY_NOT_KNOWN
   }
 }

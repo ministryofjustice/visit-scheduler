@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -48,6 +49,9 @@ const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 class VisitController(
   private val visitService: VisitService
 ) {
+  companion object {
+    const val USER_NAME_HEADER_KEY = "user-name"
+  }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PostMapping(VISIT_RESERVE_SLOT)
@@ -85,9 +89,10 @@ class VisitController(
     ]
   )
   fun reserveVisitSlot(
-    @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto
+    @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto,
+    @RequestHeader(USER_NAME_HEADER_KEY) userName: String?
   ): VisitDto {
-    return visitService.reserveVisitSlot(reserveVisitSlotDto = reserveVisitSlotDto)
+    return visitService.reserveVisitSlot(reserveVisitSlotDto = reserveVisitSlotDto, userName = userName)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -176,9 +181,10 @@ class VisitController(
   fun changeBookedVisit(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String,
-    @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto
+    @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto,
+    @RequestHeader(USER_NAME_HEADER_KEY) userName: String?
   ): VisitDto {
-    return visitService.changeBookedVisit(reference.trim(), reserveVisitSlotDto)
+    return visitService.changeBookedVisit(reference.trim(), reserveVisitSlotDto, userName)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -215,9 +221,10 @@ class VisitController(
   )
   fun bookVisit(
     @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
-    @PathVariable applicationReference: String
+    @PathVariable applicationReference: String,
+    @RequestHeader(USER_NAME_HEADER_KEY) userName: String?
   ): VisitDto {
-    return visitService.bookVisit(applicationReference.trim())
+    return visitService.bookVisit(applicationReference.trim(), userName)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -263,9 +270,10 @@ class VisitController(
   fun cancelVisit(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String,
-    @RequestBody @Valid cancelOutcome: OutcomeDto
+    @RequestBody @Valid cancelOutcome: OutcomeDto,
+    @RequestHeader(USER_NAME_HEADER_KEY) userName: String?
   ): VisitDto {
-    return visitService.cancelVisit(reference.trim(), cancelOutcome)
+    return visitService.cancelVisit(reference.trim(), cancelOutcome, userName)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
