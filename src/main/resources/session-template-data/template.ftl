@@ -54,7 +54,6 @@ BEGIN;
 	ALTER SEQUENCE session_template_id_seq RESTART WITH  ${session_template_id_index};
 
 	-- Create temporary group table
-
 	CREATE TABLE tmp_session_location_group (
 		id                	serial        NOT NULL PRIMARY KEY,
 		prison_code       	VARCHAR(6)    NOT NULL,
@@ -63,6 +62,7 @@ BEGIN;
 		name          	    VARCHAR(100)  NOT NULL
 	);
 
+	-- Location group names are only descriptions they need to be updated when the group locations change
 	INSERT INTO tmp_session_location_group (prison_code,key,name)
 	VALUES
 	<#list groups as g>
