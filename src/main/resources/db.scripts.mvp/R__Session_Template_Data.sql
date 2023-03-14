@@ -18,6 +18,10 @@ BEGIN;
 	INSERT INTO prison(code, active) SELECT 'CFI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'CFI');
 	INSERT INTO prison(code, active) SELECT 'WWI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'WWI');
 	INSERT INTO prison(code, active) SELECT 'PNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'PNI');
+	INSERT INTO prison(code, active) SELECT 'EWI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'EWI');
+	INSERT INTO prison(code, active) SELECT 'DHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'DHI');
+	INSERT INTO prison(code, active) SELECT 'MHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'MHI');
+	INSERT INTO prison(code, active) SELECT 'BNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BNI');
 
 	-- Creating session template data
 	CREATE TEMP TABLE tmp_session_template(
@@ -156,7 +160,30 @@ BEGIN;
 			(NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'14:00','15:00','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 14:00'),
 			(NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'15:30','16:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 15:30'),
 			(NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'14:00','15:00','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 14:00'),
-			(NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'15:30','16:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 15:30')
+			(NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'15:30','16:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 15:30'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 14:00'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 15:30'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-10, 14:00'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-10, 15:30'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'FRIDAY',false,'FRIDAY, 2023-03-10, 14:00'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'FRIDAY',false,'FRIDAY, 2023-03-10, 15:30'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 14:00'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 15:30'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 14:00'),
+			(NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 15:30'),
+			(NULL,'DHI','Visits Main Hall','SOCIAL',24,3,false,'13:30','15:45','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 13:30'),
+			(NULL,'DHI','Visits Main Hall','SOCIAL',24,3,false,'09:30','11:30','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 09:30'),
+			(NULL,'DHI','Visits Main Hall','SOCIAL',24,3,false,'13:30','15:45','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 13:30'),
+			(NULL,'DHI','Visits Main Hall','SOCIAL',24,3,false,'13:30','15:45','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 13:30'),
+			(NULL,'MHI','Visits Main Hall','SOCIAL',14,2,false,'13:15','16:00','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 13:15'),
+			(NULL,'MHI','Visits Main Hall','SOCIAL',14,2,false,'13:15','16:00','2023-03-10',NULL,'THURSDAY',false,'THURSDAY, 2023-03-10, 13:15'),
+			(NULL,'MHI','Visits Main Hall','SOCIAL',14,2,false,'13:30','16:15','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 13:30'),
+			(NULL,'MHI','Visits Main Hall','SOCIAL',14,2,false,'13:30','16:15','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 13:30'),
+			(NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 14:15'),
+			(NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-10, 14:15'),
+			(NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'THURSDAY',false,'THURSDAY, 2023-03-10, 14:15'),
+			(NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 14:15'),
+			(NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 14:15')
 	;
 
 	-- update tmp session template table with correct prison id for given code.
@@ -167,10 +194,9 @@ BEGIN;
 	SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{3})(?!$)', '\1.','g')) as reference,visit_room,visit_type,open_capacity,closed_capacity,enhanced,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name FROM tmp_session_template order by id;
 
 	-- Sequence updated manually as id's were inserted from temp table
-	ALTER SEQUENCE session_template_id_seq RESTART WITH  117;
+	ALTER SEQUENCE session_template_id_seq RESTART WITH  140;
 
 	-- Create temporary group table
-
 	CREATE TABLE tmp_session_location_group (
 		id                	serial        NOT NULL PRIMARY KEY,
 		prison_code       	VARCHAR(6)    NOT NULL,
@@ -179,6 +205,7 @@ BEGIN;
 		name          	    VARCHAR(100)  NOT NULL
 	);
 
+	-- Location group names are only descriptions they need to be updated when the group locations change
 	INSERT INTO tmp_session_location_group (prison_code,key,name)
 	VALUES
 		('BLI','BLI_G1_WING','Wings A, B, G, F, E and H'),
