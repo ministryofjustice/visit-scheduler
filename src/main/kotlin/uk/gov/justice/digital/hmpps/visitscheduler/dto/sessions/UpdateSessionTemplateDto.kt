@@ -38,5 +38,11 @@ data class UpdateSessionTemplateDto(
   val enhanced: Boolean? = null,
 
   @Schema(description = "biWeekly time table", example = "true", required = true)
-  val biWeekly: Boolean? = null
+  val biWeekly: Boolean? = null,
+
+  @Schema(description = "list of included prisoner categories", required = false)
+  val includedPrisonerCategories: List<String> = listOf(),
+
+  @Schema(description = "list of excluded prisoner categories", required = false)
+  val excludedPrisonerCategories: List<String> = listOf(),
 )
