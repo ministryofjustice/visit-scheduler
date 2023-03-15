@@ -32,7 +32,7 @@ import java.time.LocalTime
 @Component
 @Transactional
 class PrisonEntityHelper(
-  private val prisonRepository: TestPrisonRepository
+  private val prisonRepository: TestPrisonRepository,
 ) {
 
   @Transactional(propagation = REQUIRED)
@@ -51,7 +51,7 @@ class PrisonEntityHelper(
 @Transactional
 class VisitEntityHelper(
   private val visitRepository: VisitRepository,
-  private val prisonEntityHelper: PrisonEntityHelper
+  private val prisonEntityHelper: PrisonEntityHelper,
 ) {
 
   fun create(
@@ -67,7 +67,6 @@ class VisitEntityHelper(
     activePrison: Boolean = true,
     outcomeStatus: OutcomeStatus? = null,
   ): Visit {
-
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
     return visitRepository.saveAndFlush(
@@ -82,8 +81,8 @@ class VisitEntityHelper(
         visitType = visitType,
         visitRestriction = visitRestriction,
         _reference = reference,
-        outcomeStatus = outcomeStatus
-      )
+        outcomeStatus = outcomeStatus,
+      ),
     )
   }
 
@@ -96,22 +95,22 @@ class VisitEntityHelper(
       visitId = visit.id,
       name = name,
       telephone = phone,
-      visit = visit
+      visit = visit,
     )
   }
 
   fun createVisitor(
     visit: Visit,
     nomisPersonId: Long,
-    visitContact: Boolean?
+    visitContact: Boolean?,
   ) {
     visit.visitors.add(
       VisitVisitor(
         nomisPersonId = nomisPersonId,
         visitId = visit.id,
         visit = visit,
-        visitContact = visitContact
-      )
+        visitContact = visitContact,
+      ),
     )
   }
 
@@ -125,23 +124,23 @@ class VisitEntityHelper(
         type = name,
         visitId = visit.id,
         text = details,
-        visit = visit
-      )
+        visit = visit,
+      ),
     )
   }
 
   fun createNote(
     visit: Visit,
     text: String,
-    type: VisitNoteType
+    type: VisitNoteType,
   ) {
     visit.visitNotes.add(
       VisitNote(
         visitId = visit.id,
         type = type,
         text = text,
-        visit = visit
-      )
+        visit = visit,
+      ),
     )
   }
 
@@ -154,32 +153,30 @@ class VisitEntityHelper(
 @Transactional
 class SessionLocationGroupHelper(
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
-  private val prisonEntityHelper: PrisonEntityHelper
+  private val prisonEntityHelper: PrisonEntityHelper,
 ) {
 
   fun create(name: String? = "Group A", prisonCode: String = "MDI"): SessionLocationGroup {
-
     val sessionLocations = mutableListOf(
       AllowedSessionLocationHierarchy(
         levelOneCode = "A",
         levelTwoCode = "1",
         levelThreeCode = "W",
-        levelFourCode = "001"
-      )
+        levelFourCode = "001",
+      ),
     )
     return create(name = name, prisonCode = prisonCode, sessionLocations)
   }
 
   fun create(name: String? = "Group A", prisonCode: String = "MDI", prisonHierarchies: List<AllowedSessionLocationHierarchy>): SessionLocationGroup {
-
     val prison = prisonEntityHelper.create(prisonCode, true)
 
     val group = sessionLocationGroupRepository.saveAndFlush(
       SessionLocationGroup(
         prison = prison,
         prisonId = prison.id,
-        name = name!!
-      )
+        name = name!!,
+      ),
     )
 
     val permittedGroupLocations = mutableListOf<PermittedSessionLocation>()
@@ -192,7 +189,7 @@ class SessionLocationGroupHelper(
           levelOneCode = prisonHierarchy.levelOneCode,
           levelTwoCode = prisonHierarchy.levelTwoCode,
           levelThreeCode = prisonHierarchy.levelThreeCode,
-          levelFourCode = prisonHierarchy.levelFourCode
+          levelFourCode = prisonHierarchy.levelFourCode,
         )
       permittedGroupLocations.add(permittedSessionLocation)
     }
@@ -207,7 +204,7 @@ class SessionLocationGroupHelper(
 @Transactional
 class SessionTemplateEntityHelper(
   private val sessionRepository: TestSessionTemplateRepository,
-  private val prisonEntityHelper: PrisonEntityHelper
+  private val prisonEntityHelper: PrisonEntityHelper,
 ) {
 
   fun create(
@@ -225,9 +222,8 @@ class SessionTemplateEntityHelper(
     activePrison: Boolean = true,
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
-    enhanced: Boolean = false
+    enhanced: Boolean = false,
   ): SessionTemplate {
-
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
     return create(
@@ -244,7 +240,7 @@ class SessionTemplateEntityHelper(
       dayOfWeek = dayOfWeek,
       permittedSessionGroups = permittedSessionGroups,
       biWeekly = biWeekly,
-      enhanced = enhanced
+      enhanced = enhanced,
     )
   }
 
@@ -263,9 +259,8 @@ class SessionTemplateEntityHelper(
     activePrison: Boolean = true,
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
-    enhanced: Boolean = false
+    enhanced: Boolean = false,
   ): SessionTemplate {
-
     return sessionRepository.saveAndFlush(
       SessionTemplate(
         name = name + dayOfWeek,
@@ -282,8 +277,8 @@ class SessionTemplateEntityHelper(
         dayOfWeek = dayOfWeek,
         permittedSessionGroups = permittedSessionGroups,
         biWeekly = biWeekly,
-        enhanced = enhanced
-      )
+        enhanced = enhanced,
+      ),
     )
   }
 }
@@ -295,7 +290,7 @@ class DeleteEntityHelper(
   private val prisonRepository: PrisonRepository,
   private val sessionRepository: TestSessionTemplateRepository,
   private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository,
-  private val sessionLocationGroupRepository: SessionLocationGroupRepository
+  private val sessionLocationGroupRepository: SessionLocationGroupRepository,
 ) {
 
   fun deleteAll() {

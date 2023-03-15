@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionL
 interface TestSessionLocationGroupRepository : JpaRepository<SessionLocationGroup, Long> {
 
   @Query(
-    "SELECT CASE WHEN (COUNT(t) > 0) THEN TRUE ELSE FALSE END FROM SessionLocationGroup t WHERE t.id = :id "
+    "SELECT CASE WHEN (COUNT(t) > 0) THEN TRUE ELSE FALSE END FROM SessionLocationGroup t WHERE t.id = :id ",
   )
   fun hasById(@Param("id") id: Long): Boolean
 

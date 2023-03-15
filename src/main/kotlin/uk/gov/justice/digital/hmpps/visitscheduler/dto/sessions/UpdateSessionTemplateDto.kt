@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 import java.time.LocalTime
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
 
 data class UpdateSessionTemplateDto(
 
@@ -38,5 +38,5 @@ data class UpdateSessionTemplateDto(
   val enhanced: Boolean? = null,
 
   @Schema(description = "biWeekly time table", example = "true", required = true)
-  val biWeekly: Boolean? = null
+  val biWeekly: Boolean? = null,
 )

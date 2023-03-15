@@ -1,12 +1,14 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
-import com.microsoft.applicationinsights.web.internal.RequestTelemetryContext
-import com.microsoft.applicationinsights.web.internal.ThreadContext
-import org.assertj.core.api.Assertions.assertThat
+import io.opentelemetry.api.trace.Span
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.kotlin.spy
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.mockito.kotlin.whenever
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.ConfigDataApplicationContextInitializer
 import org.springframework.context.annotation.Import
@@ -33,48 +35,51 @@ class ClientTrackingConfigurationTest {
 
   @BeforeEach
   fun setup() {
-    ThreadContext.setRequestTelemetryContext(RequestTelemetryContext(1L))
   }
 
   @AfterEach
   fun tearDown() {
-    ThreadContext.remove()
   }
 
   @Test
   fun shouldAddClientIdAndUserNameToInsightTelemetry() {
-
     // Given
     val token = jwtAuthHelper.createJwt("bob")
     val req = MockHttpServletRequest()
     req.addHeader(HttpHeaders.AUTHORIZATION, "Bearer $token")
     val res = MockHttpServletResponse()
 
+    val clientTrackingInterceptorSpy = spy(clientTrackingInterceptor)
+    val mockSpan = spy(Span.current())
+    whenever(clientTrackingInterceptorSpy.getCurrentSpan()).thenReturn(mockSpan)
+
     // When
-    clientTrackingInterceptor.preHandle(req, res, "null")
+    clientTrackingInterceptorSpy.preHandle(req, res, "null")
 
     // Then
-    val insightTelemetry = ThreadContext.getRequestTelemetryContext().httpRequestTelemetry.properties
-    assertThat(insightTelemetry).hasSize(2)
-    assertThat(insightTelemetry["username"]).isEqualTo("bob")
-    assertThat(insightTelemetry["clientId"]).isEqualTo("visit-scheduler-client")
+    verify(mockSpan, times(1)).setAttribute("username", "bob")
+    verify(mockSpan, times(1)).setAttribute("enduser.id", "bob")
+    verify(mockSpan, times(1)).setAttribute("clientId", "visit-scheduler-client")
   }
 
   @Test
   fun shouldAddOnlyClientIdIfUsernameNullToInsightTelemetry() {
-
     // Given
     val token = jwtAuthHelper.createJwt(null)
     val req = MockHttpServletRequest()
     req.addHeader(HttpHeaders.AUTHORIZATION, "Bearer $token")
     val res = MockHttpServletResponse()
 
+    val clientTrackingInterceptorSpy = spy(clientTrackingInterceptor)
+    val mockSpan = spy(Span.current())
+    whenever(clientTrackingInterceptorSpy.getCurrentSpan()).thenReturn(mockSpan)
+
     // When
-    clientTrackingInterceptor.preHandle(req, res, "null")
+    clientTrackingInterceptorSpy.preHandle(req, res, "null")
 
     // Then
-    val insightTelemetry = ThreadContext.getRequestTelemetryContext().httpRequestTelemetry.properties
-    assertThat(insightTelemetry).hasSize(1)
-    assertThat(insightTelemetry["clientId"]).isEqualTo("visit-scheduler-client")
+    verify(mockSpan, times(0)).setAttribute("username", "bob")
+    verify(mockSpan, times(0)).setAttribute("enduser.id", "bob")
+    verify(mockSpan, times(1)).setAttribute("clientId", "visit-scheduler-client")
   }
 }

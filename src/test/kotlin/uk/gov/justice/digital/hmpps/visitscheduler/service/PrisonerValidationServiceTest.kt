@@ -30,7 +30,7 @@ class PrisonerValidationServiceTest {
     val prisonCode = "MDI"
     val prisonerDetails = PrisonerDetailsDto(prisonerId, prisonCode)
     whenever(
-      prisonerService.getPrisonerFullStatus(prisonerId)
+      prisonerService.getPrisonerFullStatus(prisonerId),
     ).thenReturn(prisonerDetails)
 
     // When
@@ -48,7 +48,7 @@ class PrisonerValidationServiceTest {
     val prisonCode = "MDI"
     val prisonerDetails = PrisonerDetailsDto(prisonerId, prisonCode)
     whenever(
-      prisonerService.getPrisonerFullStatus(prisonerId)
+      prisonerService.getPrisonerFullStatus(prisonerId),
     ).thenReturn(prisonerDetails)
 
     assertThrows<PrisonerNotInSuppliedPrisonException> {

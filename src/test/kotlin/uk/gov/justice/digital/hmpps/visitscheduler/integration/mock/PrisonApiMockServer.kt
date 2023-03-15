@@ -15,7 +15,7 @@ class PrisonApiMockServer : WireMockServer(8092) {
     offenderNo: String,
     nonAssociationId: String,
     effectiveDate: String,
-    expiryDate: String? = null
+    expiryDate: String? = null,
   ) {
     stubFor(
       get("/api/offenders/$offenderNo/non-association-details")
@@ -24,7 +24,7 @@ class PrisonApiMockServer : WireMockServer(8092) {
             .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
             .withStatus(200)
             .withBody(
-              if (expiryDate.isNullOrEmpty())
+              if (expiryDate.isNullOrEmpty()) {
                 """
                 {
                   "nonAssociations": [
@@ -37,7 +37,7 @@ class PrisonApiMockServer : WireMockServer(8092) {
                   ]
                 }
                 """.trimIndent()
-              else
+              } else {
                 """
                 {
                   "nonAssociations": [
@@ -51,8 +51,9 @@ class PrisonApiMockServer : WireMockServer(8092) {
                   ]
                 }
                 """.trimIndent()
-            )
-        )
+              },
+            ),
+        ),
     )
   }
 
@@ -68,9 +69,9 @@ class PrisonApiMockServer : WireMockServer(8092) {
                 {
                   "nonAssociations": []
                 }
-              """.trimIndent()
-            )
-        )
+              """.trimIndent(),
+            ),
+        ),
     )
   }
 
@@ -85,9 +86,9 @@ class PrisonApiMockServer : WireMockServer(8092) {
             .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
             .withStatus(200)
             .withBody(
-              getJsonString(housingLocationsDto)
-            )
-        )
+              getJsonString(housingLocationsDto),
+            ),
+        ),
     )
   }
 
@@ -101,9 +102,9 @@ class PrisonApiMockServer : WireMockServer(8092) {
             .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
             .withStatus(200)
             .withBody(
-              getJsonString(prisonerDetailsDto)
-            )
-        )
+              getJsonString(prisonerDetailsDto),
+            ),
+        ),
     )
   }
 

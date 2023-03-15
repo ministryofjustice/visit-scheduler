@@ -1,12 +1,12 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.validation.NullableNotEmpty
 import java.time.LocalDateTime
-import javax.validation.Valid
 
 data class ChangeVisitSlotRequestDto(
   @Schema(description = "Visit Restriction", example = "OPEN", required = false)

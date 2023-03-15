@@ -24,7 +24,7 @@ const val SUPPORTED_PRISONS: String = "$CONFIG_CONTROLLER_PATH/prisons/supported
 @Tag(name = "6. Prison admin rest controller")
 @RequestMapping(name = "Prison Configuration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonConfigController(
-  private val prisonConfigService: PrisonConfigService
+  private val prisonConfigService: PrisonConfigService,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -41,22 +41,22 @@ class PrisonConfigController(
             mediaType = "application/json",
             array = ArraySchema(schema = Schema(implementation = String::class)),
             examples = [
-              ExampleObject(value = "[\"HEI\", \"MDI\"]")
-            ]
-          )
+              ExampleObject(value = "[\"HEI\", \"MDI\"]"),
+            ],
+          ),
         ],
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to view session templates",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
   )
   fun getSupportedPrisons(): List<String> {
     return prisonConfigService.getSupportedPrisons()

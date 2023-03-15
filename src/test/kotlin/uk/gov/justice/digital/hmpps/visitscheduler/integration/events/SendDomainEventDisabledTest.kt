@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.events
 
-import com.amazonaws.services.sqs.model.PurgeQueueRequest
 import org.awaitility.kotlin.await
 import org.awaitility.kotlin.matches
 import org.awaitility.kotlin.untilCallTo
@@ -8,6 +7,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.TestPropertySource
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest
+import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
@@ -35,12 +37,11 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
 
   @BeforeEach
   fun `clear queues`() {
-    testSqsClient.purgeQueue(PurgeQueueRequest(testQueueUrl))
+    testSqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(testQueueUrl).build())
   }
 
   @Test
   fun `booked visit no event sent`() {
-
     // Given
     val visitEntity = visitEntityHelper.create(visitStatus = VisitStatus.RESERVED)
     val applicationReference = visitEntity.applicationReference
@@ -66,7 +67,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
     val authHeader = setAuthorisation(roles = ROLES)
     val outcomeDto = OutcomeDto(
       OutcomeStatus.PRISONER_CANCELLED,
-      "Prisoner got covid"
+      "Prisoner got covid",
     )
 
     // When
@@ -80,8 +81,9 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
     await untilCallTo { testQueueEventMessageCount() } matches { it == 0 }
   }
 
-  private fun testQueueEventMessageCount(): Int? {
-    val queueAttributes = testSqsClient.getQueueAttributes(testQueueUrl, listOf("ApproximateNumberOfMessages"))
-    return queueAttributes.attributes["ApproximateNumberOfMessages"]?.toInt()
+  fun testQueueEventMessageCount(): Int? {
+    val queueAttributesRequest = GetQueueAttributesRequest.builder().queueUrl(testQueueUrl).attributeNames(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES).build()
+    val queueAttributes = testSqsClient.getQueueAttributes(queueAttributesRequest).join()
+    return queueAttributes.attributesAsStrings()[QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES.toString()]?.toInt()
   }
 }

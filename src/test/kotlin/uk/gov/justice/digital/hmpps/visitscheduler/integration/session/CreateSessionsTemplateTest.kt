@@ -25,7 +25,6 @@ class CreateSessionsTemplateTest : IntegrationTestBase() {
 
   @Test
   fun `create session template`() {
-
     // Given
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
     val sessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)

@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
-import javax.validation.constraints.NotBlank
 
 @Schema(description = "Contact")
 data class ContactDto(

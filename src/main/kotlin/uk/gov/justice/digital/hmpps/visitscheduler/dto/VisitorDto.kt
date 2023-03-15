@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
-import javax.validation.constraints.NotNull
 
 @Schema(description = "Visitor")
 data class VisitorDto(
@@ -10,7 +10,7 @@ data class VisitorDto(
   @field:NotNull
   val nomisPersonId: Long,
   @Schema(description = "true if visitor is the contact for the visit otherwise false", example = "true", required = false)
-  val visitContact: Boolean?
+  val visitContact: Boolean?,
 ) {
 
   constructor(visitVisitorEntity: VisitVisitor) : this(

@@ -45,7 +45,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun createVisits() {
-
     visitMin = visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime, prisonerId = "FF0000AA")
 
     visitFullWithNoVisitors = visitEntityHelper.create(prisonCode = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000BB")
@@ -57,8 +56,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
     visitRepository.saveAndFlush(visitFullWithNoVisitors)
 
     visitFullWithOneVisitor = visitEntityHelper.create(
-      prisonCode = "LEI", prisonerId = "FF0000CC",
-      visitStart = visitTime.plusDays(2), visitEnd = visitTime.plusDays(2).plusHours(1)
+      prisonCode = "LEI",
+      prisonerId = "FF0000CC",
+      visitStart = visitTime.plusDays(2),
+      visitEnd = visitTime.plusDays(2).plusHours(1),
     )
     visitEntityHelper.createContact(visit = visitFullWithOneVisitor, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createNote(visit = visitFullWithOneVisitor, text = "A visit concern", type = VISITOR_CONCERN)
@@ -85,7 +86,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @Test
   fun `get visit by prisoner ID with no visitors`() {
-
     // Given
     val prisonerId = "FF0000BB"
 
@@ -111,7 +111,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @Test
   fun `get visit without prisoner ID or prison ID is not allowed`() {
-
     // Given
 
     // When
@@ -124,7 +123,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @Test
   fun `get visit by prisoner ID with one visitor`() {
-
     // Given
     val prisonId = "LEI"
     val prisonerId = "FF0000CC"
@@ -148,7 +146,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @Test
   fun `get visit by prisoner ID with multiple visitors`() {
-
     // Given
     val prisonId = "LEI"
     val prisonerId = "FF0000DD"
@@ -187,14 +184,14 @@ class VisitsByFilterTest : IntegrationTestBase() {
           "FF0000CC",
           "FF0000BB",
           "FF0000DD",
-        )
+        ),
       )
       .jsonPath("$..prisonId").value(
         Matchers.contains(
           "LEI",
           "LEI",
-          "LEI"
-        )
+          "LEI",
+        ),
       )
   }
 
@@ -216,7 +213,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @Test
   fun `get visits by prison ID and starting on or after a specified date`() {
-
     // Given
     val prisonId = "LEI"
     val startDateTime = "2021-11-03T09:00:00"
@@ -233,7 +229,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @Test
   fun `get visits by prisoner ID, prison ID and starting on or after a specified date and time`() {
-
     // Given
     val prisonId = "MDI"
     val startDateTime = "2021-11-01T13:30:45"
@@ -250,19 +245,19 @@ class VisitsByFilterTest : IntegrationTestBase() {
         Matchers.contains(
           "2021-11-03T13:30:44",
           "2021-11-02T13:30:44",
-        )
+        ),
       )
       .jsonPath("$..prisonId").value(
         Matchers.contains(
           "MDI",
-          "MDI"
-        )
+          "MDI",
+        ),
       )
       .jsonPath("$..prisonerId").value(
         Matchers.contains(
           "GG0000BB",
-          "GG0000BB"
-        )
+          "GG0000BB",
+        ),
       )
   }
 
@@ -283,8 +278,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
         Matchers.contains(
           "2021-11-02T13:30:44",
           "2021-11-01T13:30:44",
-          "2021-11-01T12:30:44"
-        )
+          "2021-11-01T12:30:44",
+        ),
       )
   }
 
@@ -304,14 +299,13 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.content.length()").isEqualTo(1)
       .jsonPath("$..startTimestamp").value(
         Matchers.contains(
-          "2021-11-02T13:30:44"
-        )
+          "2021-11-02T13:30:44",
+        ),
       )
   }
 
   @Test
   fun `get visits by visitor`() {
-
     // Given
     val visitorId = 123
     val prisonId = "LEI"
@@ -388,7 +382,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @Test
   fun `get visits - invalid request, contact id should be a long`() {
-
     // Given
     val nomisPersonId = "123LL"
     val prisonId = "MDI"
@@ -447,9 +440,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
     params: String,
     page: Int = 0,
     pageSize: Int = 100,
-    roles: List<String> = listOf("ROLE_VISIT_SCHEDULER")
+    roles: List<String> = listOf("ROLE_VISIT_SCHEDULER"),
   ): ResponseSpec {
-
     val uri = "$VISIT_CONTROLLER_SEARCH_PATH?$params&page=$page&size=$pageSize"
     return webTestClient.get().uri(uri)
       .headers(setAuthorisation(roles = roles))

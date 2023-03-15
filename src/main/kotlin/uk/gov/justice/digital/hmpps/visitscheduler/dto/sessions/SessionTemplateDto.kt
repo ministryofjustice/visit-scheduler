@@ -4,14 +4,14 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonFormat.Shape
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
 
 data class SessionTemplateDto(
 
@@ -50,7 +50,7 @@ data class SessionTemplateDto(
   @Schema(description = "day of week for visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
   @Schema(description = "list of permitted session location groups", required = false)
-  val permittedLocationGroups: List<SessionLocationGroupDto> = listOf()
+  val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     reference = sessionTemplateEntity.reference,
@@ -67,6 +67,6 @@ data class SessionTemplateDto(
     dayOfWeek = sessionTemplateEntity.dayOfWeek,
     permittedLocationGroups = sessionTemplateEntity.permittedSessionGroups.map { SessionLocationGroupDto(it) },
     biWeekly = sessionTemplateEntity.biWeekly,
-    enhanced = sessionTemplateEntity.enhanced
+    enhanced = sessionTemplateEntity.enhanced,
   )
 }
