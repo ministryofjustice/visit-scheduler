@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonFormat.Shape
+import com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
@@ -24,11 +24,11 @@ data class SessionTemplateDto(
   @Schema(description = "prisonId", example = "MDI", required = true)
   @field:NotBlank
   val prisonCode: String,
-  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
+  @JsonFormat(pattern = "HH:mm", shape = STRING)
   @Schema(description = "The start time of the generated visit session(s)", example = "13:45", required = true)
   val startTime: LocalTime,
   @Schema(description = "The end time of the generated visit session(s)", example = "13:45", required = true)
-  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
+  @JsonFormat(pattern = "HH:mm", shape = STRING)
   val endTime: LocalTime,
   @Schema(description = "The start of the Validity period for the session template", example = "2019-12-02", required = true)
   @field:NotNull
@@ -50,9 +50,16 @@ data class SessionTemplateDto(
   @Schema(description = "day of week for visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
   @Schema(description = "list of permitted session location groups", required = false)
-  val permittedLocationGroups: List<SessionLocationGroupDto> = listOf()
+  val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
+  @Schema(description = "list of included prisoner categories", required = false)
+  val includedPrisonerCategories: List<String> = listOf(),
+  @Schema(description = "list of excluded prisoner categories", required = false)
+  val excludedPrisonerCategories: List<String> = listOf(),
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
+    // TODO code dummy out to prevent delay to other tickets
+    includedPrisonerCategories = listOf("Category A incl"),
+    excludedPrisonerCategories = listOf("Category A excl"),
     reference = sessionTemplateEntity.reference,
     name = sessionTemplateEntity.name,
     prisonCode = sessionTemplateEntity.prison.code,
@@ -68,5 +75,5 @@ data class SessionTemplateDto(
     permittedLocationGroups = sessionTemplateEntity.permittedSessionGroups.map { SessionLocationGroupDto(it) },
     biWeekly = sessionTemplateEntity.biWeekly,
     enhanced = sessionTemplateEntity.enhanced
-  )
+    )
 }
