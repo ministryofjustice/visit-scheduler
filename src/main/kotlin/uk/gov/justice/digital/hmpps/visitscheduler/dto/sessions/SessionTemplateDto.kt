@@ -75,5 +75,5 @@ data class SessionTemplateDto(
     permittedLocationGroups = sessionTemplateEntity.permittedSessionGroups.map { SessionLocationGroupDto(it) },
     biWeekly = sessionTemplateEntity.biWeekly,
     enhanced = sessionTemplateEntity.enhanced
-    )
+  )
 }
