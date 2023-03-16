@@ -42,6 +42,7 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   companion object {
     val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
+    const val actionedByUserName = "user-1"
   }
 
   @BeforeEach
@@ -50,7 +51,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     prisonEntityHelper.create("MDI", true)
   }
 
-  private fun createReserveVisitSlotDto(prisonCode: String = "MDI"): ReserveVisitSlotDto {
+  private fun createReserveVisitSlotDto(prisonCode: String = "MDI", actionedBy: String = actionedByUserName): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
       prisonCode = prisonCode,
       prisonerId = "FF0000FF",
@@ -62,6 +63,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      actionedBy = actionedBy
     )
   }
 
@@ -98,6 +100,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       .jsonPath("$.visitorSupport[0].type").isEqualTo("OTHER")
       .jsonPath("$.visitorSupport[0].text").isEqualTo("Some Text")
       .jsonPath("$.createdTimestamp").isNotEmpty
+      .jsonPath("$.createdBy").isEqualTo(actionedByUserName)
       .returnResult()
 
     // And
@@ -147,7 +150,8 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitRestriction = OPEN,
       visitors = setOf(),
       visitRoom = "A1",
-      visitContact = ContactDto("John Smith", "01234 567890")
+      visitContact = ContactDto("John Smith", "01234 567890"),
+      actionedBy = actionedByUserName
     )
 
     // When
@@ -201,7 +205,8 @@ class ReserveSlotTest : IntegrationTestBase() {
       ),
       visitorSupport = setOf(
         VisitorSupportDto("OTHER", "Some Text")
-      )
+      ),
+      actionedBy = actionedByUserName
     )
 
     // When
@@ -226,6 +231,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
       visitorSupport = setOf(VisitorSupportDto("ANYTHINGWILLDO")),
+      actionedBy = actionedByUserName
     )
 
     // When

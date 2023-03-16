@@ -17,6 +17,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
@@ -122,13 +123,16 @@ class SendDomainEventTest : IntegrationTestBase() {
       val visitEntity = createVisitAndSave(VisitStatus.BOOKED)
       val reference = visitEntity.reference
       val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
-      val outcomeDto = OutcomeDto(
-        OutcomeStatus.PRISONER_CANCELLED,
-        "Prisoner got covid"
+      val cancelVisitDto = CancelVisitDto(
+        OutcomeDto(
+          OutcomeStatus.PRISONER_CANCELLED,
+          "Prisoner got covid"
+        ),
+        "user-1",
       )
 
       // When
-      val responseSpec = callCancelVisit(webTestClient, authHeader, reference, outcomeDto)
+      val responseSpec = callCancelVisit(webTestClient, authHeader, reference, cancelVisitDto)
 
       await untilCallTo { testQueueEventMessageCount() } matches { it == 1 }
 

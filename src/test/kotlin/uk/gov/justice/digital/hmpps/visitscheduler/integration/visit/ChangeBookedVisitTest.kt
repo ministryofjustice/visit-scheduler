@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
@@ -52,6 +53,10 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
+
+  companion object {
+    const val actionedByUserName = "user-1"
+  }
 
   @BeforeEach
   internal fun setUp() {
@@ -82,6 +87,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      actionedBy = actionedByUserName,
     )
   }
 

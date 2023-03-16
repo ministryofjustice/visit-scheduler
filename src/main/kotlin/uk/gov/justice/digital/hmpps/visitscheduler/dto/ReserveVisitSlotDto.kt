@@ -45,4 +45,6 @@ data class ReserveVisitSlotDto(
   var visitors: Set<@Valid VisitorDto>,
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: Set<@Valid VisitorSupportDto>? = setOf(),
+  @Schema(description = "Username for user who actioned this request", required = true)
+  val actionedBy: String,
 )

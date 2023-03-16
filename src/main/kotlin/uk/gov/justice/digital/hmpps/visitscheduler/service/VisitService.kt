@@ -10,10 +10,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.*
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -45,6 +42,7 @@ class VisitService(
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
   private val prisonConfigService: PrisonConfigService,
+  private val authenticationHelperService: AuthenticationHelperService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
 ) {
@@ -54,19 +52,18 @@ class VisitService(
     const val MAX_RECORDS = 10000
     val EXPIRED_VISIT_STATUSES = listOf(RESERVED, CHANGING)
     const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
-    const val ACTIONED_BY_NOT_KNOWN = "NOT_KNOWN"
   }
 
-  fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto, userName: String?): VisitDto {
+  fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
     val visit = visitRepository.findBookedVisit(bookingReference)
       ?: throw VisitNotFoundException("Visit booking reference $bookingReference not found")
 
     // check if the existing visit is in the past
     validateVisitStartDate(visit, "changed")
-    return reserveVisitSlot(bookingReference, reserveVisitSlotDto, userName)
+    return reserveVisitSlot(bookingReference, reserveVisitSlotDto)
   }
 
-  fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto, userName: String?): VisitDto {
+  fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
     val prison = prisonConfigService.findPrisonByCode(reserveVisitSlotDto.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
@@ -81,7 +78,7 @@ class VisitService(
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
         _reference = bookingReference,
-        createdBy = getActionedBy(userName)
+        createdBy = reserveVisitSlotDto.actionedBy
       )
     )
 
@@ -222,9 +219,7 @@ class VisitService(
     )
   }
 
-  fun bookVisit(applicationReference: String, userName: String?): VisitDto {
-    val actionedBy = getActionedBy(userName)
-
+  fun bookVisit(applicationReference: String): VisitDto {
     if (visitRepository.isApplicationBooked(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
       // If already booked then just return object and do nothing more!
@@ -243,15 +238,16 @@ class VisitService(
     val changedVisit = existingBookedVisit != null
     if (changedVisit) {
       // the existing booking should always be saved before the new booking, see VisitRepository.findByReference
-      existingBookedVisit?.let {
-        it.visitStatus = CANCELLED
-        it.outcomeStatus = SUPERSEDED_CANCELLATION
-        visitRepository.saveAndFlush(it)
-        visitToBook.createdBy = it.createdBy
+
+      existingBookedVisit?.let { existingBooking ->
+        existingBooking.visitStatus = CANCELLED
+        existingBooking.outcomeStatus = SUPERSEDED_CANCELLATION
+        visitRepository.saveAndFlush(existingBooking)
+
+        //set the new bookings updated by to username when reserved and set createdBy to existing booking value
+        visitToBook.updatedBy = visitToBook.createdBy
+        visitToBook.createdBy = existingBooking.createdBy
       }
-      visitToBook.updatedBy = actionedBy
-    } else {
-      visitToBook.createdBy = actionedBy
     }
 
     visitToBook.visitStatus = VisitStatus.BOOKED
@@ -272,8 +268,8 @@ class VisitService(
     return visit
   }
 
-  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto, userName: String?): VisitDto {
-    val actionedBy = getActionedBy(userName)
+  fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
+    val cancelOutcome = cancelVisitDto.cancelOutcome
 
     if (visitRepository.isBookingCancelled(reference)) {
       // If already canceled then just return object and do nothing more!
@@ -287,7 +283,7 @@ class VisitService(
 
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
-    visitEntity.cancelledBy = actionedBy
+    visitEntity.cancelledBy = cancelVisitDto.actionedBy
 
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
@@ -395,9 +391,5 @@ class VisitService(
     } catch (e: RuntimeException) {
       LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
     }
-  }
-
-  private fun getActionedBy(userName: String?): String {
-    return userName ?: ACTIONED_BY_NOT_KNOWN
   }
 }

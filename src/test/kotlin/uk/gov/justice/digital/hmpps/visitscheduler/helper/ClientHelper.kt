@@ -15,8 +15,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
@@ -27,11 +27,11 @@ fun callCancelVisit(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   reference: String,
-  outcome: OutcomeDto? = null
+  cancelVisitDto: CancelVisitDto? = null
 ): ResponseSpec {
 
   return callPut(
-    outcome,
+    cancelVisitDto,
     webTestClient,
     getCancelVisitUrl(reference),
     authHttpHeaders

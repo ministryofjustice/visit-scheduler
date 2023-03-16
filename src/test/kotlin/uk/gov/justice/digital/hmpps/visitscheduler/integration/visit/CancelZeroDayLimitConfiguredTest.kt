@@ -5,6 +5,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.context.TestPropertySource
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
@@ -21,16 +22,19 @@ class CancelZeroDayLimitConfiguredTest : IntegrationTestBase() {
 
   @Test
   fun `when cancel day limit configured as zero cancel future visit does not return error`() {
-    val outcomeDto = OutcomeDto(
-      OutcomeStatus.CANCELLATION,
-      "No longer joining."
+    val cancelVisitDto = CancelVisitDto(
+      OutcomeDto(
+        OutcomeStatus.CANCELLATION,
+        "No longer joining."
+      ),
+      "user-1",
     )
     // Given
     val visitStart = LocalDateTime.now().plusDays(1)
     val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
 
     // When
-    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, outcomeDto)
+    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
 
     // Then
     Assertions.assertThat(visitCancellationDayLimit).isEqualTo(0)
@@ -41,6 +45,6 @@ class CancelZeroDayLimitConfiguredTest : IntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    CancelVisitTest.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION)
+    CancelVisitTest.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy)
   }
 }

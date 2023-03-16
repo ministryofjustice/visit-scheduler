@@ -12,11 +12,11 @@ import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestBody
-import org.springframework.web.bind.annotation.RequestHeader
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
@@ -77,9 +77,8 @@ class VisitControllerLegacy(
   fun cancelVisit(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable reference: String,
-    @RequestBody @Valid cancelOutcome: OutcomeDto,
-    @RequestHeader(VisitController.USER_NAME_HEADER_KEY) userName: String?
+    @RequestBody @Valid cancelVisitDto: CancelVisitDto
   ): VisitDto {
-    return visitService.cancelVisit(reference.trim(), cancelOutcome, userName)
+    return visitService.cancelVisit(reference.trim(), cancelVisitDto)
   }
 }
