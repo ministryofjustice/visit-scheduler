@@ -1,16 +1,16 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
+import jakarta.persistence.Id
+import jakarta.persistence.Table
+import jakarta.persistence.TemporalType
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
 import java.time.LocalDateTime
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.GeneratedValue
-import javax.persistence.GenerationType
-import javax.persistence.Id
-import javax.persistence.Table
-import javax.persistence.TemporalType
 
 @Entity
 @Table(name = "PRISON")
@@ -34,7 +34,7 @@ class Prison(
   @UpdateTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column
-  val modifyTimestamp: LocalDateTime? = null
+  val modifyTimestamp: LocalDateTime? = null,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

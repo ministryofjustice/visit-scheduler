@@ -87,7 +87,7 @@ abstract class IntegrationTestBase {
   internal fun setAuthorisation(
     user: String = "AUTH_ADM",
     roles: List<String> = listOf(),
-    scopes: List<String> = listOf()
+    scopes: List<String> = listOf(),
   ): (HttpHeaders) -> Unit = jwtAuthHelper.setAuthorisation(user, roles, scopes)
 
   companion object {
@@ -124,14 +124,9 @@ abstract class IntegrationTestBase {
         registry.add("spring.flyway.user", pgContainer::getUsername)
         registry.add("spring.flyway.password", pgContainer::getPassword)
       }
-
       lsContainer?.run {
-        lsContainer.getEndpointConfiguration(org.testcontainers.containers.localstack.LocalStackContainer.Service.SNS)
-          .let { it.serviceEndpoint to it.signingRegion }
-          .also {
-            registry.add("hmpps.sqs.localstackUrl") { it.first }
-            registry.add("hmpps.sqs.region") { it.second }
-          }
+        registry.add("hmpps.sqs.localstackUrl") { lsContainer.getEndpointOverride(org.testcontainers.containers.localstack.LocalStackContainer.Service.SNS) }
+        registry.add("hmpps.sqs.region") { lsContainer.region }
       }
     }
   }

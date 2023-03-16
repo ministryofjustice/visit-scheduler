@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
@@ -17,14 +18,13 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.MigrateVisitService
-import javax.validation.Valid
 
 @RestController
 @Validated
 @Tag(name = "7. Visit migration rest controller")
 @RequestMapping(name = "Visit Migration Resource", path = ["/migrate-visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class MigrateController(
-  private val migrateVisitService: MigrateVisitService
+  private val migrateVisitService: MigrateVisitService,
 ) {
 
   @PreAuthorize("hasAnyRole('MIGRATE_VISITS', 'MIGRATION_ADMIN')")
@@ -36,34 +36,35 @@ class MigrateController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = MigrateVisitRequestDto::class)
-        )
-      ]
+          schema = Schema(implementation = MigrateVisitRequestDto::class),
+        ),
+      ],
     ),
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "Visit migrated"
+        description = "Visit migrated",
       ),
       ApiResponse(
         responseCode = "400",
         description = "Incorrect request to migrate a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to migrate a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
   )
   fun migrateVisit(
-    @RequestBody @Valid migrateVisitRequest: MigrateVisitRequestDto
+    @RequestBody @Valid
+    migrateVisitRequest: MigrateVisitRequestDto,
   ): String {
     return migrateVisitService.migrateVisit(migrateVisitRequest)
   }

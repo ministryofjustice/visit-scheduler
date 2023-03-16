@@ -12,7 +12,7 @@ interface SessionLocationGroupRepository : JpaRepository<SessionLocationGroup, L
 
   @Query(
     "select g from SessionLocationGroup g " +
-      "where g.prison.code = :prisonCode "
+      "where g.prison.code = :prisonCode ",
   )
   fun findByPrisonCode(
     @Param("prisonCode") prisonCode: String,

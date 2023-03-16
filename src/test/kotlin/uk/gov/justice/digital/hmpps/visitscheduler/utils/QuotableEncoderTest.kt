@@ -91,7 +91,6 @@ internal class QuotableEncoderTest {
 
     @Test
     fun `encoded length is multiple of chunk size`() {
-
       // Given
       val encoder = QuotableEncoder(minLength = 5, chunkSize = 2)
 
@@ -153,7 +152,6 @@ internal class QuotableEncoderTest {
 
       val hashes = mutableListOf<String>()
       for (n in 0..500000) {
-
         // When
         val hash = encoder.encode(n.toLong())
         hashes.add(hash)

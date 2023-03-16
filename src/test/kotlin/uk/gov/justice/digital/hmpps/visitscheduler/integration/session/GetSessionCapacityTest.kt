@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import java.time.LocalDate
 import java.time.LocalTime
 
-@DisplayName("Get /visit-sessions")
+@DisplayName("Get $GET_SESSION_CAPACITY")
 class GetSessionCapacityTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
@@ -27,7 +27,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
-      dayOfWeek = nextAllowedDay.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
     // When
@@ -54,7 +54,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       openCapacity = 20,
       closedCapacity = 0,
-      biWeekly = true
+      biWeekly = true,
     )
 
     sessionTemplateEntityHelper.create(
@@ -64,7 +64,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       openCapacity = 0,
       closedCapacity = 10,
-      biWeekly = true
+      biWeekly = true,
     )
 
     // When
@@ -89,7 +89,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
-      dayOfWeek = nextAllowedDay.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
     sessionTemplateEntityHelper.create(
@@ -97,7 +97,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
-      dayOfWeek = nextAllowedDay.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
     // When
@@ -122,7 +122,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     prisonCode: String ? = "MDI",
     sessionDate: LocalDate ? = LocalDate.parse("2023-01-26"),
     sessionStartTime: LocalTime ? = LocalTime.parse("13:45"),
-    sessionEndTime: LocalTime ? = LocalTime.parse("14:45")
+    sessionEndTime: LocalTime ? = LocalTime.parse("14:45"),
   ): ResponseSpec {
     return webTestClient.get().uri("$GET_SESSION_CAPACITY?prisonId=$prisonCode&sessionDate=$sessionDate&sessionStartTime=$sessionStartTime&sessionEndTime=$sessionEndTime")
       .headers(setAuthorisation(roles = requiredRole))

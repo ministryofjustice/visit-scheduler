@@ -23,7 +23,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
   fun `when cancel day limit configured as a negative value cancel future visit does not return error`() {
     val outcomeDto = OutcomeDto(
       OutcomeStatus.CANCELLATION,
-      "No longer joining."
+      "No longer joining.",
     )
     // Given
     val visitStart = LocalDateTime.now().plusDays(1)
@@ -48,7 +48,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
   fun `cancel expired visit before current time returns error when cancel day limit configured as a negative value`() {
     val outcomeDto = OutcomeDto(
       OutcomeStatus.CANCELLATION,
-      "No longer joining."
+      "No longer joining.",
     )
     // Given
     // visit has expired based on current date

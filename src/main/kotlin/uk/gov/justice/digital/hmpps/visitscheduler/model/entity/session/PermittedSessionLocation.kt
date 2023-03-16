@@ -1,18 +1,18 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
 
+import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.FetchType
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
+import jakarta.persistence.TemporalType
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import java.time.LocalDateTime
-import javax.persistence.CascadeType
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.FetchType
-import javax.persistence.JoinColumn
-import javax.persistence.ManyToOne
-import javax.persistence.Table
-import javax.persistence.TemporalType
 
 @Entity
 @Table(name = "PERMITTED_SESSION_LOCATION")
@@ -42,5 +42,5 @@ class PermittedSessionLocation(
   @UpdateTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column
-  val modifyTimestamp: LocalDateTime? = null
+  val modifyTimestamp: LocalDateTime? = null,
 ) : AbstractIdEntity()

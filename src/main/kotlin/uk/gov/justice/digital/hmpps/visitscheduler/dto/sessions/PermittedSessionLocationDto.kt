@@ -15,12 +15,12 @@ data class PermittedSessionLocationDto(
   var levelThreeCode: String? = null,
 
   @Schema(description = "Level four location code", example = "001", required = false)
-  var levelFourCode: String? = null
+  var levelFourCode: String? = null,
 ) {
   constructor(permittedSessionLocationEntity: PermittedSessionLocation) : this(
     levelOneCode = permittedSessionLocationEntity.levelOneCode,
     levelTwoCode = permittedSessionLocationEntity.levelTwoCode,
     levelThreeCode = permittedSessionLocationEntity.levelThreeCode,
-    levelFourCode = permittedSessionLocationEntity.levelFourCode
+    levelFourCode = permittedSessionLocationEntity.levelFourCode,
   )
 }

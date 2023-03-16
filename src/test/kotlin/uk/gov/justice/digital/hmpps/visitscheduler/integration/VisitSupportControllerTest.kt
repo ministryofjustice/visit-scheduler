@@ -18,7 +18,6 @@ class VisitSupportControllerTest : IntegrationTestBase() {
 
   @Test
   fun `all available support is returned`() {
-
     // Give
     val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 

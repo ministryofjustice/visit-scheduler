@@ -1,21 +1,21 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.specification
 
+import jakarta.persistence.criteria.CriteriaBuilder
+import jakarta.persistence.criteria.CriteriaQuery
+import jakarta.persistence.criteria.Predicate
+import jakarta.persistence.criteria.Root
 import org.springframework.data.jpa.domain.Specification
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
-import javax.persistence.criteria.CriteriaBuilder
-import javax.persistence.criteria.CriteriaQuery
-import javax.persistence.criteria.Predicate
-import javax.persistence.criteria.Root
 
 class VisitSpecification(private val filter: VisitFilter) : Specification<Visit> {
   override fun toPredicate(
     root: Root<Visit>,
     query: CriteriaQuery<*>,
-    criteriaBuilder: CriteriaBuilder
+    criteriaBuilder: CriteriaBuilder,
   ): Predicate? {
     val predicates = mutableListOf<Predicate>()
 
@@ -27,7 +27,7 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
       prisonCode?.run {
         val innerJoinFromVisitToVisitors =
           root.join<Visit, MutableList<Prison>>(Visit::prison.name).get<VisitVisitor>(
-            Prison::code.name
+            Prison::code.name,
           )
         predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, prisonCode))
       }
@@ -43,7 +43,7 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
       visitorId?.run {
         val innerJoinFromVisitToVisitors =
           root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitor>(
-            VisitVisitor::nomisPersonId.name
+            VisitVisitor::nomisPersonId.name,
           )
         predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, visitorId))
       }
@@ -58,9 +58,9 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
         criteriaBuilder.and(
           criteriaBuilder.or(
             criteriaBuilder.isNull(outcomeStatusPath),
-            criteriaBuilder.notEqual(outcomeStatusPath, OutcomeStatus.SUPERSEDED_CANCELLATION)
+            criteriaBuilder.notEqual(outcomeStatusPath, OutcomeStatus.SUPERSEDED_CANCELLATION),
           ),
-        )
+        ),
       )
     }
     return criteriaBuilder.and(*predicates.toTypedArray())

@@ -48,7 +48,6 @@ class BookVisitTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     reservedVisit = visitEntityHelper.create()
@@ -64,7 +63,6 @@ class BookVisitTest : IntegrationTestBase() {
 
   @Test
   fun `Book visit visit by application Reference`() {
-
     // Given
     val applicationReference = reservedVisit.applicationReference
 
@@ -105,7 +103,6 @@ class BookVisitTest : IntegrationTestBase() {
 
   @Test
   fun `Booked visit twice by application reference - just send one event`() {
-
     // Given
     val applicationReference = reservedVisit.applicationReference
 
@@ -130,7 +127,6 @@ class BookVisitTest : IntegrationTestBase() {
 
   @Test
   fun `Book visit by application Reference - change other visit with same reference to canceled`() {
-
     // Given
     val reference = reservedVisit.reference
 
@@ -179,7 +175,6 @@ class BookVisitTest : IntegrationTestBase() {
 
   @Test
   fun `Book visit visit by application Reference - check order of reserved visits is correct`() {
-
     // Given
     val reference = reservedVisit.reference
 
@@ -217,7 +212,6 @@ class BookVisitTest : IntegrationTestBase() {
 
   @Test
   fun `Book visit visit by application Reference - access forbidden when no role`() {
-
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
     val applicationReference = reservedVisit.applicationReference
@@ -290,7 +284,7 @@ class BookVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
         Assertions.assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-booked"), any(), isNull())
   }

@@ -24,7 +24,7 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
   fun stubGetPrisonerIncentiveLevel(
     prisonerId: String,
     prisonCode: String,
-    incentiveLevel: IncentiveLevelDto
+    incentiveLevel: IncentiveLevelDto,
   ) {
     val currentIncentive = CurrentIncentiveDto(incentiveLevel, LocalDateTime.now().minusMonths(1), LocalDate.now().plusMonths(1))
     val prisonerIncentiveLevelDto = PrisonerIncentiveLevelDto(prisonerId, currentIncentive, prisonCode)
@@ -36,16 +36,16 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
             .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
             .withStatus(200)
             .withBody(
-              getJsonString(prisonerIncentiveLevelDto)
-            )
-        )
+              getJsonString(prisonerIncentiveLevelDto),
+            ),
+        ),
     )
   }
 
   fun stubGetPrisonerIncentiveLevel(
     prisonerId: String,
     prisonCode: String,
-    incentiveLevelCode: String
+    incentiveLevelCode: String,
   ) {
     val incentiveLevel = IncentiveLevelDto(code = incentiveLevelCode, description = "")
     return stubGetPrisonerIncentiveLevel(prisonerId, prisonCode, incentiveLevel)

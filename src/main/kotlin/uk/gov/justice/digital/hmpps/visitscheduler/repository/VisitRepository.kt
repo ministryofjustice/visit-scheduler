@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
+import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
 import org.springframework.data.jpa.repository.Lock
@@ -12,7 +13,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDateTime
-import javax.persistence.LockModeType
 
 @Repository
 interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
@@ -20,7 +20,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Query(
     "SELECT v.applicationReference FROM Visit v " +
       "WHERE (v.visitStatus = 'RESERVED' OR v.visitStatus = 'CHANGING')" +
-      " AND v.modifyTimestamp < :expiredDateAndTime"
+      " AND v.modifyTimestamp < :expiredDateAndTime",
   )
   fun findExpiredApplicationReferences(expiredDateAndTime: LocalDateTime): List<String>
 
@@ -31,27 +31,27 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT * FROM visit " +
       "WHERE reference = :reference AND visit_status IN ('BOOKED','CANCELLED')  " +
       "ORDER BY modify_timestamp DESC LIMIT 1 ",
-    nativeQuery = true
+    nativeQuery = true,
   )
   fun findByReference(reference: String): Visit?
 
   @Query(
-    "SELECT v FROM Visit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') "
+    "SELECT v FROM Visit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') ",
   )
   fun findApplication(applicationReference: String): Visit?
 
   @Query(
-    "SELECT v FROM Visit v WHERE v.applicationReference = :applicationReference AND v.visitStatus = 'BOOKED' "
+    "SELECT v FROM Visit v WHERE v.applicationReference = :applicationReference AND v.visitStatus = 'BOOKED' ",
   )
   fun findBookedApplication(applicationReference: String): Visit?
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'BOOKED') "
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'BOOKED') ",
   )
   fun isApplicationBooked(applicationReference: String): Boolean
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference AND (v.visitStatus = 'CANCELLED') AND (v.outcomeStatus != 'SUPERSEDED_CANCELLATION')"
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference AND (v.visitStatus = 'CANCELLED') AND (v.outcomeStatus != 'SUPERSEDED_CANCELLATION')",
   )
   fun isBookingCancelled(reference: String): Boolean
 
@@ -61,13 +61,13 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
       "v.visitStart < :endDateTime AND " +
-      " (v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED') "
+      " (v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED') ",
   )
   fun hasActiveVisits(
     prisonerIds: List<String>,
     prisonCode: String,
     startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime
+    endDateTime: LocalDateTime,
   ): Boolean
 
   @Query(
@@ -77,12 +77,12 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "v.visitStart < :endDateTime AND " +
       "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
       "v.visitStatus = 'BOOKED'  " +
-      "GROUP BY v.visitRestriction"
+      "GROUP BY v.visitRestriction",
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
     startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime
+    endDateTime: LocalDateTime,
   ): List<VisitRestrictionStats>
 
   @Query(
@@ -92,17 +92,17 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "v.visitStart < :endDateTime AND " +
       "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
       "v.visitStatus = 'RESERVED' AND v.modifyTimestamp >= :expiredDateAndTime " +
-      "GROUP BY v.visitRestriction"
+      "GROUP BY v.visitRestriction",
   )
   fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime,
-    expiredDateAndTime: LocalDateTime
+    expiredDateAndTime: LocalDateTime,
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' "
+    "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
   )
   fun findBookedVisit(reference: String): Visit?
 
@@ -110,7 +110,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Modifying
   @Query(
     "Update visit SET  modify_timestamp = :modifyTimestamp WHERE id=:id",
-    nativeQuery = true
+    nativeQuery = true,
   )
   fun updateModifyTimestamp(modifyTimestamp: LocalDateTime, id: Long): Int
 
@@ -118,7 +118,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Modifying
   @Query(
     "Update visit SET  create_timestamp = :createTimestamp WHERE id=:id",
-    nativeQuery = true
+    nativeQuery = true,
   )
   fun updateCreateTimestamp(createTimestamp: LocalDateTime, id: Long): Int
 
@@ -128,12 +128,12 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(v.prisonerId = :prisonerId) AND " +
       "(v.prison.code = :prisonCode) AND " +
       "(v.visitStart >= :startDateTime) AND " +
-      "(cast(:endDateTime as date) is null OR v.visitStart < :endDateTime) "
+      "(cast(:endDateTime as date) is null OR v.visitStart < :endDateTime) ",
   )
   fun hasVisits(
     @Param("prisonerId") prisonerId: String,
     @Param("prisonCode") prisonCode: String,
     @Param("startDateTime") startDateTime: LocalDateTime,
-    @Param("endDateTime") endDateTime: LocalDateTime? = null
+    @Param("endDateTime") endDateTime: LocalDateTime? = null,
   ): Boolean
 }
