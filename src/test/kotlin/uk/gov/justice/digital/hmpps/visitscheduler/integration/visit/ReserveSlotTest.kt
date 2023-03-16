@@ -67,7 +67,6 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   @Test
   fun `reserve visit slot`() {
-
     // Given
     val reserveVisitSlotDto = createReserveVisitSlotDto()
 
@@ -114,14 +113,13 @@ class ReserveSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-reserved"), any(), isNull())
   }
 
   @Test
   fun `error message when reserve visit slot uses an unknown prison`() {
-
     // Given
     val reserveVisitSlotDto = createReserveVisitSlotDto(prisonCode = "AWE")
 
@@ -136,7 +134,6 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   @Test
   fun `when reserve visit slot has no visitors then bad request is returned`() {
-
     // Given
     val createReservationRequest = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
@@ -147,7 +144,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitRestriction = OPEN,
       visitors = setOf(),
       visitRoom = "A1",
-      visitContact = ContactDto("John Smith", "01234 567890")
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     // When
@@ -163,7 +160,6 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   @Test
   fun `when reserve visit slot has more than 10 visitors then bad request is returned`() {
-
     // Given
     val reserveVisitSlotDto = createReserveVisitSlotDto(prisonCode = "AWE")
     reserveVisitSlotDto.visitors = setOf(
@@ -172,7 +168,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       VisitorDto(5, false), VisitorDto(6, false),
       VisitorDto(7, false), VisitorDto(8, false),
       VisitorDto(9, false), VisitorDto(10, false),
-      VisitorDto(11, false), VisitorDto(12, false)
+      VisitorDto(11, false), VisitorDto(12, false),
     )
 
     // When
@@ -183,7 +179,6 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   @Test
   fun `reserve visit slot - only one visit contact allowed`() {
-
     // Given
 
     val createReservationRequest = ReserveVisitSlotDto(
@@ -197,11 +192,11 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 123, visitContact = true),
-        VisitorDto(nomisPersonId = 124, visitContact = true)
+        VisitorDto(nomisPersonId = 124, visitContact = true),
       ),
       visitorSupport = setOf(
-        VisitorSupportDto("OTHER", "Some Text")
-      )
+        VisitorSupportDto("OTHER", "Some Text"),
+      ),
     )
 
     // When
@@ -213,7 +208,6 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   @Test
   fun `reserve visit slot - invalid support`() {
-
     // Given
     val reserveVisitSlotDto = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
@@ -241,7 +235,6 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   @Test
   fun `reserve visit slot - invalid request`() {
-
     // Given
 
     // When
@@ -257,7 +250,6 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   @Test
   fun `reserve visit slot - access forbidden when no role`() {
-
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
     val reserveVisitSlotDto = createReserveVisitSlotDto()

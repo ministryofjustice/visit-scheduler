@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller.validators
 
+import jakarta.validation.Constraint
+import jakarta.validation.ConstraintValidator
+import jakarta.validation.ConstraintValidatorContext
+import jakarta.validation.Payload
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import javax.validation.Constraint
-import javax.validation.ConstraintValidator
-import javax.validation.ConstraintValidatorContext
-import javax.validation.Payload
 import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FIELD)
@@ -14,7 +14,7 @@ annotation class VisitorCountValidation(
   val message: String = "{javax.validation.constraints.visitor.count.message}",
   val groups: Array<KClass<*>> = [],
   val payload: Array<KClass<out Payload>> = [],
-  val maximumVisitorsAllowed: Short = 10
+  val maximumVisitorsAllowed: Short = 10,
 )
 
 class VisitorCountValidator : ConstraintValidator<VisitorCountValidation, Set<VisitorDto>> {

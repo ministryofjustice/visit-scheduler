@@ -78,7 +78,7 @@ class SessionTemplateSQLGenerator {
     val endDate: LocalDate?,
     val dayOfWeek: DayOfWeek,
     val locationKeys: String?,
-    val biWeekly: Boolean = false
+    val biWeekly: Boolean = false,
   ) {
     constructor(sessionRecord: CSVRecord) : this(
       prisonCode = sessionRecord.get(SessionColumnNames.PRISON.name).uppercase(),
@@ -93,7 +93,7 @@ class SessionTemplateSQLGenerator {
       endDate = sessionRecord.get(END_DATE.name)?.let { LocalDate.parse(it) },
       dayOfWeek = DayOfWeek.valueOf(sessionRecord.get(DAY_OF_WEEK.name).uppercase()),
       locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase(),
-      biWeekly = sessionRecord.get(BI_WEEKLY.name)?.uppercase().toBoolean()
+      biWeekly = sessionRecord.get(BI_WEEKLY.name)?.uppercase().toBoolean(),
     )
 
     fun getLocationList(): List<String> {
@@ -108,7 +108,7 @@ class SessionTemplateSQLGenerator {
     val levelTwo: List<String> = listOf<String>(),
     val levelThree: List<String> = listOf<String>(),
     val levelFour: List<String> = listOf<String>(),
-    val name: String? = null
+    val name: String? = null,
   ) {
     constructor(sessionRecord: CSVRecord) : this(
       prisonCode = sessionRecord.get(SessionLocationColumnNames.PRISON.name).uppercase(),
@@ -117,14 +117,13 @@ class SessionTemplateSQLGenerator {
       levelTwo = toList(sessionRecord.get(LEVEL_TWO.name)),
       levelThree = toList(sessionRecord.get(LEVEL_THREE.name)),
       levelFour = toList(sessionRecord.get(LEVEL_FOUR.name)),
-      name = sessionRecord.get(NAME.name)
+      name = sessionRecord.get(NAME.name),
     )
   }
 
   fun validateSessionLocation(locationColumns: List<LocationGroupsColumns>) {
-
     val childHasMoreThanOneParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
-      parentLevel.size> 1 && childlevel.isNotEmpty()
+      parentLevel.size > 1 && childlevel.isNotEmpty()
     }
 
     val childCantHaveEmptyParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
@@ -133,7 +132,6 @@ class SessionTemplateSQLGenerator {
 
     locationColumns.forEach { sessionLocationColumn ->
       with(sessionLocationColumn) {
-
         if (levelOne.isEmpty()) {
           throw IllegalArgumentException("Location : must have at least one level one element (prison:$prisonCode key:$key)!")
         }
@@ -156,9 +154,8 @@ class SessionTemplateSQLGenerator {
 
   fun validateSessionTemplate(
     prisonTemplateRecords: List<LocationGroupsColumns>,
-    sessionTemplateColumns: List<SessionTemplateColumns>
+    sessionTemplateColumns: List<SessionTemplateColumns>,
   ) {
-
     val levelsByGroups = prisonTemplateRecords.associateBy({ it.key }, { it })
 
     sessionTemplateColumns.forEach { sessionTemplateColumn ->
@@ -173,10 +170,10 @@ class SessionTemplateSQLGenerator {
             throw IllegalArgumentException("Session Template : Location key does not exist $locationKey for (prison:$prisonCode key:$locationKeys)!")
           }
         }
-        if (open <0 || closed <0) {
+        if (open < 0 || closed < 0) {
           throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity be cant be less than zero for (prison:$prisonCode key:$locationKeys)!")
         }
-        if (open> maxCapacity || closed> maxCapacity) {
+        if (open > maxCapacity || closed > maxCapacity) {
           throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity seems a little high for (prison:$prisonCode key:$locationKeys)!")
         }
       }
@@ -188,7 +185,7 @@ class SessionTemplateSQLGenerator {
     val levelOne: String,
     val levelTwo: String? = null,
     val levelThree: String? = null,
-    val levelFour: String? = null
+    val levelFour: String? = null,
   )
 
   data class SessionLocationGroup(
@@ -234,14 +231,12 @@ class SessionTemplateSQLGenerator {
   }
 
   private fun createPermittedSessionLocationItems(locationGroupsColumns: LocationGroupsColumns): List<SessionLocationItem> {
-
     val sessionLocationItemList = mutableListOf<SessionLocationItem>()
 
     with(locationGroupsColumns) {
-
-      val createLevelOne = levelOne.size> 1 || levelTwo.isEmpty()
-      val createLevelTwo = levelTwo.size> 1 || levelThree.isEmpty()
-      val createLevelThree = levelThree.size> 1 || levelFour.isEmpty()
+      val createLevelOne = levelOne.size > 1 || levelTwo.isEmpty()
+      val createLevelTwo = levelTwo.size > 1 || levelThree.isEmpty()
+      val createLevelThree = levelThree.size > 1 || levelFour.isEmpty()
 
       if (createLevelOne || createLevelTwo || createLevelThree) {
         locationGroupsColumns.levelOne.forEach { levelOne ->
@@ -274,7 +269,6 @@ class SessionTemplateSQLGenerator {
     sessionLocationGroups: List<SessionLocationGroup>,
     sessionLocationItems: List<SessionLocationItem>,
   ): String {
-
     val prisonCodes = sessionRecords.associateBy({ it.prisonCode }, { it.prisonCode })
 
     val input = mutableMapOf<String, Any>()
@@ -292,11 +286,9 @@ class SessionTemplateSQLGenerator {
   }
 
   fun getSessionLocationGroups(locationGroupsColumns: List<LocationGroupsColumns>): List<SessionLocationGroup> {
-
     val sessionLocationGroups = mutableMapOf<String, SessionLocationGroup>()
 
     locationGroupsColumns.forEach {
-
       val sessionLocationGroup = sessionLocationGroups[it.key]
       if (sessionLocationGroup == null) {
         sessionLocationGroups[it.key] = SessionLocationGroup(it.key, it.prisonCode, it.name!!)

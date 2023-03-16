@@ -23,7 +23,7 @@ class CancelZeroDayLimitConfiguredTest : IntegrationTestBase() {
   fun `when cancel day limit configured as zero cancel future visit does not return error`() {
     val outcomeDto = OutcomeDto(
       OutcomeStatus.CANCELLATION,
-      "No longer joining."
+      "No longer joining.",
     )
     // Given
     val visitStart = LocalDateTime.now().plusDays(1)

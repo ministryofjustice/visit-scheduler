@@ -9,7 +9,7 @@ class VisitNoteDto(
   @Schema(description = "Note type", example = "VISITOR_CONCERN", required = true)
   val type: VisitNoteType,
   @Schema(description = "Note text", example = "Visitor is concerned that his mother in-law is coming!", required = true)
-  val text: String
+  val text: String,
 ) {
   constructor(visitNoteEntity: VisitNote) : this(
     type = visitNoteEntity.type,

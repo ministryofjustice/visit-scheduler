@@ -31,7 +31,6 @@ class UpdateSessionGroupTest : IntegrationTestBase() {
 
   @Test
   fun `update session group test`() {
-
     // Given
     val locationDto = createPermittedSessionLocationDto("C", "L1", "S1", "001")
     val dto = updateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
@@ -54,7 +53,6 @@ class UpdateSessionGroupTest : IntegrationTestBase() {
 
   @Test
   fun `exception thrown when reference not found during update session group test`() {
-
     // Given
     val locationDto = createPermittedSessionLocationDto("C", "L1", "S1", "001")
     val dto = updateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))

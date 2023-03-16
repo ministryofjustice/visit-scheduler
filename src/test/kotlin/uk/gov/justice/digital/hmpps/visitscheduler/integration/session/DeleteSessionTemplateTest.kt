@@ -17,7 +17,7 @@ import java.time.LocalDate
 @DisplayName("Delete session template tests")
 class DeleteSessionTemplateTest(
   @Autowired private val testTemplateRepository: TestSessionTemplateRepository,
-  @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository
+  @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
@@ -28,7 +28,6 @@ class DeleteSessionTemplateTest(
 
   @BeforeEach
   internal fun setUp() {
-
     sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
@@ -44,7 +43,6 @@ class DeleteSessionTemplateTest(
 
   @Test
   fun `delete session template by reference test successfully`() {
-
     // Given
     val reference = sessionTemplate.reference
     val grp1Id = sessionTemplate.permittedSessionGroups[0].id

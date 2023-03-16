@@ -26,7 +26,6 @@ class VisitByReferenceTest : IntegrationTestBase() {
 
   @Test
   fun `Booked visit by reference`() {
-
     // Given
     val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, visitStart = visitTime)
 
@@ -43,7 +42,6 @@ class VisitByReferenceTest : IntegrationTestBase() {
 
   @Test
   fun `Canceled visit by reference`() {
-
     // Given
     val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, visitStart = visitTime)
 
@@ -60,7 +58,6 @@ class VisitByReferenceTest : IntegrationTestBase() {
 
   @Test
   fun `Gets latest visit`() {
-
     // Given
     val canceledVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, visitStart = visitTime)
     val bookedVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, visitStart = visitTime, reference = canceledVisit.reference)

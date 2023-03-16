@@ -7,14 +7,14 @@ import java.util.function.Predicate
 
 @Component
 class PrisonerSessionValidator(
-  private val levelMatcher: PrisonerLevelMatcher
+  private val levelMatcher: PrisonerLevelMatcher,
 ) {
   private val sessionAllPrisonersMatcher =
     Predicate<SessionTemplate> { sessionTemplate -> sessionTemplate.permittedSessionGroups.isEmpty() }
 
   fun isSessionAvailableToPrisoner(
     prisonerLevels: Map<PrisonerHousingLevels, String?>,
-    sessionTemplate: SessionTemplate
+    sessionTemplate: SessionTemplate,
   ): Boolean {
     val isSessionAvailableToAllPrisoners = sessionAllPrisonersMatcher.test(sessionTemplate)
     if (!isSessionAvailableToAllPrisoners) {

@@ -29,7 +29,7 @@ class SessionDatesUtilTest {
 
     // When
     val dates = toTest.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate).collect(
-      Collectors.toList()
+      Collectors.toList(),
     )
 
     // Then
@@ -67,7 +67,7 @@ class SessionDatesUtilTest {
 
     // When
     val dates = toTest.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate).collect(
-      Collectors.toList()
+      Collectors.toList(),
     )
 
     // Then
@@ -86,7 +86,7 @@ class SessionDatesUtilTest {
 
     // When
     val dates = toTest.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate).collect(
-      Collectors.toList()
+      Collectors.toList(),
     )
 
     // Then
@@ -104,7 +104,7 @@ class SessionDatesUtilTest {
 
     // When
     val dates = toTest.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate).collect(
-      Collectors.toList()
+      Collectors.toList(),
     )
 
     // Then
@@ -132,7 +132,7 @@ class SessionDatesUtilTest {
 
     // When
     val dates = toTest.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate).collect(
-      Collectors.toList()
+      Collectors.toList(),
     )
 
     // Then
@@ -158,7 +158,7 @@ class SessionDatesUtilTest {
 
     // When
     val dates = toTest.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate).collect(
-      Collectors.toList()
+      Collectors.toList(),
     )
 
     // Then
@@ -185,7 +185,7 @@ class SessionDatesUtilTest {
 
     // When
     val dates = toTest.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate).collect(
-      Collectors.toList()
+      Collectors.toList(),
     )
 
     // Then

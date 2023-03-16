@@ -75,7 +75,6 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
 
   @Test
   fun `delete only expired reservations`() {
-
     // Given
     val notExpiredApplicationReference = reservedVisitNotExpired.applicationReference
     val notExpiredApplicationReferenceChangingStatus = reservedVisitNotExpiredChangingStatus.applicationReference
@@ -99,7 +98,7 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
         assertThat(it["applicationReferences"]).contains(visitExpiredApplicationReference)
         assertThat(it["applicationReferences"]).contains(visitExpiredApplicationReferenceChangingStatus)
       },
-      isNull()
+      isNull(),
     )
   }
 
@@ -112,9 +111,8 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
     visitEnd: LocalDateTime = visitStart.plusHours(1),
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    reference: String = ""
+    reference: String = "",
   ): Visit {
-
     return visitEntityHelper.create(
       visitStatus = visitStatus,
       prisonerId = prisonerId,
@@ -124,7 +122,7 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
       visitEnd = visitEnd,
       visitType = visitType,
       visitRestriction = visitRestriction,
-      reference = reference
+      reference = reference,
     )
   }
 }

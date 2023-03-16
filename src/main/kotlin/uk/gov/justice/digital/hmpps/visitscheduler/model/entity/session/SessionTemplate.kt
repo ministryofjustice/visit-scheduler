@@ -1,22 +1,22 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
 
+import jakarta.persistence.CascadeType
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.EnumType
+import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
+import jakarta.persistence.ManyToMany
+import jakarta.persistence.ManyToOne
+import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractReferenceEntity
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import javax.persistence.CascadeType
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.EnumType
-import javax.persistence.Enumerated
-import javax.persistence.FetchType
-import javax.persistence.JoinColumn
-import javax.persistence.JoinTable
-import javax.persistence.ManyToMany
-import javax.persistence.ManyToOne
-import javax.persistence.Table
 
 @Entity
 @Table(name = "SESSION_TEMPLATE")
@@ -41,7 +41,7 @@ class SessionTemplate(
   @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
   @JoinTable(
     name = "SESSION_TO_LOCATION_GROUP",
-    joinColumns = [JoinColumn(name = "session_template_id",)],
+    joinColumns = [JoinColumn(name = "session_template_id")],
     inverseJoinColumns = [JoinColumn(name = "group_id")],
   )
   val permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
@@ -73,5 +73,5 @@ class SessionTemplate(
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
-  val dayOfWeek: DayOfWeek
+  val dayOfWeek: DayOfWeek,
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

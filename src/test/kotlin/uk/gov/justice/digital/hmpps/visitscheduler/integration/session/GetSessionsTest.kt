@@ -48,7 +48,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
-      dayOfWeek = nextAllowedDay.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
     // When
@@ -81,7 +81,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
-      enhanced = true
+      enhanced = true,
     )
 
     // When
@@ -116,7 +116,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
-      enhanced = false
+      enhanced = false,
     )
 
     // When
@@ -150,7 +150,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
-      enhanced = true
+      enhanced = true,
     )
 
     // When
@@ -167,7 +167,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `bi weekly schedule - test for sunday change boundary`() {
-
     val today = LocalDate.now()
     val todayIsTheWeekEnd = today.dayOfWeek in listOf<DayOfWeek>(SUNDAY, SATURDAY)
 
@@ -177,7 +176,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = startFromWeek1,
       visitRoom = "Alternate 1",
       dayOfWeek = SUNDAY,
-      biWeekly = true
+      biWeekly = true,
     )
 
     val startFromWeek2 = LocalDate.now().with(TemporalAdjusters.next(MONDAY)).minusWeeks(2)
@@ -186,7 +185,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = startFromWeek2,
       visitRoom = "Alternate 2",
       dayOfWeek = SUNDAY,
-      biWeekly = true
+      biWeekly = true,
     )
 
     // When
@@ -218,7 +217,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
-      dayOfWeek = nextAllowedDay.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
     val dayAfterNextSessionTemplate = sessionTemplateEntityHelper.create(
@@ -258,7 +257,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
       startTime = LocalTime.parse("09:00"),
-      endTime = LocalTime.parse("10:00")
+      endTime = LocalTime.parse("10:00"),
     )
 
     // When
@@ -286,7 +285,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       dayOfWeek = previousDay.dayOfWeek,
       startTime = LocalTime.parse("09:00"),
-      endTime = LocalTime.parse("10:00")
+      endTime = LocalTime.parse("10:00"),
     )
 
     // When
@@ -350,7 +349,7 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     sessionTemplateEntityHelper.create(
       validFromDate = LocalDate.now().minusDays(1),
-      validToDate = LocalDate.now().minusDays(1)
+      validToDate = LocalDate.now().minusDays(1),
     )
 
     // When
@@ -365,7 +364,7 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     sessionTemplateEntityHelper.create(
       validFromDate = LocalDate.now().plusMonths(6),
-      validToDate = LocalDate.now().plusMonths(10)
+      validToDate = LocalDate.now().plusMonths(10),
     )
 
     // When
@@ -377,7 +376,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `visit sessions include reserved and booked open visit count`() {
-
     // Given
     val nextAllowedDay = this.getNextAllowedDay()
     val dateTime = nextAllowedDay.atTime(9, 0)
@@ -389,7 +387,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       startTime = startTime,
       endTime = endTime.toLocalTime(),
-      dayOfWeek = nextAllowedDay.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
     this.visitEntityHelper.create(
@@ -400,7 +398,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = RESERVED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     this.visitEntityHelper.create(
@@ -411,7 +409,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     this.visitEntityHelper.create(
@@ -422,7 +420,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CANCELLED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     // When
@@ -434,7 +432,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `visit sessions exclude visits with changing status in visit count`() {
-
     // Given
     val nextAllowedDay = this.getNextAllowedDay()
     val dateTime = nextAllowedDay.atTime(9, 0)
@@ -446,7 +443,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       startTime = startTime,
       endTime = endTime.toLocalTime(),
-      dayOfWeek = nextAllowedDay.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
     this.visitEntityHelper.create(
@@ -457,7 +454,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CHANGING,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     this.visitEntityHelper.create(
@@ -468,7 +465,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CHANGING,
-      visitRestriction = CLOSED
+      visitRestriction = CLOSED,
     )
 
     // When
@@ -480,7 +477,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `visit sessions include reserved and booked closed visit count`() {
-
     // Given
     val nextAllowedDay = this.getNextAllowedDay()
     val dateTime = nextAllowedDay.atTime(9, 0)
@@ -492,7 +488,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       startTime = startTime,
       endTime = endTime.toLocalTime(),
-      dayOfWeek = nextAllowedDay.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
     this.visitEntityHelper.create(
@@ -503,7 +499,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = RESERVED,
-      visitRestriction = CLOSED
+      visitRestriction = CLOSED,
     )
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
@@ -513,7 +509,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = CLOSED
+      visitRestriction = CLOSED,
     )
 
     this.visitEntityHelper.create(
@@ -524,7 +520,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CANCELLED,
-      visitRestriction = CLOSED
+      visitRestriction = CLOSED,
     )
 
     // When
@@ -536,7 +532,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `visit sessions visit count includes only visits within session period`() {
-
     // Given
     val nextAllowedDay = this.getNextAllowedDay()
     val dateTime = nextAllowedDay.atTime(9, 0)
@@ -548,7 +543,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       startTime = startTime,
       endTime = endTime.toLocalTime(),
-      dayOfWeek = nextAllowedDay.dayOfWeek
+      dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
     this.visitEntityHelper.create(
@@ -559,17 +554,18 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime, visitEnd = dateTime.plusMinutes(30),
+      visitStart = dateTime,
+      visitEnd = dateTime.plusMinutes(30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     this.visitEntityHelper.create(
@@ -580,17 +576,18 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = dateTime.plusHours(1),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime.plusHours(1), visitEnd = dateTime.plusHours(2),
+      visitStart = dateTime.plusHours(1),
+      visitEnd = dateTime.plusHours(2),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     // When
@@ -624,7 +621,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association without a booking`() {
-
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
@@ -635,7 +631,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
-      validFromDate.toString()
+      validFromDate.toString(),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -651,7 +647,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `visit sessions are returned for a prisoner with a future non-association with a booked visit`() {
-
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
@@ -667,13 +662,13 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
-      validFromDate.plusMonths(6).toString()
+      validFromDate.plusMonths(6).toString(),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -699,7 +694,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `visit sessions are returned for a prisoner with a future non-association with a reserved visit`() {
-
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
@@ -715,13 +709,13 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = RESERVED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
-      validFromDate.plusMonths(6).toString()
+      validFromDate.plusMonths(6).toString(),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -762,14 +756,14 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
       validFromDate.minusMonths(6).toString(),
-      validFromDate.minusMonths(1).toString()
+      validFromDate.minusMonths(1).toString(),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -785,7 +779,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking`() {
-
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
@@ -801,14 +794,14 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationPrisonerId,
       validFromDate.minusMonths(6).toString(),
-      validFromDate.plusMonths(1).toString()
+      validFromDate.plusMonths(1).toString(),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -824,7 +817,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking CANCELLED`() {
-
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
@@ -841,14 +833,14 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationPrisonerId,
       validFromDate.minusMonths(6).toString(),
-      validFromDate.plusMonths(1).toString()
+      validFromDate.plusMonths(1).toString(),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -879,14 +871,14 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = validFromDate.minusMonths(6).atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationPrisonerId,
       validFromDate.minusMonths(6).toString(),
-      validFromDate.plusMonths(1).toString()
+      validFromDate.plusMonths(1).toString(),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -917,7 +909,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitEnd = validFromDate.plusMonths(6).atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     prisonOffenderSearchMockServer.stubGetPrisonerIncentiveLevel(prisonerId, prison.code, "")
@@ -925,7 +917,7 @@ class GetSessionsTest : IntegrationTestBase() {
       prisonerId,
       associationPrisonerId,
       validFromDate.minusYears(1).toString(),
-      validFromDate.plusYears(1).toString()
+      validFromDate.plusYears(1).toString(),
     )
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
@@ -962,7 +954,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
   private fun callGetSessions(
     policyNoticeDaysMin: Int,
-    policyNoticeDaysMax: Int
+    policyNoticeDaysMax: Int,
   ): ResponseSpec {
     return webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
       .headers(setAuthorisation(roles = requiredRole))
@@ -983,7 +975,7 @@ class GetSessionsTest : IntegrationTestBase() {
   private fun assertSession(
     visitSessionResult: VisitSessionDto,
     testDate: LocalDate,
-    expectedSessionTemplate: SessionTemplate
+    expectedSessionTemplate: SessionTemplate,
   ) {
     Assertions.assertThat(visitSessionResult.startTimestamp)
       .isEqualTo(testDate.atTime(expectedSessionTemplate.startTime))

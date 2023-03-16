@@ -10,5 +10,5 @@ class OffenderNonAssociationDetailDto(
   @Schema(description = "Date and time the mom-association expires.", example = "2019-12-01", required = false)
   val expiryDate: LocalDate? = null,
   @Schema(description = "The offender with whom not to associate.", required = true)
-  val offenderNonAssociation: OffenderNonAssociationDto
+  val offenderNonAssociation: OffenderNonAssociationDto,
 )

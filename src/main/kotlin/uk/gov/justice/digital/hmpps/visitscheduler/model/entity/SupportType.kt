@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
+import jakarta.persistence.Column
+import jakarta.persistence.Entity
+import jakarta.persistence.Id
+import jakarta.persistence.Table
 import org.hibernate.annotations.NaturalId
-import javax.persistence.Column
-import javax.persistence.Entity
-import javax.persistence.Id
-import javax.persistence.Table
 
 @Entity
 @Table(name = "SUPPORT_TYPE")

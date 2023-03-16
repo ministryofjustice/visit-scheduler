@@ -13,7 +13,7 @@ import java.time.Duration
 @Component
 class PrisonApiClient(
   @Qualifier("prisonApiWebClient") private val webClient: WebClient,
-  @Value("\${prison.api.timeout:60s}") private val apiTimeout: Duration
+  @Value("\${prison.api.timeout:60s}") private val apiTimeout: Duration,
 ) {
   private val offenderNonAssociationDetails = object : ParameterizedTypeReference<OffenderNonAssociationDetailsDto>() {}
 

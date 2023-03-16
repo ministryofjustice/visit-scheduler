@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
-import javax.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotBlank
 
 data class UpdateLocationGroupDto(
 
@@ -12,6 +12,6 @@ data class UpdateLocationGroupDto(
   val name: String,
 
   @Schema(description = "list of locations for group", required = false)
-  val locations: List<PermittedSessionLocationDto> = listOf()
+  val locations: List<PermittedSessionLocationDto> = listOf(),
 
 )

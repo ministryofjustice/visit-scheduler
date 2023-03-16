@@ -20,7 +20,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test
   fun `Data parsed - session template is parsed correctly`() {
-
     // Given
     val path = "src/test/resources/session-template-data/"
     val sessionDataFile = File(path, "session-data_count_4.csv")
@@ -66,7 +65,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test
   fun `Data parsed - session location is parsed correctly`() {
-
     // Given
     val path = "src/test/resources/session-template-data/"
     val sessionLocationDataFile = File(path, "session-location-data_count_12.csv")
@@ -122,7 +120,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test
   fun `Data parsed - session location lower case data is converted to correct case when required`() {
-
     // Given
     val path = "src/test/resources/session-template-data/"
     val sessionLocationDataFile = File(path, "session-location-data_lower_case.csv")
@@ -140,7 +137,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test
   fun `Data parsed - session template lower case data is converted to correct case when required`() {
-
     // Given
     val path = "src/test/resources/session-template-data/"
     val sessionDataFile = File(path, "session-data_lower_case.csv")
@@ -164,7 +160,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test()
   fun `Data parsed - session template levelOne validated correctly`() {
-
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
@@ -186,7 +181,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test()
   fun `Data parsed - session template levelTwo cant have two parents validated correctly`() {
-
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
@@ -209,7 +203,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test()
   fun `Data parsed - session template levelThree cant have to parents validated correctly`() {
-
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
@@ -233,7 +226,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test()
   fun `Data parsed - session template levelFour cant have to parents validated correctly`() {
-
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
@@ -258,7 +250,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test()
   fun `Data parsed - session template levelThree cant have empty parent validated correctly`() {
-
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
@@ -282,7 +273,6 @@ class SessionTemplateSQLGeneratorTest() {
 
   @Test()
   fun `Data parsed - session template levelFour cant have empty parent validated correctly`() {
-
     // Given
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()

@@ -5,7 +5,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppli
 
 @Service
 class PrisonerValidationService(
-  private val prisonerService: PrisonerService
+  private val prisonerService: PrisonerService,
 ) {
   companion object {
     const val PRISON_CODE_DEV_ERROR_MESSAGE = "Prisoner with ID - %s is not in prison - %s"

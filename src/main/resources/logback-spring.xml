@@ -6,7 +6,6 @@
 
     <springProperty scope="context" name="app" source="spring.application.name"/>
 
-
     <springProfile name="local || dev || stdout">
         <appender name="consoleAppender" class="ch.qos.logback.core.helpers.NOPAppender"/>
         <appender name="logAppender" class="ch.qos.logback.core.ConsoleAppender">
@@ -22,7 +21,6 @@
                 <Pattern>${LOG_PATTERN}</Pattern>
             </layout>
         </appender>
-        <appender name="logAppender" class="com.microsoft.applicationinsights.logback.ApplicationInsightsAppender"/>
     </springProfile>
 
     <logger name="uk.gov.justice.digital.hmpps.visitscheduler.VisitSchedulerApplicationKt" additivity="false"
@@ -36,10 +34,6 @@
     </logger>
 
     <logger name="org.springframework" additivity="false" level="INFO">
-        <appender-ref ref="logAppender"/>
-    </logger>
-
-    <logger name="com.microsoft.applicationinsights" additivity="false" level="INFO">
         <appender-ref ref="logAppender"/>
     </logger>
 

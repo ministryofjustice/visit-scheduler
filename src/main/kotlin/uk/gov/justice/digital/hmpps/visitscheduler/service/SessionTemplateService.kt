@@ -27,7 +27,7 @@ import java.util.function.Supplier
 class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
-  private val prisonConfigService: PrisonConfigService
+  private val prisonConfigService: PrisonConfigService,
 ) {
 
   companion object {
@@ -36,12 +36,11 @@ class SessionTemplateService(
 
   @Transactional(readOnly = true)
   fun getSessionTemplates(prisonCode: String, dayOfWeek: DayOfWeek?, rangeStartDate: LocalDate?, rangeEndDate: LocalDate?): List<SessionTemplateDto> {
-
     val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
       prisonCode = prisonCode,
       rangeStartDate = rangeStartDate,
       rangeEndDate = rangeEndDate,
-      dayOfWeek = dayOfWeek
+      dayOfWeek = dayOfWeek,
     )
 
     return sessionTemplates.sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
@@ -75,12 +74,11 @@ class SessionTemplateService(
   }
 
   fun createSessionLocationGroup(createLocationSessionGroup: CreateLocationGroupDto): SessionLocationGroupDto {
-
     val prison = prisonConfigService.findPrisonByCode(createLocationSessionGroup.prisonCode)
     val sessionLocationGroup = SessionLocationGroup(
       prison = prison,
       prisonId = prison.id,
-      name = createLocationSessionGroup.name
+      name = createLocationSessionGroup.name,
     )
 
     val sessionLocations = createLocationSessionGroup.locations.map {
@@ -90,7 +88,7 @@ class SessionTemplateService(
         levelOneCode = it.levelOneCode,
         levelTwoCode = it.levelTwoCode,
         levelThreeCode = it.levelThreeCode,
-        levelFourCode = it.levelFourCode
+        levelFourCode = it.levelFourCode,
       )
     }
 
@@ -112,7 +110,7 @@ class SessionTemplateService(
         levelOneCode = it.levelOneCode,
         levelTwoCode = it.levelTwoCode,
         levelThreeCode = it.levelThreeCode,
-        levelFourCode = it.levelFourCode
+        levelFourCode = it.levelFourCode,
       )
     }
 
@@ -140,7 +138,7 @@ class SessionTemplateService(
       biWeekly = createSessionTemplateDto.biWeekly,
       enhanced = createSessionTemplateDto.enhanced,
       dayOfWeek = createSessionTemplateDto.dayOfWeek,
-      visitType = VisitType.SOCIAL
+      visitType = VisitType.SOCIAL,
     )
 
     createSessionTemplateDto.locationGroupReferences?.let {
@@ -150,12 +148,11 @@ class SessionTemplateService(
     val sessionTemplateEntitySave = sessionTemplateRepository.saveAndFlush(sessionTemplateEntity)
 
     return SessionTemplateDto(
-      sessionTemplateEntitySave
+      sessionTemplateEntitySave,
     )
   }
 
   fun updateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
-
     with(updateSessionTemplateDto) {
       name?.let {
         sessionTemplateRepository.updateNameByReference(reference, name)
@@ -211,7 +208,6 @@ class SessionTemplateService(
   }
 
   fun deleteSessionLocationGroup(reference: String) {
-
     val group = getLocationGroupByReference(reference)
     if (group.sessionTemplates.isNotEmpty()) {
       throw VSiPValidationException("Group cannot be deleted $reference because session templates are using it!")

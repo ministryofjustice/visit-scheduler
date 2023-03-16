@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 @Component
 class VisitTask(
   private val visitService: VisitService,
-  @Value("\${task.expired-visit.enabled:false}") private val enabled: Boolean
+  @Value("\${task.expired-visit.enabled:false}") private val enabled: Boolean,
 ) {
 
   companion object {
@@ -21,7 +21,8 @@ class VisitTask(
   @Scheduled(cron = "\${task.expired-visit.cron:0 0/15 * * * ?}")
   @SchedulerLock(
     name = "deleteExpiredVisitsTask",
-    lockAtLeastFor = "PT5M", lockAtMostFor = "PT5M"
+    lockAtLeastFor = "PT5M",
+    lockAtMostFor = "PT5M",
   )
   fun deleteExpiredReservations() {
     if (!enabled) {
