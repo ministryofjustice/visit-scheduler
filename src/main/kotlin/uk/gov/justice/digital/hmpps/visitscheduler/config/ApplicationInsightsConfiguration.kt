@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.config
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
@@ -13,11 +12,9 @@ import org.springframework.context.annotation.Configuration
  */
 @Configuration
 class ApplicationInsightsConfiguration {
-  @Bean
-  @ConditionalOnExpression("T(org.apache.commons.lang3.StringUtils).isBlank('\${applicationinsights.connection.string:}')")
-  fun telemetryClient(): TelemetryClient {
-    log.warn("Application insights configuration missing, returning dummy bean instead")
 
+  @Bean
+  fun telemetryClient(): TelemetryClient {
     return TelemetryClient()
   }
 

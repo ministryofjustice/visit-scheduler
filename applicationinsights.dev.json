@@ -13,6 +13,9 @@
   "selfDiagnostics": {
     "destination": "console"
   },
+  "sampling": {
+    "percentage": 100
+  },
   "preview": {
     "sampling": {
       "overrides": [
@@ -24,7 +27,23 @@
               "matchType": "regexp"
             }
           ],
-          "percentage": 100
+          "percentage": 10
+        },
+        {
+          "telemetryType": "dependency",
+          "attributes": [
+            {
+              "key": "job.system",
+              "value": "spring_scheduling",
+              "matchType": "strict"
+            },
+            {
+              "key": "code.namespace",
+              "value": "io.awspring.cloud.sqs.listener.acknowledgement.BatchingAcknowledgementProcessor.*",
+              "matchType": "regexp"
+            }
+          ],
+          "percentage": 0
         }
       ]
     }
