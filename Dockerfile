@@ -1,4 +1,4 @@
-FROM openjdk:17-slim AS builder
+FROM --platform=$BUILDPLATFORM eclipse-temurin:19-jre-jammy AS builder
 
 ARG BUILD_NUMBER
 ENV BUILD_NUMBER ${BUILD_NUMBER:-1_0_0}
@@ -11,7 +11,7 @@ RUN ./gradlew clean assemble -Dorg.gradle.daemon=false
 RUN apt-get update && apt-get install -y curl
 RUN curl https://s3.amazonaws.com/rds-downloads/rds-ca-2019-root.pem  > root.crt
 
-FROM openjdk:17-slim
+FROM eclipse-temurin:19-jre-jammy
 LABEL maintainer="HMPPS Digital Studio <info@digital.justice.gov.uk>"
 
 ARG BUILD_NUMBER
