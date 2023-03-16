@@ -331,7 +331,7 @@ class SessionServiceTest {
       val prison = Prison(
         id = 1,
         code = "HEI",
-        active = true
+        active = true,
       )
 
       val openVisit = Visit(

@@ -75,8 +75,10 @@ class VisitControllerLegacy(
   )
   fun cancelVisit(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String,
-    @RequestBody @Valid cancelOutcome: OutcomeDto,
+    @PathVariable
+    reference: String,
+    @RequestBody @Valid
+    cancelOutcome: OutcomeDto,
   ): VisitDto {
     return visitService.cancelVisit(reference.trim(), cancelOutcome)
   }

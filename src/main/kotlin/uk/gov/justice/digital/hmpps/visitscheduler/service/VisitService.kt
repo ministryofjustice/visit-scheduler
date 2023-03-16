@@ -83,7 +83,7 @@ class VisitService(
         visitEnd = reserveVisitSlotDto.endTimestamp,
         _reference = bookingReference,
         createdBy = actionedBy,
-      )
+      ),
     )
 
     reserveVisitSlotDto.visitContact?.let {
@@ -208,7 +208,6 @@ class VisitService(
   }
 
   fun deleteAllExpiredVisitsByApplicationReference(applicationReferences: List<String>) {
-
     visitRepository.deleteAllByApplicationReferenceInAndVisitStatusIn(applicationReferences, EXPIRED_VISIT_STATUSES)
 
     telemetryClient.trackEvent(
