@@ -1,17 +1,17 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonFormat.Shape.STRING
+import com.fasterxml.jackson.annotation.JsonFormat.Shape
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
 
 data class SessionTemplateDto(
 
@@ -24,11 +24,11 @@ data class SessionTemplateDto(
   @Schema(description = "prisonId", example = "MDI", required = true)
   @field:NotBlank
   val prisonCode: String,
-  @JsonFormat(pattern = "HH:mm", shape = STRING)
+  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
   @Schema(description = "The start time of the generated visit session(s)", example = "13:45", required = true)
   val startTime: LocalTime,
   @Schema(description = "The end time of the generated visit session(s)", example = "13:45", required = true)
-  @JsonFormat(pattern = "HH:mm", shape = STRING)
+  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
   val endTime: LocalTime,
   @Schema(description = "The start of the Validity period for the session template", example = "2019-12-02", required = true)
   @field:NotNull
@@ -74,6 +74,6 @@ data class SessionTemplateDto(
     dayOfWeek = sessionTemplateEntity.dayOfWeek,
     permittedLocationGroups = sessionTemplateEntity.permittedSessionGroups.map { SessionLocationGroupDto(it) },
     biWeekly = sessionTemplateEntity.biWeekly,
-    enhanced = sessionTemplateEntity.enhanced
+    enhanced = sessionTemplateEntity.enhanced,
   )
 }

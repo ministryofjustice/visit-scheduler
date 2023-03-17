@@ -12,7 +12,7 @@ interface PrisonRepository : JpaRepository<Prison, Long> {
 
   @Query(
     "select p.code from Prison p " +
-      "where p.active = true order by p.code"
+      "where p.active = true order by p.code",
   )
   fun getSupportedPrisons(): List<String>
 }

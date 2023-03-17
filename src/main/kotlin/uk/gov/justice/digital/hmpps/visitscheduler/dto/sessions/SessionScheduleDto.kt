@@ -23,13 +23,13 @@ data class SessionScheduleDto(
 
   @Schema(
     description = "The capacity for the session",
-    required = true
+    required = true,
   )
   val capacity: SessionCapacityDto,
 
   @Schema(
     description = "The session is for enhanced privileges",
-    required = true
+    required = true,
   )
   val enhanced: Boolean,
 
@@ -40,6 +40,6 @@ data class SessionScheduleDto(
   val sessionTemplateFrequency: SessionTemplateFrequency,
 
   @Schema(description = "The end date of sessionTemplate", example = "2020-11-01", required = false)
-  val sessionTemplateEndDate: LocalDate?
+  val sessionTemplateEndDate: LocalDate?,
 
 )

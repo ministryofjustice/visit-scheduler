@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 @Service
 class PrisonerService(
   private val prisonApiClient: PrisonApiClient,
-  private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient
+  private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)

@@ -35,7 +35,6 @@ class SessionGroupTest(
 
   @BeforeEach
   internal fun setUpTests() {
-
     sessionTemplateWithGrps = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 
     prison = prisonEntityHelper.create(prison.code, prison.active)
@@ -55,7 +54,6 @@ class SessionGroupTest(
 
   @Test
   fun `get session groups by prison id test`() {
-
     // Given
     val prisonCode = prison.code
     // When
@@ -103,7 +101,6 @@ class SessionGroupTest(
 
   @Test
   fun `get session group by reference test`() {
-
     // Given
     val reference = sessionGroup1.reference
     // When
@@ -128,7 +125,6 @@ class SessionGroupTest(
 
   @Test
   fun `delete session group by reference test`() {
-
     // Given
     val reference = sessionGroupWithNoTemplate.reference
 
@@ -145,7 +141,6 @@ class SessionGroupTest(
 
   @Test
   fun `delete session group when session template uses the group exception is thrown`() {
-
     // Given
     val reference = sessionGroup1.reference
 

@@ -11,8 +11,9 @@ object PostgresContainer {
   private val log = LoggerFactory.getLogger(this::class.java)
   val instance: PostgreSQLContainer<Nothing>? by lazy { startPostgresqlIfNotRunning() }
   private fun startPostgresqlIfNotRunning(): PostgreSQLContainer<Nothing>? {
-    if (isPostgresRunning())
+    if (isPostgresRunning()) {
       return null
+    }
 
     val logConsumer = Slf4jLogConsumer(log).withPrefix("postgresql")
 

@@ -24,7 +24,6 @@ class CreateSessionGroupTest : IntegrationTestBase() {
 
   @Test
   fun `create session group test`() {
-
     // Given
     val locationDto = createPermittedSessionLocationDto("C", "L1", "S1", "001")
     val dto = createCreateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))

@@ -2,13 +2,13 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import java.time.LocalDateTime
-import javax.validation.constraints.NotBlank
 
 @Schema(description = "Visit")
 data class VisitDto(
@@ -79,6 +79,6 @@ data class VisitDto(
     updatedBy = visitEntity.updatedBy,
     cancelledBy = visitEntity.cancelledBy,
     createdTimestamp = visitEntity.createTimestamp!!,
-    modifiedTimestamp = visitEntity.modifyTimestamp!!
+    modifiedTimestamp = visitEntity.modifyTimestamp!!,
   )
 }

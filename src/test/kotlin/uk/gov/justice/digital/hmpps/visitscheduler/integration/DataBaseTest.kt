@@ -35,7 +35,6 @@ class DataBaseTest(
   @Transactional(propagation = REQUIRES_NEW)
   @BeforeEach
   internal fun setUp() {
-
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     reservedVisit = visitEntityHelper.create()
@@ -61,7 +60,6 @@ class DataBaseTest(
   @Transactional(propagation = REQUIRES_NEW)
   @Test
   fun `When visit deleted - all connected child objects are also removed`() {
-
     // Given
     val applicationReference = reservedVisit.applicationReference
 
@@ -81,7 +79,6 @@ class DataBaseTest(
   @Transactional(propagation = REQUIRES_NEW)
   @Test
   fun `When sessionTemplate deleted - location groups are not deleted but join is`() {
-
     // Given
     val reference = sessionTemplate.reference
     val sessionId = sessionTemplate.id

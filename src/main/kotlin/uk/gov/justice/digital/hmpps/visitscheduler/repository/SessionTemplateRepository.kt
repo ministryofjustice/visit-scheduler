@@ -19,14 +19,14 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "and (cast(:rangeEndDate as date) is null or u.validFromDate <= :rangeEndDate) " +
       "and (cast(:rangeStartDate as date) is null or (u.validToDate is null or u.validToDate >= :rangeStartDate)) " +
       "and (:dayOfWeek is null or u.dayOfWeek = :dayOfWeek) " +
-      "and (:inclEnhancedPrivilegeTemplates is null or :inclEnhancedPrivilegeTemplates = true or u.enhanced = false)"
+      "and (:inclEnhancedPrivilegeTemplates is null or :inclEnhancedPrivilegeTemplates = true or u.enhanced = false)",
   )
   fun findValidSessionTemplatesBy(
     @Param("prisonCode") prisonCode: String,
     @Param("rangeStartDate") rangeStartDate: LocalDate? = null,
     @Param("rangeEndDate") rangeEndDate: LocalDate? = null,
     @Param("dayOfWeek") dayOfWeek: DayOfWeek? = null,
-    @Param("inclEnhancedPrivilegeTemplates") inclEnhancedPrivilegeTemplates: Boolean? = null
+    @Param("inclEnhancedPrivilegeTemplates") inclEnhancedPrivilegeTemplates: Boolean? = null,
   ): List<SessionTemplate>
 
   @Query(
@@ -36,14 +36,14 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "and (u.validFromDate <= :sessionDate) " +
       "and (u.startTime = :sessionStartTime) " +
       "and (u.endTime = :sessionEndTime) " +
-      "and (u.dayOfWeek = :dayOfWeek)"
+      "and (u.dayOfWeek = :dayOfWeek)",
   )
   fun findValidSessionTemplatesForSession(
     @Param("prisonCode") prisonCode: String,
     @Param("sessionDate") sessionDate: LocalDate,
     @Param("sessionStartTime") sessionStartTime: LocalTime,
     @Param("sessionEndTime") sessionEndTime: LocalTime,
-    @Param("dayOfWeek") dayOfWeek: DayOfWeek
+    @Param("dayOfWeek") dayOfWeek: DayOfWeek,
   ): List<SessionTemplate>
 
   @Query(
@@ -51,12 +51,12 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "where u.prison.code = :prisonCode " +
       "and (u.validToDate is null or u.validToDate >= :sessionDate) " +
       "and (u.validFromDate <= :sessionDate) " +
-      "and (u.dayOfWeek = :dayOfWeek)"
+      "and (u.dayOfWeek = :dayOfWeek)",
   )
   fun findValidSessionTemplatesForSession(
     @Param("prisonCode") prisonCode: String,
     @Param("sessionDate") sessionDate: LocalDate,
-    @Param("dayOfWeek") dayOfWeek: DayOfWeek
+    @Param("dayOfWeek") dayOfWeek: DayOfWeek,
   ): List<SessionTemplate>
 
   fun findByReference(reference: String): SessionTemplate?

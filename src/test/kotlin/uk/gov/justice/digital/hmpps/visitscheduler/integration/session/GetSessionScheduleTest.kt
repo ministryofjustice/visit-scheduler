@@ -41,7 +41,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = sessionDate.dayOfWeek,
       permittedSessionGroups = mutableListOf(sessionLocationGroup),
-      enhanced = true
+      enhanced = true,
     )
 
     // When
@@ -122,7 +122,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     sessionTemplateEntityHelper.create(
       validFromDate = nextMonday,
       validToDate = nextMondayAfterFirstSessionDate,
-      dayOfWeek = firstSessionDate.dayOfWeek
+      dayOfWeek = firstSessionDate.dayOfWeek,
     )
 
     // When
@@ -145,7 +145,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validFromDate = sessionDate,
       validToDate = sessionDate.plusMonths(4),
       dayOfWeek = sessionDate.dayOfWeek,
-      biWeekly = true
+      biWeekly = true,
     )
     // When
     val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
@@ -167,7 +167,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validFromDate = sessionDate.minusWeeks(1),
       validToDate = sessionDate.plusMonths(4),
       dayOfWeek = sessionDate.dayOfWeek,
-      biWeekly = true
+      biWeekly = true,
     )
     // When
     val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
@@ -188,7 +188,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validFromDate = sessionDate,
       validToDate = sessionDate,
       dayOfWeek = sessionDate.dayOfWeek,
-      biWeekly = true
+      biWeekly = true,
     )
 
     // When
@@ -214,7 +214,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validFromDate = sessionDate,
       validToDate = sessionDate.plusDays(7),
       dayOfWeek = sessionDate.dayOfWeek,
-      permittedSessionGroups = mutableListOf(sessionLocationGroup1, sessionLocationGroup2)
+      permittedSessionGroups = mutableListOf(sessionLocationGroup1, sessionLocationGroup2),
     )
 
     // When
@@ -231,9 +231,9 @@ class GetSessionScheduleTest : IntegrationTestBase() {
 
   private fun callGetSessionSchedule(
     prisonCode: String = "MDI",
-    scheduleDate: LocalDate
+    scheduleDate: LocalDate,
   ): ResponseSpec {
-    return webTestClient.get().uri("$GET_SESSION_SCHEDULE/?prisonId=$prisonCode&date=$scheduleDate")
+    return webTestClient.get().uri("$GET_SESSION_SCHEDULE?prisonId=$prisonCode&date=$scheduleDate")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }

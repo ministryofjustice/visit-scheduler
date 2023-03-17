@@ -17,7 +17,9 @@ class AuthenticationHelperService {
     get() {
       val userPrincipal = userPrincipal
 
-      return if (userPrincipal is String) userPrincipal else {
+      return if (userPrincipal is String) {
+        userPrincipal
+      } else {
         LOG.info("unexpected user principal - $userPrincipal")
         UNEXPECTED_PRINCIPAL
       }

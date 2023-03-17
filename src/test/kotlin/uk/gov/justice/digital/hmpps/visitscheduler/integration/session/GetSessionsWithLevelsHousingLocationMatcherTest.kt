@@ -39,7 +39,7 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
-      visitRoom = "Session available to all prisoners"
+      visitRoom = "Session available to all prisoners",
     )
 
     // this session template is available to levels A,B,D, E and F but not for C
@@ -61,7 +61,7 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 1",
-      permittedSessionGroups = mutableListOf(location1)
+      permittedSessionGroups = mutableListOf(location1),
     )
 
     // this session template is available to levels A-1,A-2,A-3 and B-1
@@ -81,14 +81,14 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 2s",
-      permittedSessionGroups = mutableListOf(location2)
+      permittedSessionGroups = mutableListOf(location2),
     )
 
     // this session template is available to levels A-1-100, A-1-200, and B-1
     allowedPermittedLocations = listOf(
       AllowedSessionLocationHierarchy("A", "1", "100", null),
       AllowedSessionLocationHierarchy("A", "2", "200", null),
-      AllowedSessionLocationHierarchy("B", "1", null, null)
+      AllowedSessionLocationHierarchy("B", "1", null, null),
     )
     val location3 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
 
@@ -100,13 +100,13 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 3s and level 2s",
-      permittedSessionGroups = mutableListOf(location3)
+      permittedSessionGroups = mutableListOf(location3),
     )
 
     allowedPermittedLocations = listOf(
       AllowedSessionLocationHierarchy("A", "1", "100", "1"),
       AllowedSessionLocationHierarchy("A", "2", "100", "3"),
-      AllowedSessionLocationHierarchy("B", "1", null, null)
+      AllowedSessionLocationHierarchy("B", "1", null, null),
     )
     val location4 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
 
@@ -118,7 +118,7 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 4s and level 2s",
-      permittedSessionGroups = mutableListOf(location4)
+      permittedSessionGroups = mutableListOf(location4),
     )
   }
 
@@ -451,14 +451,14 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       visitEnd = nextAllowedDay.atTime(sessionTemplateForAllPrisoners.endTime),
       visitType = VisitType.SOCIAL,
       visitStatus = VisitStatus.BOOKED,
-      visitRestriction = VisitRestriction.OPEN
+      visitRestriction = VisitRestriction.OPEN,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
       LocalDate.now().minusMonths(6).toString(),
-      LocalDate.now().plusMonths(6).toString()
+      LocalDate.now().plusMonths(6).toString(),
     )
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
@@ -495,7 +495,7 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
   private fun assertSession(
     visitSessionResult: VisitSessionDto,
     testDate: LocalDate,
-    expectedSessionTemplate: SessionTemplate
+    expectedSessionTemplate: SessionTemplate,
   ) {
     Assertions.assertThat(visitSessionResult.startTimestamp)
       .isEqualTo(testDate.atTime(expectedSessionTemplate.startTime))

@@ -24,7 +24,7 @@ class SupportServiceTest {
   @BeforeEach
   fun setUp() {
     supportService = SupportService(
-      supportTypeRepository
+      supportTypeRepository,
     )
   }
 
@@ -34,18 +34,17 @@ class SupportServiceTest {
 
     private fun mockRepositoryResponse(supportTypes: List<SupportType>) {
       whenever(
-        supportTypeRepository.findAll()
+        supportTypeRepository.findAll(),
       ).thenReturn(supportTypes)
     }
 
     @Test
     fun `returns available support`() {
-
       // Given
       val supportType = SupportType(
         code = 10001,
         name = "TEST_NAME",
-        description = "This is the description"
+        description = "This is the description",
       )
       mockRepositoryResponse(listOf(supportType))
 

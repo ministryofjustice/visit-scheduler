@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
-import javax.validation.constraints.NotBlank
 
 @Schema(description = "Visitor support")
 data class VisitorSupportDto(
@@ -10,7 +10,7 @@ data class VisitorSupportDto(
   @field:NotBlank
   val type: String,
   @Schema(description = "Support text description", example = "visually impaired assistance", required = false)
-  val text: String? = null
+  val text: String? = null,
 ) {
 
   constructor(visitSupportEntity: VisitSupport) : this(

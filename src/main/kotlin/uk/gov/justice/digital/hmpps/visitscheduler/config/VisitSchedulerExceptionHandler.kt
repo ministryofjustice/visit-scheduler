@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
 import com.microsoft.applicationinsights.TelemetryClient
+import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
@@ -22,7 +23,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundExcept
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TemplateNotFoundException
-import javax.validation.ValidationException
 
 @RestControllerAdvice
 class VisitSchedulerExceptionHandler(
@@ -56,7 +56,7 @@ class VisitSchedulerExceptionHandler(
     log.error("Unexpected exception", e)
     val error = ErrorResponse(
       status = HttpStatus.INTERNAL_SERVER_ERROR,
-      developerMessage = e.message
+      developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.INTERNAL_SERVER_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
@@ -68,7 +68,7 @@ class VisitSchedulerExceptionHandler(
     val error = ErrorResponse(
       status = HttpStatus.BAD_REQUEST,
       userMessage = "Validation failure: ${e.cause?.message}",
-      developerMessage = e.message
+      developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
@@ -80,7 +80,7 @@ class VisitSchedulerExceptionHandler(
     val error = ErrorResponse(
       status = (HttpStatus.BAD_REQUEST),
       userMessage = "Missing Request Parameter: ${e.cause?.message}",
-      developerMessage = (e.message)
+      developerMessage = (e.message),
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
@@ -92,7 +92,7 @@ class VisitSchedulerExceptionHandler(
     val error = ErrorResponse(
       status = HttpStatus.BAD_REQUEST,
       userMessage = "Validation failure: ${e.message}",
-      developerMessage = e.message
+      developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
@@ -104,7 +104,7 @@ class VisitSchedulerExceptionHandler(
     val error = ErrorResponse(
       status = HttpStatus.BAD_REQUEST,
       userMessage = "Invalid Argument: ${e.cause?.message}",
-      developerMessage = e.message
+      developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
@@ -119,8 +119,8 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
           userMessage = "Visit not found: ${e.cause?.message}",
-          developerMessage = e.message
-        )
+          developerMessage = e.message,
+        ),
       )
   }
 
@@ -133,8 +133,8 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
           userMessage = "Capacity not found",
-          developerMessage = e.message
-        )
+          developerMessage = e.message,
+        ),
       )
   }
 
@@ -147,8 +147,8 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
           userMessage = "Template not found: ${e.cause?.message}",
-          developerMessage = e.message
-        )
+          developerMessage = e.message,
+        ),
       )
   }
 
@@ -161,8 +161,8 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.BAD_REQUEST,
           userMessage = "Support not found: ${e.cause?.message}",
-          developerMessage = e.message
-        )
+          developerMessage = e.message,
+        ),
       )
   }
 
@@ -172,7 +172,7 @@ class VisitSchedulerExceptionHandler(
     val error = ErrorResponse(
       status = HttpStatus.INTERNAL_SERVER_ERROR,
       userMessage = "Failed to publish event: ${e.cause?.message}",
-      developerMessage = e.message
+      developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.PUBLISH_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
@@ -187,8 +187,8 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
           userMessage = "Not found",
-          developerMessage = e.message
-        )
+          developerMessage = e.message,
+        ),
       )
   }
 
@@ -201,8 +201,8 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.BAD_REQUEST,
           userMessage = "Validation failed",
-          developerMessage = e.message
-        )
+          developerMessage = e.message,
+        ),
       )
   }
 
@@ -211,7 +211,7 @@ class VisitSchedulerExceptionHandler(
     log.error("Unexpected exception", e)
     val error = ErrorResponse(
       status = HttpStatus.INTERNAL_SERVER_ERROR,
-      developerMessage = e.message
+      developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.INTERNAL_SERVER_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error)
@@ -223,9 +223,9 @@ class VisitSchedulerExceptionHandler(
       mapOf(
         "status" to error.status.toString(),
         "message" to (error.developerMessage?.take(MAX_ERROR_LENGTH) ?: ""),
-        "cause" to (error.userMessage?.take(MAX_ERROR_LENGTH) ?: "")
+        "cause" to (error.userMessage?.take(MAX_ERROR_LENGTH) ?: ""),
       ),
-      null
+      null,
     )
   }
 
@@ -239,13 +239,13 @@ data class ErrorResponse(
   val status: Int,
   val errorCode: Int? = null,
   val userMessage: String? = null,
-  val developerMessage: String? = null
+  val developerMessage: String? = null,
 ) {
   constructor(
     status: HttpStatus,
     errorCode: Int? = null,
     userMessage: String? = null,
-    developerMessage: String? = null
+    developerMessage: String? = null,
   ) :
     this(status.value(), errorCode, userMessage, developerMessage)
 }
