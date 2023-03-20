@@ -10,7 +10,10 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.*
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -42,7 +45,6 @@ class VisitService(
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
   private val prisonConfigService: PrisonConfigService,
-  private val authenticationHelperService: AuthenticationHelperService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
 ) {
@@ -244,7 +246,7 @@ class VisitService(
         existingBooking.outcomeStatus = SUPERSEDED_CANCELLATION
         visitRepository.saveAndFlush(existingBooking)
 
-        //set the new bookings updated by to current username and set createdBy to existing booking username
+        // set the new bookings updated by to current username and set createdBy to existing booking username
         visitToBook.updatedBy = visitToBook.createdBy
         visitToBook.createdBy = existingBooking.createdBy
       }
