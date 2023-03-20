@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import javax.validation.Valid
 import javax.validation.constraints.NotBlank
 
-data class CancelVisitDto (
+data class CancelVisitDto(
   @Schema(description = "Outcome - status and text", required = true)
   @field:Valid
   val cancelOutcome: OutcomeDto,
