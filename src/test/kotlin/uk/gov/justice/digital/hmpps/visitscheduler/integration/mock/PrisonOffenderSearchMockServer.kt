@@ -9,7 +9,7 @@ import com.github.tomakehurst.wiremock.client.WireMock.get
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.CurrentIncentiveDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.IncentiveLevelDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerIncentiveLevelDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -21,13 +21,15 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
       .build()
   }
 
-  fun stubGetPrisonerIncentiveLevel(
+  fun stubGetPrisoner(
     prisonerId: String,
     prisonCode: String,
-    incentiveLevel: IncentiveLevelDto,
+    incentiveLevel: IncentiveLevelDto? = null,
+    category: String? = null,
   ) {
-    val currentIncentive = CurrentIncentiveDto(incentiveLevel, LocalDateTime.now().minusMonths(1), LocalDate.now().plusMonths(1))
-    val prisonerIncentiveLevelDto = PrisonerIncentiveLevelDto(prisonerId, currentIncentive, prisonCode)
+    val currentIncentive = incentiveLevel?.let { CurrentIncentiveDto(incentiveLevel, LocalDateTime.now().minusMonths(1), LocalDate.now().plusMonths(1)) }
+
+    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonCode, category = category)
 
     stubFor(
       get("/prisoner/$prisonerId")
@@ -36,19 +38,20 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
             .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
             .withStatus(200)
             .withBody(
-              getJsonString(prisonerIncentiveLevelDto),
+              getJsonString(prisonerSearchResultDto),
             ),
         ),
     )
   }
 
-  fun stubGetPrisonerIncentiveLevel(
+  fun stubGetPrisonerByString(
     prisonerId: String,
     prisonCode: String,
-    incentiveLevelCode: String,
+    incentiveLevelCode: String? = null,
+    category: String? = null,
   ) {
-    val incentiveLevel = IncentiveLevelDto(code = incentiveLevelCode, description = "")
-    return stubGetPrisonerIncentiveLevel(prisonerId, prisonCode, incentiveLevel)
+    val incentiveLevel = incentiveLevelCode ?.let { IncentiveLevelDto(code = incentiveLevelCode, description = "") }
+    return stubGetPrisoner(prisonerId, prisonCode, incentiveLevel, category)
   }
 
   private fun getJsonString(obj: Any): String {

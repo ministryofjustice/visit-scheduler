@@ -17,9 +17,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionPrisonerCategoryRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
@@ -227,6 +229,8 @@ class SessionTemplateEntityHelper(
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
     enhanced: Boolean = false,
+    includedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
+    excludedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -245,6 +249,8 @@ class SessionTemplateEntityHelper(
       permittedSessionGroups = permittedSessionGroups,
       biWeekly = biWeekly,
       enhanced = enhanced,
+      includedPrisonerCategories = includedPrisonerCategories,
+      excludedPrisonerCategories = excludedPrisonerCategories,
     )
   }
 
@@ -264,6 +270,8 @@ class SessionTemplateEntityHelper(
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
     enhanced: Boolean = false,
+    includedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
+    excludedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
   ): SessionTemplate {
     return sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -282,6 +290,8 @@ class SessionTemplateEntityHelper(
         permittedSessionGroups = permittedSessionGroups,
         biWeekly = biWeekly,
         enhanced = enhanced,
+        includedPrisonerCategories = includedPrisonerCategories,
+        excludedPrisonerCategories = excludedPrisonerCategories,
       ),
     )
   }
@@ -310,6 +320,18 @@ class DeleteEntityHelper(
     permittedSessionLocationRepository.flush()
     prisonRepository.deleteAll()
     prisonRepository.flush()
+  }
+}
+
+@Component
+@Transactional
+class SessionPrisonerCategoryEntityHelper(
+  private val sessionPrisonerCategoryRepository: SessionPrisonerCategoryRepository,
+) {
+
+  fun create(categoryCode: String): SessionPrisonerCategory {
+    val sessionPrisonerCategory = SessionPrisonerCategory(categoryCode)
+    return sessionPrisonerCategoryRepository.saveAndFlush(sessionPrisonerCategory)
   }
 }
 
