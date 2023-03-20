@@ -27,14 +27,13 @@ fun callCancelVisit(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   reference: String,
-  cancelVisitDto: CancelVisitDto? = null
+  cancelVisitDto: CancelVisitDto? = null,
 ): ResponseSpec {
-
   return callPut(
     cancelVisitDto,
     webTestClient,
     getCancelVisitUrl(reference),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
@@ -46,14 +45,13 @@ fun callVisitReserveSlotChange(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   dto: ChangeVisitSlotRequestDto? = null,
-  applicationReference: String
+  applicationReference: String,
 ): ResponseSpec {
-
   return callPut(
     dto,
     webTestClient,
     getVisitReserveSlotChangeUrl(applicationReference),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
@@ -64,14 +62,13 @@ fun getVisitReserveSlotChangeUrl(reference: String): String {
 fun callVisitReserveSlot(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: ReserveVisitSlotDto? = null
+  dto: ReserveVisitSlotDto? = null,
 ): ResponseSpec {
-
   return callPost(
     dto,
     webTestClient,
     getVisitReserveSlotUrl(),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
@@ -83,14 +80,13 @@ fun callVisitChange(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   dto: ReserveVisitSlotDto? = null,
-  reference: String
+  reference: String,
 ): ResponseSpec {
-
   return callPut(
     dto,
     webTestClient,
     getVisitChangeUrl(reference),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
@@ -101,14 +97,13 @@ fun getVisitChangeUrl(reference: String): String {
 fun callVisitBook(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  applicationReference: String
+  applicationReference: String,
 ): ResponseSpec {
-
   return callPut(
     bodyValue = null,
     webTestClient,
     getVisitBookUrl(applicationReference),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
@@ -119,7 +114,7 @@ fun getVisitBookUrl(applicationReference: String): String {
 fun callVisitByReference(
   webTestClient: WebTestClient,
   reference: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   return callGet(webTestClient, getVisitByReferenceUrl(reference), authHttpHeaders)
 }
@@ -127,28 +122,26 @@ fun callVisitByReference(
 fun callCreateSessionGroup(
   webTestClient: WebTestClient,
   dto: CreateLocationGroupDto? = null,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-
   return callPost(
     dto,
     webTestClient,
     LOCATION_GROUP_ADMIN_PATH,
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
 fun callCreateSessionTemplate(
   webTestClient: WebTestClient,
   dto: CreateSessionTemplateDto? = null,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-
   return callPost(
     dto,
     webTestClient,
     SESSION_TEMPLATE_PATH,
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
@@ -156,66 +149,61 @@ fun callUpdateSessionTemplateByReference(
   webTestClient: WebTestClient,
   reference: String,
   dto: UpdateSessionTemplateDto? = null,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-
   return callPut(
     dto,
     webTestClient,
     getSessionTemplateByReferenceUrl(reference),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
 fun callGetGroupsByPrisonId(
   webTestClient: WebTestClient,
   prisonCode: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-
   return callGet(
     webTestClient,
     getPrisonIdUrl(PRISON_LOCATION_GROUPS_ADMIN_PATH, prisonCode),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
 fun callGetGroupByReference(
   webTestClient: WebTestClient,
   prisonCode: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-
   return callGet(
     webTestClient,
     getReferenceUrl(REFERENCE_LOCATION_GROUP_ADMIN_PATH, prisonCode),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
 fun callDeleteGroupByReference(
   webTestClient: WebTestClient,
   prisonCode: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-
   return callDelete(
     webTestClient,
     getReferenceUrl(REFERENCE_LOCATION_GROUP_ADMIN_PATH, prisonCode),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
 fun callDeleteSessionTemplateByReference(
   webTestClient: WebTestClient,
   prisonCode: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-
   return callDelete(
     webTestClient,
     getReferenceUrl(REFERENCE_SESSION_TEMPLATE_PATH, prisonCode),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
@@ -223,14 +211,13 @@ fun callUpdateLocationSessionGroupByReference(
   webTestClient: WebTestClient,
   reference: String,
   dto: UpdateLocationGroupDto,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
-
   return callPut(
     dto,
     webTestClient,
     getSessionLocationGroupByReferenceUrl(reference),
-    authHttpHeaders
+    authHttpHeaders,
   )
 }
 
@@ -257,7 +244,7 @@ fun getSessionLocationGroupByReferenceUrl(reference: String): String {
 fun callGet(
   webTestClient: WebTestClient,
   url: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   return webTestClient.get().uri(url)
     .headers(authHttpHeaders)
@@ -267,7 +254,7 @@ fun callGet(
 fun callDelete(
   webTestClient: WebTestClient,
   url: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   return webTestClient.delete().uri(url)
     .headers(authHttpHeaders)
@@ -278,7 +265,7 @@ fun callPut(
   bodyValue: Any? = null,
   webTestClient: WebTestClient,
   url: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   return if (bodyValue == null) {
     webTestClient.put().uri(url)
@@ -296,7 +283,7 @@ fun callPost(
   bodyValue: Any? = null,
   webTestClient: WebTestClient,
   url: String,
-  authHttpHeaders: (HttpHeaders) -> Unit
+  authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   return if (bodyValue == null) {
     webTestClient.post().uri(url)

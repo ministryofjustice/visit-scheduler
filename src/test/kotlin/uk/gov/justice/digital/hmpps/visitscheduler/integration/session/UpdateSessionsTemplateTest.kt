@@ -27,7 +27,6 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
 
   @Test
   fun `update session template`() {
-
     // Given
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
     val sessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
@@ -43,7 +42,7 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
       dayOfWeek = sessionTemplate.dayOfWeek.minus(1),
       locationGroupReferences = mutableListOf(sessionGroup.reference),
       biWeekly = !sessionTemplate.biWeekly,
-      enhanced = !sessionTemplate.enhanced
+      enhanced = !sessionTemplate.enhanced,
     )
 
     // When
@@ -68,7 +67,6 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
 
   @Test
   fun `exception thrown when reference not found during update session template`() {
-
     // Given
     val dto = createUpdateSessionTemplateDto()
     val reference = "Ref1234"

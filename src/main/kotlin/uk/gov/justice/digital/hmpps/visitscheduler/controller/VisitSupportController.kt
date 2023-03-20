@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SupportService
 @RequestMapping(name = "Support Resource", path = ["/visit-support"], produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "3. Visit support rest controller")
 class VisitSupportController(
-  private val supportService: SupportService
+  private val supportService: SupportService,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -31,19 +31,19 @@ class VisitSupportController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Available Support information returned"
+        description = "Available Support information returned",
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "400",
         description = "Incorrect request to Get Available Support",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
   )
   fun getSupportTypes(): List<SupportTypeDto> = supportService.getSupportTypes()
 }

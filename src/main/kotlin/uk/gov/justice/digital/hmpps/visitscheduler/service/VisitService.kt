@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import com.microsoft.applicationinsights.TelemetryClient
+import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
@@ -35,7 +36,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import javax.validation.ValidationException
 
 @Service
 @Transactional
@@ -46,7 +46,7 @@ class VisitService(
   private val snsService: SnsService,
   private val prisonConfigService: PrisonConfigService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
-  @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
+  @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
   companion object {
@@ -80,7 +80,7 @@ class VisitService(
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
         _reference = bookingReference,
-        createdBy = reserveVisitSlotDto.actionedBy
+        createdBy = reserveVisitSlotDto.actionedBy,
       )
     )
 
@@ -108,7 +108,6 @@ class VisitService(
   }
 
   private fun getStartingStatus(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitStatus {
-
     val bookedVisit = this.visitRepository.findBookedVisit(bookingReference)
 
     if (bookedVisit == null ||
@@ -123,7 +122,6 @@ class VisitService(
   }
 
   private fun getUpdatedStatus(visitEntity: Visit, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitStatus {
-
     val bookedVisit = this.visitRepository.findBookedVisit(visitEntity.reference)
 
     if (bookedVisit == null ||
@@ -179,8 +177,8 @@ class VisitService(
       mapOf(
         "applicationReference" to visitEntity.applicationReference,
         "reference" to visitEntity.reference,
-        "visitStatus" to visitEntity.visitStatus.name
-      )
+        "visitStatus" to visitEntity.visitStatus.name,
+      ),
     )
 
     return VisitDto(visitEntity)
@@ -188,7 +186,6 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
-
     if (visitFilter.prisonCode == null && visitFilter.prisonerId == null) {
       throw ValidationException("Must have prisonId or prisonerId")
     }
@@ -209,15 +206,14 @@ class VisitService(
   }
 
   fun deleteAllExpiredVisitsByApplicationReference(applicationReferences: List<String>) {
-
     visitRepository.deleteAllByApplicationReferenceInAndVisitStatusIn(applicationReferences, EXPIRED_VISIT_STATUSES)
 
     telemetryClient.trackEvent(
       TelemetryVisitEvents.VISIT_DELETED_EVENT.eventName,
       mapOf(
-        "applicationReferences" to applicationReferences.joinToString(",")
+        "applicationReferences" to applicationReferences.joinToString(","),
       ),
-      null
+      null,
     )
   }
 
@@ -300,7 +296,7 @@ class VisitService(
 
     trackEvent(
       TelemetryVisitEvents.VISIT_CANCELLED_EVENT.eventName,
-      eventsMap
+      eventsMap,
     )
 
     val visit = VisitDto(visitEntity)
@@ -319,7 +315,7 @@ class VisitService(
       visitId = visit.id,
       type = type,
       text = text,
-      visit = visit
+      visit = visit,
     )
   }
 
@@ -328,7 +324,7 @@ class VisitService(
       visitId = visit.id,
       name = name,
       telephone = telephone,
-      visit = visit
+      visit = visit,
     )
   }
 
@@ -337,7 +333,7 @@ class VisitService(
       nomisPersonId = personId,
       visitId = visit.id,
       visit = visit,
-      visitContact = visitContact
+      visitContact = visitContact,
     )
   }
 
@@ -346,19 +342,19 @@ class VisitService(
       type = type,
       visitId = visit.id,
       text = text,
-      visit = visit
+      visit = visit,
     )
   }
 
   private fun validateVisitStartDate(
     visit: Visit,
     action: String,
-    allowedVisitStartDate: LocalDateTime = LocalDateTime.now()
+    allowedVisitStartDate: LocalDateTime = LocalDateTime.now(),
   ) {
     if (visit.visitStart.isBefore(allowedVisitStartDate)) {
       throw ExpiredVisitAmendException(
         AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
-        ExpiredVisitAmendException("trying to change / cancel an expired visit")
+        ExpiredVisitAmendException("trying to change / cancel an expired visit"),
       )
     }
   }
@@ -383,7 +379,7 @@ class VisitService(
       "visitRestriction" to visitEntity.visitRestriction.name,
       "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visitEntity.visitStatus.name,
-      "applicationReference" to visitEntity.applicationReference
+      "applicationReference" to visitEntity.applicationReference,
     )
   }
 

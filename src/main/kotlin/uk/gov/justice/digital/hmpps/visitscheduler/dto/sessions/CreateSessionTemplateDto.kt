@@ -4,11 +4,11 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonFormat.Shape
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
 
 data class CreateSessionTemplateDto(
 
@@ -55,4 +55,10 @@ data class CreateSessionTemplateDto(
 
   @Schema(description = "biWeekly time table", example = "true", required = true)
   val biWeekly: Boolean,
+
+  @Schema(description = "list of included prisoner categories", required = false)
+  val includedPrisonerCategories: List<String> = listOf(),
+
+  @Schema(description = "list of excluded prisoner categories", required = false)
+  val excludedPrisonerCategories: List<String> = listOf(),
 )

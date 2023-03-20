@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.validation
 
-import javax.validation.Constraint
-import javax.validation.ConstraintValidator
-import javax.validation.ConstraintValidatorContext
-import javax.validation.Payload
+import jakarta.validation.Constraint
+import jakarta.validation.ConstraintValidator
+import jakarta.validation.ConstraintValidatorContext
+import jakarta.validation.Payload
 import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FIELD)
@@ -12,7 +12,7 @@ import kotlin.reflect.KClass
 annotation class NullableNotEmpty(
   val message: String = "{javax.validation.constraints.NotEmpty.message}",
   val groups: Array<KClass<*>> = [],
-  val payload: Array<KClass<out Payload>> = []
+  val payload: Array<KClass<out Payload>> = [],
 )
 
 class NullableNotEmptyValidator : ConstraintValidator<NullableNotEmpty, Collection<Any>> {

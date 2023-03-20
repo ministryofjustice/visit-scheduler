@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.events
 
-import com.amazonaws.services.sqs.model.PurgeQueueRequest
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.awaitility.kotlin.await
@@ -17,6 +16,10 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
+import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest
+import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
+import software.amazon.awssdk.services.sqs.model.QueueAttributeName
+import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -55,7 +58,7 @@ class SendDomainEventTest : IntegrationTestBase() {
 
     @BeforeEach
     fun `clear queues`() {
-      testSqsClient.purgeQueue(PurgeQueueRequest(testQueueUrl))
+      testSqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(testQueueUrl).build())
     }
 
     private fun createVisitAndSave(visitStatus: VisitStatus): Visit {
@@ -65,7 +68,6 @@ class SendDomainEventTest : IntegrationTestBase() {
 
     @Test
     fun `send visit booked event on update`() {
-
       // Given
       val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
       val applicationReference = visitEntity.applicationReference
@@ -83,7 +85,8 @@ class SendDomainEventTest : IntegrationTestBase() {
 
       val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
 
-      val requestJson = testSqsClient.receiveMessage(testQueueUrl).messages[0].body
+      val requestJson = testSqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(testQueueUrl).build()).join().messages()[0].body()
+
       val (message, messageAttributes) = objectMapper.readValue(requestJson, HMPPSMessage::class.java)
       assertThat(messageAttributes.eventType.Value).isEqualTo(EVENT_PRISON_VISIT_BOOKED)
       val (eventType, version, description, occurredAt, prisonerId, additionalInformation) = objectMapper.readValue(message, HMPPSDomainEvent::class.java)
@@ -103,7 +106,7 @@ class SendDomainEventTest : IntegrationTestBase() {
           assertThat(it["visitStatus"]).isEqualTo(VisitStatus.BOOKED.name)
           assertThat(it["isUpdated"]).isEqualTo("false")
         },
-        isNull()
+        isNull(),
       )
       verify(telemetryClient, times(1)).trackEvent(eq("visit-booked"), any(), isNull())
 
@@ -112,7 +115,7 @@ class SendDomainEventTest : IntegrationTestBase() {
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(visit.reference)
         },
-        isNull()
+        isNull(),
       )
       verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.booked-domain-event"), any(), isNull())
     }
@@ -126,7 +129,7 @@ class SendDomainEventTest : IntegrationTestBase() {
       val cancelVisitDto = CancelVisitDto(
         OutcomeDto(
           OutcomeStatus.PRISONER_CANCELLED,
-          "Prisoner got covid"
+          "Prisoner got covid",
         ),
         "user-1",
       )
@@ -142,7 +145,9 @@ class SendDomainEventTest : IntegrationTestBase() {
         .returnResult()
 
       val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-      val requestJson = testSqsClient.receiveMessage(testQueueUrl).messages[0].body
+
+      val requestJson = testSqsClient.receiveMessage(ReceiveMessageRequest.builder().queueUrl(testQueueUrl).build()).join().messages()[0].body()
+
       val (message, messageAttributes) = objectMapper.readValue(requestJson, HMPPSMessage::class.java)
       assertThat(messageAttributes.eventType.Value).isEqualTo(EVENT_PRISON_VISIT_CANCELLED)
       val (eventType, version, description, occurredAt, prisonerId, additionalInformation) = objectMapper.readValue(message, HMPPSDomainEvent::class.java)
@@ -161,7 +166,7 @@ class SendDomainEventTest : IntegrationTestBase() {
           assertThat(it["visitStatus"]).isEqualTo(VisitStatus.CANCELLED.name)
           assertThat(it["outcomeStatus"]).isEqualTo(OutcomeStatus.PRISONER_CANCELLED.name)
         },
-        isNull()
+        isNull(),
       )
       verify(telemetryClient, times(1)).trackEvent(eq("visit-cancelled"), any(), isNull())
 
@@ -170,20 +175,21 @@ class SendDomainEventTest : IntegrationTestBase() {
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(visit.reference)
         },
-        isNull()
+        isNull(),
       )
       verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
     }
   }
 
   fun testQueueEventMessageCount(): Int? {
-    val queueAttributes = testSqsClient.getQueueAttributes(testQueueUrl, listOf("ApproximateNumberOfMessages"))
-    return queueAttributes.attributes["ApproximateNumberOfMessages"]?.toInt()
+    val queueAttributesRequest = GetQueueAttributesRequest.builder().queueUrl(testQueueUrl).attributeNames(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES).build()
+    val queueAttributes = testSqsClient.getQueueAttributes(queueAttributesRequest).join()
+    return queueAttributes.attributesAsStrings()[QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES.toString()]?.toInt()
   }
 
   data class HMPPSMessage(
     val Message: String,
-    val MessageAttributes: HMPPSMessageAttributes
+    val MessageAttributes: HMPPSMessageAttributes,
   )
 
   data class HMPPSMessageAttributes(val eventType: HMPPSEventType)

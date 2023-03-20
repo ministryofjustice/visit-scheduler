@@ -59,7 +59,6 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     val visit = visitEntityHelper.create(visitStatus = BOOKED)
@@ -92,7 +91,6 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
   @Test
   fun `change visit has given reference`() {
-
     // Given
     val reference = bookedVisit.reference
 
@@ -129,7 +127,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
           assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
           assertThat(it["visitStatus"]).isEqualTo(VisitStatus.CHANGING.name)
         },
-        isNull()
+        isNull(),
       )
       verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
 
@@ -145,7 +143,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
           assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
           assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
         },
-        isNull()
+        isNull(),
       )
     }
   }
@@ -182,7 +180,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
   }
 
@@ -218,7 +216,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
   }
 
@@ -254,7 +252,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
   }
 
@@ -289,13 +287,12 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
   }
 
   @Test
   fun `change visit - invalid request`() {
-
     // Given
     val reference = bookedVisit.reference
 
@@ -312,7 +309,6 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
   @Test
   fun `change visit - access forbidden when no role`() {
-
     // Given
     val incorrectAuthHeaders = setAuthorisation(roles = listOf())
     val reserveVisitSlotDto = createReserveVisitSlotDto()

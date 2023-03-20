@@ -11,5 +11,5 @@ data class PrisonerIncentiveLevelDto(
   val currentIncentive: CurrentIncentiveDto? = null,
 
   @Schema(description = "Prison ID", example = "MDI", required = false)
-  val prisonId: String? = null
+  val prisonId: String? = null,
 )

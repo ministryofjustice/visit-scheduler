@@ -13,6 +13,9 @@
   "selfDiagnostics": {
     "destination": "console"
   },
+  "sampling": {
+    "percentage": 100
+  },
   "preview": {
     "sampling": {
       "overrides": [
@@ -24,7 +27,7 @@
               "matchType": "regexp"
             }
           ],
-          "percentage": 100
+          "percentage": 10
         }
       ]
     }

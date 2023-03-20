@@ -40,7 +40,7 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId)
+      prisonApiClient.getOffenderNonAssociation(prisonerId),
     ).thenReturn(OffenderNonAssociationDetailsDto())
 
     // When
@@ -57,17 +57,17 @@ class PrisonerServiceTest {
     val associationId = "AA1234CC"
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId)
+      prisonApiClient.getOffenderNonAssociation(prisonerId),
     ).thenReturn(
       OffenderNonAssociationDetailsDto(
         listOf(
           OffenderNonAssociationDetailDto(
             effectiveDate = LocalDate.now().minusMonths(1),
             expiryDate = LocalDate.now().plusMonths(1),
-            offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId)
-          )
-        )
-      )
+            offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId),
+          ),
+        ),
+      ),
     )
 
     // When
@@ -86,27 +86,29 @@ class PrisonerServiceTest {
     val association1 = OffenderNonAssociationDetailDto(
       effectiveDate = LocalDate.now().minusMonths(1),
       expiryDate = LocalDate.now().plusMonths(1),
-      offenderNonAssociation = OffenderNonAssociationDto(offenderNo = "AA1234CC")
+      offenderNonAssociation = OffenderNonAssociationDto(offenderNo = "AA1234CC"),
     )
     val association2 = OffenderNonAssociationDetailDto(
       effectiveDate = LocalDate.now().minusMonths(1),
       expiryDate = LocalDate.now().plusMonths(1),
-      offenderNonAssociation = OffenderNonAssociationDto(offenderNo = "AA1234DD")
+      offenderNonAssociation = OffenderNonAssociationDto(offenderNo = "AA1234DD"),
     )
     val association3 = OffenderNonAssociationDetailDto(
       effectiveDate = LocalDate.now().minusMonths(1),
       expiryDate = LocalDate.now().plusMonths(1),
-      offenderNonAssociation = OffenderNonAssociationDto(offenderNo = "AA1234EE")
+      offenderNonAssociation = OffenderNonAssociationDto(offenderNo = "AA1234EE"),
     )
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId)
+      prisonApiClient.getOffenderNonAssociation(prisonerId),
     ).thenReturn(
       OffenderNonAssociationDetailsDto(
         listOf(
-          association1, association2, association3
-        )
-      )
+          association1,
+          association2,
+          association3,
+        ),
+      ),
     )
 
     // When
@@ -124,9 +126,9 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId)
+      prisonApiClient.getOffenderNonAssociation(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
@@ -142,9 +144,9 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId)
+      prisonApiClient.getOffenderNonAssociation(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
@@ -166,7 +168,7 @@ class PrisonerServiceTest {
     val prisonerHousingLocationsDto = PrisonerHousingLocationsDto(listOf(level1, level2, level3))
 
     whenever(
-      prisonApiClient.getPrisonerHousingLocation(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId),
     ).thenReturn(prisonerHousingLocationsDto)
 
     // When
@@ -186,9 +188,9 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerHousingLocation(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
@@ -204,9 +206,9 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerHousingLocation(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
@@ -225,7 +227,7 @@ class PrisonerServiceTest {
     val prisonerHousingLocationsDto = PrisonerHousingLocationsDto(listOf(level1))
 
     whenever(
-      prisonApiClient.getPrisonerHousingLocation(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId),
     ).thenReturn(prisonerHousingLocationsDto)
 
     // When
@@ -252,7 +254,7 @@ class PrisonerServiceTest {
     val prisonerHousingLocationsDto = PrisonerHousingLocationsDto(listOf(level1, level2, level3, level4))
 
     whenever(
-      prisonApiClient.getPrisonerHousingLocation(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId),
     ).thenReturn(prisonerHousingLocationsDto)
 
     // When
@@ -275,7 +277,7 @@ class PrisonerServiceTest {
     val prisonerHousingLocationsDto = PrisonerHousingLocationsDto(listOf())
 
     whenever(
-      prisonApiClient.getPrisonerHousingLocation(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId),
     ).thenReturn(prisonerHousingLocationsDto)
 
     // When
@@ -297,9 +299,9 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerHousingLocation(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
@@ -314,9 +316,9 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerHousingLocation(prisonerId)
+      prisonApiClient.getPrisonerHousingLocation(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
@@ -334,7 +336,7 @@ class PrisonerServiceTest {
     val prisonerDetailsDto = PrisonerDetailsDto(prisonerId, establishmentCode = "MDI")
 
     whenever(
-      prisonApiClient.getPrisonerDetails(prisonerId)
+      prisonApiClient.getPrisonerDetails(prisonerId),
     ).thenReturn(prisonerDetailsDto)
 
     // When
@@ -353,9 +355,9 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerDetails(prisonerId)
+      prisonApiClient.getPrisonerDetails(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
@@ -371,9 +373,9 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerDetails(prisonerId)
+      prisonApiClient.getPrisonerDetails(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
@@ -396,7 +398,7 @@ class PrisonerServiceTest {
     val prisonerIncentiveLevelDto = PrisonerIncentiveLevelDto(prisonerId, currentIncentive, prisonId)
 
     whenever(
-      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId)
+      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId),
     ).thenReturn(prisonerIncentiveLevelDto)
 
     // When
@@ -418,7 +420,7 @@ class PrisonerServiceTest {
     val prisonerIncentiveLevelDto = PrisonerIncentiveLevelDto(prisonerId, currentIncentive, prisonId)
 
     whenever(
-      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId)
+      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId),
     ).thenReturn(prisonerIncentiveLevelDto)
 
     // When
@@ -440,7 +442,7 @@ class PrisonerServiceTest {
     val prisonerIncentiveLevelDto = PrisonerIncentiveLevelDto(prisonerId, currentIncentive, prisonId)
 
     whenever(
-      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId)
+      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId),
     ).thenReturn(prisonerIncentiveLevelDto)
 
     // When
@@ -464,7 +466,7 @@ class PrisonerServiceTest {
     val prisonerIncentiveLevelDto = PrisonerIncentiveLevelDto(prisonerId, currentIncentive, prisonId)
 
     whenever(
-      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId)
+      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId),
     ).thenReturn(prisonerIncentiveLevelDto)
 
     // When
@@ -485,7 +487,7 @@ class PrisonerServiceTest {
     val prisonerIncentiveLevelDto = PrisonerIncentiveLevelDto(prisonerId, currentIncentive, prisonId)
 
     whenever(
-      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId)
+      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId),
     ).thenReturn(prisonerIncentiveLevelDto)
 
     // When
@@ -502,9 +504,9 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId)
+      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.NOT_FOUND.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
@@ -522,9 +524,9 @@ class PrisonerServiceTest {
 
     // When
     whenever(
-      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId)
+      prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId),
     ).thenThrow(
-      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null)
+      WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // Then

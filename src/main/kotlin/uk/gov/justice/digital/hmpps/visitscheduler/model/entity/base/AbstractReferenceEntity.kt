@@ -1,12 +1,12 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base
 
+import jakarta.persistence.Column
+import jakarta.persistence.MappedSuperclass
+import jakarta.persistence.PostPersist
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDateTime
-import javax.persistence.Column
-import javax.persistence.MappedSuperclass
-import javax.persistence.PostPersist
 
 @MappedSuperclass
 abstract class AbstractReferenceEntity(
@@ -15,7 +15,7 @@ abstract class AbstractReferenceEntity(
   @Transient
   private val minLength: Int = 8,
   @Transient
-  private val chunkSize: Int = 2
+  private val chunkSize: Int = 2,
 ) : AbstractIdEntity() {
 
   @Column

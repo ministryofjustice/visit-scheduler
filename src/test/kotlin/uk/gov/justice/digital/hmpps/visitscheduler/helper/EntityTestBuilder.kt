@@ -29,7 +29,6 @@ fun sessionTemplate(
   biWeekly: Boolean = false,
   enhanced: Boolean = true,
 ): SessionTemplate {
-
   val prison = Prison(code = prisonCode, active = true)
 
   return SessionTemplate(
@@ -47,7 +46,7 @@ fun sessionTemplate(
     dayOfWeek = dayOfWeek,
     permittedSessionGroups = permittedSessionGroups,
     biWeekly = biWeekly,
-    enhanced = enhanced
+    enhanced = enhanced,
   )
 }
 
@@ -66,7 +65,6 @@ fun createSessionTemplateDto(
   biWeekly: Boolean = false,
   enhanced: Boolean = true,
 ): CreateSessionTemplateDto {
-
   return CreateSessionTemplateDto(
     name = name + dayOfWeek,
     prisonCode = prisonCode,
@@ -80,7 +78,7 @@ fun createSessionTemplateDto(
     dayOfWeek = dayOfWeek,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
-    enhanced = enhanced
+    enhanced = enhanced,
   )
 }
 
@@ -97,7 +95,6 @@ fun createUpdateSessionTemplateDto(
   biWeekly: Boolean = false,
   enhanced: Boolean = true,
 ): UpdateSessionTemplateDto {
-
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
     validFromDate = validFromDate,
@@ -108,31 +105,29 @@ fun createUpdateSessionTemplateDto(
     endTime = endTime,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
-    enhanced = enhanced
+    enhanced = enhanced,
   )
 }
 
 fun createCreateLocationGroupDto(
   name: String = "create",
   prisonCode: String = "MDI",
-  permittedSessionLocations: MutableList<PermittedSessionLocationDto> = mutableListOf()
+  permittedSessionLocations: MutableList<PermittedSessionLocationDto> = mutableListOf(),
 ): CreateLocationGroupDto {
-
   return CreateLocationGroupDto(
     name = name,
     prisonCode = prisonCode,
-    locations = permittedSessionLocations
+    locations = permittedSessionLocations,
   )
 }
 
 fun updateLocationGroupDto(
   name: String = "update",
-  permittedSessionLocations: MutableList<PermittedSessionLocationDto> = mutableListOf()
+  permittedSessionLocations: MutableList<PermittedSessionLocationDto> = mutableListOf(),
 ): UpdateLocationGroupDto {
-
   return UpdateLocationGroupDto(
     name = name,
-    locations = permittedSessionLocations
+    locations = permittedSessionLocations,
   )
 }
 
@@ -140,13 +135,12 @@ fun createPermittedSessionLocationDto(
   levelOneCode: String,
   levelTwoCode: String? = null,
   levelThreeCode: String? = null,
-  levelFourCode: String? = null
+  levelFourCode: String? = null,
 ): PermittedSessionLocationDto {
-
   return PermittedSessionLocationDto(
     levelOneCode = levelOneCode,
     levelTwoCode = levelTwoCode,
     levelThreeCode = levelThreeCode,
-    levelFourCode = levelFourCode
+    levelFourCode = levelFourCode,
   )
 }

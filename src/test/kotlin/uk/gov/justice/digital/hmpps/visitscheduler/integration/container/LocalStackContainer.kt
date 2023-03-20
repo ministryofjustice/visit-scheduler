@@ -13,13 +13,14 @@ object LocalStackContainer {
   val instance by lazy { startLocalstackIfNotRunning() }
 
   private fun startLocalstackIfNotRunning(): LocalStackContainer? {
-    if (isLocalStackRunning())
+    if (isLocalStackRunning()) {
       return null
+    }
 
     val logConsumer = Slf4jLogConsumer(log).withPrefix("localstack")
 
     return LocalStackContainer(
-      DockerImageName.parse("localstack/localstack").withTag("0.12.10")
+      DockerImageName.parse("localstack/localstack").withTag("0.12.10"),
     ).apply {
       withServices(LocalStackContainer.Service.SNS, LocalStackContainer.Service.SQS)
       withEnv("HOSTNAME_EXTERNAL", "localhost")

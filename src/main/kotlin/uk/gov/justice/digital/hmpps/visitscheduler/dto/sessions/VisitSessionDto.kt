@@ -2,10 +2,10 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDateTime
-import javax.validation.Valid
 
 @Schema(description = "Visit Session")
 data class VisitSessionDto(
@@ -16,7 +16,7 @@ data class VisitSessionDto(
   @Schema(
     description = "The Name of the visit room in which this visit session takes place",
     example = "Visit room 1",
-    required = true
+    required = true,
   )
   val visitRoomName: String,
 
@@ -30,28 +30,28 @@ data class VisitSessionDto(
   @Schema(
     description = "The number of concurrent visits which may take place within this session",
     example = "1",
-    required = true
+    required = true,
   )
   val openVisitCapacity: Int,
 
   @Schema(
     description = "The count of open visit bookings already reserved or booked for this session",
     example = "1",
-    required = false
+    required = false,
   )
   var openVisitBookedCount: Int? = 0,
 
   @Schema(
     description = "The number of closed visits which may take place within this session",
     example = "1",
-    required = true
+    required = true,
   )
   val closedVisitCapacity: Int,
 
   @Schema(
     description = "The count of closed visit bookings already reserved or booked for this session",
     example = "1",
-    required = false
+    required = false,
   )
   var closedVisitBookedCount: Int? = 0,
 

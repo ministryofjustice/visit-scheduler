@@ -14,6 +14,6 @@ data class SupportTypeDto(
 ) {
   constructor(supportType: SupportType) : this(
     type = supportType.name,
-    description = supportType.description
+    description = supportType.description,
   )
 }

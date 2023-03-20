@@ -25,7 +25,7 @@ class CancelZeroDayLimitConfiguredTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
-        "No longer joining."
+        "No longer joining.",
       ),
       "user-1",
     )

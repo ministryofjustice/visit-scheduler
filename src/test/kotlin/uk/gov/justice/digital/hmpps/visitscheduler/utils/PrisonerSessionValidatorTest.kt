@@ -23,6 +23,7 @@ class PrisonerSessionValidatorTest {
   private val prisonerLevelMatcher = PrisonerLevelMatcher()
   private val prisonerSessionValidator = PrisonerSessionValidator(prisonerLevelMatcher)
   private val prisonerService = PrisonerService(mock(), mock())
+
   @Nested
   @DisplayName("Tests when a prisoner exists in a prison which has 3 levels")
   inner class Level3PrisonTest {
@@ -180,9 +181,9 @@ class PrisonerSessionValidatorTest {
       val allowed9 = AllowedSessionLocationHierarchy("C", "1", "007", null)
       val sessionLocationGroup = createSessionLocationGroup(
         levelsList = listOf(
-          allowed1, allowed2, allowed3, allowed4, allowed5, allowed6, allowed7, allowed8, allowed9
+          allowed1, allowed2, allowed3, allowed4, allowed5, allowed6, allowed7, allowed8, allowed9,
         ),
-        prison = sessionTemplate.prison
+        prison = sessionTemplate.prison,
       )
 
       sessionTemplate.permittedSessionGroups.add(sessionLocationGroup)
@@ -226,6 +227,7 @@ class PrisonerSessionValidatorTest {
     private val level2 = PrisonerHousingLevelDto(level = 2, code = "1", description = "level 2")
     private val level3 = PrisonerHousingLevelDto(level = 3, code = "004", description = "level 3")
     private val prisonerDetail4LevelPrison = PrisonerHousingLocationsDto(listOf(level1, level2, level3))
+
     @Test
     fun `session available to all prisoners when permitted session location is empty`() {
       // Given
@@ -367,9 +369,9 @@ class PrisonerSessionValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(
         levelsList =
         listOf(
-          allowed1, allowed2, allowed3, allowed4, allowed5, allowed6, allowed7, allowed8, allowed9
+          allowed1, allowed2, allowed3, allowed4, allowed5, allowed6, allowed7, allowed8, allowed9,
         ),
-        prison = sessionTemplate.prison
+        prison = sessionTemplate.prison,
       )
 
       sessionTemplate.permittedSessionGroups.add(sessionLocationGroup)
@@ -396,7 +398,7 @@ class PrisonerSessionValidatorTest {
 
       val sessionLocationGroup = createSessionLocationGroup(
         levelsList = listOf(allowed1, allowed2, allowed3, allowed4, allowed5, allowed6),
-        prison = sessionTemplate.prison
+        prison = sessionTemplate.prison,
       )
       sessionTemplate.permittedSessionGroups.add(sessionLocationGroup)
 
@@ -430,7 +432,7 @@ class PrisonerSessionValidatorTest {
 
       val sessionLocationGroup = createSessionLocationGroup(
         levelsList = listOf(allowed1, allowed2, allowed3, allowed4, allowed5, allowed6, allowed7, allowed8, allowed9, allowed10, allowed11, allowed12),
-        prison = sessionTemplate.prison
+        prison = sessionTemplate.prison,
       )
 
       sessionTemplate.permittedSessionGroups.add(sessionLocationGroup)
@@ -466,9 +468,9 @@ class PrisonerSessionValidatorTest {
         levelsList =
         listOf(
           allowed1, allowed2, allowed3, allowed4,
-          allowed5, allowed6, allowed7, allowed8, allowed9, allowed10, allowed11
+          allowed5, allowed6, allowed7, allowed8, allowed9, allowed10, allowed11,
         ),
-        prison = sessionTemplate.prison
+        prison = sessionTemplate.prison,
       )
 
       sessionTemplate.permittedSessionGroups.add(sessionLocationGroup)
@@ -482,16 +484,15 @@ class PrisonerSessionValidatorTest {
 
   private fun createSessionTemplate(): SessionTemplate {
     return sessionTemplate(
-      validFromDate = LocalDate.now()
+      validFromDate = LocalDate.now(),
     )
   }
 
   private fun createSessionLocationGroup(groupName: String = "group 1", levelsList: List<AllowedSessionLocationHierarchy>, prison: Prison): SessionLocationGroup {
-
     val group = SessionLocationGroup(
       name = groupName,
       prisonId = prison.id,
-      prison = prison
+      prison = prison,
     )
 
     val permittedSessionLocations = mutableListOf<PermittedSessionLocation>()
@@ -505,7 +506,7 @@ class PrisonerSessionValidatorTest {
 
   private fun createPermittedSessionLocation(
     allowedSessionLocationHierarchy: AllowedSessionLocationHierarchy,
-    group: SessionLocationGroup
+    group: SessionLocationGroup,
   ): PermittedSessionLocation {
     return PermittedSessionLocation(
       groupId = group.id,

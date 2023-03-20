@@ -45,18 +45,19 @@ class MigrateVisitService(
         visitRestriction = migrateVisitRequest.visitRestriction,
         visitStart = migrateVisitRequest.startTimestamp,
         visitEnd = migrateVisitRequest.endTimestamp,
-        createdBy = actionedBy
-      )
+        createdBy = actionedBy,
+      ),
     )
 
     migrateVisitRequest.visitContact?.let { contact ->
       visitEntity.visitContact = createVisitContact(
         visitEntity,
-        if (UNKNOWN_TOKEN == contact.name || contact.name.partition { it.isLowerCase() }.first.isNotEmpty())
+        if (UNKNOWN_TOKEN == contact.name || contact.name.partition { it.isLowerCase() }.first.isNotEmpty()) {
           contact.name
-        else
-          capitalise(contact.name),
-        contact.telephone
+        } else {
+          capitalise(contact.name)
+        },
+        contact.telephone,
       )
     }
 
@@ -106,9 +107,9 @@ class MigrateVisitService(
         "visitRestriction" to visitEntity.visitRestriction.name,
         "visitStart" to visitEntity.visitStart.toString(),
         "visitStatus" to visitEntity.visitStatus.name,
-        "outcomeStatus" to visitEntity.outcomeStatus?.name
+        "outcomeStatus" to visitEntity.outcomeStatus?.name,
       ),
-      null
+      null,
     )
   }
 
@@ -121,10 +122,11 @@ class MigrateVisitService(
         }
         index++
       }
-      if (index < word.length)
+      if (index < word.length) {
         word.replaceRange(index, index + 1, word[index].titlecase(Locale.getDefault()))
-      else
+      } else {
         word
+      }
     }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
@@ -132,14 +134,14 @@ class MigrateVisitService(
       visitId = visit.id,
       type = type,
       text = text,
-      visit = visit
+      visit = visit,
     )
   }
 
   private fun saveLegacyData(visit: Visit, leadPersonId: Long?) {
     val legacyData = LegacyData(
       visitId = visit.id,
-      leadPersonId = leadPersonId
+      leadPersonId = leadPersonId,
     )
 
     legacyDataRepository.saveAndFlush(legacyData)
@@ -150,7 +152,7 @@ class MigrateVisitService(
       visitId = visit.id,
       name = name,
       telephone = telephone ?: "",
-      visit = visit
+      visit = visit,
     )
   }
 
@@ -159,7 +161,7 @@ class MigrateVisitService(
       nomisPersonId = personId,
       visitId = visit.id,
       visit = visit,
-      visitContact = null
+      visitContact = null,
     )
   }
 }

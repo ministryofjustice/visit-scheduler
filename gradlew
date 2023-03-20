@@ -205,7 +205,6 @@ set -- \
         org.gradle.wrapper.GradleWrapperMain \
         "$@"
 
-
 # Stop when "xargs" is not available.
 if ! command -v xargs >/dev/null 2>&1
 then

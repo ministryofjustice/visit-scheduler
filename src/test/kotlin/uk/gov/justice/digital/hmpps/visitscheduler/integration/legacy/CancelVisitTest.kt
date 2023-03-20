@@ -40,7 +40,6 @@ class CancelVisitTest : IntegrationTestBase() {
   }
   @Test
   fun `cancel visit by reference with outcome and outcome text`() {
-
     // Given
     val visit = createVisitAndSave()
 
@@ -73,7 +72,6 @@ class CancelVisitTest : IntegrationTestBase() {
 
   @Test
   fun `cancel visit by reference with outcome and without outcome text`() {
-
     // Given
     val visit = createVisitAndSave()
 
@@ -106,7 +104,6 @@ class CancelVisitTest : IntegrationTestBase() {
 
   @Test
   fun `cancel visit by reference without outcome`() {
-
     // Given
     val visit = createVisitAndSave()
 
@@ -125,7 +122,6 @@ class CancelVisitTest : IntegrationTestBase() {
 
   @Test
   fun `cancel visit by reference with outcome status of superseded`() {
-
     // Given
     val visit = createVisitAndSave()
 
@@ -141,7 +137,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
-        BodyInserters.fromValue(cancelVisitDto)
+        BodyInserters.fromValue(cancelVisitDto),
       )
       .exchange()
 
@@ -166,7 +162,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.ADMINISTRATIVE_CANCELLATION,
-        "Visit does not exist"
+        "Visit does not exist",
       ),
       cancelledByByUser,
     )
@@ -176,7 +172,7 @@ class CancelVisitTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
         BodyInserters.fromValue(
-          cancelVisitDto
+          cancelVisitDto,
         )
       )
       .exchange()
@@ -193,9 +189,9 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.ESTABLISHMENT_CANCELLED,
-        "Prisoner got covid"
+        "Prisoner got covid",
       ),
-      cancelledByByUser
+      cancelledByByUser,
     )
 
     // When
@@ -203,7 +199,7 @@ class CancelVisitTest : IntegrationTestBase() {
       .headers(setAuthorisation(roles = listOf()))
       .body(
         BodyInserters.fromValue(
-          cancelVisitDto
+          cancelVisitDto,
         )
       )
       .exchange()
@@ -223,7 +219,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.PRISONER_CANCELLED,
-        "Prisoner got covid"
+        "Prisoner got covid",
       ),
       cancelledByByUser,
     )
@@ -232,8 +228,8 @@ class CancelVisitTest : IntegrationTestBase() {
     val responseSpec = webTestClient.put().uri("/visits/$reference/cancel")
       .body(
         BodyInserters.fromValue(
-          cancelVisitDto
-        )
+          cancelVisitDto,
+        ),
       )
       .exchange()
 
@@ -246,11 +242,10 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
-        "No longer joining."
+        "No longer joining.",
       ),
       cancelledByByUser,
     )
-
     // Given
     val visitStart = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
     val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
@@ -259,7 +254,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val responseSpec = webTestClient.patch().uri("/visits/${expiredVisit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
-        BodyInserters.fromValue(cancelVisitDto)
+        BodyInserters.fromValue(cancelVisitDto),
       )
       .exchange()
 
@@ -282,7 +277,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
-        "No longer joining."
+        "No longer joining.",
       ),
       cancelledByByUser,
     )
@@ -294,7 +289,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
-        BodyInserters.fromValue(cancelVisitDto)
+        BodyInserters.fromValue(cancelVisitDto),
       )
       .exchange()
 
@@ -313,7 +308,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
-        "No longer joining."
+        "No longer joining.",
       ),
       cancelledByByUser,
     )
@@ -325,7 +320,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
-        BodyInserters.fromValue(cancelVisitDto)
+        BodyInserters.fromValue(cancelVisitDto),
       )
       .exchange()
 
@@ -344,7 +339,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
-        "No longer joining."
+        "No longer joining.",
       ),
       cancelledByByUser,
     )
@@ -356,7 +351,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
-        BodyInserters.fromValue(cancelVisitDto)
+        BodyInserters.fromValue(cancelVisitDto),
       )
       .exchange()
 
@@ -376,7 +371,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
   private fun assertVisitCancellation(
     cancelledVisit: VisitDto,
-    expectedOutcomeStatus: OutcomeStatus
+    expectedOutcomeStatus: OutcomeStatus,
   ) {
     Assertions.assertThat(cancelledVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
     Assertions.assertThat(cancelledVisit.outcomeStatus).isEqualTo(expectedOutcomeStatus)
@@ -384,7 +379,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
   private fun assertTelemetryClientEvents(
     cancelledVisit: VisitDto,
-    telemetryClient: TelemetryClient
+    telemetryClient: TelemetryClient,
   ) {
     verify(telemetryClient).trackEvent(
       eq("visit-cancelled"),
@@ -400,7 +395,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
       },
-      isNull()
+      isNull(),
     )
 
     val eventsMap = mutableMapOf(
@@ -413,7 +408,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "visitRestriction" to cancelledVisit.visitRestriction.name,
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,
-      "outcomeStatus" to cancelledVisit.outcomeStatus!!.name
+      "outcomeStatus" to cancelledVisit.outcomeStatus!!.name,
     )
     verify(telemetryClient, times(1)).trackEvent("visit-cancelled", eventsMap, null)
 
@@ -422,7 +417,7 @@ class CancelVisitTest : IntegrationTestBase() {
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
   }

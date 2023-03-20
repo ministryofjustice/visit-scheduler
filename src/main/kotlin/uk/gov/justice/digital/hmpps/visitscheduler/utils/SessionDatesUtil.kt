@@ -15,9 +15,8 @@ class SessionDatesUtil {
   fun calculateDates(
     firstBookableSessionDay: LocalDate,
     lastBookableSessionDay: LocalDate,
-    sessionTemplate: SessionTemplate
+    sessionTemplate: SessionTemplate,
   ): Stream<LocalDate> {
-
     if (sessionTemplate.biWeekly) {
       return biWeeklyDates(firstBookableSessionDay, sessionTemplate, lastBookableSessionDay)
     }
@@ -36,7 +35,7 @@ class SessionDatesUtil {
   private fun biWeeklyDates(
     firstBookableSessionDay: LocalDate,
     sessionTemplate: SessionTemplate,
-    lastBookableSessionDay: LocalDate
+    lastBookableSessionDay: LocalDate,
   ): Stream<LocalDate> {
     // This has been added just encase some one wants the session template start date other than the start of week.
     // Therefore, this use of validFromMonday will allow the bi-weekly to still work.
@@ -52,7 +51,8 @@ class SessionDatesUtil {
       return Stream.empty()
     }
     return biWeeklyFirstBookableSessionDay.datesUntil(
-      adjustedLastBookableSessionDay, Period.ofWeeks(2)
+      adjustedLastBookableSessionDay,
+      Period.ofWeeks(2),
     )
   }
 
@@ -65,6 +65,6 @@ class SessionDatesUtil {
 
   fun isBiWeeklySkipDate(
     validFromDate: LocalDate,
-    firstBookableSessionDay: LocalDate
+    firstBookableSessionDay: LocalDate,
   ) = WEEKS.between(validFromDate, firstBookableSessionDay).toInt() % 2 != 0
 }

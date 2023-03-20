@@ -53,7 +53,6 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     visitMin = visitEntityHelper.create(visitStatus = RESERVED)
@@ -70,7 +69,6 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
   @Test
   fun `change reserved slot by application reference - add final details`() {
-
     // Given
 
     val updateRequest = ChangeVisitSlotRequestDto(
@@ -123,21 +121,20 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
   fun `change reserved slot by application reference - start date has not changed`() {
-
     // Given
     val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
     val visitReserved = visitEntityHelper.create(visitStatus = CHANGING, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitBooked.visitStart,
-      visitContact = ContactDto("John Smith", "01234 567890")
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -161,21 +158,20 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
   fun `change reserved slot by application reference - start restriction has not changed`() {
-
     // Given
     val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
     val visitReserved = visitEntityHelper.create(visitStatus = CHANGING, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       visitRestriction = visitBooked.visitRestriction,
-      visitContact = ContactDto("John Smith", "01234 567890")
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -199,21 +195,20 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
   fun `change reserved slot by application reference - start date has changed`() {
-
     // Given
     val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
     val visitReserved = visitEntityHelper.create(visitStatus = CHANGING, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitBooked.visitStart.minusDays(1),
-      visitContact = ContactDto("John Smith", "01234 567890")
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -237,21 +232,20 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
 
   @Test
   fun `change reserved slot by application reference - start restriction has changed`() {
-
     // Given
     val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
     val visitReserved = visitEntityHelper.create(visitStatus = CHANGING, reference = visitBooked.reference)
 
     val updateRequest = ChangeVisitSlotRequestDto(
       visitRestriction = VisitRestriction.CLOSED,
-      visitContact = ContactDto("John Smith", "01234 567890")
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -275,7 +269,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
@@ -288,7 +282,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitBooked.visitStart,
-      visitContact = ContactDto("John Smith", "01234 567890")
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -312,7 +306,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
@@ -325,7 +319,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     val updateRequest = ChangeVisitSlotRequestDto(
       visitRestriction = visitBooked.visitRestriction,
-      visitContact = ContactDto("John Smith", "01234 567890")
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -349,7 +343,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
@@ -362,7 +356,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusDays(2).plusHours(1),
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),
-      visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = true))
+      visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = true)),
     )
     val applicationReference = visitFull.applicationReference
 
@@ -375,7 +369,6 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
   @Test
   fun `when change reserved slot has no visitors then bad request is returned`() {
-
     // Given
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitFull.visitStart,
@@ -396,7 +389,6 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
   @Test
   fun `when change reserved slot has more than 10 visitors then bad request is returned`() {
-
     // Given
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitFull.visitStart,
@@ -409,7 +401,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         VisitorDto(5, false), VisitorDto(6, false),
         VisitorDto(7, false), VisitorDto(8, false),
         VisitorDto(9, false), VisitorDto(10, false),
-        VisitorDto(11, false), VisitorDto(12, false)
+        VisitorDto(11, false), VisitorDto(12, false),
       ),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
     )
@@ -450,7 +442,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
@@ -483,7 +475,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
@@ -517,7 +509,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
   }
@@ -537,7 +529,6 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
   @Test
   fun `change reserved slot - access forbidden when no role`() {
-
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
     val updateRequest = ChangeVisitSlotRequestDto()

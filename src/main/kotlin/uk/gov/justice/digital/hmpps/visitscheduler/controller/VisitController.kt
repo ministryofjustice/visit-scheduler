@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
+import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
@@ -31,7 +32,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
-import javax.validation.Valid
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
 const val VISIT_CONTROLLER_SEARCH_PATH: String = "$VISIT_CONTROLLER_PATH/search"
@@ -47,7 +47,7 @@ const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 @Tag(name = "1. Visit rest controller")
 @RequestMapping(name = "Visit Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitController(
-  private val visitService: VisitService
+  private val visitService: VisitService,
 ) {
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PostMapping(VISIT_RESERVE_SLOT)
@@ -58,34 +58,35 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = ReserveVisitSlotDto::class)
-        )
-      ]
+          schema = Schema(implementation = ReserveVisitSlotDto::class),
+        ),
+      ],
     ),
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "Visit slot reserved"
+        description = "Visit slot reserved",
       ),
       ApiResponse(
         responseCode = "400",
         description = "Incorrect request to reserve a slot",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to reserve a slot",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
   )
   fun reserveVisitSlot(
-    @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto
+    @RequestBody @Valid
+    reserveVisitSlotDto: ReserveVisitSlotDto,
   ): VisitDto {
     return visitService.reserveVisitSlot(reserveVisitSlotDto = reserveVisitSlotDto)
   }
@@ -99,41 +100,43 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = ChangeVisitSlotRequestDto::class)
-        )
-      ]
+          schema = Schema(implementation = ChangeVisitSlotRequestDto::class),
+        ),
+      ],
     ),
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit slot changed"
+        description = "Visit slot changed",
       ),
       ApiResponse(
         responseCode = "400",
         description = "Incorrect request to changed a visit slot",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to changed a visit slot",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "404",
         description = "Visit slot not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
-    ]
+    ],
   )
   fun changeReservedVisitSlot(
     @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
-    @PathVariable applicationReference: String,
-    @RequestBody @Valid changeVisitSlotRequestDto: ChangeVisitSlotRequestDto
+    @PathVariable
+    applicationReference: String,
+    @RequestBody @Valid
+    changeVisitSlotRequestDto: ChangeVisitSlotRequestDto,
   ): VisitDto {
     return visitService.changeVisitSlot(applicationReference.trim(), changeVisitSlotRequestDto)
   }
@@ -147,36 +150,38 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = ReserveVisitSlotDto::class)
-        )
-      ]
+          schema = Schema(implementation = ReserveVisitSlotDto::class),
+        ),
+      ],
     ),
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "Visit created"
+        description = "Visit created",
       ),
       ApiResponse(
         responseCode = "400",
         description = "Incorrect request to change a booked visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to change a booked visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
   )
   fun changeBookedVisit(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String,
-    @RequestBody @Valid reserveVisitSlotDto: ReserveVisitSlotDto,
+    @PathVariable
+    reference: String,
+    @RequestBody @Valid
+    reserveVisitSlotDto: ReserveVisitSlotDto,
   ): VisitDto {
     return visitService.changeBookedVisit(reference.trim(), reserveVisitSlotDto)
   }
@@ -189,33 +194,34 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit updated"
+        description = "Visit updated",
       ),
       ApiResponse(
         responseCode = "400",
         description = "Incorrect request to book a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to book a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "404",
         description = "Visit not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
-    ]
+    ],
   )
   fun bookVisit(
     @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
-    @PathVariable applicationReference: String,
+    @PathVariable
+    applicationReference: String,
   ): VisitDto {
     return visitService.bookVisit(applicationReference.trim())
   }
@@ -229,41 +235,43 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = OutcomeDto::class)
-        )
-      ]
+          schema = Schema(implementation = OutcomeDto::class),
+        ),
+      ],
     ),
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit cancelled"
+        description = "Visit cancelled",
       ),
       ApiResponse(
         responseCode = "400",
         description = "Incorrect request to cancel a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to cancel a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "404",
         description = "Visit not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
-    ]
+    ],
   )
   fun cancelVisit(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String,
-    @RequestBody @Valid cancelVisitDto: CancelVisitDto
+    @PathVariable
+    reference: String,
+    @RequestBody @Valid
+    cancelVisitDto: CancelVisitDto,
   ): VisitDto {
     return visitService.cancelVisit(reference.trim(), cancelVisitDto)
   }
@@ -276,68 +284,76 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit Information Returned"
+        description = "Visit Information Returned",
       ),
       ApiResponse(
         responseCode = "400",
         description = "Incorrect request to Get visits for prisoner",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions to retrieve visits",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
-      )
-    ]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
   )
   fun getVisitsByFilterPageable(
     @RequestParam(value = "prisonerId", required = false)
     @Parameter(
       description = "Filter results by prisoner id",
-      example = "A12345DC"
-    ) prisonerId: String?,
+      example = "A12345DC",
+    )
+    prisonerId: String?,
     @RequestParam(value = "prisonId", required = false)
     @Parameter(
       description = "Filter results by prison id/code",
-      example = "MDI"
-    ) prisonCode: String?,
+      example = "MDI",
+    )
+    prisonCode: String?,
     @RequestParam(value = "startDateTime", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
       description = "Filter results by visits that start on or after the given timestamp",
-      example = "2021-11-03T09:00:00"
-    ) startDateTime: LocalDateTime?,
+      example = "2021-11-03T09:00:00",
+    )
+    startDateTime: LocalDateTime?,
     @RequestParam(value = "endDateTime", required = false)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
       description = "Filter results by visits that start on or before the given timestamp",
-      example = "2021-11-03T09:00:00"
-    ) endDateTime: LocalDateTime?,
+      example = "2021-11-03T09:00:00",
+    )
+    endDateTime: LocalDateTime?,
     @RequestParam(value = "visitorId", required = false)
     @Parameter(
       description = "Filter results by visitor (contact id)",
-      example = "12322"
-    ) visitorId: Long?,
+      example = "12322",
+    )
+    visitorId: Long?,
     @RequestParam(value = "visitStatus", required = true)
     @Parameter(
       description = "Filter results by visit status",
-      example = "BOOKED"
-    ) visitStatusList: List<VisitStatus>,
+      example = "BOOKED",
+    )
+    visitStatusList: List<VisitStatus>,
     @RequestParam(value = "page", required = true)
     @Parameter(
       description = "Pagination page number, starting at zero",
-      example = "0"
-    ) page: Int,
+      example = "0",
+    )
+    page: Int,
     @RequestParam(value = "size", required = true)
     @Parameter(
       description = "Pagination size per page",
-      example = "50"
-    ) size: Int
+      example = "50",
+    )
+    size: Int,
   ): Page<VisitDto> {
     return visitService.findVisitsByFilterPageableDescending(
       VisitFilter(
@@ -346,10 +362,10 @@ class VisitController(
         startDateTime = startDateTime,
         endDateTime = endDateTime,
         visitorId = visitorId,
-        visitStatusList = visitStatusList
+        visitStatusList = visitStatusList,
       ),
       page,
-      size
+      size,
     )
   }
 
@@ -361,33 +377,34 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit Information Returned"
+        description = "Visit Information Returned",
       ),
       ApiResponse(
         responseCode = "400",
         description = "Incorrect request to Get visits for prisoner",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "403",
         description = "Incorrect permissions retrieve a visit",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "404",
         description = "Visit not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))]
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
-    ]
+    ],
   )
   fun getVisitByReference(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable reference: String
+    @PathVariable
+    reference: String,
   ): VisitDto {
     return visitService.getVisitByReference(reference.trim())
   }

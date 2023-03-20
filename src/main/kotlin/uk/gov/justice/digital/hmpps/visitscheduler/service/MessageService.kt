@@ -7,7 +7,7 @@ import java.util.Locale
 
 @Service
 class MessageService(
-  private val messageSource: MessageSource
+  private val messageSource: MessageSource,
 ) {
 
   fun getMessage(code: String, vararg args: String): String? {

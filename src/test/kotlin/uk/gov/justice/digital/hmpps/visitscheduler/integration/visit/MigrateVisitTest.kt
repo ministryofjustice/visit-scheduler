@@ -84,23 +84,22 @@ class MigrateVisitTest : IntegrationTestBase() {
         VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
         VisitNoteDto(type = VISIT_OUTCOMES, "A visit outcome"),
         VisitNoteDto(type = VISIT_COMMENT, "A visit comment"),
-        VisitNoteDto(type = STATUS_CHANGED_REASON, "Status has changed")
+        VisitNoteDto(type = STATUS_CHANGED_REASON, "Status has changed"),
       ),
       legacyData = CreateLegacyDataRequestDto(123),
       createDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
-      modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30)
+      modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30),
     )
   }
 
   @Test
   fun `migrate visit`() {
-
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto()
 
     val jsonBody = BodyInserters.fromValue(
-      migrateVisitRequestDto
+      migrateVisitRequestDto,
     )
 
     // When
@@ -113,7 +112,6 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-
       assertThat(visit.reference).isEqualTo(reference)
       assertThat(visit.prison.code).isEqualTo("MDI")
       assertThat(visit.prisonerId).isEqualTo("FF0000FF")
@@ -137,7 +135,7 @@ class MigrateVisitTest : IntegrationTestBase() {
           tuple(VISITOR_CONCERN, "A visit concern"),
           tuple(VISIT_OUTCOMES, "A visit outcome"),
           tuple(VISIT_COMMENT, "A visit comment"),
-          tuple(STATUS_CHANGED_REASON, "Status has changed")
+          tuple(STATUS_CHANGED_REASON, "Status has changed"),
         )
 
       val legacyData = legacyDataRepository.findByVisitId(visit.id)
@@ -162,14 +160,13 @@ class MigrateVisitTest : IntegrationTestBase() {
         assertThat(it["visitStatus"]).isEqualTo(BOOKED.name)
         assertThat(it["outcomeStatus"]).isEqualTo(COMPLETED_NORMALLY.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
   fun `can migrate visit without leadVisitorId`() {
-
     // Given
     val createMigrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = "MDI",
@@ -179,7 +176,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
     val jsonBody = BodyInserters.fromValue(createMigrateVisitRequestDto)
 
@@ -202,7 +199,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `migrate visit without contact details`() {
-
     // Given
     val createMigrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = "MDI",
@@ -212,11 +208,11 @@ class MigrateVisitTest : IntegrationTestBase() {
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     val jsonBody = BodyInserters.fromValue(
-      createMigrateVisitRequestDto
+      createMigrateVisitRequestDto,
     )
 
     // When
@@ -238,7 +234,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `migrate visit without create and update Date and Time`() {
-
     // Given
     val createMigrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = "MDI",
@@ -248,11 +243,11 @@ class MigrateVisitTest : IntegrationTestBase() {
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     val jsonBody = BodyInserters.fromValue(
-      createMigrateVisitRequestDto
+      createMigrateVisitRequestDto,
     )
 
     // When
@@ -274,7 +269,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `migrate visit when outcome status not given`() {
-
     // Given
     val migrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = "MDI",
@@ -284,7 +278,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitStatus = BOOKED,
-      visitRestriction = OPEN
+      visitRestriction = OPEN,
     )
 
     val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
@@ -309,14 +303,13 @@ class MigrateVisitTest : IntegrationTestBase() {
         assertThat(it["reference"]).isEqualTo(reference)
         assertThat(it["outcomeStatus"]).isEqualTo(NOT_RECORDED.name)
       },
-      isNull()
+      isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
   fun `when telephone number is not given then an UNKNOWN will be migrated  `() {
-
     // Given
     val jsonString = """{
       "prisonerId": "G9377GA",
@@ -350,7 +343,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `when telephone number is NULL then an UNKNOWN will be migrated`() {
-
     // Given
     val jsonString = """{
       "prisonerId": "G9377GA",
@@ -385,7 +377,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `when contact name is not given then an UNKNOWN will be migrated  `() {
-
     // Given
     val jsonString = """{
       "prisonerId": "G9377GA",
@@ -419,7 +410,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `when contact name is NULL then an UNKNOWN will be migrated`() {
-
     // Given
     val jsonString = """{
       "prisonerId": "G9377GA",
@@ -454,7 +444,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `when contact name contains lowercase letters then name will be migrated as provided`() {
-
     // Given
     val name = "Title-case Name"
 
@@ -491,7 +480,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `when contact name is uppercase then contact name capitalised will be migrated`() {
-
     // Given
     val name = "UPPERCASE NAME"
     val capitalised = "Uppercase Name"
@@ -529,7 +517,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `when contact outcomeStatus is not given then an NOT_RECORDED will be migrated  `() {
-
     // Given
     val jsonString = """{
       "prisonerId": "G9377GA",
@@ -560,7 +547,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `when contact outcomeStatus is NULL then an NOT_RECORDED will be migrated`() {
-
     // Given
     val jsonString = """{
       "prisonerId": "G9377GA",
@@ -593,10 +579,9 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `migrate visit - invalid request`() {
-
     // Given
     val jsonBody = BodyInserters.fromValue(
-      mapOf("wrongProperty" to "wrongValue")
+      mapOf("wrongProperty" to "wrongValue"),
     )
 
     // When
@@ -614,7 +599,6 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @Test
   fun `access forbidden when no role`() {
-
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
     val jsonBody = BodyInserters.fromValue(createMigrateVisitRequestDto())
@@ -657,15 +641,15 @@ class MigrateVisitTest : IntegrationTestBase() {
       .contentType(MediaType.APPLICATION_JSON)
       .body(
         BodyInserters.fromValue(
-          jsonString
-        )
+          jsonString,
+        ),
       )
       .exchange()
   }
 
   private fun callMigrateVisit(
     authHttpHeaders: (HttpHeaders) -> Unit,
-    jsonBody: BodyInserter<*, in ClientHttpRequest>?
+    jsonBody: BodyInserter<*, in ClientHttpRequest>?,
   ): ResponseSpec {
     return webTestClient.post().uri(TEST_END_POINT)
       .headers(authHttpHeaders)

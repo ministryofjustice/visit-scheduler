@@ -1,13 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import com.amazonaws.services.sns.model.MessageAttributeValue
-import com.amazonaws.services.sns.model.PublishRequest
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import software.amazon.awssdk.services.sns.model.MessageAttributeValue
+import software.amazon.awssdk.services.sns.model.PublishRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import java.time.LocalDateTime
@@ -26,7 +26,7 @@ class SnsService(
   private val telemetryClient: TelemetryClient,
   private val objectMapper: ObjectMapper,
   @Value("\${feature.events.sns.enabled::true}")
-  private val snsEventsEnabled: Boolean
+  private val snsEventsEnabled: Boolean,
 ) {
 
   companion object {
@@ -49,7 +49,6 @@ class SnsService(
     atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
   fun sendVisitBookedEvent(visit: VisitDto) {
-
     publishToDomainEventsTopic(
       HMPPSDomainEvent(
         eventType = EVENT_PRISON_VISIT_BOOKED,
@@ -59,8 +58,8 @@ class SnsService(
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
-        )
-      )
+        ),
+      ),
     )
   }
 
@@ -73,9 +72,9 @@ class SnsService(
         occurredAt = visit.modifiedTimestamp.toOffsetDateFormat(),
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
-          reference = visit.reference
-        )
-      )
+          reference = visit.reference,
+        ),
+      ),
     )
   }
 
@@ -86,19 +85,21 @@ class SnsService(
     }
 
     try {
-      val result = domaineventsTopicClient.publish(
-        PublishRequest(domaineventsTopic.arn, objectMapper.writeValueAsString(payloadEvent))
-          .withMessageAttributes(
-            mapOf(
-              "eventType" to MessageAttributeValue().withDataType("String").withStringValue(payloadEvent.eventType)
-            )
-          )
+      val messageAttributes = mutableMapOf(
+        "eventType" to MessageAttributeValue.builder().dataType("String").stringValue(payloadEvent.eventType).build(),
       )
+
+      val publishRequest = PublishRequest.builder().topicArn(domaineventsTopic.arn)
+        .message(objectMapper.writeValueAsString(payloadEvent))
+        .messageAttributes(messageAttributes)
+        .build()
+
+      val result = domaineventsTopicClient.publish(publishRequest).join()
 
       telemetryClient.trackEvent(
         "${payloadEvent.eventType}-domain-event",
-        mapOf("messageId" to result.messageId, "reference" to payloadEvent.additionalInformation.reference),
-        null
+        mapOf("messageId" to result.messageId(), "reference" to payloadEvent.additionalInformation.reference),
+        null,
       )
     } catch (e: Throwable) {
       throw PublishEventException("Failed to publish Event $payloadEvent.eventType to $TOPIC_ID", e)
@@ -115,8 +116,8 @@ class SnsService(
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
-        )
-      )
+        ),
+      ),
     )
   }
 }

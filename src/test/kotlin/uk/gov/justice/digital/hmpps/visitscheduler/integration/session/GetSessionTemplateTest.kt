@@ -13,14 +13,13 @@ import java.time.format.DateTimeFormatter
 
 @DisplayName("Get /visit-session-templates")
 class GetSessionTemplateTest(
-  @Autowired private val repository: TestSessionTemplateRepository
+  @Autowired private val repository: TestSessionTemplateRepository,
 ) : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
   @Test
   fun `all session templates are returned empty list`() {
-
     // Given
     val prisonCode = "MDI"
 
@@ -60,7 +59,7 @@ class GetSessionTemplateTest(
     val sessionLocationGroup = sessionLocationGroupHelper.create()
     val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = LocalDate.now(),
-      permittedSessionGroups = mutableListOf(sessionLocationGroup)
+      permittedSessionGroups = mutableListOf(sessionLocationGroup),
     )
 
     // When

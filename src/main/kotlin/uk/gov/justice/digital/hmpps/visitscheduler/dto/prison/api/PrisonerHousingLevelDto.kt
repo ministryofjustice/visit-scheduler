@@ -13,5 +13,5 @@ data class PrisonerHousingLevelDto(
   val type: String? = null,
 
   @Schema(description = "Description of the location, either from the user description if set or reference code description and code", example = "Wing A", required = true)
-  val description: String
+  val description: String,
 )

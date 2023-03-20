@@ -2,15 +2,15 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotEmpty
+import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDateTime
-import javax.validation.Valid
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotEmpty
-import javax.validation.constraints.NotNull
 
 data class ReserveVisitSlotDto(
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)

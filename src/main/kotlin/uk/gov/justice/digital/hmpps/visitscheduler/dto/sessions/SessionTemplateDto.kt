@@ -4,14 +4,14 @@ import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonFormat.Shape
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
-import javax.validation.constraints.NotBlank
-import javax.validation.constraints.NotNull
 
 data class SessionTemplateDto(
 
@@ -50,9 +50,16 @@ data class SessionTemplateDto(
   @Schema(description = "day of week for visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
   @Schema(description = "list of permitted session location groups", required = false)
-  val permittedLocationGroups: List<SessionLocationGroupDto> = listOf()
+  val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
+  @Schema(description = "list of included prisoner categories", required = false)
+  val includedPrisonerCategories: List<String> = listOf(),
+  @Schema(description = "list of excluded prisoner categories", required = false)
+  val excludedPrisonerCategories: List<String> = listOf(),
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
+    // TODO code dummy out to prevent delay to other tickets
+    includedPrisonerCategories = listOf("Category A incl"),
+    excludedPrisonerCategories = listOf("Category A excl"),
     reference = sessionTemplateEntity.reference,
     name = sessionTemplateEntity.name,
     prisonCode = sessionTemplateEntity.prison.code,
@@ -67,6 +74,6 @@ data class SessionTemplateDto(
     dayOfWeek = sessionTemplateEntity.dayOfWeek,
     permittedLocationGroups = sessionTemplateEntity.permittedSessionGroups.map { SessionLocationGroupDto(it) },
     biWeekly = sessionTemplateEntity.biWeekly,
-    enhanced = sessionTemplateEntity.enhanced
+    enhanced = sessionTemplateEntity.enhanced,
   )
 }
