@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
-import javax.validation.Valid
-import javax.validation.constraints.NotBlank
+import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 
 data class CancelVisitDto(
   @Schema(description = "Outcome - status and text", required = true)

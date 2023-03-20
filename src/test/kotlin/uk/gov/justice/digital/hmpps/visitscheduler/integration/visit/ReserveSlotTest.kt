@@ -42,7 +42,7 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   companion object {
     val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
-    const val actionedByUserName = "user-1",
+    const val actionedByUserName = "user-1"
   }
 
   @BeforeEach
@@ -199,7 +199,7 @@ class ReserveSlotTest : IntegrationTestBase() {
         VisitorDto(nomisPersonId = 124, visitContact = true),
       ),
       visitorSupport = setOf(
-        VisitorSupportDto("OTHER", "Some Text")
+        VisitorSupportDto("OTHER", "Some Text"),
       ),
       actionedBy = actionedByUserName,
     )
@@ -225,7 +225,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
       visitorSupport = setOf(VisitorSupportDto("ANYTHINGWILLDO")),
-      actionedBy = actionedByUserName
+      actionedBy = actionedByUserName,
     )
 
     // When

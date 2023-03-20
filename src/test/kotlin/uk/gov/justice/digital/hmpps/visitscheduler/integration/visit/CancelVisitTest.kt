@@ -49,7 +49,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.PRISONER_CANCELLED,
-        "Prisoner got covid"
+        "Prisoner got covid",
       ),
       cancelledByByUser,
     )
@@ -80,7 +80,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
-        outcomeStatus = OutcomeStatus.VISITOR_CANCELLED
+        outcomeStatus = OutcomeStatus.VISITOR_CANCELLED,
       ),
       cancelledByByUser,
     )
@@ -110,7 +110,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val reference = visit.reference
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
-        outcomeStatus = OutcomeStatus.VISITOR_CANCELLED
+        outcomeStatus = OutcomeStatus.VISITOR_CANCELLED,
       ),
       cancelledByByUser,
     )
@@ -163,7 +163,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.SUPERSEDED_CANCELLATION,
-        "Prisoner has updated the existing booking"
+        "Prisoner has updated the existing booking",
       ),
       cancelledByByUser,
     )
@@ -311,7 +311,7 @@ class CancelVisitTest : IntegrationTestBase() {
       .body(
         BodyInserters.fromValue(
           cancelVisitDto,
-        )
+        ),
       )
       .exchange()
 

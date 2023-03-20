@@ -81,7 +81,7 @@ class VisitService(
         visitEnd = reserveVisitSlotDto.endTimestamp,
         _reference = bookingReference,
         createdBy = reserveVisitSlotDto.actionedBy,
-      )
+      ),
     )
 
     reserveVisitSlotDto.visitContact?.let {

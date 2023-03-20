@@ -81,6 +81,6 @@ class VisitControllerLegacy(
     @RequestBody @Valid
     cancelVisitDto: CancelVisitDto,
   ): VisitDto {
-    return visitService.cancelVisit(reference.trim(), cancelOutcome)
+    return visitService.cancelVisit(reference.trim(), cancelVisitDto)
   }
 }

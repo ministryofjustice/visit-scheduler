@@ -25,7 +25,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
-        "No longer joining."
+        "No longer joining.",
       ),
       CancelVisitTest.cancelledByByUser,
     )
@@ -53,7 +53,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
-        "No longer joining."
+        "No longer joining.",
       ),
       CancelVisitTest.cancelledByByUser,
     )

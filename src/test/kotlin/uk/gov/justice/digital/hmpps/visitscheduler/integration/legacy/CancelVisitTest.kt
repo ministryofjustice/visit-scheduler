@@ -38,6 +38,7 @@ class CancelVisitTest : IntegrationTestBase() {
   companion object {
     const val cancelledByByUser = "user-1"
   }
+
   @Test
   fun `cancel visit by reference with outcome and outcome text`() {
     // Given
@@ -46,7 +47,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.PRISONER_CANCELLED,
-        "Prisoner got covid"
+        "Prisoner got covid",
       ),
       cancelledByByUser,
     )
@@ -77,7 +78,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
-        outcomeStatus = OutcomeStatus.VISITOR_CANCELLED
+        outcomeStatus = OutcomeStatus.VISITOR_CANCELLED,
       ),
       cancelledByByUser,
     )
@@ -86,7 +87,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val responseSpec = webTestClient.patch().uri("/visits/${visit.reference}/cancel")
       .headers(setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")))
       .body(
-        BodyInserters.fromValue(cancelVisitDto)
+        BodyInserters.fromValue(cancelVisitDto),
       )
       .exchange()
 
@@ -128,7 +129,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.SUPERSEDED_CANCELLATION,
-        "Prisoner has updated the existing booking"
+        "Prisoner has updated the existing booking",
       ),
       cancelledByByUser,
     )
@@ -173,7 +174,7 @@ class CancelVisitTest : IntegrationTestBase() {
       .body(
         BodyInserters.fromValue(
           cancelVisitDto,
-        )
+        ),
       )
       .exchange()
 
@@ -200,7 +201,7 @@ class CancelVisitTest : IntegrationTestBase() {
       .body(
         BodyInserters.fromValue(
           cancelVisitDto,
-        )
+        ),
       )
       .exchange()
 
