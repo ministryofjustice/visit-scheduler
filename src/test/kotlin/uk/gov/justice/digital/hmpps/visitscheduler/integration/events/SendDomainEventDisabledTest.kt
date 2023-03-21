@@ -10,6 +10,7 @@ import org.springframework.test.context.TestPropertySource
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
@@ -65,13 +66,16 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
     val visitEntity = visitEntityHelper.create(visitStatus = VisitStatus.BOOKED)
     val reference = visitEntity.reference
     val authHeader = setAuthorisation(roles = ROLES)
-    val outcomeDto = OutcomeDto(
-      OutcomeStatus.PRISONER_CANCELLED,
-      "Prisoner got covid",
+    val cancelVisitDto = CancelVisitDto(
+      OutcomeDto(
+        OutcomeStatus.PRISONER_CANCELLED,
+        "Prisoner got covid",
+      ),
+      "user-1",
     )
 
     // When
-    callCancelVisit(webTestClient, authHeader, reference, outcomeDto)
+    callCancelVisit(webTestClient, authHeader, reference, cancelVisitDto)
 
     // Then
     assertSNSEventsNotSent()

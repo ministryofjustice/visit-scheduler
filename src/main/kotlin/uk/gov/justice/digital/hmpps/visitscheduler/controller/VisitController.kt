@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
@@ -48,7 +49,6 @@ const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 class VisitController(
   private val visitService: VisitService,
 ) {
-
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PostMapping(VISIT_RESERVE_SLOT)
   @ResponseStatus(HttpStatus.CREATED)
@@ -271,9 +271,9 @@ class VisitController(
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    cancelOutcome: OutcomeDto,
+    cancelVisitDto: CancelVisitDto,
   ): VisitDto {
-    return visitService.cancelVisit(reference.trim(), cancelOutcome)
+    return visitService.cancelVisit(reference.trim(), cancelVisitDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

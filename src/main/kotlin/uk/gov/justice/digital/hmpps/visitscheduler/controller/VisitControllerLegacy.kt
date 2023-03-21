@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
@@ -78,8 +79,8 @@ class VisitControllerLegacy(
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    cancelOutcome: OutcomeDto,
+    cancelVisitDto: CancelVisitDto,
   ): VisitDto {
-    return visitService.cancelVisit(reference.trim(), cancelOutcome)
+    return visitService.cancelVisit(reference.trim(), cancelVisitDto)
   }
 }
