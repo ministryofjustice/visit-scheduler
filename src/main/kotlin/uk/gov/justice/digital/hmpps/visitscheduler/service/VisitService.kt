@@ -11,8 +11,8 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
@@ -45,7 +45,6 @@ class VisitService(
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
   private val prisonConfigService: PrisonConfigService,
-  private val authenticationHelperService: AuthenticationHelperService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
@@ -67,7 +66,6 @@ class VisitService(
   }
 
   fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
-    val actionedBy = authenticationHelperService.currentUserName
     val prison = prisonConfigService.findPrisonByCode(reserveVisitSlotDto.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
@@ -82,7 +80,7 @@ class VisitService(
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
         _reference = bookingReference,
-        createdBy = actionedBy,
+        createdBy = reserveVisitSlotDto.actionedBy,
       ),
     )
 
@@ -220,7 +218,6 @@ class VisitService(
   }
 
   fun bookVisit(applicationReference: String): VisitDto {
-    val actionedBy = authenticationHelperService.currentUserName
     if (visitRepository.isApplicationBooked(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
       // If already booked then just return object and do nothing more!
@@ -239,15 +236,16 @@ class VisitService(
     val changedVisit = existingBookedVisit != null
     if (changedVisit) {
       // the existing booking should always be saved before the new booking, see VisitRepository.findByReference
-      existingBookedVisit?.let {
-        it.visitStatus = CANCELLED
-        it.outcomeStatus = SUPERSEDED_CANCELLATION
-        visitRepository.saveAndFlush(it)
-        visitToBook.createdBy = it.createdBy
+
+      existingBookedVisit?.let { existingBooking ->
+        existingBooking.visitStatus = CANCELLED
+        existingBooking.outcomeStatus = SUPERSEDED_CANCELLATION
+        visitRepository.saveAndFlush(existingBooking)
+
+        // set the new bookings updated by to current username and set createdBy to existing booking username
+        visitToBook.updatedBy = visitToBook.createdBy
+        visitToBook.createdBy = existingBooking.createdBy
       }
-      visitToBook.updatedBy = actionedBy
-    } else {
-      visitToBook.createdBy = actionedBy
     }
 
     visitToBook.visitStatus = VisitStatus.BOOKED
@@ -268,8 +266,8 @@ class VisitService(
     return visit
   }
 
-  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
-    val actionedBy = authenticationHelperService.currentUserName
+  fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
+    val cancelOutcome = cancelVisitDto.cancelOutcome
 
     if (visitRepository.isBookingCancelled(reference)) {
       // If already canceled then just return object and do nothing more!
@@ -283,7 +281,7 @@ class VisitService(
 
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
-    visitEntity.cancelledBy = actionedBy
+    visitEntity.cancelledBy = cancelVisitDto.actionedBy
 
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))

@@ -53,6 +53,10 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
+  companion object {
+    const val actionedByUserName = "user-1"
+  }
+
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
@@ -81,6 +85,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      actionedBy = actionedByUserName,
     )
   }
 
