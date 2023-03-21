@@ -82,7 +82,7 @@ class PrisonerService(
   }
 
   fun getPrisoner(prisonerId: String?): PrisonerDto? {
-    prisonerId?.let {
+    return prisonerId?.let {
       try {
         val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
         val enhanced = ENHANCED_INCENTIVE_PRIVILEGE == prisonerSearchResultDto?.currentIncentive?.level?.code
@@ -97,6 +97,5 @@ class PrisonerService(
         }
       }
     }
-    return null
   }
 }

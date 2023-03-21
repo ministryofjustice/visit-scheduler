@@ -170,13 +170,15 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
-    val category = "Test category"
+    val category1 = "Test category"
+    val category2 = "Test category 2"
 
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = category)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = category1)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
-    val categoryInc = sessionPrisonerCategoryEntityHelper.create(category)
+    val categoryInc1 = sessionPrisonerCategoryEntityHelper.create(category1)
+    val categoryInc2 = sessionPrisonerCategoryEntityHelper.create(category2)
 
     val nextAllowedDay = getNextAllowedDay()
 
@@ -186,7 +188,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
       enhanced = false,
-      includedPrisonerCategories = mutableListOf(categoryInc),
+      includedPrisonerCategories = mutableListOf(categoryInc1, categoryInc2),
     )
 
     // When
@@ -206,13 +208,15 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
-    val category = "Test category"
+    val category1 = "Test category"
+    val category2 = "Test category 2"
 
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = category)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = category1)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
-    val categoryInc = sessionPrisonerCategoryEntityHelper.create(category)
+    val categoryExc1 = sessionPrisonerCategoryEntityHelper.create(category1)
+    val categoryExc2 = sessionPrisonerCategoryEntityHelper.create(category2)
 
     val nextAllowedDay = getNextAllowedDay()
 
@@ -222,7 +226,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
       enhanced = false,
-      excludedPrisonerCategories = mutableListOf(categoryInc),
+      excludedPrisonerCategories = mutableListOf(categoryExc1, categoryExc2),
     )
 
     // When
@@ -235,6 +239,84 @@ class GetSessionsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
+  }
+
+  @Test
+  fun `A session is returned for session template when excludes category do not match prisoner category`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+    val prisonerCategory = "prisoner category"
+    val category1 = "Test category"
+    val category2 = "Test category 2"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = prisonerCategory)
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val categoryExc1 = sessionPrisonerCategoryEntityHelper.create(category1)
+    val categoryExc2 = sessionPrisonerCategoryEntityHelper.create(category2)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = false,
+      excludedPrisonerCategories = mutableListOf(categoryExc1, categoryExc2),
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+  }
+
+  @Test
+  fun `A session is returned for session template when excludes category do not match and includes do`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+    val category1 = "Test category"
+    val category2 = "Test category 2"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = category1)
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val categoryInc = sessionPrisonerCategoryEntityHelper.create(category1)
+    val categoryExc = sessionPrisonerCategoryEntityHelper.create(category2)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = false,
+      includedPrisonerCategories = mutableListOf(categoryInc),
+      excludedPrisonerCategories = mutableListOf(categoryExc),
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
   }
 
   @Test

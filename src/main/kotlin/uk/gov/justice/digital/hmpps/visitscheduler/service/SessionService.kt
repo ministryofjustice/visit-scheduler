@@ -71,12 +71,12 @@ class SessionService(
       prisonCode = prisonCode,
       rangeStartDate = requestedBookableStartDate,
       rangeEndDate = requestedBookableEndDate,
-      inclEnhancedPrivilegeTemplates = prisoner?.let { prisoner.enhanced } ?: run { true },
+      inclEnhancedPrivilegeTemplates = prisoner?.let { prisoner.enhanced } ?: true,
     )
 
-    val prisonerCategory = prisoner?.let { prisoner.category } ?: run { null }
+    val prisonerCategory = prisoner?.let { prisoner.category }
     prisonerCategory?.let {
-      sessionTemplates = filterByCategory(sessionTemplates, prisonerCategory)
+      sessionTemplates = filterByCategory(sessionTemplates, it)
     }
 
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)
@@ -101,7 +101,7 @@ class SessionService(
     return sessionTemplates.filter {
       it.includedPrisonerCategories.isEmpty() || it.includedPrisonerCategories.any { categoryFilter(it) }
     }.filter {
-      it.excludedPrisonerCategories.isEmpty() || it.excludedPrisonerCategories.any { !categoryFilter(it) }
+      it.excludedPrisonerCategories.isEmpty() || !it.excludedPrisonerCategories.any { categoryFilter(it) }
     }
   }
 
