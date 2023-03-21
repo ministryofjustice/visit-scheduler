@@ -59,11 +59,16 @@ BEGIN;
 			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2022-12-31','2023-01-02','SATURDAY',false,'SATURDAY, 2022-12-31, 14:00'),
 			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2023-01-01','2023-01-02','SUNDAY',false,'SUNDAY, 2023-01-01, 14:00'),
 			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2023-01-02','2023-01-02','MONDAY',false,'MONDAY, 2023-01-02, 14:00'),
-			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-09',NULL,'MONDAY',false,'MONDAY, 2023-01-09, 13:45'),
-			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-04',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-04, 13:45'),
-			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'09:00','10:00','2023-01-06',NULL,'FRIDAY',false,'FRIDAY, 2023-01-06, 09:00'),
-			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-07',NULL,'SATURDAY',false,'SATURDAY, 2023-01-07, 13:45'),
-			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-08',NULL,'SUNDAY',false,'SUNDAY, 2023-01-08, 13:45'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-09','2023-03-20','MONDAY',false,'MONDAY, 2023-01-09, 13:45'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-04','2023-03-20','WEDNESDAY',false,'WEDNESDAY, 2023-01-04, 13:45'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'09:00','10:00','2023-01-06','2023-03-20','FRIDAY',false,'FRIDAY, 2023-01-06, 09:00'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-07','2023-03-20','SATURDAY',false,'SATURDAY, 2023-01-07, 13:45'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-08','2023-03-20','SUNDAY',false,'SUNDAY, 2023-01-08, 13:45'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'13:45','14:45','2023-03-21',NULL,'MONDAY',false,'MONDAY, 2023-03-21, 13:45'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'13:45','14:45','2023-03-21',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-21, 13:45'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'09:00','10:00','2023-03-21',NULL,'FRIDAY',false,'FRIDAY, 2023-03-21, 09:00'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'13:45','14:45','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 13:45'),
+			(NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'13:45','14:45','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 13:45'),
 			('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3','BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-05','2022-12-18','TUESDAY',true,'TUESDAY, 2022-12-05, 14:00'),
 			('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3','BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-12-05','2022-12-18','TUESDAY',true,'TUESDAY, 2022-12-05, 15:30'),
 			('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3','BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-05','2022-12-18','WEDNESDAY',true,'WEDNESDAY, 2022-12-05, 14:00'),
@@ -194,7 +199,7 @@ BEGIN;
 	SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{3})(?!$)', '\1.','g')) as reference,visit_room,visit_type,open_capacity,closed_capacity,enhanced,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name FROM tmp_session_template order by id;
 
 	-- Sequence updated manually as id's were inserted from temp table
-	ALTER SEQUENCE session_template_id_seq RESTART WITH  140;
+	ALTER SEQUENCE session_template_id_seq RESTART WITH  145;
 
 	-- Create temporary group table
 	CREATE TABLE tmp_session_location_group (
