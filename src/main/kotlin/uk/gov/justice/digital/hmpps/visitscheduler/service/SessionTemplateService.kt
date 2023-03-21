@@ -15,8 +15,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationExcep
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionPrisonerCategoryRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -28,6 +30,7 @@ class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val prisonConfigService: PrisonConfigService,
+  private val categoryRepository: SessionPrisonerCategoryRepository,
 ) {
 
   companion object {
@@ -59,18 +62,6 @@ class SessionTemplateService(
   @Transactional(readOnly = true)
   fun getSessionLocationGroup(prisonCode: String): List<SessionLocationGroupDto> {
     return sessionLocationGroupRepository.findByPrisonCode(prisonCode).map { SessionLocationGroupDto(it) }
-  }
-
-  private fun getLocationGroupByReference(reference: String): SessionLocationGroup {
-    val sessionLocationGroup = sessionLocationGroupRepository.findByReference(reference)
-      ?: throw ItemNotFoundException("SessionLocationGroup reference:$reference not found")
-    return sessionLocationGroup
-  }
-
-  private fun getSessionTemplate(reference: String): SessionTemplate {
-    val sessionTemplate = sessionTemplateRepository.findByReference(reference)
-      ?: throw TemplateNotFoundException("Template reference:$reference not found")
-    return sessionTemplate
   }
 
   fun createSessionLocationGroup(createLocationSessionGroup: CreateLocationGroupDto): SessionLocationGroupDto {
@@ -141,6 +132,14 @@ class SessionTemplateService(
       visitType = VisitType.SOCIAL,
     )
 
+    createSessionTemplateDto.excludedPrisonerCategories.forEach {
+      sessionTemplateEntity.excludedPrisonerCategories.add(getSessionPrisonerCategory(it))
+    }
+
+    createSessionTemplateDto.includedPrisonerCategories.forEach {
+      sessionTemplateEntity.includedPrisonerCategories.add(getSessionPrisonerCategory(it))
+    }
+
     createSessionTemplateDto.locationGroupReferences?.let {
       it.forEach { ref -> sessionTemplateEntity.permittedSessionGroups.add(this.getLocationGroupByReference(ref)) }
     }
@@ -194,7 +193,26 @@ class SessionTemplateService(
     val updatedSessionTemplateEntity = getSessionTemplate(reference)
 
     updateSessionTemplateDto.locationGroupReferences?.let {
+      updatedSessionTemplateEntity.permittedSessionGroups.clear()
       it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionGroups.add(this.getLocationGroupByReference(ref)) }
+    }
+
+    updateSessionTemplateDto.excludedPrisonerCategories?.let {
+      updatedSessionTemplateEntity.excludedPrisonerCategories.clear()
+      updateSessionTemplateDto.excludedPrisonerCategories.forEach {
+        updatedSessionTemplateEntity.excludedPrisonerCategories.add(
+          getSessionPrisonerCategory(it),
+        )
+      }
+    }
+
+    updateSessionTemplateDto.includedPrisonerCategories?.let {
+      updatedSessionTemplateEntity.includedPrisonerCategories.clear()
+      updateSessionTemplateDto.includedPrisonerCategories.forEach {
+        updatedSessionTemplateEntity.includedPrisonerCategories.add(
+          getSessionPrisonerCategory(it),
+        )
+      }
     }
 
     return SessionTemplateDto(updatedSessionTemplateEntity)
@@ -220,6 +238,22 @@ class SessionTemplateService(
     if (deleted > 1) {
       throw java.lang.IllegalStateException("More than one Session location group $reference was deleted!")
     }
+  }
+
+  private fun getSessionPrisonerCategory(code: String): SessionPrisonerCategory {
+    return categoryRepository.findByCode(code) ?: categoryRepository.saveAndFlush(SessionPrisonerCategory(code))
+  }
+
+  private fun getLocationGroupByReference(reference: String): SessionLocationGroup {
+    val sessionLocationGroup = sessionLocationGroupRepository.findByReference(reference)
+      ?: throw ItemNotFoundException("SessionLocationGroup reference:$reference not found")
+    return sessionLocationGroup
+  }
+
+  private fun getSessionTemplate(reference: String): SessionTemplate {
+    val sessionTemplate = sessionTemplateRepository.findByReference(reference)
+      ?: throw TemplateNotFoundException("Template reference:$reference not found")
+    return sessionTemplate
   }
 }
 

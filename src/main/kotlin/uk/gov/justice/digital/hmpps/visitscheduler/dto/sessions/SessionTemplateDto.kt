@@ -57,9 +57,8 @@ data class SessionTemplateDto(
   val excludedPrisonerCategories: List<String> = listOf(),
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
-    // TODO code dummy out to prevent delay to other tickets
-    includedPrisonerCategories = listOf("Category A incl"),
-    excludedPrisonerCategories = listOf("Category A excl"),
+    includedPrisonerCategories = sessionTemplateEntity.includedPrisonerCategories.map { it.code },
+    excludedPrisonerCategories = sessionTemplateEntity.excludedPrisonerCategories.map { it.code },
     reference = sessionTemplateEntity.reference,
     name = sessionTemplateEntity.name,
     prisonCode = sessionTemplateEntity.prison.code,

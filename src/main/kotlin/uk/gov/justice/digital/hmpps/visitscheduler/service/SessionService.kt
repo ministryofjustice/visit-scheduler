@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -64,14 +65,19 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
     }
 
-    val inclEnhancedPrivilegeTemplates = prisonerId?.let { prisonerService.hasPrisonerGotEnhancedPrivilege(prisonerId) } ?: run { true }
+    val prisoner = prisonerService.getPrisoner(prisonerId)
 
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
       prisonCode = prisonCode,
       rangeStartDate = requestedBookableStartDate,
       rangeEndDate = requestedBookableEndDate,
-      inclEnhancedPrivilegeTemplates = inclEnhancedPrivilegeTemplates,
+      inclEnhancedPrivilegeTemplates = prisoner?.let { prisoner.enhanced } ?: true,
     )
+
+    val prisonerCategory = prisoner?.let { prisoner.category }
+    prisonerCategory?.let {
+      sessionTemplates = filterByCategory(sessionTemplates, it)
+    }
 
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)
 
@@ -88,6 +94,15 @@ class SessionService(
     populateBookedCount(sessions)
 
     return sessions.sortedWith(compareBy { it.startTimestamp })
+  }
+
+  private fun filterByCategory(sessionTemplates: List<SessionTemplate>, prisonerCategory: String): List<SessionTemplate> {
+    val categoryFilter = { category: SessionPrisonerCategory -> category.code == prisonerCategory }
+    return sessionTemplates.filter {
+      it.includedPrisonerCategories.isEmpty() || it.includedPrisonerCategories.any { categoryFilter(it) }
+    }.filter {
+      it.excludedPrisonerCategories.isEmpty() || !it.excludedPrisonerCategories.any { categoryFilter(it) }
+    }
   }
 
   private fun buildVisitSessionsUsingTemplate(

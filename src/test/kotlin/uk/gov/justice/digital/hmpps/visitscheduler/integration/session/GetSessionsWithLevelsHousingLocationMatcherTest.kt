@@ -120,6 +120,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
       visitRoom = "session available to some level 4s and level 2s",
       permittedSessionGroups = mutableListOf(location4),
     )
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prison.code)
   }
 
   @Test

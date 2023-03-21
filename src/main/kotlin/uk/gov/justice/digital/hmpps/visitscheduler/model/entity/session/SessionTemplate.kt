@@ -74,4 +74,21 @@ class SessionTemplate(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   val dayOfWeek: DayOfWeek,
+
+  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
+  @JoinTable(
+    name = "SESSION_TO_INCLUDED_PRISONER_CATEGORY",
+    joinColumns = [JoinColumn(name = "session_template_id")],
+    inverseJoinColumns = [JoinColumn(name = "prisoner_category_id")],
+  )
+  val includedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
+
+  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
+  @JoinTable(
+    name = "SESSION_TO_EXCLUDED_PRISONER_CATEGORY",
+    joinColumns = [JoinColumn(name = "session_template_id")],
+    inverseJoinColumns = [JoinColumn(name = "prisoner_category_id")],
+  )
+  val excludedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
+
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

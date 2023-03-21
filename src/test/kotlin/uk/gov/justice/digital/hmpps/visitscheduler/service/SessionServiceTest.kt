@@ -19,6 +19,7 @@ import org.springframework.data.projection.SpelAwareProxyProjectionFactory
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
@@ -70,14 +71,10 @@ class SessionServiceTest {
   private val noticeDaysMin = 1L
   private val noticeDaysMax = 100L
 
-  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incEnhancedPrivilege: Boolean = true) {
+  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incEnhancedPrivilege: Boolean = true, category: String ? = null) {
     whenever(
-      prisonerService.hasPrisonerGotEnhancedPrivilege(any()),
-    ).thenReturn(incEnhancedPrivilege)
-
-    whenever(
-      prisonerService.hasPrisonerGotEnhancedPrivilege(any()),
-    ).thenReturn(incEnhancedPrivilege)
+      prisonerService.getPrisoner(any()),
+    ).thenReturn(PrisonerDto(enhanced = incEnhancedPrivilege, category = category))
 
     whenever(
       sessionTemplateRepository.findValidSessionTemplatesBy(
