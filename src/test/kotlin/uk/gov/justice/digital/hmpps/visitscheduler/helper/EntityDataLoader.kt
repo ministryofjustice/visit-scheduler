@@ -305,6 +305,7 @@ class DeleteEntityHelper(
   private val sessionRepository: TestSessionTemplateRepository,
   private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
+  private val sessionPrisonerCategoryRepository: SessionPrisonerCategoryRepository,
 ) {
 
   fun deleteAll() {
@@ -320,6 +321,8 @@ class DeleteEntityHelper(
     permittedSessionLocationRepository.flush()
     prisonRepository.deleteAll()
     prisonRepository.flush()
+    sessionPrisonerCategoryRepository.deleteAll()
+    sessionPrisonerCategoryRepository.flush()
   }
 }
 

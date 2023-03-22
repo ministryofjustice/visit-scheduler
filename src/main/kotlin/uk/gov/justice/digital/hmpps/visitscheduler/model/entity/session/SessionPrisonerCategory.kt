@@ -7,7 +7,9 @@ import jakarta.persistence.FetchType
 import jakarta.persistence.ManyToMany
 import jakarta.persistence.PreRemove
 import jakarta.persistence.Table
+import org.hibernate.annotations.CreationTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "SESSION_PRISONER_CATEGORY")
@@ -23,6 +25,10 @@ class SessionPrisonerCategory(
 
   @ManyToMany(mappedBy = "includedPrisonerCategories", fetch = FetchType.LAZY, cascade = [CascadeType.DETACH])
   val includedSessionTemplate: MutableList<SessionTemplate> = mutableListOf()
+
+  @CreationTimestamp
+  @Column
+  val createTimestamp: LocalDateTime? = null
 
   @PreRemove
   private fun removeCategories() {
