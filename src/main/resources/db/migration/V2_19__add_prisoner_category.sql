@@ -2,8 +2,7 @@ CREATE TABLE session_prisoner_category
 (
     id                  serial          NOT NULL PRIMARY KEY,
     code                varchar(100)    UNIQUE NOT NULL,
-    create_timestamp    timestamp       default current_timestamp,
-    modify_timestamp    timestamp       default current_timestamp
+    create_timestamp    timestamp       default current_timestamp
 );
 
 
