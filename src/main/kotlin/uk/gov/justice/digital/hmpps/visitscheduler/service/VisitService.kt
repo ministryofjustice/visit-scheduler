@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
@@ -44,6 +45,7 @@ class VisitService(
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
+  private val authenticationHelperService: AuthenticationHelperService,
   private val prisonConfigService: PrisonConfigService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
@@ -264,6 +266,12 @@ class VisitService(
     }
 
     return visit
+  }
+
+  @Deprecated("This method has been deprecated.")
+  fun cancelVisit(reference: String, outcomeDto: OutcomeDto): VisitDto {
+    val cancelVisitDto = CancelVisitDto(outcomeDto, authenticationHelperService.currentUserName)
+    return cancelVisit(reference, cancelVisitDto)
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {

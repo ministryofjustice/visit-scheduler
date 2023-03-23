@@ -34,12 +34,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDateTime
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
+const val V2_VISIT_CONTROLLER_PATH: String = "/v2/visits"
 const val VISIT_CONTROLLER_SEARCH_PATH: String = "$VISIT_CONTROLLER_PATH/search"
 const val VISIT_RESERVE_SLOT: String = "$VISIT_CONTROLLER_PATH/slot/reserve"
 const val VISIT_RESERVED_SLOT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/slot/change"
 const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/change"
 const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
-const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
+const val VISIT_CANCEL: String = "$V2_VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 
 @RestController
