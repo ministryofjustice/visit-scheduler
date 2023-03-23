@@ -95,6 +95,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       legacyData = CreateLegacyDataRequestDto(123),
       createDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
       modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30),
+      actionedBy = "Aled Evans",
     )
   }
 
@@ -143,6 +144,7 @@ class MigrateVisitTest : IntegrationTestBase() {
           tuple(VISIT_COMMENT, "A visit comment"),
           tuple(STATUS_CHANGED_REASON, "Status has changed"),
         )
+      assertThat(visit.createdBy).isEqualTo("Aled Evans")
 
       val legacyData = legacyDataRepository.findByVisitId(visit.id)
       assertThat(legacyData).isNotNull
