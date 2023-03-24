@@ -16,6 +16,7 @@ class AuthAwareTokenConverter : Converter<Jwt, AbstractAuthenticationToken> {
     val claims = jwt.claims
     val principal = findPrincipal(claims)
     val authorities = extractAuthorities(jwt)
+
     return AuthAwareAuthenticationToken(jwt, principal, authorities)
   }
 

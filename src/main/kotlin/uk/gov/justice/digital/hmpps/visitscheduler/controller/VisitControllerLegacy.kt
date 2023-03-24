@@ -10,8 +10,8 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
-import org.springframework.web.bind.annotation.PatchMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
@@ -30,14 +30,13 @@ import kotlin.DeprecationLevel.WARNING
 class VisitControllerLegacy(
   private val visitService: VisitService,
 ) {
-
   @Deprecated("This endpoint should be changed to :$VISIT_CANCEL", ReplaceWith(VISIT_CANCEL), WARNING)
   @Suppress("KotlinDeprecation")
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PatchMapping("/{reference}/cancel")
+  @PutMapping("/{reference}/cancel")
   @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "Cancel an existing visit",
+    summary = "Cancel an existing booked visit",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
@@ -79,5 +78,7 @@ class VisitControllerLegacy(
     reference: String,
     @RequestBody @Valid
     cancelOutcome: OutcomeDto,
-  ): VisitDto = visitService.cancelVisit(reference.trim(), cancelOutcome)
+  ): VisitDto {
+    return visitService.cancelVisit(reference.trim(), cancelOutcome)
+  }
 }

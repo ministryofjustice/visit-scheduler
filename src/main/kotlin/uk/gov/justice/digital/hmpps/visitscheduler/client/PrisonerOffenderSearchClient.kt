@@ -6,7 +6,7 @@ import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.bodyToMono
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerIncentiveLevelDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import java.time.Duration
 
 @Component
@@ -14,10 +14,10 @@ class PrisonerOffenderSearchClient(
   @Qualifier("prisonerOffenderSearchWebClient") private val webClient: WebClient,
   @Value("\${prisoner.offender.search.timeout:10s}") private val apiTimeout: Duration,
 ) {
-  fun getPrisonerIncentiveLevel(offenderNo: String): PrisonerIncentiveLevelDto? {
+  fun getPrisoner(offenderNo: String): PrisonerSearchResultDto? {
     return webClient.get()
       .uri("/prisoner/$offenderNo")
       .accept(MediaType.APPLICATION_JSON)
-      .retrieve().bodyToMono<PrisonerIncentiveLevelDto>().block(apiTimeout)
+      .retrieve().bodyToMono<PrisonerSearchResultDto>().block(apiTimeout)
   }
 }

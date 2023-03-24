@@ -29,7 +29,12 @@ class CreateSessionsTemplateTest : IntegrationTestBase() {
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
     val sessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
 
-    val dto = createSessionTemplateDto(validToDate = LocalDate.now().plusDays(1), locationGroupReferences = mutableListOf(sessionGroup.reference))
+    val dto = createSessionTemplateDto(
+      validToDate = LocalDate.now().plusDays(1),
+      locationGroupReferences = mutableListOf(sessionGroup.reference),
+      includedPrisonerCategories = listOf("inc category"),
+      excludedPrisonerCategories = listOf("exc category"),
+    )
 
     // When
     val responseSpec = callCreateSessionTemplate(webTestClient, dto, setAuthorisation(roles = requiredRole))
@@ -52,5 +57,7 @@ class CreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups[0].reference).isEqualTo(dto.locationGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.biWeekly).isEqualTo(dto.biWeekly)
     Assertions.assertThat(sessionTemplateDto.enhanced).isEqualTo(true)
+    Assertions.assertThat(sessionTemplateDto.includedPrisonerCategories[0]).isEqualTo(dto.includedPrisonerCategories[0])
+    Assertions.assertThat(sessionTemplateDto.excludedPrisonerCategories[0]).isEqualTo(dto.excludedPrisonerCategories[0])
   }
 }

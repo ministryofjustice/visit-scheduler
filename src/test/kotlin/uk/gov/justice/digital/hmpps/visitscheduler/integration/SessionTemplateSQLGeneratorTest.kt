@@ -45,6 +45,8 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
       assertThat(biWeekly).isFalse()
       assertThat(locationKeys).isEqualTo("BLI_G1")
+      assertThat(incCategories).isEqualTo("INC_CAT")
+      assertThat(excCategories).isEqualTo("EXC_CAT")
     }
     with(sessionRecords[1]) {
       assertThat(prisonCode).isEqualTo("BL2")
@@ -60,6 +62,8 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.WEDNESDAY)
       assertThat(biWeekly).isTrue()
       assertThat(locationKeys).isEqualTo("BLI_G2")
+      assertThat(incCategories).isEqualTo("INC_CAT")
+      assertThat(excCategories).isEqualTo("EXC_CAT")
     }
   }
 
@@ -155,6 +159,8 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
       assertThat(locationKeys).isEqualTo("BLI_G1")
       assertThat(biWeekly).isFalse()
+      assertThat(incCategories).isEqualTo("INC_CAT")
+      assertThat(excCategories).isEqualTo("EXC_CAT")
     }
   }
 

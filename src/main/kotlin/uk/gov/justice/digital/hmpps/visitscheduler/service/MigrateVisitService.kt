@@ -3,10 +3,14 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -14,6 +18,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion
+import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 @Service
@@ -22,10 +28,13 @@ class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
   private val prisonConfigService: PrisonConfigService,
+  private val snsService: SnsService,
+  private val authenticationHelperService: AuthenticationHelperService,
   private val telemetryClient: TelemetryClient,
 ) {
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
+    val actionedBy = migrateVisitRequest.actionedBy ?: authenticationHelperService.currentUserName
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
@@ -43,6 +52,7 @@ class MigrateVisitService(
         visitRestriction = migrateVisitRequest.visitRestriction,
         visitStart = migrateVisitRequest.startTimestamp,
         visitEnd = migrateVisitRequest.endTimestamp,
+        createdBy = actionedBy,
       ),
     )
 
@@ -76,7 +86,7 @@ class MigrateVisitService(
       saveLegacyData(visitEntity, null)
     }
 
-    sendTelemetryData(visitEntity)
+    sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
     visitRepository.saveAndFlush(visitEntity)
 
@@ -92,22 +102,64 @@ class MigrateVisitService(
     return visitEntity.reference
   }
 
-  private fun sendTelemetryData(visitEntity: Visit) {
-    telemetryClient.trackEvent(
-      TelemetryVisitEvents.VISIT_MIGRATED_EVENT.eventName,
-      mapOf(
-        "reference" to visitEntity.reference,
-        "prisonerId" to visitEntity.prisonerId,
-        "prisonId" to visitEntity.prison.code,
-        "visitType" to visitEntity.visitType.name,
-        "visitRoom" to visitEntity.visitRoom,
-        "visitRestriction" to visitEntity.visitRestriction.name,
-        "visitStart" to visitEntity.visitStart.toString(),
-        "visitStatus" to visitEntity.visitStatus.name,
-        "outcomeStatus" to visitEntity.outcomeStatus?.name,
-      ),
-      null,
+  fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
+    val cancelOutcome = cancelVisitDto.cancelOutcome
+
+    if (visitRepository.isBookingCancelled(reference)) {
+      // If already canceled then just return object and do nothing more!
+      VisitService.LOG.debug("The visit $reference has already been canceled!")
+      val canceledVisit = visitRepository.findByReference(reference)!!
+      return VisitDto(canceledVisit)
+    }
+
+    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Canceled migrated visit $reference not found ")
+
+    visitEntity.visitStatus = CANCELLED
+    visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
+    visitEntity.cancelledBy = cancelVisitDto.actionedBy
+
+    cancelOutcome.text?.let {
+      visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
+    }
+
+    sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
+
+    val visit = VisitDto(visitRepository.saveAndFlush(visitEntity))
+    snsService.sendVisitCancelledEvent(visit)
+    return visit
+  }
+
+  private fun sendMigratedTrackEvent(visitEntity: Visit, type: TelemetryVisitEvents) {
+    val eventsMap = createVisitTrackEventFromVisitEntity(visitEntity)
+    visitEntity.outcomeStatus?.let {
+      eventsMap.put("outcomeStatus", it.name)
+    }
+    trackEvent(
+      type.eventName,
+      eventsMap,
     )
+  }
+
+  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): MutableMap<String, String> {
+    return mutableMapOf(
+      "reference" to visitEntity.reference,
+      "prisonerId" to visitEntity.prisonerId,
+      "prisonId" to visitEntity.prison.code,
+      "visitType" to visitEntity.visitType.name,
+      "visitRoom" to visitEntity.visitRoom,
+      "visitRestriction" to visitEntity.visitRestriction.name,
+      "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStatus" to visitEntity.visitStatus.name,
+      "applicationReference" to visitEntity.applicationReference,
+    )
+  }
+
+  private fun trackEvent(eventName: String, properties: Map<String, String>) {
+    try {
+      telemetryClient.trackEvent(eventName, properties, null)
+    } catch (e: RuntimeException) {
+      Companion.LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
+    }
   }
 
   private fun capitalise(sentence: String): String =

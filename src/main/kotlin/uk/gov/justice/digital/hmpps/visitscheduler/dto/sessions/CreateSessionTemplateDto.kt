@@ -55,4 +55,10 @@ data class CreateSessionTemplateDto(
 
   @Schema(description = "biWeekly time table", example = "true", required = true)
   val biWeekly: Boolean,
+
+  @Schema(description = "list of included prisoner categories", required = false)
+  val includedPrisonerCategories: List<String> = listOf(),
+
+  @Schema(description = "list of excluded prisoner categories", required = false)
+  val excludedPrisonerCategories: List<String> = listOf(),
 )
