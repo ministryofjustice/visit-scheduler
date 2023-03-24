@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
@@ -236,7 +235,7 @@ class VisitController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = OutcomeDto::class),
+          schema = Schema(implementation = CancelVisitDto::class),
         ),
       ],
     ),

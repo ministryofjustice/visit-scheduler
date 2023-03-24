@@ -6,6 +6,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.LOCATION_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_LOCATION_GROUPS_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_SESSION_TEMPLATE_PATH
@@ -39,6 +40,24 @@ fun callCancelVisit(
 
 fun getCancelVisitUrl(reference: String): String {
   return VISIT_CANCEL.replace("{reference}", reference)
+}
+
+fun callMigrateCancelVisit(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  reference: String,
+  cancelVisitDto: CancelVisitDto? = null,
+): ResponseSpec {
+  return callPut(
+    cancelVisitDto,
+    webTestClient,
+    getMigrateCancelVisitUrl(reference),
+    authHttpHeaders,
+  )
+}
+
+fun getMigrateCancelVisitUrl(reference: String): String {
+  return MIGRATE_CANCEL.replace("{reference}", reference)
 }
 
 fun callVisitReserveSlotChange(

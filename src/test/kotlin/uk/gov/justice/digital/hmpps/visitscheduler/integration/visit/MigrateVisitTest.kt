@@ -21,15 +21,20 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyDataRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
@@ -40,6 +45,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -89,6 +95,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       legacyData = CreateLegacyDataRequestDto(123),
       createDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
       modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30),
+      actionedBy = "Aled Evans",
     )
   }
 
@@ -137,6 +144,7 @@ class MigrateVisitTest : IntegrationTestBase() {
           tuple(VISIT_COMMENT, "A visit comment"),
           tuple(STATUS_CHANGED_REASON, "Status has changed"),
         )
+      assertThat(visit.createdBy).isEqualTo("Aled Evans")
 
       val legacyData = legacyDataRepository.findByVisitId(visit.id)
       assertThat(legacyData).isNotNull
@@ -144,25 +152,8 @@ class MigrateVisitTest : IntegrationTestBase() {
         assertThat(legacyData.visitId).isEqualTo(visit.id)
         assertThat(legacyData.leadPersonId).isEqualTo(123)
       }
+      assertTelemetryClientEvents(VisitDto(visit), TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
     }
-
-    // And
-    verify(telemetryClient).trackEvent(
-      eq("visit-migrated"),
-      org.mockito.kotlin.check {
-        assertThat(it["reference"]).isEqualTo(reference)
-        assertThat(it["prisonerId"]).isEqualTo("FF0000FF")
-        assertThat(it["prisonId"]).isEqualTo("MDI")
-        assertThat(it["visitType"]).isEqualTo(SOCIAL.name)
-        assertThat(it["visitRoom"]).isEqualTo("A1")
-        assertThat(it["visitRestriction"]).isEqualTo(OPEN.name)
-        assertThat(it["visitStart"]).isEqualTo(visitTime.format(DateTimeFormatter.ISO_DATE_TIME))
-        assertThat(it["visitStatus"]).isEqualTo(BOOKED.name)
-        assertThat(it["outcomeStatus"]).isEqualTo(COMPLETED_NORMALLY.name)
-      },
-      isNull(),
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
   }
 
   @Test
@@ -627,6 +618,40 @@ class MigrateVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isUnauthorized
   }
 
+  @Test
+  fun `cancel visit migrated by reference -  with outcome and outcome text`() {
+    // Given
+    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+
+    val cancelVisitDto = CancelVisitDto(
+      OutcomeDto(
+        PRISONER_CANCELLED,
+        "Prisoner got covid",
+      ),
+      CancelVisitTest.cancelledByByUser,
+    )
+    val reference = visit.reference
+
+    // When
+    val responseSpec = callMigrateCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_MIGRATE_VISITS")), reference, cancelVisitDto)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+      .returnResult()
+
+    // And
+    val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    CancelVisitTest.assertVisitCancellation(visitCancelled, PRISONER_CANCELLED, cancelVisitDto.actionedBy)
+    assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
+    assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
+    assertThat(visitCancelled.createdBy).isEqualTo(visit.createdBy)
+    assertThat(visitCancelled.updatedBy).isEqualTo(visit.updatedBy)
+
+    assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
+    assertCancelledDomainEvent(visitCancelled)
+  }
+
   private fun getReference(responseSpec: ResponseSpec): String {
     var reference = ""
     responseSpec.expectBody()
@@ -659,5 +684,54 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   companion object {
     val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
+  }
+
+  fun assertTelemetryClientEvents(
+    cancelledVisit: VisitDto,
+    type: TelemetryVisitEvents,
+  ) {
+    verify(telemetryClient).trackEvent(
+      eq(type.eventName),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
+        assertThat(it["applicationReference"]).isEqualTo(cancelledVisit.applicationReference)
+        assertThat(it["prisonerId"]).isEqualTo(cancelledVisit.prisonerId)
+        assertThat(it["prisonId"]).isEqualTo(cancelledVisit.prisonCode)
+        assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
+        assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
+        assertThat(it["visitRestriction"]).isEqualTo(cancelledVisit.visitRestriction.name)
+        assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
+        assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
+      },
+      isNull(),
+    )
+
+    val eventsMap = mutableMapOf(
+      "reference" to cancelledVisit.reference,
+      "applicationReference" to cancelledVisit.applicationReference,
+      "prisonerId" to cancelledVisit.prisonerId,
+      "prisonId" to cancelledVisit.prisonCode,
+      "visitType" to cancelledVisit.visitType.name,
+      "visitRoom" to cancelledVisit.visitRoom,
+      "visitRestriction" to cancelledVisit.visitRestriction.name,
+      "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStatus" to cancelledVisit.visitStatus.name,
+      "outcomeStatus" to cancelledVisit.outcomeStatus!!.name,
+    )
+    verify(telemetryClient, times(1)).trackEvent(type.eventName, eventsMap, null)
+  }
+
+  fun assertCancelledDomainEvent(
+    cancelledVisit: VisitDto,
+  ) {
+    verify(telemetryClient).trackEvent(
+      eq("prison-visit.cancelled-domain-event"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
+      },
+      isNull(),
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
   }
 }

@@ -8,14 +8,7 @@ enum class TelemetryVisitEvents(val eventName: String) {
   VISIT_CANCELLED_EVENT("visit-cancelled"),
   VISIT_DELETED_EVENT("visit-expired-visits-deleted"),
   VISIT_MIGRATED_EVENT("visit-migrated"),
-
-  @Suppress("KotlinDeprecation")
-  @Deprecated("Legacy version - to be removed")
-  VISIT_UPDATED_EVENT("visit-updated"),
-
-  SESSION_TEMPLATE_CREATED("session-template-created"),
-  SESSION_TEMPLATE_DELETED("session-template-deleted"),
-
+  CANCELLED_VISIT_MIGRATED_EVENT("cancelled-visit-migrated"),
   ACCESS_DENIED_ERROR_EVENT("visit-access-denied-error"),
   INTERNAL_SERVER_ERROR_EVENT("visit-internal-server-error"),
   BAD_REQUEST_ERROR_EVENT("visit-bad-request-error"),
