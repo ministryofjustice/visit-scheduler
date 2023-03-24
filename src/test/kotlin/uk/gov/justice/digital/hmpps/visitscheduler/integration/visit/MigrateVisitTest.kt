@@ -73,7 +73,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_MIGRATE_VISITS"))
   }
 
-  private fun createMigrateVisitRequestDto(actionedBy : String ?= "Aled Evans",): MigrateVisitRequestDto {
+  private fun createMigrateVisitRequestDto(actionedBy: String ? = "Aled Evans"): MigrateVisitRequestDto {
     return MigrateVisitRequestDto(
       prisonCode = "MDI",
       prisonerId = "FF0000FF",
