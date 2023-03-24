@@ -43,6 +43,8 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
       locationGroupReferences = mutableListOf(sessionGroup.reference),
       biWeekly = !sessionTemplate.biWeekly,
       enhanced = !sessionTemplate.enhanced,
+      includedPrisonerCategories = listOf("inc category"),
+      excludedPrisonerCategories = listOf("exc category"),
     )
 
     // When
@@ -63,6 +65,8 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups[0].reference).isEqualTo(dto.locationGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.biWeekly).isEqualTo(dto.biWeekly)
     Assertions.assertThat(sessionTemplateDto.enhanced).isEqualTo(true)
+    Assertions.assertThat(sessionTemplateDto.includedPrisonerCategories[0]).isEqualTo(dto.includedPrisonerCategories!![0])
+    Assertions.assertThat(sessionTemplateDto.excludedPrisonerCategories[0]).isEqualTo(dto.excludedPrisonerCategories!![0])
   }
 
   @Test
@@ -79,5 +83,44 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
     val errorResponse = getErrorResponse(responseSpec)
     Assertions.assertThat(errorResponse.userMessage).isEqualTo("Template not found: null")
     Assertions.assertThat(errorResponse.developerMessage).isEqualTo("Template reference:$reference not found")
+  }
+
+  @Test
+  fun `update session template - check duplicate sub objects`() {
+    // Given
+    val initCategoryInc = sessionPrisonerCategoryEntityHelper.create("Category Inc 1")
+    val initCategoryExc = sessionPrisonerCategoryEntityHelper.create("Category Exc 1")
+    val initAllowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("B", "1", "001"))
+    val initSessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = initAllowedPermittedLocations)
+
+    val sessionTemplateWithSubObjects = sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
+      permittedSessionGroups = mutableListOf(initSessionGroup),
+      includedPrisonerCategories = mutableListOf(initCategoryInc),
+      excludedPrisonerCategories = mutableListOf(initCategoryExc),
+    )
+
+    val updatedAllowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
+    val updatedSessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = updatedAllowedPermittedLocations)
+
+    val dto = createUpdateSessionTemplateDto(
+      locationGroupReferences = mutableListOf(updatedSessionGroup.reference),
+      includedPrisonerCategories = listOf("Category Inc 2"),
+      excludedPrisonerCategories = listOf("Category Inc 2"),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithSubObjects.reference, dto, setAuthorisation(roles = requiredRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.permittedLocationGroups).hasSize(1)
+    Assertions.assertThat(sessionTemplateDto.permittedLocationGroups[0].reference).isEqualTo(dto.locationGroupReferences!![0])
+    Assertions.assertThat(sessionTemplateDto.includedPrisonerCategories).hasSize(1)
+    Assertions.assertThat(sessionTemplateDto.includedPrisonerCategories[0]).isEqualTo(dto.includedPrisonerCategories!![0])
+    Assertions.assertThat(sessionTemplateDto.excludedPrisonerCategories).hasSize(1)
+    Assertions.assertThat(sessionTemplateDto.excludedPrisonerCategories[0]).isEqualTo(dto.excludedPrisonerCategories!![0])
   }
 }

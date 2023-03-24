@@ -51,8 +51,14 @@ data class SessionTemplateDto(
   val dayOfWeek: DayOfWeek?,
   @Schema(description = "list of permitted session location groups", required = false)
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
+  @Schema(description = "list of included prisoner categories", required = false)
+  val includedPrisonerCategories: List<String> = listOf(),
+  @Schema(description = "list of excluded prisoner categories", required = false)
+  val excludedPrisonerCategories: List<String> = listOf(),
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
+    includedPrisonerCategories = sessionTemplateEntity.includedPrisonerCategories.map { it.code },
+    excludedPrisonerCategories = sessionTemplateEntity.excludedPrisonerCategories.map { it.code },
     reference = sessionTemplateEntity.reference,
     name = sessionTemplateEntity.name,
     prisonCode = sessionTemplateEntity.prison.code,

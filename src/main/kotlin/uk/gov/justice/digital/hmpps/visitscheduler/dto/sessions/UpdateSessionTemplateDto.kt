@@ -32,11 +32,17 @@ data class UpdateSessionTemplateDto(
   val openCapacity: Int? = null,
 
   @Schema(description = "list of group references for permitted session location groups", required = false)
-  val locationGroupReferences: List<String>? = listOf(),
+  val locationGroupReferences: List<String>? = null,
 
   @Schema(description = "enhanced privilege", example = "true", required = true)
   val enhanced: Boolean? = null,
 
   @Schema(description = "biWeekly time table", example = "true", required = true)
   val biWeekly: Boolean? = null,
+
+  @Schema(description = "list of included prisoner categories", required = false)
+  val includedPrisonerCategories: List<String>? = null,
+
+  @Schema(description = "list of excluded prisoner categories", required = false)
+  val excludedPrisonerCategories: List<String>? = null,
 )

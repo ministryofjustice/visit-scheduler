@@ -11,6 +11,7 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
@@ -44,6 +45,7 @@ class VisitService(
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
+  private val authenticationHelperService: AuthenticationHelperService,
   private val prisonConfigService: PrisonConfigService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
@@ -80,6 +82,7 @@ class VisitService(
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
         _reference = bookingReference,
+        createdBy = reserveVisitSlotDto.actionedBy,
       ),
     )
 
@@ -235,10 +238,15 @@ class VisitService(
     val changedVisit = existingBookedVisit != null
     if (changedVisit) {
       // the existing booking should always be saved before the new booking, see VisitRepository.findByReference
-      existingBookedVisit?.let {
-        it.visitStatus = CANCELLED
-        it.outcomeStatus = SUPERSEDED_CANCELLATION
-        visitRepository.saveAndFlush(it)
+
+      existingBookedVisit?.let { existingBooking ->
+        existingBooking.visitStatus = CANCELLED
+        existingBooking.outcomeStatus = SUPERSEDED_CANCELLATION
+        visitRepository.saveAndFlush(existingBooking)
+
+        // set the new bookings updated by to current username and set createdBy to existing booking username
+        visitToBook.updatedBy = visitToBook.createdBy
+        visitToBook.createdBy = existingBooking.createdBy
       }
     }
 
@@ -260,7 +268,15 @@ class VisitService(
     return visit
   }
 
-  fun cancelVisit(reference: String, cancelOutcome: OutcomeDto): VisitDto {
+  @Deprecated("This method has been deprecated.")
+  fun cancelVisit(reference: String, outcomeDto: OutcomeDto): VisitDto {
+    val cancelVisitDto = CancelVisitDto(outcomeDto, authenticationHelperService.currentUserName)
+    return cancelVisit(reference, cancelVisitDto)
+  }
+
+  fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
+    val cancelOutcome = cancelVisitDto.cancelOutcome
+
     if (visitRepository.isBookingCancelled(reference)) {
       // If already canceled then just return object and do nothing more!
       LOG.debug("The visit $reference has already been canceled!")
@@ -269,14 +285,11 @@ class VisitService(
     }
 
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
-    val visitCancellationDateAllowed = getAllowedCancellationDate(
-      LocalDateTime.now(),
-      visitCancellationDayLimit = visitCancellationDayLimit.toLong(),
-    )
-    validateVisitStartDate(visitEntity, "cancelled", visitCancellationDateAllowed)
+    validateVisitStartDate(visitEntity, "cancelled", getAllowedCancellationDate(visitCancellationDayLimit = visitCancellationDayLimit))
 
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
+    visitEntity.cancelledBy = cancelVisitDto.actionedBy
 
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
@@ -354,11 +367,11 @@ class VisitService(
     }
   }
 
-  private fun getAllowedCancellationDate(currentDateTime: LocalDateTime, visitCancellationDayLimit: Long): LocalDateTime {
+  private fun getAllowedCancellationDate(currentDateTime: LocalDateTime = LocalDateTime.now(), visitCancellationDayLimit: Int): LocalDateTime {
     var visitCancellationDateAllowed = currentDateTime
     // check if the visit being cancelled is in the past
     if (visitCancellationDayLimit > 0) {
-      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS)
+      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit.toLong()).truncatedTo(ChronoUnit.DAYS)
     }
 
     return visitCancellationDateAllowed

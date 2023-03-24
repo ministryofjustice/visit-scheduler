@@ -7,11 +7,13 @@ import org.springframework.stereotype.Service
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 
 @Service
 class PrisonerService(
@@ -79,16 +81,21 @@ class PrisonerService(
     return levels.stream().filter { level -> level.level == housingLevel }.findFirst().orElse(null)
   }
 
-  fun hasPrisonerGotEnhancedPrivilege(prisonerId: String): Boolean {
-    try {
-      val prisonerIncentiveLevel = prisonerOffenderSearchClient.getPrisonerIncentiveLevel(prisonerId)
-      return ENHANCED_INCENTIVE_PRIVILEGE == prisonerIncentiveLevel?.currentIncentive?.level?.code
-    } catch (e: WebClientResponseException) {
-      if (e.statusCode != HttpStatus.NOT_FOUND) {
-        LOG.error("Exception thrown on prisoner offender search call - /prisoner/$prisonerId", e)
-        throw e
+  fun getPrisoner(prisonerId: String?): PrisonerDto? {
+    return prisonerId?.let {
+      try {
+        val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
+        val enhanced = ENHANCED_INCENTIVE_PRIVILEGE == prisonerSearchResultDto?.currentIncentive?.level?.code
+        return PrisonerDto(category = prisonerSearchResultDto?.category, enhanced = enhanced)
+      } catch (e: WebClientResponseException) {
+        if (e.statusCode == HttpStatus.NOT_FOUND) {
+          LOG.error("Exception thrown on prisoner offender search call - /prisoner/$prisonerId", e)
+          throw ItemNotFoundException("Prisoner not found $prisonerId", e)
+        } else {
+          LOG.error("Exception thrown on prisoner offender search call - /prisoner/$prisonerId", e)
+          throw e
+        }
       }
     }
-    return false
   }
 }

@@ -53,4 +53,6 @@ data class MigrateVisitRequestDto(
   val visitors: Set<@Valid VisitorDto>? = setOf(),
   @Schema(description = "Visit notes", required = false)
   val visitNotes: Set<@Valid VisitNoteDto>? = setOf(),
+  @Schema(description = "Username for user who actioned this request", required = true)
+  val actionedBy: String? = null,
 )

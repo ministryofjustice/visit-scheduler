@@ -74,6 +74,15 @@ class Visit(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   var visitNotes: MutableList<VisitNote> = mutableListOf(),
 
+  @Column
+  var createdBy: String,
+
+  @Column
+  var updatedBy: String? = null,
+
+  @Column
+  var cancelledBy: String? = null,
+
   @Transient
   private val _reference: String = "",
 ) : AbstractIdEntity() {

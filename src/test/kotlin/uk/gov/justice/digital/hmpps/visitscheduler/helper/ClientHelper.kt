@@ -6,6 +6,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.LOCATION_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_LOCATION_GROUPS_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_SESSION_TEMPLATE_PATH
@@ -15,8 +16,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
@@ -27,10 +28,10 @@ fun callCancelVisit(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   reference: String,
-  outcome: OutcomeDto? = null,
+  cancelVisitDto: CancelVisitDto? = null,
 ): ResponseSpec {
   return callPut(
-    outcome,
+    cancelVisitDto,
     webTestClient,
     getCancelVisitUrl(reference),
     authHttpHeaders,
@@ -39,6 +40,24 @@ fun callCancelVisit(
 
 fun getCancelVisitUrl(reference: String): String {
   return VISIT_CANCEL.replace("{reference}", reference)
+}
+
+fun callMigrateCancelVisit(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  reference: String,
+  cancelVisitDto: CancelVisitDto? = null,
+): ResponseSpec {
+  return callPut(
+    cancelVisitDto,
+    webTestClient,
+    getMigrateCancelVisitUrl(reference),
+    authHttpHeaders,
+  )
+}
+
+fun getMigrateCancelVisitUrl(reference: String): String {
+  return MIGRATE_CANCEL.replace("{reference}", reference)
 }
 
 fun callVisitReserveSlotChange(

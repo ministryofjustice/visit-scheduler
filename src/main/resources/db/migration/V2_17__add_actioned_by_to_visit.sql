@@ -1,0 +1,3 @@
+ALTER TABLE visit ADD created_by VARCHAR(60) DEFAULT 'NOT_KNOWN';
+ALTER TABLE visit ADD updated_by VARCHAR(60);
+ALTER TABLE visit ADD cancelled_by VARCHAR(60);
