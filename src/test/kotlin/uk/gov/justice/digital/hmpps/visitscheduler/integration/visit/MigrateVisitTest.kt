@@ -73,7 +73,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_MIGRATE_VISITS"))
   }
 
-  private fun createMigrateVisitRequestDto(): MigrateVisitRequestDto {
+  private fun createMigrateVisitRequestDto(actionedBy : String ?= "Aled Evans",): MigrateVisitRequestDto {
     return MigrateVisitRequestDto(
       prisonCode = "MDI",
       prisonerId = "FF0000FF",
@@ -95,12 +95,12 @@ class MigrateVisitTest : IntegrationTestBase() {
       legacyData = CreateLegacyDataRequestDto(123),
       createDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
       modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30),
-      actionedBy = "Aled Evans",
+      actionedBy = actionedBy,
     )
   }
 
   @Test
-  fun `migrate visit`() {
+  fun `migrate visit 1`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto()
@@ -153,6 +153,27 @@ class MigrateVisitTest : IntegrationTestBase() {
         assertThat(legacyData.leadPersonId).isEqualTo(123)
       }
       assertTelemetryClientEvents(VisitDto(visit), TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
+    }
+  }
+
+  @Test
+  fun `client id is used for migrate visit when createdBy is not given`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(actionedBy = null)
+    val jsonBody = BodyInserters.fromValue(
+      migrateVisitRequestDto,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val visit = visitRepository.findByReference(getReference(responseSpec))
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.createdBy).isEqualTo("AUTH_ADM")
     }
   }
 
