@@ -100,7 +100,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `migrate visit 1`() {
+  fun `migrate visit`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto()
