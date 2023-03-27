@@ -36,6 +36,14 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun findByReference(reference: String): Visit?
 
   @Query(
+    "SELECT * FROM visit " +
+      "WHERE reference = :reference AND visit_status IN ('BOOKED','CANCELLED')  " +
+      "ORDER BY modify_timestamp",
+    nativeQuery = true,
+  )
+  fun findAllByReference(reference: String): List<Visit>
+
+  @Query(
     "SELECT v FROM Visit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') ",
   )
   fun findApplication(applicationReference: String): Visit?

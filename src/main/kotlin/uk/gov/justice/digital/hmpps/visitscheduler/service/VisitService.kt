@@ -318,6 +318,11 @@ class VisitService(
     return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
   }
 
+  @Transactional(readOnly = true)
+  fun getVisitHistoryByReference(reference: String): List<VisitDto> {
+    return visitRepository.findAllByReference(reference).map { VisitDto(it) }
+  }
+
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
     return VisitNote(
       visitId = visit.id,
