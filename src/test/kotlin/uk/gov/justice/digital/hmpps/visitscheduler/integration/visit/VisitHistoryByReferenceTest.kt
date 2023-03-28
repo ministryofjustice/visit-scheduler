@@ -43,6 +43,9 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.length()").isEqualTo(2)
       .jsonPath("$[0].reference").isEqualTo(reference)
+      .jsonPath("$[0].visitStatus").isEqualTo(BOOKED.name)
       .jsonPath("$[1].reference").isEqualTo(reference)
+      .jsonPath("$[1].visitStatus").isEqualTo(CANCELLED.name)
+
   }
 }
