@@ -38,7 +38,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Query(
     "SELECT * FROM visit " +
       "WHERE reference = :reference AND visit_status IN ('BOOKED','CANCELLED')  " +
-      "ORDER BY modify_timestamp",
+      "ORDER BY id",
     nativeQuery = true,
   )
   fun findAllByReference(reference: String): List<Visit>
