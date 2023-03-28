@@ -46,6 +46,5 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
       .jsonPath("$[0].visitStatus").isEqualTo(BOOKED.name)
       .jsonPath("$[1].reference").isEqualTo(reference)
       .jsonPath("$[1].visitStatus").isEqualTo(CANCELLED.name)
-
   }
 }

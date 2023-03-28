@@ -50,7 +50,7 @@ class BookVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedVisit = visitEntityHelper.create()
+    reservedVisit = visitEntityHelper.create(createdBy = "John Reserved")
 
     visitEntityHelper.createNote(visit = reservedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = reservedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
@@ -130,7 +130,7 @@ class BookVisitTest : IntegrationTestBase() {
     // Given
     val reference = reservedVisit.reference
 
-    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, reference = reference)
+    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, reference = reference, createdBy = "John Booked")
 
     visitEntityHelper.createNote(visit = bookedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = bookedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
@@ -160,7 +160,9 @@ class BookVisitTest : IntegrationTestBase() {
     val reservedEntity = visits.single { it.id == reservedVisit.id }
 
     Assertions.assertThat(bookedEntity.visitStatus).isEqualTo(CANCELLED)
+    Assertions.assertThat(bookedEntity.cancelledBy).isEqualTo("John Reserved")
     Assertions.assertThat(bookedEntity.outcomeStatus).isEqualTo(OutcomeStatus.SUPERSEDED_CANCELLATION)
+
     Assertions.assertThat(reservedEntity.visitStatus).isEqualTo(BOOKED)
     Assertions.assertThat(reservedEntity.createdBy).isNotNull
     Assertions.assertThat(reservedEntity.createdBy).isEqualTo(bookedEntity.createdBy)
