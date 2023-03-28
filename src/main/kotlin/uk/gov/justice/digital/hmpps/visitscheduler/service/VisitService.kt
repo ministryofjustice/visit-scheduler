@@ -242,6 +242,7 @@ class VisitService(
       existingBookedVisit?.let { existingBooking ->
         existingBooking.visitStatus = CANCELLED
         existingBooking.outcomeStatus = SUPERSEDED_CANCELLATION
+        existingBooking.cancelledBy = visitToBook.createdBy
         visitRepository.saveAndFlush(existingBooking)
 
         // set the new bookings updated by to current username and set createdBy to existing booking username
