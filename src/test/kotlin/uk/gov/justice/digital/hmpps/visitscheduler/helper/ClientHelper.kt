@@ -5,6 +5,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_LOCATION_GROUPS_ADMIN_PATH
@@ -130,6 +131,14 @@ fun getVisitBookUrl(applicationReference: String): String {
   return VISIT_BOOK.replace("{applicationReference}", applicationReference)
 }
 
+fun callVisitHistoryByReference(
+  webTestClient: WebTestClient,
+  reference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callGet(webTestClient, getVisitHistoryByReferenceUrl(reference), authHttpHeaders)
+}
+
 fun callVisitByReference(
   webTestClient: WebTestClient,
   reference: String,
@@ -250,6 +259,10 @@ fun getReferenceUrl(url: String, reference: String): String {
 
 fun getVisitByReferenceUrl(reference: String): String {
   return getReferenceUrl(GET_VISIT_BY_REFERENCE, reference)
+}
+
+fun getVisitHistoryByReferenceUrl(reference: String): String {
+  return getReferenceUrl(GET_VISIT_HISTORY_CONTROLLER_PATH, reference)
 }
 
 fun getSessionTemplateByReferenceUrl(reference: String): String {

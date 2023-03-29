@@ -242,6 +242,7 @@ class VisitService(
       existingBookedVisit?.let { existingBooking ->
         existingBooking.visitStatus = CANCELLED
         existingBooking.outcomeStatus = SUPERSEDED_CANCELLATION
+        existingBooking.cancelledBy = visitToBook.createdBy
         visitRepository.saveAndFlush(existingBooking)
 
         // set the new bookings updated by to current username and set createdBy to existing booking username
@@ -316,6 +317,11 @@ class VisitService(
   @Transactional(readOnly = true)
   fun getVisitByReference(reference: String): VisitDto {
     return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
+  }
+
+  @Transactional(readOnly = true)
+  fun getVisitHistoryByReference(reference: String): List<VisitDto> {
+    return visitRepository.findAllByReference(reference).map { VisitDto(it) }
   }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {

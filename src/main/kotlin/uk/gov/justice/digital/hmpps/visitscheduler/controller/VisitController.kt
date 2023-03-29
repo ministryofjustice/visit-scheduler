@@ -34,6 +34,8 @@ import java.time.LocalDateTime
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
 const val V2_VISIT_CONTROLLER_PATH: String = "/v2/visits"
+const val GET_VISIT_HISTORY_CONTROLLER_PATH: String = "$VISIT_CONTROLLER_PATH/{reference}/history"
+
 const val VISIT_CONTROLLER_SEARCH_PATH: String = "$VISIT_CONTROLLER_PATH/search"
 const val VISIT_RESERVE_SLOT: String = "$VISIT_CONTROLLER_PATH/slot/reserve"
 const val VISIT_RESERVED_SLOT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/slot/change"
@@ -407,5 +409,45 @@ class VisitController(
     reference: String,
   ): VisitDto {
     return visitService.getVisitByReference(reference.trim())
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(GET_VISIT_HISTORY_CONTROLLER_PATH)
+  @Operation(
+    summary = "Get visit history",
+    description = "Retrieve visit history by visit reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit History Information Returned",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to Get visit history",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions retrieve visit history",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Visit not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getVisitHistoryByReference(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+  ): List<VisitDto> {
+    return visitService.getVisitHistoryByReference(reference.trim())
   }
 }
