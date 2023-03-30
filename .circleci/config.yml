@@ -46,6 +46,8 @@ jobs:
           paths:
             - build/libs
             - build.gradle.kts
+    # The resource_class feature allows configuring CPU and RAM resources for each job. Different resource classes are available for different executors. https://circleci.com/docs/2.0/configuration-reference/#resourceclass
+    resource_class: large
 
 workflows:
   version: 2
@@ -121,7 +123,7 @@ workflows:
   build-test-develop-flow:
     when:
       and:
-         - equal: [ develop, << pipeline.git.branch >> ]
+        - equal: [ develop, << pipeline.git.branch >> ]
     jobs:
       - validate:
           filters:
