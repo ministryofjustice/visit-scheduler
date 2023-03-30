@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import com.microsoft.applicationinsights.TelemetryClient
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -8,8 +10,9 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
-import org.springframework.test.annotation.DirtiesContext
+import org.springframework.cache.CacheManager
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 
 @DisplayName("Get /visit-support")
@@ -21,8 +24,16 @@ class VisitSupportControllerTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var supportTypeRepository: SupportTypeRepository
 
+  @Autowired
+  private lateinit var cacheManager: CacheManager
+
+  @BeforeEach
+  @AfterEach
+  fun clearCache() {
+    cacheManager.getCache("support-types")?.clear()
+  }
+
   @Test
-  @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
   fun `all available support is returned`() {
     // Give
     val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
@@ -41,7 +52,6 @@ class VisitSupportControllerTest : IntegrationTestBase() {
   }
 
   @Test
-  @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
   fun `when support is called twice cached values are returned the second time`() {
     // Give
     val requiredRole = listOf("ROLE_VISIT_SCHEDULER")

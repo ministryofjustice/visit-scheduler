@@ -1,12 +1,15 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.config
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.AfterEach
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
-import org.springframework.test.annotation.DirtiesContext
+import org.springframework.cache.CacheManager
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.SUPPORTED_PRISONS
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -18,10 +21,18 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var prisonRepository: PrisonRepository
 
+  @Autowired
+  private lateinit var cacheManager: CacheManager
+
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
+  @BeforeEach
+  @AfterEach
+  fun clearCache() {
+    cacheManager.getCache("supported-prisons")?.clear()
+  }
+
   @Test
-  @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
   fun `all supported prisons are returned in correct order`() {
     // Given
     val today = LocalDate.now()
@@ -53,7 +64,6 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
   }
 
   @Test
-  @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
   fun `when supported prisons is called twice cached values are returned the second time`() {
     // Given
     val today = LocalDate.now()
@@ -90,7 +100,6 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
   }
 
   @Test
-  @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
   fun `sessions with inactive prisons are not returned`() {
     // Given
     sessionTemplateEntityHelper.create(prisonCode = "GRE", activePrison = false)
