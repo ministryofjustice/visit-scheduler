@@ -9,6 +9,8 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.test.annotation.DirtiesContext
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 
 @DisplayName("Get /visit-support")
 class VisitSupportControllerTest : IntegrationTestBase() {
@@ -16,7 +18,11 @@ class VisitSupportControllerTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
+  @SpyBean
+  private lateinit var supportTypeRepository: SupportTypeRepository
+
   @Test
+  @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
   fun `all available support is returned`() {
     // Give
     val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
@@ -30,6 +36,38 @@ class VisitSupportControllerTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.length()").isEqualTo(5)
+
+    verify(supportTypeRepository, times(1)).findAll()
+  }
+
+  @Test
+  @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
+  fun `when support is called twice cached values are returned the second time`() {
+    // Give
+    val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+
+    // When
+    var responseSpec = webTestClient.get().uri("/visit-support")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    responseSpec.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(5)
+
+    // when a 2nd call is made results are still returned but from cache
+    responseSpec = webTestClient.get().uri("/visit-support")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then results are the same as the first call
+    responseSpec.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.length()").isEqualTo(5)
+
+    // verify that call to supportTypeRepository was only made once
+    verify(supportTypeRepository, times(1)).findAll()
   }
 
   @Test

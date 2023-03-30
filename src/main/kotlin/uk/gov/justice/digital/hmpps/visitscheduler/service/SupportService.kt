@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SupportTypeDto
@@ -11,6 +12,7 @@ class SupportService(
 ) {
 
   @Transactional(readOnly = true)
+  @Cacheable("support-types")
   fun getSupportTypes(): List<SupportTypeDto> {
     // Revisit externalising support types and content management
     return supportTypeRepository.findAll().sortedBy { it.code }.map { SupportTypeDto(it) }

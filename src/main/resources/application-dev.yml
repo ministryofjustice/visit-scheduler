@@ -41,3 +41,10 @@ task:
     enabled: true
     cron: 0 0/10 * * * ?
     validity-minutes: 20
+
+cache:
+  evict:
+    support-types:
+      cron: "0 */15 * * * ?"
+    supported-prisons:
+      cron: "0 */15 * * * ?"
