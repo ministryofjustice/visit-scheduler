@@ -2,18 +2,17 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
-import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerCellDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
 
 @Service
 class PrisonerService(
@@ -26,44 +25,64 @@ class PrisonerService(
   }
 
   fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
-    try {
-      val offenderNonAssociationList = prisonApiClient.getOffenderNonAssociation(prisonerId)?.nonAssociations ?: emptyList()
+    val offenderNonAssociationDetails = prisonApiClient.getOffenderNonAssociation(prisonerId)
+    offenderNonAssociationDetails?.let {
+      val offenderNonAssociationList = offenderNonAssociationDetails.nonAssociations
       LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${offenderNonAssociationList.size} non associations!")
       return offenderNonAssociationList
-    } catch (e: WebClientResponseException) {
-      if (e.statusCode != HttpStatus.NOT_FOUND) {
-        LOG.error("Exception thrown on prison API call - /api/offenders/$prisonerId/non-association-details", e)
-        throw e
-      }
     }
-
     return emptyList()
   }
 
   fun getPrisonerFullStatus(prisonerId: String): PrisonerDetailsDto? {
-    try {
-      return prisonApiClient.getPrisonerDetails(prisonerId)
-    } catch (e: WebClientResponseException) {
-      if (e.statusCode != HttpStatus.NOT_FOUND) {
-        LOG.error("Exception thrown on prison API call - /api/prisoners/$prisonerId/full-status", e)
-        throw e
+    return prisonApiClient.getPrisonerDetails(prisonerId)
+  }
+
+  fun getPrisonerLastHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? {
+    val prisonerDetailsDto = prisonApiClient.getPrisonerDetails(prisonerId)
+    prisonerDetailsDto?.let {
+      LOG.debug("getPrisonerLastHousingLocation response : $prisonerDetailsDto")
+      val location = getLastLocation(prisonerDetailsDto, prisonCode)
+      return location?.let {
+        return PrisonerHousingLocationsDto(levels = location.levels)
       }
     }
-
     return null
   }
 
-  fun getPrisonerHousingLocation(prisonerId: String): PrisonerHousingLocationsDto? {
-    try {
-      return prisonApiClient.getPrisonerHousingLocation(prisonerId)
-    } catch (e: WebClientResponseException) {
-      if (e.statusCode != HttpStatus.NOT_FOUND) {
-        LOG.error("Exception thrown on prison API call - /api/offenders/$prisonerId/housing-location", e)
-        throw e
+  private fun getLastLocation(
+    prisonerDetails: PrisonerDetailsDto,
+    prisonCode: String,
+  ): PrisonerCellDto? {
+    val cellHistory = prisonApiClient.getCellHistory(prisonerDetails.bookingId)
+    cellHistory?.let {
+      with(cellHistory) {
+        if (history.size > 1 && history[1].prisonCode == prisonCode) {
+          return history[1]
+        }
       }
     }
-
     return null
+  }
+
+  fun getPrisonerHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? {
+    val prisonerHousingLocationsDto = prisonApiClient.getPrisonerHousingLocation(prisonerId)
+    prisonerHousingLocationsDto?.let {
+      if (isPrisonerInTemporaryLocation(prisonerHousingLocationsDto)) {
+        return getPrisonerLastHousingLocation(prisonerId, prisonCode)
+      }
+      return prisonerHousingLocationsDto
+    }
+    return null
+  }
+
+  private fun isPrisonerInTemporaryLocation(prisonerHousingLocationsDto: PrisonerHousingLocationsDto?): Boolean {
+    prisonerHousingLocationsDto?.let {
+      if (it.levels.isNotEmpty()) {
+        return TransitionalLocationTypes.contains(it.levels[0].code)
+      }
+    }
+    return false
   }
 
   fun getLevelsMapForPrisoner(prisonerHousingLocationsDto: PrisonerHousingLocationsDto): Map<PrisonerHousingLevels, String?> {
@@ -81,21 +100,9 @@ class PrisonerService(
     return levels.stream().filter { level -> level.level == housingLevel }.findFirst().orElse(null)
   }
 
-  fun getPrisoner(prisonerId: String?): PrisonerDto? {
-    return prisonerId?.let {
-      try {
-        val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
-        val enhanced = ENHANCED_INCENTIVE_PRIVILEGE == prisonerSearchResultDto?.currentIncentive?.level?.code
-        return PrisonerDto(category = prisonerSearchResultDto?.category, enhanced = enhanced)
-      } catch (e: WebClientResponseException) {
-        if (e.statusCode == HttpStatus.NOT_FOUND) {
-          LOG.error("Exception thrown on prisoner offender search call - /prisoner/$prisonerId", e)
-          throw ItemNotFoundException("Prisoner not found $prisonerId", e)
-        } else {
-          LOG.error("Exception thrown on prisoner offender search call - /prisoner/$prisonerId", e)
-          throw e
-        }
-      }
-    }
+  fun getPrisoner(prisonerId: String): PrisonerDto? {
+    val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
+    val enhanced = ENHANCED_INCENTIVE_PRIVILEGE == prisonerSearchResultDto?.currentIncentive?.level?.code
+    return PrisonerDto(category = prisonerSearchResultDto?.category, enhanced = enhanced)
   }
 }

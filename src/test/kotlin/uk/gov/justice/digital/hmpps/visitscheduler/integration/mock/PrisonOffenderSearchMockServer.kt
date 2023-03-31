@@ -6,6 +6,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
+import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.CurrentIncentiveDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.IncentiveLevelDto
@@ -28,18 +29,32 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
     category: String? = null,
   ) {
     val currentIncentive = incentiveLevel?.let { CurrentIncentiveDto(incentiveLevel, LocalDateTime.now().minusMonths(1), LocalDate.now().plusMonths(1)) }
-
     val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonCode, category = category)
 
+    stubGetPrisoner(
+      prisonerId,
+      prisonerSearchResultDto,
+    )
+  }
+
+  fun stubGetPrisoner(
+    prisonerId: String,
+    prisonerSearchResultDto: PrisonerSearchResultDto?,
+  ) {
     stubFor(
       get("/prisoner/$prisonerId")
         .willReturn(
-          aResponse()
-            .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-            .withStatus(200)
-            .withBody(
-              getJsonString(prisonerSearchResultDto),
-            ),
+          if (prisonerSearchResultDto == null) {
+            aResponse().withStatus(HttpStatus.NOT_FOUND.value())
+          } else {
+            aResponse()
+              .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+              .withStatus(200)
+              .withBody(
+                getJsonString(prisonerSearchResultDto),
+              )
+          },
+
         ),
     )
   }

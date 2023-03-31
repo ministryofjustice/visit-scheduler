@@ -459,8 +459,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
-      LocalDate.now().minusMonths(6).toString(),
-      LocalDate.now().plusMonths(6).toString(),
+      LocalDate.now().minusMonths(6),
+      LocalDate.now().plusMonths(6),
     )
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
@@ -490,7 +490,7 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
   }
 
   private fun getNextAllowedDay(): LocalDate {
-    // The two days is based on the default SessionService.policyNoticeDaysMin
+    // The two days is based on the default FALSE,,,vice.policyNoticeDaysMin
     return LocalDate.now().plusDays(2)
   }
 
