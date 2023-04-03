@@ -23,7 +23,7 @@ class PrisonerOffenderSearchClient(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    private val prisonerSearchResultDto = object : ParameterizedTypeReference<PrisonerSearchResultDto>() {}
+    private val PRISONER_SEARCH_RESULT_DTO = object : ParameterizedTypeReference<PrisonerSearchResultDto>() {}
   }
 
   fun getPrisoner(offenderNo: String): PrisonerSearchResultDto? {
@@ -31,7 +31,7 @@ class PrisonerOffenderSearchClient(
       .uri("/prisoner/$offenderNo")
       .accept(MediaType.APPLICATION_JSON)
       .retrieve()
-      .bodyToMono(prisonerSearchResultDto)
+      .bodyToMono(PRISONER_SEARCH_RESULT_DTO)
       .onErrorResume { e ->
         if (isNotFoundError(e)) {
           LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo", e)
