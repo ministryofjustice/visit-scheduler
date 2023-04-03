@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.dto.PrisonerCellHistoryNativeDto
 import java.time.LocalDate
 
 class PrisonApiMockServer : WireMockServer(8092) {
@@ -100,6 +101,24 @@ class PrisonApiMockServer : WireMockServer(8092) {
               .withStatus(200)
               .withBody(
                 getJsonString(prisonerDetailsDto),
+              )
+          },
+        ),
+    )
+  }
+
+  fun stubGetCellHistory(bookingId: Int, prisonerCellHistoryNativeDto: PrisonerCellHistoryNativeDto? = null, status: HttpStatus = HttpStatus.NOT_FOUND) {
+    stubFor(
+      get("/api/bookings/$bookingId/cell-history?page=0&size=10")
+        .willReturn(
+          if (prisonerCellHistoryNativeDto == null) {
+            aResponse().withStatus(status.value())
+          } else {
+            aResponse()
+              .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+              .withStatus(200)
+              .withBody(
+                getJsonString(prisonerCellHistoryNativeDto),
               )
           },
         ),

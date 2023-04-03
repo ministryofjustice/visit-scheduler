@@ -7,5 +7,5 @@ import io.swagger.v3.oas.annotations.media.Schema
 data class PrisonerCellHistoryDto(
 
   @JsonProperty("content")
-  val history: List<PrisonerCellDto> = listOf(),
+  val history: List<PrisonerCellLocationDto> = listOf(),
 )

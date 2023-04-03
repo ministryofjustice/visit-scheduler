@@ -170,6 +170,7 @@ class SessionService(
           sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
         }
       }
+      return listOf()
     }
 
     return sessionTemplates

@@ -86,13 +86,13 @@ class PrisonApiClient(
 
   fun getCellHistory(bookingId: Int): PrisonerCellHistoryDto? {
     return webClient.get()
-      .uri("/api/bookings/$bookingId/cell-history?page=0&size=3")
+      .uri("/api/bookings/$bookingId/cell-history?page=0&size=10")
       .retrieve()
       .bodyToMono(TYPE_FOR_PRISONER_CELL_HISTORY)
       .onErrorResume {
           e ->
         if (!isNotFoundError(e)) {
-          LOG.error("Failed get request /api/bookings/$bookingId/cell-history?page=0&size=3s")
+          LOG.error("Failed get request /api/bookings/$bookingId/cell-history?page=0&size=10")
           Mono.error(e)
         } else {
           return@onErrorResume Mono.just(Optional.empty())

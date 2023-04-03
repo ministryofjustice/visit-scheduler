@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerCellDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerCellLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
@@ -42,9 +42,9 @@ class PrisonerService(
     val prisonerDetailsDto = prisonApiClient.getPrisonerDetails(prisonerId)
     prisonerDetailsDto?.let {
       LOG.debug("getPrisonerLastHousingLocation response : $prisonerDetailsDto")
-      val location = getLastLocation(prisonerDetailsDto, prisonCode)
-      return location?.let {
-        return PrisonerHousingLocationsDto(levels = location.levels)
+      val lastLocation = getLastLocation(prisonerDetailsDto, prisonCode)
+      return lastLocation?.let {
+        return PrisonerHousingLocationsDto(levels = lastLocation.levels)
       }
     }
     return null
@@ -53,34 +53,26 @@ class PrisonerService(
   private fun getLastLocation(
     prisonerDetails: PrisonerDetailsDto,
     prisonCode: String,
-  ): PrisonerCellDto? {
+  ): PrisonerCellLocationDto? {
     val cellHistory = prisonApiClient.getCellHistory(prisonerDetails.bookingId)
-    cellHistory?.let {
-      with(cellHistory) {
-        if (history.size > 1 && history[1].prisonCode == prisonCode) {
-          return history[1]
-        }
-      }
+    return cellHistory?.let {
+      return cellHistory.history.firstOrNull { !isPrisonerInTemporaryLocation(it.levels) && it.prisonCode == prisonCode }
     }
-    return null
   }
 
   fun getPrisonerHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? {
     val prisonerHousingLocationsDto = prisonApiClient.getPrisonerHousingLocation(prisonerId)
-    prisonerHousingLocationsDto?.let {
-      if (isPrisonerInTemporaryLocation(prisonerHousingLocationsDto)) {
+    return prisonerHousingLocationsDto?.let {
+      if (isPrisonerInTemporaryLocation(prisonerHousingLocationsDto.levels)) {
         return getPrisonerLastHousingLocation(prisonerId, prisonCode)
       }
       return prisonerHousingLocationsDto
     }
-    return null
   }
 
-  private fun isPrisonerInTemporaryLocation(prisonerHousingLocationsDto: PrisonerHousingLocationsDto?): Boolean {
-    prisonerHousingLocationsDto?.let {
-      if (it.levels.isNotEmpty()) {
-        return TransitionalLocationTypes.contains(it.levels[0].code)
-      }
+  private fun isPrisonerInTemporaryLocation(levels: List<PrisonerHousingLevelDto>): Boolean {
+    if (levels.isNotEmpty()) {
+      return TransitionalLocationTypes.contains(levels[0].code)
     }
     return false
   }

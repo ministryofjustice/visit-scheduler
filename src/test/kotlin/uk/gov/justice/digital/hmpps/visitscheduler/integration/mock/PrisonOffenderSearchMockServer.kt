@@ -24,21 +24,6 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
 
   fun stubGetPrisoner(
     prisonerId: String,
-    prisonCode: String,
-    incentiveLevel: IncentiveLevelDto? = null,
-    category: String? = null,
-  ) {
-    val currentIncentive = incentiveLevel?.let { CurrentIncentiveDto(incentiveLevel, LocalDateTime.now().minusMonths(1), LocalDate.now().plusMonths(1)) }
-    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonCode, category = category)
-
-    stubGetPrisoner(
-      prisonerId,
-      prisonerSearchResultDto,
-    )
-  }
-
-  fun stubGetPrisoner(
-    prisonerId: String,
     prisonerSearchResultDto: PrisonerSearchResultDto?,
   ) {
     stubFor(
@@ -66,7 +51,13 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
     category: String? = null,
   ) {
     val incentiveLevel = incentiveLevelCode ?.let { IncentiveLevelDto(code = incentiveLevelCode, description = "") }
-    return stubGetPrisoner(prisonerId, prisonCode, incentiveLevel, category)
+    val currentIncentive = incentiveLevel?.let { CurrentIncentiveDto(incentiveLevel, LocalDateTime.now().minusMonths(1), LocalDate.now().plusMonths(1)) }
+    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonCode, category = category)
+
+    stubGetPrisoner(
+      prisonerId,
+      prisonerSearchResultDto,
+    )
   }
 
   private fun getJsonString(obj: Any): String {

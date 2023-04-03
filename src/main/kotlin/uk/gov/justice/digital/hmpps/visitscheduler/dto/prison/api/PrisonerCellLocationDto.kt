@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 
 @Schema(description = "Prisoner cell information")
-data class PrisonerCellDto(
+data class PrisonerCellLocationDto(
   var prisonCode: String? = null,
   val levels: List<PrisonerHousingLevelDto> = listOf(),
 ) {
@@ -19,10 +19,9 @@ data class PrisonerCellDto(
       }
       return descriptionElements.mapIndexed { index: Int, value ->
         PrisonerHousingLevelDto(
-          level = index,
+          level = index + 1,
           code = value,
-          type = "LEVEL",
-          description = "",
+          description = "cell history",
         )
       }
     }

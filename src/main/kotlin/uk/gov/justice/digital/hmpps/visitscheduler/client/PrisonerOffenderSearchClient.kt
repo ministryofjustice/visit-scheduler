@@ -37,7 +37,7 @@ class PrisonerOffenderSearchClient(
           LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo", e)
           Mono.error(ItemNotFoundException("Prisoner not found $offenderNo with offender search", e) as Throwable)
         } else {
-          LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo with offender search", e)
+          LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo using offender search", e)
           Mono.error(e)
         }
       }.block(apiTimeout)
