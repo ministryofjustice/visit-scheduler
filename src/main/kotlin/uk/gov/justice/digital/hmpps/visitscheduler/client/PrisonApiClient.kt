@@ -95,6 +95,7 @@ class PrisonApiClient(
           LOG.error("Failed get request /api/bookings/$bookingId/cell-history?page=0&size=10")
           Mono.error(e)
         } else {
+          LOG.error("NotFound error get request /api/bookings/$bookingId/cell-history?page=0&size=10")
           return@onErrorResume Mono.just(Optional.empty())
         }
       }

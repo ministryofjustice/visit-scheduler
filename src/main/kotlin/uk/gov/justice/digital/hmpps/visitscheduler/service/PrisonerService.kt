@@ -55,6 +55,7 @@ class PrisonerService(
     prisonerDetails: PrisonerDetailsDto,
     prisonCode: String,
   ): PrisonerCellLocationDto? {
+    LOG.debug("Enter getLastLocation : ${prisonerDetails.bookingId}")
     val cellHistory = prisonApiClient.getCellHistory(prisonerDetails.bookingId)
     LOG.debug("getLastLocation response : $cellHistory")
     return cellHistory?.let {
