@@ -69,6 +69,7 @@ abstract class IntegrationTestBase {
   @BeforeEach
   fun resetStubs() {
     prisonApiMockServer.resetAll()
+    prisonOffenderSearchMockServer.resetAll()
   }
 
   @AfterEach

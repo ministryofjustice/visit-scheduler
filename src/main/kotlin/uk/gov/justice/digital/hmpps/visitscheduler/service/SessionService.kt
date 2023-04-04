@@ -65,7 +65,7 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
     }
 
-    val prisoner = prisonerService.getPrisoner(prisonerId)
+    val prisoner = prisonerId?.let { prisonerService.getPrisoner(prisonerId) }
 
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
       prisonCode = prisonCode,
@@ -79,7 +79,7 @@ class SessionService(
       sessionTemplates = filterByCategory(sessionTemplates, it)
     }
 
-    sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId)
+    sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId, prisonCode)
 
     var sessions = sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, requestedBookableStartDate, requestedBookableEndDate)
@@ -161,14 +161,18 @@ class SessionService(
     return validToDate
   }
 
-  private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?): List<SessionTemplate> {
-    prisonerId?.let { prisonerIdVal ->
-      val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerIdVal)
-      prisonerDetailDto?.let { prisonerDetail ->
-        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
-        return sessionTemplates.filter { sessionTemplate ->
-          sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
+  private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String): List<SessionTemplate> {
+    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionGroups.isNotEmpty() }
+    if (hasSessionsWithLocationGroups) {
+      prisonerId?.let { it ->
+        val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(it, prisonCode)
+        prisonerDetailDto?.let { prisonerDetail ->
+          val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
+          return sessionTemplates.filter { sessionTemplate ->
+            sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
+          }
         }
+        return listOf()
       }
     }
 

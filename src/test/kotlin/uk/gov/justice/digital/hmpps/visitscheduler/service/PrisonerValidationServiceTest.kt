@@ -28,7 +28,7 @@ class PrisonerValidationServiceTest {
   fun `when prison code passed matches prisoners establishment code no exceptions are thrown`() {
     val prisonerId = "AA1234BB"
     val prisonCode = "MDI"
-    val prisonerDetails = PrisonerDetailsDto(prisonerId, prisonCode)
+    val prisonerDetails = PrisonerDetailsDto(prisonerId, prisonCode, 1)
     whenever(
       prisonerService.getPrisonerFullStatus(prisonerId),
     ).thenReturn(prisonerDetails)
@@ -46,7 +46,7 @@ class PrisonerValidationServiceTest {
   fun `when prison code does not match prisoners establishment code an exception is thrown`() {
     val prisonerId = "AA1234BB"
     val prisonCode = "MDI"
-    val prisonerDetails = PrisonerDetailsDto(prisonerId, prisonCode)
+    val prisonerDetails = PrisonerDetailsDto(prisonerId, prisonCode, 1)
     whenever(
       prisonerService.getPrisonerFullStatus(prisonerId),
     ).thenReturn(prisonerDetails)

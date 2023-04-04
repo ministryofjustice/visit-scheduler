@@ -23,6 +23,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
@@ -70,6 +72,18 @@ class SessionServiceTest {
   private val prisonCode = "MDI"
   private val noticeDaysMin = 1L
   private val noticeDaysMax = 100L
+
+  @BeforeEach
+  fun beforeEachTestSetup() {
+    whenever(prisonerService.getPrisonerHousingLocation(any(), any())).thenReturn(
+      PrisonerHousingLocationsDto(
+        levels = listOf(),
+      ),
+    )
+
+    whenever(prisonerService.getLevelsMapForPrisoner(any())).thenReturn(mutableMapOf<PrisonerHousingLevels, String?>())
+    whenever(prisonerSessionValidator.isSessionAvailableToPrisoner(any(), any())).thenReturn(true)
+  }
 
   private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incEnhancedPrivilege: Boolean = true, category: String ? = null) {
     whenever(
