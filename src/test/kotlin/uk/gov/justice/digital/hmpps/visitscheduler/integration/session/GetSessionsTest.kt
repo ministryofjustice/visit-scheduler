@@ -385,7 +385,7 @@ class GetSessionsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
+    assertThat(visitSessionResults.size).isEqualTo(0)
   }
 
   @Test
