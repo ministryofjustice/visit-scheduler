@@ -17,7 +17,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @DisplayName("Get /visit-sessions")
-class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
+class GetSessionsWithLocationsTest : IntegrationTestBase() {
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
   private val prison: Prison = Prison(code = "MDI", active = true)
 
@@ -459,8 +459,8 @@ class GetSessionsWithLevelsHousingLocationMatcherTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       associationId,
-      LocalDate.now().minusMonths(6).toString(),
-      LocalDate.now().plusMonths(6).toString(),
+      LocalDate.now().minusMonths(6),
+      LocalDate.now().plusMonths(6),
     )
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)

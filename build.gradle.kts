@@ -60,6 +60,7 @@ dependencies {
   testImplementation("org.testcontainers:postgresql:1.17.6")
   testImplementation("org.testcontainers:localstack:1.17.6")
   testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.435")
+  testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.10.0")
 }
 
 java {
