@@ -13,7 +13,6 @@ data class PrisonerCellLocationDto(
   // This is the workaround until we have the new api, JSON should then convert directly into this object
   companion object {
 
-
     private fun createHousingLevels(description: String): List<PrisonerHousingLevelDto> {
       val descriptionElements = description.split("-").toMutableList()
       if (descriptionElements.isNotEmpty()) {
