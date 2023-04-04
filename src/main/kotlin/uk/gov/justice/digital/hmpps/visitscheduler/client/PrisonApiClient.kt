@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerCellHi
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import java.time.Duration
-import java.util.*
+import java.util.Optional
 
 @Component
 class PrisonApiClient(

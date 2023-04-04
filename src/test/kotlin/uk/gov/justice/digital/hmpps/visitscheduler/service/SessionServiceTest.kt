@@ -74,7 +74,7 @@ class SessionServiceTest {
   private val noticeDaysMax = 100L
 
   @BeforeEach
-  fun sss() {
+  fun beforeEachTestSetup() {
     whenever(prisonerService.getPrisonerHousingLocation(any(), any())).thenReturn(
       PrisonerHousingLocationsDto(
         levels = listOf(),

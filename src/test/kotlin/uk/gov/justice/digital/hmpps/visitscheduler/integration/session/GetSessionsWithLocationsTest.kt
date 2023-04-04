@@ -490,7 +490,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   private fun getNextAllowedDay(): LocalDate {
-    // The two days is based on the default FALSE,,,vice.policyNoticeDaysMin
+    // The two days is based on the default SessionService.policyNoticeDaysMin
     return LocalDate.now().plusDays(2)
   }
 
