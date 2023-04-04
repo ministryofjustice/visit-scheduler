@@ -43,10 +43,10 @@ class PrisonApiClient(
       .onErrorResume {
           e ->
         if (!isNotFoundError(e)) {
-          LOG.error("Failed get request /api/offenders/$offenderNo/non-association-details")
+          LOG.error("getOffenderNonAssociation Failed get request /api/offenders/$offenderNo/non-association-details")
           Mono.error(e)
         } else {
-          LOG.debug("Not Found get request /api/offenders/$offenderNo/non-association-details")
+          LOG.debug("getOffenderNonAssociation Not Found get request /api/offenders/$offenderNo/non-association-details")
           return@onErrorResume Mono.just(Optional.empty())
         }
       }
@@ -62,10 +62,10 @@ class PrisonApiClient(
       .onErrorResume {
           e ->
         if (!isNotFoundError(e)) {
-          LOG.error("Failed get request /api/offenders/$offenderNo/housing-location")
+          LOG.error("getPrisonerHousingLocation Failed get request /api/offenders/$offenderNo/housing-location")
           Mono.error(e)
         } else {
-          LOG.debug("Not Found get request /api/offenders/$offenderNo/housing-location")
+          LOG.debug("getPrisonerHousingLocation Not Found get request /api/offenders/$offenderNo/housing-location")
           return@onErrorResume Mono.just(Optional.empty())
         }
       }
@@ -80,10 +80,10 @@ class PrisonApiClient(
       .bodyToMono(TYPE_FOR_PRISONER_DETAILS)
       .onErrorResume { e ->
         if (!isNotFoundError(e)) {
-          LOG.error("Failed get request /api/prisoners/$offenderNo/full-status")
+          LOG.error("getPrisonerDetails Failed get request /api/prisoners/$offenderNo/full-status")
           Mono.error(e)
         } else {
-          LOG.debug("Not Found get request /api/prisoners/$offenderNo/full-status")
+          LOG.debug("getPrisonerDetails Not Found get request /api/prisoners/$offenderNo/full-status")
           return@onErrorResume Mono.just(Optional.empty())
         }
       }
@@ -99,10 +99,10 @@ class PrisonApiClient(
       .onErrorResume {
           e ->
         if (!isNotFoundError(e)) {
-          LOG.error("Failed get request /api/bookings/$bookingId/cell-history?page=0&size=10")
+          LOG.error("getCellHistory Failed get request /api/bookings/$bookingId/cell-history?page=0&size=10")
           Mono.error(e)
         } else {
-          LOG.debug("Not Found get request /api/bookings/$bookingId/cell-history?page=0&size=10")
+          LOG.debug("getCellHistory Not Found get request /api/bookings/$bookingId/cell-history?page=0&size=10")
           return@onErrorResume Mono.just(Optional.empty())
         }
       }
