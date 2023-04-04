@@ -162,15 +162,18 @@ class SessionService(
   }
 
   private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String): List<SessionTemplate> {
-    prisonerId?.let { prisonerIdVal ->
-      val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerIdVal, prisonCode)
-      prisonerDetailDto?.let { prisonerDetail ->
-        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
-        return sessionTemplates.filter { sessionTemplate ->
-          sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
+    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionGroups.isNotEmpty() }
+    if (hasSessionsWithLocationGroups) {
+      prisonerId?.let { prisonerIdVal ->
+        val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerIdVal, prisonCode)
+        prisonerDetailDto?.let { prisonerDetail ->
+          val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
+          return sessionTemplates.filter { sessionTemplate ->
+            sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
+          }
         }
+        return listOf()
       }
-      return listOf()
     }
 
     return sessionTemplates
