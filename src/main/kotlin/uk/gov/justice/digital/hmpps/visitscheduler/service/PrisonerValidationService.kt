@@ -8,8 +8,8 @@ class PrisonerValidationService(
   private val prisonerService: PrisonerService,
 ) {
   companion object {
-    const val PRISON_CODE_DEV_ERROR_MESSAGE = "Prisoner with ID - %s is not in prison - %s"
-    const val PRISON_CODE_USER_ERROR_MESSAGE = "prisoner's establishment and prison code passed do not match"
+    const val PRISON_INFORMATION_MISSING_ERROR_MESSAGE = "Prisoner with ID - %s cannot be found"
+    const val PRISON_CODE_DEV_ERROR_MESSAGE = "Prisoner with ID - %s is not in prison - %s but %s"
   }
 
   /**
@@ -18,10 +18,17 @@ class PrisonerValidationService(
   fun validatePrisonerIsFromPrison(prisonerId: String, prisonCode: String) {
     val prisonerDetails = prisonerService.getPrisonerFullStatus(prisonerId)
 
-    if (prisonCode != prisonerDetails?.establishmentCode) {
-      val message = PRISON_CODE_DEV_ERROR_MESSAGE.format(prisonerId, prisonCode)
+    var message: String? = null
+    prisonerDetails?.let {
+      if (prisonCode != it.establishmentCode) {
+        message = PRISON_CODE_DEV_ERROR_MESSAGE.format(prisonerId, prisonCode, it.establishmentCode)
+      }
+    } ?: run {
+      message = PRISON_INFORMATION_MISSING_ERROR_MESSAGE.format(prisonerId)
+    }
 
-      throw PrisonerNotInSuppliedPrisonException(message, PrisonerNotInSuppliedPrisonException(PRISON_CODE_USER_ERROR_MESSAGE))
+    message?.let {
+      throw PrisonerNotInSuppliedPrisonException(message)
     }
   }
 }

@@ -9,4 +9,7 @@ data class PrisonerDetailsDto(
 
   @Schema(description = "Establishment Code for prisoner", example = "MDI", required = true)
   val establishmentCode: String,
+
+  @Schema(description = "Identifies a prisoners custodial journey ", example = "1231232", required = true)
+  val bookingId: Int,
 )
