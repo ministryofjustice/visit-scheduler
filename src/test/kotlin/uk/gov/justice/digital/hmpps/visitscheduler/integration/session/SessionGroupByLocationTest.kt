@@ -17,8 +17,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocatio
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
 
-@DisplayName("Get /visit-sessions")
-class SessionGroupTest(
+@DisplayName("Get /location-groups")
+class SessionGroupByLocationTest(
   @Autowired val testTemplateRepository: TestSessionTemplateRepository,
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {

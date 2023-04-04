@@ -47,7 +47,7 @@ class VisitSchedulerExceptionHandler(
       log.error("Unexpected server exception", e)
     }
     return ResponseEntity
-      .status(e.rawStatusCode)
+      .status(e.statusCode)
       .body(e.responseBodyAsByteArray)
   }
 

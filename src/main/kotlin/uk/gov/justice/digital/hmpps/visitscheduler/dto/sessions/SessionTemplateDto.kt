@@ -6,6 +6,7 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -51,14 +52,10 @@ data class SessionTemplateDto(
   val dayOfWeek: DayOfWeek?,
   @Schema(description = "list of permitted session location groups", required = false)
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
-  @Schema(description = "list of included prisoner categories", required = false)
-  val includedPrisonerCategories: List<String> = listOf(),
-  @Schema(description = "list of excluded prisoner categories", required = false)
-  val excludedPrisonerCategories: List<String> = listOf(),
+  @Schema(description = "list of permitted prisoner category groups", required = false)
+  val prisonerCategoryGroups: List<SessionCategoryGroupDto> = listOf(),
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
-    includedPrisonerCategories = sessionTemplateEntity.includedPrisonerCategories.map { it.code },
-    excludedPrisonerCategories = sessionTemplateEntity.excludedPrisonerCategories.map { it.code },
     reference = sessionTemplateEntity.reference,
     name = sessionTemplateEntity.name,
     prisonCode = sessionTemplateEntity.prison.code,
@@ -72,6 +69,7 @@ data class SessionTemplateDto(
     openCapacity = sessionTemplateEntity.openCapacity,
     dayOfWeek = sessionTemplateEntity.dayOfWeek,
     permittedLocationGroups = sessionTemplateEntity.permittedSessionGroups.map { SessionLocationGroupDto(it) },
+    prisonerCategoryGroups = sessionTemplateEntity.permittedSessionCategoryGroups.map { SessionCategoryGroupDto(it) },
     biWeekly = sessionTemplateEntity.biWeekly,
     enhanced = sessionTemplateEntity.enhanced,
   )
