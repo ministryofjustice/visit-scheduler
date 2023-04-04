@@ -56,6 +56,7 @@ class PrisonerService(
     prisonCode: String,
   ): PrisonerCellLocationDto? {
     val cellHistory = prisonApiClient.getCellHistory(prisonerDetails.bookingId)
+    LOG.debug("getLastLocation response : $cellHistory")
     return cellHistory?.let {
       return cellHistory.history.firstOrNull { !isPrisonerInTemporaryLocation(it.levels) && it.prisonCode == prisonCode }
     }
