@@ -46,7 +46,7 @@ class PrisonApiClient(
           LOG.error("Failed get request /api/offenders/$offenderNo/non-association-details")
           Mono.error(e)
         } else {
-          LOG.error("Not Found get request /api/offenders/$offenderNo/non-association-details")
+          LOG.debug("Not Found get request /api/offenders/$offenderNo/non-association-details")
           return@onErrorResume Mono.just(Optional.empty())
         }
       }
@@ -65,7 +65,7 @@ class PrisonApiClient(
           LOG.error("Failed get request /api/offenders/$offenderNo/housing-location")
           Mono.error(e)
         } else {
-          LOG.error("Not Found get request /api/offenders/$offenderNo/housing-location")
+          LOG.debug("Not Found get request /api/offenders/$offenderNo/housing-location")
           return@onErrorResume Mono.just(Optional.empty())
         }
       }
@@ -83,7 +83,7 @@ class PrisonApiClient(
           LOG.error("Failed get request /api/prisoners/$offenderNo/full-status")
           Mono.error(e)
         } else {
-          LOG.error("Not Found get request /api/prisoners/$offenderNo/full-status")
+          LOG.debug("Not Found get request /api/prisoners/$offenderNo/full-status")
           return@onErrorResume Mono.just(Optional.empty())
         }
       }
@@ -102,7 +102,7 @@ class PrisonApiClient(
           LOG.error("Failed get request /api/bookings/$bookingId/cell-history?page=0&size=10")
           Mono.error(e)
         } else {
-          LOG.error("Not Found get request /api/bookings/$bookingId/cell-history?page=0&size=10")
+          LOG.debug("Not Found get request /api/bookings/$bookingId/cell-history?page=0&size=10")
           return@onErrorResume Mono.just(Optional.empty())
         }
       }

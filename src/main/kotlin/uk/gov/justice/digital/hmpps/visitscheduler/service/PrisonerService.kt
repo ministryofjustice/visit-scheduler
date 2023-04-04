@@ -41,7 +41,7 @@ class PrisonerService(
   fun getPrisonerLastHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? {
     val prisonerDetailsDto = prisonApiClient.getPrisonerDetails(prisonerId)
     prisonerDetailsDto?.let {
-      LOG.debug("Enter getPrisonerLastHousingLocation for : $prisonerDetailsDto")
+      LOG.debug("Entered getPrisonerLastHousingLocation for : $prisonerDetailsDto")
       val lastLocation = getLastLocation(prisonerDetailsDto, prisonCode)
       LOG.debug("getPrisonerLastHousingLocation response : $lastLocation")
       return lastLocation?.let {
@@ -55,7 +55,7 @@ class PrisonerService(
     prisonerDetails: PrisonerDetailsDto,
     prisonCode: String,
   ): PrisonerCellLocationDto? {
-    LOG.debug("Enter getLastLocation : ${prisonerDetails.bookingId}")
+    LOG.debug("Entered getLastLocation : ${prisonerDetails.bookingId}")
     val cellHistory = prisonApiClient.getCellHistory(prisonerDetails.bookingId)
     LOG.debug("getLastLocation response : $cellHistory")
     return cellHistory?.let {
