@@ -35,6 +35,7 @@ class PrisonApiClient(
     e is WebClientResponseException && e.statusCode == NOT_FOUND
 
   fun getOffenderNonAssociation(offenderNo: String): OffenderNonAssociationDetailsDto? {
+    LOG.debug("Entered getOffenderNonAssociation $offenderNo")
     return webClient.get()
       .uri("/api/offenders/$offenderNo/non-association-details")
       .retrieve()
@@ -53,6 +54,7 @@ class PrisonApiClient(
   }
 
   fun getPrisonerHousingLocation(offenderNo: String): PrisonerHousingLocationsDto? {
+    LOG.debug("Entered getPrisonerHousingLocation $offenderNo")
     return webClient.get()
       .uri("/api/offenders/$offenderNo/housing-location")
       .retrieve()
@@ -71,6 +73,7 @@ class PrisonApiClient(
   }
 
   fun getPrisonerDetails(offenderNo: String): PrisonerDetailsDto? {
+    LOG.debug("Entered getPrisonerDetails $offenderNo")
     return webClient.get()
       .uri("/api/prisoners/$offenderNo/full-status")
       .retrieve()
@@ -88,6 +91,7 @@ class PrisonApiClient(
   }
 
   fun getCellHistory(bookingId: Int): PrisonerCellHistoryDto? {
+    LOG.debug("Entered getCellHistory $bookingId")
     return webClient.get()
       .uri("/api/bookings/$bookingId/cell-history?page=0&size=10")
       .retrieve()
