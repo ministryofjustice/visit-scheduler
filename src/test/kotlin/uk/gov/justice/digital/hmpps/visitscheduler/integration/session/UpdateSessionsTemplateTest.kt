@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.createUpdateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategory
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 
 @DisplayName("Get /visit-sessions")
 class UpdateSessionsTemplateTest : IntegrationTestBase() {
@@ -32,7 +32,7 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
     val sessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
 
-    val categoryAs = listOf(PrisonerCategory.A_HIGH, PrisonerCategory.A_STANDARD, PrisonerCategory.A_EXCEPTIONAL, PrisonerCategory.A_PROVISIONAL)
+    val categoryAs = listOf(PrisonerCategoryType.A_HIGH, PrisonerCategoryType.A_STANDARD, PrisonerCategoryType.A_EXCEPTIONAL, PrisonerCategoryType.A_PROVISIONAL)
     val sessionCategoryGroup = sessionPrisonerCategoryHelper.create(prisonCode = prison.code, prisonerCategories = categoryAs)
 
     val dto = createUpdateSessionTemplateDto(

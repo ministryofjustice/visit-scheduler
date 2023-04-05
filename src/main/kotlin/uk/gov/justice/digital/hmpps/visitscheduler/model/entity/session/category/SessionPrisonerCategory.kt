@@ -29,7 +29,7 @@ class SessionPrisonerCategory(
 
   @Column(name = "code", nullable = false)
   @Enumerated(EnumType.STRING)
-  var prisonerCategory: PrisonerCategory,
+  var prisonerCategoryType: PrisonerCategoryType,
 
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)

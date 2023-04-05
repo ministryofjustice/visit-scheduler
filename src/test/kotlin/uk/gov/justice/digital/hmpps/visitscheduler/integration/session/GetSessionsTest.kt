@@ -21,7 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategory
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import java.time.DayOfWeek
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
@@ -178,13 +178,13 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
     val categoryA = "Category A"
     val categoryAList = listOf(
-      PrisonerCategory.A_HIGH,
-      PrisonerCategory.A_PROVISIONAL,
-      PrisonerCategory.A_EXCEPTIONAL,
-      PrisonerCategory.A_STANDARD,
+      PrisonerCategoryType.A_HIGH,
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_EXCEPTIONAL,
+      PrisonerCategoryType.A_STANDARD,
     )
 
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategory.A_EXCEPTIONAL.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.A_EXCEPTIONAL.code)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
@@ -221,14 +221,14 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
     val categoryA = "Category A"
     val categoryAList = listOf(
-      PrisonerCategory.A_HIGH,
-      PrisonerCategory.A_PROVISIONAL,
-      PrisonerCategory.A_EXCEPTIONAL,
-      PrisonerCategory.A_STANDARD,
+      PrisonerCategoryType.A_HIGH,
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_EXCEPTIONAL,
+      PrisonerCategoryType.A_STANDARD,
     )
 
     // prisoner is in category B while the session only allows category As
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategory.B.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.B.code)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
@@ -262,7 +262,7 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategory.A_EXCEPTIONAL.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.A_EXCEPTIONAL.code)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
@@ -298,17 +298,17 @@ class GetSessionsTest : IntegrationTestBase() {
     val categoryANonHighs = "Category A Non Highs"
 
     val categoryAListHigh = listOf(
-      PrisonerCategory.A_PROVISIONAL,
-      PrisonerCategory.A_EXCEPTIONAL,
-      PrisonerCategory.A_STANDARD,
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_EXCEPTIONAL,
+      PrisonerCategoryType.A_STANDARD,
     )
 
     val categoryAListNonHigh = listOf(
-      PrisonerCategory.A_HIGH,
+      PrisonerCategoryType.A_HIGH,
     )
 
     // prisoner is in category A standard - so should be included
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategory.A_STANDARD.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.A_STANDARD.code)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
@@ -348,17 +348,17 @@ class GetSessionsTest : IntegrationTestBase() {
     val categoryANonHighs = "Category A Non Highs"
 
     val categoryAListHigh = listOf(
-      PrisonerCategory.A_PROVISIONAL,
-      PrisonerCategory.A_EXCEPTIONAL,
-      PrisonerCategory.A_STANDARD,
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_EXCEPTIONAL,
+      PrisonerCategoryType.A_STANDARD,
     )
 
     val categoryAListNonHigh = listOf(
-      PrisonerCategory.A_HIGH,
+      PrisonerCategoryType.A_HIGH,
     )
 
     // prisoner is in category B
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategory.B.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.B.code)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 

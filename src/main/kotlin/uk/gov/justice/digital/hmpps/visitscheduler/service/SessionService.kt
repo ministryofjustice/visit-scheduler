@@ -120,7 +120,7 @@ class SessionService(
   private fun getAllowedCategoriesForSessionTemplate(sessionTemplate: SessionTemplate): Set<String> {
     return sessionTemplate.permittedSessionCategoryGroups.stream()
       .flatMap { it.sessionCategories.stream() }
-      .map { it.prisonerCategory.code }
+      .map { it.prisonerCategoryType.code }
       .collect(Collectors.toSet())
   }
 

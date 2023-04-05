@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategory
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
@@ -332,15 +332,15 @@ class SessionPrisonerCategoryHelper(
 ) {
   fun create(name: String? = "Group A", prisonCode: String = "MDI"): SessionCategoryGroup {
     val sessionPrisonerCategories = mutableListOf(
-      PrisonerCategory.A_PROVISIONAL,
-      PrisonerCategory.A_STANDARD,
-      PrisonerCategory.A_HIGH,
-      PrisonerCategory.A_EXCEPTIONAL,
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_STANDARD,
+      PrisonerCategoryType.A_HIGH,
+      PrisonerCategoryType.A_EXCEPTIONAL,
     )
     return create(name = name, prisonCode = prisonCode, sessionPrisonerCategories)
   }
 
-  fun create(name: String? = "Group A", prisonCode: String = "MDI", prisonerCategories: List<PrisonerCategory>): SessionCategoryGroup {
+  fun create(name: String? = "Group A", prisonCode: String = "MDI", prisonerCategories: List<PrisonerCategoryType>): SessionCategoryGroup {
     val prison = prisonEntityHelper.create(prisonCode, true)
 
     val group = sessionCategoryGroupRepository.saveAndFlush(
@@ -358,7 +358,7 @@ class SessionPrisonerCategoryHelper(
         SessionPrisonerCategory(
           sessionCategoryGroupId = group.id,
           sessionCategoryGroup = group,
-          prisonerCategory = prisonerCategory,
+          prisonerCategoryType = prisonerCategory,
         )
       permittedCategoryGroups.add(permittedCategoryGroup)
     }
