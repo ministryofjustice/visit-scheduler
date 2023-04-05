@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateSessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import java.time.LocalDate
 
 @DisplayName("Get /visit-sessions")
@@ -27,13 +28,15 @@ class CreateSessionsTemplateTest : IntegrationTestBase() {
   fun `create session template`() {
     // Given
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
-    val sessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+    val sessionLocationGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+
+    val categoryAs = listOf(PrisonerCategoryType.A_EXCEPTIONAL, PrisonerCategoryType.A_HIGH, PrisonerCategoryType.A_PROVISIONAL, PrisonerCategoryType.A_STANDARD)
+    val sessionCategoryGroup = sessionPrisonerCategoryHelper.create(prisonCode = prison.code, prisonerCategories = categoryAs)
 
     val dto = createSessionTemplateDto(
       validToDate = LocalDate.now().plusDays(1),
-      locationGroupReferences = mutableListOf(sessionGroup.reference),
-      includedPrisonerCategories = listOf("inc category"),
-      excludedPrisonerCategories = listOf("exc category"),
+      locationGroupReferences = mutableListOf(sessionLocationGroup.reference),
+      categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference),
     )
 
     // When
@@ -57,7 +60,8 @@ class CreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups[0].reference).isEqualTo(dto.locationGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.biWeekly).isEqualTo(dto.biWeekly)
     Assertions.assertThat(sessionTemplateDto.enhanced).isEqualTo(true)
-    Assertions.assertThat(sessionTemplateDto.includedPrisonerCategories[0]).isEqualTo(dto.includedPrisonerCategories[0])
-    Assertions.assertThat(sessionTemplateDto.excludedPrisonerCategories[0]).isEqualTo(dto.excludedPrisonerCategories[0])
+    Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.size).isEqualTo(1)
+    Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.stream().map { it.categories }).containsExactlyInAnyOrder(categoryAs)
+    Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups[0].reference).isEqualTo(dto.categoryGroupReferences!![0])
   }
 }

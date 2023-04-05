@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -25,7 +26,8 @@ fun sessionTemplate(
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
-  permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
+  permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
+  permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
   biWeekly: Boolean = false,
   enhanced: Boolean = true,
 ): SessionTemplate {
@@ -44,7 +46,8 @@ fun sessionTemplate(
     startTime = startTime,
     endTime = endTime,
     dayOfWeek = dayOfWeek,
-    permittedSessionGroups = permittedSessionGroups,
+    permittedSessionGroups = permittedSessionLocationGroups,
+    permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     biWeekly = biWeekly,
     enhanced = enhanced,
   )
@@ -64,8 +67,7 @@ fun createSessionTemplateDto(
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
   enhanced: Boolean = true,
-  includedPrisonerCategories: List<String> = listOf(),
-  excludedPrisonerCategories: List<String> = listOf(),
+  categoryGroupReferences: MutableList<String> = mutableListOf(),
 ): CreateSessionTemplateDto {
   return CreateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -81,8 +83,7 @@ fun createSessionTemplateDto(
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
     enhanced = enhanced,
-    includedPrisonerCategories = includedPrisonerCategories,
-    excludedPrisonerCategories = excludedPrisonerCategories,
+    categoryGroupReferences = categoryGroupReferences,
   )
 }
 
@@ -98,8 +99,7 @@ fun createUpdateSessionTemplateDto(
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
   enhanced: Boolean = true,
-  includedPrisonerCategories: List<String> = listOf(),
-  excludedPrisonerCategories: List<String> = listOf(),
+  categoryGroupReferences: MutableList<String> = mutableListOf(),
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -112,8 +112,7 @@ fun createUpdateSessionTemplateDto(
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
     enhanced = enhanced,
-    includedPrisonerCategories = includedPrisonerCategories,
-    excludedPrisonerCategories = excludedPrisonerCategories,
+    categoryGroupReferences = categoryGroupReferences,
   )
 }
 

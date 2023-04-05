@@ -40,9 +40,6 @@ data class UpdateSessionTemplateDto(
   @Schema(description = "biWeekly time table", example = "true", required = true)
   val biWeekly: Boolean? = null,
 
-  @Schema(description = "list of included prisoner categories", required = false)
-  val includedPrisonerCategories: List<String>? = null,
-
-  @Schema(description = "list of excluded prisoner categories", required = false)
-  val excludedPrisonerCategories: List<String>? = null,
+  @Schema(description = "list of group references for allowed prisoner category groups", required = false)
+  val categoryGroupReferences: List<String>? = listOf(),
 )
