@@ -12,8 +12,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 
-@DisplayName("Put update groups")
-class UpdateSessionGroupTest : IntegrationTestBase() {
+@DisplayName("Put update session location groups")
+class UpdateSessionLocationGroupTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 

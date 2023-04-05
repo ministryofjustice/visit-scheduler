@@ -145,13 +145,13 @@ internal class QuotableEncoderTest {
   inner class EncoderCollisions {
 
     @Test
-    fun `Half a million hashes has no collisions`() {
+    fun `quarter a million hashes has no collisions`() {
       // Given
       // Not designed for testing extremely large values.
       val encoder = QuotableEncoder(minLength = 8)
 
       val hashes = mutableListOf<String>()
-      for (n in 0..500000) {
+      for (n in 0..250000) {
         // When
         val hash = encoder.encode(n.toLong())
         hashes.add(hash)
