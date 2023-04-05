@@ -20,7 +20,7 @@ class TransitionalLocationTypesTest {
   @Test
   fun `when given type is null string compares correctly`() {
     // Given
-    val type : String ?= null
+    val type: String ? = null
 
     // When
     val result = TransitionalLocationTypes.contains(type)
@@ -28,7 +28,6 @@ class TransitionalLocationTypesTest {
     // Then
     assertThat(result).isFalse
   }
-
 
   @Test
   fun `when given type not temporary string compares correctly`() {
