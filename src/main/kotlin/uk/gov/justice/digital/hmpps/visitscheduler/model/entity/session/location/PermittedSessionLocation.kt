@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
+package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -12,6 +12,7 @@ import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.LocalDateTime
 
 @Entity

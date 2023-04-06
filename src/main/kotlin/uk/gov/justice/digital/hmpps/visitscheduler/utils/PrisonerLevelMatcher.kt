@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.util.function.BiPredicate
 
 @Component
@@ -18,8 +18,8 @@ class PrisonerLevelMatcher : BiPredicate<SessionLocationGroup?, Map<PrisonerHous
   }
 
   override fun test(
-    sessionLocationGroups: SessionLocationGroup?,
-    levelsMap: Map<PrisonerHousingLevels, String?>,
+      sessionLocationGroups: SessionLocationGroup?,
+      levelsMap: Map<PrisonerHousingLevels, String?>,
   ): Boolean {
     sessionLocationGroups?.let { sessionLocationGroup ->
       for (permittedSessionLocation in sessionLocationGroup.sessionLocations) {

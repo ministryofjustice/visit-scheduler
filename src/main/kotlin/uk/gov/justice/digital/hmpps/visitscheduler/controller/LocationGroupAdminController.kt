@@ -21,9 +21,9 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateLocationGroupDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 
 const val LOCATION_GROUPS_ADMIN_PATH: String = "/location-groups"
@@ -136,7 +136,7 @@ class LocationGroupAdminController(
     ],
   )
   fun createLocationGroup(
-    @RequestBody @Valid
+      @RequestBody @Valid
     createLocationSessionGroup: CreateLocationGroupDto,
   ): SessionLocationGroupDto {
     return sessionTemplateService.createSessionLocationGroup(createLocationSessionGroup)

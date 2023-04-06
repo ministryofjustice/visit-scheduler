@@ -52,8 +52,8 @@ class DataBaseTest(
     val sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, prisonHierarchies = allowedPermittedLocations1)
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))
     val sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
-    sessionTemplate.permittedSessionGroups.add(sessionGroup1)
-    sessionTemplate.permittedSessionGroups.add(sessionGroup2)
+    sessionTemplate.permittedSessionLocationGroups.add(sessionGroup1)
+    sessionTemplate.permittedSessionLocationGroups.add(sessionGroup2)
     sessionTemplate = testTemplateRepository.saveAndFlush(sessionTemplate)
   }
 
@@ -82,8 +82,8 @@ class DataBaseTest(
     // Given
     val reference = sessionTemplate.reference
     val sessionId = sessionTemplate.id
-    val grp1Id = sessionTemplate.permittedSessionGroups[0].id
-    val grp2Id = sessionTemplate.permittedSessionGroups[1].id
+    val grp1Id = sessionTemplate.permittedSessionLocationGroups[0].id
+    val grp2Id = sessionTemplate.permittedSessionLocationGroups[1].id
 
     // When
     val result = testTemplateRepository.deleteByReference(reference)

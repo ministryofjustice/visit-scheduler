@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteSessionTemplateByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
@@ -35,8 +35,8 @@ class DeleteSessionTemplateTest(
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))
     sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
 
-    sessionTemplate.permittedSessionGroups.add(sessionGroup1)
-    sessionTemplate.permittedSessionGroups.add(sessionGroup2)
+    sessionTemplate.permittedSessionLocationGroups.add(sessionGroup1)
+    sessionTemplate.permittedSessionLocationGroups.add(sessionGroup2)
 
     testTemplateRepository.saveAndFlush(sessionTemplate)
   }
@@ -45,8 +45,8 @@ class DeleteSessionTemplateTest(
   fun `delete session template by reference test successfully`() {
     // Given
     val reference = sessionTemplate.reference
-    val grp1Id = sessionTemplate.permittedSessionGroups[0].id
-    val grp2Id = sessionTemplate.permittedSessionGroups[1].id
+    val grp1Id = sessionTemplate.permittedSessionLocationGroups[0].id
+    val grp2Id = sessionTemplate.permittedSessionLocationGroups[1].id
 
     // When
     val responseSpec = callDeleteSessionTemplateByReference(webTestClient, reference, setAuthorisation(roles = requiredRole))

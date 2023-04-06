@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.createPermittedSession
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.updateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 
 @DisplayName("Put update session location groups")
 class UpdateSessionLocationGroupTest : IntegrationTestBase() {

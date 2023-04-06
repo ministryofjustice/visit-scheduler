@@ -5,17 +5,19 @@ import freemarker.template.Configuration.VERSION_2_3_0
 import freemarker.template.Template
 import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
+import reactor.util.function.Tuple2
+import reactor.util.function.Tuples
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.BI_WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.DAY_OF_WEEK
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_TIME
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.ENHANCED
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.EXC_CATEGORY
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.INC_CATEGORY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.LOCATION_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.PRISONER_CATEGORY_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.ROOM
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.START_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.START_TIME
@@ -34,21 +36,32 @@ import java.io.StringWriter
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.ArrayList
 import java.util.function.BiPredicate
 import java.util.stream.Collectors
+
 
 private const val maxCapacity = 200
 
 class SessionTemplateSQLGenerator {
 
   private enum class SessionColumnNames {
-    PRISON, ROOM, TYPE, OPEN, CLOSED, ENHANCED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS, INC_CATEGORY, EXC_CATEGORY;
+    PRISON, ROOM, TYPE, OPEN, CLOSED, ENHANCED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS, PRISONER_CATEGORY_KEYS;
   }
 
   private enum class SessionLocationColumnNames {
     PRISON, KEY, LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, NAME;
   }
 
+  private enum class SessionPrisonerCategoryColumnNames {
+    PRISON, KEY, PRISONER_CATEGORY_TYPE_CODE, NAME;
+  }
+
+  enum class GroupType(val file: String) {
+    LOCATION("session-location-data.csv"),
+    PRISONER_CATEGORY("session-prisoner-category-data.csv")
+
+  }
   companion object {
     private const val DELIMITER = ":"
     val CVS_FORMAT: CSVFormat = CSVFormat.DEFAULT.builder()
@@ -81,8 +94,7 @@ class SessionTemplateSQLGenerator {
     val dayOfWeek: DayOfWeek,
     val locationKeys: String?,
     val biWeekly: Boolean = false,
-    val incCategories: String?,
-    val excCategories: String?,
+    val prisonerCategoryKeys: String?,
   ) {
     constructor(sessionRecord: CSVRecord) : this(
       prisonCode = sessionRecord.get(SessionColumnNames.PRISON.name).uppercase(),
@@ -98,41 +110,12 @@ class SessionTemplateSQLGenerator {
       dayOfWeek = DayOfWeek.valueOf(sessionRecord.get(DAY_OF_WEEK.name).uppercase()),
       locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase(),
       biWeekly = sessionRecord.get(BI_WEEKLY.name)?.uppercase().toBoolean(),
-      incCategories = sessionRecord.get(INC_CATEGORY.name)?.uppercase(),
-      excCategories = sessionRecord.get(EXC_CATEGORY.name)?.uppercase(),
+      prisonerCategoryKeys = sessionRecord.get(PRISONER_CATEGORY_KEYS.name)?.uppercase(),
     )
 
     fun getLocationList(): List<String> {
       return toList(locationKeys)
     }
-
-    fun getPrisonerIncCategoryList(): List<String> {
-      return toList(incCategories)
-    }
-
-    fun getPrisonerExcCategoryList(): List<String> {
-      return toList(excCategories)
-    }
-  }
-
-  data class LocationGroupsColumns(
-    val prisonCode: String,
-    val key: String,
-    val levelOne: List<String> = listOf<String>(),
-    val levelTwo: List<String> = listOf<String>(),
-    val levelThree: List<String> = listOf<String>(),
-    val levelFour: List<String> = listOf<String>(),
-    val name: String? = null,
-  ) {
-    constructor(sessionRecord: CSVRecord) : this(
-      prisonCode = sessionRecord.get(SessionLocationColumnNames.PRISON.name).uppercase(),
-      key = sessionRecord.get(KEY.name).uppercase(),
-      levelOne = toList(sessionRecord.get(LEVEL_ONE.name)),
-      levelTwo = toList(sessionRecord.get(LEVEL_TWO.name)),
-      levelThree = toList(sessionRecord.get(LEVEL_THREE.name)),
-      levelFour = toList(sessionRecord.get(LEVEL_FOUR.name)),
-      name = sessionRecord.get(NAME.name),
-    )
   }
 
   fun validateSessionLocation(locationColumns: List<LocationGroupsColumns>) {
@@ -166,11 +149,12 @@ class SessionTemplateSQLGenerator {
     }
   }
 
-  fun validateSessionTemplate(
-    prisonTemplateRecords: List<LocationGroupsColumns>,
+  private fun validateSessionTemplate(
+    locationGroupsColumns:  List<GroupColumns>,
+    prisonerCategoryGroupsColumns: List<GroupColumns>,
     sessionTemplateColumns: List<SessionTemplateColumns>,
   ) {
-    val levelsByGroups = prisonTemplateRecords.associateBy({ it.key }, { it })
+    val levelsByGroups = locationGroupsColumns.associateBy({ it.key }, { it })
 
     sessionTemplateColumns.forEach { sessionTemplateColumn ->
       with(sessionTemplateColumn) {
@@ -194,20 +178,6 @@ class SessionTemplateSQLGenerator {
     }
   }
 
-  data class SessionLocationItem(
-    val groupKey: String,
-    val levelOne: String,
-    val levelTwo: String? = null,
-    val levelThree: String? = null,
-    val levelFour: String? = null,
-  )
-
-  data class SessionLocationGroup(
-    val key: String,
-    val prisonCode: String,
-    var name: String,
-  )
-
   fun getSessionRecordsRecords(csvFile: File): List<SessionTemplateColumns> {
     val records: Iterable<CSVRecord> = CVS_FORMAT.parse(FileReader(csvFile))
     val prisonTemplateRecords = ArrayList<SessionTemplateColumns>()
@@ -220,11 +190,15 @@ class SessionTemplateSQLGenerator {
     return prisonTemplateRecords.toList()
   }
 
-  fun getSessionLocationColumns(csvFile: File): List<LocationGroupsColumns> {
+  private fun getSessionGroupColumns(path: String, groupType: GroupType): List<GroupColumns> {
+    val csvFile = File(path, groupType.file)
     val reader: Reader = FileReader(csvFile)
     val records: Iterable<CSVRecord> = CVS_FORMAT.parse(reader)
-    val prisonTemplateRecords = ArrayList<LocationGroupsColumns>()
+    return getSessionLocationColumns(csvFile, records)
+  }
 
+  fun getSessionLocationColumns(csvFile: File, records: Iterable<CSVRecord>): List<GroupColumns> {
+    val prisonTemplateRecords = ArrayList<LocationGroupsColumns>()
     for (record in records) {
       if (record.size() != SessionLocationColumnNames.values().size) {
         throw IllegalArgumentException("Some location columns are missing ${csvFile.name} line number: ${record.recordNumber}, exspected ${SessionLocationColumnNames.values().size} but got ${record.size()}")
@@ -237,13 +211,25 @@ class SessionTemplateSQLGenerator {
     return prisonTemplateRecords
   }
 
-  fun getSessionLocationItems(prisonTemplateRecords: List<LocationGroupsColumns>): List<SessionLocationItem> {
-    val sessionLocationItems = ArrayList<SessionLocationItem>()
-    prisonTemplateRecords.forEach { sessionLocationItems.addAll(createPermittedSessionLocationItems(it)) }
+
+
+  fun getSessionItems(prisonTemplateRecords: List<GroupColumns>): List<SessionItem> {
+    val sessionLocationItems = ArrayList<SessionItem>()
+    prisonTemplateRecords.forEach {
+      sessionLocationItems.addAll(createPermittedSessionItems(it))
+    }
     return sessionLocationItems.toList()
+  }
+  private fun createPermittedSessionItems(groupColumns: GroupColumns): List<SessionItem> {
+    when(groupColumns) {
+      is LocationGroupsColumns -> return createPermittedSessionLocationItems(groupColumns)
+    }
+
+    return emptyList()
   }
 
   private fun createPermittedSessionLocationItems(locationGroupsColumns: LocationGroupsColumns): List<SessionLocationItem> {
+
     val sessionLocationItemList = mutableListOf<SessionLocationItem>()
 
     with(locationGroupsColumns) {
@@ -258,10 +244,23 @@ class SessionTemplateSQLGenerator {
           } else {
             levelTwo.forEach { levelTwo ->
               if (createLevelTwo) {
-                sessionLocationItemList.add(SessionLocationItem(groupKey = locationGroupsColumns.key, levelOne = levelOne, levelTwo = levelTwo))
+                sessionLocationItemList.add(
+                  SessionLocationItem(
+                    groupKey = locationGroupsColumns.key,
+                    levelOne = levelOne,
+                    levelTwo = levelTwo,
+                  ),
+                )
               } else {
                 levelThree.forEach { levelThree ->
-                  sessionLocationItemList.add(SessionLocationItem(groupKey = locationGroupsColumns.key, levelOne = levelOne, levelTwo = levelTwo, levelThree = levelThree))
+                  sessionLocationItemList.add(
+                    SessionLocationItem(
+                      groupKey = locationGroupsColumns.key,
+                      levelOne = levelOne,
+                      levelTwo = levelTwo,
+                      levelThree = levelThree,
+                    ),
+                  )
                 }
               }
             }
@@ -269,93 +268,159 @@ class SessionTemplateSQLGenerator {
         }
       } else {
         levelFour.forEach { levelFour ->
-          sessionLocationItemList.add(SessionLocationItem(groupKey = locationGroupsColumns.key, levelOne = levelOne[0], levelTwo = levelTwo[0], levelThree = levelThree[0], levelFour = levelFour))
+          sessionLocationItemList.add(
+            SessionLocationItem(
+              groupKey = locationGroupsColumns.key,
+              levelOne = levelOne[0],
+              levelTwo = levelTwo[0],
+              levelThree = levelThree[0],
+              levelFour = levelFour,
+            ),
+          )
         }
       }
     }
     return sessionLocationItemList
   }
 
-  fun createSql(
+  private fun createSql(
     template: Template,
     sessionRecords: List<SessionTemplateColumns>,
-    sessionLocationGroups: List<SessionLocationGroup>,
-    sessionLocationItems: List<SessionLocationItem>,
-    prisonerCategoryItems: List<String>,
-  ): String {
+    groupItemMap: HashMap<GroupType, Tuple2<List<SessionGroup>, List<SessionItem>>>,
+    ): String {
     val prisonCodes = sessionRecords.associateBy({ it.prisonCode }, { it.prisonCode })
+    val sessionLocationGroups= (groupItemMap[GroupType.LOCATION]?.t1 ?: emptyList())
+    val sessionLocationItems= (groupItemMap[GroupType.LOCATION]?.t2 ?: emptyList()) as ArrayList<SessionLocationItem>
+    val prisonerCategoryGroups= (groupItemMap[GroupType.PRISONER_CATEGORY]?.t1 ?: emptyList())
+    val prisonerCategoryItems= (groupItemMap[GroupType.PRISONER_CATEGORY]?.t2 ?: emptyList()) as ArrayList<SessionPrisonerCategoryItem>
 
     val input = mutableMapOf<String, Any>()
     input.put("prisonCodes", prisonCodes.values)
     input.put("sessionRecords", sessionRecords)
     input.put("groups", sessionLocationGroups)
     input.put("locations", sessionLocationItems)
-    input.put("categories", prisonerCategoryItems)
+    input.put("categories", prisonerCategoryGroups)
     input.put("permitted_session_location_index", sessionLocationItems.size + 1)
     input.put("session_template_id_index", sessionRecords.size + 1)
     input.put("session_location_group_id_index", sessionLocationGroups.size + 1)
-    input.put("session_prisoner_category_id_index", prisonerCategoryItems.size + 1)
+    input.put("session_prisoner_category_id_index", prisonerCategoryGroups.size + 1)
 
     val stringWriter = StringWriter()
     template.process(input, stringWriter)
     return stringWriter.toString()
   }
 
-  fun getSessionLocationGroups(locationGroupsColumns: List<LocationGroupsColumns>): List<SessionLocationGroup> {
-    val sessionLocationGroups = mutableMapOf<String, SessionLocationGroup>()
+  private fun getSessionGroups(locationGroupsColumns: List<GroupColumns>): List<SessionGroup> {
+    val sessionGroups = mutableMapOf<String, SessionGroup>()
 
     locationGroupsColumns.forEach {
-      val sessionLocationGroup = sessionLocationGroups[it.key]
-      if (sessionLocationGroup == null) {
-        sessionLocationGroups[it.key] = SessionLocationGroup(it.key, it.prisonCode, it.name!!)
+      val sessionGroup = sessionGroups[it.key]
+      if (sessionGroup == null) {
+        sessionGroups[it.key] = SessionGroup(it.key, it.prisonCode, it.name!!)
       } else if (it.name != null) {
-        sessionLocationGroup.name = "${sessionLocationGroup.name}, ${it.name}"
+        sessionGroup.name = "${sessionGroup.name}, ${it.name}"
       }
     }
-    return ArrayList(sessionLocationGroups.values)
+    return ArrayList(sessionGroups.values)
   }
 
-  fun getSessionPrisonerCategoryItems(sessionTemplateColumns: List<SessionTemplateColumns>): List<String> {
-    val sessionPrisonerCategory = mutableSetOf<String>()
-    sessionTemplateColumns.forEach {
-      sessionPrisonerCategory.addAll(it.getPrisonerIncCategoryList())
-      sessionPrisonerCategory.addAll(it.getPrisonerExcCategoryList())
-    }
-    return ArrayList(sessionPrisonerCategory)
-  }
-}
-
-fun main() {
-  val path = "src/main/resources/session-template-data/"
-  val sessionDataFile = File(path, "session-data.csv")
-  val sessionLocationDataFile = File(path, "session-location-data.csv")
-
-  val cfg = Configuration(VERSION_2_3_0)
-  cfg.setDirectoryForTemplateLoading(File(path))
-  val template = cfg.getTemplate("template.ftl")
-
-  val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-  val sessionTemplateColumns = sessionTemplateSQLGenerator.getSessionRecordsRecords(sessionDataFile)
-  val locationGroupsColumns = sessionTemplateSQLGenerator.getSessionLocationColumns(sessionLocationDataFile)
-
-  sessionTemplateSQLGenerator.validateSessionTemplate(locationGroupsColumns, sessionTemplateColumns)
-
-  val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(locationGroupsColumns)
-  val sessionLocationGroups = sessionTemplateSQLGenerator.getSessionLocationGroups(locationGroupsColumns)
-  val prisonerCategoryItems = sessionTemplateSQLGenerator.getSessionPrisonerCategoryItems(sessionTemplateColumns)
-
-  val sql = sessionTemplateSQLGenerator.createSql(
-    template,
-    sessionTemplateColumns,
-    sessionLocationGroups,
-    sessionLocationItems,
-    prisonerCategoryItems,
+  abstract class SessionItem(
+    open val groupKey: String,
   )
 
-  val outputFile = File(path + "R__Session_Template_Data.sql")
-  outputFile.delete()
-  PrintWriter(outputFile).use { out ->
-    out.print(sql)
-    print("File created : ${outputFile.absolutePath}!")
+  data class SessionLocationItem(
+    override val groupKey: String,
+    val levelOne: String,
+    val levelTwo: String? = null,
+    val levelThree: String? = null,
+    val levelFour: String? = null,
+  ): SessionItem(groupKey)
+
+  data class SessionPrisonerCategoryItem(
+    override val groupKey: String,
+    val prisonerCategoryType: PrisonerCategoryType,
+  ): SessionItem(groupKey)
+
+  data class SessionGroup(
+    val key: String,
+    val prisonCode: String,
+    var name: String,
+  )
+
+  abstract class GroupColumns(
+    open var prisonCode: String,
+    open val key: String,
+    open val name: String? = null,
+  )
+
+  data class LocationGroupsColumns(
+    override var prisonCode: String,
+    override val key: String,
+    val levelOne: List<String> = listOf<String>(),
+    val levelTwo: List<String> = listOf<String>(),
+    val levelThree: List<String> = listOf<String>(),
+    val levelFour: List<String> = listOf<String>(),
+    override val name: String? = null,
+  ) : GroupColumns(prisonCode, key, name) {
+    constructor(sessionRecord: CSVRecord) : this(
+      prisonCode = sessionRecord.get(SessionLocationColumnNames.PRISON.name).uppercase(),
+      key = sessionRecord.get(KEY.name).uppercase(),
+      levelOne = toList(sessionRecord.get(LEVEL_ONE.name)),
+      levelTwo = toList(sessionRecord.get(LEVEL_TWO.name)),
+      levelThree = toList(sessionRecord.get(LEVEL_THREE.name)),
+      levelFour = toList(sessionRecord.get(LEVEL_FOUR.name)),
+      name = sessionRecord.get(NAME.name),
+    )
+  }
+
+  data class PrisonerCategoryGroupsColumns(
+    override var prisonCode: String,
+    override val key: String,
+    val categoryCodes: List<String> = listOf(),
+    override val name: String? = null,
+  ) : GroupColumns(prisonCode, key, name) {
+    constructor(sessionRecord: CSVRecord) : this(
+      prisonCode = sessionRecord.get(SessionPrisonerCategoryColumnNames.PRISON.name).uppercase(),
+      key = sessionRecord.get(SessionPrisonerCategoryColumnNames.KEY.name).uppercase(),
+      categoryCodes = toList(sessionRecord.get(SessionPrisonerCategoryColumnNames.PRISONER_CATEGORY_TYPE_CODE.name)),
+      name = sessionRecord.get(SessionPrisonerCategoryColumnNames.NAME.name),
+    )
+  }
+  fun main() {
+    val path = "src/main/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data.csv")
+
+    val cfg = Configuration(VERSION_2_3_0)
+    cfg.setDirectoryForTemplateLoading(File(path))
+    val template = cfg.getTemplate("template.ftl")
+
+    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
+    val sessionTemplateColumns = sessionTemplateSQLGenerator.getSessionRecordsRecords(sessionDataFile)
+    val locationGroupsColumns = sessionTemplateSQLGenerator.getSessionGroupColumns(path, GroupType.LOCATION)
+    val prisonerCategoryGroupsColumns = sessionTemplateSQLGenerator.getSessionGroupColumns(path, GroupType.PRISONER_CATEGORY)
+
+    sessionTemplateSQLGenerator.validateSessionTemplate(locationGroupsColumns, prisonerCategoryGroupsColumns, sessionTemplateColumns)
+
+
+    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionItems(locationGroupsColumns)
+    val sessionLocationGroups = sessionTemplateSQLGenerator.getSessionGroups(locationGroupsColumns)
+    val sessionPrisonerCategoryItems = sessionTemplateSQLGenerator.getSessionItems(prisonerCategoryGroupsColumns)
+    val sessionPrisonerCategoryGroups = sessionTemplateSQLGenerator.getSessionGroups(prisonerCategoryGroupsColumns)
+    val groupItemMap = HashMap<GroupType, Tuple2<List<SessionGroup>, List<SessionItem>>>()
+    groupItemMap[GroupType.LOCATION] = Tuples.of(sessionLocationGroups, sessionLocationItems)
+    groupItemMap[GroupType.PRISONER_CATEGORY] = Tuples.of(sessionPrisonerCategoryGroups, sessionPrisonerCategoryItems)
+
+    val sql = sessionTemplateSQLGenerator.createSql(
+      template,
+      sessionTemplateColumns,
+      groupItemMap,
+    )
+
+    val outputFile = File(path + "R__Session_Template_Data.sql")
+    outputFile.delete()
+    PrintWriter(outputFile).use { out ->
+      out.print(sql)
+      print("File created : ${outputFile.absolutePath}!")
+    }
   }
 }

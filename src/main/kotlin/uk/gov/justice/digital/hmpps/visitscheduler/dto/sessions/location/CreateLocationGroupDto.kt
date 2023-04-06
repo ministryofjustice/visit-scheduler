@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
@@ -18,4 +18,4 @@ data class CreateLocationGroupDto(
   @Schema(description = "list of locations for group", required = false)
   val locations: List<PermittedSessionLocationDto> = listOf(),
 
-)
+  )

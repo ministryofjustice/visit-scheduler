@@ -78,7 +78,7 @@ class SessionTemplateSQLGeneratorTest() {
     // When
 
     val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionLocationColumns(sessionLocationDataFile)
-    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(prisonTemplateRecords)
+    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionItems(prisonTemplateRecords)
 
     // Then
     assertThat(prisonTemplateRecords.size).isEqualTo(8)
@@ -132,7 +132,7 @@ class SessionTemplateSQLGeneratorTest() {
 
     // When
     val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionLocationColumns(sessionLocationDataFile)
-    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(prisonTemplateRecords)
+    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionItems(prisonTemplateRecords)
 
     // Then
     assertThat(sessionLocationItems.size).isEqualTo(1)

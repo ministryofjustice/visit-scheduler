@@ -20,9 +20,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 
 fun callCancelVisit(
@@ -148,9 +148,9 @@ fun callVisitByReference(
 }
 
 fun callCreateSessionGroup(
-  webTestClient: WebTestClient,
-  dto: CreateLocationGroupDto? = null,
-  authHttpHeaders: (HttpHeaders) -> Unit,
+    webTestClient: WebTestClient,
+    dto: CreateLocationGroupDto? = null,
+    authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   return callPost(
     dto,
