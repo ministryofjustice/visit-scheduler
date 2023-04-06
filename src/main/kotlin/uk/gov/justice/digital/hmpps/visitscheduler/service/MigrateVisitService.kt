@@ -31,6 +31,8 @@ class MigrateVisitService(
   private val prisonConfigService: PrisonConfigService,
   private val snsService: SnsService,
   private val prisonerService: PrisonerService,
+  private val sessionService: SessionService,
+  private val sessionTemplateService: SessionTemplateService,
   private val authenticationHelperService: AuthenticationHelperService,
   private val telemetryClient: TelemetryClient,
 ) {
@@ -105,9 +107,21 @@ class MigrateVisitService(
   private fun getSessionCategory(migrateVisitRequest: MigrateVisitRequestDto): String? {
     val isInTheFuture = !migrateVisitRequest.startTimestamp.isBefore(LocalDateTime.now())
     if (isInTheFuture) {
-      // TODO how do we do this?
+      val groups = sessionTemplateService.getSessionLocationGroup(migrateVisitRequest.prisonCode)
+      val sessionDate = migrateVisitRequest.startTimestamp.toLocalDate()
+      val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
+      val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
+
+      if (groups.isNotEmpty()) {
+        val location = prisonerService.getPrisonerHousingLocation(migrateVisitRequest.prisonerId, migrateVisitRequest.prisonCode)
+        val sessionCapacity = sessionService.getSessionCapacity(location, migrateVisitRequest.prisonCode, sessionDate, startTime, endTime)
+        return sessionCapacity?.capacityGroup
+      } else {
+        val sessionCapacities = sessionService.getSessionCapacity(migrateVisitRequest.prisonCode, sessionDate, startTime, endTime)
+        // TODO this is a list > how do we do this?
+      }
     }
-    return migrateVisitRequest.visitRoom
+    return null
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
