@@ -13,8 +13,8 @@ data class VisitSessionDto(
   @Schema(description = "Session Template Reference", example = "v9d.7ed.7u", required = true)
   val sessionTemplateReference: String,
 
-  @Schema(description = "Capacity group", example = "Main Group", required = true)
-  val capacityGroup: String,
+  @Schema(description = "Capacity group", example = "Main Group", required = false)
+  val capacityGroup: String? = null,
 
   @Schema(description = "The type of visits taking place within this session", example = "SOCIAL", required = true)
   val visitType: VisitType,

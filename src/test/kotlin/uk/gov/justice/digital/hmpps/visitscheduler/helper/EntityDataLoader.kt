@@ -62,7 +62,7 @@ class VisitEntityHelper(
     visitStatus: VisitStatus = RESERVED,
     prisonerId: String = "FF0000AA",
     prisonCode: String = "MDI",
-    capacityGroup: String = "A1",
+    capacityGroup: String? = "A1",
     visitStart: LocalDateTime = LocalDateTime.of((LocalDateTime.now().year + 1), 11, 1, 12, 30, 44),
     visitEnd: LocalDateTime = visitStart.plusHours(1),
     visitType: VisitType = VisitType.SOCIAL,

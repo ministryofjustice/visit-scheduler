@@ -37,8 +37,8 @@ class Visit(
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison,
 
-  @Column(nullable = false)
-  var capacityGroup: String,
+  @Column(nullable = true)
+  var capacityGroup: String? = null,
 
   @Column(nullable = false)
   var visitStart: LocalDateTime,

@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -29,6 +30,7 @@ class MigrateVisitService(
   private val visitRepository: VisitRepository,
   private val prisonConfigService: PrisonConfigService,
   private val snsService: SnsService,
+  private val prisonerService: PrisonerService,
   private val authenticationHelperService: AuthenticationHelperService,
   private val telemetryClient: TelemetryClient,
 ) {
@@ -40,12 +42,14 @@ class MigrateVisitService(
 
     val prison = prisonConfigService.findPrisonByCode(migrateVisitRequest.prisonCode)
 
+    val capacityGroup = getSessionCategory(migrateVisitRequest)
+
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
         prison = prison,
         prisonId = prison.id,
-        capacityGroup = migrateVisitRequest.visitRoom,
+        capacityGroup = capacityGroup,
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
         outcomeStatus = outcomeStatus,
@@ -98,6 +102,14 @@ class MigrateVisitService(
     return visitEntity.reference
   }
 
+  private fun getSessionCategory(migrateVisitRequest: MigrateVisitRequestDto): String? {
+    val isInTheFuture = !migrateVisitRequest.startTimestamp.isBefore(LocalDateTime.now())
+    if (isInTheFuture) {
+      // TODO how do we do this?
+    }
+    return migrateVisitRequest.visitRoom
+  }
+
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
@@ -142,7 +154,7 @@ class MigrateVisitService(
       "prisonerId" to visitEntity.prisonerId,
       "prisonId" to visitEntity.prison.code,
       "visitType" to visitEntity.visitType.name,
-      "capacityGroup" to visitEntity.capacityGroup,
+      "capacityGroup" to (visitEntity.capacityGroup ?: ""),
       "visitRestriction" to visitEntity.visitRestriction.name,
       "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visitEntity.visitStatus.name,

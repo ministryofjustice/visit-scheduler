@@ -9,8 +9,8 @@ data class SessionCapacityDto(
   val closed: Int,
   @Schema(description = "open capacity", example = "50", required = true)
   val open: Int,
-  @Schema(description = "Capacity group", example = "Main Group", required = true)
-  val capacityGroup: String,
+  @Schema(description = "Capacity group", example = "Main Group", required = false)
+  val capacityGroup: String? = null,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     closed = sessionTemplateEntity.closedCapacity,

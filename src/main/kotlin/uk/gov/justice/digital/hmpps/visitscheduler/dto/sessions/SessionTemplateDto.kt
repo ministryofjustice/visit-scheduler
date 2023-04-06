@@ -42,8 +42,8 @@ data class SessionTemplateDto(
   val enhanced: Boolean,
   @Schema(description = "biWeekly", example = "true", required = true)
   val biWeekly: Boolean,
-  @Schema(description = "capacity group", example = "Main Group", required = true)
-  val capacityGroup: String,
+  @Schema(description = "Capacity group", example = "Main Group", required = false)
+  val capacityGroup: String? = null,
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)

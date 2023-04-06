@@ -389,7 +389,7 @@ class VisitService(
       "prisonerId" to visitEntity.prisonerId,
       "prisonId" to visitEntity.prison.code,
       "visitType" to visitEntity.visitType.name,
-      "capacityGroup" to visitEntity.capacityGroup,
+      "capacityGroup" to (visitEntity.capacityGroup ?: ""),
       "visitRestriction" to visitEntity.visitRestriction.name,
       "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visitEntity.visitStatus.name,
