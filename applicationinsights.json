@@ -6,12 +6,18 @@
     "service.version": "${BUILD_NUMBER}"
   },
   "instrumentation": {
+    "springScheduling": {
+      "enabled": false
+    },
     "logging": {
       "level": "DEBUG"
     }
   },
   "selfDiagnostics": {
     "destination": "console"
+  },
+  "sampling": {
+    "percentage": 100
   },
   "preview": {
     "sampling": {
