@@ -6,9 +6,6 @@
     "service.version": "${BUILD_NUMBER}"
   },
   "instrumentation": {
-    "springScheduling": {
-      "enabled": false
-    },
     "logging": {
       "level": "DEBUG"
     }
