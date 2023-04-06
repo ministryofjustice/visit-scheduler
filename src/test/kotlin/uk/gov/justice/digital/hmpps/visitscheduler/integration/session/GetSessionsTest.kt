@@ -397,7 +397,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val startFromWeek1 = today.with(TemporalAdjusters.next(MONDAY)).minusWeeks(1)
     sessionTemplateEntityHelper.create(
       validFromDate = startFromWeek1,
-      visitRoom = "Alternate 1",
+      capacityGroup = "Alternate 1",
       dayOfWeek = SUNDAY,
       biWeekly = true,
     )
@@ -406,7 +406,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     sessionTemplateEntityHelper.create(
       validFromDate = startFromWeek2,
-      visitRoom = "Alternate 2",
+      capacityGroup = "Alternate 2",
       dayOfWeek = SUNDAY,
       biWeekly = true,
     )
@@ -422,11 +422,11 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isGreaterThan(2)
     if (todayIsTheWeekEnd) {
       // On the weekend it skips to the other session template / schedule because we cannot book with in 24 hrs
-      assertThat(visitSessionResults[0].visitRoomName).isEqualTo("Alternate 2")
-      assertThat(visitSessionResults[1].visitRoomName).isEqualTo("Alternate 1")
+      assertThat(visitSessionResults[0].capacityGroup).isEqualTo("Alternate 2")
+      assertThat(visitSessionResults[1].capacityGroup).isEqualTo("Alternate 1")
     } else {
-      assertThat(visitSessionResults[0].visitRoomName).isEqualTo("Alternate 1")
-      assertThat(visitSessionResults[1].visitRoomName).isEqualTo("Alternate 2")
+      assertThat(visitSessionResults[0].capacityGroup).isEqualTo("Alternate 1")
+      assertThat(visitSessionResults[1].capacityGroup).isEqualTo("Alternate 2")
     }
   }
 
@@ -616,7 +616,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
@@ -627,7 +627,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
@@ -638,7 +638,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
@@ -672,7 +672,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
@@ -683,7 +683,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime.plusWeeks(1),
       visitEnd = endTime,
       visitType = SOCIAL,
@@ -717,7 +717,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
@@ -727,7 +727,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
@@ -738,7 +738,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
@@ -772,7 +772,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime.minusHours(1),
       visitEnd = endTime,
       visitType = SOCIAL,
@@ -783,7 +783,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime,
       visitEnd = dateTime.plusMinutes(30),
       visitType = SOCIAL,
@@ -794,7 +794,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime.plusMinutes(30),
       visitEnd = dateTime.plusHours(1),
       visitType = SOCIAL,
@@ -805,7 +805,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = dateTime.plusHours(1),
       visitEnd = dateTime.plusHours(2),
       visitType = SOCIAL,
@@ -883,7 +883,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
@@ -932,7 +932,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
@@ -981,7 +981,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
@@ -1021,7 +1021,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
@@ -1062,7 +1062,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
@@ -1102,7 +1102,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = validFromDate.minusMonths(6).atTime(9, 0),
       visitEnd = validFromDate.minusMonths(6).atTime(9, 30),
       visitType = SOCIAL,
@@ -1142,7 +1142,7 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
-      visitRoom = sessionTemplate.visitRoom,
+      capacityGroup = sessionTemplate.capacityGroup,
       visitStart = validFromDate.plusMonths(6).atTime(9, 0),
       visitEnd = validFromDate.plusMonths(6).atTime(9, 30),
       visitType = SOCIAL,

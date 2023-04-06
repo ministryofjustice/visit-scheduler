@@ -122,7 +122,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.reference).isEqualTo(reference)
       assertThat(visit.prison.code).isEqualTo("MDI")
       assertThat(visit.prisonerId).isEqualTo("FF0000FF")
-      assertThat(visit.visitRoom).isEqualTo("A1")
+      assertThat(visit.capacityGroup).isEqualTo("A1")
       assertThat(visit.visitType).isEqualTo(SOCIAL)
       assertThat(visit.visitStart).isEqualTo(visitTime.toString())
       assertThat(visit.visitEnd).isEqualTo(visitTime.plusHours(1).toString())
@@ -719,7 +719,7 @@ class MigrateVisitTest : IntegrationTestBase() {
         assertThat(it["prisonerId"]).isEqualTo(cancelledVisit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(cancelledVisit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
-        assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
+        assertThat(it["capacityGroup"]).isEqualTo(cancelledVisit.capacityGroup)
         assertThat(it["visitRestriction"]).isEqualTo(cancelledVisit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
@@ -734,7 +734,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       "prisonerId" to cancelledVisit.prisonerId,
       "prisonId" to cancelledVisit.prisonCode,
       "visitType" to cancelledVisit.visitType.name,
-      "visitRoom" to cancelledVisit.visitRoom,
+      "capacityGroup" to cancelledVisit.capacityGroup,
       "visitRestriction" to cancelledVisit.visitRestriction.name,
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,

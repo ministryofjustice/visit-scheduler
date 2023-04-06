@@ -277,7 +277,7 @@ class GetSessionsWithLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBa
       endTime = LocalTime.parse("14:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = sessionPrisonCode,
-      visitRoom = "session available to some level 4s and level 2s",
+      capacityGroup = "session available to some level 4s and level 2s",
       permittedSessionGroups = mutableListOf(location),
     )
   }
@@ -334,7 +334,7 @@ class GetSessionsWithLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBa
     assertThat(visitSessionResult.endTimestamp).isEqualTo(testDate.atTime(expectedSessionTemplate.endTime))
     assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
-    assertThat(visitSessionResult.visitRoomName).isEqualTo(expectedSessionTemplate.visitRoom)
+    assertThat(visitSessionResult.capacityGroup).isEqualTo(expectedSessionTemplate.capacityGroup)
   }
 
   private fun getResults(returnResult: WebTestClient.BodyContentSpec): Array<VisitSessionDto> {

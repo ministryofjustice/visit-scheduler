@@ -37,8 +37,8 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val sessionCapacity = getResults(returnResult)
-    Assertions.assertThat(sessionCapacity.closed).isEqualTo(sessionTemplate.closedCapacity)
-    Assertions.assertThat(sessionCapacity.open).isEqualTo(sessionTemplate.openCapacity)
+    Assertions.assertThat(sessionCapacity[0].closed).isEqualTo(sessionTemplate.closedCapacity)
+    Assertions.assertThat(sessionCapacity[0].open).isEqualTo(sessionTemplate.openCapacity)
   }
 
   @Test
@@ -74,22 +74,36 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val sessionCapacity = getResults(returnResult)
-    Assertions.assertThat(sessionCapacity.closed).isEqualTo(sessionTemplate1.closedCapacity)
-    Assertions.assertThat(sessionCapacity.open).isEqualTo(sessionTemplate1.openCapacity)
+    Assertions.assertThat(sessionCapacity[0].closed).isEqualTo(sessionTemplate1.closedCapacity)
+    Assertions.assertThat(sessionCapacity[0].open).isEqualTo(sessionTemplate1.openCapacity)
   }
 
   @Test
-  fun `throw 500 Internal server exception when more than one capacity is found`() {
+  fun `Capacity groups capacities are added up`() {
     // Given
 
     val nextAllowedDay = getNextAllowedDay()
 
-    val sessionTemplate = sessionTemplateEntityHelper.create(
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      capacityGroup = "G1",
+      closedCapacity = 1,
+      openCapacity = 1,
+    )
+
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      capacityGroup = "G2",
+      closedCapacity = 10,
+      openCapacity = 11,
     )
 
     sessionTemplateEntityHelper.create(
@@ -98,13 +112,23 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      capacityGroup = "G2",
+      closedCapacity = sessionTemplate2.closedCapacity,
+      openCapacity = sessionTemplate2.openCapacity,
     )
 
     // When
-    val responseSpec = callGetSessionCapacity(sessionTemplate.prison.code, sessionTemplate.validFromDate, sessionTemplate.startTime, sessionTemplate.endTime)
+    val responseSpec = callGetSessionCapacity(sessionTemplate1.prison.code, sessionTemplate1.validFromDate, sessionTemplate1.startTime, sessionTemplate1.endTime)
 
     // Then
-    responseSpec.expectStatus().is5xxServerError
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionCapacity = getResults(returnResult)
+    Assertions.assertThat(sessionCapacity.size).isEqualTo(2)
+    Assertions.assertThat(sessionCapacity[0].closed).isEqualTo(sessionTemplate1.closedCapacity)
+    Assertions.assertThat(sessionCapacity[0].open).isEqualTo(sessionTemplate1.openCapacity)
+    Assertions.assertThat(sessionCapacity[1].closed).isEqualTo(sessionTemplate2.closedCapacity * 2)
+    Assertions.assertThat(sessionCapacity[1].open).isEqualTo(sessionTemplate2.openCapacity * 2)
   }
 
   @Test
@@ -134,7 +158,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     return LocalDate.now().plusDays(2)
   }
 
-  private fun getResults(returnResult: BodyContentSpec): SessionCapacityDto {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, SessionCapacityDto::class.java)
+  private fun getResults(returnResult: BodyContentSpec): Array<SessionCapacityDto> {
+    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<SessionCapacityDto>::class.java)
   }
 }

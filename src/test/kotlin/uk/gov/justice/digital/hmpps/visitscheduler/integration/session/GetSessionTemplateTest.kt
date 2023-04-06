@@ -102,7 +102,7 @@ class GetSessionTemplateTest(
     Assertions.assertThat(sessionTemplateDto.endTime).isEqualTo(sessionTemplate.endTime)
     Assertions.assertThat(sessionTemplateDto.validFromDate).isEqualTo(LocalDate.now().format(DateTimeFormatter.ISO_DATE))
     Assertions.assertThat(sessionTemplateDto.visitType).isEqualTo(VisitType.SOCIAL)
-    Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(sessionTemplate.visitRoom)
+    Assertions.assertThat(sessionTemplateDto.capacityGroup).isEqualTo(sessionTemplate.capacityGroup)
     Assertions.assertThat(sessionTemplateDto.closedCapacity).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionTemplateDto.openCapacity).isEqualTo(sessionTemplate.openCapacity)
   }

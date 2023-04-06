@@ -36,7 +36,7 @@ data class CreateSessionTemplateDto(
   val validToDate: LocalDate? = null,
 
   @Schema(description = "visit room", example = "A1", required = true)
-  val visitRoom: String,
+  val capacityGroup: String,
 
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,

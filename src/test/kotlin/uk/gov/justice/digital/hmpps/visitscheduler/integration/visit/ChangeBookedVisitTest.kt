@@ -77,7 +77,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     return ReserveVisitSlotDto(
       prisonCode = prisonId,
       prisonerId = prisonerId,
-      visitRoom = "A1",
+      capacityGroup = "A1",
       visitType = SOCIAL,
       startTimestamp = startTimestamp,
       endTimestamp = bookedVisit.visitEnd,
@@ -122,7 +122,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
           assertThat(it["prisonerId"]).isEqualTo(reservedVisit.prisonerId)
           assertThat(it["prisonId"]).isEqualTo(reservedVisit.prison.code)
           assertThat(it["visitType"]).isEqualTo(reservedVisit.visitType.name)
-          assertThat(it["visitRoom"]).isEqualTo(reservedVisit.visitRoom)
+          assertThat(it["capacityGroup"]).isEqualTo(reservedVisit.capacityGroup)
           assertThat(it["visitRestriction"]).isEqualTo(reservedVisit.visitRestriction.name)
           assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
           assertThat(it["visitStatus"]).isEqualTo(VisitStatus.CHANGING.name)
@@ -138,7 +138,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
           assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
           assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
           assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-          assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+          assertThat(it["capacityGroup"]).isEqualTo(visit.capacityGroup)
           assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
           assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
           assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
@@ -175,7 +175,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["capacityGroup"]).isEqualTo(visit.capacityGroup)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
@@ -211,7 +211,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["capacityGroup"]).isEqualTo(visit.capacityGroup)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
@@ -247,7 +247,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["capacityGroup"]).isEqualTo(visit.capacityGroup)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
@@ -282,7 +282,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["capacityGroup"]).isEqualTo(visit.capacityGroup)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)

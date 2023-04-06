@@ -52,7 +52,7 @@ class CreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.closedCapacity).isEqualTo(dto.closedCapacity)
     Assertions.assertThat(sessionTemplateDto.openCapacity).isEqualTo(dto.openCapacity)
     Assertions.assertThat(sessionTemplateDto.prisonCode).isEqualTo(dto.prisonCode)
-    Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(dto.visitRoom)
+    Assertions.assertThat(sessionTemplateDto.capacityGroup).isEqualTo(dto.capacityGroup)
     Assertions.assertThat(sessionTemplateDto.startTime).isEqualTo(dto.startTime)
     Assertions.assertThat(sessionTemplateDto.endTime).isEqualTo(dto.endTime)
     Assertions.assertThat(sessionTemplateDto.dayOfWeek).isEqualTo(dto.dayOfWeek)

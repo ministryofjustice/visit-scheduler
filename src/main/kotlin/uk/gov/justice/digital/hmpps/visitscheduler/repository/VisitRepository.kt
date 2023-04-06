@@ -69,7 +69,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
       "v.visitStart < :endDateTime AND " +
-      " (v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED') ",
+      "(v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED') ",
   )
   fun hasActiveVisits(
     prisonerIds: List<String>,
@@ -83,12 +83,14 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "WHERE v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
       "v.visitStart < :endDateTime AND " +
+      "(:capacityGroup is null or v.capacityGroup = :capacityGroup) AND " +
       "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
       "v.visitStatus = 'BOOKED'  " +
       "GROUP BY v.visitRestriction",
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
+    capacityGroup: String ? = null,
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime,
   ): List<VisitRestrictionStats>
@@ -98,12 +100,14 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "WHERE v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
       "v.visitStart < :endDateTime AND " +
+      "(:capacityGroup is null or v.capacityGroup = :capacityGroup) AND " +
       "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
       "v.visitStatus = 'RESERVED' AND v.modifyTimestamp >= :expiredDateAndTime " +
       "GROUP BY v.visitRestriction",
   )
   fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
+    capacityGroup: String ? = null,
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime,
     expiredDateAndTime: LocalDateTime,

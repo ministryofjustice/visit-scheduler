@@ -38,7 +38,7 @@ class Visit(
   val prison: Prison,
 
   @Column(nullable = false)
-  var visitRoom: String,
+  var capacityGroup: String,
 
   @Column(nullable = false)
   var visitStart: LocalDateTime,

@@ -21,8 +21,8 @@ data class VisitDto(
   @JsonProperty("prisonId")
   @Schema(description = "Prison Id", example = "MDI", required = true)
   val prisonCode: String,
-  @Schema(description = "Visit Room", example = "A1 L3", required = true)
-  val visitRoom: String,
+  @Schema(description = "Capacity group", example = "Main Group", required = true)
+  val capacityGroup: String,
   @Schema(description = "Visit Type", example = "SOCIAL", required = true)
   val visitType: VisitType,
   @Schema(description = "Visit Status", example = "RESERVED", required = true)
@@ -64,7 +64,7 @@ data class VisitDto(
     reference = visitEntity.reference,
     prisonerId = visitEntity.prisonerId,
     prisonCode = visitEntity.prison.code,
-    visitRoom = visitEntity.visitRoom,
+    capacityGroup = visitEntity.capacityGroup,
     visitStatus = visitEntity.visitStatus,
     outcomeStatus = visitEntity.outcomeStatus,
     visitType = visitEntity.visitType,

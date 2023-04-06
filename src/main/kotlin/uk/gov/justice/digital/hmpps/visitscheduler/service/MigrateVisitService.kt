@@ -45,7 +45,7 @@ class MigrateVisitService(
         prisonerId = migrateVisitRequest.prisonerId,
         prison = prison,
         prisonId = prison.id,
-        visitRoom = migrateVisitRequest.visitRoom,
+        capacityGroup = migrateVisitRequest.visitRoom,
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
         outcomeStatus = outcomeStatus,
@@ -80,11 +80,7 @@ class MigrateVisitService(
       }
     }
 
-    migrateVisitRequest.legacyData?.let {
-      saveLegacyData(visitEntity, it.leadVisitorId)
-    } ?: run {
-      saveLegacyData(visitEntity, null)
-    }
+    saveLegacyData(visitEntity, migrateVisitRequest)
 
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
@@ -146,7 +142,7 @@ class MigrateVisitService(
       "prisonerId" to visitEntity.prisonerId,
       "prisonId" to visitEntity.prison.code,
       "visitType" to visitEntity.visitType.name,
-      "visitRoom" to visitEntity.visitRoom,
+      "capacityGroup" to visitEntity.capacityGroup,
       "visitRestriction" to visitEntity.visitRestriction.name,
       "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visitEntity.visitStatus.name,
@@ -187,10 +183,11 @@ class MigrateVisitService(
     )
   }
 
-  private fun saveLegacyData(visit: Visit, leadPersonId: Long?) {
+  private fun saveLegacyData(visit: Visit, migrateVisitRequestDto: MigrateVisitRequestDto) {
     val legacyData = LegacyData(
       visitId = visit.id,
-      leadPersonId = leadPersonId,
+      leadPersonId = migrateVisitRequestDto.legacyData?.leadVisitorId,
+      visitRoom = migrateVisitRequestDto.visitRoom,
     )
 
     legacyDataRepository.saveAndFlush(legacyData)
