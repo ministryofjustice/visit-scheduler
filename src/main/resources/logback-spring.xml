@@ -6,25 +6,13 @@
 
     <springProperty scope="context" name="app" source="spring.application.name"/>
 
-    <springProfile name="local || dev || stdout">
-        <appender name="consoleAppender" class="ch.qos.logback.core.helpers.NOPAppender"/>
-        <appender name="logAppender" class="ch.qos.logback.core.ConsoleAppender">
-            <layout class="ch.qos.logback.classic.PatternLayout">
-                <Pattern>${LOG_PATTERN}</Pattern>
-            </layout>
-        </appender>
-    </springProfile>
+    <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
+        <layout class="ch.qos.logback.classic.PatternLayout">
+            <Pattern>${LOG_PATTERN}</Pattern>
+        </layout>
+    </appender>
 
-    <springProfile name="!(local || dev || stdout)">
-        <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
-            <layout class="ch.qos.logback.classic.PatternLayout">
-                <Pattern>${LOG_PATTERN}</Pattern>
-            </layout>
-        </appender>
-    </springProfile>
-
-    <logger name="uk.gov.justice.digital.hmpps.visitscheduler.VisitSchedulerApplicationKt" additivity="false"
-            level="DEBUG">
+    <logger name="uk.gov.justice.digital.hmpps.visitscheduler.VisitSchedulerApplicationKt" additivity="false" level="DEBUG">
         <appender-ref ref="consoleAppender"/>
     </logger>
 

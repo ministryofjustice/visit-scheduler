@@ -16,9 +16,6 @@
   "selfDiagnostics": {
     "destination": "console"
   },
-  "sampling": {
-    "percentage": 100
-  },
   "preview": {
     "sampling": {
       "overrides": [
