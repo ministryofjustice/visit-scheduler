@@ -11,4 +11,13 @@ BEGIN;
         AND st.start_time = '14:15'
         AND st.end_time  = '15:45'
         AND p.code = 'BNI';
+
+    UPDATE visit v set visit_start = visit_start - interval '30 minutes'
+    FROM prison p
+    WHERE v.prison_id = p.id
+      AND (v.visit_start::time = '14:15:00')
+      AND (v.visit_end::time = '15:45:00')
+      AND p.code = 'BNI'
+      AND 	v.visit_start >= TO_DATE('11/04/2023', 'DD/MM/YYYY')
+      AND v.visit_status = 'BOOKED';
 END;
