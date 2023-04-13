@@ -12,9 +12,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
 import java.time.LocalDate
 
@@ -505,8 +505,8 @@ class PrisonerSessionValidatorTest {
   }
 
   private fun createPermittedSessionLocation(
-      allowedSessionLocationHierarchy: AllowedSessionLocationHierarchy,
-      group: SessionLocationGroup,
+    allowedSessionLocationHierarchy: AllowedSessionLocationHierarchy,
+    group: SessionLocationGroup,
   ): PermittedSessionLocation {
     return PermittedSessionLocation(
       groupId = group.id,

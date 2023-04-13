@@ -27,7 +27,7 @@ class SessionTemplateSQLGeneratorTest() {
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
 
     // When
-    val sessionRecords = sessionTemplateSQLGenerator.getSessionRecordsRecords(sessionDataFile)
+    val sessionRecords = sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
 
     // Then
     assertThat(sessionRecords.size).isEqualTo(4)
@@ -45,8 +45,7 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
       assertThat(biWeekly).isFalse()
       assertThat(locationKeys).isEqualTo("BLI_G1")
-      assertThat(incCategories).isEqualTo("INC_CAT")
-      assertThat(excCategories).isEqualTo("EXC_CAT")
+      assertThat(categoryKeys).isEqualTo("INC_CAT")
     }
     with(sessionRecords[1]) {
       assertThat(prisonCode).isEqualTo("BL2")
@@ -62,8 +61,7 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.WEDNESDAY)
       assertThat(biWeekly).isTrue()
       assertThat(locationKeys).isEqualTo("BLI_G2")
-      assertThat(incCategories).isEqualTo("INC_CAT")
-      assertThat(excCategories).isEqualTo("EXC_CAT")
+      assertThat(categoryKeys).isEqualTo("INC_CAT")
     }
   }
 
@@ -77,8 +75,8 @@ class SessionTemplateSQLGeneratorTest() {
 
     // When
 
-    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionLocationColumns(sessionLocationDataFile)
-    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionItems(prisonTemplateRecords)
+    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionGroupColumns(SessionTemplateSQLGenerator.GroupType.LOCATION, sessionLocationDataFile) as ArrayList<SessionTemplateSQLGenerator.LocationGroupsColumns>
+    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(prisonTemplateRecords)
 
     // Then
     assertThat(prisonTemplateRecords.size).isEqualTo(8)
@@ -131,8 +129,8 @@ class SessionTemplateSQLGeneratorTest() {
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
 
     // When
-    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionLocationColumns(sessionLocationDataFile)
-    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionItems(prisonTemplateRecords)
+    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionGroupColumns(SessionTemplateSQLGenerator.GroupType.LOCATION, sessionLocationDataFile) as ArrayList<SessionTemplateSQLGenerator.LocationGroupsColumns>
+    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(prisonTemplateRecords)
 
     // Then
     assertThat(sessionLocationItems.size).isEqualTo(1)
@@ -147,7 +145,7 @@ class SessionTemplateSQLGeneratorTest() {
 
     val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     // When
-    val sessionRecords = sessionTemplateSQLGenerator.getSessionRecordsRecords(sessionDataFile)
+    val sessionRecords = sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
 
     // Then
     assertThat(sessionRecords.size).isEqualTo(1)
@@ -159,8 +157,7 @@ class SessionTemplateSQLGeneratorTest() {
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
       assertThat(locationKeys).isEqualTo("BLI_G1")
       assertThat(biWeekly).isFalse()
-      assertThat(incCategories).isEqualTo("INC_CAT")
-      assertThat(excCategories).isEqualTo("EXC_CAT")
+      assertThat(categoryKeys).isEqualTo("INC_CAT")
     }
   }
 
@@ -178,7 +175,7 @@ class SessionTemplateSQLGeneratorTest() {
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
@@ -200,7 +197,7 @@ class SessionTemplateSQLGeneratorTest() {
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
@@ -223,7 +220,7 @@ class SessionTemplateSQLGeneratorTest() {
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
@@ -247,7 +244,7 @@ class SessionTemplateSQLGeneratorTest() {
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
@@ -270,7 +267,7 @@ class SessionTemplateSQLGeneratorTest() {
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
@@ -294,7 +291,7 @@ class SessionTemplateSQLGeneratorTest() {
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then

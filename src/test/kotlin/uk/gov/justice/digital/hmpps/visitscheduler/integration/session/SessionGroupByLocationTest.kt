@@ -10,9 +10,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteGroupByRefer
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetGroupsByPrisonId
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
