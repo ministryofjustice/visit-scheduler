@@ -213,13 +213,7 @@ class SessionTemplateSQLGenerator {
     }
   }
 
-  fun getSessionLocationItems(prisonTemplateRecords: List<LocationGroupsColumns>): List<SessionLocationItem> {
-    val sessionLocationItems = ArrayList<SessionLocationItem>()
-    prisonTemplateRecords.forEach { sessionLocationItems.addAll(createPermittedSessionLocationItems(it)) }
-    return sessionLocationItems.toList()
-  }
-
-  private fun getSessionItems(groupColumnsList: List<GroupColumns>): List<SessionItem> {
+  fun getSessionItems(groupColumnsList: List<GroupColumns>): List<SessionItem> {
     val sessionItems = ArrayList<SessionItem>()
     groupColumnsList.forEach {
       when (it) {
