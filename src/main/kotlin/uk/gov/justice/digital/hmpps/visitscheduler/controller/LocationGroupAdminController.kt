@@ -136,7 +136,8 @@ class LocationGroupAdminController(
     ],
   )
   fun createLocationGroup(
-      @RequestBody @Valid
+    @RequestBody
+    @Valid
     createLocationSessionGroup: CreateLocationGroupDto,
   ): SessionLocationGroupDto {
     return sessionTemplateService.createSessionLocationGroup(createLocationSessionGroup)

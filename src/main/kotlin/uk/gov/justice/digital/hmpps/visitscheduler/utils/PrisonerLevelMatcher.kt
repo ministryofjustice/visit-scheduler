@@ -18,8 +18,8 @@ class PrisonerLevelMatcher : BiPredicate<SessionLocationGroup?, Map<PrisonerHous
   }
 
   override fun test(
-      sessionLocationGroups: SessionLocationGroup?,
-      levelsMap: Map<PrisonerHousingLevels, String?>,
+    sessionLocationGroups: SessionLocationGroup?,
+    levelsMap: Map<PrisonerHousingLevels, String?>,
   ): Boolean {
     sessionLocationGroups?.let { sessionLocationGroup ->
       for (permittedSessionLocation in sessionLocationGroup.sessionLocations) {
