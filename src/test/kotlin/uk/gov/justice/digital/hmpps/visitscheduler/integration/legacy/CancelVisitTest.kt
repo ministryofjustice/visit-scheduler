@@ -377,6 +377,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,
       "outcomeStatus" to cancelledVisit.outcomeStatus!!.name,
+      "actionedBy" to cancelledVisit.cancelledBy,
     )
     verify(telemetryClient, times(1)).trackEvent("visit-cancelled", eventsMap, null)
 
