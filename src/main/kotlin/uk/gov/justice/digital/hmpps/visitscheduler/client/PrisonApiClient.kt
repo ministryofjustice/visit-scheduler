@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerCellHi
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import java.time.Duration
-import java.util.Optional
 
 @Component
 class PrisonApiClient(
@@ -25,10 +24,10 @@ class PrisonApiClient(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    private val TYPE_FOR_OFFENDER_NONASSOCIATION = object : ParameterizedTypeReference<Optional<OffenderNonAssociationDetailsDto>>() {}
-    private val TYPE_FOR_PRISONER_HOUSING_LOCATIONS = object : ParameterizedTypeReference<Optional<PrisonerHousingLocationsDto>>() {}
-    private val TYPE_FOR_PRISONER_DETAILS = object : ParameterizedTypeReference<Optional<PrisonerDetailsDto>>() {}
-    private val TYPE_FOR_PRISONER_CELL_HISTORY = object : ParameterizedTypeReference<Optional<PrisonerCellHistoryDto>>() {}
+    private val TYPE_FOR_OFFENDER_NONASSOCIATION = object : ParameterizedTypeReference<OffenderNonAssociationDetailsDto>() {}
+    private val TYPE_FOR_PRISONER_HOUSING_LOCATIONS = object : ParameterizedTypeReference<PrisonerHousingLocationsDto>() {}
+    private val TYPE_FOR_PRISONER_DETAILS = object : ParameterizedTypeReference<PrisonerDetailsDto>() {}
+    private val TYPE_FOR_PRISONER_CELL_HISTORY = object : ParameterizedTypeReference<PrisonerCellHistoryDto>() {}
   }
 
   private fun isNotFoundError(e: Throwable?) =
@@ -47,10 +46,10 @@ class PrisonApiClient(
           Mono.error(e)
         } else {
           LOG.debug("getOffenderNonAssociation Not Found get request /api/offenders/$offenderNo/non-association-details")
-          return@onErrorResume Mono.just(Optional.empty())
+          return@onErrorResume Mono.justOrEmpty(null)
         }
       }
-      .block(apiTimeout)?.orElseGet { null }
+      .block(apiTimeout)
   }
 
   fun getPrisonerHousingLocation(offenderNo: String): PrisonerHousingLocationsDto? {
@@ -66,10 +65,10 @@ class PrisonApiClient(
           Mono.error(e)
         } else {
           LOG.debug("getPrisonerHousingLocation Not Found get request /api/offenders/$offenderNo/housing-location")
-          return@onErrorResume Mono.just(Optional.empty())
+          return@onErrorResume Mono.justOrEmpty(null)
         }
       }
-      .block(apiTimeout)?.orElseGet { null }
+      .block(apiTimeout)
   }
 
   fun getPrisonerDetails(offenderNo: String): PrisonerDetailsDto? {
@@ -84,10 +83,10 @@ class PrisonApiClient(
           Mono.error(e)
         } else {
           LOG.debug("getPrisonerDetails Not Found get request /api/prisoners/$offenderNo/full-status")
-          return@onErrorResume Mono.just(Optional.empty())
+          return@onErrorResume Mono.justOrEmpty(null)
         }
       }
-      .block(apiTimeout)?.orElseGet { null }
+      .block(apiTimeout)
   }
 
   fun getCellHistory(bookingId: Int): PrisonerCellHistoryDto? {
@@ -103,9 +102,9 @@ class PrisonApiClient(
           Mono.error(e)
         } else {
           LOG.debug("getCellHistory Not Found get request /api/bookings/$bookingId/cell-history?page=0&size=10")
-          return@onErrorResume Mono.just(Optional.empty())
+          return@onErrorResume Mono.justOrEmpty(null)
         }
       }
-      .block(apiTimeout)?.orElseGet { null }
+      .block(apiTimeout)
   }
 }
