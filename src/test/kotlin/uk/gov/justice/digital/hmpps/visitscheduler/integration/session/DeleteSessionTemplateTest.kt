@@ -8,8 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteSessionTemplateByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate

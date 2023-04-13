@@ -15,12 +15,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
