@@ -7,6 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_EXCEPTIONAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_HIGH
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_PROVISIONAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_STANDARD
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -70,7 +74,7 @@ class GetSessionTemplateTest(
     // Then
     val sessionTemplateDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
 
-    val group = sessionTemplateDto.permittedLocationGroups.get(0)
+    val group = sessionTemplateDto.permittedLocationGroups[0]
     val permittedLocation = group.locations[0]
 
     Assertions.assertThat(group.locations).hasSize(1)
@@ -78,6 +82,32 @@ class GetSessionTemplateTest(
     Assertions.assertThat(permittedLocation.levelTwoCode).isEqualTo(sessionLocationGroup.sessionLocations[0].levelTwoCode)
     Assertions.assertThat(permittedLocation.levelThreeCode).isEqualTo(sessionLocationGroup.sessionLocations[0].levelThreeCode)
     Assertions.assertThat(permittedLocation.levelFourCode).isEqualTo(sessionLocationGroup.sessionLocations[0].levelFourCode)
+  }
+
+  @Test
+  fun `Session templates are returned with permitted category groups`() {
+    // Given
+    val sessionCategoryGroup = sessionPrisonerCategoryHelper.create()
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now(),
+      permittedCategories = mutableListOf(sessionCategoryGroup),
+    )
+
+    // When
+    val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val sessionTemplateDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
+
+    val prisonerCategoryGroups = sessionTemplateDto.prisonerCategoryGroups
+    Assertions.assertThat(prisonerCategoryGroups).hasSize(1)
+
+    val prisonerCategories = prisonerCategoryGroups[0].categories
+    Assertions.assertThat(prisonerCategories).hasSize(4)
+    val expectedCategories = mutableListOf(A_PROVISIONAL, A_STANDARD, A_HIGH, A_EXCEPTIONAL)
+    Assertions.assertThat(prisonerCategories).containsAll(expectedCategories)
   }
 
   @Test

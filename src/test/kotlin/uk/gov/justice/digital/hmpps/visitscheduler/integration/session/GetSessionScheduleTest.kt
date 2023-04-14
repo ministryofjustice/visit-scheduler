@@ -33,6 +33,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     val sessionDate = LocalDate.now()
 
     val sessionLocationGroup = sessionLocationGroupHelper.create(prisonCode = prisonCode)
+    val sessionCategoryGroup = sessionPrisonerCategoryHelper.create(prisonCode = prisonCode)
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = sessionDate,
@@ -41,6 +42,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = sessionDate.dayOfWeek,
       permittedSessionGroups = mutableListOf(sessionLocationGroup),
+      permittedCategories = mutableListOf(sessionCategoryGroup),
       enhanced = true,
     )
 
@@ -60,6 +62,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[0].capacity.open).isEqualTo(sessionTemplate.openCapacity)
     Assertions.assertThat(sessionScheduleResults[0].capacity.closed).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[0]).isEqualTo(sessionLocationGroup.name)
+    Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[0]).isEqualTo(sessionCategoryGroup.name)
     Assertions.assertThat(sessionScheduleResults[0].enhanced).isTrue
   }
 
@@ -227,6 +230,33 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[0]).isEqualTo(sessionLocationGroup1.name)
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[1]).isEqualTo(sessionLocationGroup2.name)
+  }
+
+  @Test
+  fun `Session schedule is returned for a prison, with many category groups`() {
+    // Given
+    val sessionDate = LocalDate.now()
+
+    val sessionCategoryGroup1 = sessionPrisonerCategoryHelper.create(name = "Category A prisoners", prisonCode = prisonCode)
+    val sessionCategoryGroup2 = sessionPrisonerCategoryHelper.create(name = "Vulnerable Categories", prisonCode = prisonCode)
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = sessionDate,
+      validToDate = sessionDate.plusDays(7),
+      dayOfWeek = sessionDate.dayOfWeek,
+      permittedCategories = mutableListOf(sessionCategoryGroup1, sessionCategoryGroup2),
+    )
+
+    // When
+    val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionScheduleResults = getResults(returnResult)
+    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
+    Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[0]).isEqualTo(sessionCategoryGroup1.name)
+    Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[1]).isEqualTo(sessionCategoryGroup2.name)
   }
 
   private fun callGetSessionSchedule(
