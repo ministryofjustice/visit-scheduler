@@ -17,12 +17,12 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionLocationGroupHelper
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerCategoryEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerCategoryHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
@@ -50,7 +50,7 @@ abstract class IntegrationTestBase {
   protected lateinit var sessionTemplateEntityHelper: SessionTemplateEntityHelper
 
   @Autowired
-  protected lateinit var sessionPrisonerCategoryEntityHelper: SessionPrisonerCategoryEntityHelper
+  protected lateinit var sessionPrisonerCategoryHelper: SessionPrisonerCategoryHelper
 
   @Autowired
   lateinit var prisonEntityHelper: PrisonEntityHelper

@@ -11,14 +11,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetGroupByReferenc
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetGroupsByPrisonId
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
 
-@DisplayName("Get /visit-sessions")
-class SessionGroupTest(
+@DisplayName("Get /location-groups")
+class SessionGroupByLocationTest(
   @Autowired val testTemplateRepository: TestSessionTemplateRepository,
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
@@ -43,8 +43,8 @@ class SessionGroupTest(
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))
     sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
 
-    sessionTemplateWithGrps.permittedSessionGroups.add(sessionGroup1)
-    sessionTemplateWithGrps.permittedSessionGroups.add(sessionGroup2)
+    sessionTemplateWithGrps.permittedSessionLocationGroups.add(sessionGroup1)
+    sessionTemplateWithGrps.permittedSessionLocationGroups.add(sessionGroup2)
 
     testTemplateRepository.saveAndFlush(sessionTemplateWithGrps)
 

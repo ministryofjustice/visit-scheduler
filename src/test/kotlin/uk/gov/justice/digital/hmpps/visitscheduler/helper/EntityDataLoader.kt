@@ -15,13 +15,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionPrisonerCategoryRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
@@ -229,8 +231,7 @@ class SessionTemplateEntityHelper(
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
     enhanced: Boolean = false,
-    includedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
-    excludedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
+    permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -249,8 +250,7 @@ class SessionTemplateEntityHelper(
       permittedSessionGroups = permittedSessionGroups,
       biWeekly = biWeekly,
       enhanced = enhanced,
-      includedPrisonerCategories = includedPrisonerCategories,
-      excludedPrisonerCategories = excludedPrisonerCategories,
+      permittedCategories = permittedCategories,
     )
   }
 
@@ -270,8 +270,7 @@ class SessionTemplateEntityHelper(
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
     enhanced: Boolean = false,
-    includedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
-    excludedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
+    permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
   ): SessionTemplate {
     return sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -287,11 +286,10 @@ class SessionTemplateEntityHelper(
         startTime = startTime,
         endTime = endTime,
         dayOfWeek = dayOfWeek,
-        permittedSessionGroups = permittedSessionGroups,
+        permittedSessionLocationGroups = permittedSessionGroups,
         biWeekly = biWeekly,
         enhanced = enhanced,
-        includedPrisonerCategories = includedPrisonerCategories,
-        excludedPrisonerCategories = excludedPrisonerCategories,
+        permittedSessionCategoryGroups = permittedCategories,
       ),
     )
   }
@@ -305,7 +303,7 @@ class DeleteEntityHelper(
   private val sessionRepository: TestSessionTemplateRepository,
   private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
-  private val sessionPrisonerCategoryRepository: SessionPrisonerCategoryRepository,
+  private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
 ) {
 
   fun deleteAll() {
@@ -321,20 +319,53 @@ class DeleteEntityHelper(
     permittedSessionLocationRepository.flush()
     prisonRepository.deleteAll()
     prisonRepository.flush()
-    sessionPrisonerCategoryRepository.deleteAll()
-    sessionPrisonerCategoryRepository.flush()
+    sessionCategoryGroupRepository.deleteAll()
+    sessionCategoryGroupRepository.flush()
   }
 }
 
 @Component
 @Transactional
-class SessionPrisonerCategoryEntityHelper(
-  private val sessionPrisonerCategoryRepository: SessionPrisonerCategoryRepository,
+class SessionPrisonerCategoryHelper(
+  private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
+  private val prisonEntityHelper: PrisonEntityHelper,
 ) {
+  fun create(name: String? = "Group A", prisonCode: String = "MDI"): SessionCategoryGroup {
+    val sessionPrisonerCategories = mutableListOf(
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_STANDARD,
+      PrisonerCategoryType.A_HIGH,
+      PrisonerCategoryType.A_EXCEPTIONAL,
+    )
+    return create(name = name, prisonCode = prisonCode, sessionPrisonerCategories)
+  }
 
-  fun create(categoryCode: String): SessionPrisonerCategory {
-    val sessionPrisonerCategory = SessionPrisonerCategory(categoryCode)
-    return sessionPrisonerCategoryRepository.saveAndFlush(sessionPrisonerCategory)
+  fun create(name: String? = "Group A", prisonCode: String = "MDI", prisonerCategories: List<PrisonerCategoryType>): SessionCategoryGroup {
+    val prison = prisonEntityHelper.create(prisonCode, true)
+
+    val group = sessionCategoryGroupRepository.saveAndFlush(
+      SessionCategoryGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = name!!,
+      ),
+    )
+
+    val permittedCategoryGroups = mutableListOf<SessionPrisonerCategory>()
+
+    for (prisonerCategory in prisonerCategories) {
+      val permittedCategoryGroup =
+        SessionPrisonerCategory(
+          sessionCategoryGroupId = group.id,
+          sessionCategoryGroup = group,
+          prisonerCategoryType = prisonerCategory,
+        )
+      permittedCategoryGroups.add(permittedCategoryGroup)
+    }
+
+    group.sessionCategories.addAll(permittedCategoryGroups)
+
+    return group
   }
 }
 

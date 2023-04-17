@@ -104,7 +104,7 @@ class VisitService(
     }
 
     val eventName = if (bookingReference.isBlank()) TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT.eventName else TelemetryVisitEvents.VISIT_CHANGED_EVENT.eventName
-    trackEvent(eventName, createVisitTrackEventFromVisitEntity(visitEntity))
+    trackEvent(eventName, createVisitTrackEventFromVisitEntity(visitEntity, reserveVisitSlotDto.actionedBy))
 
     return VisitDto(visitEntity)
   }
@@ -255,7 +255,7 @@ class VisitService(
 
     val visit = VisitDto(visitRepository.saveAndFlush(visitToBook))
 
-    val bookEvent = createVisitTrackEventFromVisitEntity(visitToBook)
+    val bookEvent = createVisitTrackEventFromVisitEntity(visitToBook, visitToBook.createdBy)
     bookEvent["isUpdated"] = changedVisit.toString()
 
     trackEvent(TelemetryVisitEvents.VISIT_BOOKED_EVENT.eventName, bookEvent)
@@ -298,7 +298,7 @@ class VisitService(
 
     visitRepository.saveAndFlush(visitEntity)
 
-    val eventsMap = createVisitTrackEventFromVisitEntity(visitEntity)
+    val eventsMap = createVisitTrackEventFromVisitEntity(visitEntity, cancelVisitDto.actionedBy)
     visitEntity.outcomeStatus?.let {
       eventsMap.put("outcomeStatus", it.name)
     }
@@ -383,7 +383,7 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
-  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): MutableMap<String, String> {
+  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit, actionedBy: String): MutableMap<String, String> {
     return mutableMapOf(
       "reference" to visitEntity.reference,
       "prisonerId" to visitEntity.prisonerId,
@@ -394,6 +394,7 @@ class VisitService(
       "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visitEntity.visitStatus.name,
       "applicationReference" to visitEntity.applicationReference,
+      "actionedBy" to actionedBy,
     )
   }
 

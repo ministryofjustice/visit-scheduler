@@ -5,20 +5,20 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionPrisonerCategoryRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -29,8 +29,8 @@ import java.util.function.Supplier
 class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
+  private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val prisonConfigService: PrisonConfigService,
-  private val categoryRepository: SessionPrisonerCategoryRepository,
 ) {
 
   companion object {
@@ -132,16 +132,12 @@ class SessionTemplateService(
       visitType = VisitType.SOCIAL,
     )
 
-    createSessionTemplateDto.excludedPrisonerCategories.forEach {
-      sessionTemplateEntity.excludedPrisonerCategories.add(getSessionPrisonerCategory(it))
-    }
-
-    createSessionTemplateDto.includedPrisonerCategories.forEach {
-      sessionTemplateEntity.includedPrisonerCategories.add(getSessionPrisonerCategory(it))
+    createSessionTemplateDto.categoryGroupReferences?.let {
+      it.forEach { ref -> sessionTemplateEntity.permittedSessionCategoryGroups.add(this.getPrisonerCategoryGroupByReference(ref)) }
     }
 
     createSessionTemplateDto.locationGroupReferences?.let {
-      it.forEach { ref -> sessionTemplateEntity.permittedSessionGroups.add(this.getLocationGroupByReference(ref)) }
+      it.forEach { ref -> sessionTemplateEntity.permittedSessionLocationGroups.add(this.getLocationGroupByReference(ref)) }
     }
 
     val sessionTemplateEntitySave = sessionTemplateRepository.saveAndFlush(sessionTemplateEntity)
@@ -193,26 +189,13 @@ class SessionTemplateService(
     val updatedSessionTemplateEntity = getSessionTemplate(reference)
 
     updateSessionTemplateDto.locationGroupReferences?.let {
-      updatedSessionTemplateEntity.permittedSessionGroups.clear()
-      it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionGroups.add(this.getLocationGroupByReference(ref)) }
+      updatedSessionTemplateEntity.permittedSessionLocationGroups.clear()
+      it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionLocationGroups.add(this.getLocationGroupByReference(ref)) }
     }
 
-    updateSessionTemplateDto.excludedPrisonerCategories?.let {
-      updatedSessionTemplateEntity.excludedPrisonerCategories.clear()
-      updateSessionTemplateDto.excludedPrisonerCategories.forEach {
-        updatedSessionTemplateEntity.excludedPrisonerCategories.add(
-          getSessionPrisonerCategory(it),
-        )
-      }
-    }
-
-    updateSessionTemplateDto.includedPrisonerCategories?.let {
-      updatedSessionTemplateEntity.includedPrisonerCategories.clear()
-      updateSessionTemplateDto.includedPrisonerCategories.forEach {
-        updatedSessionTemplateEntity.includedPrisonerCategories.add(
-          getSessionPrisonerCategory(it),
-        )
-      }
+    updateSessionTemplateDto.categoryGroupReferences?.let {
+      updatedSessionTemplateEntity.permittedSessionCategoryGroups.clear()
+      it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionCategoryGroups.add(this.getPrisonerCategoryGroupByReference(ref)) }
     }
 
     return SessionTemplateDto(updatedSessionTemplateEntity)
@@ -240,8 +223,8 @@ class SessionTemplateService(
     }
   }
 
-  private fun getSessionPrisonerCategory(code: String): SessionPrisonerCategory {
-    return categoryRepository.findByCode(code) ?: categoryRepository.saveAndFlush(SessionPrisonerCategory(code))
+  private fun getPrisonerCategoryGroupByReference(reference: String): SessionCategoryGroup {
+    return sessionCategoryGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerCategory reference:$reference not found")
   }
 
   private fun getLocationGroupByReference(reference: String): SessionLocationGroup {

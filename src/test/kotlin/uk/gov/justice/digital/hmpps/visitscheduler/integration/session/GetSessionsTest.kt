@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import java.time.DayOfWeek
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
@@ -171,34 +172,38 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `A session is returned for session template that includes category for prisoner with category`() {
+  fun `when a session template is allowed for a category group then session template is returned for prisoner category in same group`() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
-    val category1 = "Test category"
-    val category2 = "Test category 2"
+    val categoryA = "Category A"
+    val categoryAList = listOf(
+      PrisonerCategoryType.A_HIGH,
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_EXCEPTIONAL,
+      PrisonerCategoryType.A_STANDARD,
+    )
 
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = category1)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.A_EXCEPTIONAL.code)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
-    val categoryInc1 = sessionPrisonerCategoryEntityHelper.create(category1)
-    val categoryInc2 = sessionPrisonerCategoryEntityHelper.create(category2)
+    val categoryInc1 = sessionPrisonerCategoryHelper.create(name = categoryA, prisonerCategories = categoryAList)
 
     val nextAllowedDay = getNextAllowedDay()
 
+    // this session is only available to Category A prisoners
     sessionTemplateEntityHelper.create(
       prisonCode = prisonCode,
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
       enhanced = false,
-      includedPrisonerCategories = mutableListOf(categoryInc1, categoryInc2),
+      permittedCategories = mutableListOf(categoryInc1),
     )
 
     // When
-
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
@@ -210,33 +215,38 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `A session is not returned for session template that excludes category for prisoner with category`() {
+  fun `when a session template is allowed for a category group then session template is not returned for prisoner category not in same category group`() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
-    val category1 = "Test category"
-    val category2 = "Test category 2"
+    val categoryA = "Category A"
+    val categoryAList = listOf(
+      PrisonerCategoryType.A_HIGH,
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_EXCEPTIONAL,
+      PrisonerCategoryType.A_STANDARD,
+    )
 
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = category1)
+    // prisoner is in category B while the session only allows category As
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.B.code)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
-    val categoryExc1 = sessionPrisonerCategoryEntityHelper.create(category1)
-    val categoryExc2 = sessionPrisonerCategoryEntityHelper.create(category2)
+    val categoryInc1 = sessionPrisonerCategoryHelper.create(name = categoryA, prisonerCategories = categoryAList)
 
     val nextAllowedDay = getNextAllowedDay()
 
+    // this session is only available for Category A prisoners
     sessionTemplateEntityHelper.create(
       prisonCode = prisonCode,
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
       enhanced = false,
-      excludedPrisonerCategories = mutableListOf(categoryExc1, categoryExc2),
+      permittedCategories = mutableListOf(categoryInc1),
     )
 
     // When
-
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
@@ -248,35 +258,27 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `A session is returned for session template when excludes category do not match prisoner category`() {
+  fun `when a session template does not have a category group then session template is returned for all prisoners`() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
-    val prisonerCategory = "prisoner category"
-    val category1 = "Test category"
-    val category2 = "Test category 2"
-
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = prisonerCategory)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.A_EXCEPTIONAL.code)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
-    val categoryExc1 = sessionPrisonerCategoryEntityHelper.create(category1)
-    val categoryExc2 = sessionPrisonerCategoryEntityHelper.create(category2)
-
     val nextAllowedDay = getNextAllowedDay()
 
+    // this session is available to all prisoners
     sessionTemplateEntityHelper.create(
       prisonCode = prisonCode,
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
       enhanced = false,
-      excludedPrisonerCategories = mutableListOf(categoryExc1, categoryExc2),
     )
 
     // When
-
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
@@ -288,35 +290,45 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `A session is returned for session template when excludes category do not match and includes do`() {
+  fun `when a session template is allowed for multiple category groups then session template is returned for prisoner category in any group`() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
-    val category1 = "Test category"
-    val category2 = "Test category 2"
+    val categoryAHighs = "Category A Highs"
+    val categoryANonHighs = "Category A Non Highs"
 
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = category1)
+    val categoryAListHigh = listOf(
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_EXCEPTIONAL,
+      PrisonerCategoryType.A_STANDARD,
+    )
+
+    val categoryAListNonHigh = listOf(
+      PrisonerCategoryType.A_HIGH,
+    )
+
+    // prisoner is in category A standard - so should be included
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.A_STANDARD.code)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
-    val categoryInc = sessionPrisonerCategoryEntityHelper.create(category1)
-    val categoryExc = sessionPrisonerCategoryEntityHelper.create(category2)
+    val categoryIncAHighs = sessionPrisonerCategoryHelper.create(name = categoryAHighs, prisonerCategories = categoryAListHigh)
+    val categoryIncNonAHighs = sessionPrisonerCategoryHelper.create(name = categoryANonHighs, prisonerCategories = categoryAListNonHigh)
 
     val nextAllowedDay = getNextAllowedDay()
 
+    // this session is available to Category A prisoners
     sessionTemplateEntityHelper.create(
       prisonCode = prisonCode,
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
       enhanced = false,
-      includedPrisonerCategories = mutableListOf(categoryInc),
-      excludedPrisonerCategories = mutableListOf(categoryExc),
+      permittedCategories = mutableListOf(categoryIncAHighs, categoryIncNonAHighs),
     )
 
     // When
-
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
@@ -325,6 +337,55 @@ class GetSessionsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
+  }
+
+  @Test
+  fun `when a session template is allowed for multiple category groups then session template is not returned if prisoner category is not in any group`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+    val categoryAHighs = "Category A Highs"
+    val categoryANonHighs = "Category A Non Highs"
+
+    val categoryAListHigh = listOf(
+      PrisonerCategoryType.A_PROVISIONAL,
+      PrisonerCategoryType.A_EXCEPTIONAL,
+      PrisonerCategoryType.A_STANDARD,
+    )
+
+    val categoryAListNonHigh = listOf(
+      PrisonerCategoryType.A_HIGH,
+    )
+
+    // prisoner is in category B
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD", category = PrisonerCategoryType.B.code)
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val categoryIncAHighs = sessionPrisonerCategoryHelper.create(name = categoryAHighs, prisonerCategories = categoryAListHigh)
+    val categoryIncNonAHighs = sessionPrisonerCategoryHelper.create(name = categoryANonHighs, prisonerCategories = categoryAListNonHigh)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    // this session is available to Category A prisoners - 2 groups
+    sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      enhanced = false,
+      permittedCategories = mutableListOf(categoryIncAHighs, categoryIncNonAHighs),
+    )
+
+    // When
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(0)
   }
 
   @Test

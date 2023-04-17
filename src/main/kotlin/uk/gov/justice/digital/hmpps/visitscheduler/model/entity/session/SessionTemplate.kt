@@ -14,6 +14,8 @@ import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractReferenceEntity
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -44,7 +46,15 @@ class SessionTemplate(
     joinColumns = [JoinColumn(name = "session_template_id")],
     inverseJoinColumns = [JoinColumn(name = "group_id")],
   )
-  val permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
+  val permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
+
+  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
+  @JoinTable(
+    name = "SESSION_TO_CATEGORY_GROUP",
+    joinColumns = [JoinColumn(name = "session_template_id")],
+    inverseJoinColumns = [JoinColumn(name = "session_category_group_id")],
+  )
+  val permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
 
   @Column
   @Enumerated(EnumType.STRING)
@@ -74,21 +84,4 @@ class SessionTemplate(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   val dayOfWeek: DayOfWeek,
-
-  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
-  @JoinTable(
-    name = "SESSION_TO_INCLUDED_PRISONER_CATEGORY",
-    joinColumns = [JoinColumn(name = "session_template_id")],
-    inverseJoinColumns = [JoinColumn(name = "prisoner_category_id")],
-  )
-  val includedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
-
-  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
-  @JoinTable(
-    name = "SESSION_TO_EXCLUDED_PRISONER_CATEGORY",
-    joinColumns = [JoinColumn(name = "session_template_id")],
-    inverseJoinColumns = [JoinColumn(name = "prisoner_category_id")],
-  )
-  val excludedPrisonerCategories: MutableList<SessionPrisonerCategory> = mutableListOf(),
-
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

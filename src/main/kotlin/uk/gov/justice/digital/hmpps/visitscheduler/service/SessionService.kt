@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -25,6 +24,7 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit.DAYS
 import java.time.temporal.TemporalAdjusters
+import java.util.stream.Collectors
 import java.util.stream.Stream
 
 @Service
@@ -74,9 +74,8 @@ class SessionService(
       inclEnhancedPrivilegeTemplates = prisoner?.let { prisoner.enhanced } ?: true,
     )
 
-    val prisonerCategory = prisoner?.let { prisoner.category }
-    prisonerCategory?.let {
-      sessionTemplates = filterByCategory(sessionTemplates, it)
+    prisoner?.let {
+      sessionTemplates = filterByCategory(sessionTemplates, prisoner.category)
     }
 
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId, prisonCode)
@@ -96,13 +95,33 @@ class SessionService(
     return sessions.sortedWith(compareBy { it.startTimestamp })
   }
 
-  private fun filterByCategory(sessionTemplates: List<SessionTemplate>, prisonerCategory: String): List<SessionTemplate> {
-    val categoryFilter = { category: SessionPrisonerCategory -> category.code == prisonerCategory }
-    return sessionTemplates.filter {
-      it.includedPrisonerCategories.isEmpty() || it.includedPrisonerCategories.any { categoryFilter(it) }
-    }.filter {
-      it.excludedPrisonerCategories.isEmpty() || !it.excludedPrisonerCategories.any { categoryFilter(it) }
+  private fun filterByCategory(sessionTemplates: List<SessionTemplate>, prisonerCategory: String?): List<SessionTemplate> {
+    val hasSessionsWithCategoryGroups = sessionTemplates.any { it.permittedSessionCategoryGroups.isNotEmpty() }
+    if (hasSessionsWithCategoryGroups) {
+      return sessionTemplates.filter { sessionTemplate ->
+        sessionTemplate.permittedSessionCategoryGroups.isEmpty() || isPrisonerCategoryAllowedOnSession(sessionTemplate, prisonerCategory)
+      }
     }
+
+    return sessionTemplates
+  }
+
+  private fun isPrisonerCategoryAllowedOnSession(sessionTemplate: SessionTemplate, prisonerCategory: String?): Boolean {
+    prisonerCategory?.let {
+      return getAllowedCategoriesForSessionTemplate(sessionTemplate).any { category ->
+        category.equals(prisonerCategory, false)
+      }
+    }
+
+    // if prisoner category is null - return false as prisoner should not be allowed on restricted category sessions
+    return false
+  }
+
+  private fun getAllowedCategoriesForSessionTemplate(sessionTemplate: SessionTemplate): Set<String> {
+    return sessionTemplate.permittedSessionCategoryGroups.stream()
+      .flatMap { it.sessionCategories.stream() }
+      .map { it.prisonerCategoryType.code }
+      .collect(Collectors.toSet())
   }
 
   private fun buildVisitSessionsUsingTemplate(
@@ -162,12 +181,12 @@ class SessionService(
   }
 
   private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String): List<SessionTemplate> {
-    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionGroups.isNotEmpty() }
+    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
     if (hasSessionsWithLocationGroups) {
-      prisonerId?.let { it ->
-        val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(it, prisonCode)
-        prisonerDetailDto?.let { prisonerDetail ->
-          val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
+      prisonerId?.let {
+        val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
+        prisonerDetailDto?.let {
+          val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
           return sessionTemplates.filter { sessionTemplate ->
             sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
           }
@@ -283,7 +302,7 @@ class SessionService(
       throw java.lang.IllegalStateException("Session capacity has more than one session template prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
     }
 
-    return SessionCapacityDto(sessionTemplates.get(0))
+    return SessionCapacityDto(sessionTemplates[0])
   }
 
   private fun filterSessionsTemplatesForDate(date: LocalDate, sessionTemplates: List<SessionTemplate>): List<SessionTemplate> {
@@ -312,7 +331,8 @@ class SessionService(
       startTime = sessionTemplate.startTime,
       endTime = sessionTemplate.endTime,
       capacity = SessionCapacityDto(sessionTemplate),
-      prisonerLocationGroupNames = sessionTemplate.permittedSessionGroups.map { it.name }.toList(),
+      prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
+      prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
       sessionTemplateFrequency = sessionTemplateFrequency,
       sessionTemplateEndDate = sessionTemplate.validToDate,
       enhanced = sessionTemplate.enhanced,
