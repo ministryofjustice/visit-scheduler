@@ -20,10 +20,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 
 fun callCancelVisit(
   webTestClient: WebTestClient,
