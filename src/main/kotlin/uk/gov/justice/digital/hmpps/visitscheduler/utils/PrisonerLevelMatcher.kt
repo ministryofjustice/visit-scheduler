@@ -2,7 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.util.function.BiPredicate
 
 @Component

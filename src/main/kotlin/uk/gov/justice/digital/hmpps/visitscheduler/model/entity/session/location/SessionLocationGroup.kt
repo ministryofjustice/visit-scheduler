@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
+package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -12,6 +12,7 @@ import jakarta.persistence.PreRemove
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractReferenceEntity
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 
 @Entity
 @Table(name = "SESSION_LOCATION_GROUP")
@@ -32,13 +33,13 @@ class SessionLocationGroup(
   @JoinColumn(name = "GROUP_ID", updatable = false, insertable = true)
   val sessionLocations: MutableList<PermittedSessionLocation> = mutableListOf()
 
-  @ManyToMany(mappedBy = "permittedSessionGroups", fetch = FetchType.LAZY, cascade = [CascadeType.DETACH])
+  @ManyToMany(mappedBy = "permittedSessionLocationGroups", fetch = FetchType.LAZY, cascade = [CascadeType.DETACH])
   val sessionTemplates: MutableList<SessionTemplate> = mutableListOf()
 
   @PreRemove
   private fun removeGroupsFromUsers() {
     for (s in sessionTemplates) {
-      s.permittedSessionGroups.remove(this)
+      s.permittedSessionLocationGroups.remove(this)
     }
   }
 }
