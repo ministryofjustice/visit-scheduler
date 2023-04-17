@@ -183,10 +183,10 @@ class SessionService(
   private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String): List<SessionTemplate> {
     val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
     if (hasSessionsWithLocationGroups) {
-      prisonerId?.let { it ->
-        val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(it, prisonCode)
-        prisonerDetailDto?.let { prisonerDetail ->
-          val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
+      prisonerId?.let {
+        val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
+        prisonerDetailDto?.let {
+          val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
           return sessionTemplates.filter { sessionTemplate ->
             sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
           }
@@ -302,7 +302,7 @@ class SessionService(
       throw java.lang.IllegalStateException("Session capacity has more than one session template prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
     }
 
-    return SessionCapacityDto(sessionTemplates.get(0))
+    return SessionCapacityDto(sessionTemplates[0])
   }
 
   private fun filterSessionsTemplatesForDate(date: LocalDate, sessionTemplates: List<SessionTemplate>): List<SessionTemplate> {
@@ -332,6 +332,7 @@ class SessionService(
       endTime = sessionTemplate.endTime,
       capacity = SessionCapacityDto(sessionTemplate),
       prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
+      prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
       sessionTemplateFrequency = sessionTemplateFrequency,
       sessionTemplateEndDate = sessionTemplate.validToDate,
       enhanced = sessionTemplate.enhanced,
