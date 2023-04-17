@@ -181,7 +181,7 @@ class SessionService(
   }
 
   private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String): List<SessionTemplate> {
-    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionGroups.isNotEmpty() }
+    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
     if (hasSessionsWithLocationGroups) {
       prisonerId?.let { it ->
         val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(it, prisonCode)
@@ -331,7 +331,7 @@ class SessionService(
       startTime = sessionTemplate.startTime,
       endTime = sessionTemplate.endTime,
       capacity = SessionCapacityDto(sessionTemplate),
-      prisonerLocationGroupNames = sessionTemplate.permittedSessionGroups.map { it.name }.toList(),
+      prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
       sessionTemplateFrequency = sessionTemplateFrequency,
       sessionTemplateEndDate = sessionTemplate.validToDate,
       enhanced = sessionTemplate.enhanced,
