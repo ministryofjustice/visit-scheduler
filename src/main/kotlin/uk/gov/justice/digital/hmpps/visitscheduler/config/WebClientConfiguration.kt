@@ -18,36 +18,20 @@ class WebClientConfiguration(
   @Value("\${prison.api.url}") private val prisonApiBaseUrl: String,
   @Value("\${prisoner.offender.search.url}") private val prisonOffenderSearchBaseUrl: String,
 ) {
+  companion object {
+    const val CLIENT_REGISTRATION_ID = "hmpps-apis"
+  }
+
   @Bean
   fun prisonApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
-    val oauth2Client = ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager)
-    oauth2Client.setDefaultClientRegistrationId("prison-api")
-    val exchangeStrategies = ExchangeStrategies.builder()
-      .codecs { configurer: ClientCodecConfigurer -> configurer.defaultCodecs().maxInMemorySize(-1) }
-      .build()
-
-    return WebClient.builder()
-      .baseUrl(prisonApiBaseUrl)
-      .apply(oauth2Client.oauth2Configuration())
-      .exchangeStrategies(exchangeStrategies)
-      .build()
+    val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
+    return getWebClient(prisonApiBaseUrl, oauth2Client)
   }
 
   @Bean
   fun prisonerOffenderSearchWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
-    val oauth2Client = ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager)
-    // TODO - update prison-api to prisoner-offender-search-api
-    oauth2Client.setDefaultClientRegistrationId("prison-api")
-
-    val exchangeStrategies = ExchangeStrategies.builder()
-      .codecs { configurer: ClientCodecConfigurer -> configurer.defaultCodecs().maxInMemorySize(-1) }
-      .build()
-
-    return WebClient.builder()
-      .baseUrl(prisonOffenderSearchBaseUrl)
-      .apply(oauth2Client.oauth2Configuration())
-      .exchangeStrategies(exchangeStrategies)
-      .build()
+    val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
+    return getWebClient(prisonOffenderSearchBaseUrl, oauth2Client)
   }
 
   @Bean
@@ -70,5 +54,25 @@ class WebClientConfiguration(
       AuthorizedClientServiceOAuth2AuthorizedClientManager(clientRegistrationRepository, oAuth2AuthorizedClientService)
     authorizedClientManager.setAuthorizedClientProvider(authorizedClientProvider)
     return authorizedClientManager
+  }
+
+  private fun getOauth2Client(authorizedClientManager: OAuth2AuthorizedClientManager, clientRegistrationId: String): ServletOAuth2AuthorizedClientExchangeFilterFunction {
+    val oauth2Client = ServletOAuth2AuthorizedClientExchangeFilterFunction(authorizedClientManager)
+    oauth2Client.setDefaultClientRegistrationId(clientRegistrationId)
+    return oauth2Client
+  }
+
+  private fun getExchangeStrategies(): ExchangeStrategies {
+    return ExchangeStrategies.builder()
+      .codecs { configurer: ClientCodecConfigurer -> configurer.defaultCodecs().maxInMemorySize(-1) }
+      .build()
+  }
+
+  private fun getWebClient(baseUrl: String, oauth2Client: ServletOAuth2AuthorizedClientExchangeFilterFunction): WebClient {
+    return WebClient.builder()
+      .baseUrl(baseUrl)
+      .apply(oauth2Client.oauth2Configuration())
+      .exchangeStrategies(getExchangeStrategies())
+      .build()
   }
 }
