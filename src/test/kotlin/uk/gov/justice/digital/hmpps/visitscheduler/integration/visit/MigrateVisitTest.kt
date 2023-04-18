@@ -52,6 +52,8 @@ import java.time.format.DateTimeFormatter
 
 private const val TEST_END_POINT = "/migrate-visits"
 
+private const val PRISON_CODE = "MDI"
+
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Migrate POST /visits")
 class MigrateVisitTest : IntegrationTestBase() {
@@ -69,13 +71,13 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    prisonEntityHelper.create("MDI", true)
+    prisonEntityHelper.create(PRISON_CODE, true)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_MIGRATE_VISITS"))
   }
 
   private fun createMigrateVisitRequestDto(actionedBy: String ? = "Aled Evans"): MigrateVisitRequestDto {
     return MigrateVisitRequestDto(
-      prisonCode = "MDI",
+      prisonCode = PRISON_CODE,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -103,6 +105,8 @@ class MigrateVisitTest : IntegrationTestBase() {
   fun `migrate visit`() {
     // Given
 
+    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now().minusDays(2), prisonCode = PRISON_CODE, capacityGroup = "CapGroup")
+
     val migrateVisitRequestDto = createMigrateVisitRequestDto()
 
     val jsonBody = BodyInserters.fromValue(
@@ -120,9 +124,9 @@ class MigrateVisitTest : IntegrationTestBase() {
     assertThat(visit).isNotNull
     visit?.let {
       assertThat(visit.reference).isEqualTo(reference)
-      assertThat(visit.prison.code).isEqualTo("MDI")
+      assertThat(visit.prison.code).isEqualTo(PRISON_CODE)
       assertThat(visit.prisonerId).isEqualTo("FF0000FF")
-      assertThat(visit.capacityGroup).isEqualTo("A1")
+      assertThat(visit.capacityGroup).isEqualTo("CapGroup")
       assertThat(visit.visitType).isEqualTo(SOCIAL)
       assertThat(visit.visitStart).isEqualTo(visitTime.toString())
       assertThat(visit.visitEnd).isEqualTo(visitTime.plusHours(1).toString())
@@ -151,6 +155,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       if (legacyData != null) {
         assertThat(legacyData.visitId).isEqualTo(visit.id)
         assertThat(legacyData.leadPersonId).isEqualTo(123)
+        assertThat(legacyData.visitRoom).isEqualTo("A1")
       }
       assertTelemetryClientEvents(VisitDto(visit), TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
     }
@@ -181,7 +186,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   fun `can migrate visit without leadVisitorId`() {
     // Given
     val createMigrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonCode = "MDI",
+      prisonCode = PRISON_CODE,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -213,7 +218,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   fun `migrate visit without contact details`() {
     // Given
     val createMigrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonCode = "MDI",
+      prisonCode = PRISON_CODE,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -248,7 +253,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   fun `migrate visit without create and update Date and Time`() {
     // Given
     val createMigrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonCode = "MDI",
+      prisonCode = PRISON_CODE,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,
@@ -283,7 +288,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   fun `migrate visit when outcome status not given`() {
     // Given
     val migrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonCode = "MDI",
+      prisonCode = PRISON_CODE,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
       visitType = SOCIAL,

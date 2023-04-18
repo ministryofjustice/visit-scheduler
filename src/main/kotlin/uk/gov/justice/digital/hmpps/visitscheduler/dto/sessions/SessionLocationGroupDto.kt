@@ -17,7 +17,6 @@ data class SessionLocationGroupDto(
 
   @Schema(description = "list of locations for group", required = false)
   val locations: List<PermittedSessionLocationDto> = listOf(),
-
 ) {
   constructor(sessionLocationGroup: SessionLocationGroup) : this(
     name = sessionLocationGroup.name,

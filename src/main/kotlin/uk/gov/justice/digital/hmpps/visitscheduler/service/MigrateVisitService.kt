@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
@@ -16,12 +17,17 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import kotlin.math.absoluteValue
 
 @Service
 @Transactional
@@ -31,8 +37,7 @@ class MigrateVisitService(
   private val prisonConfigService: PrisonConfigService,
   private val snsService: SnsService,
   private val prisonerService: PrisonerService,
-  private val sessionService: SessionService,
-  private val sessionTemplateService: SessionTemplateService,
+  private val sessionTemplateRepository: SessionTemplateRepository,
   private val authenticationHelperService: AuthenticationHelperService,
   private val telemetryClient: TelemetryClient,
 ) {
@@ -104,22 +109,87 @@ class MigrateVisitService(
     return visitEntity.reference
   }
 
-  private fun getSessionCategory(migrateVisitRequest: MigrateVisitRequestDto): String? {
-    val isInTheFuture = !migrateVisitRequest.startTimestamp.isBefore(LocalDateTime.now())
-    if (isInTheFuture) {
-      val groups = sessionTemplateService.getSessionLocationGroup(migrateVisitRequest.prisonCode)
-      val sessionDate = migrateVisitRequest.startTimestamp.toLocalDate()
-      val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
-      val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
-
-      if (groups.isNotEmpty()) {
-        val location = prisonerService.getPrisonerHousingLocation(migrateVisitRequest.prisonerId, migrateVisitRequest.prisonCode)
-        val sessionCapacity = sessionService.getSessionCapacity(location, migrateVisitRequest.prisonCode, sessionDate, startTime, endTime)
-        return sessionCapacity?.capacityGroup
-      } else {
-        val sessionCapacities = sessionService.getSessionCapacity(migrateVisitRequest.prisonCode, sessionDate, startTime, endTime)
-        // TODO this is a list > how do we do this?
+  @Transactional(readOnly = true)
+  fun getSessionTemplatesInTimeProximityOrder(prisonCode: String, sessionDate: LocalDate, startTime: LocalTime, endTime: LocalTime): List<SessionTemplateDto> {
+    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(prisonCode = prisonCode, dayOfWeek = sessionDate.dayOfWeek)
+    if (sessionTemplates.isNotEmpty()) {
+      val proximityComparator = Comparator<SessionTemplate> { template1, template2 ->
+        val session1Proximity = getProximityMinutes(template1.startTime, startTime, template1.endTime, endTime)
+        val session2Proximity = getProximityMinutes(template2.startTime, startTime, template2.endTime, endTime)
+        if (session1Proximity == session2Proximity) {
+          if (template1.validToDate != null && template2.validToDate != null) {
+            template2.validToDate.compareTo(template1.validToDate)
+          } else {
+            if (template1.validToDate != null) {
+              1
+            } else if (template2.validToDate != null) {
+              -1
+            } else {
+              template2.validFromDate.compareTo(template1.validFromDate)
+            }
+          }
+        } else {
+          session1Proximity.compareTo(session2Proximity)
+        }
       }
+
+      val sortedSessionTemplates = sessionTemplates.sortedWith(proximityComparator)
+      return sortedSessionTemplates.map { SessionTemplateDto(it) }
+    }
+    return emptyList()
+  }
+
+  private fun getProximityMinutes(sessionStartTime: LocalTime, startTime: LocalTime, sessionEndTime: LocalTime, endTime: LocalTime): Int {
+    return (
+      (sessionStartTime.toSecondOfDay() - startTime.toSecondOfDay()).absoluteValue +
+        (sessionEndTime.toSecondOfDay() - endTime.toSecondOfDay()).absoluteValue
+      ) / 60
+  }
+
+  private fun getSessionCategory(migrateVisitRequest: MigrateVisitRequestDto): String? {
+    val sessionDate = migrateVisitRequest.startTimestamp.toLocalDate()
+    val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
+
+    val sessionTemplates = getSessionTemplatesInTimeProximityOrder(
+      migrateVisitRequest.prisonCode,
+      sessionDate,
+      startTime,
+      endTime,
+    )
+
+    if (sessionTemplates.isNotEmpty()) {
+      val isInTheFuture = !migrateVisitRequest.startTimestamp.isBefore(LocalDateTime.now())
+      if (isInTheFuture) {
+        val sessionMatchingPrisonerLocation = getSessionMatchingPrisonerLocation(migrateVisitRequest, sessionTemplates)
+        sessionMatchingPrisonerLocation?.let {
+          return it.capacityGroup
+        }
+      }
+      return sessionTemplates.first().capacityGroup
+    }
+    return null
+  }
+
+  private fun getSessionMatchingPrisonerLocation(
+    migrateVisitRequest: MigrateVisitRequestDto,
+    sessionTemplates: List<SessionTemplateDto>,
+  ): SessionTemplateDto? {
+    val location = prisonerService.getPermittedSessionLocationForPrisoner(
+      migrateVisitRequest.prisonerId,
+      migrateVisitRequest.prisonCode,
+    )
+    location?.let {
+      val result = sessionTemplates.firstOrNull { st ->
+        if (st.permittedLocationGroups.isNotEmpty()) {
+          st.permittedLocationGroups.firstOrNull { lg ->
+            lg.locations.firstOrNull { (it == location) } != null
+          } != null
+        } else {
+          false
+        }
+      }
+      result?.let { return it }
     }
     return null
   }
