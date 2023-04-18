@@ -49,7 +49,18 @@ class MigrateVisitService(
 
     val prison = prisonConfigService.findPrisonByCode(migrateVisitRequest.prisonCode)
 
-    val capacityGroup = getSessionCategory(migrateVisitRequest)
+    val sessionDate = migrateVisitRequest.startTimestamp.toLocalDate()
+    val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
+
+    val sessionTemplatesByProximityOrder = getSessionTemplatesInTimeProximityOrder(
+      migrateVisitRequest.prisonCode,
+      sessionDate,
+      startTime,
+      endTime,
+    )
+
+    val capacityGroup = getSessionCategory(migrateVisitRequest, sessionTemplatesByProximityOrder)
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
@@ -146,27 +157,20 @@ class MigrateVisitService(
       ) / 60
   }
 
-  private fun getSessionCategory(migrateVisitRequest: MigrateVisitRequestDto): String? {
-    val sessionDate = migrateVisitRequest.startTimestamp.toLocalDate()
-    val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
-    val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
+  private fun getSessionCategory(
+    migrateVisitRequest: MigrateVisitRequestDto,
+    sessionTemplatesByProximityOrder: List<SessionTemplateDto>
+  ): String? {
 
-    val sessionTemplates = getSessionTemplatesInTimeProximityOrder(
-      migrateVisitRequest.prisonCode,
-      sessionDate,
-      startTime,
-      endTime,
-    )
-
-    if (sessionTemplates.isNotEmpty()) {
+    if (sessionTemplatesByProximityOrder.isNotEmpty()) {
       val isInTheFuture = !migrateVisitRequest.startTimestamp.isBefore(LocalDateTime.now())
       if (isInTheFuture) {
-        val sessionMatchingPrisonerLocation = getSessionMatchingPrisonerLocation(migrateVisitRequest, sessionTemplates)
+        val sessionMatchingPrisonerLocation = getSessionMatchingPrisonerLocation(migrateVisitRequest, sessionTemplatesByProximityOrder)
         sessionMatchingPrisonerLocation?.let {
           return it.capacityGroup
         }
       }
-      return sessionTemplates.first().capacityGroup
+      return sessionTemplatesByProximityOrder.first().capacityGroup
     }
     return null
   }
