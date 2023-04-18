@@ -159,9 +159,8 @@ class MigrateVisitService(
 
   private fun getSessionCategory(
     migrateVisitRequest: MigrateVisitRequestDto,
-    sessionTemplatesByProximityOrder: List<SessionTemplateDto>
+    sessionTemplatesByProximityOrder: List<SessionTemplateDto>,
   ): String? {
-
     if (sessionTemplatesByProximityOrder.isNotEmpty()) {
       val isInTheFuture = !migrateVisitRequest.startTimestamp.isBefore(LocalDateTime.now())
       if (isInTheFuture) {
