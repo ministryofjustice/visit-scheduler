@@ -131,11 +131,13 @@
     );
 
     -- Category group names are only descriptions they need to be updated when the group categories change
-    INSERT INTO tmp_session_category_group (prison_code,key,name)
-    VALUES
-    <#list categoryGroups as g>
-        ('${g.prisonCode}','${g.key}','${g.name}')<#if g_has_next>,</#if>
-    </#list>;
+    <#if (categoryGroups?size > 0)>
+        INSERT INTO tmp_session_category_group (prison_code,key,name)
+        VALUES
+        <#list categoryGroups as g>
+            ('${g.prisonCode}','${g.key}','${g.name}')<#if g_has_next>,</#if>
+        </#list>;
+    </#if>
 
     -- update tmp category group table with correct prison id for given code.
     UPDATE tmp_session_category_group SET prison_id = prison.id FROM prison WHERE tmp_session_category_group.prison_code = prison.code;
@@ -156,11 +158,13 @@
     code    VARCHAR(100) NOT NULL
     );
 
-    INSERT INTO tmp_session_prisoner_category (group_key,code)
-    VALUES
-    <#list categories as l>
-        ('${l.groupKey}','${l.prisonerCategoryType}')<#if l_has_next>,</#if>
-    </#list>;
+    <#if (categories?size > 0)>
+        INSERT INTO tmp_session_prisoner_category (group_key,code)
+        VALUES
+        <#list categories as l>
+            ('${l.groupKey}','${l.prisonerCategoryType}')<#if l_has_next>,</#if>
+        </#list>;
+    </#if>
 
     -- update tmp prisoner category table with correct group_id.
     UPDATE tmp_session_prisoner_category SET group_id = tmp_session_category_group.id FROM tmp_session_category_group WHERE tmp_session_prisoner_category.group_key = tmp_session_category_group.key;
