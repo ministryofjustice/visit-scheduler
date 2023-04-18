@@ -70,7 +70,11 @@ class VisitTask(
             log.info("NON Associations: Visit with reference - ${it.reference} ,prisoner id - ${it.prisonerId}, prison id - ${it.prisonerId}, start time - ${it.startTimestamp}, end time - ${it.endTimestamp} flagged for check - possible non associations on same day.")
           }
 
-          Thread.sleep(500)
+          try {
+            Thread.sleep(500)
+          } catch (e: InterruptedException) {
+            log.error("Sleep failed : $e")
+          }
         }
       }
     }
