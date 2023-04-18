@@ -453,6 +453,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
+        Assertions.assertThat(it["actionedBy"]).isEqualTo(cancelledVisit.cancelledBy)
       },
       isNull(),
     )
@@ -468,6 +469,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,
       "outcomeStatus" to cancelledVisit.outcomeStatus!!.name,
+      "actionedBy" to cancelledVisit.cancelledBy,
     )
     verify(telemetryClient, times(1)).trackEvent(type.eventName, eventsMap, null)
   }

@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractReferenceEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -45,7 +46,7 @@ class SessionTemplate(
     joinColumns = [JoinColumn(name = "session_template_id")],
     inverseJoinColumns = [JoinColumn(name = "group_id")],
   )
-  val permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
+  val permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
 
   @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
   @JoinTable(

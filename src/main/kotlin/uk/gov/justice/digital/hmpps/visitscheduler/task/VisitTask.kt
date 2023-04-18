@@ -6,12 +6,22 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
+import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Component
 class VisitTask(
   private val visitService: VisitService,
+  private val sessionService: SessionService,
+  private val prisonConfigService: PrisonConfigService,
   @Value("\${task.expired-visit.enabled:false}") private val enabled: Boolean,
+  @Value("\${task.log-non-associations.enabled:false}") private val logNonAssociationsEnabled: Boolean,
+  @Value("\${task.log-non-associations.number-of-days-ahead:30}") private val numberOfDaysAhead: Long,
 ) {
 
   companion object {
@@ -34,6 +44,39 @@ class VisitTask(
     log.debug("Expired visits: ${expiredApplicationReferences.count()}")
     if (expiredApplicationReferences.isNotEmpty()) {
       visitService.deleteAllExpiredVisitsByApplicationReference(expiredApplicationReferences)
+    }
+  }
+
+  @Scheduled(cron = "\${task.log-non-associations.cron:0 0 3 * * ?}")
+  fun logNonAssociationVisits() {
+    if (!logNonAssociationsEnabled) {
+      return
+    }
+
+    log.debug("Entered logNonAssociationVisits")
+    prisonConfigService.getSupportedPrisons().forEach { prisonCode ->
+      for (i in 0..numberOfDaysAhead) {
+        val visitFilter = VisitFilter(
+          prisonCode = prisonCode,
+          visitStatusList = listOf(VisitStatus.BOOKED),
+          startDateTime = LocalDateTime.now().plusDays(i).with(LocalTime.MIN),
+          endDateTime = LocalDateTime.now().plusDays(i).with(LocalTime.MAX),
+        )
+        val visits = visitService.findVisitsByFilterPageableDescending(visitFilter)
+
+        visits.forEach {
+          val sessions = sessionService.getVisitSessions(it.prisonCode, it.prisonerId, i, i)
+          if (sessions.isEmpty()) {
+            log.info("NON Associations: Visit with reference - ${it.reference} ,prisoner id - ${it.prisonerId}, prison code - ${it.prisonCode}, start time - ${it.startTimestamp}, end time - ${it.endTimestamp} flagged for check - possible non associations on same day.")
+          }
+
+          try {
+            Thread.sleep(500)
+          } catch (e: InterruptedException) {
+            log.error("Sleep failed : $e")
+          }
+        }
+      }
     }
   }
 }

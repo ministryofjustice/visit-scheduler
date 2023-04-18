@@ -285,6 +285,7 @@ class BookVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
         Assertions.assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
+        Assertions.assertThat(it["actionedBy"]).isEqualTo(visit.createdBy)
       },
       isNull(),
     )
