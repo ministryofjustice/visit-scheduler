@@ -67,7 +67,7 @@ class VisitTask(
         visits.forEach {
           val sessions = sessionService.getVisitSessions(it.prisonCode, it.prisonerId, i, i)
           if (sessions.isEmpty()) {
-            log.info("NON Associations: Visit with reference - ${it.reference} ,prisoner id - ${it.prisonerId}, prison id - ${it.prisonerId}, start time - ${it.startTimestamp}, end time - ${it.endTimestamp} flagged for check - possible non associations on same day.")
+            log.info("NON Associations: Visit with reference - ${it.reference} ,prisoner id - ${it.prisonerId}, prison code - ${it.prisonCode}, start time - ${it.startTimestamp}, end time - ${it.endTimestamp} flagged for check - possible non associations on same day.")
           }
 
           try {
