@@ -31,6 +31,8 @@ generic-service:
   namespace_secrets:
     visit-scheduler:
       APPINSIGHTS_INSTRUMENTATIONKEY: "APPINSIGHTS_INSTRUMENTATIONKEY"
+      SYSTEM_CLIENT_ID: "SYSTEM_CLIENT_ID"
+      SYSTEM_CLIENT_SECRET: "SYSTEM_CLIENT_SECRET"
     visit-scheduler-rds:
       SPRING_DATASOURCE_USERNAME: "database_username"
       SPRING_DATASOURCE_PASSWORD: "database_password"
