@@ -120,7 +120,7 @@ task:
     cron: 0 0/10 * * * *
     validity-minutes: 20
   log-non-associations:
-    enabled: true
+    enabled: false
     cron: "0 0 3 * * ?" #every day at 3 AM
     number-of-days-ahead: 30
 
