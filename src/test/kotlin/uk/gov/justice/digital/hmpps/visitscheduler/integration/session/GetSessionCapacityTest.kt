@@ -127,8 +127,8 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     Assertions.assertThat(sessionCapacity.size).isEqualTo(2)
     Assertions.assertThat(sessionCapacity[0].closed).isEqualTo(sessionTemplate1.closedCapacity)
     Assertions.assertThat(sessionCapacity[0].open).isEqualTo(sessionTemplate1.openCapacity)
-    Assertions.assertThat(sessionCapacity[1].closed).isEqualTo(sessionTemplate2.closedCapacity * 2)
-    Assertions.assertThat(sessionCapacity[1].open).isEqualTo(sessionTemplate2.openCapacity * 2)
+    Assertions.assertThat(sessionCapacity[1].closed).isEqualTo(20)
+    Assertions.assertThat(sessionCapacity[1].open).isEqualTo(22)
   }
 
   @Test

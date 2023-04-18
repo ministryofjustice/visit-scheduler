@@ -5,7 +5,6 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
@@ -184,8 +183,8 @@ class SessionService(
   private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String): List<SessionTemplate> {
     val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
     if (hasSessionsWithLocationGroups) {
-      prisonerId?.let { it ->
-        val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(it, prisonCode)
+      prisonerId?.let {
+        val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
         prisonerDetailDto?.let { prisonerDetail ->
           val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
           return sessionTemplates.filter { sessionTemplate ->
@@ -285,11 +284,6 @@ class SessionService(
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
 
-  fun getSessionCapacity(location: PrisonerHousingLocationsDto?, sessionDate: String, sessionStartTime: LocalDate?, sessionEndTime: LocalTime?, endTime: LocalTime?): SessionCapacityDto? {
-    // TODO must work on this
-    return null
-  }
-
   fun getSessionCapacity(prisonCode: String, sessionDate: LocalDate, sessionStartTime: LocalTime, sessionEndTime: LocalTime): List<SessionCapacityDto> {
     val dayOfWeek = sessionDate.dayOfWeek
 
@@ -305,9 +299,6 @@ class SessionService(
 
     if (sessionTemplates.isEmpty()) {
       throw CapacityNotFoundException("Session capacity not found prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
-    }
-    if (sessionTemplates.size > 1) {
-      throw java.lang.IllegalStateException("Session capacity has more than one session template prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
     }
 
     val capacityGroups = sessionTemplates.groupBy { it.capacityGroup }
