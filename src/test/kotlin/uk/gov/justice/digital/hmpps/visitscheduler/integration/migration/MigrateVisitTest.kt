@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.migration
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
@@ -40,6 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_C
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -53,6 +55,7 @@ import java.time.format.DateTimeFormatter
 private const val TEST_END_POINT = "/migrate-visits"
 
 private const val PRISON_CODE = "MDI"
+private const val cancelledByByUser = "user-2"
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Migrate POST /visits")
@@ -654,7 +657,7 @@ class MigrateVisitTest : IntegrationTestBase() {
         PRISONER_CANCELLED,
         "Prisoner got covid",
       ),
-      CancelVisitTest.cancelledByByUser,
+      cancelledByByUser,
     )
     val reference = visit.reference
 
@@ -668,7 +671,7 @@ class MigrateVisitTest : IntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    CancelVisitTest.assertVisitCancellation(visitCancelled, PRISONER_CANCELLED, cancelVisitDto.actionedBy)
+    assertVisitCancellation(visitCancelled, PRISONER_CANCELLED, cancelVisitDto.actionedBy)
     assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
     assertThat(visitCancelled.createdBy).isEqualTo(visit.createdBy)
@@ -759,5 +762,15 @@ class MigrateVisitTest : IntegrationTestBase() {
       isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
+  }
+
+  fun assertVisitCancellation(
+    cancelledVisit: VisitDto,
+    expectedOutcomeStatus: OutcomeStatus,
+    cancelledBy: String,
+  ) {
+    assertThat(cancelledVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
+    assertThat(cancelledVisit.outcomeStatus).isEqualTo(expectedOutcomeStatus)
+    assertThat(cancelledVisit.cancelledBy).isEqualTo(cancelledBy)
   }
 }
