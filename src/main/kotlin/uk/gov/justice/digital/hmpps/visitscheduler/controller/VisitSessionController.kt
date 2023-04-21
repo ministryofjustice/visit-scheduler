@@ -180,7 +180,7 @@ class VisitSessionController(
       example = "14:30:00",
     )
     sessionEndTime: LocalTime,
-  ): List<SessionCapacityDto> {
+  ): SessionCapacityDto {
     return sessionService.getSessionCapacity(prisonCode, sessionDate, sessionStartTime, sessionEndTime)
   }
 }

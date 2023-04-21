@@ -284,7 +284,7 @@ class SessionService(
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
 
-  fun getSessionCapacity(prisonCode: String, sessionDate: LocalDate, sessionStartTime: LocalTime, sessionEndTime: LocalTime): List<SessionCapacityDto> {
+  fun getSessionCapacity(prisonCode: String, sessionDate: LocalDate, sessionStartTime: LocalTime, sessionEndTime: LocalTime): SessionCapacityDto {
     val dayOfWeek = sessionDate.dayOfWeek
 
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
@@ -301,8 +301,7 @@ class SessionService(
       throw CapacityNotFoundException("Session capacity not found prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
     }
 
-    val capacityGroups = sessionTemplates.groupBy { it.capacityGroup }
-    return capacityGroups.map { (capacityGroup, itemsInGroup) -> SessionCapacityDto(itemsInGroup) }
+    return SessionCapacityDto(sessionTemplates)
   }
 
   private fun filterSessionsTemplatesForDate(date: LocalDate, sessionTemplates: List<SessionTemplate>): List<SessionTemplate> {
