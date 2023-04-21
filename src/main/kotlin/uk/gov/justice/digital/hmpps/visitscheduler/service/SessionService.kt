@@ -180,7 +180,7 @@ class SessionService(
     return validToDate
   }
 
-  private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String): List<SessionTemplate> {
+  fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String, mustHaveLocationGroups: Boolean = false): List<SessionTemplate> {
     val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
     if (hasSessionsWithLocationGroups) {
       prisonerId?.let {
@@ -195,7 +195,7 @@ class SessionService(
       }
     }
 
-    return sessionTemplates
+    return if (mustHaveLocationGroups) listOf() else sessionTemplates
   }
 
   private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String, noAssociationConflictSessions: List<VisitSessionDto>): List<VisitSessionDto> {

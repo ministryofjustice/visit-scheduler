@@ -15,11 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
-import org.springframework.http.client.reactive.ClientHttpRequest
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import org.springframework.web.reactive.function.BodyInserter
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto
@@ -78,46 +76,15 @@ class MigrateVisitTest : IntegrationTestBase() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_MIGRATE_VISITS"))
   }
 
-  private fun createMigrateVisitRequestDto(actionedBy: String ? = "Aled Evans"): MigrateVisitRequestDto {
-    return MigrateVisitRequestDto(
-      prisonCode = PRISON_CODE,
-      prisonerId = "FF0000FF",
-      visitRoom = "A1",
-      visitType = SOCIAL,
-      startTimestamp = visitTime,
-      endTimestamp = visitTime.plusHours(1),
-      visitStatus = BOOKED,
-      outcomeStatus = COMPLETED_NORMALLY,
-      visitRestriction = OPEN,
-      visitContact = CreateLegacyContactOnVisitRequestDto("John Smith", "013448811538"),
-      visitors = setOf(VisitorDto(123, true)),
-      visitNotes = setOf(
-        VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
-        VisitNoteDto(type = VISIT_OUTCOMES, "A visit outcome"),
-        VisitNoteDto(type = VISIT_COMMENT, "A visit comment"),
-        VisitNoteDto(type = STATUS_CHANGED_REASON, "Status has changed"),
-      ),
-      legacyData = CreateLegacyDataRequestDto(123),
-      createDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
-      modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30),
-      actionedBy = actionedBy,
-    )
-  }
-
   @Test
   fun `migrate visit`() {
     // Given
 
-    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now().minusDays(2), prisonCode = PRISON_CODE, capacityGroup = "CapGroup")
-
     val migrateVisitRequestDto = createMigrateVisitRequestDto()
-
-    val jsonBody = BodyInserters.fromValue(
-      migrateVisitRequestDto,
-    )
+    createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
-    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -129,7 +96,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.reference).isEqualTo(reference)
       assertThat(visit.prison.code).isEqualTo(PRISON_CODE)
       assertThat(visit.prisonerId).isEqualTo("FF0000FF")
-      assertThat(visit.capacityGroup).isEqualTo("CapGroup")
+      assertThat(visit.capacityGroup).isEqualTo("A1")
       assertThat(visit.visitType).isEqualTo(SOCIAL)
       assertThat(visit.visitStart).isEqualTo(visitTime.toString())
       assertThat(visit.visitEnd).isEqualTo(visitTime.plusHours(1).toString())
@@ -164,17 +131,50 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
   }
 
+  private fun createSessionTemplateFrom(migrateVisitRequestDto: MigrateVisitRequestDto) {
+    sessionTemplateEntityHelper.create(
+      validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek,
+      capacityGroup = migrateVisitRequestDto.visitRoom,
+      startTime = migrateVisitRequestDto.startTimestamp.toLocalTime(),
+      endTime = migrateVisitRequestDto.endTimestamp.toLocalTime(),
+    )
+  }
+
+  @Test
+  fun `Capacity group - migrate visit has null capacity group if visit is in the past`() {
+    // Given
+
+    val visitStartTimeAndDate = LocalDateTime.now().minusDays(95)
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(
+      visitStartTimeAndDate = visitStartTimeAndDate,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.capacityGroup).isNull()
+    }
+  }
+
   @Test
   fun `client id is used for migrate visit when createdBy is not given`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(actionedBy = null)
-    val jsonBody = BodyInserters.fromValue(
-      migrateVisitRequestDto,
-    )
+    createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
-    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -188,7 +188,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   @Test
   fun `can migrate visit without leadVisitorId`() {
     // Given
-    val createMigrateVisitRequestDto = MigrateVisitRequestDto(
+    val migrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = PRISON_CODE,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
@@ -198,10 +198,10 @@ class MigrateVisitTest : IntegrationTestBase() {
       visitStatus = BOOKED,
       visitRestriction = OPEN,
     )
-    val jsonBody = BodyInserters.fromValue(createMigrateVisitRequestDto)
+    createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
-    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -220,7 +220,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   @Test
   fun `migrate visit without contact details`() {
     // Given
-    val createMigrateVisitRequestDto = MigrateVisitRequestDto(
+    val migrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = PRISON_CODE,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
@@ -230,13 +230,10 @@ class MigrateVisitTest : IntegrationTestBase() {
       visitStatus = BOOKED,
       visitRestriction = OPEN,
     )
-
-    val jsonBody = BodyInserters.fromValue(
-      createMigrateVisitRequestDto,
-    )
+    createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
-    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -255,7 +252,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   @Test
   fun `migrate visit without create and update Date and Time`() {
     // Given
-    val createMigrateVisitRequestDto = MigrateVisitRequestDto(
+    val migrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = PRISON_CODE,
       prisonerId = "FF0000FF",
       visitRoom = "A1",
@@ -265,13 +262,10 @@ class MigrateVisitTest : IntegrationTestBase() {
       visitStatus = BOOKED,
       visitRestriction = OPEN,
     )
-
-    val jsonBody = BodyInserters.fromValue(
-      createMigrateVisitRequestDto,
-    )
+    createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
-    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -300,11 +294,10 @@ class MigrateVisitTest : IntegrationTestBase() {
       visitStatus = BOOKED,
       visitRestriction = OPEN,
     )
-
-    val jsonBody = BodyInserters.fromValue(migrateVisitRequestDto)
+    createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
-    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, jsonBody)
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -329,120 +322,59 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when telephone number is not given then an UNKNOWN will be migrated  `() {
+  fun `when telephone number and contact name is NULL then an UNKNOWN will be migrated`() {
     // Given
+    val migrateVisitDto = createMigrateVisitRequestDto()
+    createSessionTemplateFrom(migrateVisitDto)
+
     val jsonString = """{
-      "prisonerId": "G9377GA",
-      "prisonId": "MDI",
-      "visitRoom": "A1",
-      "startTimestamp": "$visitTime",
-      "endTimestamp": "${visitTime.plusHours(1)}",
-      "visitType": "${SOCIAL.name}",
-      "visitStatus": "${BOOKED.name}",
-      "visitRestriction": "${OPEN.name}",
-      "visitContact": {
-        "name": "John Smith"
-      }    
-    }"""
-
-    // When
-    val responseSpec = callMigrateVisit(jsonString)
-
-    // Then
-    responseSpec.expectStatus().isCreated
-
-    val visit = visitRepository.findByReference(getReference(responseSpec))
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
-    }
-
-    // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
-  }
-
-  @Test
-  fun `when telephone number is NULL then an UNKNOWN will be migrated`() {
-    // Given
-    val jsonString = """{
-      "prisonerId": "G9377GA",
-      "prisonId": "MDI",
-      "visitRoom": "A1",
-      "startTimestamp": "$visitTime",
-      "endTimestamp": "${visitTime.plusHours(1)}",
-      "visitType": "${SOCIAL.name}",
-      "visitStatus": "${BOOKED.name}",
-      "visitRestriction": "${OPEN.name}",
-      "visitContact": {
-        "name": "John Smith",
-        "telephone": null
-      }     
-    }"""
-
-    // When
-    val responseSpec = callMigrateVisit(jsonString)
-
-    // Then
-    responseSpec.expectStatus().isCreated
-
-    val visit = visitRepository.findByReference(getReference(responseSpec))
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
-    }
-
-    // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
-  }
-
-  @Test
-  fun `when contact name is not given then an UNKNOWN will be migrated  `() {
-    // Given
-    val jsonString = """{
-      "prisonerId": "G9377GA",
-      "prisonId": "MDI",
-      "visitRoom": "A1",
-      "startTimestamp": "$visitTime",
-      "endTimestamp": "${visitTime.plusHours(1)}",
-      "visitType": "${SOCIAL.name}",
-      "visitStatus": "${BOOKED.name}",
-      "visitRestriction": "${OPEN.name}",
-      "visitContact": {
-        "telephone": "1234567890"
-      }    
-    }"""
-
-    // When
-    val responseSpec = callMigrateVisit(jsonString)
-
-    // Then
-    responseSpec.expectStatus().isCreated
-
-    val visit = visitRepository.findByReference(getReference(responseSpec))
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
-    }
-
-    // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
-  }
-
-  @Test
-  fun `when contact name is NULL then an UNKNOWN will be migrated`() {
-    // Given
-    val jsonString = """{
-      "prisonerId": "G9377GA",
-      "prisonId": "MDI",
-      "visitRoom": "A1",
-      "startTimestamp": "$visitTime",
-      "endTimestamp": "${visitTime.plusHours(1)}",
-      "visitType": "${SOCIAL.name}",
-      "visitStatus": "${BOOKED.name}",
-      "visitRestriction": "${OPEN.name}",
+      "prisonerId": "${migrateVisitDto.prisonerId}",
+      "prisonId": "${migrateVisitDto.prisonCode}",
+      "visitRoom": "${migrateVisitDto.visitRoom}",
+      "startTimestamp": "${migrateVisitDto.startTimestamp}",
+      "endTimestamp": "${migrateVisitDto.endTimestamp}",
+      "visitType": "${migrateVisitDto.visitType.name}",
+      "visitStatus": "${migrateVisitDto.visitStatus.name}",
+      "visitRestriction": "${migrateVisitDto.visitRestriction.name}",
       "visitContact": {
         "name": null,
-        "telephone": "1234567890"
+        "telephone": null
+      }    
+    }"""
+
+    // When
+    val responseSpec = callMigrateVisit(jsonString)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+
+    val visit = visitRepository.findByReference(getReference(responseSpec))
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
+      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
+    }
+
+    // And
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
+  }
+
+  @Test
+  fun `when contact name, contact tel and  outcome status are not given then an UNKNOWN name and NOT_RECORDED will be migrated  `() {
+    // Given
+    val migrateVisitDto = createMigrateVisitRequestDto()
+    createSessionTemplateFrom(migrateVisitDto)
+
+    val jsonString = """{
+      "prisonerId": "${migrateVisitDto.prisonerId}",
+      "prisonId": "${migrateVisitDto.prisonCode}",
+      "visitRoom": "${migrateVisitDto.visitRoom}",
+      "startTimestamp": "${migrateVisitDto.startTimestamp}",
+      "endTimestamp": "${migrateVisitDto.endTimestamp}",
+      "visitType": "${migrateVisitDto.visitType.name}",
+      "visitStatus": "${migrateVisitDto.visitStatus.name}",
+      "visitRestriction": "${migrateVisitDto.visitRestriction.name}",
+      "visitContact": {
       }    
     }"""
 
@@ -456,6 +388,8 @@ class MigrateVisitTest : IntegrationTestBase() {
     assertThat(visit).isNotNull
     visit?.let {
       assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
+      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
+      assertThat(visit.outcomeStatus).isEqualTo(NOT_RECORDED)
     }
 
     // And
@@ -467,23 +401,11 @@ class MigrateVisitTest : IntegrationTestBase() {
     // Given
     val name = "Title-case Name"
 
-    val jsonString = """{
-      "prisonerId": "G9377GA",
-      "prisonId": "MDI",
-      "visitRoom": "A1",
-      "startTimestamp": "$visitTime",
-      "endTimestamp": "${visitTime.plusHours(1)}",
-      "visitType": "${SOCIAL.name}",
-      "visitStatus": "${BOOKED.name}",
-      "visitRestriction": "${OPEN.name}",
-      "visitContact": {
-        "name": "$name",
-        "telephone": "1234567890"
-      }    
-    }"""
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(contactName = name)
+    createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
-    val responseSpec = callMigrateVisit(jsonString)
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -504,23 +426,11 @@ class MigrateVisitTest : IntegrationTestBase() {
     val name = "UPPERCASE NAME"
     val capitalised = "Uppercase Name"
 
-    val jsonString = """{
-      "prisonerId": "G9377GA",
-      "prisonId": "MDI",
-      "visitRoom": "A1",
-      "startTimestamp": "$visitTime",
-      "endTimestamp": "${visitTime.plusHours(1)}",
-      "visitType": "${SOCIAL.name}",
-      "visitStatus": "${BOOKED.name}",
-      "visitRestriction": "${OPEN.name}",
-      "visitContact": {
-        "name": "$name",
-        "telephone": "1234567890"
-      }    
-    }"""
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(contactName = name)
+    createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
-    val responseSpec = callMigrateVisit(jsonString)
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -536,52 +446,13 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when contact outcomeStatus is not given then an NOT_RECORDED will be migrated  `() {
-    // Given
-    val jsonString = """{
-      "prisonerId": "G9377GA",
-      "prisonId": "MDI",
-      "visitRoom": "A1",
-      "startTimestamp": "$visitTime",
-      "endTimestamp": "${visitTime.plusHours(1)}",
-      "visitType": "${SOCIAL.name}",
-      "visitStatus": "${BOOKED.name}",
-      "visitRestriction": "${OPEN.name}"
-    }"""
-
-    // When
-    val responseSpec = callMigrateVisit(jsonString)
-
-    // Then
-    responseSpec.expectStatus().isCreated
-
-    val visit = visitRepository.findByReference(getReference(responseSpec))
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.outcomeStatus).isEqualTo(NOT_RECORDED)
-    }
-
-    // And
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
-  }
-
-  @Test
   fun `when contact outcomeStatus is NULL then an NOT_RECORDED will be migrated`() {
     // Given
-    val jsonString = """{
-      "prisonerId": "G9377GA",
-      "prisonId": "MDI",
-      "visitRoom": "A1",
-      "startTimestamp": "$visitTime",
-      "endTimestamp": "${visitTime.plusHours(1)}",
-      "visitType": "${SOCIAL.name}",
-      "visitStatus": "${BOOKED.name}",
-      "visitRestriction": "${OPEN.name}",
-      "outcomeStatus" : null
-    }"""
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(outcomeStatus = null)
+    createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
-    val responseSpec = callMigrateVisit(jsonString)
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isCreated
@@ -621,10 +492,10 @@ class MigrateVisitTest : IntegrationTestBase() {
   fun `access forbidden when no role`() {
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val jsonBody = BodyInserters.fromValue(createMigrateVisitRequestDto())
+    val createMigrateVisitRequestDto = createMigrateVisitRequestDto()
 
     // When
-    val responseSpec = callMigrateVisit(authHttpHeaders, jsonBody)
+    val responseSpec = callMigrateVisit(authHttpHeaders, createMigrateVisitRequestDto)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -703,11 +574,11 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   private fun callMigrateVisit(
     authHttpHeaders: (HttpHeaders) -> Unit,
-    jsonBody: BodyInserter<*, in ClientHttpRequest>?,
+    migrateVisitRequestDto: MigrateVisitRequestDto,
   ): ResponseSpec {
     return webTestClient.post().uri(TEST_END_POINT)
       .headers(authHttpHeaders)
-      .body(jsonBody)
+      .body(BodyInserters.fromValue(migrateVisitRequestDto))
       .exchange()
   }
 
@@ -773,4 +644,35 @@ class MigrateVisitTest : IntegrationTestBase() {
     assertThat(cancelledVisit.outcomeStatus).isEqualTo(expectedOutcomeStatus)
     assertThat(cancelledVisit.cancelledBy).isEqualTo(cancelledBy)
   }
+}
+
+fun createMigrateVisitRequestDto(
+  actionedBy: String? = "Aled Evans",
+  visitStartTimeAndDate: LocalDateTime = MigrateVisitTest.visitTime,
+  outcomeStatus: OutcomeStatus? = COMPLETED_NORMALLY,
+  contactName: String? = "John Smith",
+): MigrateVisitRequestDto {
+  return MigrateVisitRequestDto(
+    prisonCode = PRISON_CODE,
+    prisonerId = "FF0000FF",
+    visitRoom = "A1",
+    visitType = SOCIAL,
+    startTimestamp = visitStartTimeAndDate,
+    endTimestamp = visitStartTimeAndDate.plusHours(1),
+    visitStatus = BOOKED,
+    outcomeStatus = outcomeStatus,
+    visitRestriction = OPEN,
+    visitContact = CreateLegacyContactOnVisitRequestDto(contactName!!, "013448811538"),
+    visitors = setOf(VisitorDto(123, true)),
+    visitNotes = setOf(
+      VisitNoteDto(type = VISITOR_CONCERN, "A visit concern"),
+      VisitNoteDto(type = VISIT_OUTCOMES, "A visit outcome"),
+      VisitNoteDto(type = VISIT_COMMENT, "A visit comment"),
+      VisitNoteDto(type = STATUS_CHANGED_REASON, "Status has changed"),
+    ),
+    legacyData = CreateLegacyDataRequestDto(123),
+    createDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
+    modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30),
+    actionedBy = actionedBy,
+  )
 }

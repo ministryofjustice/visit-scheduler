@@ -12,7 +12,7 @@ class PrisonerLevelMatcher : BiPredicate<SessionLocationGroup?, Map<PrisonerHous
       permittedSessionLevel?.let {
         return it == prisonerLevel
       }
-
+      // If no prison level then match
       return true
     }
   }

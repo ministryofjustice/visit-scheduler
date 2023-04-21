@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.*
 
 fun sessionTemplate(
   name: String = "sessionTemplate_",
@@ -50,7 +51,7 @@ fun sessionTemplate(
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     biWeekly = biWeekly,
     enhanced = enhanced,
-  )
+  ).also { it.reference = UUID.randomUUID().toString() }
 }
 
 fun createSessionTemplateDto(

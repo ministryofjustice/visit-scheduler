@@ -2,28 +2,34 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.InjectMocks
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigratedVisitCapacityGroupMatchException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.DayOfWeek
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
 @ExtendWith(MockitoExtension::class)
-class MigrateVisitServiceTest {
+class MigrateVisitServiceProximityTest {
 
   private val legacyDataRepository = mock<LegacyDataRepository>()
   private val visitRepository = mock<VisitRepository>()
   private val prisonConfigService = mock<PrisonConfigService>()
   private val snsService = mock<SnsService>()
-  private val prisonerService = mock<PrisonerService>()
+  private val sessionTemplates = mock<SessionService>()
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val authenticationHelperService = mock<AuthenticationHelperService>()
   private val telemetryClient = mock<TelemetryClient>()
@@ -111,18 +117,14 @@ class MigrateVisitServiceTest {
       ),
     )
 
-    whenever(
-      sessionTemplateRepository.findValidSessionTemplatesBy(
-        prisonCode = prisonCode,
-        dayOfWeek = dayOfWeek,
-      ),
-    ).thenReturn(sessionTemplates)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates)
 
     // When
-    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime)
+    val results =
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
-    assertThat(results).hasSize(7)
+    assertThat(results).hasSize(3)
     assertThat(results[0].startTime).isEqualTo("13:10:00")
     assertThat(results[0].endTime).isEqualTo("13:50:00")
     assertThat(results[0].capacityGroup).isEqualTo("passed")
@@ -165,15 +167,11 @@ class MigrateVisitServiceTest {
       ),
     )
 
-    whenever(
-      sessionTemplateRepository.findValidSessionTemplatesBy(
-        prisonCode = prisonCode,
-        dayOfWeek = dayOfWeek,
-      ),
-    ).thenReturn(sessionTemplates)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates)
 
     // When
-    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime)
+    val results =
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
     assertThat(results[0].capacityGroup).isEqualTo("passed")
@@ -216,15 +214,11 @@ class MigrateVisitServiceTest {
       ),
     )
 
-    whenever(
-      sessionTemplateRepository.findValidSessionTemplatesBy(
-        prisonCode = prisonCode,
-        dayOfWeek = dayOfWeek,
-      ),
-    ).thenReturn(sessionTemplates)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates)
 
     // When
-    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime)
+    val results =
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
     assertThat(results[0].capacityGroup).isEqualTo("passed")
@@ -265,15 +259,11 @@ class MigrateVisitServiceTest {
       ),
     )
 
-    whenever(
-      sessionTemplateRepository.findValidSessionTemplatesBy(
-        prisonCode = prisonCode,
-        dayOfWeek = dayOfWeek,
-      ),
-    ).thenReturn(sessionTemplates)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates)
 
     // When
-    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime)
+    val results =
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
     assertThat(results[0].capacityGroup).isEqualTo("passed")
@@ -283,7 +273,7 @@ class MigrateVisitServiceTest {
   fun `get nearest template session for identical sessions and dont return first one (expired one)`() {
     // Given
     val prisonCode = "BMI"
-    val sessionDateStart = LocalDateTime.now().minusDays(10)
+    val sessionDateStart = LocalDateTime.now().plusDays(1)
 
     val sessionDate = sessionDateStart.toLocalDate()
     val startTime = LocalTime.parse("13:00:00")
@@ -315,15 +305,11 @@ class MigrateVisitServiceTest {
       ),
     )
 
-    whenever(
-      sessionTemplateRepository.findValidSessionTemplatesBy(
-        prisonCode = prisonCode,
-        dayOfWeek = dayOfWeek,
-      ),
-    ).thenReturn(sessionTemplates)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates)
 
     // When
-    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime)
+    val results =
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
     assertThat(results[0].capacityGroup).isEqualTo("passed")
@@ -364,15 +350,11 @@ class MigrateVisitServiceTest {
       ),
     )
 
-    whenever(
-      sessionTemplateRepository.findValidSessionTemplatesBy(
-        prisonCode = prisonCode,
-        dayOfWeek = dayOfWeek,
-      ),
-    ).thenReturn(sessionTemplates)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates)
 
     // When
-    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime)
+    val results =
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
     assertThat(results[0].capacityGroup).isEqualTo("passed")
@@ -413,17 +395,275 @@ class MigrateVisitServiceTest {
       ),
     )
 
-    whenever(
-      sessionTemplateRepository.findValidSessionTemplatesBy(
-        prisonCode = prisonCode,
-        dayOfWeek = dayOfWeek,
-      ),
-    ).thenReturn(sessionTemplates)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates)
 
     // When
-    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime)
+    val results =
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
     assertThat(results[0].capacityGroup).isEqualTo("passed")
+  }
+
+  @Test
+  fun `when template with capacity same as room name call repo with capacity`() {
+    // Given
+    val prisonCode = "BMI"
+    val sessionDateStart = LocalDateTime.now().minusDays(10)
+
+    val sessionDate = sessionDateStart.toLocalDate()
+    val startTime = LocalTime.parse("13:00:00")
+    val endTime = LocalTime.parse("14:00:00")
+    val dayOfWeek = sessionDateStart.dayOfWeek
+    val capacityGroup = "youWillFindMe"
+
+    val sessionTemplates = mutableListOf<SessionTemplate>()
+
+    sessionTemplates.add(
+      sessionTemplate(
+        prisonCode = prisonCode,
+        validFromDate = sessionDate.plusDays(1),
+        startTime = LocalTime.parse("13:20:00"),
+        endTime = LocalTime.parse("13:40:00"),
+        capacityGroup = capacityGroup,
+        dayOfWeek = dayOfWeek,
+      ),
+    )
+
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+
+    // When
+    val results =
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+
+    // Then
+    verify(sessionTemplateRepository, times(1)).findValidSessionTemplatesBy(
+      rangeStartDate = LocalDate.now(),
+      prisonCode = prisonCode,
+      dayOfWeek = dayOfWeek,
+      capacityGroup = capacityGroup,
+    )
+    verify(sessionTemplateRepository, times(0)).findValidSessionTemplatesBy(
+      rangeStartDate = LocalDate.now(),
+      prisonCode = prisonCode,
+      dayOfWeek = dayOfWeek,
+    )
+  }
+
+  @Test
+  fun `When no sessionTemplate are found exception is throw`() {
+    // Given
+    val prisonCode = "BMI"
+    val sessionDateStart = LocalDateTime.now().minusDays(10)
+
+    val sessionDate = sessionDateStart.toLocalDate()
+    val startTime = LocalTime.parse("13:00:00")
+    val endTime = LocalTime.parse("14:00:00")
+    val dayOfWeek = sessionDateStart.dayOfWeek
+    val capacityGroup = "youWillFindMe"
+
+    val sessionTemplates = mutableListOf<SessionTemplate>()
+
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+
+    // When
+    val exception = Assertions.assertThrows(MigratedVisitCapacityGroupMatchException::class.java) {
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+    }
+
+    // Then
+    assertThat(exception).hasMessageStartingWith("Could not find any SessionTemplate for future visit date ")
+  }
+
+  @Test
+  fun `When one sessionTemplate is found but is greater than max proximity an exception is throw`() {
+    // Given
+    val prisonCode = "BMI"
+    val sessionDateStart = LocalDateTime.now().minusDays(10)
+
+    val sessionDate = sessionDateStart.toLocalDate()
+    val startTime = LocalTime.parse("13:00:00")
+    val endTime = LocalTime.parse("14:00:00")
+    val dayOfWeek = sessionDateStart.dayOfWeek
+    val capacityGroup = "youWillFindMe"
+
+    val sessionTemplates = mutableListOf<SessionTemplate>()
+    sessionTemplates.add(
+      sessionTemplate(
+        prisonCode = prisonCode,
+        validFromDate = sessionDate.plusDays(1),
+        startTime = startTime.plusMinutes(60),
+        endTime = endTime.plusMinutes(121),
+        capacityGroup = capacityGroup,
+        dayOfWeek = dayOfWeek,
+      ),
+    )
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+
+    // When
+    val exception = Assertions.assertThrows(MigratedVisitCapacityGroupMatchException::class.java) {
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+    }
+
+    // Then
+    assertThat(exception).hasMessageStartingWith("Could not find suitable SessionTemplate within max proximity of $DEFAULT_MAX_PROX_MINUTES for future visit date")
+  }
+
+  @Test
+  fun `When sessionTemplates are found but all are greater than max proximity an exception is throw`() {
+    // Given
+    val prisonCode = "BMI"
+    val sessionDateStart = LocalDateTime.now().minusDays(10)
+
+    val sessionDate = sessionDateStart.toLocalDate()
+    val startTime = LocalTime.parse("13:00:00")
+    val endTime = LocalTime.parse("14:00:00")
+    val dayOfWeek = sessionDateStart.dayOfWeek
+    val capacityGroup = "youWillFindMe"
+
+    val sessionTemplates = mutableListOf<SessionTemplate>()
+
+    sessionTemplates.add(
+      sessionTemplate(
+        prisonCode = prisonCode,
+        validFromDate = sessionDate.plusDays(1),
+        startTime = startTime,
+        endTime = endTime.plusMinutes(181),
+        capacityGroup = capacityGroup,
+        dayOfWeek = dayOfWeek,
+      ),
+    )
+    sessionTemplates.add(
+      sessionTemplate(
+        prisonCode = prisonCode,
+        validFromDate = sessionDate.plusDays(1),
+        startTime = startTime.minusMinutes(181),
+        endTime = endTime.plusMinutes(181),
+        capacityGroup = capacityGroup,
+        dayOfWeek = dayOfWeek,
+      ),
+    )
+
+    sessionTemplates.add(
+      sessionTemplate(
+        prisonCode = prisonCode,
+        validFromDate = sessionDate.plusDays(1),
+        startTime = startTime.minusMinutes(181),
+        endTime = endTime.minusMinutes(181),
+        capacityGroup = capacityGroup,
+        dayOfWeek = dayOfWeek,
+      ),
+    )
+
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+
+    // When
+    val exception = Assertions.assertThrows(MigratedVisitCapacityGroupMatchException::class.java) {
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+    }
+
+    // Then
+    assertThat(exception).hasMessageStartingWith("Could not find suitable SessionTemplate within max proximity of $DEFAULT_MAX_PROX_MINUTES for future visit date")
+  }
+
+  @Test
+  fun `When most sessionTemplates have greater than max proximity but one is below no exception is throw and session is returned`() {
+    // Given
+    val prisonCode = "BMI"
+    val sessionDateStart = LocalDateTime.now().minusDays(10)
+
+    val sessionDate = sessionDateStart.toLocalDate()
+    val startTime = LocalTime.parse("13:00:00")
+    val endTime = LocalTime.parse("14:00:00")
+    val dayOfWeek = sessionDateStart.dayOfWeek
+    val capacityGroup = "youWillFindMe"
+
+    val sessionTemplates = mutableListOf<SessionTemplate>()
+
+    sessionTemplates.add(
+      sessionTemplate(
+        prisonCode = prisonCode,
+        validFromDate = sessionDate.plusDays(1),
+        startTime = startTime,
+        endTime = endTime.plusMinutes(181),
+        capacityGroup = capacityGroup,
+        dayOfWeek = dayOfWeek,
+      ),
+    )
+    sessionTemplates.add(
+      sessionTemplate(
+        prisonCode = prisonCode,
+        validFromDate = sessionDate.plusDays(1),
+        startTime = startTime.minusMinutes(181),
+        endTime = endTime.plusMinutes(181),
+        capacityGroup = capacityGroup,
+        dayOfWeek = dayOfWeek,
+      ),
+    )
+    sessionTemplates.add(
+      sessionTemplate(
+        prisonCode = prisonCode,
+        validFromDate = sessionDate.plusDays(1),
+        startTime = startTime.minusMinutes(181),
+        endTime = endTime.minusMinutes(181),
+        capacityGroup = capacityGroup,
+        dayOfWeek = dayOfWeek,
+      ),
+    )
+
+    sessionTemplates.add(
+      sessionTemplate(
+        prisonCode = prisonCode,
+        validFromDate = sessionDate.plusDays(1),
+        startTime = startTime.minusMinutes(10),
+        endTime = endTime.minusMinutes(10),
+        capacityGroup = capacityGroup,
+        dayOfWeek = dayOfWeek,
+      ),
+    )
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+
+    // When
+    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+
+    // Then
+    assertThat(results).hasSize(1)
+  }
+
+  private fun mockSessionTemplateRepo(
+    prisonCode: String,
+    dayOfWeek: DayOfWeek?,
+    sessionTemplates: MutableList<SessionTemplate>,
+    capacityGroup: String? = null,
+  ) {
+    val rangeStartDate = LocalDate.now()
+
+    if (capacityGroup != null) {
+      whenever(
+        sessionTemplateRepository.findValidSessionTemplatesBy(
+          rangeStartDate = rangeStartDate,
+          prisonCode = prisonCode,
+          dayOfWeek = dayOfWeek,
+          capacityGroup = capacityGroup,
+        ),
+      ).thenReturn(sessionTemplates.filter { it.capacityGroup == capacityGroup })
+    } else {
+      whenever(
+        sessionTemplateRepository.findValidSessionTemplatesBy(
+          rangeStartDate = rangeStartDate,
+          prisonCode = prisonCode,
+          dayOfWeek = dayOfWeek,
+        ),
+      ).thenReturn(sessionTemplates)
+
+      whenever(
+        sessionTemplateRepository.findValidSessionTemplatesBy(
+          rangeStartDate = rangeStartDate,
+          prisonCode = prisonCode,
+          dayOfWeek = dayOfWeek,
+          capacityGroup = "youWontFindMe",
+        ),
+      ).thenReturn(listOf())
+    }
   }
 }

@@ -16,3 +16,4 @@ UPDATE visit
 
 ALTER TABLE visit RENAME COLUMN visit_room TO capacity_group;
 ALTER TABLE session_template RENAME COLUMN visit_room TO capacity_group;
+ALTER TABLE session_template ALTER COLUMN capacity_group drop not null;
