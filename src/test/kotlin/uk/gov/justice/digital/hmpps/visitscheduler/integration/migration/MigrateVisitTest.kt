@@ -326,7 +326,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `client id is used for migrate visit when createdBy is not given`() {
+  fun `NOT_KNOWN_NOMIS is used for migrate visit when createdBy is not given`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(actionedBy = null)
@@ -340,7 +340,7 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.createdBy).isEqualTo("AUTH_ADM")
+      assertThat(visit.createdBy).isEqualTo("NOT_KNOWN_NOMIS")
     }
   }
 

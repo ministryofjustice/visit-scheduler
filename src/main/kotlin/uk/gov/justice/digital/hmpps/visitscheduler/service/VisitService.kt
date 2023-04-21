@@ -45,7 +45,6 @@ class VisitService(
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
   private val snsService: SnsService,
-  private val authenticationHelperService: AuthenticationHelperService,
   private val prisonConfigService: PrisonConfigService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
@@ -271,7 +270,7 @@ class VisitService(
 
   @Deprecated("This method has been deprecated.")
   fun cancelVisit(reference: String, outcomeDto: OutcomeDto): VisitDto {
-    val cancelVisitDto = CancelVisitDto(outcomeDto, authenticationHelperService.currentUserName)
+    val cancelVisitDto = CancelVisitDto(outcomeDto, NOT_KNOWN_NOMIS)
     return cancelVisit(reference, cancelVisitDto)
   }
 
