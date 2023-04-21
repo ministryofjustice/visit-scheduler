@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.migration
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
+import org.hamcrest.Matchers.startsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -45,9 +46,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.DEFAULT_MAX_PROX_MINUTES
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 private const val TEST_END_POINT = "/migrate-visits"
@@ -131,14 +134,19 @@ class MigrateVisitTest : IntegrationTestBase() {
     }
   }
 
-  private fun createSessionTemplateFrom(migrateVisitRequestDto: MigrateVisitRequestDto) {
+  private fun createSessionTemplateFrom(
+    migrateVisitRequestDto: MigrateVisitRequestDto,
+    capacityGroup: String = migrateVisitRequestDto.visitRoom,
+    startTime: LocalTime? = null,
+    endTime: LocalTime? = null,
+  ) {
     sessionTemplateEntityHelper.create(
       validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1),
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek,
-      capacityGroup = migrateVisitRequestDto.visitRoom,
-      startTime = migrateVisitRequestDto.startTimestamp.toLocalTime(),
-      endTime = migrateVisitRequestDto.endTimestamp.toLocalTime(),
+      capacityGroup = capacityGroup,
+      startTime = startTime?.let { startTime } ?: migrateVisitRequestDto.startTimestamp.toLocalTime(),
+      endTime = endTime?.let { endTime } ?: migrateVisitRequestDto.endTimestamp.toLocalTime(),
     )
   }
 
@@ -164,6 +172,157 @@ class MigrateVisitTest : IntegrationTestBase() {
     visit?.let {
       assertThat(visit.capacityGroup).isNull()
     }
+  }
+
+  @Test
+  fun `Capacity group - migrate visit selects the correct template by capacity group`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
+    createSessionTemplateFrom(migrateVisitRequestDto, "theSmallHall")
+    createSessionTemplateFrom(migrateVisitRequestDto, "theGreatHall")
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.capacityGroup).isEqualTo(migrateVisitRequestDto.visitRoom)
+    }
+  }
+
+  @Test
+  fun `Capacity group - migrate visit selects the nearest template when capacity group does not match`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
+
+    createSessionTemplateFrom(
+      migrateVisitRequestDto,
+      "theSmallHall",
+      startTime = migrateVisitRequestDto.startTimestamp.toLocalTime().plusMinutes(10),
+      endTime = migrateVisitRequestDto.endTimestamp.toLocalTime().plusMinutes(10),
+    )
+
+    createSessionTemplateFrom(
+      migrateVisitRequestDto,
+      "theExceptionHall",
+      startTime = migrateVisitRequestDto.startTimestamp.toLocalTime().plusMinutes(200),
+      endTime = migrateVisitRequestDto.endTimestamp.toLocalTime().plusMinutes(200),
+    )
+
+    createSessionTemplateFrom(
+      migrateVisitRequestDto,
+      "theClosestTinyHall",
+      startTime = migrateVisitRequestDto.startTimestamp.toLocalTime().plusMinutes(5),
+      endTime = migrateVisitRequestDto.endTimestamp.toLocalTime().plusMinutes(5),
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.capacityGroup).isEqualTo("theClosestTinyHall")
+    }
+  }
+
+  @Test
+  fun `Capacity group - migrate visit can only find sessionTemplate out side max proximity on start time exception is thrown`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
+
+    createSessionTemplateFrom(
+      migrateVisitRequestDto,
+      "theSmallHall",
+      startTime = migrateVisitRequestDto.startTimestamp.toLocalTime().plusMinutes(DEFAULT_MAX_PROX_MINUTES.toLong() + 1),
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
+      .jsonPath("$.developerMessage").value(startsWith("Could not find suitable SessionTemplate within max proximity of $DEFAULT_MAX_PROX_MINUTES for future visit date"))
+  }
+
+  @Test
+  fun `Capacity group - migrate visit can only find sessionTemplate out side max proximity on end time exception is thrown`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
+
+    createSessionTemplateFrom(
+      migrateVisitRequestDto,
+      "theSmallHall",
+      startTime = migrateVisitRequestDto.endTimestamp.toLocalTime().plusMinutes(DEFAULT_MAX_PROX_MINUTES.toLong() + 1),
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
+      .jsonPath("$.developerMessage").value(startsWith("Could not find suitable SessionTemplate within max proximity of $DEFAULT_MAX_PROX_MINUTES for future visit date"))
+  }
+
+  @Test
+  fun `Capacity group - migrate visit can only find sessionTemplate out side max proximity on start-end time exception is thrown`() {
+    // Given
+
+    val justOverMax = (DEFAULT_MAX_PROX_MINUTES.toLong() / 2) + 1
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
+
+    createSessionTemplateFrom(
+      migrateVisitRequestDto,
+      "theSmallHall",
+      startTime = migrateVisitRequestDto.endTimestamp.toLocalTime().plusMinutes(justOverMax),
+      endTime = migrateVisitRequestDto.startTimestamp.toLocalTime().plusMinutes(justOverMax),
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
+      .jsonPath("$.developerMessage").value(startsWith("Could not find suitable SessionTemplate within max proximity of $DEFAULT_MAX_PROX_MINUTES for future visit date"))
+  }
+
+  @Test
+  fun `Capacity group - migrate visit can not sessionTemplate exception is thrown`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
+      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
   }
 
   @Test
@@ -649,13 +808,14 @@ class MigrateVisitTest : IntegrationTestBase() {
 fun createMigrateVisitRequestDto(
   actionedBy: String? = "Aled Evans",
   visitStartTimeAndDate: LocalDateTime = MigrateVisitTest.visitTime,
+  visitRoom: String = "A1",
   outcomeStatus: OutcomeStatus? = COMPLETED_NORMALLY,
   contactName: String? = "John Smith",
 ): MigrateVisitRequestDto {
   return MigrateVisitRequestDto(
     prisonCode = PRISON_CODE,
     prisonerId = "FF0000FF",
-    visitRoom = "A1",
+    visitRoom = visitRoom,
     visitType = SOCIAL,
     startTimestamp = visitStartTimeAndDate,
     endTimestamp = visitStartTimeAndDate.plusHours(1),
