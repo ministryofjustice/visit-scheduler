@@ -252,10 +252,10 @@ class MigrateVisitService(
 
   private fun createTemplateLocationMap(sessionLocationTemplates: List<SessionTemplate>): MutableMap<String, MutableList<PermittedSessionLocation>> {
     val templateLocationMap = mutableMapOf<String, MutableList<PermittedSessionLocation>>()
-    sessionLocationTemplates.forEach { st ->
-      st.permittedSessionLocationGroups.forEach { lg ->
-        val sessionLocationList = templateLocationMap.getOrPut(st.reference) { mutableListOf() }
-        sessionLocationList.addAll(lg.sessionLocations)
+    sessionLocationTemplates.forEach { template ->
+      template.permittedSessionLocationGroups.forEach { locationGroup ->
+        val sessionLocationList = templateLocationMap.getOrPut(template.reference) { mutableListOf() }
+        sessionLocationList.addAll(locationGroup.sessionLocations)
       }
     }
     return templateLocationMap
