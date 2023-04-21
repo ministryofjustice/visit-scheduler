@@ -7,12 +7,10 @@ UPDATE legacy_data
 
 ALTER TABLE visit ALTER COLUMN visit_room drop not null;
 
-
 UPDATE visit
     SET visit_room = NULL
         FROM (SELECT v.id,v.visit_room FROM visit v JOIN legacy_data ld ON ld.visit_id = v.id) AS subquery
-    WHERE visit.id = subquery.id;
-
+    WHERE visit.id = subquery.id and visit_start < CURRENT_DATE;
 
 ALTER TABLE visit RENAME COLUMN visit_room TO capacity_group;
 ALTER TABLE session_template RENAME COLUMN visit_room TO capacity_group;

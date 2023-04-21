@@ -244,8 +244,8 @@ class MigrateVisitService(
         getBestMatch.compare(sorted1.first(), sorted2.first())
       }
 
-      val sortedByLevelMatch = templateLocationMap.toList().sortedWith(proximityComparator)
-      return sessionLocationTemplates.find { it.reference == sortedByLevelMatch.first().first }!!
+      val bestMatchedSessionReference = templateLocationMap.toList().sortedWith(proximityComparator).first().first
+      return sessionLocationTemplates.find { it.reference == bestMatchedSessionReference }!!
     }
     return sessionTemplates.first()
   }
