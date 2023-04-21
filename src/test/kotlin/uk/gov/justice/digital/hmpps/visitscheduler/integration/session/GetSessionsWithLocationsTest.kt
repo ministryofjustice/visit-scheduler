@@ -39,7 +39,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
-      visitRoom = "Session available to all prisoners",
+      capacityGroup = "Session available to all prisoners",
     )
 
     // this session template is available to levels A,B,D, E and F but not for C
@@ -60,7 +60,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       endTime = LocalTime.parse("11:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
-      visitRoom = "session available to some level 1",
+      capacityGroup = "session available to some level 1",
       permittedSessionGroups = mutableListOf(location1),
     )
 
@@ -80,7 +80,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       endTime = LocalTime.parse("12:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
-      visitRoom = "session available to some level 2s",
+      capacityGroup = "session available to some level 2s",
       permittedSessionGroups = mutableListOf(location2),
     )
 
@@ -99,7 +99,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       endTime = LocalTime.parse("13:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
-      visitRoom = "session available to some level 3s and level 2s",
+      capacityGroup = "session available to some level 3s and level 2s",
       permittedSessionGroups = mutableListOf(location3),
     )
 
@@ -117,7 +117,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       endTime = LocalTime.parse("14:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
-      visitRoom = "session available to some level 4s and level 2s",
+      capacityGroup = "session available to some level 4s and level 2s",
       permittedSessionGroups = mutableListOf(location4),
     )
 
@@ -448,7 +448,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = associationId,
       prisonCode = prison.code,
-      visitRoom = sessionTemplateForAllPrisoners.visitRoom,
+      capacityGroup = sessionTemplateForAllPrisoners.capacityGroup,
       visitStart = nextAllowedDay.atTime(sessionTemplateForAllPrisoners.startTime),
       visitEnd = nextAllowedDay.atTime(sessionTemplateForAllPrisoners.endTime),
       visitType = VisitType.SOCIAL,
@@ -504,7 +504,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     Assertions.assertThat(visitSessionResult.endTimestamp).isEqualTo(testDate.atTime(expectedSessionTemplate.endTime))
     Assertions.assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     Assertions.assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
-    Assertions.assertThat(visitSessionResult.visitRoomName).isEqualTo(expectedSessionTemplate.visitRoom)
+    Assertions.assertThat(visitSessionResult.capacityGroup).isEqualTo(expectedSessionTemplate.capacityGroup)
   }
 
   private fun getResults(returnResult: WebTestClient.BodyContentSpec): Array<VisitSessionDto> {

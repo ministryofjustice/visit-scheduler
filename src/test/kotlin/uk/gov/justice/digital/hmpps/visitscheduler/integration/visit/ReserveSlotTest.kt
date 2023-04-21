@@ -55,7 +55,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     return ReserveVisitSlotDto(
       prisonCode = prisonCode,
       prisonerId = "FF0000FF",
-      visitRoom = "A1",
+      capacityGroup = "A1",
       visitType = SOCIAL,
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
@@ -82,7 +82,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       .jsonPath("$.applicationReference").isNotEmpty
       .jsonPath("$.prisonId").isEqualTo("MDI")
       .jsonPath("$.prisonerId").isEqualTo("FF0000FF")
-      .jsonPath("$.visitRoom").isEqualTo("A1")
+      .jsonPath("$.capacityGroup").isEqualTo("A1")
       .jsonPath("$.visitType").isEqualTo(SOCIAL.name)
       .jsonPath("$.startTimestamp").isEqualTo(visitTime.toString())
       .jsonPath("$.endTimestamp").isEqualTo(visitTime.plusHours(1).toString())
@@ -111,7 +111,7 @@ class ReserveSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        Assertions.assertThat(it["capacityGroup"]).isEqualTo(visit.capacityGroup)
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
@@ -146,7 +146,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitType = SOCIAL,
       visitRestriction = OPEN,
       visitors = setOf(),
-      visitRoom = "A1",
+      capacityGroup = "A1",
       visitContact = ContactDto("John Smith", "01234 567890"),
       actionedBy = actionedByUserName,
     )
@@ -192,7 +192,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitType = SOCIAL,
       visitRestriction = OPEN,
-      visitRoom = "A1",
+      capacityGroup = "A1",
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 123, visitContact = true),
@@ -221,7 +221,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       endTimestamp = visitTime.plusHours(1),
       visitType = SOCIAL,
       visitRestriction = OPEN,
-      visitRoom = "A1",
+      capacityGroup = "A1",
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
       visitorSupport = setOf(VisitorSupportDto("ANYTHINGWILLDO")),

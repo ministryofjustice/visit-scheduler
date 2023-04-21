@@ -142,7 +142,7 @@ class SessionService(
             openVisitCapacity = sessionTemplate.openCapacity,
             closedVisitCapacity = sessionTemplate.closedCapacity,
             endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
-            visitRoomName = sessionTemplate.visitRoom,
+            capacityGroup = sessionTemplate.capacityGroup,
             visitType = sessionTemplate.visitType,
           )
         }
@@ -180,13 +180,13 @@ class SessionService(
     return validToDate
   }
 
-  private fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String): List<SessionTemplate> {
+  fun filterSessionsTemplatesForLocation(sessionTemplates: List<SessionTemplate>, prisonerId: String?, prisonCode: String, mustHaveLocationGroups: Boolean = false): List<SessionTemplate> {
     val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
     if (hasSessionsWithLocationGroups) {
       prisonerId?.let {
         val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
-        prisonerDetailDto?.let {
-          val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
+        prisonerDetailDto?.let { prisonerDetail ->
+          val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
           return sessionTemplates.filter { sessionTemplate ->
             sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
           }
@@ -195,7 +195,7 @@ class SessionService(
       }
     }
 
-    return sessionTemplates
+    return if (mustHaveLocationGroups) listOf() else sessionTemplates
   }
 
   private fun filterPrisonerConflict(sessions: List<VisitSessionDto>, prisonerId: String, noAssociationConflictSessions: List<VisitSessionDto>): List<VisitSessionDto> {
@@ -265,6 +265,7 @@ class SessionService(
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
     val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
       prisonCode = session.prisonCode,
+      capacityGroup = session.capacityGroup,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp,
       expiredDateAndTime = visitService.getReservedExpiredDateAndTime(),
@@ -272,6 +273,7 @@ class SessionService(
 
     val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
       prisonCode = session.prisonCode,
+      capacityGroup = session.capacityGroup,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp,
     )
@@ -282,7 +284,7 @@ class SessionService(
   private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
     sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
 
-  fun getSessionCapacity(prisonCode: String, sessionDate: LocalDate, sessionStartTime: LocalTime, sessionEndTime: LocalTime): SessionCapacityDto {
+  fun getSessionCapacity(prisonCode: String, sessionDate: LocalDate, sessionStartTime: LocalTime, sessionEndTime: LocalTime): List<SessionCapacityDto> {
     val dayOfWeek = sessionDate.dayOfWeek
 
     var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
@@ -298,11 +300,9 @@ class SessionService(
     if (sessionTemplates.isEmpty()) {
       throw CapacityNotFoundException("Session capacity not found prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
     }
-    if (sessionTemplates.size > 1) {
-      throw java.lang.IllegalStateException("Session capacity has more than one session template prisonCode:$prisonCode,session Date:$sessionDate, StartTime:$sessionStartTime, EndTime:$sessionEndTime, dayOfWeek:$dayOfWeek")
-    }
 
-    return SessionCapacityDto(sessionTemplates[0])
+    val capacityGroups = sessionTemplates.groupBy { it.capacityGroup }
+    return capacityGroups.map { (capacityGroup, itemsInGroup) -> SessionCapacityDto(itemsInGroup) }
   }
 
   private fun filterSessionsTemplatesForDate(date: LocalDate, sessionTemplates: List<SessionTemplate>): List<SessionTemplate> {

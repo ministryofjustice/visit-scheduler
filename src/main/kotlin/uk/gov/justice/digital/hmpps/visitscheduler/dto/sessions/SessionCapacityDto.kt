@@ -9,9 +9,17 @@ data class SessionCapacityDto(
   val closed: Int,
   @Schema(description = "open capacity", example = "50", required = true)
   val open: Int,
+  @Schema(description = "Capacity group", example = "Main Group", required = false)
+  val capacityGroup: String? = null,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     closed = sessionTemplateEntity.closedCapacity,
     open = sessionTemplateEntity.openCapacity,
+    capacityGroup = sessionTemplateEntity.capacityGroup,
+  )
+  constructor(capacityGroupOfSessionTemplates: List<SessionTemplate>) : this(
+    closed = capacityGroupOfSessionTemplates.sumOf { it.closedCapacity },
+    open = capacityGroupOfSessionTemplates.sumOf { it.openCapacity },
+    capacityGroup = capacityGroupOfSessionTemplates.first().capacityGroup,
   )
 }

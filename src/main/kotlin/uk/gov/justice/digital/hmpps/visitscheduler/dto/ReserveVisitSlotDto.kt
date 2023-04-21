@@ -20,9 +20,8 @@ data class ReserveVisitSlotDto(
   @Schema(description = "Prison Id", example = "MDI", required = true)
   @field:NotBlank
   val prisonCode: String,
-  @Schema(description = "Visit Room", example = "A1", required = true)
-  @field:NotBlank
-  val visitRoom: String,
+  @Schema(description = "Capacity group", example = "Main Group", required = false)
+  val capacityGroup: String? = null,
   @Schema(description = "Visit Type", example = "SOCIAL", required = true)
   @field:NotNull
   val visitType: VisitType,

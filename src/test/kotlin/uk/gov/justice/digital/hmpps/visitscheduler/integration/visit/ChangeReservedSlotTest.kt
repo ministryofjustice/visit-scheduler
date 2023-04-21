@@ -93,7 +93,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       .jsonPath("$.applicationReference").isEqualTo(applicationReference)
       .jsonPath("$.prisonerId").isEqualTo(visitFull.prisonerId)
       .jsonPath("$.prisonId").isEqualTo(visitFull.prison.code)
-      .jsonPath("$.visitRoom").isEqualTo(visitFull.visitRoom)
+      .jsonPath("$.capacityGroup").isEqualTo(visitFull.capacityGroup)
       .jsonPath("$.startTimestamp").isEqualTo(updateRequest.startTimestamp.toString())
       .jsonPath("$.endTimestamp").isEqualTo(updateRequest.endTimestamp.toString())
       .jsonPath("$.visitType").isEqualTo(visitFull.visitType.name)

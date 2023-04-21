@@ -34,8 +34,8 @@ class SessionTemplate(
   @Column(nullable = false)
   var name: String,
 
-  @Column(nullable = false)
-  val visitRoom: String,
+  @Column(nullable = true)
+  val capacityGroup: String? = null,
 
   @Column(nullable = false)
   val enhanced: Boolean = false,

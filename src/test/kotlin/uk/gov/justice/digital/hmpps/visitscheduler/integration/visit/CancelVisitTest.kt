@@ -204,7 +204,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val reserveVisitSlotDto = ReserveVisitSlotDto(
       prisonerId = bookedVisit.prisonerId,
       prisonCode = bookedVisit.prison.code,
-      visitRoom = bookedVisit.visitRoom,
+      capacityGroup = bookedVisit.capacityGroup,
       visitType = bookedVisit.visitType,
       visitRestriction = bookedVisit.visitRestriction,
       startTimestamp = bookedVisit.visitStart,
@@ -448,7 +448,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["prisonerId"]).isEqualTo(cancelledVisit.prisonerId)
         Assertions.assertThat(it["prisonId"]).isEqualTo(cancelledVisit.prisonCode)
         Assertions.assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
-        Assertions.assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
+        Assertions.assertThat(it["capacityGroup"]).isEqualTo(cancelledVisit.capacityGroup)
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(cancelledVisit.visitRestriction.name)
         Assertions.assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
@@ -464,7 +464,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "prisonerId" to cancelledVisit.prisonerId,
       "prisonId" to cancelledVisit.prisonCode,
       "visitType" to cancelledVisit.visitType.name,
-      "visitRoom" to cancelledVisit.visitRoom,
+      "capacityGroup" to cancelledVisit.capacityGroup,
       "visitRestriction" to cancelledVisit.visitRestriction.name,
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,

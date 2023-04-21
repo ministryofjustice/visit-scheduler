@@ -107,6 +107,7 @@ class SessionServiceTest {
     whenever(
       visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
         sessionTemplate.prison.code,
+        capacityGroup = sessionTemplate.capacityGroup,
         startDateTime,
         endDateTime,
       ),
@@ -287,7 +288,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
-        visitRoom = "1",
+        capacityGroup = "1",
         createdBy = "TEST-USER",
       )
 
@@ -300,7 +301,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = BOOKED,
         visitRestriction = OPEN,
-        visitRoom = "1",
+        capacityGroup = "1",
         createdBy = "TEST-USER",
       )
 
@@ -313,7 +314,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = BOOKED,
         visitRestriction = CLOSED,
-        visitRoom = "1",
+        capacityGroup = "1",
         createdBy = "TEST-USER",
       )
       mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession)
@@ -354,7 +355,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = OPEN,
-        visitRoom = "1",
+        capacityGroup = "1",
         createdBy = "TEST-USER",
       )
 
@@ -367,7 +368,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = CLOSED,
-        visitRoom = "1",
+        capacityGroup = "1",
         createdBy = "TEST-USER",
       )
       mockVisitRepositoryCountResponse(listOf(openVisit, closedVisit), singleSession)
@@ -407,7 +408,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = UNKNOWN,
-        visitRoom = "1",
+        capacityGroup = "1",
         createdBy = "TEST-USER",
       )
 

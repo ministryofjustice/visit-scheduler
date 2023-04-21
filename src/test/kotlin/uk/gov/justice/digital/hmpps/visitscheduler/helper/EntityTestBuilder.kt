@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.*
 
 fun sessionTemplate(
   name: String = "sessionTemplate_",
@@ -21,7 +22,7 @@ fun sessionTemplate(
   closedCapacity: Int = 5,
   openCapacity: Int = 10,
   prisonCode: String = "MDI",
-  visitRoom: String = "1",
+  capacityGroup: String = "1",
   visitType: VisitType = VisitType.SOCIAL,
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
@@ -41,7 +42,7 @@ fun sessionTemplate(
     openCapacity = openCapacity,
     prisonId = prison.id,
     prison = prison,
-    visitRoom = visitRoom,
+    capacityGroup = capacityGroup,
     visitType = visitType,
     startTime = startTime,
     endTime = endTime,
@@ -50,7 +51,7 @@ fun sessionTemplate(
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     biWeekly = biWeekly,
     enhanced = enhanced,
-  )
+  ).also { it.reference = UUID.randomUUID().toString() }
 }
 
 fun createSessionTemplateDto(
@@ -60,7 +61,7 @@ fun createSessionTemplateDto(
   closedCapacity: Int = 5,
   openCapacity: Int = 10,
   prisonCode: String = "MDI",
-  visitRoom: String = "1",
+  capacityGroup: String = "1",
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
@@ -76,7 +77,7 @@ fun createSessionTemplateDto(
     validToDate = validToDate,
     closedCapacity = closedCapacity,
     openCapacity = openCapacity,
-    visitRoom = visitRoom,
+    capacityGroup = capacityGroup,
     startTime = startTime,
     endTime = endTime,
     dayOfWeek = dayOfWeek,

@@ -11,7 +11,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerCellLo
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_FOUR
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_ONE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_THREE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_TWO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
 
 @Service
@@ -83,12 +88,25 @@ class PrisonerService(
   fun getLevelsMapForPrisoner(prisonerHousingLocationsDto: PrisonerHousingLocationsDto): Map<PrisonerHousingLevels, String?> {
     val levelsMap: MutableMap<PrisonerHousingLevels, String?> = mutableMapOf()
 
-    levelsMap[PrisonerHousingLevels.LEVEL_ONE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_ONE.level)?.code
-    levelsMap[PrisonerHousingLevels.LEVEL_TWO] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_TWO.level)?.code
-    levelsMap[PrisonerHousingLevels.LEVEL_THREE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_THREE.level)?.code
-    levelsMap[PrisonerHousingLevels.LEVEL_FOUR] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_FOUR.level)?.code
+    levelsMap[LEVEL_ONE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_ONE.level)?.code
+    levelsMap[LEVEL_TWO] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_TWO.level)?.code
+    levelsMap[LEVEL_THREE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_THREE.level)?.code
+    levelsMap[LEVEL_FOUR] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_FOUR.level)?.code
 
     return levelsMap.toMap()
+  }
+
+  fun getPermittedSessionLocationForPrisoner(prisonerId: String, prisonCode: String): PermittedSessionLocationDto? {
+    val housingLocation = this.getPrisonerHousingLocation(prisonerId, prisonCode)
+    return housingLocation?.let {
+      val housingMap = getLevelsMapForPrisoner(housingLocation)
+      return PermittedSessionLocationDto(
+        levelOneCode = housingMap.get(LEVEL_ONE)!!,
+        levelTwoCode = housingMap.get(LEVEL_TWO),
+        levelThreeCode = housingMap.get(LEVEL_THREE),
+        levelFourCode = housingMap.get(LEVEL_FOUR),
+      )
+    }
   }
 
   private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: Int): PrisonerHousingLevelDto? {
