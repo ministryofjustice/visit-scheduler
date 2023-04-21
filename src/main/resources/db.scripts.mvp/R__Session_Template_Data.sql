@@ -246,7 +246,7 @@
                     ('BLI','BLI_G1_C3','Wing C - Landing 3 - Cells 1 to 24'),
                     ('BLI','BLI_G2_WING','Wings D and F'),
                     ('BLI','BLI_G2_C2','Wing C - Landing 2 - Cells 1 to 8 and 25 to 32'),
-                    ('BNI','A_WING','Wing A'),
+                    ('BNI','A_WING','A Wing'),
                     ('BNI','OTHER_WINGS','Wings B, C, D, E, F, SSCU and Healthcare')
         ;
 
@@ -412,8 +412,8 @@
     -- Category group names are only descriptions they need to be updated when the group categories change
         INSERT INTO tmp_session_category_group (prison_code,key,name)
         VALUES
-            ('FNI','FNI_CAT_A_HIGH','Category A High Risk'),
-                    ('FNI','FNI_NON_CAT_A_HIGH','Non Category A High Risk')
+            ('FNI','FNI_CAT_A_HIGH','Category A (High Risk) prisoners'),
+                    ('FNI','FNI_NON_CAT_A_HIGH','Non Category A (High Risk) prisoners')
         ;
 
     -- update tmp category group table with correct prison id for given code.
