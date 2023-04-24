@@ -37,8 +37,8 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val sessionCapacity = getResults(returnResult)
-    Assertions.assertThat(sessionCapacity[0].closed).isEqualTo(sessionTemplate.closedCapacity)
-    Assertions.assertThat(sessionCapacity[0].open).isEqualTo(sessionTemplate.openCapacity)
+    Assertions.assertThat(sessionCapacity.closed).isEqualTo(sessionTemplate.closedCapacity)
+    Assertions.assertThat(sessionCapacity.open).isEqualTo(sessionTemplate.openCapacity)
   }
 
   @Test
@@ -74,12 +74,12 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val sessionCapacity = getResults(returnResult)
-    Assertions.assertThat(sessionCapacity[0].closed).isEqualTo(sessionTemplate1.closedCapacity)
-    Assertions.assertThat(sessionCapacity[0].open).isEqualTo(sessionTemplate1.openCapacity)
+    Assertions.assertThat(sessionCapacity.closed).isEqualTo(sessionTemplate1.closedCapacity)
+    Assertions.assertThat(sessionCapacity.open).isEqualTo(sessionTemplate1.openCapacity)
   }
 
   @Test
-  fun `Capacity groups capacities are added up`() {
+  fun `Capacities are added up`() {
     // Given
 
     val nextAllowedDay = getNextAllowedDay()
@@ -124,11 +124,8 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val sessionCapacity = getResults(returnResult)
-    Assertions.assertThat(sessionCapacity.size).isEqualTo(2)
-    Assertions.assertThat(sessionCapacity[0].closed).isEqualTo(sessionTemplate1.closedCapacity)
-    Assertions.assertThat(sessionCapacity[0].open).isEqualTo(sessionTemplate1.openCapacity)
-    Assertions.assertThat(sessionCapacity[1].closed).isEqualTo(20)
-    Assertions.assertThat(sessionCapacity[1].open).isEqualTo(22)
+    Assertions.assertThat(sessionCapacity.closed).isEqualTo(21)
+    Assertions.assertThat(sessionCapacity.open).isEqualTo(23)
   }
 
   @Test
@@ -164,9 +161,8 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val sessionCapacity = getResults(returnResult)
-    Assertions.assertThat(sessionCapacity.size).isEqualTo(1)
-    Assertions.assertThat(sessionCapacity[0].closed).isEqualTo(sessionTemplate1.closedCapacity + sessionTemplate2.closedCapacity)
-    Assertions.assertThat(sessionCapacity[0].open).isEqualTo(sessionTemplate1.openCapacity + sessionTemplate2.openCapacity)
+    Assertions.assertThat(sessionCapacity.closed).isEqualTo(sessionTemplate1.closedCapacity + sessionTemplate2.closedCapacity)
+    Assertions.assertThat(sessionCapacity.open).isEqualTo(sessionTemplate1.openCapacity + sessionTemplate2.openCapacity)
   }
 
   @Test
@@ -196,7 +192,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     return LocalDate.now().plusDays(2)
   }
 
-  private fun getResults(returnResult: BodyContentSpec): Array<SessionCapacityDto> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<SessionCapacityDto>::class.java)
+  private fun getResults(returnResult: BodyContentSpec): SessionCapacityDto {
+    return objectMapper.readValue(returnResult.returnResult().responseBody, SessionCapacityDto::class.java)
   }
 }
