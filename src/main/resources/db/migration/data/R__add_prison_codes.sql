@@ -8,3 +8,10 @@ INSERT INTO prison(code, active) SELECT 'EWI', false WHERE NOT EXISTS ( SELECT i
 INSERT INTO prison(code, active) SELECT 'DHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'DHI');
 INSERT INTO prison(code, active) SELECT 'MHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'MHI');
 INSERT INTO prison(code, active) SELECT 'BNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BNI');
+INSERT INTO prison(code, active) SELECT 'FNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FNI');
+INSERT INTO prison(code, active) SELECT 'LNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'LNI');
+INSERT INTO prison(code, active) SELECT 'FHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FHI');
+INSERT INTO prison(code, active) SELECT 'ESI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'ESI');
+INSERT INTO prison(code, active) SELECT 'BSI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BSI');
+INSERT INTO prison(code, active) SELECT 'AGI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'AGI');
+INSERT INTO prison(code, active) SELECT 'DMI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'DMI');
