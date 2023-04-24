@@ -167,7 +167,7 @@ class SessionTemplateSQLGenerator {
     val prisonTemplateRecords = ArrayList<SessionTemplateColumns>()
     for (record in records) {
       if (record.size() != SessionColumnNames.values().size) {
-        throw IllegalArgumentException("Some session columns are missing line number: ${record.recordNumber}, expected ${SessionColumnNames.values().size} but got ${record.size()}")
+        throw IllegalArgumentException("Some session columns are missing line number: ${record.recordNumber}, expected ${SessionColumnNames.values().size} but got ${record.size()} ${record.toList()}")
       }
       prisonTemplateRecords.add(SessionTemplateColumns(record))
     }
