@@ -233,6 +233,7 @@
         -- Sequence updated manually as id's were inserted from temp table
         ALTER SEQUENCE session_template_id_seq RESTART WITH  168;
 ;
+
         -- Create temporary group table
         CREATE TABLE tmp_session_location_group (
             id                	serial        NOT NULL PRIMARY KEY,
