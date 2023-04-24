@@ -16,7 +16,7 @@
         TRUNCATE TABLE permitted_session_location  RESTART IDENTITY CASCADE;
         TRUNCATE TABLE session_prisoner_category  RESTART IDENTITY CASCADE;
 
-        INSERT INTO prison(code, active) SELECT 'HEI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'HEI');
+            INSERT INTO prison(code, active) SELECT 'HEI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'HEI');
         INSERT INTO prison(code, active) SELECT 'BLI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BLI');
         INSERT INTO prison(code, active) SELECT 'CFI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'CFI');
         INSERT INTO prison(code, active) SELECT 'WWI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'WWI');
@@ -26,6 +26,7 @@
         INSERT INTO prison(code, active) SELECT 'MHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'MHI');
         INSERT INTO prison(code, active) SELECT 'BNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BNI');
         INSERT INTO prison(code, active) SELECT 'FNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FNI');
+        INSERT INTO prison(code, active) SELECT 'LNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'LNI');
         INSERT INTO prison(code, active) SELECT 'FHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FHI');
         INSERT INTO prison(code, active) SELECT 'ESI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'ESI');
         INSERT INTO prison(code, active) SELECT 'BSI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BSI');
@@ -220,10 +221,10 @@
                     (NULL,'FNI_CAT_A_HIGH','FNI','Visits CAT A','SOCIAL',3,0,false,'14:00','16:00','2023-04-18',NULL,'SATURDAY',false,'SATURDAY, 2023-04-18, 14:00'),
                     (NULL,'FNI_NON_CAT_A_HIGH','FNI','Visits Main Hall','SOCIAL',30,4,false,'14:00','16:15','2023-04-18',NULL,'SUNDAY',false,'SUNDAY, 2023-04-18, 14:00'),
                     (NULL,'FNI_CAT_A_HIGH','FNI','Visits CAT A','SOCIAL',3,0,false,'14:00','16:00','2023-04-18',NULL,'SUNDAY',false,'SUNDAY, 2023-04-18, 14:00'),
-                    (NULL,NULL,'DHI','Visits Main Hall','SOCIAL',12,3,false,'14:15','16:15','2023-03-21',NULL,'TUESDAY',false,'TUESDAY, 2023-03-21, 14:15'),
-                    (NULL,NULL,'DHI','Visits Main Hall','SOCIAL',12,3,false,'14:15','16:15','2023-03-21',NULL,'THURSDAY',false,'THURSDAY, 2023-03-21, 14:15'),
-                    (NULL,NULL,'DHI','Visits Main Hall','SOCIAL',12,3,false,'14:00','16:00','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 14:00'),
-                    (NULL,NULL,'DHI','Visits Main Hall','SOCIAL',12,3,false,'14:00','16:00','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,'LNI','Visits Main Hall','SOCIAL',12,3,false,'14:15','16:15','2023-03-21',NULL,'TUESDAY',false,'TUESDAY, 2023-03-21, 14:15'),
+                    (NULL,NULL,'LNI','Visits Main Hall','SOCIAL',12,3,false,'14:15','16:15','2023-03-21',NULL,'THURSDAY',false,'THURSDAY, 2023-03-21, 14:15'),
+                    (NULL,NULL,'LNI','Visits Main Hall','SOCIAL',12,3,false,'14:00','16:00','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,'LNI','Visits Main Hall','SOCIAL',12,3,false,'14:00','16:00','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 14:00'),
                     (NULL,NULL,'FHI','Visits Main Hall','SOCIAL',12,2,false,'14:00','16:00','2023-03-21',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-21, 14:00'),
                     (NULL,NULL,'FHI','Visits Main Hall','SOCIAL',12,2,false,'14:00','16:00','2023-03-21',NULL,'FRIDAY',false,'FRIDAY, 2023-03-21, 14:00'),
                     (NULL,NULL,'FHI','Visits Main Hall','SOCIAL',12,2,false,'09:30','11:30','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 09:30'),
