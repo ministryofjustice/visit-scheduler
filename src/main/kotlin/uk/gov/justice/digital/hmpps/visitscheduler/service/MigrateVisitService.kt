@@ -33,6 +33,8 @@ import kotlin.math.absoluteValue
 
 const val DEFAULT_MAX_PROX_MINUTES = 180
 
+const val NOT_KNOWN_NOMIS = "NOT_KNOWN_NOMIS"
+
 @Service
 @Transactional
 class MigrateVisitService(
@@ -42,7 +44,6 @@ class MigrateVisitService(
   private val snsService: SnsService,
   private val sessionService: SessionService,
   private val sessionTemplateRepository: SessionTemplateRepository,
-  private val authenticationHelperService: AuthenticationHelperService,
   private val telemetryClient: TelemetryClient,
 ) {
 
@@ -50,7 +51,7 @@ class MigrateVisitService(
   private var maxProximityMinutes: Int = DEFAULT_MAX_PROX_MINUTES
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
-    val actionedBy = migrateVisitRequest.actionedBy ?: authenticationHelperService.currentUserName
+    val actionedBy = migrateVisitRequest.actionedBy ?: NOT_KNOWN_NOMIS
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
