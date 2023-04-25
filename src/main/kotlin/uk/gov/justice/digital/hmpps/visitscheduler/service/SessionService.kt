@@ -62,6 +62,8 @@ class SessionService(
     noticeDaysMin: Long? = null,
     noticeDaysMax: Long? = null,
   ): List<VisitSessionDto> {
+    LOG.debug("Enter getVisitSessions prisonCode:$prisonCode, prisonerId : $prisonerId noticeDaysMin:$noticeDaysMin noticeDaysMax:$noticeDaysMax")
+
     val today = LocalDate.now()
     val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
     val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
@@ -79,6 +81,7 @@ class SessionService(
       rangeEndDate = requestedBookableEndDate,
       inclEnhancedPrivilegeTemplates = prisoner?.let { prisoner.enhanced } ?: true,
     )
+    LOG.debug("getVisitSessions sessionTemplates size:${sessionTemplates.size} prisonerId : $prisonerId")
 
     prisoner?.let {
       sessionTemplates = filterByCategory(sessionTemplates, prisoner.category)
@@ -196,6 +199,7 @@ class SessionService(
         prisonerDetailDto?.let { prisonerDetail ->
           val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
           return sessionTemplates.filter { sessionTemplate ->
+            LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference}")
             sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
           }
         }
