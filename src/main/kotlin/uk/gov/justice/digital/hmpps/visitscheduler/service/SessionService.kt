@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import jakarta.validation.constraints.NotNull
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -48,6 +50,10 @@ class SessionService(
   private val sessionValidator: PrisonerSessionValidator,
   private val prisonerValidationService: PrisonerValidationService,
 ) {
+
+  companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
 
   @Transactional(readOnly = true)
   fun getVisitSessions(
@@ -109,7 +115,9 @@ class SessionService(
   private fun isPrisonerCategoryAllowedOnSession(sessionTemplate: SessionTemplate, prisonerCategory: String?): Boolean {
     prisonerCategory?.let {
       return getAllowedCategoriesForSessionTemplate(sessionTemplate).any { category ->
-        category.equals(prisonerCategory, false)
+        val match = category.equals(prisonerCategory, false)
+        LOG.debug("isPrisonerCategoryAllowedOnSession prisonerCategory:$prisonerCategory, matched $match, sessionTemplate:${sessionTemplate.reference}")
+        match
       }
     }
 
