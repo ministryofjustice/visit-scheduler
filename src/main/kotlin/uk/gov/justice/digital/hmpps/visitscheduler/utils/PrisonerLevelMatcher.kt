@@ -60,15 +60,15 @@ class PrisonerLevelMatcher : BiPredicate<SessionLocationGroup?, Map<PrisonerHous
     val debugLog = StringBuilder()
     debugLog.append("Level match :")
     with(permittedSessionLocation) {
-      debugLog.append(" level1 :$levelOneCode=${levelsMap.get(LEVEL_ONE)}")
+      debugLog.append(" 1:$levelOneCode=${levelsMap.get(LEVEL_ONE)}")
       levelTwoCode?.let {
-        debugLog.append(" level2 :$levelTwoCode=${levelsMap.get(LEVEL_TWO)}")
+        debugLog.append(" 2:$levelTwoCode=${levelsMap.get(LEVEL_TWO)}")
       }
       levelThreeCode?.let {
-        debugLog.append(" level3 :$levelThreeCode=${levelsMap.get(LEVEL_THREE)}")
+        debugLog.append(" 3:$levelThreeCode=${levelsMap.get(LEVEL_THREE)}")
       }
       levelFourCode?.let {
-        debugLog.append(" level4 :$levelFourCode=${levelsMap.get(LEVEL_FOUR)}")
+        debugLog.append(" 4:$levelFourCode=${levelsMap.get(LEVEL_FOUR)}")
       }
     }
     LOG.debug(debugLog.toString())
