@@ -357,7 +357,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["prisonerId"]).isEqualTo(cancelledVisit.prisonerId)
         Assertions.assertThat(it["prisonId"]).isEqualTo(cancelledVisit.prisonCode)
         Assertions.assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
-        Assertions.assertThat(it["capacityGroup"]).isEqualTo(cancelledVisit.capacityGroup)
+        Assertions.assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(cancelledVisit.visitRestriction.name)
         Assertions.assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
@@ -372,7 +372,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "prisonerId" to cancelledVisit.prisonerId,
       "prisonId" to cancelledVisit.prisonCode,
       "visitType" to cancelledVisit.visitType.name,
-      "capacityGroup" to cancelledVisit.capacityGroup,
+      "visitRoom" to cancelledVisit.visitRoom,
       "visitRestriction" to cancelledVisit.visitRestriction.name,
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,

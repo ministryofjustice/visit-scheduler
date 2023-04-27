@@ -44,6 +44,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.DEFAULT_MAX_PROX_MINUTES
@@ -99,7 +100,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       assertThat(visit.reference).isEqualTo(reference)
       assertThat(visit.prison.code).isEqualTo(PRISON_CODE)
       assertThat(visit.prisonerId).isEqualTo("FF0000FF")
-      assertThat(visit.capacityGroup).isEqualTo("A1")
+      assertThat(visit.visitRoom).isEqualTo("A1")
       assertThat(visit.visitType).isEqualTo(SOCIAL)
       assertThat(visit.visitStart).isEqualTo(visitTime.toString())
       assertThat(visit.visitEnd).isEqualTo(visitTime.plusHours(1).toString())
@@ -128,7 +129,6 @@ class MigrateVisitTest : IntegrationTestBase() {
       if (legacyData != null) {
         assertThat(legacyData.visitId).isEqualTo(visit.id)
         assertThat(legacyData.leadPersonId).isEqualTo(123)
-        assertThat(legacyData.visitRoom).isEqualTo("A1")
       }
       assertTelemetryClientEvents(VisitDto(visit), TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
     }
@@ -136,22 +136,22 @@ class MigrateVisitTest : IntegrationTestBase() {
 
   private fun createSessionTemplateFrom(
     migrateVisitRequestDto: MigrateVisitRequestDto,
-    capacityGroup: String = migrateVisitRequestDto.visitRoom,
+    visitRoom: String = migrateVisitRequestDto.visitRoom,
     startTime: LocalTime? = null,
     endTime: LocalTime? = null,
-  ) {
-    sessionTemplateEntityHelper.create(
+  ): SessionTemplate {
+    return sessionTemplateEntityHelper.create(
       validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1),
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek,
-      capacityGroup = capacityGroup,
+      visitRoom = visitRoom,
       startTime = startTime?.let { startTime } ?: migrateVisitRequestDto.startTimestamp.toLocalTime(),
       endTime = endTime?.let { endTime } ?: migrateVisitRequestDto.endTimestamp.toLocalTime(),
     )
   }
 
   @Test
-  fun `Capacity group - migrate visit has null capacity group if visit is in the past`() {
+  fun `Migrate visit has null sessionTemplateReference group if visit is in the past`() {
     // Given
 
     val visitStartTimeAndDate = LocalDateTime.now().minusDays(95)
@@ -170,12 +170,12 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.capacityGroup).isNull()
+      assertThat(visit.sessionTemplateReference).isNull()
     }
   }
 
   @Test
-  fun `Capacity group - migrate visit selects the correct template by capacity group`() {
+  fun `Migrated visit selects the correct template by visit room`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
@@ -192,12 +192,12 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.capacityGroup).isEqualTo(migrateVisitRequestDto.visitRoom)
+      assertThat(visit.visitRoom).isEqualTo(migrateVisitRequestDto.visitRoom)
     }
   }
 
   @Test
-  fun `Capacity group - migrate visit selects the nearest template when capacity group does not match`() {
+  fun `Migrated visit selects the nearest template when visit rooms does not match`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
@@ -216,7 +216,7 @@ class MigrateVisitTest : IntegrationTestBase() {
       endTime = migrateVisitRequestDto.endTimestamp.toLocalTime().plusMinutes(200),
     )
 
-    createSessionTemplateFrom(
+    val theClosestSessionTemplate = createSessionTemplateFrom(
       migrateVisitRequestDto,
       "theClosestTinyHall",
       startTime = migrateVisitRequestDto.startTimestamp.toLocalTime().plusMinutes(5),
@@ -233,12 +233,12 @@ class MigrateVisitTest : IntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.capacityGroup).isEqualTo("theClosestTinyHall")
+      assertThat(visit.sessionTemplateReference).isEqualTo(theClosestSessionTemplate.reference)
     }
   }
 
   @Test
-  fun `Capacity group - migrate visit can only find sessionTemplate out side max proximity on start time exception is thrown`() {
+  fun `Migrated visit can only find sessionTemplate out side max proximity on start time exception is thrown`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
@@ -261,7 +261,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Capacity group - migrate visit can only find sessionTemplate out side max proximity on end time exception is thrown`() {
+  fun `Migrated visit can only find sessionTemplate out side max proximity on end time exception is thrown`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
@@ -284,7 +284,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Capacity group - migrate visit can only find sessionTemplate out side max proximity on start-end time exception is thrown`() {
+  fun `Migrated visit can only find sessionTemplate out side max proximity on start-end time exception is thrown`() {
     // Given
 
     val justOverMax = (DEFAULT_MAX_PROX_MINUTES.toLong() / 2) + 1
@@ -309,7 +309,7 @@ class MigrateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Capacity group - migrate visit can not sessionTemplate exception is thrown`() {
+  fun `Migrated visit can not find sessionTemplate exception is thrown`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
@@ -753,14 +753,15 @@ class MigrateVisitTest : IntegrationTestBase() {
       eq(type.eventName),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
-        assertThat(it["applicationReference"]).isEqualTo(cancelledVisit.applicationReference)
         assertThat(it["prisonerId"]).isEqualTo(cancelledVisit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(cancelledVisit.prisonCode)
         assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
-        assertThat(it["capacityGroup"]).isEqualTo(cancelledVisit.capacityGroup)
+        assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
+        assertThat(it["sessionTemplateReference"]).isEqualTo(cancelledVisit.sessionTemplateReference)
         assertThat(it["visitRestriction"]).isEqualTo(cancelledVisit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
+        assertThat(it["applicationReference"]).isEqualTo(cancelledVisit.applicationReference)
         assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
       },
       isNull(),
@@ -772,7 +773,8 @@ class MigrateVisitTest : IntegrationTestBase() {
       "prisonerId" to cancelledVisit.prisonerId,
       "prisonId" to cancelledVisit.prisonCode,
       "visitType" to cancelledVisit.visitType.name,
-      "capacityGroup" to cancelledVisit.capacityGroup,
+      "visitRoom" to cancelledVisit.visitRoom,
+      "sessionTemplateReference" to cancelledVisit.sessionTemplateReference,
       "visitRestriction" to cancelledVisit.visitRestriction.name,
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,

@@ -397,7 +397,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val startFromWeek1 = today.with(TemporalAdjusters.next(MONDAY)).minusWeeks(1)
     sessionTemplateEntityHelper.create(
       validFromDate = startFromWeek1,
-      capacityGroup = "Alternate 1",
+      visitRoom = "Alternate 1",
       dayOfWeek = SUNDAY,
       biWeekly = true,
     )
@@ -406,7 +406,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     sessionTemplateEntityHelper.create(
       validFromDate = startFromWeek2,
-      capacityGroup = "Alternate 2",
+      visitRoom = "Alternate 2",
       dayOfWeek = SUNDAY,
       biWeekly = true,
     )
@@ -422,11 +422,11 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isGreaterThan(2)
     if (todayIsTheWeekEnd) {
       // On the weekend it skips to the other session template / schedule because we cannot book with in 24 hrs
-      assertThat(visitSessionResults[0].capacityGroup).isEqualTo("Alternate 2")
-      assertThat(visitSessionResults[1].capacityGroup).isEqualTo("Alternate 1")
+      assertThat(visitSessionResults[0].visitRoom).isEqualTo("Alternate 2")
+      assertThat(visitSessionResults[1].visitRoom).isEqualTo("Alternate 1")
     } else {
-      assertThat(visitSessionResults[0].capacityGroup).isEqualTo("Alternate 1")
-      assertThat(visitSessionResults[1].capacityGroup).isEqualTo("Alternate 2")
+      assertThat(visitSessionResults[0].visitRoom).isEqualTo("Alternate 1")
+      assertThat(visitSessionResults[1].visitRoom).isEqualTo("Alternate 2")
     }
   }
 
@@ -616,34 +616,37 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = RESERVED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CANCELLED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     // When
@@ -672,23 +675,25 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CHANGING,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime.plusWeeks(1),
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CHANGING,
       visitRestriction = CLOSED,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     // When
@@ -717,33 +722,36 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = RESERVED,
       visitRestriction = CLOSED,
+      sessionTemplateReference = sessionTemplate.reference,
     )
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = CLOSED,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = CANCELLED,
       visitRestriction = CLOSED,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     // When
@@ -772,45 +780,49 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime.minusHours(1),
       visitEnd = endTime,
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime,
       visitEnd = dateTime.plusMinutes(30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime.plusMinutes(30),
       visitEnd = dateTime.plusHours(1),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = "MDI",
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = dateTime.plusHours(1),
       visitEnd = dateTime.plusHours(2),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     // When
@@ -883,12 +895,13 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
@@ -932,12 +945,13 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = RESERVED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
@@ -981,12 +995,13 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
@@ -1021,12 +1036,13 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
@@ -1062,12 +1078,13 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.atTime(9, 0),
       visitEnd = validFromDate.atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
@@ -1102,12 +1119,13 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.minusMonths(6).atTime(9, 0),
       visitEnd = validFromDate.minusMonths(6).atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     prisonApiMockServer.stubGetOffenderNonAssociation(
@@ -1142,12 +1160,13 @@ class GetSessionsTest : IntegrationTestBase() {
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
-      capacityGroup = sessionTemplate.capacityGroup,
+      visitRoom = sessionTemplate.visitRoom,
       visitStart = validFromDate.plusMonths(6).atTime(9, 0),
       visitEnd = validFromDate.plusMonths(6).atTime(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prison.code, "")

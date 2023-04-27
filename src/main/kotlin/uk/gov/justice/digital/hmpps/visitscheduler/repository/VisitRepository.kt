@@ -83,14 +83,14 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "WHERE v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
       "v.visitStart < :endDateTime AND " +
-      "(:capacityGroup is null or v.capacityGroup = :capacityGroup) AND " +
+      "(:sessionTemplateReference is null or v.sessionTemplateReference = :sessionTemplateReference) AND " +
       "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
       "v.visitStatus = 'BOOKED'  " +
       "GROUP BY v.visitRestriction",
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
-    capacityGroup: String ? = null,
+    sessionTemplateReference: String ? = null,
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime,
   ): List<VisitRestrictionStats>
@@ -100,14 +100,14 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "WHERE v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
       "v.visitStart < :endDateTime AND " +
-      "(:capacityGroup is null or v.capacityGroup = :capacityGroup) AND " +
+      "(:sessionTemplateReference is null or v.sessionTemplateReference = :sessionTemplateReference) AND " +
       "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
       "v.visitStatus = 'RESERVED' AND v.modifyTimestamp >= :expiredDateAndTime " +
       "GROUP BY v.visitRestriction",
   )
   fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
-    capacityGroup: String ? = null,
+    sessionTemplateReference: String ? = null,
     startDateTime: LocalDateTime,
     endDateTime: LocalDateTime,
     expiredDateAndTime: LocalDateTime,

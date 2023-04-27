@@ -199,19 +199,19 @@ class CancelVisitTest : IntegrationTestBase() {
     val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED)
     val roles = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+
     // update the visit
     // first create a reserveVisitSlotDto with same details as the booked visit
     val reserveVisitSlotDto = ReserveVisitSlotDto(
       prisonerId = bookedVisit.prisonerId,
-      prisonCode = bookedVisit.prison.code,
-      capacityGroup = bookedVisit.capacityGroup,
-      visitType = bookedVisit.visitType,
       visitRestriction = bookedVisit.visitRestriction,
       startTimestamp = bookedVisit.visitStart,
       endTimestamp = bookedVisit.visitEnd,
       visitContact = ContactDto("John Smith", "011223344"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       actionedBy = reservedByByUser,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     // call visit change and then book the visit
@@ -448,7 +448,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["prisonerId"]).isEqualTo(cancelledVisit.prisonerId)
         Assertions.assertThat(it["prisonId"]).isEqualTo(cancelledVisit.prisonCode)
         Assertions.assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
-        Assertions.assertThat(it["capacityGroup"]).isEqualTo(cancelledVisit.capacityGroup)
+        Assertions.assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(cancelledVisit.visitRestriction.name)
         Assertions.assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
@@ -464,7 +464,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "prisonerId" to cancelledVisit.prisonerId,
       "prisonId" to cancelledVisit.prisonCode,
       "visitType" to cancelledVisit.visitType.name,
-      "capacityGroup" to cancelledVisit.capacityGroup,
+      "visitRoom" to cancelledVisit.visitRoom,
       "visitRestriction" to cancelledVisit.visitRestriction.name,
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,

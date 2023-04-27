@@ -14,6 +14,8 @@ import java.time.LocalDateTime
 data class VisitDto(
   @Schema(description = "Application Reference", example = "dfs-wjs-eqr", required = true)
   val applicationReference: String,
+  @Schema(description = "session template Reference", example = "dfs-wjs-eqr", required = false)
+  val sessionTemplateReference: String? = null,
   @Schema(description = "Visit Reference", example = "v9-d7-ed-7u", required = true)
   val reference: String,
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
@@ -21,8 +23,9 @@ data class VisitDto(
   @JsonProperty("prisonId")
   @Schema(description = "Prison Id", example = "MDI", required = true)
   val prisonCode: String,
-  @Schema(description = "Capacity group", example = "Main Group", required = false)
-  val capacityGroup: String? = null,
+  @Schema(description = "Visit Room", example = "Visits Main Hall", required = true)
+  @field:NotBlank
+  val visitRoom: String,
   @Schema(description = "Visit Type", example = "SOCIAL", required = true)
   val visitType: VisitType,
   @Schema(description = "Visit Status", example = "RESERVED", required = true)
@@ -64,7 +67,7 @@ data class VisitDto(
     reference = visitEntity.reference,
     prisonerId = visitEntity.prisonerId,
     prisonCode = visitEntity.prison.code,
-    capacityGroup = visitEntity.capacityGroup,
+    visitRoom = visitEntity.visitRoom,
     visitStatus = visitEntity.visitStatus,
     outcomeStatus = visitEntity.outcomeStatus,
     visitType = visitEntity.visitType,
@@ -80,5 +83,6 @@ data class VisitDto(
     cancelledBy = visitEntity.cancelledBy,
     createdTimestamp = visitEntity.createTimestamp!!,
     modifiedTimestamp = visitEntity.modifyTimestamp!!,
+    sessionTemplateReference = visitEntity.sessionTemplateReference,
   )
 }

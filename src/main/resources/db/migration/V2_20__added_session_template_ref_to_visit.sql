@@ -1,0 +1,1 @@
+ALTER TABLE visit ADD session_template_reference text;

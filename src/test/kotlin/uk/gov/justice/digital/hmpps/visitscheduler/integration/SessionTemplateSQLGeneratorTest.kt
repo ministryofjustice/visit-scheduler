@@ -44,7 +44,7 @@ class SessionTemplateSQLGeneratorTest {
     assertThat(sessionRecords.size).isEqualTo(4)
     with(sessionRecords[0]) {
       assertThat(prisonCode).isEqualTo("BL1")
-      assertThat(capacityGroup).isEqualTo("Room 1")
+      assertThat(visitRoom).isEqualTo("Room 1")
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(open).isEqualTo(10)
       assertThat(closed).isEqualTo(1)
@@ -60,7 +60,7 @@ class SessionTemplateSQLGeneratorTest {
     }
     with(sessionRecords[1]) {
       assertThat(prisonCode).isEqualTo("BL2")
-      assertThat(capacityGroup).isEqualTo("Room 2")
+      assertThat(visitRoom).isEqualTo("Room 2")
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(open).isEqualTo(20)
       assertThat(closed).isEqualTo(2)
@@ -157,7 +157,7 @@ class SessionTemplateSQLGeneratorTest {
     assertThat(sessionRecords.size).isEqualTo(1)
     with(sessionRecords[0]) {
       assertThat(prisonCode).isEqualTo("BL1")
-      assertThat(capacityGroup).isEqualTo("room 1")
+      assertThat(visitRoom).isEqualTo("room 1")
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(enhanced).isFalse
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)

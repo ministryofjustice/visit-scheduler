@@ -10,7 +10,6 @@ import reactor.util.function.Tuples
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.BI_WEEKLY
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CAPACITY_GROUP
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CATEGORY_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.DAY_OF_WEEK
@@ -22,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGener
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.START_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.START_TIME
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.TYPE
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.VISIT_ROOM
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.KEY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.LEVEL_FOUR
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.LEVEL_ONE
@@ -44,7 +44,7 @@ private const val maxCapacity = 200
 class SessionTemplateSQLGenerator {
 
   private enum class SessionColumnNames {
-    PRISON, CAPACITY_GROUP, TYPE, OPEN, CLOSED, ENHANCED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS, CATEGORY_KEYS;
+    PRISON, VISIT_ROOM, TYPE, OPEN, CLOSED, ENHANCED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS, CATEGORY_KEYS;
   }
 
   private enum class SessionLocationColumnNames {
@@ -335,7 +335,7 @@ class SessionTemplateSQLGenerator {
   }
   data class SessionTemplateColumns(
     val prisonCode: String,
-    val capacityGroup: String,
+    val visitRoom: String,
     val type: VisitType,
     val open: Int,
     val closed: Int,
@@ -351,7 +351,7 @@ class SessionTemplateSQLGenerator {
   ) {
     constructor(sessionRecord: CSVRecord) : this(
       prisonCode = sessionRecord.get(SessionColumnNames.PRISON.name).uppercase(),
-      capacityGroup = sessionRecord.get(CAPACITY_GROUP.name),
+      visitRoom = sessionRecord.get(VISIT_ROOM.name),
       type = VisitType.valueOf(sessionRecord.get(TYPE.name).uppercase()),
       open = Integer.parseInt(sessionRecord.get(OPEN.name)),
       closed = Integer.parseInt(sessionRecord.get(CLOSED.name)),

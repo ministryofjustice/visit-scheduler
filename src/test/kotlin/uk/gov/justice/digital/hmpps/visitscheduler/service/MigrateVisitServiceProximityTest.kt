@@ -11,7 +11,7 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigratedVisitCapacityGroupMatchException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
@@ -82,7 +82,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate,
         startTime = LocalTime.parse("13:10:00"),
         endTime = LocalTime.parse("13:50:00"),
-        capacityGroup = "passed",
+        visitRoom = "passed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -93,7 +93,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.minusWeeks(1),
         startTime = LocalTime.parse("13:10:00"),
         endTime = LocalTime.parse("13:50:00"),
-        capacityGroup = "failed",
+        visitRoom = "failed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -127,7 +127,7 @@ class MigrateVisitServiceProximityTest {
     assertThat(results).hasSize(3)
     assertThat(results[0].startTime).isEqualTo("13:10:00")
     assertThat(results[0].endTime).isEqualTo("13:50:00")
-    assertThat(results[0].capacityGroup).isEqualTo("passed")
+    assertThat(results[0].visitRoom).isEqualTo("passed")
   }
 
   @Test
@@ -150,7 +150,7 @@ class MigrateVisitServiceProximityTest {
         validToDate = sessionDate.plusDays(5),
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "failed",
+        visitRoom = "failed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -162,7 +162,7 @@ class MigrateVisitServiceProximityTest {
         validToDate = sessionDate.plusDays(6),
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "passed",
+        visitRoom = "passed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -174,7 +174,7 @@ class MigrateVisitServiceProximityTest {
       toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
-    assertThat(results[0].capacityGroup).isEqualTo("passed")
+    assertThat(results[0].visitRoom).isEqualTo("passed")
   }
 
   @Test
@@ -197,7 +197,7 @@ class MigrateVisitServiceProximityTest {
         validToDate = sessionDate.plusDays(6),
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "passed",
+        visitRoom = "passed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -209,7 +209,7 @@ class MigrateVisitServiceProximityTest {
         validToDate = sessionDate.plusDays(5),
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "failed",
+        visitRoom = "failed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -221,7 +221,7 @@ class MigrateVisitServiceProximityTest {
       toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
-    assertThat(results[0].capacityGroup).isEqualTo("passed")
+    assertThat(results[0].visitRoom).isEqualTo("passed")
   }
 
   @Test
@@ -243,7 +243,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate,
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "passed",
+        visitRoom = "passed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -254,7 +254,7 @@ class MigrateVisitServiceProximityTest {
         validToDate = sessionDate.plusDays(5),
         startTime = sessionTemplates[0].startTime,
         endTime = sessionTemplates[0].endTime,
-        capacityGroup = "failed",
+        visitRoom = "failed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -266,7 +266,7 @@ class MigrateVisitServiceProximityTest {
       toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
-    assertThat(results[0].capacityGroup).isEqualTo("passed")
+    assertThat(results[0].visitRoom).isEqualTo("passed")
   }
 
   @Test
@@ -289,7 +289,7 @@ class MigrateVisitServiceProximityTest {
         validToDate = sessionDate.plusDays(5),
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "failed",
+        visitRoom = "failed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -300,7 +300,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate,
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "passed",
+        visitRoom = "passed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -312,7 +312,7 @@ class MigrateVisitServiceProximityTest {
       toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
-    assertThat(results[0].capacityGroup).isEqualTo("passed")
+    assertThat(results[0].visitRoom).isEqualTo("passed")
   }
 
   @Test
@@ -334,7 +334,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate,
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "failed",
+        visitRoom = "failed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -345,7 +345,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "passed",
+        visitRoom = "passed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -357,7 +357,7 @@ class MigrateVisitServiceProximityTest {
       toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
-    assertThat(results[0].capacityGroup).isEqualTo("passed")
+    assertThat(results[0].visitRoom).isEqualTo("passed")
   }
 
   @Test
@@ -379,7 +379,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "passed",
+        visitRoom = "passed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -390,7 +390,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate,
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = "failed",
+        visitRoom = "failed",
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -402,7 +402,7 @@ class MigrateVisitServiceProximityTest {
       toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, "youWontFindMe")
 
     // Then
-    assertThat(results[0].capacityGroup).isEqualTo("passed")
+    assertThat(results[0].visitRoom).isEqualTo("passed")
   }
 
   @Test
@@ -415,7 +415,7 @@ class MigrateVisitServiceProximityTest {
     val startTime = LocalTime.parse("13:00:00")
     val endTime = LocalTime.parse("14:00:00")
     val dayOfWeek = sessionDateStart.dayOfWeek
-    val capacityGroup = "youWillFindMe"
+    val visitRoom = "youWillFindMe"
 
     val sessionTemplates = mutableListOf<SessionTemplate>()
 
@@ -425,23 +425,22 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = LocalTime.parse("13:20:00"),
         endTime = LocalTime.parse("13:40:00"),
-        capacityGroup = capacityGroup,
+        visitRoom = visitRoom,
         dayOfWeek = dayOfWeek,
       ),
     )
 
-    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, visitRoom)
 
     // When
-    val results =
-      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+    toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, visitRoom)
 
     // Then
     verify(sessionTemplateRepository, times(1)).findValidSessionTemplatesBy(
       rangeStartDate = LocalDate.now(),
       prisonCode = prisonCode,
       dayOfWeek = dayOfWeek,
-      capacityGroup = capacityGroup,
+      visitRoom = visitRoom,
     )
     verify(sessionTemplateRepository, times(0)).findValidSessionTemplatesBy(
       rangeStartDate = LocalDate.now(),
@@ -460,15 +459,15 @@ class MigrateVisitServiceProximityTest {
     val startTime = LocalTime.parse("13:00:00")
     val endTime = LocalTime.parse("14:00:00")
     val dayOfWeek = sessionDateStart.dayOfWeek
-    val capacityGroup = "youWillFindMe"
+    val visitRoom = "youWillFindMe"
 
     val sessionTemplates = mutableListOf<SessionTemplate>()
 
-    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, visitRoom)
 
     // When
-    val exception = Assertions.assertThrows(MigratedVisitCapacityGroupMatchException::class.java) {
-      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+    val exception = Assertions.assertThrows(MatchSessionTemplateToMigratedVisitException::class.java) {
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, visitRoom)
     }
 
     // Then
@@ -485,7 +484,7 @@ class MigrateVisitServiceProximityTest {
     val startTime = LocalTime.parse("13:00:00")
     val endTime = LocalTime.parse("14:00:00")
     val dayOfWeek = sessionDateStart.dayOfWeek
-    val capacityGroup = "youWillFindMe"
+    val visitRoom = "youWillFindMe"
 
     val sessionTemplates = mutableListOf<SessionTemplate>()
     sessionTemplates.add(
@@ -494,15 +493,15 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = startTime.plusMinutes(60),
         endTime = endTime.plusMinutes(121),
-        capacityGroup = capacityGroup,
+        visitRoom = visitRoom,
         dayOfWeek = dayOfWeek,
       ),
     )
-    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, visitRoom)
 
     // When
-    val exception = Assertions.assertThrows(MigratedVisitCapacityGroupMatchException::class.java) {
-      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+    val exception = Assertions.assertThrows(MatchSessionTemplateToMigratedVisitException::class.java) {
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, visitRoom)
     }
 
     // Then
@@ -519,7 +518,7 @@ class MigrateVisitServiceProximityTest {
     val startTime = LocalTime.parse("13:00:00")
     val endTime = LocalTime.parse("14:00:00")
     val dayOfWeek = sessionDateStart.dayOfWeek
-    val capacityGroup = "youWillFindMe"
+    val visitRoom = "youWillFindMe"
 
     val sessionTemplates = mutableListOf<SessionTemplate>()
 
@@ -529,7 +528,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = startTime,
         endTime = endTime.plusMinutes(181),
-        capacityGroup = capacityGroup,
+        visitRoom = visitRoom,
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -539,7 +538,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = startTime.minusMinutes(181),
         endTime = endTime.plusMinutes(181),
-        capacityGroup = capacityGroup,
+        visitRoom = visitRoom,
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -550,16 +549,16 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = startTime.minusMinutes(181),
         endTime = endTime.minusMinutes(181),
-        capacityGroup = capacityGroup,
+        visitRoom = visitRoom,
         dayOfWeek = dayOfWeek,
       ),
     )
 
-    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, visitRoom)
 
     // When
-    val exception = Assertions.assertThrows(MigratedVisitCapacityGroupMatchException::class.java) {
-      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+    val exception = Assertions.assertThrows(MatchSessionTemplateToMigratedVisitException::class.java) {
+      toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, visitRoom)
     }
 
     // Then
@@ -576,7 +575,7 @@ class MigrateVisitServiceProximityTest {
     val startTime = LocalTime.parse("13:00:00")
     val endTime = LocalTime.parse("14:00:00")
     val dayOfWeek = sessionDateStart.dayOfWeek
-    val capacityGroup = "youWillFindMe"
+    val visitRoom = "youWillFindMe"
 
     val sessionTemplates = mutableListOf<SessionTemplate>()
 
@@ -586,7 +585,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = startTime,
         endTime = endTime.plusMinutes(181),
-        capacityGroup = capacityGroup,
+        visitRoom = visitRoom,
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -596,7 +595,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = startTime.minusMinutes(181),
         endTime = endTime.plusMinutes(181),
-        capacityGroup = capacityGroup,
+        visitRoom = visitRoom,
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -606,7 +605,7 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = startTime.minusMinutes(181),
         endTime = endTime.minusMinutes(181),
-        capacityGroup = capacityGroup,
+        visitRoom = visitRoom,
         dayOfWeek = dayOfWeek,
       ),
     )
@@ -617,14 +616,14 @@ class MigrateVisitServiceProximityTest {
         validFromDate = sessionDate.plusDays(1),
         startTime = startTime.minusMinutes(10),
         endTime = endTime.minusMinutes(10),
-        capacityGroup = capacityGroup,
+        visitRoom = visitRoom,
         dayOfWeek = dayOfWeek,
       ),
     )
-    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, capacityGroup)
+    mockSessionTemplateRepo(prisonCode, dayOfWeek, sessionTemplates, visitRoom)
 
     // When
-    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, capacityGroup)
+    val results = toTest.getSessionTemplatesInTimeProximityOrder(prisonCode, sessionDate, startTime, endTime, visitRoom)
 
     // Then
     assertThat(results).hasSize(1)
@@ -634,19 +633,19 @@ class MigrateVisitServiceProximityTest {
     prisonCode: String,
     dayOfWeek: DayOfWeek?,
     sessionTemplates: MutableList<SessionTemplate>,
-    capacityGroup: String? = null,
+    visitRoom: String? = null,
   ) {
     val rangeStartDate = LocalDate.now()
 
-    if (capacityGroup != null) {
+    if (visitRoom != null) {
       whenever(
         sessionTemplateRepository.findValidSessionTemplatesBy(
           rangeStartDate = rangeStartDate,
           prisonCode = prisonCode,
           dayOfWeek = dayOfWeek,
-          capacityGroup = capacityGroup,
+          visitRoom = visitRoom,
         ),
-      ).thenReturn(sessionTemplates.filter { it.capacityGroup == capacityGroup })
+      ).thenReturn(sessionTemplates.filter { it.visitRoom == visitRoom })
     } else {
       whenever(
         sessionTemplateRepository.findValidSessionTemplatesBy(
@@ -661,7 +660,7 @@ class MigrateVisitServiceProximityTest {
           rangeStartDate = rangeStartDate,
           prisonCode = prisonCode,
           dayOfWeek = dayOfWeek,
-          capacityGroup = "youWontFindMe",
+          visitRoom = "youWontFindMe",
         ),
       ).thenReturn(listOf())
     }

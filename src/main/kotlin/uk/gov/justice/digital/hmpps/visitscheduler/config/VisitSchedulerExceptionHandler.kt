@@ -17,7 +17,7 @@ import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigratedVisitCapacityGroupMatchException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -75,8 +75,8 @@ class VisitSchedulerExceptionHandler(
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
-  @ExceptionHandler(MigratedVisitCapacityGroupMatchException::class)
-  fun handleMigratedVisitCapacityGroupMatchException(e: Exception): ResponseEntity<ErrorResponse> {
+  @ExceptionHandler(MatchSessionTemplateToMigratedVisitException::class)
+  fun handleMatchSessionTemplateToMigratedVisitException(e: Exception): ResponseEntity<ErrorResponse> {
     log.debug("Migration exception: {}", e.message)
     val error = ErrorResponse(
       status = HttpStatus.BAD_REQUEST,

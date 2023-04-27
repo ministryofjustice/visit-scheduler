@@ -123,7 +123,7 @@ class SessionTemplateService(
       endTime = createSessionTemplateDto.endTime,
       validFromDate = createSessionTemplateDto.validFromDate,
       validToDate = createSessionTemplateDto.validToDate,
-      capacityGroup = createSessionTemplateDto.capacityGroup,
+      visitRoom = createSessionTemplateDto.visitRoom,
       closedCapacity = createSessionTemplateDto.closedCapacity,
       openCapacity = createSessionTemplateDto.openCapacity,
       biWeekly = createSessionTemplateDto.biWeekly,

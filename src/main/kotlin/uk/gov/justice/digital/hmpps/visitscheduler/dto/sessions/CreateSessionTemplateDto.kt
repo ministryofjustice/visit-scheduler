@@ -35,8 +35,9 @@ data class CreateSessionTemplateDto(
   @Schema(description = "The end of the Validity period for the session template", example = "2019-12-02", required = false)
   val validToDate: LocalDate? = null,
 
-  @Schema(description = "Capacity group", example = "Main Group", required = false)
-  val capacityGroup: String? = null,
+  @Schema(description = "Visit Room", example = "Visits Main Hall", required = true)
+  @field:NotBlank
+  val visitRoom: String,
 
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
