@@ -20,7 +20,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "and (cast(:rangeStartDate as date) is null or (u.validToDate is null or u.validToDate >= :rangeStartDate)) " +
       "and (:dayOfWeek is null or u.dayOfWeek = :dayOfWeek) " +
       "and (:inclEnhancedPrivilegeTemplates is null or :inclEnhancedPrivilegeTemplates = true or u.enhanced = false)" +
-      "and (:capacityGroup is null or u.capacityGroup = :capacityGroup)",
+      "and (:visitRoom is null or u.visitRoom = :visitRoom)",
   )
   fun findValidSessionTemplatesBy(
     @Param("prisonCode") prisonCode: String,
@@ -28,7 +28,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("rangeEndDate") rangeEndDate: LocalDate? = null,
     @Param("dayOfWeek") dayOfWeek: DayOfWeek? = null,
     @Param("inclEnhancedPrivilegeTemplates") inclEnhancedPrivilegeTemplates: Boolean? = null,
-    @Param("capacityGroup") capacityGroup: String? = null,
+    @Param("visitRoom") visitRoom: String? = null,
   ): List<SessionTemplate>
 
   @Query(

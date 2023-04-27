@@ -42,8 +42,9 @@ data class SessionTemplateDto(
   val enhanced: Boolean,
   @Schema(description = "biWeekly", example = "true", required = true)
   val biWeekly: Boolean,
-  @Schema(description = "Capacity group", example = "Main Group", required = false)
-  val capacityGroup: String? = null,
+  @Schema(description = "Visit Room", example = "A1 L3", required = true)
+  @field:NotBlank
+  val visitRoom: String,
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
@@ -64,7 +65,7 @@ data class SessionTemplateDto(
     visitType = sessionTemplateEntity.visitType,
     validFromDate = sessionTemplateEntity.validFromDate,
     validToDate = sessionTemplateEntity.validToDate,
-    capacityGroup = sessionTemplateEntity.capacityGroup,
+    visitRoom = sessionTemplateEntity.visitRoom,
     closedCapacity = sessionTemplateEntity.closedCapacity,
     openCapacity = sessionTemplateEntity.openCapacity,
     dayOfWeek = sessionTemplateEntity.dayOfWeek,

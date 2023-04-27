@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
-import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
@@ -9,22 +8,15 @@ import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDateTime
 
 data class ReserveVisitSlotDto(
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   @field:NotBlank
   val prisonerId: String,
-  @JsonProperty("prisonId")
-  @Schema(description = "Prison Id", example = "MDI", required = true)
+  @Schema(description = "Session template reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank
-  val prisonCode: String,
-  @Schema(description = "Capacity group", example = "Main Group", required = false)
-  val capacityGroup: String? = null,
-  @Schema(description = "Visit Type", example = "SOCIAL", required = true)
-  @field:NotNull
-  val visitType: VisitType,
+  val sessionTemplateReference: String,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   @field:NotNull
   val visitRestriction: VisitRestriction,

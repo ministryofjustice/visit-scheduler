@@ -153,7 +153,7 @@ class SessionService(
             openVisitCapacity = sessionTemplate.openCapacity,
             closedVisitCapacity = sessionTemplate.closedCapacity,
             endTimestamp = LocalDateTime.of(date, sessionTemplate.endTime),
-            capacityGroup = sessionTemplate.capacityGroup,
+            visitRoom = sessionTemplate.visitRoom,
             visitType = sessionTemplate.visitType,
           )
         }
@@ -277,7 +277,7 @@ class SessionService(
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
     val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
       prisonCode = session.prisonCode,
-      capacityGroup = session.capacityGroup,
+      sessionTemplateReference = session.sessionTemplateReference,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp,
       expiredDateAndTime = visitService.getReservedExpiredDateAndTime(),
@@ -285,7 +285,7 @@ class SessionService(
 
     val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
       prisonCode = session.prisonCode,
-      capacityGroup = session.capacityGroup,
+      sessionTemplateReference = session.sessionTemplateReference,
       startDateTime = session.startTimestamp,
       endDateTime = session.endTimestamp,
     )

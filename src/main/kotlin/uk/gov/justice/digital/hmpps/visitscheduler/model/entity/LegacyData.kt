@@ -23,9 +23,6 @@ class LegacyData(
   @Column(name = "LEAD_PERSON_ID", nullable = true)
   val leadPersonId: Long?,
 
-  @Column(nullable = false)
-  var visitRoom: String,
-
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

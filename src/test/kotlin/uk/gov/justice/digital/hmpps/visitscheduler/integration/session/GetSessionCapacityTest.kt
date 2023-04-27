@@ -90,7 +90,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
-      capacityGroup = "G1",
+      visitRoom = "G1",
       closedCapacity = 1,
       openCapacity = 1,
     )
@@ -101,7 +101,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
-      capacityGroup = "G2",
+      visitRoom = "G2",
       closedCapacity = 10,
       openCapacity = 11,
     )
@@ -112,7 +112,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
-      capacityGroup = "G2",
+      visitRoom = "G2",
       closedCapacity = sessionTemplate2.closedCapacity,
       openCapacity = sessionTemplate2.openCapacity,
     )
@@ -129,7 +129,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Null Capacity groups capacities are added up`() {
+  fun `Sessions capacity are added up`() {
     // Given
 
     val nextAllowedDay = getNextAllowedDay()

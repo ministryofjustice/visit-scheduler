@@ -8,12 +8,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigratedVisitCapacityGroupMatchException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -55,16 +56,25 @@ class MigrateVisitService(
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
-    val prison = prisonConfigService.findPrisonByCode(migrateVisitRequest.prisonCode)
+    val prison: Prison
+    var sessionTemplateReference: String ? = null
 
-    val capacityGroup = getSessionCategory(migrateVisitRequest)
+    val isInTheFuture = !migrateVisitRequest.startTimestamp.isBefore(LocalDateTime.now())
+    if (isInTheFuture) {
+      val sessionTemplate = getSessionTemplate(migrateVisitRequest)
+      prison = sessionTemplate.prison
+      sessionTemplateReference = sessionTemplate.reference
+    } else {
+      prison = prisonConfigService.findPrisonByCode(migrateVisitRequest.prisonCode)
+    }
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
         prison = prison,
         prisonId = prison.id,
-        capacityGroup = capacityGroup,
+        visitRoom = migrateVisitRequest.visitRoom,
+        sessionTemplateReference = sessionTemplateReference,
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
         outcomeStatus = outcomeStatus,
@@ -123,9 +133,9 @@ class MigrateVisitService(
     sessionDate: LocalDate,
     startTime: LocalTime,
     endTime: LocalTime,
-    capacityGroup: String,
+    sessionTemplateReference: String,
   ): List<SessionTemplate> {
-    val sessionTemplates = getSessionsTemplates(prisonCode, sessionDate, capacityGroup)
+    val sessionTemplates = getSessionsTemplates(prisonCode, sessionDate, sessionTemplateReference)
 
     if (sessionTemplates.isNotEmpty()) {
       val proximityComparator = Comparator<SessionTemplate> { template1, template2 ->
@@ -153,9 +163,9 @@ class MigrateVisitService(
       if (sortedSessionTemplates.isNotEmpty()) {
         return sortedSessionTemplates
       }
-      throw MigratedVisitCapacityGroupMatchException("Could not find suitable SessionTemplate within max proximity of $maxProximityMinutes for future visit date $sessionDate/${sessionDate.dayOfWeek}/$startTime")
+      throw MatchSessionTemplateToMigratedVisitException("Could not find suitable SessionTemplate within max proximity of $maxProximityMinutes for future visit date $sessionDate/${sessionDate.dayOfWeek}/$startTime")
     }
-    throw MigratedVisitCapacityGroupMatchException("Could not find any SessionTemplate for future visit date $sessionDate/${sessionDate.dayOfWeek}/$startTime")
+    throw MatchSessionTemplateToMigratedVisitException("Could not find any SessionTemplate for future visit date $sessionDate/${sessionDate.dayOfWeek}/$startTime")
   }
 
   private fun validProximity(
@@ -170,7 +180,7 @@ class MigrateVisitService(
   private fun getSessionsTemplates(
     prisonCode: String,
     sessionDate: LocalDate,
-    capacityGroup: String,
+    visitRoom: String,
   ): List<SessionTemplate> {
     val rangeStartDate = LocalDate.now()
 
@@ -178,7 +188,7 @@ class MigrateVisitService(
       rangeStartDate = rangeStartDate,
       prisonCode = prisonCode,
       dayOfWeek = sessionDate.dayOfWeek,
-      capacityGroup = capacityGroup,
+      visitRoom = visitRoom,
     )
 
     if (sessionTemplates.isEmpty()) {
@@ -198,27 +208,20 @@ class MigrateVisitService(
       ) / 60
   }
 
-  private fun getSessionCategory(
+  private fun getSessionTemplate(
     migrateVisitRequest: MigrateVisitRequestDto,
-  ): String? {
+  ): SessionTemplate {
     with(migrateVisitRequest) {
-      val isInTheFuture = !startTimestamp.isBefore(LocalDateTime.now())
-      if (isInTheFuture) {
-        val sessionTemplatesByProximityOrder = getSessionTemplatesInTimeProximityOrder(
-          prisonCode,
-          startTimestamp.toLocalDate(),
-          startTimestamp.toLocalTime(),
-          endTimestamp.toLocalTime(),
-          visitRoom,
-        )
+      val sessionTemplatesByProximityOrder = getSessionTemplatesInTimeProximityOrder(
+        prisonCode,
+        startTimestamp.toLocalDate(),
+        startTimestamp.toLocalTime(),
+        endTimestamp.toLocalTime(),
+        visitRoom,
+      )
 
-        val sessionsWithCapacityGroups = sessionTemplatesByProximityOrder.filter { it.capacityGroup != null }
-        if (sessionsWithCapacityGroups.isNotEmpty()) {
-          return getNearestTemplateThatMatchesPrisonerLocation(migrateVisitRequest, sessionsWithCapacityGroups).capacityGroup
-        }
-      }
+      return getNearestTemplateThatMatchesPrisonerLocation(migrateVisitRequest, sessionTemplatesByProximityOrder)
     }
-    return null
   }
 
   fun getNearestTemplateThatMatchesPrisonerLocation(
@@ -306,7 +309,8 @@ class MigrateVisitService(
       "prisonerId" to visitEntity.prisonerId,
       "prisonId" to visitEntity.prison.code,
       "visitType" to visitEntity.visitType.name,
-      "capacityGroup" to (visitEntity.capacityGroup ?: ""),
+      "visitRoom" to visitEntity.visitRoom,
+      "sessionTemplateReference" to (visitEntity.sessionTemplateReference ?: ""),
       "visitRestriction" to visitEntity.visitRestriction.name,
       "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visitEntity.visitStatus.name,
@@ -351,7 +355,6 @@ class MigrateVisitService(
     val legacyData = LegacyData(
       visitId = visit.id,
       leadPersonId = migrateVisitRequestDto.legacyData?.leadVisitorId,
-      visitRoom = migrateVisitRequestDto.visitRoom,
     )
 
     legacyDataRepository.saveAndFlush(legacyData)
