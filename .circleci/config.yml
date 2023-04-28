@@ -164,7 +164,18 @@ workflows:
             - visit-scheduler-stage
           requires:
             - request-staging-approval
-
+      - request-preprod-approval:
+          type: approval
+          requires:
+            - deploy_staging
+      - hmpps/deploy_env:
+          name: deploy_preprod
+          env: "preprod"
+          context:
+            - hmpps-common-vars
+            - visit-scheduler-preprod
+          requires:
+            - request-preprod-approval
   security:
     triggers:
       - schedule:
