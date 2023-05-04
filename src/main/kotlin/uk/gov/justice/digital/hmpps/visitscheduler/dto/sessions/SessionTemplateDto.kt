@@ -38,8 +38,6 @@ data class SessionTemplateDto(
   val validToDate: LocalDate? = null,
   @Schema(description = "visit type", example = "SOCIAL", required = true)
   val visitType: VisitType,
-  @Schema(description = "enhanced privilege", example = "true", required = true)
-  val enhanced: Boolean,
   @Schema(description = "biWeekly", example = "true", required = true)
   val biWeekly: Boolean,
   @Schema(description = "Visit Room", example = "A1 L3", required = true)
@@ -72,6 +70,5 @@ data class SessionTemplateDto(
     permittedLocationGroups = sessionTemplateEntity.permittedSessionLocationGroups.map { SessionLocationGroupDto(it) },
     prisonerCategoryGroups = sessionTemplateEntity.permittedSessionCategoryGroups.map { SessionCategoryGroupDto(it) },
     biWeekly = sessionTemplateEntity.biWeekly,
-    enhanced = sessionTemplateEntity.enhanced,
   )
 }

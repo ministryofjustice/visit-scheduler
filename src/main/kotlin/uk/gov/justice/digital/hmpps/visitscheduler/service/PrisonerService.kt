@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
 
 @Service
 class PrisonerService(
@@ -115,7 +116,11 @@ class PrisonerService(
 
   fun getPrisoner(prisonerId: String): PrisonerDto? {
     val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
-    val enhanced = ENHANCED_INCENTIVE_PRIVILEGE == prisonerSearchResultDto?.currentIncentive?.level?.code
-    return PrisonerDto(category = prisonerSearchResultDto?.category, enhanced = enhanced)
+    val incentiveLevelCode = prisonerSearchResultDto?.currentIncentive?.level?.code
+    var incentiveLevel: IncentiveLevels? = null
+    incentiveLevelCode?.let {
+      incentiveLevel = IncentiveLevels.getIncentiveLevel(it)
+    }
+    return PrisonerDto(category = prisonerSearchResultDto?.category, incentiveLevel)
   }
 }

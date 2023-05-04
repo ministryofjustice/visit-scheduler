@@ -34,9 +34,6 @@ data class UpdateSessionTemplateDto(
   @Schema(description = "list of group references for permitted session location groups", required = false)
   val locationGroupReferences: List<String>? = null,
 
-  @Schema(description = "enhanced privilege", example = "true", required = true)
-  val enhanced: Boolean? = null,
-
   @Schema(description = "biWeekly time table", example = "true", required = true)
   val biWeekly: Boolean? = null,
 

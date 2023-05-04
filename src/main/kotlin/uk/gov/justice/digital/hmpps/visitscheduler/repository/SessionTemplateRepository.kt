@@ -19,7 +19,6 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "and (cast(:rangeEndDate as date) is null or u.validFromDate <= :rangeEndDate) " +
       "and (cast(:rangeStartDate as date) is null or (u.validToDate is null or u.validToDate >= :rangeStartDate)) " +
       "and (:dayOfWeek is null or u.dayOfWeek = :dayOfWeek) " +
-      "and (:inclEnhancedPrivilegeTemplates is null or :inclEnhancedPrivilegeTemplates = true or u.enhanced = false)" +
       "and (:visitRoom is null or u.visitRoom = :visitRoom)",
   )
   fun findValidSessionTemplatesBy(
@@ -27,7 +26,6 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("rangeStartDate") rangeStartDate: LocalDate? = null,
     @Param("rangeEndDate") rangeEndDate: LocalDate? = null,
     @Param("dayOfWeek") dayOfWeek: DayOfWeek? = null,
-    @Param("inclEnhancedPrivilegeTemplates") inclEnhancedPrivilegeTemplates: Boolean? = null,
     @Param("visitRoom") visitRoom: String? = null,
   ): List<SessionTemplate>
 
@@ -93,10 +91,6 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   @Modifying
   @Query("Update SessionTemplate s set s.openCapacity = :openCapacity WHERE s.reference = :reference")
   fun updateOpenCapacityByReference(reference: String, openCapacity: Int): Int
-
-  @Modifying
-  @Query("Update SessionTemplate s set s.enhanced = :enhanced WHERE s.reference = :reference")
-  fun updateEnhancedByReference(reference: String, enhanced: Boolean): Int
 
   @Modifying
   @Query("Update SessionTemplate s set s.biWeekly = :biWeekly WHERE s.reference = :reference")

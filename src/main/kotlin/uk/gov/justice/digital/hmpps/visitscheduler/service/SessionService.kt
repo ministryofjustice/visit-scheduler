@@ -79,7 +79,6 @@ class SessionService(
       prisonCode = prisonCode,
       rangeStartDate = requestedBookableStartDate,
       rangeEndDate = requestedBookableEndDate,
-      inclEnhancedPrivilegeTemplates = prisoner?.let { prisoner.enhanced } ?: true,
     )
     LOG.debug("getVisitSessions sessionTemplates size:${sessionTemplates.size} prisonerId : $prisonerId")
 
@@ -346,7 +345,6 @@ class SessionService(
       prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
       sessionTemplateFrequency = sessionTemplateFrequency,
       sessionTemplateEndDate = sessionTemplate.validToDate,
-      enhanced = sessionTemplate.enhanced,
     )
   }
 

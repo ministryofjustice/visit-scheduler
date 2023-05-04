@@ -232,7 +232,6 @@ class SessionTemplateEntityHelper(
     activePrison: Boolean = true,
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
-    enhanced: Boolean = false,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
@@ -251,7 +250,6 @@ class SessionTemplateEntityHelper(
       dayOfWeek = dayOfWeek,
       permittedSessionGroups = permittedSessionGroups,
       biWeekly = biWeekly,
-      enhanced = enhanced,
       permittedCategories = permittedCategories,
     )
   }
@@ -271,7 +269,6 @@ class SessionTemplateEntityHelper(
     activePrison: Boolean = true,
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
-    enhanced: Boolean = false,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
   ): SessionTemplate {
     return sessionRepository.saveAndFlush(
@@ -290,7 +287,6 @@ class SessionTemplateEntityHelper(
         dayOfWeek = dayOfWeek,
         permittedSessionLocationGroups = permittedSessionGroups,
         biWeekly = biWeekly,
-        enhanced = enhanced,
         permittedSessionCategoryGroups = permittedCategories,
       ),
     )

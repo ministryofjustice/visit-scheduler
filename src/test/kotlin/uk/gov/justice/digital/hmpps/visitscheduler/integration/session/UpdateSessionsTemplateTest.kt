@@ -46,7 +46,6 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
       dayOfWeek = sessionTemplate.dayOfWeek.minus(1),
       locationGroupReferences = mutableListOf(sessionGroup.reference),
       biWeekly = !sessionTemplate.biWeekly,
-      enhanced = !sessionTemplate.enhanced,
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference),
     )
 
@@ -67,7 +66,6 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups[0].reference).isEqualTo(dto.locationGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.biWeekly).isEqualTo(dto.biWeekly)
-    Assertions.assertThat(sessionTemplateDto.enhanced).isEqualTo(true)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.stream().map { it.categories }).containsExactlyInAnyOrder(categoryAs)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups[0].reference).isEqualTo(dto.categoryGroupReferences!![0])

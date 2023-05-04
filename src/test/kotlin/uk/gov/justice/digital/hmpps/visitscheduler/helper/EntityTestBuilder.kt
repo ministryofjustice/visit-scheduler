@@ -30,7 +30,6 @@ fun sessionTemplate(
   permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
   permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
   biWeekly: Boolean = false,
-  enhanced: Boolean = true,
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = true)
 
@@ -50,7 +49,6 @@ fun sessionTemplate(
     permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     biWeekly = biWeekly,
-    enhanced = enhanced,
   ).also { it.reference = UUID.randomUUID().toString() }
 }
 
@@ -67,7 +65,6 @@ fun createSessionTemplateDto(
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
-  enhanced: Boolean = true,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
 ): CreateSessionTemplateDto {
   return CreateSessionTemplateDto(
@@ -83,7 +80,6 @@ fun createSessionTemplateDto(
     dayOfWeek = dayOfWeek,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
-    enhanced = enhanced,
     categoryGroupReferences = categoryGroupReferences,
   )
 }
@@ -99,7 +95,6 @@ fun createUpdateSessionTemplateDto(
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
-  enhanced: Boolean = true,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
@@ -112,7 +107,6 @@ fun createUpdateSessionTemplateDto(
     endTime = endTime,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
-    enhanced = enhanced,
     categoryGroupReferences = categoryGroupReferences,
   )
 }

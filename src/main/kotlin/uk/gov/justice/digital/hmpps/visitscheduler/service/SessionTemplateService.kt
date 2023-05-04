@@ -127,7 +127,6 @@ class SessionTemplateService(
       closedCapacity = createSessionTemplateDto.closedCapacity,
       openCapacity = createSessionTemplateDto.openCapacity,
       biWeekly = createSessionTemplateDto.biWeekly,
-      enhanced = createSessionTemplateDto.enhanced,
       dayOfWeek = createSessionTemplateDto.dayOfWeek,
       visitType = VisitType.SOCIAL,
     )
@@ -175,10 +174,6 @@ class SessionTemplateService(
 
       openCapacity?.let {
         sessionTemplateRepository.updateOpenCapacityByReference(reference, openCapacity)
-      }
-
-      enhanced?.let {
-        sessionTemplateRepository.updateEnhancedByReference(reference, enhanced)
       }
 
       biWeekly?.let {
