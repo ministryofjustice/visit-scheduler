@@ -7,6 +7,8 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_HIGH
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_PROVISIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.FEMALE_CLOSED
@@ -666,4 +668,74 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
       .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
   }
+
+
+  @Test
+  fun `Migrated session match - When migrated visit is open and no open templates available exception is thrown` () {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRestriction = OPEN)
+
+    val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
+    val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
+    val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom + "3",
+      startTime = startTime,
+      endTime = endTime.plusMinutes(10),
+      closedCapacity = 10,
+      openCapacity = 0,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
+      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
+  }
+
+  @Test
+  fun `Migrated session match - When migrated visit is closed and no closed templates available exception is thrown` () {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRestriction = CLOSED)
+
+    val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
+    val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
+    val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom + "3",
+      startTime = startTime,
+      endTime = endTime.plusMinutes(10),
+      closedCapacity = 0,
+      openCapacity = 10,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
+      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
+  }
+
 }

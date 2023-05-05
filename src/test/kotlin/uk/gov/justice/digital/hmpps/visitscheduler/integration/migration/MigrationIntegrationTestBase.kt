@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CH
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
@@ -107,6 +108,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     housingLocations: String? = null,
     category: String? = null,
     incentiveLevelCode: String? = null,
+    visitRestriction: VisitRestriction =OPEN
   ): MigrateVisitRequestDto {
     val migrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = PRISON_CODE,
@@ -117,7 +119,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
       endTimestamp = visitStartTimeAndDate.plusHours(1),
       visitStatus = BOOKED,
       outcomeStatus = outcomeStatus,
-      visitRestriction = OPEN,
+      visitRestriction = visitRestriction,
       visitContact = CreateLegacyContactOnVisitRequestDto(contactName!!, "013448811538"),
       visitors = setOf(VisitorDto(123, true)),
       visitNotes = setOf(
