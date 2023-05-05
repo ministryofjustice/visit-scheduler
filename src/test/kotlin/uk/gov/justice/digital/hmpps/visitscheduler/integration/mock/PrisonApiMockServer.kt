@@ -46,21 +46,21 @@ class PrisonApiMockServer : WireMockServer(8092) {
   }
 
   fun stubGetOffenderNonAssociationEmpty(offenderNo: String) {
-    stubGetOffenderNonAssociation(offenderNo, housingLocationsDto = OffenderNonAssociationDetailsDto())
+    stubGetOffenderNonAssociation(offenderNo, offenderNonAssociationDetailsDto = OffenderNonAssociationDetailsDto())
   }
 
-  fun stubGetOffenderNonAssociation(offenderNo: String, housingLocationsDto: OffenderNonAssociationDetailsDto? = null, status: HttpStatus = HttpStatus.NOT_FOUND) {
+  fun stubGetOffenderNonAssociation(offenderNo: String, offenderNonAssociationDetailsDto: OffenderNonAssociationDetailsDto? = null, status: HttpStatus = HttpStatus.NOT_FOUND) {
     stubFor(
       get("/api/offenders/$offenderNo/non-association-details")
         .willReturn(
-          if (housingLocationsDto == null) {
+          if (offenderNonAssociationDetailsDto == null) {
             aResponse().withStatus(status.value())
           } else {
             aResponse()
               .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
               .withStatus(200)
               .withBody(
-                getJsonString(housingLocationsDto),
+                getJsonString(offenderNonAssociationDetailsDto),
               )
           },
         ),
