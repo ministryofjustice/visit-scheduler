@@ -108,7 +108,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     housingLocations: String? = null,
     category: String? = null,
     incentiveLevelCode: String? = null,
-    visitRestriction: VisitRestriction =OPEN
+    visitRestriction: VisitRestriction = OPEN,
   ): MigrateVisitRequestDto {
     val migrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = PRISON_CODE,

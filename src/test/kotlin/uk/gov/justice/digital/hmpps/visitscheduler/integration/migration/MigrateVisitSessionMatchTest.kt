@@ -669,9 +669,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
   }
 
-
   @Test
-  fun `Migrated session match - When migrated visit is open and no open templates available exception is thrown` () {
+  fun `Migrated session match - When migrated visit is open and no open templates available exception is thrown`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRestriction = OPEN)
@@ -680,7 +679,6 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
     val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
-
 
     sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
@@ -705,7 +703,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   }
 
   @Test
-  fun `Migrated session match - When migrated visit is closed and no closed templates available exception is thrown` () {
+  fun `Migrated session match - When migrated visit is closed and no closed templates available exception is thrown`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRestriction = CLOSED)
@@ -714,7 +712,6 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
     val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
-
 
     sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
@@ -737,5 +734,4 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
       .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
   }
-
 }
