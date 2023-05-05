@@ -233,7 +233,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   }
 
   @Test
-  fun `Migrated session match - select session template with no housing locations when session templates dont have valid locations`() {
+  fun `Migrated session match - select session template with closest housing location`() {
     // Given
 
     val prisonCode = "AWE"
@@ -298,7 +298,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   }
 
   @Test
-  fun `Migrated session match - select session template with closest housing location 1`() {
+  fun `Migrated session match - select session template with no housing locations when session templates dont have valid locations`() {
     // Given
 
     val prisonCode = "AWE"
