@@ -462,7 +462,7 @@ class SessionTemplateSQLGenerator {
 
     override fun createItemList(): List<SessionItem> {
       val sessionIncentiveItemList = mutableListOf<SessionPrisonerIncentiveItem>()
-      with (this) {
+      with(this) {
         incentiveLevels.forEach {
           sessionIncentiveItemList.add(
             SessionPrisonerIncentiveItem(groupKey = key, incentiveLevel = IncentiveLevels.valueOf(it)),

@@ -9,7 +9,8 @@ enum class IncentiveLevels(val code: String) {
   ENHANCED_3("EN3"),
   BASIC("BAS"),
   ENTRY("ENT"),
-  STANDARD("STD");
+  STANDARD("STD"),
+  ;
 
   companion object {
     fun getIncentiveLevel(code: String): IncentiveLevels? {
