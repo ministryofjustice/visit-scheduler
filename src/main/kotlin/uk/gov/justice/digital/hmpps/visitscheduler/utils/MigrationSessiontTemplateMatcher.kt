@@ -73,14 +73,17 @@ class MigrationSessionTemplateMatcher(
       dayOfWeek = sessionDate.dayOfWeek,
     )
 
+    return removeUnwantedRestrictionTypes(restriction, templates)
+  }
+
+  private fun removeUnwantedRestrictionTypes(restriction: VisitRestriction, sessionTemplates : List<SessionTemplate> ): List<SessionTemplate> {
     if (restriction != UNKNOWN) {
       // Must have a valid capacity for future visits
-      return templates.filter {
+      return sessionTemplates.filter {
         if (restriction == OPEN) it.openCapacity > 0 else it.closedCapacity > 0
       }
     }
-
-    return templates
+    return sessionTemplates
   }
 
   private fun getProximityMinutes(sessionStartTime: LocalTime, startTime: LocalTime, sessionEndTime: LocalTime, endTime: LocalTime): Int {
