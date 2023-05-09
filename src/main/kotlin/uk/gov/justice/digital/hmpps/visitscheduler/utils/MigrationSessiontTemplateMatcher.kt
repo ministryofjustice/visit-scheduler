@@ -175,8 +175,12 @@ class MigrationSessionTemplateMatcher(
     migrateVisitRequest: MigrateVisitRequestDto,
     template: SessionTemplate,
   ): Int {
-    val dateProximity = DAYS.between(migrateVisitRequest.startTimestamp.toLocalDate(), template.validFromDate)
-    return if (dateProximity > 0) -100 else dateProximity.toInt()
+    val migratedVisitDate = migrateVisitRequest.startTimestamp.toLocalDate()
+    if (template.validFromDate.isAfter(migratedVisitDate)) {
+      //Template from date is after the migrated visit date therefore not valid
+      return -1000
+    }
+    return DAYS.between(migratedVisitDate,template.validFromDate).toInt()
   }
 
   private fun getLocationMatchScore(locationMatchingSessionTemplate: SessionTemplate): Int {
