@@ -76,7 +76,7 @@ class MigrationSessionTemplateMatcher(
     return removeUnwantedRestrictionTypes(restriction, templates)
   }
 
-  private fun removeUnwantedRestrictionTypes(restriction: VisitRestriction, sessionTemplates : List<SessionTemplate> ): List<SessionTemplate> {
+  private fun removeUnwantedRestrictionTypes(restriction: VisitRestriction, sessionTemplates: List<SessionTemplate>): List<SessionTemplate> {
     if (restriction != UNKNOWN) {
       // Must have a valid capacity for future visits
       return sessionTemplates.filter {
