@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_HIGH
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_PROVISIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.FEMALE_CLOSED
@@ -684,9 +685,9 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       validFromDate = validFromDate,
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = dayOfWeek,
-      visitRoom = migrateVisitRequestDto.visitRoom + "3",
+      visitRoom = migrateVisitRequestDto.visitRoom,
       startTime = startTime,
-      endTime = endTime.plusMinutes(10),
+      endTime = endTime,
       closedCapacity = 10,
       openCapacity = 0,
     )
@@ -717,9 +718,9 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       validFromDate = validFromDate,
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = dayOfWeek,
-      visitRoom = migrateVisitRequestDto.visitRoom + "3",
+      visitRoom = migrateVisitRequestDto.visitRoom,
       startTime = startTime,
-      endTime = endTime.plusMinutes(10),
+      endTime = endTime,
       closedCapacity = 0,
       openCapacity = 10,
     )
@@ -733,5 +734,40 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
       .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
+  }
+
+  @Test
+  fun `Migrated session match - When migrated visit is Unknown and no closed or open seesion then no error`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRestriction = UNKNOWN)
+
+    val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
+    val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
+    val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+      closedCapacity = 0,
+      openCapacity = 0,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    }
   }
 }
