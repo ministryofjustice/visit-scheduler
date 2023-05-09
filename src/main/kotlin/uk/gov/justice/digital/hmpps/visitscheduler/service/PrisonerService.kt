@@ -27,7 +27,6 @@ class PrisonerService(
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    private const val ENHANCED_INCENTIVE_PRIVILEGE = "ENH"
   }
 
   fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
@@ -121,6 +120,6 @@ class PrisonerService(
     incentiveLevelCode?.let {
       incentiveLevel = IncentiveLevels.getIncentiveLevel(it)
     }
-    return PrisonerDto(category = prisonerSearchResultDto?.category, incentiveLevel)
+    return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel)
   }
 }

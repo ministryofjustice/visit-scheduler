@@ -5,7 +5,11 @@ import kotlin.jvm.optionals.getOrNull
 
 enum class IncentiveLevels(val code: String) {
   ENHANCED("ENH"),
-  ;
+  ENHANCED_2("EN2"),
+  ENHANCED_3("EN3"),
+  BASIC("BAS"),
+  ENTRY("ENT"),
+  STANDARD("STD");
 
   companion object {
     fun getIncentiveLevel(code: String): IncentiveLevels? {
