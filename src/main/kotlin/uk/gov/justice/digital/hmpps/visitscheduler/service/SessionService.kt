@@ -103,7 +103,7 @@ class SessionService(
     return sessions.sortedWith(compareBy { it.startTimestamp })
   }
 
-  private fun filterByCategory(sessionTemplates: List<SessionTemplate>, prisonerCategory: String?): List<SessionTemplate> {
+  fun filterByCategory(sessionTemplates: List<SessionTemplate>, prisonerCategory: String?): List<SessionTemplate> {
     val hasSessionsWithCategoryGroups = sessionTemplates.any { it.permittedSessionCategoryGroups.isNotEmpty() }
     if (hasSessionsWithCategoryGroups) {
       return sessionTemplates.filter { sessionTemplate ->
@@ -114,7 +114,7 @@ class SessionService(
     return sessionTemplates
   }
 
-  private fun isPrisonerCategoryAllowedOnSession(sessionTemplate: SessionTemplate, prisonerCategory: String?): Boolean {
+  fun isPrisonerCategoryAllowedOnSession(sessionTemplate: SessionTemplate, prisonerCategory: String?): Boolean {
     prisonerCategory?.let {
       return getAllowedCategoriesForSessionTemplate(sessionTemplate).any { category ->
         val match = category.equals(prisonerCategory, false)

@@ -41,7 +41,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = sessionDate.dayOfWeek,
-      permittedSessionGroups = mutableListOf(sessionLocationGroup),
+      permittedLocationGroups = mutableListOf(sessionLocationGroup),
       permittedCategories = mutableListOf(sessionCategoryGroup),
     )
 
@@ -215,7 +215,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validFromDate = sessionDate,
       validToDate = sessionDate.plusDays(7),
       dayOfWeek = sessionDate.dayOfWeek,
-      permittedSessionGroups = mutableListOf(sessionLocationGroup1, sessionLocationGroup2),
+      permittedLocationGroups = mutableListOf(sessionLocationGroup1, sessionLocationGroup2),
     )
 
     // When

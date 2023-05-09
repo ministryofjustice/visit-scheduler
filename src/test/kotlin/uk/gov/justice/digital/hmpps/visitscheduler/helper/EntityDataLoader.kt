@@ -230,7 +230,7 @@ class SessionTemplateEntityHelper(
     endTime: LocalTime = LocalTime.parse("10:00"),
     dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
     activePrison: Boolean = true,
-    permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
+    permittedLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
   ): SessionTemplate {
@@ -248,7 +248,7 @@ class SessionTemplateEntityHelper(
       startTime = startTime,
       endTime = endTime,
       dayOfWeek = dayOfWeek,
-      permittedSessionGroups = permittedSessionGroups,
+      permittedSessionGroups = permittedLocationGroups,
       biWeekly = biWeekly,
       permittedCategories = permittedCategories,
     )
