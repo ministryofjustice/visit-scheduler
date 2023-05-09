@@ -278,7 +278,7 @@ class GetSessionsWithLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBa
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = sessionPrisonCode,
       visitRoom = "session available to some level 4s and level 2s",
-      permittedSessionGroups = mutableListOf(location),
+      permittedLocationGroups = mutableListOf(location),
     )
   }
 

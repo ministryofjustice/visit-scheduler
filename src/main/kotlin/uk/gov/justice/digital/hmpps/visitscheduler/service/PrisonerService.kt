@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_THREE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_TWO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
 
 @Service
@@ -94,19 +93,6 @@ class PrisonerService(
     levelsMap[LEVEL_FOUR] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_FOUR.level)?.code
 
     return levelsMap.toMap()
-  }
-
-  fun getPermittedSessionLocationForPrisoner(prisonerId: String, prisonCode: String): PermittedSessionLocationDto? {
-    val housingLocation = this.getPrisonerHousingLocation(prisonerId, prisonCode)
-    return housingLocation?.let {
-      val housingMap = getLevelsMapForPrisoner(housingLocation)
-      return PermittedSessionLocationDto(
-        levelOneCode = housingMap.get(LEVEL_ONE)!!,
-        levelTwoCode = housingMap.get(LEVEL_TWO),
-        levelThreeCode = housingMap.get(LEVEL_THREE),
-        levelFourCode = housingMap.get(LEVEL_FOUR),
-      )
-    }
   }
 
   private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: Int): PrisonerHousingLevelDto? {

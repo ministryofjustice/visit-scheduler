@@ -63,7 +63,7 @@ class GetSessionTemplateTest(
     val sessionLocationGroup = sessionLocationGroupHelper.create()
     val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = LocalDate.now(),
-      permittedSessionGroups = mutableListOf(sessionLocationGroup),
+      permittedLocationGroups = mutableListOf(sessionLocationGroup),
     )
 
     // When
