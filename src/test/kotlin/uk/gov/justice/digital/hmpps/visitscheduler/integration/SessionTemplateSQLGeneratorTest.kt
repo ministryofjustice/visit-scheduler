@@ -190,10 +190,10 @@ class SessionTemplateSQLGeneratorTest {
     // Given
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val locationGroupsColumns =  LocationGroupsColumns(
+    val locationGroupsColumns = LocationGroupsColumns(
       key = "key1",
-      prisonCode =  "prison1",
-      levelOne =  listOf("one", "one"),
+      prisonCode = "prison1",
+      levelOne = listOf("one", "one"),
       levelTwo = listOf("child"),
     )
     sessionLocationList.add(locationGroupsColumns)
@@ -212,10 +212,10 @@ class SessionTemplateSQLGeneratorTest {
     // Given
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val locationGroupsColumns =  LocationGroupsColumns(
+    val locationGroupsColumns = LocationGroupsColumns(
       key = "key1",
-      prisonCode =  "prison1",
-      levelOne =  listOf("one"),
+      prisonCode = "prison1",
+      levelOne = listOf("one"),
       levelTwo = listOf("two", "two"),
       levelThree = listOf("three"),
     )
@@ -237,8 +237,8 @@ class SessionTemplateSQLGeneratorTest {
 
     val locationGroupsColumns = LocationGroupsColumns(
       key = "key1",
-      prisonCode =  "prison1",
-      levelOne =  listOf("one"),
+      prisonCode = "prison1",
+      levelOne = listOf("one"),
       levelTwo = listOf("two"),
       levelThree = listOf("three", "three"),
       levelFour = listOf("four"),
@@ -261,8 +261,8 @@ class SessionTemplateSQLGeneratorTest {
 
     val locationGroupsColumns = LocationGroupsColumns(
       key = "key1",
-      prisonCode =  "prison1",
-      levelOne =  listOf("one"),
+      prisonCode = "prison1",
+      levelOne = listOf("one"),
       levelTwo = listOf(),
       levelThree = listOf("three"),
     )
@@ -284,8 +284,8 @@ class SessionTemplateSQLGeneratorTest {
 
     val locationGroupsColumns = LocationGroupsColumns(
       key = "key1",
-      prisonCode =  "prison1",
-      levelOne =  listOf("one"),
+      prisonCode = "prison1",
+      levelOne = listOf("one"),
       levelTwo = listOf("two"),
       levelThree = listOf(),
       levelFour = listOf("four"),
@@ -389,7 +389,7 @@ class SessionTemplateSQLGeneratorTest {
       key = "key1",
       prisonCode = "prison1",
       // no categories
-      categoryCodes = listOf()
+      categoryCodes = listOf(),
     )
     sessionCategoryList.add(categoryGroupColumns)
 
@@ -431,7 +431,6 @@ class SessionTemplateSQLGeneratorTest {
     // Then
     assertThat(exception.message).isEqualTo("Some prisoner-category columns are missing $fileName line number: 1, expected 4 but got 3")
   }
-
 
   @Test
   fun `Data parsed - session prisoner incentive level data is parsed correctly`() {

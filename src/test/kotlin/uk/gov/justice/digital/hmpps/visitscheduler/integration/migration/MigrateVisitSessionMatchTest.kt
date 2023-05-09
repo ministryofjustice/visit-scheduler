@@ -89,7 +89,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "1",
       startTime = startTime,
       endTime = endTime,
-      enhanced = false,
+      // TODO - to be done as part of VB-2216
+      // enhanced = false,
     )
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
@@ -99,7 +100,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom,
       startTime = startTime,
       endTime = endTime,
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     sessionTemplateEntityHelper.create(
@@ -109,7 +111,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "3",
       startTime = startTime,
       endTime = endTime,
-      enhanced = false,
+      // TODO - to be done as part of VB-2216
+      // enhanced = false,
     )
 
     // When
@@ -144,7 +147,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "1",
       startTime = startTime,
       endTime = endTime,
-      enhanced = false,
+      // TODO - to be done as part of VB-2216
+      // enhanced = false,
     )
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
@@ -154,7 +158,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "2",
       startTime = startTime,
       endTime = endTime,
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     sessionTemplateEntityHelper.create(
@@ -164,7 +169,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "3",
       startTime = startTime,
       endTime = endTime,
-      enhanced = false,
+      // TODO - to be done as part of VB-2216
+      // enhanced = false,
     )
 
     // When
@@ -383,7 +389,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      enhanced = false,
+      // TODO - to be done as part of VB-2216
+      // enhanced = false,
     )
 
     // Categories - wrong category
@@ -396,7 +403,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, FEMALE_CLOSED),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     // Categories - no category
@@ -408,7 +416,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       startTime = startTime,
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     // Location - lower level location
@@ -421,7 +430,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     // Location - no location
@@ -433,7 +443,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       startTime = startTime,
       endTime = endTime,
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     // This is the session that should be selected - best match
@@ -446,7 +457,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     // Proximity - out
@@ -459,7 +471,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime.minusMinutes(10),
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     // Proximity - in
@@ -472,7 +485,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime.plusMinutes(10),
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     // When
@@ -516,7 +530,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     // This is the session that should be selected - best match by room name
@@ -529,7 +544,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     sessionTemplateEntityHelper.create(
@@ -541,7 +557,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      enhanced = true,
+      // TODO - to be done as part of VB-2216
+      // enhanced = true,
     )
 
     // When

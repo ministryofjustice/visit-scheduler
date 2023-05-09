@@ -136,7 +136,8 @@ class MigrationSessionTemplateMatcher(
         if (prisonerDto.category != null) {
           it.category = sessionService.isPrisonerCategoryAllowedOnSession(template, prisonerDto.category)
         }
-        it.enhanced = template.enhanced == true && prisonerDto.enhanced == true
+        // TODO - to be done as part of VB-2216
+        // it.enhanced = template.enhanced == true && prisonerDto.enhanced == true
         it.proximity = getProximityMinutes(template.startTime, startTime, template.endTime, endTime)
         it.roomNameMatch = template.visitRoom == migrateVisitRequest.visitRoom
       }
