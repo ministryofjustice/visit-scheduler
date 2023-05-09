@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_PROVISIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.FEMALE_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.DEFAULT_MAX_PROX_MINUTES
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
@@ -762,6 +763,84 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
 
     // Then
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    }
+  }
+
+  @Test
+  fun `Migrated session match - Using validFromDate and ValidToDate on session template`() {
+    // Given
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(
+      visitRestriction = OPEN,
+      visitStartTimeAndDate = LocalDateTime.now().plusDays(10).withHour(10).withMinute(30),
+    )
+
+    val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
+    val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().minusDays(10),
+      validToDate = LocalDate.now().minusDays(1),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().plusDays(8),
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+    )
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().plusDays(9),
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().plusDays(7),
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().plusDays(11),
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now(),
+      validToDate = LocalDate.now().plusDays(9),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
     val reference = getReference(responseSpec)
 
     val visit = visitRepository.findByReference(reference)
