@@ -47,7 +47,7 @@ class MigrateVisitService(
     var sessionTemplateReference: String ? = null
     val visitRoom: String
 
-    val isInTheFuture = !migrateVisitRequest.startTimestamp.isBefore(LocalDateTime.now())
+    val isInTheFuture = !migrateVisitRequest.startTimestamp.toLocalDate().isBefore(LocalDate.now())
     if (isInTheFuture) {
       val sessionTemplate = migrationSessionTemplateMatcher.getMatchingSessionTemplate(migrateVisitRequest)
 
