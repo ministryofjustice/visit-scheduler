@@ -21,7 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataReposito
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplateMatcher
-import java.time.LocalDateTime
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
