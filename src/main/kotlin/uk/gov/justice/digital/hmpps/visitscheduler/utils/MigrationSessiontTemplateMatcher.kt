@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
@@ -13,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import java.time.LocalDate
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit.DAYS
 import kotlin.math.absoluteValue
 
 const val DEFAULT_MAX_PROX_MINUTES = 180
@@ -26,6 +29,8 @@ class MigrationSessionTemplateMatcher(
 ) {
 
   companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+
     @Value("\${policy.session.max-proximity-minutes:$DEFAULT_MAX_PROX_MINUTES}")
     var maxProximityMinutes: Int = DEFAULT_MAX_PROX_MINUTES
   }
@@ -35,29 +40,34 @@ class MigrationSessionTemplateMatcher(
     var locationScore: Int = -1
     var category: Boolean = false
     var enhanced: Boolean = false
-    var proximity: Int = 0
+    var timeProximity: Int = 0
+    var validDateProximity: Int = 0
     var roomNameMatch: Boolean = false
 
     override fun compareTo(other: MigrateMatch): Int {
       if (!isValidProximity()) return -1
 
-      // smaller proximity the better
-      val proximityCompare = -proximity.compareTo(other.proximity)
+      // smaller proximity the better, hence -timeProximity
+      val timeProximityCompare = -timeProximity.compareTo(other.timeProximity)
 
-      val compareValue =
-        proximityCompare +
+      var compareValue =
+        timeProximityCompare +
           locationScore.compareTo(other.locationScore) +
           category.compareTo(other.category) +
-          enhanced.compareTo(other.enhanced)
+          enhanced.compareTo(other.enhanced) +
+          validDateProximity.compareTo(other.validDateProximity)
 
       if (compareValue == 0) {
-        return roomNameMatch.compareTo(other.roomNameMatch)
+        compareValue = validDateProximity.compareTo(other.validDateProximity)
+        if (compareValue == 0) {
+          compareValue = roomNameMatch.compareTo(other.roomNameMatch)
+        }
       }
       return compareValue
     }
 
     fun isValidProximity(): Boolean {
-      return (proximity <= maxProximityMinutes)
+      return (timeProximity <= maxProximityMinutes)
     }
   }
 
@@ -66,10 +76,8 @@ class MigrationSessionTemplateMatcher(
     sessionDate: LocalDate,
     restriction: VisitRestriction,
   ): List<SessionTemplate> {
-    val rangeStartDate = LocalDate.now()
-
     val templates = sessionTemplateRepository.findValidSessionTemplatesBy(
-      rangeStartDate = rangeStartDate,
+      rangeStartDate = sessionDate,
       prisonCode = prisonCode,
       dayOfWeek = sessionDate.dayOfWeek,
     )
@@ -89,9 +97,11 @@ class MigrationSessionTemplateMatcher(
 
   private fun getProximityMinutes(sessionStartTime: LocalTime, startTime: LocalTime, sessionEndTime: LocalTime, endTime: LocalTime): Int {
     return (
-      (sessionStartTime.toSecondOfDay() - startTime.toSecondOfDay()).absoluteValue +
-        (sessionEndTime.toSecondOfDay() - endTime.toSecondOfDay()).absoluteValue
-      ) / 60
+      (
+        (sessionStartTime.toSecondOfDay() - startTime.toSecondOfDay()).absoluteValue +
+          (sessionEndTime.toSecondOfDay() - endTime.toSecondOfDay()).absoluteValue
+        ) / 60
+      )
   }
 
   fun getMatchingSessionTemplate(
@@ -112,6 +122,12 @@ class MigrationSessionTemplateMatcher(
     migrateVisitRequest: MigrateVisitRequestDto,
     sessionTemplates: List<SessionTemplate>,
   ): SessionTemplate {
+    val startDate = migrateVisitRequest.startTimestamp.toLocalDate()
+    val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
+
+    LOG.debug("Enter getNearestSessionTemplate visit date $startDate/${startDate.dayOfWeek}/$startTime <> $endTime")
+
     val matchedSessionTemplate = sessionTemplates.associateWith { MigrateMatch() }
 
     val sessionLocationTemplates = sessionService.filterSessionsTemplatesForLocation(
@@ -127,9 +143,6 @@ class MigrationSessionTemplateMatcher(
     }
 
     val prisonerDto = prisonerService.getPrisoner(migrateVisitRequest.prisonerId)!!
-    val startDate = migrateVisitRequest.startTimestamp.toLocalDate()
-    val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
-    val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
 
     sessionTemplates.forEach { template ->
       val matcher = matchedSessionTemplate[template]
@@ -139,8 +152,9 @@ class MigrationSessionTemplateMatcher(
         }
         // TODO - to be done as part of VB-2216
         // it.enhanced = template.enhanced == true && prisonerDto.enhanced == true
-        it.proximity = getProximityMinutes(template.startTime, startTime, template.endTime, endTime)
+        it.timeProximity = getProximityMinutes(template.startTime, startTime, template.endTime, endTime)
         it.roomNameMatch = template.visitRoom == migrateVisitRequest.visitRoom
+        it.validDateProximity = getDateProximityDays(migrateVisitRequest, template)
       }
     }
 
@@ -158,6 +172,18 @@ class MigrationSessionTemplateMatcher(
       throw MatchSessionTemplateToMigratedVisitException("Not valid proximity, Could not find any SessionTemplate for future visit date $startDate/${startDate.dayOfWeek}/$startTime")
     }
     return bestMatch
+  }
+
+  private fun getDateProximityDays(
+    migrateVisitRequest: MigrateVisitRequestDto,
+    template: SessionTemplate,
+  ): Int {
+    val migratedVisitDate = migrateVisitRequest.startTimestamp.toLocalDate()
+    if (template.validFromDate.isAfter(migratedVisitDate)) {
+      // Template from date is after the migrated visit date therefore not valid
+      return -1000
+    }
+    return DAYS.between(migratedVisitDate, template.validFromDate).toInt()
   }
 
   private fun getLocationMatchScore(locationMatchingSessionTemplate: SessionTemplate): Int {
