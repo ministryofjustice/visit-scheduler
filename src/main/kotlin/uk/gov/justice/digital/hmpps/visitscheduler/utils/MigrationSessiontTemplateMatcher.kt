@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
@@ -26,6 +28,8 @@ class MigrationSessionTemplateMatcher(
 ) {
 
   companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+
     @Value("\${policy.session.max-proximity-minutes:$DEFAULT_MAX_PROX_MINUTES}")
     var maxProximityMinutes: Int = DEFAULT_MAX_PROX_MINUTES
   }
@@ -117,6 +121,12 @@ class MigrationSessionTemplateMatcher(
     migrateVisitRequest: MigrateVisitRequestDto,
     sessionTemplates: List<SessionTemplate>,
   ): SessionTemplate {
+    val startDate = migrateVisitRequest.startTimestamp.toLocalDate()
+    val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
+
+    LOG.debug("Enter getNearestSessionTemplate visit date $startDate/${startDate.dayOfWeek}/$startTime <> $endTime")
+
     val matchedSessionTemplate = sessionTemplates.associateWith { MigrateMatch() }
 
     val sessionLocationTemplates = sessionService.filterSessionsTemplatesForLocation(
@@ -132,9 +142,6 @@ class MigrationSessionTemplateMatcher(
     }
 
     val prisonerDto = prisonerService.getPrisoner(migrateVisitRequest.prisonerId)!!
-    val startDate = migrateVisitRequest.startTimestamp.toLocalDate()
-    val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
-    val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
 
     sessionTemplates.forEach { template ->
       val matcher = matchedSessionTemplate[template]
