@@ -18,7 +18,6 @@ class PrisonerSessionValidator(
   private val sessionAllPrisonersCategoryMatcher =
     Predicate<SessionTemplate> { sessionTemplate -> sessionTemplate.permittedSessionCategoryGroups.isEmpty() }
 
-
   private val sessionAllPrisonersIncentiveLevelMatcher =
     Predicate<SessionTemplate> { sessionTemplate -> sessionTemplate.permittedSessionIncentiveLevelGroups.isEmpty() }
 
@@ -40,7 +39,7 @@ class PrisonerSessionValidator(
   ): Boolean {
     val isSessionAvailableToAllPrisoners = sessionAllPrisonersCategoryMatcher.test(sessionTemplate)
     if (!isSessionAvailableToAllPrisoners) {
-      return  categoryMatcher.test(prisonerCategory, sessionTemplate)
+      return categoryMatcher.test(prisonerCategory, sessionTemplate)
     }
 
     return true
@@ -52,7 +51,7 @@ class PrisonerSessionValidator(
   ): Boolean {
     val isSessionAvailableToAllPrisoners = sessionAllPrisonersIncentiveLevelMatcher.test(sessionTemplate)
     if (!isSessionAvailableToAllPrisoners) {
-      return  incentiveLevelMatcher.test(prisonerIncentiveLevel, sessionTemplate)
+      return incentiveLevelMatcher.test(prisonerIncentiveLevel, sessionTemplate)
     }
 
     return true
