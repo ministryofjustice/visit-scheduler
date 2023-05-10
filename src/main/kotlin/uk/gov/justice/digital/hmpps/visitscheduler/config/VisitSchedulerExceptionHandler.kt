@@ -77,7 +77,7 @@ class VisitSchedulerExceptionHandler(
 
   @ExceptionHandler(MatchSessionTemplateToMigratedVisitException::class)
   fun handleMatchSessionTemplateToMigratedVisitException(e: Exception): ResponseEntity<ErrorResponse> {
-    log.debug("Migration exception: {}", e.message)
+    log.error("Migration exception: {}", e.message)
     val error = ErrorResponse(
       status = HttpStatus.BAD_REQUEST,
       userMessage = "Migration failure: could not find matching session template",
