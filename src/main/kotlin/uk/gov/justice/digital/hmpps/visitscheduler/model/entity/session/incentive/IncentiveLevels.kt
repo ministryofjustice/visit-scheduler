@@ -8,7 +8,6 @@ enum class IncentiveLevels(val code: String) {
   ENHANCED_2("EN2"),
   ENHANCED_3("EN3"),
   BASIC("BAS"),
-  ENTRY("ENT"),
   STANDARD("STD"),
   ;
 

@@ -465,7 +465,7 @@ class SessionTemplateSQLGeneratorTest {
     assertThat(sessionIncentiveLevelItems.size).isEqualTo(7)
     assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[0], "CFI_INC_LEVEL1", IncentiveLevels.BASIC)
     assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[1], "CFI_INC_LEVEL2", IncentiveLevels.STANDARD)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[2], "CFI_INC_LEVEL3", IncentiveLevels.ENTRY)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[2], "CFI_INC_LEVEL3", IncentiveLevels.ENHANCED_3)
     assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[3], "CFI_INC_LEVEL3", IncentiveLevels.BASIC)
     assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[4], "CFI_INC_LEVEL3", IncentiveLevels.STANDARD)
     assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[5], "CFI_INC_LEVEL4", IncentiveLevels.ENHANCED)
@@ -485,7 +485,7 @@ class SessionTemplateSQLGeneratorTest {
     // Then
     assertThat(sessionIncentiveLevelItems.size).isEqualTo(4)
     assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[0], "CFI_INC_LEVEL1", IncentiveLevels.BASIC)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[1], "CFI_INC_LEVEL2", IncentiveLevels.ENTRY)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[1], "CFI_INC_LEVEL2", IncentiveLevels.ENHANCED_3)
     assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[2], "CFI_INC_LEVEL2", IncentiveLevels.STANDARD)
     assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[3], "CFI_INC_LEVEL2", IncentiveLevels.ENHANCED)
   }
