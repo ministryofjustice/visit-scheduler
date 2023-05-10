@@ -37,8 +37,8 @@ class MigrateVisitService(
   private val snsService: SnsService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
-  @Value("\${migrate.sessiontemplate.mapping.offset:0}")
-  private val migrateSessionTemplateMappingOffset: Long,
+  @Value("\${migrate.sessiontemplate.mapping.offset.days:0}")
+  private val migrateSessionTemplateMappingOffsetDays: Long,
 ) {
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
@@ -121,7 +121,7 @@ class MigrateVisitService(
   }
 
   private fun shouldMigrateWithSessionMapping(migrateVisitRequest: MigrateVisitRequestDto): Boolean {
-    val startDate = LocalDate.now().plusDays(migrateSessionTemplateMappingOffset)
+    val startDate = LocalDate.now().plusDays(migrateSessionTemplateMappingOffsetDays)
     return !migrateVisitRequest.startTimestamp.toLocalDate().isBefore(startDate)
   }
 
