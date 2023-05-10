@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_TWO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 
 @Service
 class PrisonerService(
@@ -25,7 +26,6 @@ class PrisonerService(
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    private const val ENHANCED_INCENTIVE_PRIVILEGE = "ENH"
   }
 
   fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
@@ -101,7 +101,15 @@ class PrisonerService(
 
   fun getPrisoner(prisonerId: String): PrisonerDto? {
     val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
-    val enhanced = ENHANCED_INCENTIVE_PRIVILEGE == prisonerSearchResultDto?.currentIncentive?.level?.code
-    return PrisonerDto(category = prisonerSearchResultDto?.category, enhanced = enhanced)
+    val incentiveLevelCode = prisonerSearchResultDto?.currentIncentive?.level?.code
+    var incentiveLevel: IncentiveLevel? = null
+    incentiveLevelCode?.let {
+      incentiveLevel = IncentiveLevel.getIncentiveLevel(it)
+
+      if (incentiveLevel == null) {
+        LOG.error("Incentive level - $it for prisoner - $prisonerId not available in IncentiveLevel enum.")
+      }
+    }
+    return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel)
   }
 }

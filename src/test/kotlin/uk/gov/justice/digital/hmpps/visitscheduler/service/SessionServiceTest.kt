@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
@@ -82,20 +83,19 @@ class SessionServiceTest {
     )
 
     whenever(prisonerService.getLevelsMapForPrisoner(any())).thenReturn(mutableMapOf<PrisonerHousingLevels, String?>())
-    whenever(prisonerSessionValidator.isSessionAvailableToPrisoner(any(), any())).thenReturn(true)
+    whenever(prisonerSessionValidator.isSessionAvailableToPrisonerLocation(any(), any())).thenReturn(true)
   }
 
-  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incEnhancedPrivilege: Boolean = true, category: String ? = null) {
+  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incentiveLevel: IncentiveLevel? = null, category: String ? = null) {
     whenever(
       prisonerService.getPrisoner(any()),
-    ).thenReturn(PrisonerDto(enhanced = incEnhancedPrivilege, category = category))
+    ).thenReturn(PrisonerDto(category = category, incentiveLevel = incentiveLevel))
 
     whenever(
       sessionTemplateRepository.findValidSessionTemplatesBy(
         prisonCode = prisonCode,
         rangeStartDate = date.plusDays(noticeDaysMin),
         rangeEndDate = date.plusDays(noticeDaysMax),
-        inclEnhancedPrivilegeTemplates = incEnhancedPrivilege,
       ),
     ).thenReturn(response)
   }

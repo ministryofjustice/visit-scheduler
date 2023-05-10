@@ -9,13 +9,14 @@ import reactor.util.function.Tuple2
 import reactor.util.function.Tuples
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.BI_WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CATEGORY_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.DAY_OF_WEEK
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_TIME
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.ENHANCED
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.INCENTIVE_LEVEL_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.LOCATION_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.START_DATE
@@ -44,7 +45,7 @@ private const val maxCapacity = 200
 class SessionTemplateSQLGenerator {
 
   private enum class SessionColumnNames {
-    PRISON, VISIT_ROOM, TYPE, OPEN, CLOSED, ENHANCED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS, CATEGORY_KEYS;
+    PRISON, VISIT_ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS, CATEGORY_KEYS, INCENTIVE_LEVEL_KEYS;
   }
 
   private enum class SessionLocationColumnNames {
@@ -55,9 +56,14 @@ class SessionTemplateSQLGenerator {
     PRISON, KEY, CATEGORY, NAME;
   }
 
+  private enum class SessionPrisonerIncentiveLevelColumnNames {
+    PRISON, KEY, INCENTIVE_LEVEL, NAME;
+  }
+
   enum class GroupType(val type: String, val file: String, val columnSize: Int) {
     LOCATION("location", "session-location-data.csv", SessionLocationColumnNames.values().size),
     PRISONER_CATEGORY("prisoner-category", "session-prisoner-category-data.csv", SessionPrisonerCategoryColumnNames.values().size),
+    PRISONER_INCENTIVE_LEVEL("prisoner-incentive-level", "session-prisoner-incentive-data.csv", SessionPrisonerCategoryColumnNames.values().size),
   }
 
   companion object {
@@ -78,52 +84,6 @@ class SessionTemplateSQLGenerator {
     }
   }
 
-  private fun validateSessionLocation(sessionLocationColumn: LocationGroupsColumns) {
-    val childHasMoreThanOneParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
-      parentLevel.size > 1 && childlevel.isNotEmpty()
-    }
-
-    val childCantHaveEmptyParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
-      parentLevel.isEmpty() && childlevel.isNotEmpty()
-    }
-
-    with(sessionLocationColumn) {
-      if (levelOne.isEmpty()) {
-        throw IllegalArgumentException("Location : must have at least one level one element (prison:$prisonCode key:$key)!")
-      }
-
-      if (childHasMoreThanOneParent.test(levelOne, levelTwo) ||
-        childHasMoreThanOneParent.test(levelTwo, levelThree) ||
-        childHasMoreThanOneParent.test(levelThree, levelFour)
-      ) {
-        throw IllegalArgumentException("Location : Child can't have more than one parent (prison:$prisonCode key:$key)!")
-      }
-
-      if (childCantHaveEmptyParent.test(levelTwo, levelThree) ||
-        childCantHaveEmptyParent.test(levelThree, levelFour)
-      ) {
-        throw IllegalArgumentException("Location : Child can't have empty parent (prison:$prisonCode key:$key)!")
-      }
-    }
-  }
-
-  private fun validateSessionPrisonerCategory(sessionPrisonerCategoryGroupsColumn: PrisonerCategoryGroupsColumns) {
-    with(sessionPrisonerCategoryGroupsColumn) {
-      if (categoryCodes.isEmpty()) {
-        throw IllegalArgumentException("Category : must have at least one category code (prison:$prisonCode key:$key)!")
-      }
-
-      categoryCodes.forEach {
-        try {
-          PrisonerCategoryType.valueOf(it)
-        } catch (e: Exception) {
-          val allowedValues = PrisonerCategoryType.values().joinToString(",")
-          throw IllegalArgumentException("Category : Invalid category code - $it - allowed values are - $allowedValues  (prison:$prisonCode key:$key)!")
-        }
-      }
-    }
-  }
-
   private fun validateSessionTemplate(
     groupType: GroupType,
     groupColumns: List<GroupColumns>,
@@ -134,6 +94,7 @@ class SessionTemplateSQLGenerator {
         val keyList = when (groupType) {
           GroupType.LOCATION -> getLocationList()
           GroupType.PRISONER_CATEGORY -> getPrisonerCategoryList()
+          GroupType.PRISONER_INCENTIVE_LEVEL -> getPrisonerIncentiveLevelList()
         }
         validateSessionTemplateGroupColumn(groupType, sessionTemplateColumn, keyList, groupColumns)
 
@@ -198,74 +159,22 @@ class SessionTemplateSQLGenerator {
     return when (groupType) {
       GroupType.LOCATION -> LocationGroupsColumns(csvRecord)
       GroupType.PRISONER_CATEGORY -> PrisonerCategoryGroupsColumns(csvRecord)
+      GroupType.PRISONER_INCENTIVE_LEVEL -> PrisonerIncentiveLevelGroupsColumns(csvRecord)
     }
   }
 
   fun validateGroupColumns(groupColumns: List<GroupColumns>) {
     groupColumns.forEach {
-      validateGroupColumn(it)
-    }
-  }
-  private fun validateGroupColumn(groupColumn: GroupColumns) {
-    when (groupColumn) {
-      is LocationGroupsColumns -> validateSessionLocation(groupColumn)
-      is PrisonerCategoryGroupsColumns -> validateSessionPrisonerCategory(groupColumn)
+      it.validate()
     }
   }
 
   fun getSessionItems(groupColumnsList: List<GroupColumns>): List<SessionItem> {
     val sessionItems = ArrayList<SessionItem>()
     groupColumnsList.forEach {
-      when (it) {
-        is LocationGroupsColumns -> sessionItems.addAll(createPermittedSessionLocationItems(it))
-        is PrisonerCategoryGroupsColumns -> sessionItems.addAll(createPrisonerCategoryItem(it))
-      }
+      sessionItems.addAll(it.createItemList())
     }
     return sessionItems.toList()
-  }
-
-  private fun createPermittedSessionLocationItems(locationGroupsColumns: LocationGroupsColumns): List<SessionLocationItem> {
-    val sessionLocationItemList = mutableListOf<SessionLocationItem>()
-
-    with(locationGroupsColumns) {
-      val createLevelOne = levelOne.size > 1 || levelTwo.isEmpty()
-      val createLevelTwo = levelTwo.size > 1 || levelThree.isEmpty()
-      val createLevelThree = levelThree.size > 1 || levelFour.isEmpty()
-
-      if (createLevelOne || createLevelTwo || createLevelThree) {
-        locationGroupsColumns.levelOne.forEach { levelOne ->
-          if (createLevelOne) {
-            sessionLocationItemList.add(SessionLocationItem(groupKey = locationGroupsColumns.key, levelOne = levelOne))
-          } else {
-            levelTwo.forEach { levelTwo ->
-              if (createLevelTwo) {
-                sessionLocationItemList.add(SessionLocationItem(groupKey = locationGroupsColumns.key, levelOne = levelOne, levelTwo = levelTwo))
-              } else {
-                levelThree.forEach { levelThree ->
-                  sessionLocationItemList.add(SessionLocationItem(groupKey = locationGroupsColumns.key, levelOne = levelOne, levelTwo = levelTwo, levelThree = levelThree))
-                }
-              }
-            }
-          }
-        }
-      } else {
-        levelFour.forEach { levelFour ->
-          sessionLocationItemList.add(SessionLocationItem(groupKey = locationGroupsColumns.key, levelOne = levelOne[0], levelTwo = levelTwo[0], levelThree = levelThree[0], levelFour = levelFour))
-        }
-      }
-    }
-    return sessionLocationItemList
-  }
-
-  private fun createPrisonerCategoryItem(categoryGroupsColumns: PrisonerCategoryGroupsColumns): List<SessionPrisonerCategoryItem> {
-    val sessionLocationItemList = mutableListOf<SessionPrisonerCategoryItem>()
-    categoryGroupsColumns.categoryCodes.forEach {
-      sessionLocationItemList.add(
-        SessionPrisonerCategoryItem(groupKey = categoryGroupsColumns.key, prisonerCategoryType = PrisonerCategoryType.valueOf(it)),
-      )
-    }
-
-    return sessionLocationItemList
   }
 
   fun createSql(
@@ -278,6 +187,8 @@ class SessionTemplateSQLGenerator {
     val sessionLocationItems = groupItemMap[GroupType.LOCATION]?.t2 ?: ArrayList()
     val sessionCategoryGroups = groupItemMap[GroupType.PRISONER_CATEGORY]?.t1 ?: ArrayList()
     val sessionCategoryItems = groupItemMap[GroupType.PRISONER_CATEGORY]?.t2 ?: ArrayList()
+    val sessionIncentiveGroups = groupItemMap[GroupType.PRISONER_INCENTIVE_LEVEL]?.t1 ?: ArrayList()
+    val sessionIncentiveItems = groupItemMap[GroupType.PRISONER_INCENTIVE_LEVEL]?.t2 ?: ArrayList()
 
     val input = mutableMapOf<String, Any>()
     input["prisonCodes"] = prisonCodes.values
@@ -286,11 +197,15 @@ class SessionTemplateSQLGenerator {
     input["locations"] = sessionLocationItems
     input["categoryGroups"] = sessionCategoryGroups
     input["categories"] = sessionCategoryItems
+    input["incentiveGroups"] = sessionIncentiveGroups
+    input["incentives"] = sessionIncentiveItems
     input["permitted_session_location_index"] = sessionLocationItems.size + 1
     input["session_template_id_index"] = sessionRecords.size + 1
     input["session_location_group_id_index"] = sessionLocationGroups.size + 1
     input["session_category_group_id_index"] = sessionCategoryGroups.size + 1
     input["session_prisoner_category_index"] = sessionCategoryItems.size + 1
+    input["session_incentive_group_id_index"] = sessionIncentiveGroups.size + 1
+    input["session_prisoner_incentive_index"] = sessionIncentiveItems.size + 1
 
     val stringWriter = StringWriter()
     template.process(input, stringWriter)
@@ -339,7 +254,6 @@ class SessionTemplateSQLGenerator {
     val type: VisitType,
     val open: Int,
     val closed: Int,
-    val enhanced: Boolean = false,
     val startTime: LocalTime,
     val endTime: LocalTime,
     val startDate: LocalDate,
@@ -348,6 +262,7 @@ class SessionTemplateSQLGenerator {
     val locationKeys: String?,
     val biWeekly: Boolean = false,
     val categoryKeys: String?,
+    val incentiveLevelKeys: String?,
   ) {
     constructor(sessionRecord: CSVRecord) : this(
       prisonCode = sessionRecord.get(SessionColumnNames.PRISON.name).uppercase(),
@@ -355,7 +270,6 @@ class SessionTemplateSQLGenerator {
       type = VisitType.valueOf(sessionRecord.get(TYPE.name).uppercase()),
       open = Integer.parseInt(sessionRecord.get(OPEN.name)),
       closed = Integer.parseInt(sessionRecord.get(CLOSED.name)),
-      enhanced = sessionRecord.get(ENHANCED.name)?.uppercase().toBoolean(),
       startTime = LocalTime.parse(sessionRecord.get(START_TIME.name)),
       endTime = LocalTime.parse(sessionRecord.get(END_TIME.name)),
       startDate = LocalDate.parse(sessionRecord.get(START_DATE.name)),
@@ -364,6 +278,7 @@ class SessionTemplateSQLGenerator {
       locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase(),
       biWeekly = sessionRecord.get(BI_WEEKLY.name)?.uppercase().toBoolean(),
       categoryKeys = sessionRecord.get(CATEGORY_KEYS.name)?.uppercase(),
+      incentiveLevelKeys = sessionRecord.get(INCENTIVE_LEVEL_KEYS.name)?.uppercase(),
     )
 
     fun getLocationList(): List<String> {
@@ -373,15 +288,23 @@ class SessionTemplateSQLGenerator {
     fun getPrisonerCategoryList(): List<String> {
       return toList(categoryKeys)
     }
+
+    fun getPrisonerIncentiveLevelList(): List<String> {
+      return toList(incentiveLevelKeys)
+    }
   }
 
   abstract class GroupColumns(
     open var prisonCode: String,
     open val key: String,
     open val name: String? = null,
-  )
+  ) {
+    abstract fun validate()
 
-  data class LocationGroupsColumns(
+    abstract fun createItemList(): List<SessionItem>
+  }
+
+  class LocationGroupsColumns(
     override var prisonCode: String,
     override val key: String,
     val levelOne: List<String> = listOf(),
@@ -399,6 +322,68 @@ class SessionTemplateSQLGenerator {
       levelFour = toList(sessionRecord.get(LEVEL_FOUR.name)),
       name = sessionRecord.get(NAME.name),
     )
+
+    override fun validate() {
+      val childHasMoreThanOneParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
+        parentLevel.size > 1 && childlevel.isNotEmpty()
+      }
+
+      val childCantHaveEmptyParent = BiPredicate<List<String>, List<String>> { parentLevel, childlevel ->
+        parentLevel.isEmpty() && childlevel.isNotEmpty()
+      }
+
+      with(this) {
+        if (levelOne.isEmpty()) {
+          throw IllegalArgumentException("Location : must have at least one level one element (prison:$prisonCode key:$key)!")
+        }
+
+        if (childHasMoreThanOneParent.test(levelOne, levelTwo) ||
+          childHasMoreThanOneParent.test(levelTwo, levelThree) ||
+          childHasMoreThanOneParent.test(levelThree, levelFour)
+        ) {
+          throw IllegalArgumentException("Location : Child can't have more than one parent (prison:$prisonCode key:$key)!")
+        }
+
+        if (childCantHaveEmptyParent.test(levelTwo, levelThree) ||
+          childCantHaveEmptyParent.test(levelThree, levelFour)
+        ) {
+          throw IllegalArgumentException("Location : Child can't have empty parent (prison:$prisonCode key:$key)!")
+        }
+      }
+    }
+
+    override fun createItemList(): List<SessionLocationItem> {
+      val sessionLocationItemList = mutableListOf<SessionLocationItem>()
+
+      with(this) {
+        val createLevelOne = levelOne.size > 1 || levelTwo.isEmpty()
+        val createLevelTwo = levelTwo.size > 1 || levelThree.isEmpty()
+        val createLevelThree = levelThree.size > 1 || levelFour.isEmpty()
+
+        if (createLevelOne || createLevelTwo || createLevelThree) {
+          levelOne.forEach { levelOne ->
+            if (createLevelOne) {
+              sessionLocationItemList.add(SessionLocationItem(groupKey = key, levelOne = levelOne))
+            } else {
+              levelTwo.forEach { levelTwo ->
+                if (createLevelTwo) {
+                  sessionLocationItemList.add(SessionLocationItem(groupKey = key, levelOne = levelOne, levelTwo = levelTwo))
+                } else {
+                  levelThree.forEach { levelThree ->
+                    sessionLocationItemList.add(SessionLocationItem(groupKey = key, levelOne = levelOne, levelTwo = levelTwo, levelThree = levelThree))
+                  }
+                }
+              }
+            }
+          }
+        } else {
+          levelFour.forEach { levelFour ->
+            sessionLocationItemList.add(SessionLocationItem(groupKey = key, levelOne = levelOne[0], levelTwo = levelTwo[0], levelThree = levelThree[0], levelFour = levelFour))
+          }
+        }
+      }
+      return sessionLocationItemList
+    }
   }
 
   data class PrisonerCategoryGroupsColumns(
@@ -413,6 +398,80 @@ class SessionTemplateSQLGenerator {
       categoryCodes = toList(sessionRecord.get(SessionPrisonerCategoryColumnNames.CATEGORY.name)),
       name = sessionRecord.get(SessionPrisonerCategoryColumnNames.NAME.name),
     )
+
+    override fun validate() {
+      with(this) {
+        if (categoryCodes.isEmpty()) {
+          throw IllegalArgumentException("Category : must have at least one category code (prison:$prisonCode key:$key)!")
+        }
+
+        categoryCodes.forEach {
+          try {
+            PrisonerCategoryType.valueOf(it)
+          } catch (e: Exception) {
+            val allowedValues = PrisonerCategoryType.values().joinToString(",")
+            throw IllegalArgumentException("Category : Invalid category code - $it - allowed values are - $allowedValues  (prison:$prisonCode key:$key)!")
+          }
+        }
+      }
+    }
+
+    override fun createItemList(): List<SessionPrisonerCategoryItem> {
+      val sessionCategoryItemList = mutableListOf<SessionPrisonerCategoryItem>()
+      with(this) {
+        categoryCodes.forEach {
+          sessionCategoryItemList.add(
+            SessionPrisonerCategoryItem(groupKey = key, prisonerCategoryType = PrisonerCategoryType.valueOf(it)),
+          )
+        }
+      }
+
+      return sessionCategoryItemList
+    }
+  }
+
+  data class PrisonerIncentiveLevelGroupsColumns(
+    override var prisonCode: String,
+    override val key: String,
+    val incentiveLevels: List<String> = listOf(),
+    override val name: String? = null,
+  ) : GroupColumns(prisonCode, key, name) {
+    constructor(sessionRecord: CSVRecord) : this(
+      prisonCode = sessionRecord.get(SessionPrisonerIncentiveLevelColumnNames.PRISON.name).uppercase(),
+      key = sessionRecord.get(SessionPrisonerIncentiveLevelColumnNames.KEY.name).uppercase(),
+      incentiveLevels = toList(sessionRecord.get(SessionPrisonerIncentiveLevelColumnNames.INCENTIVE_LEVEL.name)),
+      name = sessionRecord.get(SessionPrisonerIncentiveLevelColumnNames.NAME.name),
+    )
+
+    override fun validate() {
+      with(this) {
+        if (incentiveLevels.isEmpty()) {
+          throw IllegalArgumentException("Incentive Level : must have at least one incentive level (prison:$prisonCode key:$key)!")
+        }
+
+        incentiveLevels.forEach {
+          try {
+            IncentiveLevel.valueOf(it)
+          } catch (e: Exception) {
+            val allowedValues = IncentiveLevel.values().joinToString(",")
+            throw IllegalArgumentException("IncentiveLevel : Invalid incentive level - $it - allowed values are - $allowedValues  (prison:$prisonCode key:$key)!")
+          }
+        }
+      }
+    }
+
+    override fun createItemList(): List<SessionItem> {
+      val sessionIncentiveItemList = mutableListOf<SessionPrisonerIncentiveItem>()
+      with(this) {
+        incentiveLevels.forEach {
+          sessionIncentiveItemList.add(
+            SessionPrisonerIncentiveItem(groupKey = key, incentiveLevel = IncentiveLevel.valueOf(it)),
+          )
+        }
+      }
+
+      return sessionIncentiveItemList
+    }
   }
 
   abstract class SessionItem(
@@ -430,6 +489,11 @@ class SessionTemplateSQLGenerator {
   data class SessionPrisonerCategoryItem(
     override val groupKey: String,
     val prisonerCategoryType: PrisonerCategoryType,
+  ) : SessionItem(groupKey)
+
+  data class SessionPrisonerIncentiveItem(
+    override val groupKey: String,
+    val incentiveLevel: IncentiveLevel,
   ) : SessionItem(groupKey)
 
   data class SessionGroup(

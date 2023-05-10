@@ -25,6 +25,8 @@ class MigrationSessionTemplateMatcher(
   private val prisonerService: PrisonerService,
   private val sessionService: SessionService,
   private val sessionTemplateRepository: SessionTemplateRepository,
+  private val prisonerCategoryMatcher: PrisonerCategoryMatcher,
+  private val prisonerIncentiveLevelMatcher: PrisonerIncentiveLevelMatcher,
 ) {
 
   companion object {
@@ -149,10 +151,8 @@ class MigrationSessionTemplateMatcher(
     sessionTemplates.forEach { template ->
       val matcher = matchedSessionTemplate[template]
       matcher?.let {
-        if (prisonerDto.category != null) {
-          it.category = sessionService.isPrisonerCategoryAllowedOnSession(template, prisonerDto.category)
-        }
-        it.enhanced = template.enhanced == true && prisonerDto.enhanced == true
+        it.category = prisonerCategoryMatcher.test(prisonerDto.category, template)
+        it.enhanced = prisonerIncentiveLevelMatcher.test(prisonerDto.incentiveLevel, template)
         it.timeProximity = getProximityMinutes(template.startTime, startTime, template.endTime, endTime)
         it.roomNameMatch = template.visitRoom == migrateVisitRequest.visitRoom
         it.validDateProximity = getDateProximityDays(migrateVisitRequest, template)

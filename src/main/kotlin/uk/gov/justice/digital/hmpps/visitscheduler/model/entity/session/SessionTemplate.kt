@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractReferenceEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -37,9 +38,6 @@ class SessionTemplate(
   @Column(nullable = false)
   val visitRoom: String,
 
-  @Column(nullable = false)
-  val enhanced: Boolean = false,
-
   @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
   @JoinTable(
     name = "SESSION_TO_LOCATION_GROUP",
@@ -55,6 +53,14 @@ class SessionTemplate(
     inverseJoinColumns = [JoinColumn(name = "session_category_group_id")],
   )
   val permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
+
+  @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
+  @JoinTable(
+    name = "SESSION_TO_INCENTIVE_GROUP",
+    joinColumns = [JoinColumn(name = "session_template_id")],
+    inverseJoinColumns = [JoinColumn(name = "session_incentive_group_id")],
+  )
+  val permittedSessionIncentiveLevelGroups: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
 
   @Column
   @Enumerated(EnumType.STRING)

@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_SESSION_SCHEDU
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.TUESDAY
 import java.time.LocalDate
@@ -43,7 +44,6 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       dayOfWeek = sessionDate.dayOfWeek,
       permittedLocationGroups = mutableListOf(sessionLocationGroup),
       permittedCategories = mutableListOf(sessionCategoryGroup),
-      enhanced = true,
     )
 
     // When
@@ -63,7 +63,6 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[0].capacity.closed).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[0]).isEqualTo(sessionLocationGroup.name)
     Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[0]).isEqualTo(sessionCategoryGroup.name)
-    Assertions.assertThat(sessionScheduleResults[0].enhanced).isTrue
   }
 
   @Test
@@ -257,6 +256,33 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
     Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[0]).isEqualTo(sessionCategoryGroup1.name)
     Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[1]).isEqualTo(sessionCategoryGroup2.name)
+  }
+
+  @Test
+  fun `Session schedule is returned for a prison, with multiple incentive level groups`() {
+    // Given
+    val sessionDate = LocalDate.now()
+
+    val sessionIncentiveLevelGroup1 = sessionPrisonerIncentiveLevelHelper.create(name = "Enhanced Incentive prisoners", prisonCode = prisonCode, incentiveLevelList = mutableListOf(IncentiveLevel.ENHANCED, IncentiveLevel.ENHANCED_2))
+    val sessionIncentiveLevelGroup2 = sessionPrisonerIncentiveLevelHelper.create(name = "Basic Incentive prisoners", prisonCode = prisonCode, incentiveLevelList = mutableListOf(IncentiveLevel.BASIC))
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = sessionDate,
+      validToDate = sessionDate.plusDays(7),
+      dayOfWeek = sessionDate.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(sessionIncentiveLevelGroup1, sessionIncentiveLevelGroup2),
+    )
+
+    // When
+    val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionScheduleResults = getResults(returnResult)
+    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
+    Assertions.assertThat(sessionScheduleResults[0].prisonerIncentiveLevelGroupNames[0]).isEqualTo(sessionIncentiveLevelGroup1.name)
+    Assertions.assertThat(sessionScheduleResults[0].prisonerIncentiveLevelGroupNames[1]).isEqualTo(sessionIncentiveLevelGroup2.name)
   }
 
   private fun callGetSessionSchedule(

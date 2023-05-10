@@ -1,8 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category
 
-/*
-TODO - this needs to be reconsidered based on tests and further analysis and might need to be replaced with a String.
- */
 enum class PrisonerCategoryType(
   val code: String,
 ) {

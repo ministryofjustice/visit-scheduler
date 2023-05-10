@@ -30,7 +30,6 @@ fun sessionTemplate(
   permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
   permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
   biWeekly: Boolean = false,
-  enhanced: Boolean = true,
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = true)
 
@@ -50,7 +49,6 @@ fun sessionTemplate(
     permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     biWeekly = biWeekly,
-    enhanced = enhanced,
   ).also { it.reference = UUID.randomUUID().toString() }
 }
 
@@ -67,8 +65,8 @@ fun createSessionTemplateDto(
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
-  enhanced: Boolean = true,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
+  incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): CreateSessionTemplateDto {
   return CreateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -83,8 +81,8 @@ fun createSessionTemplateDto(
     dayOfWeek = dayOfWeek,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
-    enhanced = enhanced,
     categoryGroupReferences = categoryGroupReferences,
+    incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
 }
 
@@ -99,8 +97,8 @@ fun createUpdateSessionTemplateDto(
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
-  enhanced: Boolean = true,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
+  incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -112,8 +110,8 @@ fun createUpdateSessionTemplateDto(
     endTime = endTime,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
-    enhanced = enhanced,
     categoryGroupReferences = categoryGroupReferences,
+    incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
 }
 
