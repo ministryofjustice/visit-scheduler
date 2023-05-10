@@ -19,7 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionPrisonerIncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
@@ -381,7 +381,7 @@ class SessionPrisonerIncentiveLevelHelper(
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
   private val prisonEntityHelper: PrisonEntityHelper,
 ) {
-  fun create(name: String? = "Group A", prisonCode: String = "MDI", incentiveLevelsList: List<IncentiveLevels>): SessionIncentiveLevelGroup {
+  fun create(name: String? = "Group A", prisonCode: String = "MDI", incentiveLevelList: List<IncentiveLevel>): SessionIncentiveLevelGroup {
     val prison = prisonEntityHelper.create(prisonCode, true)
 
     val group = sessionIncentiveLevelGroupRepository.saveAndFlush(
@@ -394,7 +394,7 @@ class SessionPrisonerIncentiveLevelHelper(
 
     val permittedIncentiveLevelGroups = mutableListOf<SessionPrisonerIncentiveLevel>()
 
-    for (prisonerIncentiveLevel in incentiveLevelsList) {
+    for (prisonerIncentiveLevel in incentiveLevelList) {
       val permittedIncentiveLevelGroup =
         SessionPrisonerIncentiveLevel(
           sessionCategoryGroupId = group.id,

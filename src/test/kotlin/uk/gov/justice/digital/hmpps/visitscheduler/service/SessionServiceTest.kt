@@ -39,7 +39,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
@@ -86,10 +86,10 @@ class SessionServiceTest {
     whenever(prisonerSessionValidator.isSessionAvailableToPrisonerLocation(any(), any())).thenReturn(true)
   }
 
-  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incentiveLevels: IncentiveLevels? = null, category: String ? = null) {
+  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incentiveLevel: IncentiveLevel? = null, category: String ? = null) {
     whenever(
       prisonerService.getPrisoner(any()),
-    ).thenReturn(PrisonerDto(category = category, incentiveLevel = incentiveLevels))
+    ).thenReturn(PrisonerDto(category = category, incentiveLevel = incentiveLevel))
 
     whenever(
       sessionTemplateRepository.findValidSessionTemplatesBy(

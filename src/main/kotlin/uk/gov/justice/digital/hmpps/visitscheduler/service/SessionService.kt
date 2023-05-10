@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequenc
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
@@ -115,7 +115,7 @@ class SessionService(
     return sessionTemplates
   }
 
-  fun filterByIncentiveLevels(sessionTemplates: List<SessionTemplate>, prisonerIncentiveLevel: IncentiveLevels?): List<SessionTemplate> {
+  fun filterByIncentiveLevels(sessionTemplates: List<SessionTemplate>, prisonerIncentiveLevel: IncentiveLevel?): List<SessionTemplate> {
     val hasSessionsWithIncentiveLevelGroups = sessionTemplates.any { it.permittedSessionIncentiveLevelGroups.isNotEmpty() }
     if (hasSessionsWithIncentiveLevelGroups) {
       return sessionTemplates.filter { sessionTemplate ->

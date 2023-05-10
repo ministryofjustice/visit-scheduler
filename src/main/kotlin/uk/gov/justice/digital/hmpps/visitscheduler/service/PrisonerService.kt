@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_TWO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 
 @Service
 class PrisonerService(
@@ -102,12 +102,12 @@ class PrisonerService(
   fun getPrisoner(prisonerId: String): PrisonerDto? {
     val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
     val incentiveLevelCode = prisonerSearchResultDto?.currentIncentive?.level?.code
-    var incentiveLevel: IncentiveLevels? = null
+    var incentiveLevel: IncentiveLevel? = null
     incentiveLevelCode?.let {
-      incentiveLevel = IncentiveLevels.getIncentiveLevel(it)
+      incentiveLevel = IncentiveLevel.getIncentiveLevel(it)
 
       if (incentiveLevel == null) {
-        LOG.error("Incentive level - $it for prisoner - $prisonerId not available in IncentiveLevels enum.")
+        LOG.error("Incentive level - $it for prisoner - $prisonerId not available in IncentiveLevel enum.")
       }
     }
     return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel)

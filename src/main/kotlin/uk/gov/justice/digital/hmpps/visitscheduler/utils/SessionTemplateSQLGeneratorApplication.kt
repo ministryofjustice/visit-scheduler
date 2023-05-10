@@ -9,7 +9,7 @@ import reactor.util.function.Tuple2
 import reactor.util.function.Tuples
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.BI_WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CATEGORY_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CLOSED
@@ -451,9 +451,9 @@ class SessionTemplateSQLGenerator {
 
         incentiveLevels.forEach {
           try {
-            IncentiveLevels.valueOf(it)
+            IncentiveLevel.valueOf(it)
           } catch (e: Exception) {
-            val allowedValues = IncentiveLevels.values().joinToString(",")
+            val allowedValues = IncentiveLevel.values().joinToString(",")
             throw IllegalArgumentException("IncentiveLevel : Invalid incentive level - $it - allowed values are - $allowedValues  (prison:$prisonCode key:$key)!")
           }
         }
@@ -465,7 +465,7 @@ class SessionTemplateSQLGenerator {
       with(this) {
         incentiveLevels.forEach {
           sessionIncentiveItemList.add(
-            SessionPrisonerIncentiveItem(groupKey = key, incentiveLevel = IncentiveLevels.valueOf(it)),
+            SessionPrisonerIncentiveItem(groupKey = key, incentiveLevel = IncentiveLevel.valueOf(it)),
           )
         }
       }
@@ -493,7 +493,7 @@ class SessionTemplateSQLGenerator {
 
   data class SessionPrisonerIncentiveItem(
     override val groupKey: String,
-    val incentiveLevel: IncentiveLevels,
+    val incentiveLevel: IncentiveLevel,
   ) : SessionItem(groupKey)
 
   data class SessionGroup(

@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.util.function.Predicate
 
 @Component
@@ -46,7 +46,7 @@ class PrisonerSessionValidator(
   }
 
   fun isSessionAvailableToIncentiveLevel(
-    prisonerIncentiveLevel: IncentiveLevels?,
+    prisonerIncentiveLevel: IncentiveLevel?,
     sessionTemplate: SessionTemplate,
   ): Boolean {
     val isSessionAvailableToAllPrisoners = sessionAllPrisonersIncentiveLevelMatcher.test(sessionTemplate)

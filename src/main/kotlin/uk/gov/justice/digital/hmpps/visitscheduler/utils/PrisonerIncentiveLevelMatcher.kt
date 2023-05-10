@@ -4,25 +4,25 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.util.function.BiPredicate
 import java.util.stream.Collectors
 
 @Component
-class PrisonerIncentiveLevelMatcher : BiPredicate<IncentiveLevels?, SessionTemplate> {
+class PrisonerIncentiveLevelMatcher : BiPredicate<IncentiveLevel?, SessionTemplate> {
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
   override fun test(
-    prisonerIncentiveLevel: IncentiveLevels?,
+    prisonerIncentiveLevel: IncentiveLevel?,
     sessionTemplate: SessionTemplate,
   ): Boolean {
     return isPrisonerIncentiveLevelAllowedOnSession(sessionTemplate, prisonerIncentiveLevel)
   }
 
-  fun isPrisonerIncentiveLevelAllowedOnSession(sessionTemplate: SessionTemplate, prisonerIncentiveLevel: IncentiveLevels?): Boolean {
+  fun isPrisonerIncentiveLevelAllowedOnSession(sessionTemplate: SessionTemplate, prisonerIncentiveLevel: IncentiveLevel?): Boolean {
     prisonerIncentiveLevel?.let {
       return getAllowedIncentiveLevelsForSessionTemplate(sessionTemplate).any { incentiveLevel ->
         val match = incentiveLevel.equals(it.code, false)

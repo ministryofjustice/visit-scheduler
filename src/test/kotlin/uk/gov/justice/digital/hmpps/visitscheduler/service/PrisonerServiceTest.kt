@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.CurrentIncentiveDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.IncentiveLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -401,7 +402,7 @@ class PrisonerServiceTest {
   }
 
   @Test
-  fun `when prisoner has enhanced incentive level then check for enhanced privilege returns true`() {
+  fun `when prisoner has enhanced incentive level then enhanced incentive level is returned`() {
     // Given
     val prisonerId = "AA1234BB"
     val prisonId = "MDI"
@@ -418,13 +419,12 @@ class PrisonerServiceTest {
     val prisoner = prisonerService.getPrisoner(prisonerId)
 
     // Then
-    // TODO - update - VB-2024
-    // assertThat(prisoner?.enhanced).isTrue
+    assertThat(prisoner?.incentiveLevel).isEqualTo(IncentiveLevel.ENHANCED)
     Mockito.verify(prisonerOffenderSearchClient, times(1)).getPrisoner(prisonerId)
   }
 
   @Test
-  fun `when prisoner has standard incentive level then check for enhanced privilege returns false`() {
+  fun `when prisoner has standard incentive level then standard incentive level is returned`() {
     // Given
     val prisonerId = "AA1234BB"
     val prisonId = "MDI"
@@ -441,13 +441,12 @@ class PrisonerServiceTest {
     val prisoner = prisonerService.getPrisoner(prisonerId)
 
     // Then
-    // TODO - update - VB-2024
-    // assertThat(prisoner?.enhanced).isFalse
+    assertThat(prisoner?.incentiveLevel).isEqualTo(IncentiveLevel.STANDARD)
     Mockito.verify(prisonerOffenderSearchClient, times(1)).getPrisoner(prisonerId)
   }
 
   @Test
-  fun `when prisoner has any other incentive level besides enhanced then check for enhanced privilege returns false`() {
+  fun `when prisoner has an invalid incentive level then incentive level is returned as null`() {
     // Given
     val prisonerId = "AA1234BB"
     val prisonId = "MDI"
@@ -464,13 +463,12 @@ class PrisonerServiceTest {
     val prisoner = prisonerService.getPrisoner(prisonerId)
 
     // Then
-    // TODO - update - VB-2024
-    // assertThat(prisoner?.enhanced).isFalse
+    assertThat(prisoner?.incentiveLevel).isNull()
     Mockito.verify(prisonerOffenderSearchClient, times(1)).getPrisoner(prisonerId)
   }
 
   @Test
-  fun `when prisoner has incentive level code as NULL then check for enhanced privilege returns false`() {
+  fun `when prisoner has incentive level code as NULL then incentive level is returned as null`() {
     // Given
     val prisonerId = "AA1234BB"
     val prisonId = "MDI"
@@ -489,13 +487,12 @@ class PrisonerServiceTest {
     val prisoner = prisonerService.getPrisoner(prisonerId)
 
     // Then
-    // TODO - update - VB-2024
-    // assertThat(prisoner?.enhanced).isFalse
+    assertThat(prisoner?.incentiveLevel).isNull()
     Mockito.verify(prisonerOffenderSearchClient, times(1)).getPrisoner(prisonerId)
   }
 
   @Test
-  fun `when prisoner has current incentive as null then check for enhanced privilege returns false`() {
+  fun `when prisoner has current incentive as null then incentive level is returned as null`() {
     // Given
     val prisonerId = "AA1234BB"
     val prisonId = "MDI"
@@ -511,13 +508,12 @@ class PrisonerServiceTest {
     val prisoner = prisonerService.getPrisoner(prisonerId)
 
     // Then
-    // TODO - update - VB-2024
-    // assertThat(prisoner?.enhanced).isFalse
+    assertThat(prisoner?.incentiveLevel).isNull()
     Mockito.verify(prisonerOffenderSearchClient, times(1)).getPrisoner(prisonerId)
   }
 
   @Test
-  fun `when prisoner search call returns NOT FOUND then check for enhanced privilege returns false`() {
+  fun `when prisoner search call returns NOT FOUND then incentive level is returned as null`() {
     // Given
     val prisonerId = "AA1234BB"
 
@@ -529,8 +525,7 @@ class PrisonerServiceTest {
     val prisonerDto = prisonerService.getPrisoner(prisonerId)
 
     // Then
-    // TODO - update - VB-2024
-    // assertThat(prisonerDto?.enhanced).isFalse
+    assertThat(prisonerDto?.incentiveLevel).isNull()
     Mockito.verify(prisonerOffenderSearchClient, times(1)).getPrisoner(prisonerId)
   }
 

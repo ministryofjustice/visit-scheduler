@@ -3,7 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incenti
 import java.util.Arrays
 import kotlin.jvm.optionals.getOrNull
 
-enum class IncentiveLevels(val code: String) {
+enum class IncentiveLevel(val code: String) {
   ENHANCED("ENH"),
   ENHANCED_2("EN2"),
   ENHANCED_3("EN3"),
@@ -12,7 +12,7 @@ enum class IncentiveLevels(val code: String) {
   ;
 
   companion object {
-    fun getIncentiveLevel(code: String): IncentiveLevels? {
+    fun getIncentiveLevel(code: String): IncentiveLevel? {
       return Arrays.stream(values()).filter { it.code == code }.findFirst().getOrNull()
     }
   }

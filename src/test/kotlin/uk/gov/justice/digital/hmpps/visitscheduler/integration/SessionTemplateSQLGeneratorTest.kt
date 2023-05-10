@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.GroupType.LOCATION
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.GroupType.PRISONER_CATEGORY
@@ -463,13 +463,13 @@ class SessionTemplateSQLGeneratorTest {
     assertThat(prisonerIncentiveLevelGroupsColumns[3].name).isEqualTo("Test INC_LEVEL 4")
 
     assertThat(sessionIncentiveLevelItems.size).isEqualTo(7)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[0], "CFI_INC_LEVEL1", IncentiveLevels.BASIC)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[1], "CFI_INC_LEVEL2", IncentiveLevels.STANDARD)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[2], "CFI_INC_LEVEL3", IncentiveLevels.ENHANCED_3)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[3], "CFI_INC_LEVEL3", IncentiveLevels.BASIC)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[4], "CFI_INC_LEVEL3", IncentiveLevels.STANDARD)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[5], "CFI_INC_LEVEL4", IncentiveLevels.ENHANCED)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[6], "CFI_INC_LEVEL4", IncentiveLevels.ENHANCED_2)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[0], "CFI_INC_LEVEL1", IncentiveLevel.BASIC)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[1], "CFI_INC_LEVEL2", IncentiveLevel.STANDARD)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[2], "CFI_INC_LEVEL3", IncentiveLevel.ENHANCED_3)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[3], "CFI_INC_LEVEL3", IncentiveLevel.BASIC)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[4], "CFI_INC_LEVEL3", IncentiveLevel.STANDARD)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[5], "CFI_INC_LEVEL4", IncentiveLevel.ENHANCED)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[6], "CFI_INC_LEVEL4", IncentiveLevel.ENHANCED_2)
   }
 
   @Test
@@ -484,10 +484,10 @@ class SessionTemplateSQLGeneratorTest {
 
     // Then
     assertThat(sessionIncentiveLevelItems.size).isEqualTo(4)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[0], "CFI_INC_LEVEL1", IncentiveLevels.BASIC)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[1], "CFI_INC_LEVEL2", IncentiveLevels.ENHANCED_3)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[2], "CFI_INC_LEVEL2", IncentiveLevels.STANDARD)
-    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[3], "CFI_INC_LEVEL2", IncentiveLevels.ENHANCED)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[0], "CFI_INC_LEVEL1", IncentiveLevel.BASIC)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[1], "CFI_INC_LEVEL2", IncentiveLevel.ENHANCED_3)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[2], "CFI_INC_LEVEL2", IncentiveLevel.STANDARD)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[3], "CFI_INC_LEVEL2", IncentiveLevel.ENHANCED)
   }
 
   @Test
@@ -590,7 +590,7 @@ class SessionTemplateSQLGeneratorTest {
   private fun assertSessionPrisonerIncentiveLevel(
     sessionItem: SessionItem,
     key: String,
-    incentiveLevel: IncentiveLevels,
+    incentiveLevel: IncentiveLevel,
   ) {
     val sessionPrisonerIncentiveLevelItem = sessionItem as SessionPrisonerIncentiveItem
     assertThat(sessionPrisonerIncentiveLevelItem.groupKey).isEqualTo(key)

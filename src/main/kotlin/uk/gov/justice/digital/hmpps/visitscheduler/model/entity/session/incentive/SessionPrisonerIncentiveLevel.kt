@@ -29,7 +29,7 @@ class SessionPrisonerIncentiveLevel(
 
   @Column(name = "code", nullable = false)
   @Enumerated(EnumType.STRING)
-  var prisonerIncentiveLevel: IncentiveLevels,
+  var prisonerIncentiveLevel: IncentiveLevel,
 
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)

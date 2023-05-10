@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
@@ -73,7 +73,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
-      IncentiveLevels.ENHANCED,
+      IncentiveLevel.ENHANCED,
     )
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
@@ -184,7 +184,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
 
     val incentiveLevelList = listOf(
-      IncentiveLevels.ENHANCED,
+      IncentiveLevel.ENHANCED,
     )
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
@@ -223,7 +223,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
 
     val incentiveLevelList = listOf(
-      IncentiveLevels.ENHANCED,
+      IncentiveLevel.ENHANCED,
     )
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
@@ -1300,7 +1300,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
-      IncentiveLevels.ENHANCED,
+      IncentiveLevel.ENHANCED,
     )
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
@@ -1338,7 +1338,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
-      IncentiveLevels.ENHANCED,
+      IncentiveLevel.ENHANCED,
     )
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
@@ -1376,7 +1376,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
-      IncentiveLevels.ENHANCED,
+      IncentiveLevel.ENHANCED,
     )
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
@@ -1412,7 +1412,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
-      IncentiveLevels.ENHANCED,
+      IncentiveLevel.ENHANCED,
     )
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
