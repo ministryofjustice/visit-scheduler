@@ -66,6 +66,7 @@ fun createSessionTemplateDto(
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
+  incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): CreateSessionTemplateDto {
   return CreateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -81,6 +82,7 @@ fun createSessionTemplateDto(
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
     categoryGroupReferences = categoryGroupReferences,
+    incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
 }
 
@@ -96,6 +98,7 @@ fun createUpdateSessionTemplateDto(
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
+  incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -108,6 +111,7 @@ fun createUpdateSessionTemplateDto(
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
     categoryGroupReferences = categoryGroupReferences,
+    incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
 }
 

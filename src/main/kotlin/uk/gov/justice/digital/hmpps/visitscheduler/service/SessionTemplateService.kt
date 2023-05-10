@@ -4,8 +4,8 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
@@ -15,9 +15,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationExcep
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import java.time.DayOfWeek
@@ -30,6 +32,7 @@ class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
+  private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
   private val prisonConfigService: PrisonConfigService,
 ) {
 
@@ -139,6 +142,10 @@ class SessionTemplateService(
       it.forEach { ref -> sessionTemplateEntity.permittedSessionLocationGroups.add(this.getLocationGroupByReference(ref)) }
     }
 
+    createSessionTemplateDto.incentiveLevelGroupReferences?.let {
+      it.forEach { ref -> sessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getPrisonerIncentiveLevelGroupByReference(ref)) }
+    }
+
     val sessionTemplateEntitySave = sessionTemplateRepository.saveAndFlush(sessionTemplateEntity)
 
     return SessionTemplateDto(
@@ -193,6 +200,10 @@ class SessionTemplateService(
       it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionCategoryGroups.add(this.getPrisonerCategoryGroupByReference(ref)) }
     }
 
+    updateSessionTemplateDto.incentiveLevelGroupReferences?.let {
+      updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.clear()
+      it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getPrisonerIncentiveLevelGroupByReference(ref)) }
+    }
     return SessionTemplateDto(updatedSessionTemplateEntity)
   }
 
@@ -222,16 +233,18 @@ class SessionTemplateService(
     return sessionCategoryGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerCategory reference:$reference not found")
   }
 
+  private fun getPrisonerIncentiveLevelGroupByReference(reference: String): SessionIncentiveLevelGroup {
+    return sessionIncentiveLevelGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerIncentiveLevel reference:$reference not found")
+  }
+
   private fun getLocationGroupByReference(reference: String): SessionLocationGroup {
-    val sessionLocationGroup = sessionLocationGroupRepository.findByReference(reference)
+    return sessionLocationGroupRepository.findByReference(reference)
       ?: throw ItemNotFoundException("SessionLocationGroup reference:$reference not found")
-    return sessionLocationGroup
   }
 
   private fun getSessionTemplate(reference: String): SessionTemplate {
-    val sessionTemplate = sessionTemplateRepository.findByReference(reference)
+    return sessionTemplateRepository.findByReference(reference)
       ?: throw TemplateNotFoundException("Template reference:$reference not found")
-    return sessionTemplate
   }
 }
 

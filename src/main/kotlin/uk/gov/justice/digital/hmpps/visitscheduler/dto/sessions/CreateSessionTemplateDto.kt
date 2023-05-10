@@ -56,4 +56,7 @@ data class CreateSessionTemplateDto(
 
   @Schema(description = "list of group references for allowed prisoner category groups", required = false)
   val categoryGroupReferences: List<String>? = listOf(),
+
+  @Schema(description = "list of group references for allowed prisoner incentive levels", required = false)
+  val incentiveLevelGroupReferences: List<String>? = listOf(),
 )

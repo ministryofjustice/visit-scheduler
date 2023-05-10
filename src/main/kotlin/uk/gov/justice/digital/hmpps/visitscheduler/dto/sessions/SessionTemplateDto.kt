@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.dto
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonFormat.Shape
@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.level.SessionIncentiveLevelGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -53,6 +54,8 @@ data class SessionTemplateDto(
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
   @Schema(description = "list of permitted prisoner category groups", required = false)
   val prisonerCategoryGroups: List<SessionCategoryGroupDto> = listOf(),
+  @Schema(description = "list of permitted incentive level groups", required = false)
+  val prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto> = listOf(),
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     reference = sessionTemplateEntity.reference,
@@ -69,6 +72,7 @@ data class SessionTemplateDto(
     dayOfWeek = sessionTemplateEntity.dayOfWeek,
     permittedLocationGroups = sessionTemplateEntity.permittedSessionLocationGroups.map { SessionLocationGroupDto(it) },
     prisonerCategoryGroups = sessionTemplateEntity.permittedSessionCategoryGroups.map { SessionCategoryGroupDto(it) },
+    prisonerIncentiveLevelGroups = sessionTemplateEntity.permittedSessionIncentiveLevelGroups.map { SessionIncentiveLevelGroupDto(it) },
     biWeekly = sessionTemplateEntity.biWeekly,
   )
 }
