@@ -166,7 +166,7 @@ class MigrationSessionTemplateMatcher(
 
     val orderedSessionTemplates = sessionTemplates.sortedWith(templateMatchComparator)
     val bestMatch = orderedSessionTemplates.lastOrNull()
-      ?: throw MatchSessionTemplateToMigratedVisitException("Could not find any SessionTemplate for : $message")
+      ?: throw MatchSessionTemplateToMigratedVisitException("Could not find any SessionTemplate : $message, No session templates!")
 
     if (!matchedSessionTemplate[bestMatch]!!.isValidProximity()) {
       throw MatchSessionTemplateToMigratedVisitException("Could not find any SessionTemplate : $message, Not a valid proximity!")
