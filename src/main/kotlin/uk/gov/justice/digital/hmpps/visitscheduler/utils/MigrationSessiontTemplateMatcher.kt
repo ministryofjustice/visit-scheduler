@@ -126,16 +126,17 @@ class MigrationSessionTemplateMatcher(
     val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
     val prisonCode = migrateVisitRequest.prisonCode
+    val prisonerId = migrateVisitRequest.prisonerId
 
-    val message = "prison code $prisonCode, visit $startDate/${startDate.dayOfWeek}/$startTime <> $endTime"
+    val message = "prison code $prisonCode prisoner id $prisonerId, visit $startDate/${startDate.dayOfWeek}/$startTime <> $endTime"
     LOG.debug("Enter getNearestSessionTemplate : $message")
 
     val matchedSessionTemplate = sessionTemplates.associateWith { MigrateMatch() }
 
     val sessionLocationTemplates = sessionService.filterSessionsTemplatesForLocation(
       sessionTemplates,
-      migrateVisitRequest.prisonerId,
-      migrateVisitRequest.prisonCode,
+      prisonerId,
+      prisonCode,
       true,
     )
     if (sessionLocationTemplates.isNotEmpty()) {
@@ -144,7 +145,7 @@ class MigrationSessionTemplateMatcher(
       }
     }
 
-    val prisonerDto = prisonerService.getPrisoner(migrateVisitRequest.prisonerId)!!
+    val prisonerDto = prisonerService.getPrisoner(prisonerId)!!
 
     sessionTemplates.forEach { template ->
       val matcher = matchedSessionTemplate[template]
