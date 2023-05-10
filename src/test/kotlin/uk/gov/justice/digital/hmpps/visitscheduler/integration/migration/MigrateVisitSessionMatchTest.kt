@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.migration
 
 import org.assertj.core.api.Assertions.assertThat
+import org.hamcrest.Matchers.endsWith
 import org.hamcrest.Matchers.startsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -603,7 +604,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Not valid proximity, Could not find any SessionTemplate for future visit date"))
+      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
+      .jsonPath("$.developerMessage").value(endsWith("Not a valid proximity!"))
   }
 
   @Test
@@ -626,7 +628,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Not valid proximity, Could not find any SessionTemplate for future visit date"))
+      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
+      .jsonPath("$.developerMessage").value(endsWith("Not a valid proximity!"))
   }
 
   @Test
@@ -651,7 +654,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Not valid proximity, Could not find any SessionTemplate for future visit date"))
+      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
+      .jsonPath("$.developerMessage").value(endsWith("Not a valid proximity!"))
   }
 
   @Test
@@ -668,7 +672,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
+      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
+      .jsonPath("$.developerMessage").value(endsWith("No session templates!"))
   }
 
   @Test
@@ -701,7 +706,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
+      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
+      .jsonPath("$.developerMessage").value(endsWith("No session templates!"))
   }
 
   @Test
@@ -734,7 +740,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate for future visit date"))
+      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
+      .jsonPath("$.developerMessage").value(endsWith("No session templates!"))
   }
 
   @Test
