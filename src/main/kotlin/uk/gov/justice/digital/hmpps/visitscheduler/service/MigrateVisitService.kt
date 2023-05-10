@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import com.microsoft.applicationinsights.TelemetryClient
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
@@ -36,6 +37,8 @@ class MigrateVisitService(
   private val snsService: SnsService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
+  @Value("\${migrate.session-template.mapping.offset:0}")
+  private val migrateSessionTemplateMappingOffset: Long,
 ) {
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
@@ -47,8 +50,7 @@ class MigrateVisitService(
     var sessionTemplateReference: String ? = null
     val visitRoom: String
 
-    val isInTheFuture = !migrateVisitRequest.startTimestamp.toLocalDate().isBefore(LocalDate.now())
-    if (isInTheFuture) {
+    if (shouldMigrateWithSessionMapping(migrateVisitRequest)) {
       val sessionTemplate = migrationSessionTemplateMatcher.getMatchingSessionTemplate(migrateVisitRequest)
 
       prison = sessionTemplate.prison
@@ -116,6 +118,11 @@ class MigrateVisitService(
     }
 
     return visitEntity.reference
+  }
+
+  private fun shouldMigrateWithSessionMapping(migrateVisitRequest: MigrateVisitRequestDto): Boolean {
+    val startDate = LocalDate.now().plusDays(migrateSessionTemplateMappingOffset)
+    return !migrateVisitRequest.startTimestamp.toLocalDate().isBefore(startDate)
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
