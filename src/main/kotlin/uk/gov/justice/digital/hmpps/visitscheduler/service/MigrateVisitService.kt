@@ -37,7 +37,7 @@ class MigrateVisitService(
   private val snsService: SnsService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
-  @Value("\${migrate.session-template.mapping.offset:0}")
+  @Value("\${migrate.sessiontemplate.mapping.offset:0}")
   private val migrateSessionTemplateMappingOffset: Long,
 ) {
 
