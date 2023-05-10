@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.UNKNOW
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_HIGH
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_PROVISIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.FEMALE_CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.DEFAULT_MAX_PROX_MINUTES
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -21,6 +22,10 @@ import java.time.LocalDateTime
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Migrate POST /visits")
 class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
+  val enhancedIncentiveLevelGroupName = "ENH Incentive Level Group"
+  val incentiveLevelList = listOf(
+    IncentiveLevel.ENHANCED,
+  )
 
   @BeforeEach
   internal fun setUp() {
@@ -83,6 +88,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
     val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+    val enhancedIncentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroupName, migrateVisitRequestDto.prisonCode, incentiveLevelList)
 
     sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
@@ -91,8 +97,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "1",
       startTime = startTime,
       endTime = endTime,
-      // TODO - to be done as part of VB-2216
-      // enhanced = false,
+      permittedIncentiveLevels = mutableListOf(),
     )
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
@@ -102,8 +107,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom,
       startTime = startTime,
       endTime = endTime,
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     sessionTemplateEntityHelper.create(
@@ -113,8 +117,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "3",
       startTime = startTime,
       endTime = endTime,
-      // TODO - to be done as part of VB-2216
-      // enhanced = false,
+      permittedIncentiveLevels = mutableListOf(),
     )
 
     // When
@@ -134,13 +137,13 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   @Test
   fun `Migrated session match - select session template with enhanced match`() {
     // Given
-
     val migrateVisitRequestDto = createMigrateVisitRequestDto(incentiveLevelCode = "ENH")
 
     val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
     val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+    val enhancedIncentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroupName, migrateVisitRequestDto.prisonCode, incentiveLevelList)
 
     sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
@@ -149,8 +152,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "1",
       startTime = startTime,
       endTime = endTime,
-      // TODO - to be done as part of VB-2216
-      // enhanced = false,
+      permittedIncentiveLevels = mutableListOf(),
     )
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
@@ -160,8 +162,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "2",
       startTime = startTime,
       endTime = endTime,
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     sessionTemplateEntityHelper.create(
@@ -171,8 +172,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "3",
       startTime = startTime,
       endTime = endTime,
-      // TODO - to be done as part of VB-2216
-      // enhanced = false,
+      permittedIncentiveLevels = mutableListOf(),
     )
 
     // When
@@ -380,6 +380,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
     val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+    val enhancedIncentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroupName, migrateVisitRequestDto.prisonCode, incentiveLevelList)
 
     // Enhanced - not enhanced
     sessionTemplateEntityHelper.create(
@@ -391,8 +392,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = false,
+      permittedIncentiveLevels = mutableListOf(),
     )
 
     // Categories - wrong category
@@ -405,8 +405,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // Categories - no category
@@ -418,8 +417,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       startTime = startTime,
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // Location - lower level location
@@ -432,8 +430,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // Location - no location
@@ -445,8 +442,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       startTime = startTime,
       endTime = endTime,
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // This is the session that should be selected - best match
@@ -459,8 +455,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // Proximity - out
@@ -473,8 +468,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime.minusMinutes(10),
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // Proximity - in
@@ -487,8 +481,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime.plusMinutes(10),
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // When
@@ -522,6 +515,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
     val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+    val enhancedIncentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroupName, migrateVisitRequestDto.prisonCode, incentiveLevelList)
 
     sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
@@ -532,8 +526,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // This is the session that should be selected - best match by room name
@@ -546,8 +539,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
+
     )
 
     sessionTemplateEntityHelper.create(
@@ -559,8 +552,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       endTime = endTime,
       permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
       permittedCategories = cratePermittedCategories("group A", migrateVisitRequestDto.prisonCode, A_HIGH, FEMALE_CLOSED),
-      // TODO - to be done as part of VB-2216
-      // enhanced = true,
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // When

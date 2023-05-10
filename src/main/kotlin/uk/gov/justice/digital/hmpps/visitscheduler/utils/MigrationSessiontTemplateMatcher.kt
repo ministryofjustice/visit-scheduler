@@ -25,7 +25,8 @@ class MigrationSessionTemplateMatcher(
   private val prisonerService: PrisonerService,
   private val sessionService: SessionService,
   private val sessionTemplateRepository: SessionTemplateRepository,
-  private val sessionValidator: PrisonerSessionValidator,
+  private val prisonerCategoryMatcher: PrisonerCategoryMatcher,
+  private val prisonerIncentiveLevelMatcher: PrisonerIncentiveLevelMatcher,
 ) {
 
   companion object {
@@ -150,11 +151,8 @@ class MigrationSessionTemplateMatcher(
     sessionTemplates.forEach { template ->
       val matcher = matchedSessionTemplate[template]
       matcher?.let {
-        if (prisonerDto.category != null) {
-          it.category = sessionValidator.isSessionAvailableToPrisonerCategory(prisonerDto.category, template)
-        }
-        // TODO - to be done as part of VB-2216
-        // it.enhanced = template.enhanced == true && prisonerDto.enhanced == true
+        it.category = prisonerCategoryMatcher.test(prisonerDto.category, template)
+        it.enhanced = prisonerIncentiveLevelMatcher.test(prisonerDto.incentiveLevel, template)
         it.timeProximity = getProximityMinutes(template.startTime, startTime, template.endTime, endTime)
         it.roomNameMatch = template.visitRoom == migrateVisitRequest.visitRoom
         it.validDateProximity = getDateProximityDays(migrateVisitRequest, template)
