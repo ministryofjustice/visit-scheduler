@@ -125,8 +125,10 @@ class MigrationSessionTemplateMatcher(
     val startDate = migrateVisitRequest.startTimestamp.toLocalDate()
     val startTime = migrateVisitRequest.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequest.endTimestamp.toLocalTime()
+    val prisonCode = migrateVisitRequest.prisonCode
 
-    LOG.debug("Enter getNearestSessionTemplate visit date $startDate/${startDate.dayOfWeek}/$startTime <> $endTime")
+    val message = "prison code $prisonCode, visit $startDate/${startDate.dayOfWeek}/$startTime <> $endTime"
+    LOG.debug("Enter getNearestSessionTemplate : $message")
 
     val matchedSessionTemplate = sessionTemplates.associateWith { MigrateMatch() }
 
@@ -166,10 +168,10 @@ class MigrationSessionTemplateMatcher(
 
     val orderedSessionTemplates = sessionTemplates.sortedWith(templateMatchComparator)
     val bestMatch = orderedSessionTemplates.lastOrNull()
-      ?: throw MatchSessionTemplateToMigratedVisitException("Could not find any SessionTemplate for future visit date $startDate/${startDate.dayOfWeek}/$startTime")
+      ?: throw MatchSessionTemplateToMigratedVisitException("Could not find any SessionTemplate : $message, No session templates!")
 
     if (!matchedSessionTemplate[bestMatch]!!.isValidProximity()) {
-      throw MatchSessionTemplateToMigratedVisitException("Not valid proximity, Could not find any SessionTemplate for future visit date $startDate/${startDate.dayOfWeek}/$startTime")
+      throw MatchSessionTemplateToMigratedVisitException("Could not find any SessionTemplate : $message, Not a valid proximity!")
     }
     return bestMatch
   }
