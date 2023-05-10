@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionLocationGroupHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerCategoryHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerIncentiveLevelHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
@@ -51,6 +52,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var sessionPrisonerCategoryHelper: SessionPrisonerCategoryHelper
+
+  @Autowired
+  protected lateinit var sessionPrisonerIncentiveLevelHelper: SessionPrisonerIncentiveLevelHelper
 
   @Autowired
   lateinit var prisonEntityHelper: PrisonEntityHelper

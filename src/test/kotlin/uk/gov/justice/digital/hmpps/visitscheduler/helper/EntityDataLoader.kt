@@ -19,10 +19,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionPrisonerIncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
@@ -233,6 +237,7 @@ class SessionTemplateEntityHelper(
     permittedLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
+    permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -251,6 +256,7 @@ class SessionTemplateEntityHelper(
       permittedSessionGroups = permittedLocationGroups,
       biWeekly = biWeekly,
       permittedCategories = permittedCategories,
+      permittedIncentiveLevels = permittedIncentiveLevels,
     )
   }
 
@@ -270,6 +276,7 @@ class SessionTemplateEntityHelper(
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
+    permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
   ): SessionTemplate {
     return sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -288,6 +295,7 @@ class SessionTemplateEntityHelper(
         permittedSessionLocationGroups = permittedSessionGroups,
         biWeekly = biWeekly,
         permittedSessionCategoryGroups = permittedCategories,
+        permittedSessionIncentiveLevelGroups = permittedIncentiveLevels,
       ),
     )
   }
@@ -362,6 +370,41 @@ class SessionPrisonerCategoryHelper(
     }
 
     group.sessionCategories.addAll(permittedCategoryGroups)
+
+    return group
+  }
+}
+
+@Component
+@Transactional
+class SessionPrisonerIncentiveLevelHelper(
+  private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
+  private val prisonEntityHelper: PrisonEntityHelper,
+) {
+  fun create(name: String? = "Group A", prisonCode: String = "MDI", incentiveLevelsList: List<IncentiveLevels>): SessionIncentiveLevelGroup {
+    val prison = prisonEntityHelper.create(prisonCode, true)
+
+    val group = sessionIncentiveLevelGroupRepository.saveAndFlush(
+      SessionIncentiveLevelGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = name!!,
+      ),
+    )
+
+    val permittedIncentiveLevelGroups = mutableListOf<SessionPrisonerIncentiveLevel>()
+
+    for (prisonerIncentiveLevel in incentiveLevelsList) {
+      val permittedIncentiveLevelGroup =
+        SessionPrisonerIncentiveLevel(
+          sessionCategoryGroupId = group.id,
+          sessionIncentiveLevelGroup = group,
+          prisonerIncentiveLevel = prisonerIncentiveLevel,
+        )
+      permittedIncentiveLevelGroups.add(permittedIncentiveLevelGroup)
+    }
+
+    group.sessionIncentiveLevels.addAll(permittedIncentiveLevelGroups)
 
     return group
   }

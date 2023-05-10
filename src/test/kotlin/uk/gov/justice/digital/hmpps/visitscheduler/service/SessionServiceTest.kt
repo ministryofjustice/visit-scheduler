@@ -83,7 +83,7 @@ class SessionServiceTest {
     )
 
     whenever(prisonerService.getLevelsMapForPrisoner(any())).thenReturn(mutableMapOf<PrisonerHousingLevels, String?>())
-    whenever(prisonerSessionValidator.isSessionAvailableToPrisoner(any(), any())).thenReturn(true)
+    whenever(prisonerSessionValidator.isSessionAvailableToPrisonerLocation(any(), any())).thenReturn(true)
   }
 
   private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incentiveLevels: IncentiveLevels? = null, category: String ? = null) {

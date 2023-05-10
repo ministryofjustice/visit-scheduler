@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
@@ -66,10 +67,15 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions are returned for enhanced prisoner a prison for a single schedule`() {
+  fun `visit sessions are returned for enhanced prisoner when prison has enhanced schedule`() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
+    val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
+    val incentiveLevelList = listOf(
+      IncentiveLevels.ENHANCED,
+    )
+    val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "ENH")
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
@@ -85,10 +91,10 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelGroup),
     )
 
     // When
-
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
@@ -101,7 +107,7 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions are returned for a standard prisoner for a schedule that is not enhanced`() {
+  fun `non enhanced visit sessions are returned for a prisoner with any incentive level`() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
@@ -120,6 +126,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(),
     )
 
     // When
@@ -135,10 +142,51 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `no visit sessions are returned for a standard prisoner for a schedule that is enhanced`() {
+  fun `non enhanced visit sessions are returned for a prisoner with null incentive level`() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, null)
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(),
+    )
+
+    // When
+
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+  }
+
+  @Test
+  fun `no visit sessions are returned for a standard incentive level prisoner for a schedule that is enhanced`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+    val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
+
+    val incentiveLevelList = listOf(
+      IncentiveLevels.ENHANCED,
+    )
+    val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "STD")
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
@@ -153,10 +201,10 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelGroup),
     )
 
     // When
-
     val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
@@ -164,9 +212,46 @@ class GetSessionsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(0)
+  }
 
-    // TODO - update - VB-2024 - this needs to go back to isEqualTo(0)
-    assertThat(visitSessionResults.size).isEqualTo(1)
+  @Test
+  fun `no visit sessions are returned for a null incentive level prisoner for a schedule that is enhanced`() {
+    // Given
+    val prisonCode = "MDI"
+    val prisonerId = "A1234AA"
+    val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
+
+    val incentiveLevelList = listOf(
+      IncentiveLevels.ENHANCED,
+    )
+    val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, null)
+    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelGroup),
+    )
+
+    // When
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(0)
   }
 
   @Test
@@ -197,6 +282,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(),
       permittedCategories = mutableListOf(categoryInc1),
     )
 
@@ -239,6 +325,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(),
       permittedCategories = mutableListOf(categoryInc1),
     )
 
@@ -271,6 +358,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(),
     )
 
     // When
@@ -319,6 +407,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(),
       permittedCategories = mutableListOf(categoryIncAHighs, categoryIncNonAHighs),
     )
 
@@ -367,6 +456,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(),
       permittedCategories = mutableListOf(categoryIncAHighs, categoryIncNonAHighs),
     )
 
@@ -1208,6 +1298,11 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
+    val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
+    val incentiveLevelList = listOf(
+      IncentiveLevels.ENHANCED,
+    )
+    val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "ENH")
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
@@ -1222,6 +1317,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelGroup),
     )
 
     // When
@@ -1240,6 +1336,11 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
+    val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
+    val incentiveLevelList = listOf(
+      IncentiveLevels.ENHANCED,
+    )
+    val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerSearchResultDto = null)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
@@ -1254,6 +1355,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelGroup),
     )
 
     // When
@@ -1272,6 +1374,11 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
+    val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
+    val incentiveLevelList = listOf(
+      IncentiveLevels.ENHANCED,
+    )
+    val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "ENH")
     prisonApiMockServer.stubGetOffenderNonAssociation(prisonerId, null)
@@ -1286,6 +1393,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelGroup),
     )
 
     // When
@@ -1302,6 +1410,11 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
+    val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
+    val incentiveLevelList = listOf(
+      IncentiveLevels.ENHANCED,
+    )
+    val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, "ENH")
     prisonApiMockServer.stubGetOffenderNonAssociation(prisonerId, status = BAD_REQUEST)
@@ -1316,6 +1429,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      permittedIncentiveLevels = mutableListOf(incentiveLevelGroup),
     )
 
     // When

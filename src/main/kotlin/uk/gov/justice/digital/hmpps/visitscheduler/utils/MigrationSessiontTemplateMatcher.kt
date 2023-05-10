@@ -22,6 +22,7 @@ class MigrationSessionTemplateMatcher(
   private val prisonerService: PrisonerService,
   private val sessionService: SessionService,
   private val sessionTemplateRepository: SessionTemplateRepository,
+  private val sessionValidator: PrisonerSessionValidator,
 ) {
 
   companion object {
@@ -134,7 +135,7 @@ class MigrationSessionTemplateMatcher(
       val matcher = matchedSessionTemplate[template]
       matcher?.let {
         if (prisonerDto.category != null) {
-          it.category = sessionService.isPrisonerCategoryAllowedOnSession(template, prisonerDto.category)
+          it.category = sessionValidator.isSessionAvailableToPrisonerCategory(prisonerDto.category, template)
         }
         // TODO - to be done as part of VB-2216
         // it.enhanced = template.enhanced == true && prisonerDto.enhanced == true

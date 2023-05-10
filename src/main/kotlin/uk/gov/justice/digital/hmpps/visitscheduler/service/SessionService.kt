@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequenc
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
@@ -26,7 +27,6 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit.DAYS
 import java.time.temporal.TemporalAdjusters
-import java.util.stream.Collectors
 import java.util.stream.Stream
 
 @Service
@@ -84,6 +84,7 @@ class SessionService(
 
     prisoner?.let {
       sessionTemplates = filterByCategory(sessionTemplates, prisoner.category)
+      sessionTemplates = filterByIncentiveLevels(sessionTemplates, prisoner.incentiveLevel)
     }
 
     sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId, prisonCode)
@@ -107,31 +108,22 @@ class SessionService(
     val hasSessionsWithCategoryGroups = sessionTemplates.any { it.permittedSessionCategoryGroups.isNotEmpty() }
     if (hasSessionsWithCategoryGroups) {
       return sessionTemplates.filter { sessionTemplate ->
-        sessionTemplate.permittedSessionCategoryGroups.isEmpty() || isPrisonerCategoryAllowedOnSession(sessionTemplate, prisonerCategory)
+        sessionValidator.isSessionAvailableToPrisonerCategory(prisonerCategory, sessionTemplate)
       }
     }
 
     return sessionTemplates
   }
 
-  fun isPrisonerCategoryAllowedOnSession(sessionTemplate: SessionTemplate, prisonerCategory: String?): Boolean {
-    prisonerCategory?.let {
-      return getAllowedCategoriesForSessionTemplate(sessionTemplate).any { category ->
-        val match = category.equals(prisonerCategory, false)
-        LOG.debug("isPrisonerCategoryAllowedOnSession prisonerCategory:$prisonerCategory, matched $match, sessionTemplate:${sessionTemplate.reference}")
-        match
+  fun filterByIncentiveLevels(sessionTemplates: List<SessionTemplate>, prisonerIncentiveLevel: IncentiveLevels?): List<SessionTemplate> {
+    val hasSessionsWithIncentiveLevelGroups = sessionTemplates.any { it.permittedSessionIncentiveLevelGroups.isNotEmpty() }
+    if (hasSessionsWithIncentiveLevelGroups) {
+      return sessionTemplates.filter { sessionTemplate ->
+        sessionValidator.isSessionAvailableToIncentiveLevel(prisonerIncentiveLevel, sessionTemplate)
       }
     }
 
-    // if prisoner category is null - return false as prisoner should not be allowed on restricted category sessions
-    return false
-  }
-
-  private fun getAllowedCategoriesForSessionTemplate(sessionTemplate: SessionTemplate): Set<String> {
-    return sessionTemplate.permittedSessionCategoryGroups.stream()
-      .flatMap { it.sessionCategories.stream() }
-      .map { it.prisonerCategoryType.code }
-      .collect(Collectors.toSet())
+    return sessionTemplates
   }
 
   private fun buildVisitSessionsUsingTemplate(
@@ -199,7 +191,7 @@ class SessionService(
           val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
           return sessionTemplates.filter { sessionTemplate ->
             LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference}")
-            sessionValidator.isSessionAvailableToPrisoner(prisonerLevels, sessionTemplate)
+            sessionValidator.isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)
           }
         }
         return listOf()
@@ -343,6 +335,7 @@ class SessionService(
       capacity = SessionCapacityDto(sessionTemplate),
       prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
       prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
+      prisonerIncentiveLevelGroupNames = sessionTemplate.permittedSessionIncentiveLevelGroups.map { it.name }.toList(),
       sessionTemplateFrequency = sessionTemplateFrequency,
       sessionTemplateEndDate = sessionTemplate.validToDate,
     )
