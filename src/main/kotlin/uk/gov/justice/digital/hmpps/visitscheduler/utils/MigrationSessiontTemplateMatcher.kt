@@ -43,14 +43,14 @@ class MigrationSessionTemplateMatcher(
       if (!isValidProximity()) return -1
 
       // smaller proximity the better, hence -timeProximity
-      val timeProximityCompare = compareScour(-timeProximity.compareTo(other.timeProximity))
+      val timeProximityCompare = -timeProximity.compareTo(other.timeProximity)
 
       var compareValue =
         timeProximityCompare +
-          compareScour(locationScore.compareTo(other.locationScore)) +
+          locationScore.compareTo(other.locationScore) +
           category.compareTo(other.category) +
           enhanced.compareTo(other.enhanced) +
-          compareScour(validDateProximity.compareTo(other.validDateProximity))
+          validDateProximity.compareTo(other.validDateProximity)
 
       if (compareValue == 0) {
         compareValue = validDateProximity.compareTo(other.validDateProximity)
@@ -63,12 +63,6 @@ class MigrationSessionTemplateMatcher(
 
     fun isValidProximity(): Boolean {
       return (timeProximity <= maxProximityMinutes)
-    }
-
-    private fun compareScour(value: Int): Int {
-      if (value > 0) return 1
-      if (value < 0) return -1
-      return 0
     }
   }
 
