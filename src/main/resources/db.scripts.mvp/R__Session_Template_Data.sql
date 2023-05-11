@@ -19,7 +19,7 @@
         TRUNCATE TABLE session_prisoner_category  RESTART IDENTITY CASCADE;
         TRUNCATE TABLE session_prisoner_incentive  RESTART IDENTITY CASCADE;
 
-        INSERT INTO prison(code, active) SELECT 'HEI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'HEI');
+            INSERT INTO prison(code, active) SELECT 'HEI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'HEI');
         INSERT INTO prison(code, active) SELECT 'BLI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BLI');
         INSERT INTO prison(code, active) SELECT 'CFI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'CFI');
         INSERT INTO prison(code, active) SELECT 'WWI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'WWI');
