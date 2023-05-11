@@ -101,9 +101,36 @@ class GetSessionScheduleTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `Session schedule is not returned when date is excluded`() {
+    // Given
+    val sessionDate = LocalDate.now()
+
+    prisonEntityHelper.create(prisonCode, true, listOf(sessionDate))
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = sessionDate,
+      validToDate = sessionDate.plusDays(7),
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = sessionDate.dayOfWeek,
+      prisonCode = prisonCode,
+    )
+
+    // When
+    val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionScheduleResults = getResults(returnResult)
+    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(0)
+  }
+
+  @Test
   fun `When no schedules none are returned`() {
     // Given
     val sessionDate = LocalDate.now()
+    prisonEntityHelper.create(prisonCode, true)
 
     // When
     val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
