@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundExc
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
@@ -133,9 +134,13 @@ class SessionService(
   ): List<VisitSessionDto> {
     val firstBookableSessionDay = getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek)
     val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.validToDate)
+    val excludeDates = getExcludeDates(sessionTemplate.prison)
 
     if (firstBookableSessionDay <= lastBookableSessionDay) {
       return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
+        .filter { date ->
+          !excludeDates.contains(date)
+        }
         .map { date ->
           VisitSessionDto(
             sessionTemplateReference = sessionTemplate.reference,
@@ -152,6 +157,14 @@ class SessionService(
     }
 
     return emptyList()
+  }
+
+  private fun getExcludeDates(prison: Prison): Set<LocalDate> {
+    val excludeDates = mutableSetOf<LocalDate>()
+    if (prison.excludeDates.isNotEmpty()) {
+      prison.excludeDates.forEach { excludeDates.add(it.excludeDate) }
+    }
+    return excludeDates.toSet()
   }
 
   private fun calculateDates(firstBookableSessionDay: LocalDate, lastBookableSessionDay: LocalDate, sessionTemplate: SessionTemplate): Stream<LocalDate> {

@@ -67,6 +67,34 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `visit sessions are returned for a prison without excluded dates`() {
+    // Given
+
+    val nextAllowedDay = getNextAllowedDay()
+    val nextWeek = nextAllowedDay.plusDays(7)
+    prisonEntityHelper.create(prisonCode = "AWE", excludeDates = listOf(nextWeek))
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+    )
+
+    // When
+    val responseSpec = callGetSessions(prisonId = "AWE")
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+  }
+
+  @Test
   fun `visit sessions are returned for enhanced prisoner when prison has enhanced schedule`() {
     // Given
     val prisonCode = "MDI"

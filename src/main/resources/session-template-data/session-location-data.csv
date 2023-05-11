@@ -8,5 +8,5 @@ BLI,BLI_G2_WING,D:F,,,,Wings D and F
 BLI,BLI_G2_C2,C,2,001:002:003:004:005:006:007:008:025:026:027:028:029:030:031:032,,Wing C - Landing 2 - Cells 1 to 8 and 25 to 32
 BNI,BNI_A_WING,A,,,,"A Wing"
 BNI,BNI_OTHER_WINGS,B:C:D:E:F:SSCU:Healthcare,,,,"Wings B, C, D, E, F, SSCU and Healthcare"
-DMI,DMI_F_WING,F,,,,"F Wing"
-DMI,DMI_OTHER_WINGS,A:B:C:D:E:G:I:M,,,,"Wings A, B, C, D, E, G, I, M"
+DMI,DMI_C_F_WING,F:C,,,,"Wings C and F"
+DMI,DMI_OTHER_WINGS,A:B:D:E:G:I:M,,,,"Wings A, B, D, E, G, I, M"
