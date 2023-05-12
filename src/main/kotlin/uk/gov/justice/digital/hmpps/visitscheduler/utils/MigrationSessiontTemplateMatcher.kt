@@ -129,7 +129,7 @@ class MigrationSessionTemplateMatcher(
     val prisonCode = migrateVisitRequest.prisonCode
     val prisonerId = migrateVisitRequest.prisonerId
 
-    val message = "prison code $prisonCode prisoner id $prisonerId, visit $startDate/${startDate.dayOfWeek}/$startTime <> $endTime"
+    val message = "prison code $prisonCode prisoner id $prisonerId, visit $startDate/${startDate.dayOfWeek}/$startTime <> $endTime room:${migrateVisitRequest.visitRoom}"
     LOG.debug("Enter getNearestSessionTemplate : $message")
 
     val matchedSessionTemplate = sessionTemplates.associateWith { MigrateMatch() }
