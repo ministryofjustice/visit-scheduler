@@ -4,8 +4,10 @@ import jakarta.validation.ValidationException
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import java.time.LocalDate
 
 @Service
 @Transactional
@@ -17,6 +19,19 @@ class PrisonConfigService(
   @Transactional(readOnly = true)
   fun findPrisonByCode(prisonCode: String): Prison {
     return prisonRepository.findByCode(prisonCode) ?: throw ValidationException(messageService.getMessage("validation.prison.notfound", prisonCode))
+  }
+
+  @Cacheable("get-prison")
+  @Transactional(readOnly = true)
+  fun getPrison(prisonCode: String): PrisonDto {
+    val prison = findPrisonByCode(prisonCode)
+    return PrisonDto(prisonCode, prison.active, prison.excludeDates.map { it.excludeDate })
+  }
+
+  @Transactional(readOnly = true)
+  fun isExcludedDate(prisonCode: String, date: LocalDate): Boolean {
+    val prison = findPrisonByCode(prisonCode)
+    return prison.excludeDates.find { it.excludeDate.compareTo(date) == 0 } != null
   }
 
   @Cacheable("supported-prisons")

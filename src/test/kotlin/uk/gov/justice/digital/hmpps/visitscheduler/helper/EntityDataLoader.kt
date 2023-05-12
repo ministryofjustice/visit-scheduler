@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -44,12 +45,15 @@ class PrisonEntityHelper(
 ) {
 
   @Transactional(propagation = REQUIRED)
-  fun create(prisonCode: String = "MDI", activePrison: Boolean = true): Prison {
+  fun create(prisonCode: String = "MDI", activePrison: Boolean = true, excludeDates: List<LocalDate> = listOf()): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
     if (prison == null) {
       prison = prisonRepository.saveAndFlush(Prison(code = prisonCode, active = activePrison))
     } else {
       prison.active = activePrison
+    }
+    prison?.let {
+      prison.excludeDates.addAll(excludeDates.map { PrisonExcludeDate(prisonId = prison.id, prison = prison, it) })
     }
     return prison!!
   }
