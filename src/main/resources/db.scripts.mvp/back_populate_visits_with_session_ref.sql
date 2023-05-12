@@ -67,8 +67,8 @@ BEGIN;
         order by v.id;
 
 -- updates visits using data acquired
-    UPDATE visit SET session_reference = tmp.session_template_ref
-        FROM tmp_visits_to_sessions WHERE visit.id = tmp.visit_id
+UPDATE visit SET session_template_reference = tmp.session_template_ref
+    FROM tmp_visits_to_sessions tmp WHERE visit.id = tmp.visit_id and visit.session_template_reference is null;
 
 -- drop temporary tables
     DROP TABLE  tmp_visits_with_sessions;
