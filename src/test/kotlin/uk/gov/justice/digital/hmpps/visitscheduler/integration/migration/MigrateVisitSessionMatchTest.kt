@@ -247,13 +247,17 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   fun `Migrated session match - select session template with closest housing location`() {
     // Given
 
-    val prisonCode = "AWE"
-    val prisonerHousing = "$prisonCode-B-1-2-3"
+    val prisonCode = "BLI"
+    val prisonerHousing = "$prisonCode-D-3-003"
     val migrateVisitRequestDto = createMigrateVisitRequestDto(prisonCode = prisonCode, housingLocations = prisonerHousing)
     val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
     val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+
+    val locations1 = createSessionLocationGroup("$prisonCode-C-1-001")
+    locations1.addAll(createSessionLocationGroup("$prisonCode-C-2-009"))
+    locations1.addAll(createSessionLocationGroup("$prisonCode-C-3-001"))
 
     sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
@@ -262,7 +266,12 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "1",
       startTime = startTime,
       endTime = endTime,
+      permittedLocationGroups = locations1,
     )
+
+    val locations2 = createSessionLocationGroup("$prisonCode-D")
+    locations2.addAll(createSessionLocationGroup("$prisonCode-F"))
+    locations2.addAll(createSessionLocationGroup("$prisonCode-C-2-029"))
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
@@ -271,8 +280,12 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "2",
       startTime = startTime,
       endTime = endTime,
-      permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1-2"),
+      permittedLocationGroups = locations2,
     )
+
+    val locations3 = createSessionLocationGroup("$prisonCode-A-1-001")
+    locations3.addAll(createSessionLocationGroup("$prisonCode-A-2-009"))
+    locations3.addAll(createSessionLocationGroup("$prisonCode-A-3-001"))
 
     sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
@@ -281,17 +294,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "3",
       startTime = startTime,
       endTime = endTime,
-      permittedLocationGroups = createSessionLocationGroup("$prisonCode-B-1"),
-    )
-
-    sessionTemplateEntityHelper.create(
-      validFromDate = validFromDate,
-      prisonCode = migrateVisitRequestDto.prisonCode,
-      dayOfWeek = dayOfWeek,
-      visitRoom = migrateVisitRequestDto.visitRoom + "4",
-      startTime = startTime,
-      endTime = endTime,
-      permittedLocationGroups = createSessionLocationGroup("$prisonCode-B"),
+      permittedLocationGroups = locations3,
     )
 
     // When

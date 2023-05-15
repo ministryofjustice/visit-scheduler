@@ -264,15 +264,16 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
   protected fun createSessionLocationGroup(housingLocation: String): MutableList<SessionLocationGroup> {
     val delimiter = "-"
     val array = housingLocation.split(delimiter, ignoreCase = false, limit = 5)
+    val prisonCode = array[0]
 
     val allowedPermittedLocationsB1 = listOf(
       AllowedSessionLocationHierarchy(
         array[1],
-        if (array.size == 3) array[2] else null,
-        if (array.size == 4) array[3] else null,
-        if (array.size == 5) array[4] else null,
+        if (array.size > 2) array[2] else null,
+        if (array.size > 3) array[3] else null,
+        if (array.size > 4) array[4] else null,
       ),
     )
-    return mutableListOf(sessionLocationGroupHelper.create(prisonCode = array[0], prisonHierarchies = allowedPermittedLocationsB1))
+    return mutableListOf(sessionLocationGroupHelper.create(prisonCode = prisonCode, prisonHierarchies = allowedPermittedLocationsB1))
   }
 }
