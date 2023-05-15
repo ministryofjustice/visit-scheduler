@@ -218,8 +218,9 @@ class SessionService(
         prisonerDetailDto?.let { prisonerDetail ->
           val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
           return sessionTemplates.filter { sessionTemplate ->
-            LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference}")
-            sessionValidator.isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)
+            val keep = sessionValidator.isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)
+            LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference} Keep:$keep")
+            keep
           }
         }
         return listOf()

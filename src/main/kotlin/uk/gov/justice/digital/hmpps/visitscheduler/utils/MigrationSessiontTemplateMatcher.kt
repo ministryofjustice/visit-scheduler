@@ -142,7 +142,8 @@ class MigrationSessionTemplateMatcher(
     )
     if (sessionLocationTemplates.isNotEmpty()) {
       sessionLocationTemplates.forEach { template ->
-        matchedSessionTemplate[template]?.locationScore = getLocationMatchScore(template)
+        val matchScore = getLocationMatchScore(template)
+        matchedSessionTemplate[template]?.locationScore = matchScore
       }
     }
 
@@ -195,6 +196,7 @@ class MigrationSessionTemplateMatcher(
         with(it) {
           val score = levelFourCode?.let { 4 } ?: levelThreeCode?.let { 3 } ?: levelTwoCode?.let { 2 } ?: levelOneCode.let { 1 } ?: 0
           if (score > highestScore) {
+            LOG.debug("getLocationMatchScore best match : ${locationMatchingSessionTemplate.reference} score : $score level $levelOneCode/$levelTwoCode/$levelThreeCode/$levelFourCode")
             highestScore = score
           }
         }
