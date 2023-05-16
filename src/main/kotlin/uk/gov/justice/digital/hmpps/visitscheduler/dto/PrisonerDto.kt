@@ -11,4 +11,7 @@ data class PrisonerDto(
 
   @Schema(description = "enhanced privilege", example = "true", required = true)
   val incentiveLevel: IncentiveLevel?,
+
+  @Schema(description = "prison code", example = "BHI", required = true)
+  var prisonCode: String? = null,
 )
