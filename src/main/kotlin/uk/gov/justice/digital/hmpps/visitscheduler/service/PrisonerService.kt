@@ -110,6 +110,6 @@ class PrisonerService(
         LOG.error("Incentive level - $it for prisoner - $prisonerId not available in IncentiveLevel enum.")
       }
     }
-    return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel)
+    return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel, prisonCode = prisonerSearchResultDto?.prisonId)
   }
 }

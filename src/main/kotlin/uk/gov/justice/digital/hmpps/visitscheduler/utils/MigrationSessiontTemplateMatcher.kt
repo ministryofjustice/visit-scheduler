@@ -137,7 +137,13 @@ class MigrationSessionTemplateMatcher(
     val matchedSessionTemplate = sessionTemplates.associateWith { MigrateMatch() }
     findLocationMatch(prisonerId, prisonCode, sessionTemplates, matchedSessionTemplate)
 
-    val prisonerDto = prisonerService.getPrisoner(prisonerId)!!
+    val prisonerDto = prisonerService.getPrisoner(prisonerId)
+    if (prisonerDto == null) {
+      throw MatchSessionTemplateToMigratedVisitException("getNearestSessionTemplate : Prisoner cannot be found : $message!")
+    } else if (prisonCode != prisonerDto.prisonCode) {
+      LOG.debug("getNearestSessionTemplate : migrated prison ($prisonCode) is different from prisoners location prison ($prisonCode)!")
+    }
+
     val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)!!
     val prisonLevelMap = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
 
