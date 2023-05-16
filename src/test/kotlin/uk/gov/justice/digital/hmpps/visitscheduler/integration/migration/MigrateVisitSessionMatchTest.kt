@@ -864,4 +864,56 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
+
+  @Test
+  fun `Migrated session match - for Bi weekly session templates`() {
+    // Given
+    val migrateVisitRequestDto = createMigrateVisitRequestDto()
+    val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
+    val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().minusDays(7),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+      biWeekly = true,
+    )
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().minusDays(14),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+      biWeekly = true,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = LocalDate.now().minusDays(21),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom,
+      startTime = startTime,
+      endTime = endTime,
+      biWeekly = true,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    }
+  }
 }
