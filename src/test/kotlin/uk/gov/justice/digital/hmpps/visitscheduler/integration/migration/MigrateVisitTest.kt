@@ -129,7 +129,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       visitRestriction = OPEN,
     )
     createSessionTemplateFrom(migrateVisitRequestDto)
-    mockApiCalls(migrateVisitRequestDto.prisonerId, migrateVisitRequestDto.prisonCode)
+    mockApiCalls(migrateVisitRequestDto.prisonerId, migrateVisitRequestDto.prisonCode, housingLocations = "$migrateVisitRequestDto.prisonCode-A-1-001")
 
     // When
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
@@ -162,7 +162,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       visitRestriction = OPEN,
     )
     createSessionTemplateFrom(migrateVisitRequestDto)
-    mockApiCalls(migrateVisitRequestDto.prisonerId, migrateVisitRequestDto.prisonCode)
+    mockApiCalls(migrateVisitRequestDto.prisonerId, migrateVisitRequestDto.prisonCode, housingLocations = "$migrateVisitRequestDto.prisonCode-A-1-001")
 
     // When
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
@@ -195,7 +195,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       visitRestriction = OPEN,
     )
     createSessionTemplateFrom(migrateVisitRequestDto)
-    mockApiCalls(migrateVisitRequestDto.prisonerId, migrateVisitRequestDto.prisonCode)
+    mockApiCalls(migrateVisitRequestDto.prisonerId, migrateVisitRequestDto.prisonCode, housingLocations = "$migrateVisitRequestDto.prisonCode-A-1-001")
 
     // When
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
@@ -228,7 +228,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       visitRestriction = OPEN,
     )
     createSessionTemplateFrom(migrateVisitRequestDto)
-    mockApiCalls(migrateVisitRequestDto.prisonerId, migrateVisitRequestDto.prisonCode)
+    mockApiCalls(migrateVisitRequestDto.prisonerId, migrateVisitRequestDto.prisonCode, housingLocations = "$migrateVisitRequestDto.prisonCode-A-1-001")
 
     // When
     val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)

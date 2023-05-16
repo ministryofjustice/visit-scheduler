@@ -11,6 +11,7 @@ import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.CurrentIncentiveDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.IncentiveLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -47,10 +48,10 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
   fun stubGetPrisonerByString(
     prisonerId: String,
     prisonCode: String,
-    incentiveLevelCode: String? = null,
+    incentiveLevelCode: IncentiveLevel? = null,
     category: String? = null,
   ) {
-    val incentiveLevel = incentiveLevelCode ?.let { IncentiveLevelDto(code = incentiveLevelCode, description = "") }
+    val incentiveLevel = incentiveLevelCode ?.let { IncentiveLevelDto(code = incentiveLevelCode.code, description = "") }
     val currentIncentive = incentiveLevel?.let { CurrentIncentiveDto(incentiveLevel, LocalDateTime.now().minusMonths(1), LocalDate.now().plusMonths(1)) }
     val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonCode, category = category)
 

@@ -6,6 +6,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.util.function.Predicate
 
+const val LOCATION_NOT_PERMITTED = -10
+
 @Component
 class PrisonerSessionValidator(
   private val levelMatcher: PrisonerLevelMatcher,
@@ -25,8 +27,7 @@ class PrisonerSessionValidator(
     prisonerLevels: Map<PrisonerHousingLevels, String?>,
     sessionTemplate: SessionTemplate,
   ): Boolean {
-    val isSessionAvailableToAllPrisoners = sessionAllPrisonersMatcher.test(sessionTemplate)
-    if (!isSessionAvailableToAllPrisoners) {
+    if (!isSessionForAllPrisonerLocations(sessionTemplate)) {
       return sessionTemplate.permittedSessionLocationGroups.any { levelMatcher.test(it, prisonerLevels) }
     }
 
@@ -37,11 +38,9 @@ class PrisonerSessionValidator(
     prisonerCategory: String?,
     sessionTemplate: SessionTemplate,
   ): Boolean {
-    val isSessionAvailableToAllPrisoners = sessionAllPrisonersCategoryMatcher.test(sessionTemplate)
-    if (!isSessionAvailableToAllPrisoners) {
+    if (!isSessionForAllCategories(sessionTemplate)) {
       return categoryMatcher.test(prisonerCategory, sessionTemplate)
     }
-
     return true
   }
 
@@ -49,11 +48,50 @@ class PrisonerSessionValidator(
     prisonerIncentiveLevel: IncentiveLevel?,
     sessionTemplate: SessionTemplate,
   ): Boolean {
-    val isSessionAvailableToAllPrisoners = sessionAllPrisonersIncentiveLevelMatcher.test(sessionTemplate)
-    if (!isSessionAvailableToAllPrisoners) {
+    if (!isSessionForAllIncentiveLevels(sessionTemplate)) {
       return incentiveLevelMatcher.test(prisonerIncentiveLevel, sessionTemplate)
     }
-
     return true
+  }
+
+  fun isSessionForAllPrisonerLocations(
+    sessionTemplate: SessionTemplate,
+  ): Boolean {
+    return sessionAllPrisonersMatcher.test(sessionTemplate)
+  }
+
+  fun isSessionForAllCategories(
+    sessionTemplate: SessionTemplate,
+  ): Boolean {
+    return sessionAllPrisonersCategoryMatcher.test(sessionTemplate)
+  }
+
+  fun isSessionForAllIncentiveLevels(
+    sessionTemplate: SessionTemplate,
+  ): Boolean {
+    return sessionAllPrisonersIncentiveLevelMatcher.test(sessionTemplate)
+  }
+
+  fun getLocationScore(
+    prisonerLevels: Map<PrisonerHousingLevels, String?>,
+    sessionTemplate: SessionTemplate,
+  ): Int {
+    if (!isSessionForAllPrisonerLocations(sessionTemplate)) {
+      var highestScore = LOCATION_NOT_PERMITTED // If minus 10 then it does not match at all should be rejected
+      sessionTemplate.permittedSessionLocationGroups.forEach { sessionGroup ->
+        for (permittedSessionLocation in sessionGroup.sessionLocations) {
+          with(permittedSessionLocation) {
+            if (levelMatcher.hasLevelMatch(permittedSessionLocation, prisonerLevels)) {
+              val score = levelFourCode?.let { 4 } ?: levelThreeCode?.let { 3 } ?: levelTwoCode?.let { 2 } ?: levelOneCode.let { 1 }
+              if (score > highestScore) {
+                highestScore = score
+              }
+            }
+          }
+        }
+      }
+      return highestScore
+    }
+    return 0
   }
 }
