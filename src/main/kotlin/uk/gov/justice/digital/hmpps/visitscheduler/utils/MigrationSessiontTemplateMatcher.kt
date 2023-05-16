@@ -27,6 +27,7 @@ class MigrationSessionTemplateMatcher(
   private val prisonerCategoryMatcher: PrisonerCategoryMatcher,
   private val prisonerIncentiveLevelMatcher: PrisonerIncentiveLevelMatcher,
   private val sessionValidator: PrisonerSessionValidator,
+  private val sessionDatesUtil: SessionDatesUtil,
 ) {
 
   companion object {
@@ -71,11 +72,15 @@ class MigrationSessionTemplateMatcher(
     sessionDate: LocalDate,
     restriction: VisitRestriction,
   ): List<SessionTemplate> {
-    val templates = sessionTemplateRepository.findValidSessionTemplatesBy(
+    var templates = sessionTemplateRepository.findValidSessionTemplatesBy(
       rangeStartDate = sessionDate,
       prisonCode = prisonCode,
       dayOfWeek = sessionDate.dayOfWeek,
     )
+
+    templates = templates.filter {
+      sessionDatesUtil.isBiWeeklySessionActiveForDate(sessionDate, it)
+    }
 
     return removeUnwantedRestrictionTypes(restriction, templates)
   }
