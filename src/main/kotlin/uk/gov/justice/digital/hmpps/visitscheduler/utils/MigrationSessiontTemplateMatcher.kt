@@ -190,6 +190,10 @@ class MigrationSessionTemplateMatcher(
         timeProximity <= maxProximityMinutes &&
         migrateMatch.validFromDateProximityDays != FROM_DATE_IN_FUTURE
 
+      if (!isAllowed) {
+        LOG.debug("isSessionPermitted : removed ref:${template.reference}/$template.prisonCode locationScore:$locationScore category:$category enhanced:$enhanced timeProximity:$timeProximity roomMatch:$roomNameMatch dateProximity:$validFromDateProximityDays")
+      }
+
       return isAllowed
     }
   }
