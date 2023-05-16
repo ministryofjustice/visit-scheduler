@@ -19,7 +19,7 @@ class PrisonerLevelMatcher : BiPredicate<SessionLocationGroup?, Map<PrisonerHous
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  private val levelMatcher = object : BiPredicate<String?, String?> {
+  private val validMatch = object : BiPredicate<String?, String?> {
     override fun test(permittedSessionLevel: String?, prisonerLevel: String?): Boolean {
       permittedSessionLevel?.let {
         return it == prisonerLevel
@@ -35,22 +35,26 @@ class PrisonerLevelMatcher : BiPredicate<SessionLocationGroup?, Map<PrisonerHous
   ): Boolean {
     sessionLocationGroups?.let { sessionLocationGroup ->
       for (permittedSessionLocation in sessionLocationGroup.sessionLocations) {
-        if (LOG.isDebugEnabled) {
-          logMatch(permittedSessionLocation, levelsMap)
-        }
-
-        val result = levelMatcher.test(permittedSessionLocation.levelOneCode, levelsMap.get(LEVEL_ONE))
-          .and(levelMatcher.test(permittedSessionLocation.levelTwoCode, levelsMap.get(LEVEL_TWO)))
-          .and(levelMatcher.test(permittedSessionLocation.levelThreeCode, levelsMap.get(LEVEL_THREE)))
-          .and(levelMatcher.test(permittedSessionLocation.levelFourCode, levelsMap.get(LEVEL_FOUR)))
-
-        if (result) {
+        if (hasLevelMatch(permittedSessionLocation, levelsMap)) {
           return true
         }
       }
     }
 
     return false
+  }
+
+  fun hasLevelMatch(
+    permittedSessionLocation: PermittedSessionLocation,
+    levelsMap: Map<PrisonerHousingLevels, String?>,
+  ): Boolean {
+    if (LOG.isDebugEnabled) {
+      logMatch(permittedSessionLocation, levelsMap)
+    }
+    return validMatch.test(permittedSessionLocation.levelOneCode, levelsMap.get(LEVEL_ONE))
+      .and(validMatch.test(permittedSessionLocation.levelTwoCode, levelsMap.get(LEVEL_TWO)))
+      .and(validMatch.test(permittedSessionLocation.levelThreeCode, levelsMap.get(LEVEL_THREE)))
+      .and(validMatch.test(permittedSessionLocation.levelFourCode, levelsMap.get(LEVEL_FOUR)))
   }
 
   private fun logMatch(

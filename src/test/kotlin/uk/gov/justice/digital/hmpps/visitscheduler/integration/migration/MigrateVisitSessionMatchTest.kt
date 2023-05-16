@@ -82,7 +82,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   fun `Migrated session match - select session template with visit room match`() {
     // Given
 
-    val migrateVisitRequestDto = createMigrateVisitRequestDto()
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(incentiveLevelCode = IncentiveLevel.ENHANCED)
 
     val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
@@ -97,7 +97,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "1",
       startTime = startTime,
       endTime = endTime,
-      permittedIncentiveLevels = mutableListOf(),
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
@@ -117,7 +117,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom + "3",
       startTime = startTime,
       endTime = endTime,
-      permittedIncentiveLevels = mutableListOf(),
+      permittedIncentiveLevels = mutableListOf(enhancedIncentiveLevelGroup),
     )
 
     // When
@@ -137,7 +137,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   @Test
   fun `Migrated session match - select session template with enhanced match`() {
     // Given
-    val migrateVisitRequestDto = createMigrateVisitRequestDto(incentiveLevelCode = "ENH")
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(incentiveLevelCode = IncentiveLevel.ENHANCED)
 
     val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
@@ -257,7 +257,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
 
     val locations1 = createSessionLocationGroup("$prisonCode-C-1-001")
     locations1.addAll(createSessionLocationGroup("$prisonCode-C-2-009"))
-    locations1.addAll(createSessionLocationGroup("$prisonCode-C-3-001"))
+    locations1.addAll(createSessionLocationGroup("$prisonCode-C-3-L-001"))
+    locations1.addAll(createSessionLocationGroup("$prisonCode-D"))
 
     sessionTemplateEntityHelper.create(
       validFromDate = validFromDate,
@@ -269,7 +270,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       permittedLocationGroups = locations1,
     )
 
-    val locations2 = createSessionLocationGroup("$prisonCode-D")
+    val locations2 = createSessionLocationGroup("$prisonCode-D-3-003")
     locations2.addAll(createSessionLocationGroup("$prisonCode-F"))
     locations2.addAll(createSessionLocationGroup("$prisonCode-C-2-029"))
 
@@ -376,7 +377,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       category = A_HIGH.code,
       prisonCode = prisonCode,
       housingLocations = prisonerHousing,
-      incentiveLevelCode = "ENH",
+      incentiveLevelCode = IncentiveLevel.ENHANCED,
     )
 
     val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
@@ -511,7 +512,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       category = A_HIGH.code,
       prisonCode = prisonCode,
       housingLocations = prisonerHousing,
-      incentiveLevelCode = "ENH",
+      incentiveLevelCode = IncentiveLevel.ENHANCED,
     )
 
     val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
@@ -616,8 +617,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
-      .jsonPath("$.developerMessage").value(endsWith("Not a valid proximity!"))
+      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any matching SessionTemplates :"))
   }
 
   @Test
@@ -640,8 +640,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
-      .jsonPath("$.developerMessage").value(endsWith("Not a valid proximity!"))
+      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any matching SessionTemplates :"))
   }
 
   @Test
@@ -666,8 +665,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
-      .jsonPath("$.developerMessage").value(endsWith("Not a valid proximity!"))
+      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any matching SessionTemplates :"))
   }
 
   @Test
@@ -684,8 +682,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
-      .jsonPath("$.developerMessage").value(endsWith("No session templates!"))
+      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any SessionTemplates :"))
   }
 
   @Test
@@ -718,8 +715,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
-      .jsonPath("$.developerMessage").value(endsWith("No session templates!"))
+      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any SessionTemplates :"))
   }
 
   @Test
@@ -752,12 +748,12 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("Could not find any SessionTemplate :"))
+      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any SessionTemplates :"))
       .jsonPath("$.developerMessage").value(endsWith("No session templates!"))
   }
 
   @Test
-  fun `Migrated session match - When migrated visit is Unknown and no closed or open seesion then no error`() {
+  fun `Migrated session match - When migrated visit is Unknown and no closed or open session then no error`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRestriction = UNKNOWN)
@@ -792,7 +788,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   }
 
   @Test
-  fun `Migrated session match - Using validFromDate and ValidToDate on session template`() {
+  fun `Migrated session match - select template by nearest valid from date`() {
     // Given
     val migrateVisitRequestDto = createMigrateVisitRequestDto(
       visitRestriction = OPEN,

@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -105,9 +106,9 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     contactName: String? = "John Smith",
     prisonCode: String = PRISON_CODE,
     prisonerId: String = "FF0000FF",
-    housingLocations: String? = null,
+    housingLocations: String? = "$prisonCode-A-1-001",
     category: String? = null,
-    incentiveLevelCode: String? = null,
+    incentiveLevelCode: IncentiveLevel? = null,
     visitRestriction: VisitRestriction = OPEN,
   ): MigrateVisitRequestDto {
     val migrateVisitRequestDto = MigrateVisitRequestDto(
@@ -144,7 +145,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     prisonCode: String,
     housingLocations: String? = null,
     category: String? = null,
-    incentiveLevelCode: String? = null,
+    incentiveLevelCode: IncentiveLevel? = null,
   ) {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(
       prisonerId,

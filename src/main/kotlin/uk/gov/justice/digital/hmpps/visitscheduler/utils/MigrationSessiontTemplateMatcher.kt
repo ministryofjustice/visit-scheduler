@@ -12,21 +12,21 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.UNKNOW
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.temporal.ChronoUnit.DAYS
 import kotlin.math.absoluteValue
 
 const val DEFAULT_MAX_PROX_MINUTES = 180
+private const val FROM_DATE_IN_FUTURE = -1000
 
 @Component
 class MigrationSessionTemplateMatcher(
   private val prisonerService: PrisonerService,
-  private val sessionService: SessionService,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val prisonerCategoryMatcher: PrisonerCategoryMatcher,
   private val prisonerIncentiveLevelMatcher: PrisonerIncentiveLevelMatcher,
+  private val sessionValidator: PrisonerSessionValidator,
 ) {
 
   companion object {
@@ -42,12 +42,10 @@ class MigrationSessionTemplateMatcher(
     var category: Boolean = false
     var enhanced: Boolean = false
     var timeProximity: Int = 0
-    var validDateProximity: Int = 0
+    var validFromDateProximityDays: Int = 0
     var roomNameMatch: Boolean = false
 
     override fun compareTo(other: MigrateMatch): Int {
-      if (!isValidProximity()) return -1
-
       // smaller proximity the better, hence -timeProximity
       val timeProximityCompare = -timeProximity.compareTo(other.timeProximity)
 
@@ -55,20 +53,16 @@ class MigrationSessionTemplateMatcher(
         timeProximityCompare +
           locationScore.compareTo(other.locationScore) +
           category.compareTo(other.category) +
-          enhanced.compareTo(other.enhanced) +
-          validDateProximity.compareTo(other.validDateProximity)
+          enhanced.compareTo(other.enhanced)
 
       if (compareValue == 0) {
-        compareValue = validDateProximity.compareTo(other.validDateProximity)
+        compareValue = validFromDateProximityDays.compareTo(other.validFromDateProximityDays)
         if (compareValue == 0) {
           compareValue = roomNameMatch.compareTo(other.roomNameMatch)
         }
       }
-      return compareValue
-    }
 
-    fun isValidProximity(): Boolean {
-      return (timeProximity <= maxProximityMinutes)
+      return compareValue
     }
   }
 
@@ -114,7 +108,6 @@ class MigrationSessionTemplateMatcher(
         startTimestamp.toLocalDate(),
         migrateVisitRequest.visitRestriction,
       )
-
       return getNearestSessionTemplate(migrateVisitRequest, sessionTemplates)
     }
   }
@@ -132,31 +125,28 @@ class MigrationSessionTemplateMatcher(
     val message = "prison code $prisonCode prisoner id $prisonerId, visit $startDate/${startDate.dayOfWeek}/$startTime <> $endTime room:${migrateVisitRequest.visitRoom}"
     LOG.debug("Enter getNearestSessionTemplate : $message")
 
-    val matchedSessionTemplate = sessionTemplates.associateWith { MigrateMatch() }
-
-    val sessionLocationTemplates = sessionService.filterSessionsTemplatesForLocation(
-      sessionTemplates,
-      prisonerId,
-      prisonCode,
-      true,
-    )
-    if (sessionLocationTemplates.isNotEmpty()) {
-      sessionLocationTemplates.forEach { template ->
-        val matchScore = getLocationMatchScore(template)
-        matchedSessionTemplate[template]?.locationScore = matchScore
-      }
+    if (sessionTemplates.isEmpty()) {
+      throw MatchSessionTemplateToMigratedVisitException("getNearestSessionTemplate : Could not find any SessionTemplates : $message, No session templates!")
     }
 
+    val matchedSessionTemplate = sessionTemplates.associateWith { MigrateMatch() }
+    findLocationMatch(prisonerId, prisonCode, sessionTemplates, matchedSessionTemplate)
+
     val prisonerDto = prisonerService.getPrisoner(prisonerId)!!
+    val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)!!
+    val prisonLevelMap = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
 
     sessionTemplates.forEach { template ->
       val matcher = matchedSessionTemplate[template]
       matcher?.let {
-        it.category = prisonerCategoryMatcher.test(prisonerDto.category, template)
-        it.enhanced = prisonerIncentiveLevelMatcher.test(prisonerDto.incentiveLevel, template)
-        it.timeProximity = getProximityMinutes(template.startTime, startTime, template.endTime, endTime)
-        it.roomNameMatch = template.visitRoom == migrateVisitRequest.visitRoom
-        it.validDateProximity = getDateProximityDays(migrateVisitRequest, template)
+        with(it) {
+          locationScore = sessionValidator.getLocationScore(prisonLevelMap, template)
+          category = prisonerCategoryMatcher.test(prisonerDto.category, template)
+          enhanced = prisonerIncentiveLevelMatcher.test(prisonerDto.incentiveLevel, template)
+          timeProximity = getProximityMinutes(template.startTime, startTime, template.endTime, endTime)
+          validFromDateProximityDays = getFromDateProximityDays(migrateVisitRequest, template)
+          roomNameMatch = template.visitRoom == migrateVisitRequest.visitRoom
+        }
       }
     }
 
@@ -166,42 +156,55 @@ class MigrationSessionTemplateMatcher(
       matcher1.compareTo(matcher2)
     }
 
-    val orderedSessionTemplates = sessionTemplates.sortedWith(templateMatchComparator)
-    val bestMatch = orderedSessionTemplates.lastOrNull()
-      ?: throw MatchSessionTemplateToMigratedVisitException("Could not find any SessionTemplate : $message, No session templates!")
+    val orderedSessionTemplates = sessionTemplates.sortedWith(templateMatchComparator).filter { isSessionPermitted(it, matchedSessionTemplate[it]!!) }
 
-    if (!matchedSessionTemplate[bestMatch]!!.isValidProximity()) {
-      throw MatchSessionTemplateToMigratedVisitException("Could not find any SessionTemplate : $message, Not a valid proximity!")
+    val bestMatch = orderedSessionTemplates.lastOrNull()
+      ?: throw MatchSessionTemplateToMigratedVisitException("getNearestSessionTemplate : Could not find any matching SessionTemplates : $message!")
+
+    with(matchedSessionTemplate[bestMatch]!!) {
+      LOG.debug("getNearestSessionTemplate, ref:${bestMatch.reference}/$prisonCode/$prisonerId locationScore:$locationScore category:$category enhanced:$enhanced timeProximity:$timeProximity roomMatch:$roomNameMatch dateProximity:$validFromDateProximityDays")
     }
+
     return bestMatch
   }
 
-  private fun getDateProximityDays(
+  private fun isSessionPermitted(
+    template: SessionTemplate,
+    migrateMatch: MigrateMatch,
+  ): Boolean {
+    with(migrateMatch) {
+      val isAllowed = locationScore != LOCATION_NOT_PERMITTED &&
+        (category || sessionValidator.isSessionForAllCategories(template)) &&
+        (enhanced || sessionValidator.isSessionForAllIncentiveLevels(template)) &&
+        timeProximity <= maxProximityMinutes &&
+        migrateMatch.validFromDateProximityDays != FROM_DATE_IN_FUTURE
+
+      return isAllowed
+    }
+  }
+
+  private fun findLocationMatch(
+    prisonerId: String,
+    prisonCode: String,
+    sessionTemplates: List<SessionTemplate>,
+    matchedSessionTemplate: Map<SessionTemplate, MigrateMatch>,
+  ) {
+    val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)!!
+    val prisonLevelMap = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
+    sessionTemplates.forEach { template ->
+      matchedSessionTemplate[template]?.locationScore = sessionValidator.getLocationScore(prisonLevelMap, template)
+    }
+  }
+
+  private fun getFromDateProximityDays(
     migrateVisitRequest: MigrateVisitRequestDto,
     template: SessionTemplate,
   ): Int {
     val migratedVisitDate = migrateVisitRequest.startTimestamp.toLocalDate()
     if (template.validFromDate.isAfter(migratedVisitDate)) {
       // Template from date is after the migrated visit date therefore not valid
-      return -1000
+      return FROM_DATE_IN_FUTURE
     }
     return DAYS.between(migratedVisitDate, template.validFromDate).toInt()
-  }
-
-  private fun getLocationMatchScore(locationMatchingSessionTemplate: SessionTemplate): Int {
-    var highestScore = 0
-
-    locationMatchingSessionTemplate.permittedSessionLocationGroups.forEach { locationGroup ->
-      locationGroup.sessionLocations.forEach {
-        with(it) {
-          val score = levelFourCode?.let { 4 } ?: levelThreeCode?.let { 3 } ?: levelTwoCode?.let { 2 } ?: levelOneCode.let { 1 } ?: 0
-          if (score > highestScore) {
-            LOG.debug("getLocationMatchScore best match : ${locationMatchingSessionTemplate.reference} score : $score level $levelOneCode/$levelTwoCode/$levelThreeCode/$levelFourCode")
-            highestScore = score
-          }
-        }
-      }
-    }
-    return highestScore
   }
 }
