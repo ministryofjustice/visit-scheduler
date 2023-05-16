@@ -141,7 +141,7 @@ class MigrationSessionTemplateMatcher(
     if (prisonerDto == null) {
       throw MatchSessionTemplateToMigratedVisitException("getNearestSessionTemplate : Prisoner cannot be found : $message!")
     } else if (prisonCode != prisonerDto.prisonCode) {
-      LOG.debug("getNearestSessionTemplate : migrated prison ($prisonCode) is different from prisoners location prison ($prisonCode)!")
+      LOG.debug("getNearestSessionTemplate : migrated prison ($prisonCode) is different from prisoners location prison ($prisonerDto.prisonCode)!")
     }
 
     val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)!!
