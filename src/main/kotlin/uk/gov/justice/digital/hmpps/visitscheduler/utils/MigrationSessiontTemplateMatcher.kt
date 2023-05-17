@@ -172,7 +172,7 @@ class MigrationSessionTemplateMatcher(
       val keep = isSessionPermitted(it, migrateMatch)
       if (!keep) {
         with(migrateMatch) {
-          LOG.debug("isSessionPermitted : removed ref:${it.reference}/$prisonCode/$prisonCode locationScore:$locationScore category:$category enhanced:$enhanced timeProximity:$timeProximity roomMatch:$roomNameMatch dateProximity:$validFromDateProximityDays")
+          LOG.debug("getNearestSessionTemplate isSessionPermitted : removed ref:${it.reference}/$prisonCode/$prisonerId locationScore:$locationScore category:$category enhanced:$enhanced timeProximity:$timeProximity roomMatch:$roomNameMatch dateProximity:$validFromDateProximityDays")
         }
       }
       keep
