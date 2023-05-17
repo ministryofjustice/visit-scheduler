@@ -170,7 +170,7 @@ class MigrationSessionTemplateMatcher(
     val orderedSessionTemplates = sessionTemplates.sortedWith(templateMatchComparator).filter { isSessionPermitted(it, matchedSessionTemplate[it]!!) }
 
     val bestMatch = orderedSessionTemplates.lastOrNull()
-      ?: throw MatchSessionTemplateToMigratedVisitException("getNearestSessionTemplate : Could not find any matching SessionTemplates : $message!")
+      ?: throw MatchSessionTemplateToMigratedVisitException("getNearestSessionTemplate : Could not find any matching SessionTemplates matching prisoner : $prisonerDto, $message!")
 
     with(matchedSessionTemplate[bestMatch]!!) {
       LOG.debug("getNearestSessionTemplate, ref:${bestMatch.reference}/$prisonCode/$prisonerId locationScore:$locationScore category:$category enhanced:$enhanced timeProximity:$timeProximity roomMatch:$roomNameMatch dateProximity:$validFromDateProximityDays")
