@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
+package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive
 
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column
@@ -12,10 +12,11 @@ import jakarta.persistence.PreRemove
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractReferenceEntity
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 
 @Entity
-@Table(name = "SESSION_LOCATION_GROUP")
-class SessionLocationGroup(
+@Table(name = "SESSION_INCENTIVE_GROUP")
+class SessionIncentiveLevelGroup(
 
   @Column(name = "PRISON_ID", nullable = false)
   val prisonId: Long,
@@ -29,16 +30,16 @@ class SessionLocationGroup(
 ) : AbstractReferenceEntity(delimiter = "~", chunkSize = 3) {
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
-  @JoinColumn(name = "GROUP_ID", updatable = false, insertable = true)
-  val sessionLocations: MutableList<PermittedSessionLocation> = mutableListOf()
+  @JoinColumn(name = "SESSION_INCENTIVE_GROUP_ID", updatable = false, insertable = true)
+  val sessionIncentiveLevels: MutableList<SessionPrisonerIncentiveLevel> = mutableListOf()
 
-  @ManyToMany(mappedBy = "permittedSessionGroups", fetch = FetchType.LAZY, cascade = [CascadeType.DETACH])
+  @ManyToMany(mappedBy = "permittedSessionIncentiveLevelGroups", fetch = FetchType.LAZY, cascade = [CascadeType.DETACH])
   val sessionTemplates: MutableList<SessionTemplate> = mutableListOf()
 
   @PreRemove
-  private fun removeGroupsFromUsers() {
+  private fun removeIncentiveLevelGroupsFromUsers() {
     for (s in sessionTemplates) {
-      s.permittedSessionGroups.remove(this)
+      s.permittedSessionIncentiveLevelGroups.remove(this)
     }
   }
 }

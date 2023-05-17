@@ -79,17 +79,31 @@ class GetSessionCapacityTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `throw 500 Internal server exception when more than one capacity is found`() {
+  fun `Capacities are added up`() {
     // Given
 
     val nextAllowedDay = getNextAllowedDay()
 
-    val sessionTemplate = sessionTemplateEntityHelper.create(
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      visitRoom = "G1",
+      closedCapacity = 1,
+      openCapacity = 1,
+    )
+
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      visitRoom = "G2",
+      closedCapacity = 10,
+      openCapacity = 11,
     )
 
     sessionTemplateEntityHelper.create(
@@ -98,13 +112,57 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      visitRoom = "G2",
+      closedCapacity = sessionTemplate2.closedCapacity,
+      openCapacity = sessionTemplate2.openCapacity,
     )
 
     // When
-    val responseSpec = callGetSessionCapacity(sessionTemplate.prison.code, sessionTemplate.validFromDate, sessionTemplate.startTime, sessionTemplate.endTime)
+    val responseSpec = callGetSessionCapacity(sessionTemplate1.prison.code, sessionTemplate1.validFromDate, sessionTemplate1.startTime, sessionTemplate1.endTime)
 
     // Then
-    responseSpec.expectStatus().is5xxServerError
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionCapacity = getResults(returnResult)
+    Assertions.assertThat(sessionCapacity.closed).isEqualTo(21)
+    Assertions.assertThat(sessionCapacity.open).isEqualTo(23)
+  }
+
+  @Test
+  fun `Sessions capacity are added up`() {
+    // Given
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      closedCapacity = 1,
+      openCapacity = 1,
+    )
+
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      closedCapacity = 10,
+      openCapacity = 11,
+    )
+
+    // When
+    val responseSpec = callGetSessionCapacity(sessionTemplate1.prison.code, sessionTemplate1.validFromDate, sessionTemplate1.startTime, sessionTemplate1.endTime)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionCapacity = getResults(returnResult)
+    Assertions.assertThat(sessionCapacity.closed).isEqualTo(sessionTemplate1.closedCapacity + sessionTemplate2.closedCapacity)
+    Assertions.assertThat(sessionCapacity.open).isEqualTo(sessionTemplate1.openCapacity + sessionTemplate2.openCapacity)
   }
 
   @Test

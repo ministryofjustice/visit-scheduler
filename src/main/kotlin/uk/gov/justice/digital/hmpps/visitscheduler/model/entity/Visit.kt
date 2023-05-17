@@ -38,7 +38,10 @@ class Visit(
   val prison: Prison,
 
   @Column(nullable = false)
-  var visitRoom: String,
+  val visitRoom: String,
+
+  @Column(nullable = true)
+  val sessionTemplateReference: String? = null,
 
   @Column(nullable = false)
   var visitStart: LocalDateTime,

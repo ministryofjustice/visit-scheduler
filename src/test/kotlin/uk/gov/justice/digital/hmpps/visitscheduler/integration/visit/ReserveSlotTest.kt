@@ -51,12 +51,9 @@ class ReserveSlotTest : IntegrationTestBase() {
     prisonEntityHelper.create("MDI", true)
   }
 
-  private fun createReserveVisitSlotDto(prisonCode: String = "MDI", actionedBy: String = actionedByUserName): ReserveVisitSlotDto {
+  private fun createReserveVisitSlotDto(actionedBy: String = actionedByUserName, sessionTemplateReference: String = "sessionTemplateReference"): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
-      prisonCode = prisonCode,
       prisonerId = "FF0000FF",
-      visitRoom = "A1",
-      visitType = SOCIAL,
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
       visitRestriction = OPEN,
@@ -64,13 +61,15 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
       actionedBy = actionedBy,
+      sessionTemplateReference = sessionTemplateReference,
     )
   }
 
   @Test
   fun `reserve visit slot`() {
     // Given
-    val reserveVisitSlotDto = createReserveVisitSlotDto()
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
 
     // When
     val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
@@ -122,17 +121,18 @@ class ReserveSlotTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `error message when reserve visit slot uses an unknown prison`() {
+  fun `error message when reserve visit has no session template`() {
     // Given
-    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonCode = "AWE")
+
+    val reserveVisitSlotDto = createReserveVisitSlotDto()
 
     // When
     val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
-    responseSpec.expectStatus().isBadRequest
+    responseSpec.expectStatus().isNotFound
       .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("Prison code AWE not found!")
+      .jsonPath("$.developerMessage").isEqualTo("Template reference:sessionTemplateReference not found")
   }
 
   @Test
@@ -140,15 +140,13 @@ class ReserveSlotTest : IntegrationTestBase() {
     // Given
     val createReservationRequest = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
-      prisonCode = "MDI",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
-      visitType = SOCIAL,
       visitRestriction = OPEN,
       visitors = setOf(),
-      visitRoom = "A1",
       visitContact = ContactDto("John Smith", "01234 567890"),
       actionedBy = actionedByUserName,
+      sessionTemplateReference = "sessionTemplateReference",
     )
 
     // When
@@ -165,7 +163,8 @@ class ReserveSlotTest : IntegrationTestBase() {
   @Test
   fun `when reserve visit slot has more than 10 visitors then bad request is returned`() {
     // Given
-    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonCode = "AWE")
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
     reserveVisitSlotDto.visitors = setOf(
       VisitorDto(1, true), VisitorDto(2, false),
       VisitorDto(3, true), VisitorDto(4, false),
@@ -187,12 +186,9 @@ class ReserveSlotTest : IntegrationTestBase() {
 
     val createReservationRequest = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
-      prisonCode = "MDI",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
-      visitType = SOCIAL,
       visitRestriction = OPEN,
-      visitRoom = "A1",
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 123, visitContact = true),
@@ -202,6 +198,7 @@ class ReserveSlotTest : IntegrationTestBase() {
         VisitorSupportDto("OTHER", "Some Text"),
       ),
       actionedBy = actionedByUserName,
+      sessionTemplateReference = "sessionTemplateReference",
     )
 
     // When
@@ -216,16 +213,14 @@ class ReserveSlotTest : IntegrationTestBase() {
     // Given
     val reserveVisitSlotDto = ReserveVisitSlotDto(
       prisonerId = "FF0000FF",
-      prisonCode = "MDI",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
-      visitType = SOCIAL,
       visitRestriction = OPEN,
-      visitRoom = "A1",
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
       visitorSupport = setOf(VisitorSupportDto("ANYTHINGWILLDO")),
       actionedBy = actionedByUserName,
+      sessionTemplateReference = "sessionTemplateReference",
     )
 
     // When
@@ -258,7 +253,8 @@ class ReserveSlotTest : IntegrationTestBase() {
   fun `reserve visit slot - access forbidden when no role`() {
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val reserveVisitSlotDto = createReserveVisitSlotDto()
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
 
     // When
     val responseSpec = callVisitReserveSlot(webTestClient, authHttpHeaders, reserveVisitSlotDto)
@@ -273,7 +269,10 @@ class ReserveSlotTest : IntegrationTestBase() {
   @Test
   fun `reserve visit slot - unauthorised when no token`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(createReserveVisitSlotDto())
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
+
+    val jsonBody = BodyInserters.fromValue(reserveVisitSlotDto)
 
     // When
     val responseSpec = webTestClient.post().uri(getVisitReserveSlotUrl())

@@ -39,4 +39,13 @@ abstract class AbstractReferenceEntity(
   override fun toString(): String {
     return this::class.simpleName + "(id=$id, reference=$reference)"
   }
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other == null) return false
+    if (other::class != this::class) return false
+    if (id != (other as AbstractIdEntity).id) return false
+    if (reference != (other as AbstractReferenceEntity).reference) return false
+    return true
+  }
 }

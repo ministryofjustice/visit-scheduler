@@ -65,6 +65,6 @@ class SessionDatesUtil {
 
   fun isBiWeeklySkipDate(
     validFromDate: LocalDate,
-    firstBookableSessionDay: LocalDate,
-  ) = WEEKS.between(validFromDate, firstBookableSessionDay).toInt() % 2 != 0
+    sessionDate: LocalDate,
+  ) = WEEKS.between(validFromDate, sessionDate).toInt() % 2 != 0
 }

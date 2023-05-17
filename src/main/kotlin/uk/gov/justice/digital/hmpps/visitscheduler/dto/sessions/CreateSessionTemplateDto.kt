@@ -35,7 +35,8 @@ data class CreateSessionTemplateDto(
   @Schema(description = "The end of the Validity period for the session template", example = "2019-12-02", required = false)
   val validToDate: LocalDate? = null,
 
-  @Schema(description = "visit room", example = "A1", required = true)
+  @Schema(description = "Visit Room", example = "Visits Main Hall", required = true)
+  @field:NotBlank
   val visitRoom: String,
 
   @Schema(description = "closed capacity", example = "10", required = true)
@@ -50,12 +51,12 @@ data class CreateSessionTemplateDto(
   @Schema(description = "list of group references for permitted session location groups", required = false)
   val locationGroupReferences: List<String>? = listOf(),
 
-  @Schema(description = "enhanced privilege", example = "true", required = true)
-  val enhanced: Boolean,
-
   @Schema(description = "biWeekly time table", example = "true", required = true)
   val biWeekly: Boolean,
 
   @Schema(description = "list of group references for allowed prisoner category groups", required = false)
   val categoryGroupReferences: List<String>? = listOf(),
+
+  @Schema(description = "list of group references for allowed prisoner incentive levels", required = false)
+  val incentiveLevelGroupReferences: List<String>? = listOf(),
 )

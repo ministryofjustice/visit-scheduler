@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.dto
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import com.fasterxml.jackson.annotation.JsonFormat
 import com.fasterxml.jackson.annotation.JsonFormat.Shape
@@ -6,8 +6,9 @@ import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCategoryGroupDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.level.SessionIncentiveLevelGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek
@@ -38,12 +39,11 @@ data class SessionTemplateDto(
   val validToDate: LocalDate? = null,
   @Schema(description = "visit type", example = "SOCIAL", required = true)
   val visitType: VisitType,
-  @Schema(description = "visit room", example = "A1", required = true)
-  val visitRoom: String,
-  @Schema(description = "enhanced privilege", example = "true", required = true)
-  val enhanced: Boolean,
   @Schema(description = "biWeekly", example = "true", required = true)
   val biWeekly: Boolean,
+  @Schema(description = "Visit Room", example = "A1 L3", required = true)
+  @field:NotBlank
+  val visitRoom: String,
   @Schema(description = "closed capacity", example = "10", required = true)
   val closedCapacity: Int,
   @Schema(description = "open capacity", example = "50", required = true)
@@ -54,6 +54,8 @@ data class SessionTemplateDto(
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
   @Schema(description = "list of permitted prisoner category groups", required = false)
   val prisonerCategoryGroups: List<SessionCategoryGroupDto> = listOf(),
+  @Schema(description = "list of permitted incentive level groups", required = false)
+  val prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto> = listOf(),
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(
     reference = sessionTemplateEntity.reference,
@@ -68,9 +70,9 @@ data class SessionTemplateDto(
     closedCapacity = sessionTemplateEntity.closedCapacity,
     openCapacity = sessionTemplateEntity.openCapacity,
     dayOfWeek = sessionTemplateEntity.dayOfWeek,
-    permittedLocationGroups = sessionTemplateEntity.permittedSessionGroups.map { SessionLocationGroupDto(it) },
+    permittedLocationGroups = sessionTemplateEntity.permittedSessionLocationGroups.map { SessionLocationGroupDto(it) },
     prisonerCategoryGroups = sessionTemplateEntity.permittedSessionCategoryGroups.map { SessionCategoryGroupDto(it) },
+    prisonerIncentiveLevelGroups = sessionTemplateEntity.permittedSessionIncentiveLevelGroups.map { SessionIncentiveLevelGroupDto(it) },
     biWeekly = sessionTemplateEntity.biWeekly,
-    enhanced = sessionTemplateEntity.enhanced,
   )
 }

@@ -1,18 +1,19 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.PermittedSessionLocationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
+import java.util.*
 
 fun sessionTemplate(
   name: String = "sessionTemplate_",
@@ -21,7 +22,7 @@ fun sessionTemplate(
   closedCapacity: Int = 5,
   openCapacity: Int = 10,
   prisonCode: String = "MDI",
-  visitRoom: String = "1",
+  visitRoom: String = "visitRoom",
   visitType: VisitType = VisitType.SOCIAL,
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
@@ -29,7 +30,6 @@ fun sessionTemplate(
   permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
   permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
   biWeekly: Boolean = false,
-  enhanced: Boolean = true,
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = true)
 
@@ -46,11 +46,10 @@ fun sessionTemplate(
     startTime = startTime,
     endTime = endTime,
     dayOfWeek = dayOfWeek,
-    permittedSessionGroups = permittedSessionLocationGroups,
+    permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     biWeekly = biWeekly,
-    enhanced = enhanced,
-  )
+  ).also { it.reference = UUID.randomUUID().toString() }
 }
 
 fun createSessionTemplateDto(
@@ -60,14 +59,14 @@ fun createSessionTemplateDto(
   closedCapacity: Int = 5,
   openCapacity: Int = 10,
   prisonCode: String = "MDI",
-  visitRoom: String = "1",
+  visitRoom: String = "visitRoom",
   startTime: LocalTime = LocalTime.parse("09:00"),
   endTime: LocalTime = LocalTime.parse("10:00"),
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
-  enhanced: Boolean = true,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
+  incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): CreateSessionTemplateDto {
   return CreateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -82,8 +81,8 @@ fun createSessionTemplateDto(
     dayOfWeek = dayOfWeek,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
-    enhanced = enhanced,
     categoryGroupReferences = categoryGroupReferences,
+    incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
 }
 
@@ -98,8 +97,8 @@ fun createUpdateSessionTemplateDto(
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
-  enhanced: Boolean = true,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
+  incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -111,8 +110,8 @@ fun createUpdateSessionTemplateDto(
     endTime = endTime,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
-    enhanced = enhanced,
     categoryGroupReferences = categoryGroupReferences,
+    incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
 }
 

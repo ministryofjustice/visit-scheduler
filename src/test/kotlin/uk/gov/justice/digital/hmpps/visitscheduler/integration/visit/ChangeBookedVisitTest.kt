@@ -33,7 +33,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDateTime
@@ -61,7 +60,9 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = sessionTemplate.reference)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
@@ -73,12 +74,14 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     bookedVisit = visitEntityHelper.save(visit)
   }
 
-  private fun createReserveVisitSlotDto(prisonId: String = "MDI", prisonerId: String = "FF0000AA", startTimestamp: LocalDateTime = bookedVisit.visitStart, visitRestriction: VisitRestriction = OPEN): ReserveVisitSlotDto {
+  private fun createReserveVisitSlotDto(
+    prisonerId: String = "FF0000AA",
+    startTimestamp: LocalDateTime = bookedVisit.visitStart,
+    visitRestriction: VisitRestriction = OPEN,
+    sessionTemplateReference: String = "sessionTemplateReference",
+  ): ReserveVisitSlotDto {
     return ReserveVisitSlotDto(
-      prisonCode = prisonId,
       prisonerId = prisonerId,
-      visitRoom = "A1",
-      visitType = SOCIAL,
       startTimestamp = startTimestamp,
       endTimestamp = bookedVisit.visitEnd,
       visitRestriction = visitRestriction,
@@ -86,6 +89,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
       actionedBy = actionedByUserName,
+      sessionTemplateReference = sessionTemplateReference,
     )
   }
 
@@ -93,8 +97,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `change visit has given reference`() {
     // Given
     val reference = bookedVisit.reference
-
-    val reserveVisitSlotDto = createReserveVisitSlotDto()
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
 
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
@@ -152,8 +156,9 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `changed booked visit creates new visit when prisonId has changed`() {
     // Given
     val reference = bookedVisit.reference
-    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonId = "NEW")
-    prisonEntityHelper.create(reserveVisitSlotDto.prisonCode, true)
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "NEW")
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
+
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
 
@@ -188,7 +193,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `changed booked visit creates new visit when prisonerId has changed`() {
     // Given
     val reference = bookedVisit.reference
-    val reserveVisitSlotDto = createReserveVisitSlotDto(prisonerId = "NEW" + bookedVisit.prisonerId)
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference, prisonerId = "NEW" + bookedVisit.prisonerId)
 
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
@@ -224,7 +230,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `changed booked visit creates new visit when startTimestamp has changed`() {
     // Given
     val reference = bookedVisit.reference
-    val reserveVisitSlotDto = createReserveVisitSlotDto(startTimestamp = bookedVisit.visitStart.minusDays(1))
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference, startTimestamp = bookedVisit.visitStart.minusDays(1))
 
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
@@ -260,7 +267,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `changed booked visit creates new visit when visit restriction has changed`() {
     // Given
     val reference = bookedVisit.reference
-    val reserveVisitSlotDto = createReserveVisitSlotDto(visitRestriction = CLOSED)
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(visitRestriction = CLOSED, sessionTemplateReference = sessionTemplate.reference)
 
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)
@@ -311,7 +319,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `change visit - access forbidden when no role`() {
     // Given
     val incorrectAuthHeaders = setAuthorisation(roles = listOf())
-    val reserveVisitSlotDto = createReserveVisitSlotDto()
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
     val reference = bookedVisit.reference
 
     // When
@@ -327,7 +336,10 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   @Test
   fun `change visit - unauthorised when no token`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(createReserveVisitSlotDto())
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
+
+    val jsonBody = BodyInserters.fromValue(reserveVisitSlotDto)
     val reference = bookedVisit.reference
 
     // When
@@ -342,7 +354,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   @Test
   fun `change visit - not found`() {
     // Given
-    val reserveVisitSlotDto = createReserveVisitSlotDto()
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
     val applicationReference = "IM NOT HERE"
 
     // When
@@ -358,7 +371,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val visitStart = LocalDateTime.of((LocalDateTime.now().year - 1), 11, 1, 12, 30, 44)
     val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart, reference = "expired-visit-1")
 
-    val reserveVisitSlotDto = createReserveVisitSlotDto()
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
 
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, expiredVisit.reference)

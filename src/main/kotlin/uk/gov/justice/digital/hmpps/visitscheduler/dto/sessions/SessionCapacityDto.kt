@@ -14,4 +14,8 @@ data class SessionCapacityDto(
     closed = sessionTemplateEntity.closedCapacity,
     open = sessionTemplateEntity.openCapacity,
   )
+  constructor(sessionTemplates: List<SessionTemplate>) : this(
+    closed = sessionTemplates.sumOf { it.closedCapacity },
+    open = sessionTemplates.sumOf { it.openCapacity },
+  )
 }

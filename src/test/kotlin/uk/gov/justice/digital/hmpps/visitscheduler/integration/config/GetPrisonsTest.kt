@@ -11,13 +11,15 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.cache.CacheManager
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.SUPPORTED_PRISONS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
 
 @DisplayName("Get $SUPPORTED_PRISONS")
-class GetSupportedPrisonsTest : IntegrationTestBase() {
+class GetPrisonsTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var prisonRepository: PrisonRepository
 
@@ -35,13 +37,11 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
   @Test
   fun `all supported prisons are returned in correct order`() {
     // Given
-    val today = LocalDate.now()
-
-    sessionTemplateEntityHelper.create(validFromDate = today, prisonCode = "AWE")
-    sessionTemplateEntityHelper.create(validFromDate = today, validToDate = today, prisonCode = "GRE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(1), prisonCode = "CDE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(1), validToDate = today, prisonCode = "BDE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(2), validToDate = today.plusDays(1), prisonCode = "WDE")
+    prisonEntityHelper.create(prisonCode = "AWE")
+    prisonEntityHelper.create(prisonCode = "GRE")
+    prisonEntityHelper.create(prisonCode = "CDE")
+    prisonEntityHelper.create(prisonCode = "BDE")
+    prisonEntityHelper.create(prisonCode = "WDE")
 
     // When
     val responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
@@ -51,7 +51,7 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-    val results = getResults(returnResult)
+    val results = getSupportedPrisonsResults(returnResult)
 
     assertThat(results.size).isEqualTo(5)
     assertThat(results[0]).isEqualTo("AWE")
@@ -64,15 +64,36 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `get prison by prison id-code`() {
+    // Given
+    val excludeDate = LocalDate.now()
+
+    prisonEntityHelper.create(prisonCode = "AWE", excludeDates = listOf(excludeDate))
+
+    // When
+    val responseSpec = webTestClient.get().uri(GET_PRISON.replace("{prisonCode}", "AWE"))
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val results = getPrisonsResults(returnResult)
+    assertThat(results.code).isEqualTo("AWE")
+    assertThat(results.active).isTrue()
+    assertThat(results.excludeDates).contains(excludeDate)
+  }
+
+  @Test
   fun `when supported prisons is called twice cached values are returned the second time`() {
     // Given
     val today = LocalDate.now()
 
-    sessionTemplateEntityHelper.create(validFromDate = today, prisonCode = "AWE")
-    sessionTemplateEntityHelper.create(validFromDate = today, validToDate = today, prisonCode = "GRE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(1), prisonCode = "CDE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(1), validToDate = today, prisonCode = "BDE")
-    sessionTemplateEntityHelper.create(validFromDate = today.minusDays(2), validToDate = today.plusDays(1), prisonCode = "WDE")
+    prisonEntityHelper.create(prisonCode = "AWE")
+    prisonEntityHelper.create(prisonCode = "GRE")
+    prisonEntityHelper.create(prisonCode = "CDE")
+    prisonEntityHelper.create(prisonCode = "BDE")
+    prisonEntityHelper.create(prisonCode = "WDE")
 
     // When
     var responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
@@ -82,7 +103,7 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
     // Then
     var returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-    var results = getResults(returnResult)
+    var results = getSupportedPrisonsResults(returnResult)
 
     assertThat(results.size).isEqualTo(5)
 
@@ -94,7 +115,7 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
     // Then
     returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-    results = getResults(returnResult)
+    results = getSupportedPrisonsResults(returnResult)
     assertThat(results.size).isEqualTo(5)
     verify(prisonRepository, times(1)).getSupportedPrisons()
   }
@@ -102,8 +123,8 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
   @Test
   fun `sessions with inactive prisons are not returned`() {
     // Given
-    sessionTemplateEntityHelper.create(prisonCode = "GRE", activePrison = false)
-    sessionTemplateEntityHelper.create(prisonCode = "CDE", activePrison = false)
+    prisonEntityHelper.create(prisonCode = "GRE", activePrison = false)
+    prisonEntityHelper.create(prisonCode = "CDE", activePrison = false)
 
     // When
     val responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
@@ -113,13 +134,17 @@ class GetSupportedPrisonsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-    val results = getResults(returnResult)
+    val results = getSupportedPrisonsResults(returnResult)
 
     assertThat(results.size).isEqualTo(0)
     verify(prisonRepository, times(1)).getSupportedPrisons()
   }
 
-  private fun getResults(returnResult: BodyContentSpec): Array<String> {
+  private fun getSupportedPrisonsResults(returnResult: BodyContentSpec): Array<String> {
     return objectMapper.readValue(returnResult.returnResult().responseBody, Array<String>::class.java)
+  }
+
+  private fun getPrisonsResults(returnResult: BodyContentSpec): PrisonDto {
+    return objectMapper.readValue(returnResult.returnResult().responseBody, PrisonDto::class.java)
   }
 }

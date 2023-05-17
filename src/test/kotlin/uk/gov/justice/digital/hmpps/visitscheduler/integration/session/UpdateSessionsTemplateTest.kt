@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 
 @DisplayName("Get /visit-sessions")
 class UpdateSessionsTemplateTest : IntegrationTestBase() {
@@ -35,6 +36,9 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
     val categoryAs = listOf(PrisonerCategoryType.A_HIGH, PrisonerCategoryType.A_STANDARD, PrisonerCategoryType.A_EXCEPTIONAL, PrisonerCategoryType.A_PROVISIONAL)
     val sessionCategoryGroup = sessionPrisonerCategoryHelper.create(prisonCode = prison.code, prisonerCategories = categoryAs)
 
+    val nonEnhancedIncentives = listOf(IncentiveLevel.BASIC, IncentiveLevel.STANDARD)
+    val sessionIncentiveGroup = sessionPrisonerIncentiveLevelHelper.create(name = "Non Enhanced Incentives", prisonCode = prison.code, incentiveLevelList = nonEnhancedIncentives)
+
     val dto = createUpdateSessionTemplateDto(
       name = sessionTemplate.name + " Updated",
       validFromDate = sessionTemplate.validFromDate.plusDays(1),
@@ -46,8 +50,8 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
       dayOfWeek = sessionTemplate.dayOfWeek.minus(1),
       locationGroupReferences = mutableListOf(sessionGroup.reference),
       biWeekly = !sessionTemplate.biWeekly,
-      enhanced = !sessionTemplate.enhanced,
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference),
+      incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference),
     )
 
     // When
@@ -67,10 +71,12 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups[0].reference).isEqualTo(dto.locationGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.biWeekly).isEqualTo(dto.biWeekly)
-    Assertions.assertThat(sessionTemplateDto.enhanced).isEqualTo(true)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.stream().map { it.categories }).containsExactlyInAnyOrder(categoryAs)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups[0].reference).isEqualTo(dto.categoryGroupReferences!![0])
+    Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.size).isEqualTo(1)
+    Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.incentiveLevels }).containsExactlyInAnyOrder(nonEnhancedIncentives)
+    Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
   }
 
   @Test

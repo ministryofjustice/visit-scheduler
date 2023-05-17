@@ -27,14 +27,14 @@ data class SessionScheduleDto(
   )
   val capacity: SessionCapacityDto,
 
-  @Schema(
-    description = "The session is for enhanced privileges",
-    required = true,
-  )
-  val enhanced: Boolean,
-
-  @Schema(description = "prisoner location group", example = "Wing C", required = false)
+  @Schema(description = "prisoner location groups", example = "Wing C", required = false)
   val prisonerLocationGroupNames: List<String>,
+
+  @Schema(description = "prisoner category groups", example = "Category A Prisoners", required = false)
+  val prisonerCategoryGroupNames: List<String>,
+
+  @Schema(description = "prisoner incentive level groups", example = "Enhanced Incentive Level Prisoners", required = false)
+  val prisonerIncentiveLevelGroupNames: List<String>,
 
   @Schema(description = "The session template frequency", example = "BI_WEEKLY", required = true)
   val sessionTemplateFrequency: SessionTemplateFrequency,

@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -44,8 +45,8 @@ class VisitService(
   private val visitRepository: VisitRepository,
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClient: TelemetryClient,
+  private val sessionTemplateService: SessionTemplateService,
   private val snsService: SnsService,
-  private val authenticationHelperService: AuthenticationHelperService,
   private val prisonConfigService: PrisonConfigService,
   @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
@@ -68,16 +69,19 @@ class VisitService(
   }
 
   fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
-    val prison = prisonConfigService.findPrisonByCode(reserveVisitSlotDto.prisonCode)
+    val sessionTemplate = sessionTemplateService.getSessionTemplates(reserveVisitSlotDto.sessionTemplateReference)
+
+    val prison = prisonConfigService.findPrisonByCode(sessionTemplate.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = reserveVisitSlotDto.prisonerId,
         prison = prison,
         prisonId = prison.id,
-        visitRoom = reserveVisitSlotDto.visitRoom,
-        visitType = reserveVisitSlotDto.visitType,
-        visitStatus = getStartingStatus(bookingReference, reserveVisitSlotDto),
+        visitRoom = sessionTemplate.visitRoom,
+        sessionTemplateReference = reserveVisitSlotDto.sessionTemplateReference,
+        visitType = sessionTemplate.visitType,
+        visitStatus = getStartingStatus(bookingReference, reserveVisitSlotDto, sessionTemplate),
         visitRestriction = reserveVisitSlotDto.visitRestriction,
         visitStart = reserveVisitSlotDto.startTimestamp,
         visitEnd = reserveVisitSlotDto.endTimestamp,
@@ -104,16 +108,20 @@ class VisitService(
     }
 
     val eventName = if (bookingReference.isBlank()) TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT.eventName else TelemetryVisitEvents.VISIT_CHANGED_EVENT.eventName
-    trackEvent(eventName, createVisitTrackEventFromVisitEntity(visitEntity))
+    trackEvent(eventName, createVisitTrackEventFromVisitEntity(visitEntity, reserveVisitSlotDto.actionedBy))
 
     return VisitDto(visitEntity)
   }
 
-  private fun getStartingStatus(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitStatus {
+  private fun getStartingStatus(
+    bookingReference: String,
+    reserveVisitSlotDto: ReserveVisitSlotDto,
+    sessionTemplate: SessionTemplateDto,
+  ): VisitStatus {
     val bookedVisit = this.visitRepository.findBookedVisit(bookingReference)
 
     if (bookedVisit == null ||
-      (bookedVisit.prison.code != reserveVisitSlotDto.prisonCode) ||
+      (bookedVisit.prison.code != sessionTemplate.prisonCode) ||
       (bookedVisit.prisonerId != reserveVisitSlotDto.prisonerId) ||
       (bookedVisit.visitRestriction != reserveVisitSlotDto.visitRestriction) ||
       (bookedVisit.visitStart.compareTo(reserveVisitSlotDto.startTimestamp) != 0)
@@ -255,7 +263,7 @@ class VisitService(
 
     val visit = VisitDto(visitRepository.saveAndFlush(visitToBook))
 
-    val bookEvent = createVisitTrackEventFromVisitEntity(visitToBook)
+    val bookEvent = createVisitTrackEventFromVisitEntity(visitToBook, visitToBook.createdBy)
     bookEvent["isUpdated"] = changedVisit.toString()
 
     trackEvent(TelemetryVisitEvents.VISIT_BOOKED_EVENT.eventName, bookEvent)
@@ -271,7 +279,7 @@ class VisitService(
 
   @Deprecated("This method has been deprecated.")
   fun cancelVisit(reference: String, outcomeDto: OutcomeDto): VisitDto {
-    val cancelVisitDto = CancelVisitDto(outcomeDto, authenticationHelperService.currentUserName)
+    val cancelVisitDto = CancelVisitDto(outcomeDto, NOT_KNOWN_NOMIS)
     return cancelVisit(reference, cancelVisitDto)
   }
 
@@ -298,7 +306,7 @@ class VisitService(
 
     visitRepository.saveAndFlush(visitEntity)
 
-    val eventsMap = createVisitTrackEventFromVisitEntity(visitEntity)
+    val eventsMap = createVisitTrackEventFromVisitEntity(visitEntity, cancelVisitDto.actionedBy)
     visitEntity.outcomeStatus?.let {
       eventsMap.put("outcomeStatus", it.name)
     }
@@ -383,7 +391,7 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
-  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): MutableMap<String, String> {
+  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit, actionedBy: String): MutableMap<String, String> {
     return mutableMapOf(
       "reference" to visitEntity.reference,
       "prisonerId" to visitEntity.prisonerId,
@@ -394,6 +402,7 @@ class VisitService(
       "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visitEntity.visitStatus.name,
       "applicationReference" to visitEntity.applicationReference,
+      "actionedBy" to actionedBy,
     )
   }
 

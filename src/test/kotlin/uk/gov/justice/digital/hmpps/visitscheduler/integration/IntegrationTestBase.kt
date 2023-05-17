@@ -5,6 +5,7 @@ import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.extension.ExtendWith
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
@@ -15,23 +16,26 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionLocationGroupHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerCategoryHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerIncentiveLevelHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
+@ExtendWith(HmppsAuthExtension::class)
 abstract class IntegrationTestBase {
   @Suppress("unused")
   @Autowired
@@ -48,6 +52,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var sessionPrisonerCategoryHelper: SessionPrisonerCategoryHelper
+
+  @Autowired
+  protected lateinit var sessionPrisonerIncentiveLevelHelper: SessionPrisonerIncentiveLevelHelper
 
   @Autowired
   lateinit var prisonEntityHelper: PrisonEntityHelper

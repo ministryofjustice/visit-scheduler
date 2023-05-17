@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import com.microsoft.applicationinsights.TelemetryClient
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
@@ -12,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -19,8 +21,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplateMatcher
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+
+const val NOT_KNOWN_NOMIS = "NOT_KNOWN_NOMIS"
 
 @Service
 @Transactional
@@ -29,23 +35,39 @@ class MigrateVisitService(
   private val visitRepository: VisitRepository,
   private val prisonConfigService: PrisonConfigService,
   private val snsService: SnsService,
-  private val authenticationHelperService: AuthenticationHelperService,
+  private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
+  @Value("\${migrate.sessiontemplate.mapping.offset.days:0}")
+  private val migrateSessionTemplateMappingOffsetDays: Long,
 ) {
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
-    val actionedBy = migrateVisitRequest.actionedBy ?: authenticationHelperService.currentUserName
+    val actionedBy = migrateVisitRequest.actionedBy ?: NOT_KNOWN_NOMIS
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
-    val prison = prisonConfigService.findPrisonByCode(migrateVisitRequest.prisonCode)
+    val prison: Prison
+    var sessionTemplateReference: String ? = null
+    val visitRoom: String
+
+    if (shouldMigrateWithSessionMapping(migrateVisitRequest)) {
+      val sessionTemplate = migrationSessionTemplateMatcher.getMatchingSessionTemplate(migrateVisitRequest)
+
+      prison = sessionTemplate.prison
+      sessionTemplateReference = sessionTemplate.reference
+      visitRoom = sessionTemplate.visitRoom
+    } else {
+      prison = prisonConfigService.findPrisonByCode(migrateVisitRequest.prisonCode)
+      visitRoom = migrateVisitRequest.visitRoom
+    }
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
         prison = prison,
         prisonId = prison.id,
-        visitRoom = migrateVisitRequest.visitRoom,
+        visitRoom = visitRoom,
+        sessionTemplateReference = sessionTemplateReference,
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
         outcomeStatus = outcomeStatus,
@@ -80,11 +102,7 @@ class MigrateVisitService(
       }
     }
 
-    migrateVisitRequest.legacyData?.let {
-      saveLegacyData(visitEntity, it.leadVisitorId)
-    } ?: run {
-      saveLegacyData(visitEntity, null)
-    }
+    saveLegacyData(visitEntity, migrateVisitRequest)
 
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
@@ -100,6 +118,11 @@ class MigrateVisitService(
     }
 
     return visitEntity.reference
+  }
+
+  private fun shouldMigrateWithSessionMapping(migrateVisitRequest: MigrateVisitRequestDto): Boolean {
+    val startDate = LocalDate.now().plusDays(migrateSessionTemplateMappingOffsetDays)
+    return !migrateVisitRequest.startTimestamp.toLocalDate().isBefore(startDate)
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
@@ -147,6 +170,7 @@ class MigrateVisitService(
       "prisonId" to visitEntity.prison.code,
       "visitType" to visitEntity.visitType.name,
       "visitRoom" to visitEntity.visitRoom,
+      "sessionTemplateReference" to (visitEntity.sessionTemplateReference ?: ""),
       "visitRestriction" to visitEntity.visitRestriction.name,
       "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visitEntity.visitStatus.name,
@@ -187,10 +211,10 @@ class MigrateVisitService(
     )
   }
 
-  private fun saveLegacyData(visit: Visit, leadPersonId: Long?) {
+  private fun saveLegacyData(visit: Visit, migrateVisitRequestDto: MigrateVisitRequestDto) {
     val legacyData = LegacyData(
       visitId = visit.id,
-      leadPersonId = leadPersonId,
+      leadPersonId = migrateVisitRequestDto.legacyData?.leadVisitorId,
     )
 
     legacyDataRepository.saveAndFlush(legacyData)

@@ -2,21 +2,36 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.Assertions.assertThrows
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.Mockito
-import org.mockito.Mockito.mock
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.GroupType.LOCATION
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.GroupType.PRISONER_CATEGORY
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.GroupType.PRISONER_INCENTIVE_LEVEL
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.LocationGroupsColumns
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.PrisonerCategoryGroupsColumns
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.PrisonerIncentiveLevelGroupsColumns
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionItem
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationItem
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionPrisonerCategoryItem
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionPrisonerIncentiveItem
 import java.io.File
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
 
 @DisplayName("Session Template SQL Generator Test")
-class SessionTemplateSQLGeneratorTest() {
+class SessionTemplateSQLGeneratorTest {
+  private lateinit var sessionTemplateSQLGenerator: SessionTemplateSQLGenerator
+
+  @BeforeEach
+  fun beforeTest() {
+    sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
+  }
 
   @Test
   fun `Data parsed - session template is parsed correctly`() {
@@ -24,46 +39,42 @@ class SessionTemplateSQLGeneratorTest() {
     val path = "src/test/resources/session-template-data/"
     val sessionDataFile = File(path, "session-data_count_4.csv")
 
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-
     // When
-    val sessionRecords = sessionTemplateSQLGenerator.getSessionRecordsRecords(sessionDataFile)
+    val sessionRecords = sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
 
     // Then
     assertThat(sessionRecords.size).isEqualTo(4)
     with(sessionRecords[0]) {
       assertThat(prisonCode).isEqualTo("BL1")
-      assertThat(room).isEqualTo("Room 1")
+      assertThat(visitRoom).isEqualTo("Room 1")
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(open).isEqualTo(10)
       assertThat(closed).isEqualTo(1)
-      assertThat(enhanced).isFalse()
       assertThat(startTime).isEqualTo(LocalTime.parse("06:00"))
       assertThat(endTime).isEqualTo(LocalTime.parse("12:00"))
       assertThat(startDate).isEqualTo(LocalDate.parse("2022-11-16"))
       assertThat(endDate).isNull()
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
-      assertThat(biWeekly).isFalse()
+      assertThat(biWeekly).isFalse
       assertThat(locationKeys).isEqualTo("BLI_G1")
-      assertThat(incCategories).isEqualTo("INC_CAT")
-      assertThat(excCategories).isEqualTo("EXC_CAT")
+      assertThat(categoryKeys).isEqualTo("INC_CAT")
+      assertThat(incentiveLevelKeys).isEqualTo("INCENTIVE_LEVEL_1")
     }
     with(sessionRecords[1]) {
       assertThat(prisonCode).isEqualTo("BL2")
-      assertThat(room).isEqualTo("Room 2")
+      assertThat(visitRoom).isEqualTo("Room 2")
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(open).isEqualTo(20)
       assertThat(closed).isEqualTo(2)
-      assertThat(enhanced).isTrue()
       assertThat(startTime).isEqualTo(LocalTime.parse("07:00"))
       assertThat(endTime).isEqualTo(LocalTime.parse("13:00"))
       assertThat(startDate).isEqualTo(LocalDate.parse("2022-11-17"))
       assertThat(endDate).isEqualTo(LocalDate.parse("2022-12-17"))
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.WEDNESDAY)
-      assertThat(biWeekly).isTrue()
+      assertThat(biWeekly).isTrue
       assertThat(locationKeys).isEqualTo("BLI_G2")
-      assertThat(incCategories).isEqualTo("INC_CAT")
-      assertThat(excCategories).isEqualTo("EXC_CAT")
+      assertThat(categoryKeys).isEqualTo("INC_CAT")
+      assertThat(incentiveLevelKeys).isNull()
     }
   }
 
@@ -73,12 +84,10 @@ class SessionTemplateSQLGeneratorTest() {
     val path = "src/test/resources/session-template-data/"
     val sessionLocationDataFile = File(path, "session-location-data_count_12.csv")
 
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-
     // When
 
-    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionLocationColumns(sessionLocationDataFile)
-    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(prisonTemplateRecords)
+    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionGroupColumns(LOCATION, sessionLocationDataFile)
+    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionItems(prisonTemplateRecords)
 
     // Then
     assertThat(prisonTemplateRecords.size).isEqualTo(8)
@@ -128,11 +137,9 @@ class SessionTemplateSQLGeneratorTest() {
     val path = "src/test/resources/session-template-data/"
     val sessionLocationDataFile = File(path, "session-location-data_lower_case.csv")
 
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
-
     // When
-    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionLocationColumns(sessionLocationDataFile)
-    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionLocationItems(prisonTemplateRecords)
+    val prisonTemplateRecords = sessionTemplateSQLGenerator.getSessionGroupColumns(LOCATION, sessionLocationDataFile)
+    val sessionLocationItems = sessionTemplateSQLGenerator.getSessionItems(prisonTemplateRecords)
 
     // Then
     assertThat(sessionLocationItems.size).isEqualTo(1)
@@ -145,164 +152,413 @@ class SessionTemplateSQLGeneratorTest() {
     val path = "src/test/resources/session-template-data/"
     val sessionDataFile = File(path, "session-data_lower_case.csv")
 
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     // When
-    val sessionRecords = sessionTemplateSQLGenerator.getSessionRecordsRecords(sessionDataFile)
+    val sessionRecords = sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
 
     // Then
     assertThat(sessionRecords.size).isEqualTo(1)
     with(sessionRecords[0]) {
       assertThat(prisonCode).isEqualTo("BL1")
-      assertThat(room).isEqualTo("room 1")
+      assertThat(visitRoom).isEqualTo("room 1")
       assertThat(type).isEqualTo(SOCIAL)
-      assertThat(enhanced).isFalse()
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
       assertThat(locationKeys).isEqualTo("BLI_G1")
-      assertThat(biWeekly).isFalse()
-      assertThat(incCategories).isEqualTo("INC_CAT")
-      assertThat(excCategories).isEqualTo("EXC_CAT")
+      assertThat(biWeekly).isFalse
+      assertThat(categoryKeys).isEqualTo("INC_CAT")
     }
   }
 
-  @Test()
+  @Test
   fun `Data parsed - session template levelOne validated correctly`() {
     // Given
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
-    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf())
-    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
-    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    val locationGroupsColumns = LocationGroupsColumns(prisonCode = "prison1", key = "key1", levelOne = listOf())
     sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
     assertThat(exception.message).isEqualTo("Location : must have at least one level one element (prison:prison1 key:key1)!")
   }
 
-  @Test()
+  @Test
   fun `Data parsed - session template levelTwo cant have two parents validated correctly`() {
     // Given
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
-    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one", "one"))
-    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf("child"))
-    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
-    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    val locationGroupsColumns = LocationGroupsColumns(
+      key = "key1",
+      prisonCode = "prison1",
+      levelOne = listOf("one", "one"),
+      levelTwo = listOf("child"),
+    )
     sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
     assertThat(exception.message).isEqualTo("Location : Child can't have more than one parent (prison:prison1 key:key1)!")
   }
 
-  @Test()
+  @Test
   fun `Data parsed - session template levelThree cant have to parents validated correctly`() {
     // Given
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
-    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one"))
-    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf("two", "two"))
-    Mockito.`when`(locationGroupsColumns.levelThree).thenReturn(listOf("three"))
-    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
-    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    val locationGroupsColumns = LocationGroupsColumns(
+      key = "key1",
+      prisonCode = "prison1",
+      levelOne = listOf("one"),
+      levelTwo = listOf("two", "two"),
+      levelThree = listOf("three"),
+    )
     sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
     assertThat(exception.message).isEqualTo("Location : Child can't have more than one parent (prison:prison1 key:key1)!")
   }
 
-  @Test()
+  @Test
   fun `Data parsed - session template levelFour cant have to parents validated correctly`() {
     // Given
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
-    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one"))
-    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf("two"))
-    Mockito.`when`(locationGroupsColumns.levelThree).thenReturn(listOf("three", "three"))
-    Mockito.`when`(locationGroupsColumns.levelFour).thenReturn(listOf("four"))
-    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
-    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    val locationGroupsColumns = LocationGroupsColumns(
+      key = "key1",
+      prisonCode = "prison1",
+      levelOne = listOf("one"),
+      levelTwo = listOf("two"),
+      levelThree = listOf("three", "three"),
+      levelFour = listOf("four"),
+    )
     sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
     assertThat(exception.message).isEqualTo("Location : Child can't have more than one parent (prison:prison1 key:key1)!")
   }
 
-  @Test()
+  @Test
   fun `Data parsed - session template levelThree cant have empty parent validated correctly`() {
     // Given
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
-    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one"))
-    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf())
-    Mockito.`when`(locationGroupsColumns.levelThree).thenReturn(listOf("three"))
-    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
-    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    val locationGroupsColumns = LocationGroupsColumns(
+      key = "key1",
+      prisonCode = "prison1",
+      levelOne = listOf("one"),
+      levelTwo = listOf(),
+      levelThree = listOf("three"),
+    )
     sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
     assertThat(exception.message).isEqualTo("Location : Child can't have empty parent (prison:prison1 key:key1)!")
   }
 
-  @Test()
+  @Test
   fun `Data parsed - session template levelFour cant have empty parent validated correctly`() {
     // Given
-    val sessionTemplateSQLGenerator = SessionTemplateSQLGenerator()
     val sessionLocationList = mutableListOf<LocationGroupsColumns>()
 
-    val locationGroupsColumns = mock(LocationGroupsColumns::class.java)
-    Mockito.`when`(locationGroupsColumns.levelOne).thenReturn(listOf("one"))
-    Mockito.`when`(locationGroupsColumns.levelTwo).thenReturn(listOf("two"))
-    Mockito.`when`(locationGroupsColumns.levelThree).thenReturn(listOf())
-    Mockito.`when`(locationGroupsColumns.levelFour).thenReturn(listOf("four"))
-    Mockito.`when`(locationGroupsColumns.prisonCode).thenReturn("prison1")
-    Mockito.`when`(locationGroupsColumns.key).thenReturn("key1")
+    val locationGroupsColumns = LocationGroupsColumns(
+      key = "key1",
+      prisonCode = "prison1",
+      levelOne = listOf("one"),
+      levelTwo = listOf("two"),
+      levelThree = listOf(),
+      levelFour = listOf("four"),
+    )
     sessionLocationList.add(locationGroupsColumns)
 
     // When
     val exception = assertThrows(IllegalArgumentException::class.java) {
-      sessionTemplateSQLGenerator.validateSessionLocation(sessionLocationList)
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionLocationList)
     }
 
     // Then
     assertThat(exception.message).isEqualTo("Location : Child can't have empty parent (prison:prison1 key:key1)!")
+  }
+
+  @Test
+  fun `Data parsed - session prisoner category data is parsed correctly`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionCategoryDataFile = File(path, "session-prisoner-category-data_count_12.csv")
+
+    // When
+    val prisonerCategoryGroupsColumns =
+      sessionTemplateSQLGenerator.getSessionGroupColumns(
+        PRISONER_CATEGORY,
+        sessionCategoryDataFile,
+      )
+
+    val sessionCategoryItems = sessionTemplateSQLGenerator.getSessionItems(prisonerCategoryGroupsColumns)
+
+    // Then
+    assertThat(prisonerCategoryGroupsColumns.size).isEqualTo(4)
+    assertThat(prisonerCategoryGroupsColumns[0].key).isEqualTo("BLI_CAT1")
+    assertThat(prisonerCategoryGroupsColumns[0].prisonCode).isEqualTo("BL1")
+    assertThat(prisonerCategoryGroupsColumns[0].name).isEqualTo("Test CAT 1")
+    assertThat(prisonerCategoryGroupsColumns[1].key).isEqualTo("BLI_CAT2")
+    assertThat(prisonerCategoryGroupsColumns[1].prisonCode).isEqualTo("BL2")
+    assertThat(prisonerCategoryGroupsColumns[1].name).isEqualTo("Test CAT 2")
+    assertThat(prisonerCategoryGroupsColumns[2].key).isEqualTo("BLI_CAT3")
+    assertThat(prisonerCategoryGroupsColumns[2].prisonCode).isEqualTo("BL3")
+    assertThat(prisonerCategoryGroupsColumns[2].name).isEqualTo("Test CAT 3")
+    assertThat(prisonerCategoryGroupsColumns[3].key).isEqualTo("BLI_CAT4")
+    assertThat(prisonerCategoryGroupsColumns[3].prisonCode).isEqualTo("BL4")
+    assertThat(prisonerCategoryGroupsColumns[3].name).isEqualTo("Test CAT 4")
+
+    assertThat(sessionCategoryItems.size).isEqualTo(9)
+    assertSessionPrisonerCategory(sessionCategoryItems[0], "BLI_CAT1", PrisonerCategoryType.B)
+    assertSessionPrisonerCategory(sessionCategoryItems[1], "BLI_CAT2", PrisonerCategoryType.A_EXCEPTIONAL)
+    assertSessionPrisonerCategory(sessionCategoryItems[2], "BLI_CAT3", PrisonerCategoryType.A_EXCEPTIONAL)
+    assertSessionPrisonerCategory(sessionCategoryItems[3], "BLI_CAT3", PrisonerCategoryType.A_HIGH)
+    assertSessionPrisonerCategory(sessionCategoryItems[4], "BLI_CAT3", PrisonerCategoryType.A_STANDARD)
+    assertSessionPrisonerCategory(sessionCategoryItems[5], "BLI_CAT3", PrisonerCategoryType.A_PROVISIONAL)
+    assertSessionPrisonerCategory(sessionCategoryItems[6], "BLI_CAT4", PrisonerCategoryType.B)
+    assertSessionPrisonerCategory(sessionCategoryItems[7], "BLI_CAT4", PrisonerCategoryType.C)
+    assertSessionPrisonerCategory(sessionCategoryItems[8], "BLI_CAT4", PrisonerCategoryType.D)
+  }
+
+  @Test
+  fun `Data parsed - session prisoner category lower case data is converted to correct case when required`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionCategoryDataFile = File(path, "session-prisoner-category-data_lower_case.csv")
+
+    // When
+    val prisonerCategoryGroupsColumns = sessionTemplateSQLGenerator.getSessionGroupColumns(PRISONER_CATEGORY, sessionCategoryDataFile)
+    val sessionCategoryItems = sessionTemplateSQLGenerator.getSessionItems(prisonerCategoryGroupsColumns)
+
+    // Then
+    assertThat(sessionCategoryItems.size).isEqualTo(4)
+    assertSessionPrisonerCategory(sessionCategoryItems[0], "BLI_CAT1", PrisonerCategoryType.A_EXCEPTIONAL)
+    assertSessionPrisonerCategory(sessionCategoryItems[1], "BLI_CAT2", PrisonerCategoryType.B)
+    assertSessionPrisonerCategory(sessionCategoryItems[2], "BLI_CAT2", PrisonerCategoryType.C)
+    assertSessionPrisonerCategory(sessionCategoryItems[3], "BLI_CAT2", PrisonerCategoryType.D)
+  }
+
+  @Test
+  fun `Data parsed - session prisoner category invalid category validated correctly`() {
+    // Given
+    val sessionCategoryList = mutableListOf<PrisonerCategoryGroupsColumns>()
+
+    // invalid prisoner category - TEST
+    val categoryGroupColumns = PrisonerCategoryGroupsColumns(categoryCodes = listOf("TEST"), key = "key1", prisonCode = "prison1")
+    sessionCategoryList.add(categoryGroupColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionCategoryList)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Category : Invalid category code - TEST - allowed values are - ")
+    assertThat(exception.message).endsWith("(prison:prison1 key:key1)!")
+  }
+
+  @Test
+  fun `Data parsed - session prisoner category no category codes validated correctly`() {
+    // Given
+    val sessionCategoryList = mutableListOf<PrisonerCategoryGroupsColumns>()
+
+    val categoryGroupColumns = PrisonerCategoryGroupsColumns(
+      key = "key1",
+      prisonCode = "prison1",
+      // no categories
+      categoryCodes = listOf(),
+    )
+    sessionCategoryList.add(categoryGroupColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionCategoryList)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Category : must have at least one category code (prison:prison1 key:key1)!")
+  }
+
+  @Test
+  fun `Data parsed - session prisoner category no data is parsed correctly`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionCategoryDataFile = File(path, "session-prisoner-category-data_no_data.csv")
+
+    // When
+    val prisonerCategoryGroupsColumns = sessionTemplateSQLGenerator.getSessionGroupColumns(PRISONER_CATEGORY, sessionCategoryDataFile)
+    val sessionCategoryItems = sessionTemplateSQLGenerator.getSessionItems(prisonerCategoryGroupsColumns)
+
+    // Then
+    assertThat(sessionCategoryItems.size).isEqualTo(0)
+  }
+
+  @Test
+  fun `Data parsed - session prisoner category missing columns validated correctly`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val fileName = "session-prisoner-category-data_missing_columns.csv"
+    val sessionCategoryDataFile = File(path, fileName)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionGroupColumns(PRISONER_CATEGORY, sessionCategoryDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Some prisoner-category columns are missing $fileName line number: 1, expected 4 but got 3")
+  }
+
+  @Test
+  fun `Data parsed - session prisoner incentive level data is parsed correctly`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionIncentiveLevelDataFile = File(path, "session-prisoner-incentive-level-data_count_12.csv")
+
+    // When
+    val prisonerIncentiveLevelGroupsColumns =
+      sessionTemplateSQLGenerator.getSessionGroupColumns(
+        PRISONER_INCENTIVE_LEVEL,
+        sessionIncentiveLevelDataFile,
+      )
+
+    val sessionIncentiveLevelItems = sessionTemplateSQLGenerator.getSessionItems(prisonerIncentiveLevelGroupsColumns)
+
+    // Then
+    assertThat(prisonerIncentiveLevelGroupsColumns.size).isEqualTo(4)
+    assertThat(prisonerIncentiveLevelGroupsColumns[0].key).isEqualTo("CFI_INC_LEVEL1")
+    assertThat(prisonerIncentiveLevelGroupsColumns[0].prisonCode).isEqualTo("CF1")
+    assertThat(prisonerIncentiveLevelGroupsColumns[0].name).isEqualTo("Test INC_LEVEL 1")
+    assertThat(prisonerIncentiveLevelGroupsColumns[1].key).isEqualTo("CFI_INC_LEVEL2")
+    assertThat(prisonerIncentiveLevelGroupsColumns[1].prisonCode).isEqualTo("CF2")
+    assertThat(prisonerIncentiveLevelGroupsColumns[1].name).isEqualTo("Test INC_LEVEL 2")
+    assertThat(prisonerIncentiveLevelGroupsColumns[2].key).isEqualTo("CFI_INC_LEVEL3")
+    assertThat(prisonerIncentiveLevelGroupsColumns[2].prisonCode).isEqualTo("CF3")
+    assertThat(prisonerIncentiveLevelGroupsColumns[2].name).isEqualTo("Test INC_LEVEL 3")
+    assertThat(prisonerIncentiveLevelGroupsColumns[3].key).isEqualTo("CFI_INC_LEVEL4")
+    assertThat(prisonerIncentiveLevelGroupsColumns[3].prisonCode).isEqualTo("CF4")
+    assertThat(prisonerIncentiveLevelGroupsColumns[3].name).isEqualTo("Test INC_LEVEL 4")
+
+    assertThat(sessionIncentiveLevelItems.size).isEqualTo(7)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[0], "CFI_INC_LEVEL1", IncentiveLevel.BASIC)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[1], "CFI_INC_LEVEL2", IncentiveLevel.STANDARD)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[2], "CFI_INC_LEVEL3", IncentiveLevel.ENHANCED_3)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[3], "CFI_INC_LEVEL3", IncentiveLevel.BASIC)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[4], "CFI_INC_LEVEL3", IncentiveLevel.STANDARD)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[5], "CFI_INC_LEVEL4", IncentiveLevel.ENHANCED)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[6], "CFI_INC_LEVEL4", IncentiveLevel.ENHANCED_2)
+  }
+
+  @Test
+  fun `Data parsed - session prisoner incentive level lower case data is converted to correct case when required`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionIncentiveLevelDataFile = File(path, "session-prisoner-incentive-level-data_lower_case.csv")
+
+    // When
+    val prisonerIncentiveLevelGroupsColumns = sessionTemplateSQLGenerator.getSessionGroupColumns(PRISONER_INCENTIVE_LEVEL, sessionIncentiveLevelDataFile)
+    val sessionIncentiveLevelItems = sessionTemplateSQLGenerator.getSessionItems(prisonerIncentiveLevelGroupsColumns)
+
+    // Then
+    assertThat(sessionIncentiveLevelItems.size).isEqualTo(4)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[0], "CFI_INC_LEVEL1", IncentiveLevel.BASIC)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[1], "CFI_INC_LEVEL2", IncentiveLevel.ENHANCED_3)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[2], "CFI_INC_LEVEL2", IncentiveLevel.STANDARD)
+    assertSessionPrisonerIncentiveLevel(sessionIncentiveLevelItems[3], "CFI_INC_LEVEL2", IncentiveLevel.ENHANCED)
+  }
+
+  @Test
+  fun `Data parsed - session prisoner  incentive level invalid incentive level validated correctly`() {
+    // Given
+    val sessionIncentiveLevelList = mutableListOf<PrisonerIncentiveLevelGroupsColumns>()
+
+    val incentiveLevelGroupColumns = PrisonerIncentiveLevelGroupsColumns(incentiveLevels = listOf("TEST"), key = "key1", prisonCode = "prison1")
+    // invalid prisoner incentiveLevel - TEST
+    sessionIncentiveLevelList.add(incentiveLevelGroupColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionIncentiveLevelList)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("IncentiveLevel : Invalid incentive level - TEST - allowed values are - ")
+    assertThat(exception.message).endsWith("(prison:prison1 key:key1)!")
+  }
+
+  @Test
+  fun `Data parsed - session prisoner incentive level no incentive levels validated correctly`() {
+    // Given
+    val sessionIncentiveLevelList = mutableListOf<PrisonerIncentiveLevelGroupsColumns>()
+
+    // no categories
+    val incentiveLevelGroupColumns = PrisonerIncentiveLevelGroupsColumns(incentiveLevels = listOf(), key = "key1", prisonCode = "prison1")
+    sessionIncentiveLevelList.add(incentiveLevelGroupColumns)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.validateGroupColumns(sessionIncentiveLevelList)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Incentive Level : must have at least one incentive level (prison:prison1 key:key1)!")
+  }
+
+  @Test
+  fun `Data parsed - session prisoner incentive level no data is parsed correctly`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionIncentiveLevelDataFile = File(path, "session-prisoner-incentive-level-data_no_data.csv")
+
+    // When
+    val prisonerIncentiveLevelGroupsColumns = sessionTemplateSQLGenerator.getSessionGroupColumns(PRISONER_INCENTIVE_LEVEL, sessionIncentiveLevelDataFile)
+    val sessionIncentiveLevelItems = sessionTemplateSQLGenerator.getSessionItems(prisonerIncentiveLevelGroupsColumns)
+
+    // Then
+    assertThat(sessionIncentiveLevelItems.size).isEqualTo(0)
+  }
+
+  @Test
+  fun `Data parsed - session prisoner incentive level missing columns validated correctly`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val fileName = "session-prisoner-incentive-level-data_missing_columns.csv"
+    val sessionIncentiveLevelDataFile = File(path, fileName)
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionGroupColumns(PRISONER_INCENTIVE_LEVEL, sessionIncentiveLevelDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).isEqualTo("Some prisoner-incentive-level columns are missing $fileName line number: 1, expected 4 but got 3")
   }
 
   private fun assertSessionLocation(
-    sessionLocationItem: SessionLocationItem,
+    sessionItem: SessionItem,
     prison: String,
     key: String,
     level1: String,
@@ -310,13 +566,34 @@ class SessionTemplateSQLGeneratorTest() {
     level3: String? = null,
     level4: String? = null,
   ) {
+    val sessionLocationItem = sessionItem as SessionLocationItem
     with(sessionLocationItem) {
       assertThat(prison).isEqualTo(prison)
-      assertThat(key).isEqualTo(key)
+      assertThat(groupKey).isEqualTo(key)
       assertThat(levelOne).isEqualTo(level1)
       assertThat(levelTwo).isEqualTo(level2)
       assertThat(levelThree).isEqualTo(level3)
       assertThat(levelFour).isEqualTo(level4)
     }
+  }
+
+  private fun assertSessionPrisonerCategory(
+    sessionItem: SessionItem,
+    key: String,
+    prisonerCategory: PrisonerCategoryType,
+  ) {
+    val sessionPrisonerCategoryItem = sessionItem as SessionPrisonerCategoryItem
+    assertThat(sessionPrisonerCategoryItem.groupKey).isEqualTo(key)
+    assertThat(sessionPrisonerCategoryItem.prisonerCategoryType).isEqualTo(prisonerCategory)
+  }
+
+  private fun assertSessionPrisonerIncentiveLevel(
+    sessionItem: SessionItem,
+    key: String,
+    incentiveLevel: IncentiveLevel,
+  ) {
+    val sessionPrisonerIncentiveLevelItem = sessionItem as SessionPrisonerIncentiveItem
+    assertThat(sessionPrisonerIncentiveLevelItem.groupKey).isEqualTo(key)
+    assertThat(sessionPrisonerIncentiveLevelItem.incentiveLevel).isEqualTo(incentiveLevel)
   }
 }

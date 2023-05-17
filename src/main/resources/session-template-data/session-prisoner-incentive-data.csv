@@ -1,0 +1,4 @@
+PRISON,KEY,INCENTIVE_LEVEL,NAME
+% Group names are only descriptors - they need to be updated when the incentive levels change
+CFI,CFI_ENHANCED,ENHANCED,Enhanced prisoners
+BLI,BLI_SUPER_ENHANCED,ENHANCED_2,Super Enhanced prisoners

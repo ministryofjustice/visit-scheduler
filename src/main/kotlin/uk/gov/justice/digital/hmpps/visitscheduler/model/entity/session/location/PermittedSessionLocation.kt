@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session
+package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 
 import jakarta.persistence.CascadeType
 import jakarta.persistence.Column

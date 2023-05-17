@@ -199,19 +199,19 @@ class CancelVisitTest : IntegrationTestBase() {
     val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED)
     val roles = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
+    val sessionTemplate = sessionTemplateEntityHelper.create()
+
     // update the visit
     // first create a reserveVisitSlotDto with same details as the booked visit
     val reserveVisitSlotDto = ReserveVisitSlotDto(
       prisonerId = bookedVisit.prisonerId,
-      prisonCode = bookedVisit.prison.code,
-      visitRoom = bookedVisit.visitRoom,
-      visitType = bookedVisit.visitType,
       visitRestriction = bookedVisit.visitRestriction,
       startTimestamp = bookedVisit.visitStart,
       endTimestamp = bookedVisit.visitEnd,
       visitContact = ContactDto("John Smith", "011223344"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       actionedBy = reservedByByUser,
+      sessionTemplateReference = sessionTemplate.reference,
     )
 
     // call visit change and then book the visit
@@ -453,6 +453,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
+        Assertions.assertThat(it["actionedBy"]).isEqualTo(cancelledVisit.cancelledBy)
       },
       isNull(),
     )
@@ -468,6 +469,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,
       "outcomeStatus" to cancelledVisit.outcomeStatus!!.name,
+      "actionedBy" to cancelledVisit.cancelledBy,
     )
     verify(telemetryClient, times(1)).trackEvent(type.eventName, eventsMap, null)
   }

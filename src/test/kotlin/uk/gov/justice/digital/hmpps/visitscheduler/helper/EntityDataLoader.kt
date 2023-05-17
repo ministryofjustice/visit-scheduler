@@ -10,19 +10,24 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.PermittedSessionLocation
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionPrisonerIncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
@@ -40,12 +45,15 @@ class PrisonEntityHelper(
 ) {
 
   @Transactional(propagation = REQUIRED)
-  fun create(prisonCode: String = "MDI", activePrison: Boolean = true): Prison {
+  fun create(prisonCode: String = "MDI", activePrison: Boolean = true, excludeDates: List<LocalDate> = listOf()): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
     if (prison == null) {
       prison = prisonRepository.saveAndFlush(Prison(code = prisonCode, active = activePrison))
     } else {
       prison.active = activePrison
+    }
+    prison?.let {
+      prison.excludeDates.addAll(excludeDates.map { PrisonExcludeDate(prisonId = prison.id, prison = prison, it) })
     }
     return prison!!
   }
@@ -72,6 +80,7 @@ class VisitEntityHelper(
     outcomeStatus: OutcomeStatus? = null,
     createdBy: String = "CREATED_BY",
     updatedBy: String? = null,
+    sessionTemplateReference: String? = "sessionTemplateReference",
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -90,6 +99,7 @@ class VisitEntityHelper(
         outcomeStatus = outcomeStatus,
         createdBy = createdBy,
         updatedBy = updatedBy,
+        sessionTemplateReference = sessionTemplateReference,
       ),
     )
   }
@@ -222,16 +232,16 @@ class SessionTemplateEntityHelper(
     closedCapacity: Int = 5,
     openCapacity: Int = 10,
     prisonCode: String = "MDI",
-    visitRoom: String = "3B",
+    visitRoom: String = "A1",
     visitType: VisitType = VisitType.SOCIAL,
     startTime: LocalTime = LocalTime.parse("09:00"),
     endTime: LocalTime = LocalTime.parse("10:00"),
     dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
     activePrison: Boolean = true,
-    permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
+    permittedLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
-    enhanced: Boolean = false,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
+    permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -247,10 +257,10 @@ class SessionTemplateEntityHelper(
       startTime = startTime,
       endTime = endTime,
       dayOfWeek = dayOfWeek,
-      permittedSessionGroups = permittedSessionGroups,
+      permittedSessionGroups = permittedLocationGroups,
       biWeekly = biWeekly,
-      enhanced = enhanced,
       permittedCategories = permittedCategories,
+      permittedIncentiveLevels = permittedIncentiveLevels,
     )
   }
 
@@ -261,7 +271,7 @@ class SessionTemplateEntityHelper(
     closedCapacity: Int = 5,
     openCapacity: Int = 10,
     prison: Prison,
-    visitRoom: String = "3B",
+    visitRoom: String = "visitRoom",
     visitType: VisitType = VisitType.SOCIAL,
     startTime: LocalTime = LocalTime.parse("09:00"),
     endTime: LocalTime = LocalTime.parse("10:00"),
@@ -269,8 +279,8 @@ class SessionTemplateEntityHelper(
     activePrison: Boolean = true,
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     biWeekly: Boolean = false,
-    enhanced: Boolean = false,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
+    permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
   ): SessionTemplate {
     return sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -286,10 +296,10 @@ class SessionTemplateEntityHelper(
         startTime = startTime,
         endTime = endTime,
         dayOfWeek = dayOfWeek,
-        permittedSessionGroups = permittedSessionGroups,
+        permittedSessionLocationGroups = permittedSessionGroups,
         biWeekly = biWeekly,
-        enhanced = enhanced,
         permittedSessionCategoryGroups = permittedCategories,
+        permittedSessionIncentiveLevelGroups = permittedIncentiveLevels,
       ),
     )
   }
@@ -364,6 +374,41 @@ class SessionPrisonerCategoryHelper(
     }
 
     group.sessionCategories.addAll(permittedCategoryGroups)
+
+    return group
+  }
+}
+
+@Component
+@Transactional
+class SessionPrisonerIncentiveLevelHelper(
+  private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
+  private val prisonEntityHelper: PrisonEntityHelper,
+) {
+  fun create(name: String? = "Group A", prisonCode: String = "MDI", incentiveLevelList: List<IncentiveLevel>): SessionIncentiveLevelGroup {
+    val prison = prisonEntityHelper.create(prisonCode, true)
+
+    val group = sessionIncentiveLevelGroupRepository.saveAndFlush(
+      SessionIncentiveLevelGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = name!!,
+      ),
+    )
+
+    val permittedIncentiveLevelGroups = mutableListOf<SessionPrisonerIncentiveLevel>()
+
+    for (prisonerIncentiveLevel in incentiveLevelList) {
+      val permittedIncentiveLevelGroup =
+        SessionPrisonerIncentiveLevel(
+          sessionCategoryGroupId = group.id,
+          sessionIncentiveLevelGroup = group,
+          prisonerIncentiveLevel = prisonerIncentiveLevel,
+        )
+      permittedIncentiveLevelGroups.add(permittedIncentiveLevelGroup)
+    }
+
+    group.sessionIncentiveLevels.addAll(permittedIncentiveLevelGroups)
 
     return group
   }

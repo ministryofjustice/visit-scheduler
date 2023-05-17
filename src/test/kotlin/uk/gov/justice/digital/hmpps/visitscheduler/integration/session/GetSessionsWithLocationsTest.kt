@@ -61,7 +61,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 1",
-      permittedSessionGroups = mutableListOf(location1),
+      permittedLocationGroups = mutableListOf(location1),
     )
 
     // this session template is available to levels A-1,A-2,A-3 and B-1
@@ -81,7 +81,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 2s",
-      permittedSessionGroups = mutableListOf(location2),
+      permittedLocationGroups = mutableListOf(location2),
     )
 
     // this session template is available to levels A-1-100, A-1-200, and B-1
@@ -100,7 +100,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 3s and level 2s",
-      permittedSessionGroups = mutableListOf(location3),
+      permittedLocationGroups = mutableListOf(location3),
     )
 
     allowedPermittedLocations = listOf(
@@ -118,7 +118,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 4s and level 2s",
-      permittedSessionGroups = mutableListOf(location4),
+      permittedLocationGroups = mutableListOf(location4),
     )
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prison.code)
@@ -504,7 +504,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     Assertions.assertThat(visitSessionResult.endTimestamp).isEqualTo(testDate.atTime(expectedSessionTemplate.endTime))
     Assertions.assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
     Assertions.assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
-    Assertions.assertThat(visitSessionResult.visitRoomName).isEqualTo(expectedSessionTemplate.visitRoom)
+    Assertions.assertThat(visitSessionResult.visitRoom).isEqualTo(expectedSessionTemplate.visitRoom)
   }
 
   private fun getResults(returnResult: WebTestClient.BodyContentSpec): Array<VisitSessionDto> {

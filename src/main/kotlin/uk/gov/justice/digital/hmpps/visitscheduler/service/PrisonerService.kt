@@ -11,8 +11,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerCellLo
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_FOUR
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_ONE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_THREE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_TWO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 
 @Service
 class PrisonerService(
@@ -21,7 +26,6 @@ class PrisonerService(
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    private const val ENHANCED_INCENTIVE_PRIVILEGE = "ENH"
   }
 
   fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
@@ -83,10 +87,10 @@ class PrisonerService(
   fun getLevelsMapForPrisoner(prisonerHousingLocationsDto: PrisonerHousingLocationsDto): Map<PrisonerHousingLevels, String?> {
     val levelsMap: MutableMap<PrisonerHousingLevels, String?> = mutableMapOf()
 
-    levelsMap[PrisonerHousingLevels.LEVEL_ONE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_ONE.level)?.code
-    levelsMap[PrisonerHousingLevels.LEVEL_TWO] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_TWO.level)?.code
-    levelsMap[PrisonerHousingLevels.LEVEL_THREE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_THREE.level)?.code
-    levelsMap[PrisonerHousingLevels.LEVEL_FOUR] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, PrisonerHousingLevels.LEVEL_FOUR.level)?.code
+    levelsMap[LEVEL_ONE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_ONE.level)?.code
+    levelsMap[LEVEL_TWO] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_TWO.level)?.code
+    levelsMap[LEVEL_THREE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_THREE.level)?.code
+    levelsMap[LEVEL_FOUR] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_FOUR.level)?.code
 
     return levelsMap.toMap()
   }
@@ -97,7 +101,15 @@ class PrisonerService(
 
   fun getPrisoner(prisonerId: String): PrisonerDto? {
     val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
-    val enhanced = ENHANCED_INCENTIVE_PRIVILEGE == prisonerSearchResultDto?.currentIncentive?.level?.code
-    return PrisonerDto(category = prisonerSearchResultDto?.category, enhanced = enhanced)
+    val incentiveLevelCode = prisonerSearchResultDto?.currentIncentive?.level?.code
+    var incentiveLevel: IncentiveLevel? = null
+    incentiveLevelCode?.let {
+      incentiveLevel = IncentiveLevel.getIncentiveLevel(it)
+
+      if (incentiveLevel == null) {
+        LOG.error("Incentive level - $it for prisoner - $prisonerId not available in IncentiveLevel enum.")
+      }
+    }
+    return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel, prisonCode = prisonerSearchResultDto?.prisonId)
   }
 }

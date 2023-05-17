@@ -10,9 +10,14 @@
         -- Use TRUNCATE rather than delete so indexes are re-set
         TRUNCATE TABLE session_to_location_group RESTART IDENTITY CASCADE;
         TRUNCATE TABLE session_location_group RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE session_to_category_group RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE session_category_group RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE session_to_incentive_group RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE session_incentive_group RESTART IDENTITY CASCADE;
         TRUNCATE TABLE session_template  RESTART IDENTITY CASCADE;
         TRUNCATE TABLE permitted_session_location  RESTART IDENTITY CASCADE;
         TRUNCATE TABLE session_prisoner_category  RESTART IDENTITY CASCADE;
+        TRUNCATE TABLE session_prisoner_incentive  RESTART IDENTITY CASCADE;
 
             INSERT INTO prison(code, active) SELECT 'HEI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'HEI');
         INSERT INTO prison(code, active) SELECT 'BLI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BLI');
@@ -23,20 +28,26 @@
         INSERT INTO prison(code, active) SELECT 'DHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'DHI');
         INSERT INTO prison(code, active) SELECT 'MHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'MHI');
         INSERT INTO prison(code, active) SELECT 'BNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BNI');
+        INSERT INTO prison(code, active) SELECT 'FNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FNI');
+        INSERT INTO prison(code, active) SELECT 'LNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'LNI');
+        INSERT INTO prison(code, active) SELECT 'FHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FHI');
+        INSERT INTO prison(code, active) SELECT 'ESI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'ESI');
+        INSERT INTO prison(code, active) SELECT 'BSI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BSI');
+        INSERT INTO prison(code, active) SELECT 'AGI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'AGI');
+        INSERT INTO prison(code, active) SELECT 'DMI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'DMI');
 
         -- Creating session template data
         CREATE TEMP TABLE tmp_session_template(
              id                serial        NOT NULL PRIMARY KEY,
              locationKeys      VARCHAR       ,
-             incCategories      VARCHAR       ,
-             excCategories      VARCHAR       ,
+             categoryKeys      VARCHAR       ,
+             incentiveLevelKeys VARCHAR      ,
              prison_code       VARCHAR(6)    NOT NULL,
              prison_id         int    ,
-             visit_room        VARCHAR(255)  NOT NULL,
+             visit_room    VARCHAR(255),
              visit_type        VARCHAR(80)   NOT NULL,
              open_capacity     integer       NOT NULL,
              closed_capacity   integer       NOT NULL,
-             enhanced          BOOLEAN       NOT NULL,
              start_time        time          NOT NULL,
              end_time          time          NOT NULL,
              valid_from_date   date          NOT NULL,
@@ -46,164 +57,233 @@
              name              varchar(100)  NOT NULL
             );
 
-        INSERT INTO tmp_session_template (locationKeys, incCategories, excCategories, prison_code, visit_room, visit_type, open_capacity, closed_capacity,enhanced, start_time, end_time, valid_from_date, valid_to_date, day_of_week,bi_weekly,name)
+        INSERT INTO tmp_session_template (locationKeys, categoryKeys, incentiveLevelKeys, prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week,bi_weekly,name)
         VALUES
-            (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2022-05-30','2022-12-18','MONDAY',false,'MONDAY, 2022-05-30, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2022-06-01','2022-12-18','WEDNESDAY',false,'WEDNESDAY, 2022-06-01, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'09:00','10:00','2022-06-03','2022-12-18','FRIDAY',false,'FRIDAY, 2022-06-03, 09:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2022-06-04','2022-12-18','SATURDAY',false,'SATURDAY, 2022-06-04, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2022-06-05','2022-12-18','SUNDAY',false,'SUNDAY, 2022-06-05, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2022-12-19','2022-12-24','MONDAY',false,'MONDAY, 2022-12-19, 14:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2022-12-21','2022-12-24','WEDNESDAY',false,'WEDNESDAY, 2022-12-21, 14:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'09:00','11:00','2022-12-23','2022-12-24','FRIDAY',false,'FRIDAY, 2022-12-23, 09:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2022-12-24','2022-12-24','SATURDAY',false,'SATURDAY, 2022-12-24, 14:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2022-12-28','2023-01-02','WEDNESDAY',false,'WEDNESDAY, 2022-12-28, 14:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'09:00','11:00','2022-12-30','2023-01-02','FRIDAY',false,'FRIDAY, 2022-12-30, 09:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2022-12-31','2023-01-02','SATURDAY',false,'SATURDAY, 2022-12-31, 14:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2023-01-01','2023-01-02','SUNDAY',false,'SUNDAY, 2023-01-01, 14:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'14:00','16:00','2023-01-02','2023-01-02','MONDAY',false,'MONDAY, 2023-01-02, 14:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-09','2023-03-20','MONDAY',false,'MONDAY, 2023-01-09, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-04','2023-03-20','WEDNESDAY',false,'WEDNESDAY, 2023-01-04, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'09:00','10:00','2023-01-06','2023-03-20','FRIDAY',false,'FRIDAY, 2023-01-06, 09:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-07','2023-03-20','SATURDAY',false,'SATURDAY, 2023-01-07, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,false,'13:45','14:45','2023-01-08','2023-03-20','SUNDAY',false,'SUNDAY, 2023-01-08, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'13:45','14:45','2023-03-21',NULL,'MONDAY',false,'MONDAY, 2023-03-21, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'13:45','14:45','2023-03-21',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-21, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'09:00','10:00','2023-03-21',NULL,'FRIDAY',false,'FRIDAY, 2023-03-21, 09:00'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'13:45','14:45','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 13:45'),
-                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,false,'13:45','14:45','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 13:45'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-05','2022-12-18','TUESDAY',true,'TUESDAY, 2022-12-05, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-12-05','2022-12-18','TUESDAY',true,'TUESDAY, 2022-12-05, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-05','2022-12-18','WEDNESDAY',true,'WEDNESDAY, 2022-12-05, 14:00'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-12-05','2022-12-18','WEDNESDAY',true,'WEDNESDAY, 2022-12-05, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','16:00','2022-12-05','2022-12-18','FRIDAY',true,'FRIDAY, 2022-12-05, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-05','2022-12-18','SATURDAY',true,'SATURDAY, 2022-12-05, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-12-05','2022-12-18','SATURDAY',true,'SATURDAY, 2022-12-05, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-05','2022-12-18','SUNDAY',true,'SUNDAY, 2022-12-05, 14:00'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-12-05','2022-12-18','SUNDAY',true,'SUNDAY, 2022-12-05, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-11-28','2022-12-18','TUESDAY',true,'TUESDAY, 2022-11-28, 14:00'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-11-28','2022-12-18','TUESDAY',true,'TUESDAY, 2022-11-28, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','16:00','2022-11-28','2022-12-18','WEDNESDAY',true,'WEDNESDAY, 2022-11-28, 14:00'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','16:00','2022-11-28','2022-12-18','FRIDAY',true,'FRIDAY, 2022-11-28, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-11-28','2022-12-18','SATURDAY',true,'SATURDAY, 2022-11-28, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-11-28','2022-12-18','SATURDAY',true,'SATURDAY, 2022-11-28, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-11-28','2022-12-18','SUNDAY',true,'SUNDAY, 2022-11-28, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-11-28','2022-12-18','SUNDAY',true,'SUNDAY, 2022-11-28, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-20','2022-12-20','TUESDAY',false,'TUESDAY, 2022-12-20, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-12-20','2022-12-20','TUESDAY',false,'TUESDAY, 2022-12-20, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-21','2022-12-21','WEDNESDAY',false,'WEDNESDAY, 2022-12-21, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-12-21','2022-12-21','WEDNESDAY',false,'WEDNESDAY, 2022-12-21, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','16:00','2022-12-23','2022-12-23','FRIDAY',false,'FRIDAY, 2022-12-23, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-24','2022-12-24','SATURDAY',false,'SATURDAY, 2022-12-24, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-12-24','2022-12-24','SATURDAY',false,'SATURDAY, 2022-12-24, 15:30'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2022-12-27','2022-12-27','TUESDAY',false,'TUESDAY, 2022-12-27, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','16:00','2022-12-28','2022-12-28','WEDNESDAY',false,'WEDNESDAY, 2022-12-28, 14:00'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','16:00','2022-12-30','2022-12-30','FRIDAY',false,'FRIDAY, 2022-12-30, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'09:30','10:30','2022-12-31','2022-12-31','SATURDAY',false,'SATURDAY, 2022-12-31, 09:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2022-12-31','2022-12-31','SATURDAY',false,'SATURDAY, 2022-12-31, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-01','2023-01-01','SUNDAY',false,'SUNDAY, 2023-01-01, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-01','2023-01-01','SUNDAY',false,'SUNDAY, 2023-01-01, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-03','2023-01-03','TUESDAY',false,'TUESDAY, 2023-01-03, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-03','2023-01-03','TUESDAY',false,'TUESDAY, 2023-01-03, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-04',NULL,'TUESDAY',true,'TUESDAY, 2023-01-04, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-04',NULL,'TUESDAY',true,'TUESDAY, 2023-01-04, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-04',NULL,'WEDNESDAY',true,'WEDNESDAY, 2023-01-04, 14:00'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-04',NULL,'WEDNESDAY',true,'WEDNESDAY, 2023-01-04, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','16:00','2023-01-04',NULL,'FRIDAY',true,'FRIDAY, 2023-01-04, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-04',NULL,'SATURDAY',true,'SATURDAY, 2023-01-04, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-04',NULL,'SATURDAY',true,'SATURDAY, 2023-01-04, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-04',NULL,'SUNDAY',true,'SUNDAY, 2023-01-04, 14:00'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-04',NULL,'SUNDAY',true,'SUNDAY, 2023-01-04, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-09',NULL,'TUESDAY',true,'TUESDAY, 2023-01-09, 14:00'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-09',NULL,'TUESDAY',true,'TUESDAY, 2023-01-09, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','16:00','2023-01-09',NULL,'WEDNESDAY',true,'WEDNESDAY, 2023-01-09, 14:00'),
-                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','16:00','2023-01-09',NULL,'FRIDAY',true,'FRIDAY, 2023-01-09, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-09',NULL,'SATURDAY',true,'SATURDAY, 2023-01-09, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-09',NULL,'SATURDAY',true,'SATURDAY, 2023-01-09, 15:30'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'14:00','15:00','2023-01-09',NULL,'SUNDAY',true,'SUNDAY, 2023-01-09, 14:00'),
-                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,false,'15:30','16:30','2023-01-09',NULL,'SUNDAY',true,'SUNDAY, 2023-01-09, 15:30'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',0,2,false,'13:45','14:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',15,0,true,'18:00','18:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 18:00'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',0,2,false,'13:45','14:45','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',0,2,false,'13:45','14:45','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',0,2,false,'13:45','14:45','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'09:30','11:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 09:30'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,false,'13:45','15:45','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 13:45'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 09:00'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 10:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 13:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'15:30','16:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 09:00'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 10:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 13:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'15:30','16:30','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 09:00'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 10:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 09:00'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 10:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 13:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'15:30','16:30','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 09:00'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 10:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 13:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'15:30','16:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'09:00','10:00','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 09:00'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'10:30','11:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 10:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'13:30','14:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 13:30'),
-                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,false,'15:30','16:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'14:00','15:00','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 14:00'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'15:30','16:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'14:00','15:00','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 14:00'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'15:30','16:30','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'14:00','15:00','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 14:00'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'15:30','16:30','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'14:00','15:00','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 14:00'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'15:30','16:30','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'14:00','15:00','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 14:00'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'15:30','16:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'14:00','15:00','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 14:00'),
-                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,false,'15:30','16:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 15:30'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 14:00'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 15:30'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-10, 14:00'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-10, 15:30'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'FRIDAY',false,'FRIDAY, 2023-03-10, 14:00'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'FRIDAY',false,'FRIDAY, 2023-03-10, 15:30'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 14:00'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 15:30'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'14:00','15:00','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 14:00'),
-                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,false,'15:30','16:30','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 15:30'),
-                    (NULL,NULL,NULL,'DHI','Visits Main Hall','SOCIAL',24,3,false,'13:30','15:45','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 13:30'),
-                    (NULL,NULL,NULL,'DHI','Visits Main Hall','SOCIAL',24,3,false,'09:30','11:30','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 09:30'),
-                    (NULL,NULL,NULL,'DHI','Visits Main Hall','SOCIAL',24,3,false,'13:30','15:45','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 13:30'),
-                    (NULL,NULL,NULL,'DHI','Visits Main Hall','SOCIAL',24,3,false,'13:30','15:45','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 13:30'),
-                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,false,'13:15','16:00','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 13:15'),
-                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,false,'13:15','16:00','2023-03-10','2023-04-05','THURSDAY',false,'THURSDAY, 2023-03-10, 13:15'),
-                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,false,'13:30','16:15','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 13:30'),
-                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,false,'13:30','16:15','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 13:30'),
-                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,false,'13:15','16:00','2023-04-07',NULL,'THURSDAY',false,'THURSDAY, 2023-04-07, 13:15'),
-                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 14:15'),
-                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-10, 14:15'),
-                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'THURSDAY',false,'THURSDAY, 2023-03-10, 14:15'),
-                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 14:15'),
-                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,false,'14:15','15:45','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 14:15')
+            (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-05-30','2022-12-18','MONDAY',false,'MONDAY, 2022-05-30, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-06-01','2022-12-18','WEDNESDAY',false,'WEDNESDAY, 2022-06-01, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','10:00','2022-06-03','2022-12-18','FRIDAY',false,'FRIDAY, 2022-06-03, 09:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-06-04','2022-12-18','SATURDAY',false,'SATURDAY, 2022-06-04, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2022-06-05','2022-12-18','SUNDAY',false,'SUNDAY, 2022-06-05, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-19','2022-12-24','MONDAY',false,'MONDAY, 2022-12-19, 14:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-21','2022-12-24','WEDNESDAY',false,'WEDNESDAY, 2022-12-21, 14:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','11:00','2022-12-23','2022-12-24','FRIDAY',false,'FRIDAY, 2022-12-23, 09:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-24','2022-12-24','SATURDAY',false,'SATURDAY, 2022-12-24, 14:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-28','2023-01-02','WEDNESDAY',false,'WEDNESDAY, 2022-12-28, 14:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','11:00','2022-12-30','2023-01-02','FRIDAY',false,'FRIDAY, 2022-12-30, 09:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2022-12-31','2023-01-02','SATURDAY',false,'SATURDAY, 2022-12-31, 14:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2023-01-01','2023-01-02','SUNDAY',false,'SUNDAY, 2023-01-01, 14:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'14:00','16:00','2023-01-02','2023-01-02','MONDAY',false,'MONDAY, 2023-01-02, 14:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-09','2023-03-20','MONDAY',false,'MONDAY, 2023-01-09, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-04','2023-03-20','WEDNESDAY',false,'WEDNESDAY, 2023-01-04, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'09:00','10:00','2023-01-06','2023-03-20','FRIDAY',false,'FRIDAY, 2023-01-06, 09:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-07','2023-03-20','SATURDAY',false,'SATURDAY, 2023-01-07, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',30,2,'13:45','14:45','2023-01-08','2023-03-20','SUNDAY',false,'SUNDAY, 2023-01-08, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,'13:45','14:45','2023-03-21','2023-05-14','MONDAY',false,'MONDAY, 2023-03-21, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,'13:45','14:45','2023-03-21',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-21, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,'09:00','10:00','2023-03-21',NULL,'FRIDAY',false,'FRIDAY, 2023-03-21, 09:00'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,'13:45','14:45','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,'13:45','14:45','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',28,4,'13:45','14:45','2023-05-15','2023-05-15','MONDAY',false,'MONDAY, 2023-05-15, 13:45'),
+                    (NULL,NULL,NULL,'HEI','Visits Main Room','SOCIAL',35,2,'13:45','14:45','2023-05-16',NULL,'MONDAY',false,'MONDAY, 2023-05-16, 13:45'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05','2022-12-18','TUESDAY',true,'TUESDAY, 2022-12-05, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05','2022-12-18','TUESDAY',true,'TUESDAY, 2022-12-05, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05','2022-12-18','WEDNESDAY',true,'WEDNESDAY, 2022-12-05, 14:00'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05','2022-12-18','WEDNESDAY',true,'WEDNESDAY, 2022-12-05, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','16:00','2022-12-05','2022-12-18','FRIDAY',true,'FRIDAY, 2022-12-05, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05','2022-12-18','SATURDAY',true,'SATURDAY, 2022-12-05, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05','2022-12-18','SATURDAY',true,'SATURDAY, 2022-12-05, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-12-05','2022-12-18','SUNDAY',true,'SUNDAY, 2022-12-05, 14:00'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-12-05','2022-12-18','SUNDAY',true,'SUNDAY, 2022-12-05, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28','2022-12-18','TUESDAY',true,'TUESDAY, 2022-11-28, 14:00'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28','2022-12-18','TUESDAY',true,'TUESDAY, 2022-11-28, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','16:00','2022-11-28','2022-12-18','WEDNESDAY',true,'WEDNESDAY, 2022-11-28, 14:00'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','16:00','2022-11-28','2022-12-18','FRIDAY',true,'FRIDAY, 2022-11-28, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28','2022-12-18','SATURDAY',true,'SATURDAY, 2022-11-28, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28','2022-12-18','SATURDAY',true,'SATURDAY, 2022-11-28, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-11-28','2022-12-18','SUNDAY',true,'SUNDAY, 2022-11-28, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-11-28','2022-12-18','SUNDAY',true,'SUNDAY, 2022-11-28, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-12-20','2022-12-20','TUESDAY',false,'TUESDAY, 2022-12-20, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-12-20','2022-12-20','TUESDAY',false,'TUESDAY, 2022-12-20, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-12-21','2022-12-21','WEDNESDAY',false,'WEDNESDAY, 2022-12-21, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-12-21','2022-12-21','WEDNESDAY',false,'WEDNESDAY, 2022-12-21, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','16:00','2022-12-23','2022-12-23','FRIDAY',false,'FRIDAY, 2022-12-23, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-12-24','2022-12-24','SATURDAY',false,'SATURDAY, 2022-12-24, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-12-24','2022-12-24','SATURDAY',false,'SATURDAY, 2022-12-24, 15:30'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2022-12-27','2022-12-27','TUESDAY',false,'TUESDAY, 2022-12-27, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','16:00','2022-12-28','2022-12-28','WEDNESDAY',false,'WEDNESDAY, 2022-12-28, 14:00'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','16:00','2022-12-30','2022-12-30','FRIDAY',false,'FRIDAY, 2022-12-30, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'09:30','10:30','2022-12-31','2022-12-31','SATURDAY',false,'SATURDAY, 2022-12-31, 09:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2022-12-31','2022-12-31','SATURDAY',false,'SATURDAY, 2022-12-31, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2023-01-01','2023-01-01','SUNDAY',false,'SUNDAY, 2023-01-01, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2023-01-01','2023-01-01','SUNDAY',false,'SUNDAY, 2023-01-01, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'14:00','15:00','2023-01-03','2023-01-03','TUESDAY',false,'TUESDAY, 2023-01-03, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','Visits Main Hall','SOCIAL',20,1,'15:30','16:30','2023-01-03','2023-01-03','TUESDAY',false,'TUESDAY, 2023-01-03, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'14:00','15:00','2023-01-04',NULL,'TUESDAY',true,'TUESDAY, 2023-01-04, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'15:30','16:30','2023-01-04',NULL,'TUESDAY',true,'TUESDAY, 2023-01-04, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'14:00','15:00','2023-01-04',NULL,'WEDNESDAY',true,'WEDNESDAY, 2023-01-04, 14:00'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','WC L2 CC 1TO8 25TO32','SOCIAL',20,1,'15:30','16:30','2023-01-04',NULL,'WEDNESDAY',true,'WEDNESDAY, 2023-01-04, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'14:00','16:00','2023-01-04',NULL,'FRIDAY',true,'FRIDAY, 2023-01-04, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'14:00','15:00','2023-01-04',NULL,'SATURDAY',true,'SATURDAY, 2023-01-04, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'15:30','16:30','2023-01-04',NULL,'SATURDAY',true,'SATURDAY, 2023-01-04, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'14:00','15:00','2023-01-04',NULL,'SUNDAY',true,'SUNDAY, 2023-01-04, 14:00'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','WC L2 CC 1TO8 25TO32','SOCIAL',20,1,'15:30','16:30','2023-01-04',NULL,'SUNDAY',true,'SUNDAY, 2023-01-04, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'14:00','15:00','2023-01-09',NULL,'TUESDAY',true,'TUESDAY, 2023-01-09, 14:00'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','WC L2 CC 1TO8 25TO32','SOCIAL',20,1,'15:30','16:30','2023-01-09',NULL,'TUESDAY',true,'TUESDAY, 2023-01-09, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'14:00','16:00','2023-01-09',NULL,'WEDNESDAY',true,'WEDNESDAY, 2023-01-09, 14:00'),
+                    ('BLI_G2_WING:BLI_G2_C2',NULL,NULL,'BLI','WC L2 CC 1TO8 25TO32','SOCIAL',20,1,'14:00','16:00','2023-01-09',NULL,'FRIDAY',true,'FRIDAY, 2023-01-09, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'14:00','15:00','2023-01-09',NULL,'SATURDAY',true,'SATURDAY, 2023-01-09, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'15:30','16:30','2023-01-09',NULL,'SATURDAY',true,'SATURDAY, 2023-01-09, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'14:00','15:00','2023-01-09',NULL,'SUNDAY',true,'SUNDAY, 2023-01-09, 14:00'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',20,1,'15:30','16:30','2023-01-09',NULL,'SUNDAY',true,'SUNDAY, 2023-01-09, 15:30'),
+                    ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,'BLI_SUPER_ENHANCED','BLI','GRP1 SUPER ENHANCED','SOCIAL',25,0,'14:00','16:00','2023-05-22',NULL,'MONDAY',false,'MONDAY, 2023-05-22, 14:00'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,'13:45','15:45','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,'13:45','15:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',0,2,'13:45','14:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,'CFI_ENHANCED','CFI','VMH Enhanced','SOCIAL',15,0,'18:00','18:45','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 18:00'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,'13:45','15:45','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',0,2,'13:45','14:45','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,'13:45','15:45','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',0,2,'13:45','14:45','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,'13:45','15:45','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',0,2,'13:45','14:45','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,'09:30','11:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 09:30'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,'13:45','15:45','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'CFI','Visits Main Hall','SOCIAL',40,0,'13:45','15:45','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 13:45'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'09:00','10:00','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 09:00'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'10:30','11:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 10:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'13:30','14:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 13:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'15:30','16:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'09:00','10:00','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 09:00'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'10:30','11:30','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 10:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'13:30','14:30','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 13:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'15:30','16:30','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'09:00','10:00','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 09:00'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'10:30','11:30','2023-01-23',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-01-23, 10:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'09:00','10:00','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 09:00'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'10:30','11:30','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 10:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'13:30','14:30','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 13:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'15:30','16:30','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'09:00','10:00','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 09:00'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'10:30','11:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 10:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'13:30','14:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 13:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'15:30','16:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'09:00','10:00','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 09:00'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'10:30','11:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 10:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'13:30','14:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 13:30'),
+                    (NULL,NULL,NULL,'WWI','Visits Main Hall','SOCIAL',28,2,'15:30','16:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'14:00','15:00','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 14:00'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'15:30','16:30','2023-01-23',NULL,'MONDAY',false,'MONDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'14:00','15:00','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 14:00'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'15:30','16:30','2023-01-23',NULL,'TUESDAY',false,'TUESDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'14:00','15:00','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 14:00'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'15:30','16:30','2023-01-23',NULL,'THURSDAY',false,'THURSDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'14:00','15:00','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 14:00'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'15:30','16:30','2023-01-23',NULL,'FRIDAY',false,'FRIDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'14:00','15:00','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 14:00'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'15:30','16:30','2023-01-23',NULL,'SATURDAY',false,'SATURDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'14:00','15:00','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 14:00'),
+                    (NULL,NULL,NULL,'PNI','Visits Main Hall','SOCIAL',32,8,'15:30','16:30','2023-01-23',NULL,'SUNDAY',false,'SUNDAY, 2023-01-23, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'14:00','15:00','2023-03-10','2023-05-17','TUESDAY',false,'TUESDAY, 2023-03-10, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'15:30','16:30','2023-03-10','2023-05-17','TUESDAY',false,'TUESDAY, 2023-03-10, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'14:00','15:00','2023-03-10','2023-05-17','WEDNESDAY',false,'WEDNESDAY, 2023-03-10, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'15:30','16:30','2023-03-10','2023-05-17','WEDNESDAY',false,'WEDNESDAY, 2023-03-10, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'14:00','15:00','2023-03-10','2023-05-17','FRIDAY',false,'FRIDAY, 2023-03-10, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'15:30','16:30','2023-03-10','2023-05-17','FRIDAY',false,'FRIDAY, 2023-03-10, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'14:00','15:00','2023-03-10','2023-05-17','SATURDAY',false,'SATURDAY, 2023-03-10, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'15:30','16:30','2023-03-10','2023-05-17','SATURDAY',false,'SATURDAY, 2023-03-10, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'14:00','15:00','2023-03-10','2023-05-17','SUNDAY',false,'SUNDAY, 2023-03-10, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',10,2,'15:30','16:30','2023-03-10','2023-05-17','SUNDAY',false,'SUNDAY, 2023-03-10, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'14:00','15:00','2023-05-18',NULL,'TUESDAY',false,'TUESDAY, 2023-05-18, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'15:30','16:30','2023-05-18',NULL,'TUESDAY',false,'TUESDAY, 2023-05-18, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'14:00','15:00','2023-05-18',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-18, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'15:30','16:30','2023-05-18',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-18, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'14:00','15:00','2023-05-18',NULL,'FRIDAY',false,'FRIDAY, 2023-05-18, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'15:30','16:30','2023-05-18',NULL,'FRIDAY',false,'FRIDAY, 2023-05-18, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'14:00','15:00','2023-05-18',NULL,'SATURDAY',false,'SATURDAY, 2023-05-18, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'15:30','16:30','2023-05-18',NULL,'SATURDAY',false,'SATURDAY, 2023-05-18, 15:30'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'14:00','15:00','2023-05-18',NULL,'SUNDAY',false,'SUNDAY, 2023-05-18, 14:00'),
+                    (NULL,NULL,NULL,'EWI','Visits Main Hall','SOCIAL',12,2,'15:30','16:30','2023-05-18',NULL,'SUNDAY',false,'SUNDAY, 2023-05-18, 15:30'),
+                    (NULL,NULL,NULL,'DHI','Visits Main Hall','SOCIAL',24,3,'13:30','15:45','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 13:30'),
+                    (NULL,NULL,NULL,'DHI','Visits Main Hall','SOCIAL',24,3,'09:30','11:30','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 09:30'),
+                    (NULL,NULL,NULL,'DHI','Visits Main Hall','SOCIAL',24,3,'13:30','15:45','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 13:30'),
+                    (NULL,NULL,NULL,'DHI','Visits Main Hall','SOCIAL',24,3,'13:30','15:45','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 13:30'),
+                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,'13:15','16:00','2023-03-10',NULL,'TUESDAY',false,'TUESDAY, 2023-03-10, 13:15'),
+                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,'13:15','16:00','2023-03-10','2023-04-05','THURSDAY',false,'THURSDAY, 2023-03-10, 13:15'),
+                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,'13:30','16:15','2023-03-10',NULL,'SATURDAY',false,'SATURDAY, 2023-03-10, 13:30'),
+                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,'13:30','16:15','2023-03-10',NULL,'SUNDAY',false,'SUNDAY, 2023-03-10, 13:30'),
+                    (NULL,NULL,NULL,'MHI','Visits Main Hall','SOCIAL',14,2,'13:15','16:00','2023-04-07',NULL,'THURSDAY',false,'THURSDAY, 2023-04-07, 13:15'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'14:15','15:45','2023-03-10','2023-04-10','TUESDAY',false,'TUESDAY, 2023-03-10, 14:15'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'14:15','15:45','2023-03-10','2023-04-10','WEDNESDAY',false,'WEDNESDAY, 2023-03-10, 14:15'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'14:15','15:45','2023-03-10','2023-04-10','THURSDAY',false,'THURSDAY, 2023-03-10, 14:15'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'14:15','15:45','2023-03-10','2023-04-10','SATURDAY',false,'SATURDAY, 2023-03-10, 14:15'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'14:15','15:45','2023-03-10','2023-04-10','SUNDAY',false,'SUNDAY, 2023-03-10, 14:15'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'13:45','15:45','2023-04-11','2023-05-17','TUESDAY',false,'TUESDAY, 2023-04-11, 13:45'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'13:45','15:45','2023-04-11','2023-05-17','WEDNESDAY',false,'WEDNESDAY, 2023-04-11, 13:45'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'13:45','15:45','2023-04-11','2023-05-17','THURSDAY',false,'THURSDAY, 2023-04-11, 13:45'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'13:45','15:45','2023-04-11','2023-05-17','SATURDAY',false,'SATURDAY, 2023-04-11, 13:45'),
+                    (NULL,NULL,NULL,'BNI','Visits Main Hall','SOCIAL',60,5,'13:45','15:45','2023-04-11','2023-05-17','SUNDAY',false,'SUNDAY, 2023-04-11, 13:45'),
+                    ('BNI_OTHER_WINGS',NULL,NULL,'BNI','Visits Main Hall','SOCIAL',48,4,'13:45','15:45','2023-05-18',NULL,'TUESDAY',false,'TUESDAY, 2023-05-18, 13:45'),
+                    ('BNI_A_WING',NULL,NULL,'BNI','VMH Wing A','SOCIAL',12,1,'13:45','15:45','2023-05-18',NULL,'TUESDAY',false,'TUESDAY, 2023-05-18, 13:45'),
+                    ('BNI_OTHER_WINGS',NULL,NULL,'BNI','Visits Main Hall','SOCIAL',48,4,'13:45','15:45','2023-05-18',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-18, 13:45'),
+                    ('BNI_A_WING',NULL,NULL,'BNI','VMH Wing A','SOCIAL',12,1,'13:45','15:45','2023-05-18',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-18, 13:45'),
+                    ('BNI_OTHER_WINGS',NULL,NULL,'BNI','Visits Main Hall','SOCIAL',48,4,'13:45','15:45','2023-05-18',NULL,'THURSDAY',false,'THURSDAY, 2023-05-18, 13:45'),
+                    ('BNI_A_WING',NULL,NULL,'BNI','VMH Wing A','SOCIAL',12,1,'13:45','15:45','2023-05-18',NULL,'THURSDAY',false,'THURSDAY, 2023-05-18, 13:45'),
+                    ('BNI_OTHER_WINGS',NULL,NULL,'BNI','Visits Main Hall','SOCIAL',48,4,'13:45','15:45','2023-05-18',NULL,'SATURDAY',false,'SATURDAY, 2023-05-18, 13:45'),
+                    ('BNI_A_WING',NULL,NULL,'BNI','VMH Wing A','SOCIAL',12,1,'13:45','15:45','2023-05-18',NULL,'SATURDAY',false,'SATURDAY, 2023-05-18, 13:45'),
+                    ('BNI_OTHER_WINGS',NULL,NULL,'BNI','Visits Main Hall','SOCIAL',48,4,'13:45','15:45','2023-05-18',NULL,'SUNDAY',false,'SUNDAY, 2023-05-18, 13:45'),
+                    ('BNI_A_WING',NULL,NULL,'BNI','VMH Wing A','SOCIAL',12,1,'13:45','15:45','2023-05-18',NULL,'SUNDAY',false,'SUNDAY, 2023-05-18, 13:45'),
+                    (NULL,'FNI_NON_CAT_A_HIGH',NULL,'FNI','Visits Main Hall','SOCIAL',30,4,'14:00','16:15','2023-05-18',NULL,'FRIDAY',false,'FRIDAY, 2023-05-18, 14:00'),
+                    (NULL,'FNI_CAT_A_HIGH',NULL,'FNI','VMH Cat A High','SOCIAL',3,0,'14:00','16:00','2023-05-18',NULL,'FRIDAY',false,'FRIDAY, 2023-05-18, 14:00'),
+                    (NULL,'FNI_NON_CAT_A_HIGH',NULL,'FNI','Visits Main Hall','SOCIAL',30,4,'14:00','16:15','2023-05-18',NULL,'SATURDAY',false,'SATURDAY, 2023-05-18, 14:00'),
+                    (NULL,'FNI_CAT_A_HIGH',NULL,'FNI','VMH Cat A High','SOCIAL',3,0,'14:00','16:00','2023-05-18',NULL,'SATURDAY',false,'SATURDAY, 2023-05-18, 14:00'),
+                    (NULL,'FNI_NON_CAT_A_HIGH',NULL,'FNI','Visits Main Hall','SOCIAL',30,4,'14:00','16:15','2023-05-18',NULL,'SUNDAY',false,'SUNDAY, 2023-05-18, 14:00'),
+                    (NULL,'FNI_CAT_A_HIGH',NULL,'FNI','VMH Cat A High','SOCIAL',3,0,'14:00','16:00','2023-05-18',NULL,'SUNDAY',false,'SUNDAY, 2023-05-18, 14:00'),
+                    (NULL,NULL,NULL,'LNI','Visits Main Hall','SOCIAL',12,3,'14:15','16:15','2023-03-21',NULL,'TUESDAY',false,'TUESDAY, 2023-03-21, 14:15'),
+                    (NULL,NULL,NULL,'LNI','Visits Main Hall','SOCIAL',12,3,'14:15','16:15','2023-03-21',NULL,'THURSDAY',false,'THURSDAY, 2023-03-21, 14:15'),
+                    (NULL,NULL,NULL,'LNI','Visits Main Hall','SOCIAL',12,3,'14:00','16:00','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'LNI','Visits Main Hall','SOCIAL',12,3,'14:00','16:00','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'FHI','Visits Main Hall','SOCIAL',12,2,'14:00','16:00','2023-03-21',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'FHI','Visits Main Hall','SOCIAL',12,2,'14:00','16:00','2023-03-21',NULL,'FRIDAY',false,'FRIDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'FHI','Visits Main Hall','SOCIAL',12,2,'09:30','11:30','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 09:30'),
+                    (NULL,NULL,NULL,'FHI','Visits Main Hall','SOCIAL',12,2,'14:00','16:00','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'ESI','Visits Main Hall','SOCIAL',12,0,'14:00','16:00','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'ESI','Visits Main Hall','SOCIAL',12,0,'14:00','16:00','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'BSI','Visits Main Hall','SOCIAL',25,6,'14:00','16:00','2023-03-21',NULL,'MONDAY',false,'MONDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'BSI','Visits Main Hall','SOCIAL',25,6,'14:00','16:00','2023-03-21',NULL,'TUESDAY',false,'TUESDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'BSI','Visits Main Hall','SOCIAL',25,6,'14:00','16:00','2023-03-21',NULL,'THURSDAY',false,'THURSDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'BSI','Visits Main Hall','SOCIAL',25,6,'14:00','16:00','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'BSI','Visits Main Hall','SOCIAL',25,6,'14:00','16:00','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'AGI','Visits Main Hall','SOCIAL',15,0,'14:00','16:00','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 14:00'),
+                    (NULL,NULL,NULL,'AGI','Visits Main Hall','SOCIAL',15,0,'14:00','16:00','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 14:00'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-18',NULL,'MONDAY',false,'MONDAY, 2023-05-18, 13:45'),
+                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-18',NULL,'MONDAY',false,'MONDAY, 2023-05-18, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',27,0,'09:30','11:30','2023-05-18',NULL,'TUESDAY',false,'TUESDAY, 2023-05-18, 09:30'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-18',NULL,'TUESDAY',false,'TUESDAY, 2023-05-18, 13:45'),
+                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-18',NULL,'TUESDAY',false,'TUESDAY, 2023-05-18, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',27,0,'09:30','11:30','2023-05-18',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-18, 09:30'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-18',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-18, 13:45'),
+                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-18',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-18, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-18',NULL,'THURSDAY',false,'THURSDAY, 2023-05-18, 13:45'),
+                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-18',NULL,'THURSDAY',false,'THURSDAY, 2023-05-18, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-18',NULL,'FRIDAY',false,'FRIDAY, 2023-05-18, 13:45'),
+                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-18',NULL,'FRIDAY',false,'FRIDAY, 2023-05-18, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',27,0,'09:30','11:30','2023-05-18',NULL,'SATURDAY',false,'SATURDAY, 2023-05-18, 09:30'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-18',NULL,'SATURDAY',false,'SATURDAY, 2023-05-18, 13:45'),
+                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-18',NULL,'SATURDAY',false,'SATURDAY, 2023-05-18, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',27,0,'09:30','11:30','2023-05-18',NULL,'SUNDAY',false,'SUNDAY, 2023-05-18, 09:30'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-18',NULL,'SUNDAY',false,'SUNDAY, 2023-05-18, 13:45'),
+                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-18',NULL,'SUNDAY',false,'SUNDAY, 2023-05-18, 13:45')
         ;
 
         -- update tmp session template table with correct prison id for given code.
         UPDATE tmp_session_template SET prison_id = prison.id FROM prison WHERE tmp_session_template.prison_code = prison.code;
 
         -- insert data into real session template table from temporary one.
-        INSERT INTO session_template(id,reference,visit_room,visit_type,open_capacity,closed_capacity,enhanced,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name)
-        SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{3})(?!$)', '\1.','g')) as reference,visit_room,visit_type,open_capacity,closed_capacity,enhanced,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name FROM tmp_session_template order by id;
+        INSERT INTO session_template(id,reference,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name)
+        SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{3})(?!$)', '\1.','g')) as reference,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name FROM tmp_session_template order by id;
 
         -- Sequence updated manually as id's were inserted from temp table
-        ALTER SEQUENCE session_template_id_seq RESTART WITH  146;
+        ALTER SEQUENCE session_template_id_seq RESTART WITH  215;
 
         -- Create temporary group table
         CREATE TABLE tmp_session_location_group (
@@ -222,7 +302,11 @@
                     ('BLI','BLI_G1_C2','Wing C - Landing 2 - Cells 9 to 24'),
                     ('BLI','BLI_G1_C3','Wing C - Landing 3 - Cells 1 to 24'),
                     ('BLI','BLI_G2_WING','Wings D and F'),
-                    ('BLI','BLI_G2_C2','Wing C - Landing 2 - Cells 1 to 8 and 25 to 32')
+                    ('BLI','BLI_G2_C2','Wing C - Landing 2 - Cells 1 to 8 and 25 to 32'),
+                    ('BNI','BNI_A_WING','A Wing'),
+                    ('BNI','BNI_OTHER_WINGS','Wings B, C, D, E, F, SSCU and Healthcare'),
+                    ('DMI','DMI_C_F_WING','Wings C and F'),
+                    ('DMI','DMI_OTHER_WINGS','Wings A, B, D, E, G, I, M')
         ;
 
         -- update tmp location group table with correct prison id for given code.
@@ -233,7 +317,7 @@
                     SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY key))+2951597050), '(.{3})(?!$)', '\1~','g')) as reference,prison_id,name FROM tmp_session_location_group order by id;
 
         -- Sequence updated manually as id's were inserted from temp table
-        ALTER SEQUENCE session_location_group_id_seq RESTART WITH  7;
+        ALTER SEQUENCE session_location_group_id_seq RESTART WITH  11;
 
 
         -- Create permitted session location data
@@ -344,7 +428,24 @@
                     ('BLI_G2_C2','C','2','029', NULL),
                     ('BLI_G2_C2','C','2','030', NULL),
                     ('BLI_G2_C2','C','2','031', NULL),
-                    ('BLI_G2_C2','C','2','032', NULL)
+                    ('BLI_G2_C2','C','2','032', NULL),
+                    ('BNI_A_WING','A',NULL,NULL, NULL),
+                    ('BNI_OTHER_WINGS','B',NULL,NULL, NULL),
+                    ('BNI_OTHER_WINGS','C',NULL,NULL, NULL),
+                    ('BNI_OTHER_WINGS','D',NULL,NULL, NULL),
+                    ('BNI_OTHER_WINGS','E',NULL,NULL, NULL),
+                    ('BNI_OTHER_WINGS','F',NULL,NULL, NULL),
+                    ('BNI_OTHER_WINGS','SSCU',NULL,NULL, NULL),
+                    ('BNI_OTHER_WINGS','HEALTHCARE',NULL,NULL, NULL),
+                    ('DMI_C_F_WING','F',NULL,NULL, NULL),
+                    ('DMI_C_F_WING','C',NULL,NULL, NULL),
+                    ('DMI_OTHER_WINGS','A',NULL,NULL, NULL),
+                    ('DMI_OTHER_WINGS','B',NULL,NULL, NULL),
+                    ('DMI_OTHER_WINGS','D',NULL,NULL, NULL),
+                    ('DMI_OTHER_WINGS','E',NULL,NULL, NULL),
+                    ('DMI_OTHER_WINGS','G',NULL,NULL, NULL),
+                    ('DMI_OTHER_WINGS','I',NULL,NULL, NULL),
+                    ('DMI_OTHER_WINGS','M',NULL,NULL, NULL)
         ;
 
         -- update tmp location table with correct group_id.
@@ -355,7 +456,7 @@
         INSERT INTO permitted_session_location(id,group_id,level_one_code,level_two_code,level_three_code,level_four_code)
             SELECT id,group_id,level_one_code,level_two_code,level_three_code,level_four_code FROM tmp_permitted_session_location order by id;
 
-        ALTER SEQUENCE permitted_session_location_id_seq RESTART WITH 97;
+        ALTER SEQUENCE permitted_session_location_id_seq RESTART WITH 114;
 
 
         -- Create link table data
@@ -367,33 +468,146 @@
 
         -- Prisoner category
 
-        -- Create temporary group table
-            CREATE TABLE tmp_session_prisoner_category (
-                id                  serial          NOT NULL PRIMARY KEY,
-                code                varchar(100)    NOT NULL
-            );
+    -- Create temporary group table
+    CREATE TABLE tmp_session_category_group (
+    id                	serial        NOT NULL PRIMARY KEY,
+    prison_code       	VARCHAR(6)    NOT NULL,
+    prison_id         	int,
+    key          		VARCHAR(50)  NOT NULL,
+    name          	    VARCHAR(100)  NOT NULL
+    );
 
-            -- No categories given
+    -- Category group names are only descriptions they need to be updated when the group categories change
+        INSERT INTO tmp_session_category_group (prison_code,key,name)
+        VALUES
+            ('FNI','FNI_CAT_A_HIGH','Category A (High Risk) prisoners'),
+                    ('FNI','FNI_NON_CAT_A_HIGH','Non Category A (High Risk) prisoners')
+        ;
 
-        -- insert data into real permitted session location table from temporary one.
-        INSERT INTO session_prisoner_category(id,code)
-            SELECT id,code FROM tmp_session_prisoner_category order by id;
+    -- update tmp category group table with correct prison id for given code.
+    UPDATE tmp_session_category_group SET prison_id = prison.id FROM prison WHERE tmp_session_category_group.prison_code = prison.code;
 
-        ALTER SEQUENCE session_prisoner_category_id_seq RESTART WITH 1;
+    -- insert data into real session category group table from temporary one.
+    INSERT INTO session_category_group(id,reference,prison_id,name)
+    SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY key))+2951597050), '(.{3})(?!$)', '\1~','g')) as reference,prison_id,name FROM tmp_session_category_group order by id;
 
-        -- Create inc link table data
-        INSERT INTO session_to_included_prisoner_category(session_template_id, prisoner_category_id)
-        SELECT st.id, c.id FROM tmp_session_template st
-        JOIN tmp_session_prisoner_category c ON POSITION(c.code  IN st.incCategories)<>0 ORDER BY st.id,c.id;
+    -- Sequence updated manually as id's were inserted from temp table
+    ALTER SEQUENCE session_category_group_id_seq RESTART WITH  3;
 
-        -- Create inc link table data
-        INSERT INTO session_to_excluded_prisoner_category(session_template_id, prisoner_category_id)
-        SELECT st.id, c.id FROM tmp_session_template st
-        JOIN tmp_session_prisoner_category c ON POSITION(c.code  IN st.excCategories)<>0 ORDER BY st.id,c.id;
+
+    -- Create session prisoner category data
+    CREATE TABLE tmp_session_prisoner_category (
+    id                serial        NOT NULL PRIMARY KEY,
+    group_key        VARCHAR(100)  NOT NULL,
+    group_id          int,
+    code    VARCHAR(100) NOT NULL
+    );
+
+        INSERT INTO tmp_session_prisoner_category (group_key,code)
+        VALUES
+            ('FNI_CAT_A_HIGH','A_HIGH'),
+                    ('FNI_NON_CAT_A_HIGH','A_EXCEPTIONAL'),
+                    ('FNI_NON_CAT_A_HIGH','A_PROVISIONAL'),
+                    ('FNI_NON_CAT_A_HIGH','A_STANDARD'),
+                    ('FNI_NON_CAT_A_HIGH','B'),
+                    ('FNI_NON_CAT_A_HIGH','C'),
+                    ('FNI_NON_CAT_A_HIGH','D'),
+                    ('FNI_NON_CAT_A_HIGH','YOI_CLOSED'),
+                    ('FNI_NON_CAT_A_HIGH','YOI_OPEN'),
+                    ('FNI_NON_CAT_A_HIGH','YOI_RESTRICTED'),
+                    ('FNI_NON_CAT_A_HIGH','UNSENTENCED'),
+                    ('FNI_NON_CAT_A_HIGH','UNCATEGORISED_SENTENCED_MALE'),
+                    ('FNI_NON_CAT_A_HIGH','FEMALE_RESTRICTED'),
+                    ('FNI_NON_CAT_A_HIGH','FEMALE_CLOSED'),
+                    ('FNI_NON_CAT_A_HIGH','FEMALE_SEMI'),
+                    ('FNI_NON_CAT_A_HIGH','FEMALE_OPEN')
+        ;
+
+    -- update tmp prisoner category table with correct group_id.
+    UPDATE tmp_session_prisoner_category SET group_id = tmp_session_category_group.id FROM tmp_session_category_group WHERE tmp_session_prisoner_category.group_key = tmp_session_category_group.key;
+
+
+    -- insert data into real prisoner category table from temporary one.
+    INSERT INTO session_prisoner_category(id,session_category_group_id,code)
+    SELECT id,group_id,code FROM tmp_session_prisoner_category order by id;
+
+    ALTER SEQUENCE session_prisoner_category_id_seq RESTART WITH 17;
+
+
+    -- Create link table data
+    INSERT INTO session_to_category_group(session_template_id, session_category_group_id)
+    SELECT st.id, g.id FROM tmp_session_template st
+    JOIN tmp_session_category_group g ON POSITION(g.key  IN st.categoryKeys)<>0 ORDER BY st.id,g.id;
+
+    -- Category group names are only descriptions they need to be updated when the group categories change
+
+    -- Prisoner incentive level
+
+    -- Create temporary group table
+    CREATE TABLE tmp_session_incentive_group (
+    id                	serial        NOT NULL PRIMARY KEY,
+    prison_code       	VARCHAR(6)    NOT NULL,
+    prison_id         	int,
+    key          		VARCHAR(50)  NOT NULL,
+    name          	    VARCHAR(100)  NOT NULL
+    );
+
+    -- Incentive group names are only descriptions they need to be updated when the group incentives change
+        INSERT INTO tmp_session_incentive_group (prison_code,key,name)
+        VALUES
+            ('CFI','CFI_ENHANCED','Enhanced prisoners'),
+                    ('BLI','BLI_SUPER_ENHANCED','Super Enhanced prisoners')
+        ;
+
+    -- update tmp incentive group table with correct prison id for given code.
+    UPDATE tmp_session_incentive_group SET prison_id = prison.id FROM prison WHERE tmp_session_incentive_group.prison_code = prison.code;
+
+    -- insert data into real session incentive group table from temporary one.
+    INSERT INTO session_incentive_group(id,reference,prison_id,name)
+    SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY key))+2951597050), '(.{3})(?!$)', '\1~','g')) as reference,prison_id,name FROM tmp_session_incentive_group order by id;
+
+    -- Sequence updated manually as id's were inserted from temp table
+    ALTER SEQUENCE session_incentive_group_id_seq RESTART WITH  3;
+
+
+    -- Create session prisoner incentive data
+    CREATE TABLE tmp_session_prisoner_incentive (
+    id                serial        NOT NULL PRIMARY KEY,
+    group_key        VARCHAR(100)  NOT NULL,
+    group_id          int,
+    code    VARCHAR(100) NOT NULL
+    );
+
+        INSERT INTO tmp_session_prisoner_incentive (group_key,code)
+        VALUES
+            ('CFI_ENHANCED','ENHANCED'),
+                    ('BLI_SUPER_ENHANCED','ENHANCED_2')
+        ;
+
+    -- update tmp prisoner incentive table with correct group_id.
+    UPDATE tmp_session_prisoner_incentive SET group_id = tmp_session_incentive_group.id FROM tmp_session_incentive_group WHERE tmp_session_prisoner_incentive.group_key = tmp_session_incentive_group.key;
+
+
+    -- insert data into real prisoner incentive table from temporary one.
+    INSERT INTO session_prisoner_incentive(id,session_incentive_group_id,code)
+    SELECT id,group_id,code FROM tmp_session_prisoner_incentive order by id;
+
+    ALTER SEQUENCE session_prisoner_incentive_id_seq RESTART WITH 3;
+
+
+    -- Create link table data
+    INSERT INTO session_to_incentive_group(session_template_id, session_incentive_group_id)
+    SELECT st.id, g.id FROM tmp_session_template st
+    JOIN tmp_session_incentive_group g ON POSITION(g.key  IN st.incentiveLevelKeys)<>0 ORDER BY st.id,g.id;
+
+    -- Category group names are only descriptions they need to be updated when the group categories change
 
     -- Drop temporary tables
         DROP TABLE tmp_session_template;
         DROP TABLE tmp_session_location_group;
         DROP TABLE tmp_permitted_session_location;
+        DROP TABLE tmp_session_category_group;
         DROP TABLE tmp_session_prisoner_category;
+        DROP TABLE tmp_session_incentive_group;
+        DROP TABLE tmp_session_prisoner_incentive;
     END;

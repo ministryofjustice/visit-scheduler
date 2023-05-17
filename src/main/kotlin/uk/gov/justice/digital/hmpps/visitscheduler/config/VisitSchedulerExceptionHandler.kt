@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -68,6 +69,18 @@ class VisitSchedulerExceptionHandler(
     val error = ErrorResponse(
       status = HttpStatus.BAD_REQUEST,
       userMessage = "Validation failure: ${e.cause?.message}",
+      developerMessage = e.message,
+    )
+    sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
+  }
+
+  @ExceptionHandler(MatchSessionTemplateToMigratedVisitException::class)
+  fun handleMatchSessionTemplateToMigratedVisitException(e: Exception): ResponseEntity<ErrorResponse> {
+    log.error("Migration exception: {}", e.message)
+    val error = ErrorResponse(
+      status = HttpStatus.BAD_REQUEST,
+      userMessage = "Migration failure: could not find matching session template",
       developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)

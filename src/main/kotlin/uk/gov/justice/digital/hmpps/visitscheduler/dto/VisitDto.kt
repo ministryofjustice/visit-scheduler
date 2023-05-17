@@ -14,6 +14,8 @@ import java.time.LocalDateTime
 data class VisitDto(
   @Schema(description = "Application Reference", example = "dfs-wjs-eqr", required = true)
   val applicationReference: String,
+  @Schema(description = "session template Reference", example = "dfs-wjs-eqr", required = false)
+  val sessionTemplateReference: String? = null,
   @Schema(description = "Visit Reference", example = "v9-d7-ed-7u", required = true)
   val reference: String,
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
@@ -21,7 +23,8 @@ data class VisitDto(
   @JsonProperty("prisonId")
   @Schema(description = "Prison Id", example = "MDI", required = true)
   val prisonCode: String,
-  @Schema(description = "Visit Room", example = "A1 L3", required = true)
+  @Schema(description = "Visit Room", example = "Visits Main Hall", required = true)
+  @field:NotBlank
   val visitRoom: String,
   @Schema(description = "Visit Type", example = "SOCIAL", required = true)
   val visitType: VisitType,
@@ -80,5 +83,6 @@ data class VisitDto(
     cancelledBy = visitEntity.cancelledBy,
     createdTimestamp = visitEntity.createTimestamp!!,
     modifiedTimestamp = visitEntity.modifyTimestamp!!,
+    sessionTemplateReference = visitEntity.sessionTemplateReference,
   )
 }
