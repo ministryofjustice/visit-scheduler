@@ -1,3 +1,4 @@
+-- This must be run on the old time table before the new R__Session_Template_Data.sql is run
 BEGIN;
 
 -- Make temporary table to contain visits with counts of session templates that match using the below where and join statements
