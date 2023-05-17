@@ -167,7 +167,16 @@ class MigrationSessionTemplateMatcher(
       matcher1.compareTo(matcher2)
     }
 
-    val orderedSessionTemplates = sessionTemplates.sortedWith(templateMatchComparator).filter { isSessionPermitted(it, matchedSessionTemplate[it]!!) }
+    val orderedSessionTemplates = sessionTemplates.sortedWith(templateMatchComparator).filter {
+      val migrateMatch = matchedSessionTemplate[it]!!
+      val keep = isSessionPermitted(it, migrateMatch)
+      if (!keep) {
+        with(migrateMatch) {
+          LOG.debug("getNearestSessionTemplate isSessionPermitted : removed ref:${it.reference}/$prisonCode/$prisonerId locationScore:$locationScore category:$category enhanced:$enhanced timeProximity:$timeProximity roomMatch:$roomNameMatch dateProximity:$validFromDateProximityDays")
+        }
+      }
+      keep
+    }
 
     val bestMatch = orderedSessionTemplates.lastOrNull()
       ?: throw MatchSessionTemplateToMigratedVisitException("getNearestSessionTemplate : Could not find any matching SessionTemplates matching prisoner : $prisonerDto, $message!")
@@ -189,11 +198,6 @@ class MigrationSessionTemplateMatcher(
         (enhanced || sessionValidator.isSessionForAllIncentiveLevels(template)) &&
         timeProximity <= maxProximityMinutes &&
         migrateMatch.validFromDateProximityDays != FROM_DATE_IN_FUTURE
-
-      if (!isAllowed) {
-        LOG.debug("isSessionPermitted : removed ref:${template.reference}/$template.prisonCode locationScore:$locationScore category:$category enhanced:$enhanced timeProximity:$timeProximity roomMatch:$roomNameMatch dateProximity:$validFromDateProximityDays")
-      }
-
       return isAllowed
     }
   }
