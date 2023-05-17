@@ -617,7 +617,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any matching SessionTemplates :"))
+      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any matching SessionTemplates"))
   }
 
   @Test
@@ -640,7 +640,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any matching SessionTemplates :"))
+      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any matching SessionTemplates"))
   }
 
   @Test
@@ -665,7 +665,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: could not find matching session template")
-      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any matching SessionTemplates :"))
+      .jsonPath("$.developerMessage").value(startsWith("getNearestSessionTemplate : Could not find any matching SessionTemplates"))
   }
 
   @Test
