@@ -20,7 +20,7 @@ data class Data(
 }
 
 fun main() {
-  val dir = "/Users/aled.wynevans/development/moj/visit-scheduler/src/main/resources/session-template-data/"
+  val dir = "./src/main/resources/session-template-data/"
   val file = File(dir + "results.csv")
   val lines = Files.readAllLines(file.toPath(), Charset.defaultCharset())
 
