@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
+import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Migrate POST /visits")
@@ -91,6 +92,8 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       if (legacyData != null) {
         assertThat(legacyData.visitId).isEqualTo(visit.id)
         assertThat(legacyData.leadPersonId).isEqualTo(123)
+        assertThat(legacyData.migrateDateTime).isNotNull()
+        assertThat(legacyData.migrateDateTime?.toLocalDate()).isEqualTo(LocalDate.now())
       }
       assertTelemetryClientEvents(VisitDto(visit), TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
     }
