@@ -26,4 +26,5 @@ BEGIN;
     DROP TABLE  tmp_visits_to_sessions;
     DROP TABLE  tmp_visits_to_dup_sessions;
 
-COMMIT;
+-- Commit the change
+END;
