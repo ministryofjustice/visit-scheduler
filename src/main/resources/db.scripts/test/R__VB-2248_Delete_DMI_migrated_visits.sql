@@ -22,9 +22,7 @@ BEGIN;
     DELETE FROM legacy_data WHERE visit_id IN (SELECT visit_id FROM tmp_delete_migrated_visits);
 
     -- Drop temporary tables
-    DROP TABLE  tmp_visits_with_sessions;
-    DROP TABLE  tmp_visits_to_sessions;
-    DROP TABLE  tmp_visits_to_dup_sessions;
+    DROP TABLE  tmp_delete_migrated_visits;
 
 -- Commit the change
 END;
