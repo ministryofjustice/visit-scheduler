@@ -16,7 +16,7 @@ generic-service:
     PRISONER_OFFENDER_SEARCH_URL: https://prisoner-offender-search-preprod.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     FEATURE_EVENTS_SNS_ENABLED: true
-    MIGRATE_SESSIONTEMPLATE_MAPPING_OFFSET_DAYS: -20
+    MIGRATE_SESSIONTEMPLATE_MAPPING_OFFSET_DAYS: 0
 
 # CloudPlatform AlertManager receiver to route promethues alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts

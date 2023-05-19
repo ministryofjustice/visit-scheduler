@@ -198,7 +198,7 @@ class MigrationSessionTemplateMatcher(
       val builder = StringBuilder()
       builder.append("getNearestSessionTemplate session is not permitted ")
       builder.append("ref:${it.reference}/$prisonCode/$prisonerId ")
-      builder.append("locationScore:$locationScore")
+      builder.append("locationScore:$locationScore ")
       builder.append("category:$category ")
       builder.append("enhanced:$enhanced ")
       builder.append("timeProximity:$timeProximity ")
