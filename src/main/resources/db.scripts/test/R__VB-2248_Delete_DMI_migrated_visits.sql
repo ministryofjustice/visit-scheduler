@@ -12,7 +12,7 @@ BEGIN;
         SELECT v.id FROM visit v
                         JOIN legacy_data ld ON ld.visit_id = v.id
                         JOIN prison p ON p.id = v.prison_id
-                        WHERE p.code = 'DMI'
+                        WHERE p.code = 'DMI';
     -- Delete
     DELETE FROM visit WHERE id IN (SELECT visit_id FROM tmp_delete_migrated_visits);
     DELETE FROM visit_contact WHERE visit_id IN (SELECT visit_id FROM tmp_delete_migrated_visits);
