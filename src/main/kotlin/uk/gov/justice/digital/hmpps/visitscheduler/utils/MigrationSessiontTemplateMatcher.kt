@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
@@ -127,7 +128,7 @@ class MigrationSessionTemplateMatcher(
     val prisonCode = migrateVisitRequest.prisonCode
     val prisonerId = migrateVisitRequest.prisonerId
 
-    val message = "prison code $prisonCode prisoner id $prisonerId, visit $startDate/${startDate.dayOfWeek}/$startTime <> $endTime room:${migrateVisitRequest.visitRoom}"
+    val message = "prison code $prisonCode prisoner id $prisonerId,  bookedDate : ${migrateVisitRequest.createDateTime}, visit $startDate/${startDate.dayOfWeek}/$startTime <> $endTime room:${migrateVisitRequest.visitRoom}"
     LOG.debug("Enter getNearestSessionTemplate : $message")
 
     if (sessionTemplates.isEmpty()) {
@@ -171,21 +172,45 @@ class MigrationSessionTemplateMatcher(
       val migrateMatch = matchedSessionTemplate[it]!!
       val keep = isSessionPermitted(it, migrateMatch)
       if (!keep) {
-        with(migrateMatch) {
-          LOG.debug("getNearestSessionTemplate isSessionPermitted : removed ref:${it.reference}/$prisonCode/$prisonerId locationScore:$locationScore category:$category enhanced:$enhanced timeProximity:$timeProximity roomMatch:$roomNameMatch dateProximity:$validFromDateProximityDays")
-        }
+        logMatchDetails(migrateMatch, it, prisonCode, prisonerId, prisonLevelMap)
       }
       keep
     }
 
     val bestMatch = orderedSessionTemplates.lastOrNull()
-      ?: throw MatchSessionTemplateToMigratedVisitException("getNearestSessionTemplate : Could not find any matching SessionTemplates matching prisoner : $prisonerDto, $message!")
+      ?: throw MatchSessionTemplateToMigratedVisitException("getNearestSessionTemplate : Could not find any matching SessionTemplates matching prisoner : $prisonerDto, location : ${locationToString(prisonLevelMap)} ,$message!")
 
     with(matchedSessionTemplate[bestMatch]!!) {
       LOG.debug("getNearestSessionTemplate, ref:${bestMatch.reference}/$prisonCode/$prisonerId locationScore:$locationScore category:$category enhanced:$enhanced timeProximity:$timeProximity roomMatch:$roomNameMatch dateProximity:$validFromDateProximityDays")
     }
 
     return bestMatch
+  }
+
+  private fun logMatchDetails(
+    migrateMatch: MigrateMatch,
+    it: SessionTemplate,
+    prisonCode: String,
+    prisonerId: String,
+    prisonLevelMap: Map<PrisonerHousingLevels, String?>,
+  ) {
+    with(migrateMatch) {
+      val builder = StringBuilder()
+      builder.append("getNearestSessionTemplate session is not permitted ")
+      builder.append("ref:${it.reference}/$prisonCode/$prisonerId ")
+      builder.append("locationScore:$locationScore ")
+      builder.append("category:$category ")
+      builder.append("enhanced:$enhanced ")
+      builder.append("timeProximity:$timeProximity ")
+      builder.append("roomMatch:$roomNameMatch ")
+      builder.append("dateProximity:$validFromDateProximityDays ")
+      builder.append("location:${locationToString(prisonLevelMap)} ")
+      LOG.debug(builder.toString())
+    }
+  }
+
+  private fun locationToString(prisonLevelMap: Map<PrisonerHousingLevels, String?>): String {
+    return prisonLevelMap.values.filterNotNull().toString()
   }
 
   private fun isSessionPermitted(

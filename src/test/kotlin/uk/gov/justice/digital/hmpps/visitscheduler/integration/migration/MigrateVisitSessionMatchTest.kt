@@ -868,7 +868,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   @Test
   fun `Migrated session match - for Bi weekly session templates`() {
     // Given
-    val migrateVisitRequestDto = createMigrateVisitRequestDto()
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStartTimeAndDate = LocalDateTime.now().plusDays(5))
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
     val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
@@ -877,7 +877,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       validFromDate = LocalDate.now().minusDays(7),
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = dayOfWeek,
-      visitRoom = migrateVisitRequestDto.visitRoom,
+      visitRoom = "wrongSession1",
       startTime = startTime,
       endTime = endTime,
       biWeekly = true,
@@ -887,7 +887,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       validFromDate = LocalDate.now().minusDays(14),
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = dayOfWeek,
-      visitRoom = migrateVisitRequestDto.visitRoom,
+      visitRoom = "correctSession",
       startTime = startTime,
       endTime = endTime,
       biWeekly = true,
@@ -897,7 +897,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       validFromDate = LocalDate.now().minusDays(21),
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = dayOfWeek,
-      visitRoom = migrateVisitRequestDto.visitRoom,
+      visitRoom = "wrongSession2",
       startTime = startTime,
       endTime = endTime,
       biWeekly = true,
@@ -913,6 +913,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
+      assertThat(visit.visitRoom).isEqualTo(sessionTemplate.visitRoom)
       assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
