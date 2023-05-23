@@ -121,7 +121,7 @@ task:
     validity-minutes: 20
   log-non-associations:
     enabled: true
-    cron: "0 0 3 * * ?" #every day at 3 AM
+    cron: "0 40 15 * * ?" #15:40 PM - to be changed post release to every day at 3 AM
     number-of-days-ahead: 30
 
 feature:
