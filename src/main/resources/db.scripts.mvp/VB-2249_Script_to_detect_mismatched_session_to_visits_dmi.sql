@@ -20,9 +20,8 @@
     where p.code = 'DMI' and ld.visit_id is null order by to_char(visit_start, 'Day');
 
 
---REFERENCE	DAYOFWEEK	RESTRICTION	VISIT_START	VISIT_END	VISIT_DATE	PRISONER_ID LOCATION
+
 -- E Wing
---ly-xr-pi-sq	FRIDAY	    OPEN	    13:45:00	15:45:00	2023-06-02	A2234DN     E-3-028
 
     update visit set session_template_reference = query.session_template_reference
         from (select st.reference as session_template_reference,v.reference
@@ -44,8 +43,6 @@
     where query.reference = visit.reference
 
 -- F WING
---wg-yr-pu-qo	THURSDAY	OPEN	    13:45:00	15:45:00	2023-05-25	A1758EX     F-2-007
---jl-xr-pc-sa	THURSDAY	OPEN	    13:45:00	15:45:00	2023-06-01	A5396ER     F-3-004
 
 
     update visit set session_template_reference = query.session_template_reference
@@ -68,11 +65,6 @@
     where query.reference = visit.reference
 
 -- B WING
---mj-yr-ph-ol	SATURDAY	OPEN	    13:45:00	15:45:00	2023-05-27	A2009CG     B-2-006
---dl-xr-ph-ap	SUNDAY	    OPEN	    13:45:00	15:45:00	2023-06-11	A1364EY     B-2-020
---lw-yr-pi-dj	SUNDAY	    OPEN	    13:45:00	15:45:00	2023-05-28	A6590EX     B-3-004
---vv-yr-pu-ja	TUESDAY	    OPEN	    13:45:00	15:45:00	2023-05-23	A6590EX     B-3-004
---zl-xr-ph-rm	TUESDAY	    OPEN	    13:45:00	15:45:00	2023-05-30	A2009CG     B-2-006
 
     update visit set session_template_reference = query.session_template_reference
         from (select st.reference as session_template_reference,v.reference
@@ -94,11 +86,6 @@
     where query.reference = visit.reference
 
 -- A WING
---my-xr-pu-ym	FRIDAY	    OPEN	    13:45:00	15:45:00	2023-06-02	A0041AG     A-4-004
---rj-yr-pc-vq	SUNDAY	    OPEN	    13:45:00	15:45:00	2023-05-28	A9646CY     A-3-022
---sj-yr-pu-zl	SUNDAY	    OPEN	    13:45:00	15:45:00	2023-05-28	A0876DJ     A-4-005
---bj-yr-pf-wm	TUESDAY	    OPEN	    13:45:00	15:45:00	2023-05-23	A0876DJ     A-4-005
---dg-yr-ph-me	TUESDAY	    OPEN	    13:45:00	15:45:00	2023-05-23	A9049AD     A-3-013
 
     update visit set session_template_reference = query.session_template_reference
         from (select st.reference as session_template_reference,v.reference
@@ -120,14 +107,6 @@
     where query.reference = visit.reference
 
 -- D WING
---gx-xr-pf-my	SATURDAY	OPEN	    13:45:00	15:45:00	2023-06-03	A3590EW     D-2-024
---bx-xr-pf-nm	FRIDAY	    OPEN	    13:45:00	15:45:00	2023-05-26	A8062AQ     D-3-028
---dj-ar-pc-yp	SATURDAY	OPEN	    09:30:00	11:30:00	2023-05-20	A4790EL     D-2-030
---aj-yr-pu-bg	SATURDAY	OPEN	    13:45:00	15:45:00	2023-05-27	A5774DN     D-2-018
---eb-ar-pi-rs	TUESDAY	    OPEN	    13:45:00	15:45:00	2023-05-23	A9021CD     D-3-011
---ng-yr-pf-ee	TUESDAY	    OPEN	    13:45:00	15:45:00	2023-05-23	A8930DM     D-3-031
---pg-yr-pu-rs	TUESDAY	    OPEN	    13:45:00	15:45:00	2023-05-23	A7603CV     D-1-016
---jg-yr-ph-mp	WEDNESDAY	OPEN	    13:45:00	15:45:00	2023-05-24	A9502AP     D-2-029
 
 
     update visit set session_template_reference = query.session_template_reference
