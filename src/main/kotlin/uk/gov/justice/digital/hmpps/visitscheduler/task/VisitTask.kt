@@ -71,6 +71,7 @@ class VisitTask(
         val visits = visitService.findVisitsByFilterPageableDescending(visitFilter)
 
         visits.forEach {
+          log.debug("Started check, visit with reference - ${it.reference}, prisoner id - ${it.prisonerId}, prison code - ${it.prisonCode}, start time - ${it.startTimestamp}, end time - ${it.endTimestamp}")
           var sessions = emptyList<VisitSessionDto>()
           try {
             sessions = sessionService.getVisitSessions(it.prisonCode, it.prisonerId, i, i)
@@ -78,8 +79,10 @@ class VisitTask(
             log.info("Flagged Visit: Exception raised for Visit with reference - ${it.reference} ,prisoner id - ${it.prisonerId}, prison code - ${it.prisonCode}, start time - ${it.startTimestamp}, end time - ${it.endTimestamp}, error message - ${e.message}")
           }
           if (sessions.isEmpty()) {
-            log.info("Flagged Visit: Visit with reference - ${it.reference} ,prisoner id - ${it.prisonerId}, prison code - ${it.prisonCode}, start time - ${it.startTimestamp}, end time - ${it.endTimestamp} flagged for check.")
+            log.info("Flagged Visit: Visit with reference - ${it.reference}, prisoner id - ${it.prisonerId}, prison code - ${it.prisonCode}, start time - ${it.startTimestamp}, end time - ${it.endTimestamp} flagged for check.")
           }
+
+          log.debug("Finished check, visit with reference - ${it.reference}, prisoner id - ${it.prisonerId}, prison code - ${it.prisonCode}, start time - ${it.startTimestamp}, end time - ${it.endTimestamp}")
 
           try {
             Thread.sleep(500)
