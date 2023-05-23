@@ -57,7 +57,7 @@
                         and ((v.visit_restriction = 'OPEN' and st.open_capacity>0) or (v.visit_restriction = 'CLOSED' and st.closed_capacity>0))
                 join session_to_location_group link on link.session_template_id = st.id
                 join session_location_group g on g.id = link.group_id
-                join permitted_session_location loc on loc.group_id = g.id and loc.level_one_code = ''
+                join permitted_session_location loc on loc.group_id = g.id and loc.level_one_code = 'F'
             where p.code = 'DMI' and
             ld.visit_id is null  and
             v.prisoner_id in  ('A1758EX','A5396ER') and
