@@ -67,9 +67,11 @@ class PrisonApiMockServer : WireMockServer(8092) {
     )
   }
 
-  fun stubGetPrisonerHousingLocation(offenderNo: String, internalLocation: String?) {
-    val levels = getLevels(internalLocation)
-    val housingLocationsDto = PrisonerHousingLocationsDto(levels)
+  fun stubGetPrisonerHousingLocation(offenderNo: String, internalLocation: String?, lastPermanentLevels: String? = null) {
+    val levelsArray = getLevels(internalLocation)
+    val lastPermanentLevelsArray = getLevels(lastPermanentLevels)
+
+    val housingLocationsDto = PrisonerHousingLocationsDto(levelsArray, lastPermanentLevelsArray)
 
     stubFor(
       get("/api/offenders/$offenderNo/housing-location")

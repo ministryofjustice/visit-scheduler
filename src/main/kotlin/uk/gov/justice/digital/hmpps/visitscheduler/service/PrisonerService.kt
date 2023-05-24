@@ -68,13 +68,7 @@ class PrisonerService(
   }
 
   fun getPrisonerHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? {
-    val prisonerHousingLocationsDto = prisonApiClient.getPrisonerHousingLocation(prisonerId)
-    return prisonerHousingLocationsDto?.let {
-      if (isPrisonerInTemporaryLocation(prisonerHousingLocationsDto.levels)) {
-        return getPrisonerLastHousingLocation(prisonerId, prisonCode)
-      }
-      return prisonerHousingLocationsDto
-    }
+    return prisonApiClient.getPrisonerHousingLocation(prisonerId)
   }
 
   private fun isPrisonerInTemporaryLocation(levels: List<PrisonerHousingLevelDto>): Boolean {
@@ -85,18 +79,22 @@ class PrisonerService(
   }
 
   fun getLevelsMapForPrisoner(prisonerHousingLocationsDto: PrisonerHousingLocationsDto): Map<PrisonerHousingLevels, String?> {
-    val levelsMap: MutableMap<PrisonerHousingLevels, String?> = mutableMapOf()
+    with(prisonerHousingLocationsDto) {
+      val housingLevel = if (isPrisonerInTemporaryLocation(levels)) lastPermanentLevels else levels
 
-    levelsMap[LEVEL_ONE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_ONE.level)?.code
-    levelsMap[LEVEL_TWO] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_TWO.level)?.code
-    levelsMap[LEVEL_THREE] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_THREE.level)?.code
-    levelsMap[LEVEL_FOUR] = getHousingLevelByLevelNumber(prisonerHousingLocationsDto.levels, LEVEL_FOUR.level)?.code
+      val levelsMap: MutableMap<PrisonerHousingLevels, String?> = mutableMapOf()
 
-    return levelsMap.toMap()
+      levelsMap[LEVEL_ONE] = getHousingLevelByLevelNumber(housingLevel, LEVEL_ONE)?.code
+      levelsMap[LEVEL_TWO] = getHousingLevelByLevelNumber(housingLevel, LEVEL_TWO)?.code
+      levelsMap[LEVEL_THREE] = getHousingLevelByLevelNumber(housingLevel, LEVEL_THREE)?.code
+      levelsMap[LEVEL_FOUR] = getHousingLevelByLevelNumber(housingLevel, LEVEL_FOUR)?.code
+
+      return levelsMap.toMap()
+    }
   }
 
-  private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: Int): PrisonerHousingLevelDto? {
-    return levels.stream().filter { level -> level.level == housingLevel }.findFirst().orElse(null)
+  private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: PrisonerHousingLevels): PrisonerHousingLevelDto? {
+    return levels.stream().filter { level -> level.level == housingLevel.level }.findFirst().orElse(null)
   }
 
   fun getPrisoner(prisonerId: String): PrisonerDto? {
