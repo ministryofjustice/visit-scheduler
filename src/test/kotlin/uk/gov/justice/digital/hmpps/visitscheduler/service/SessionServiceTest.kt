@@ -276,7 +276,6 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       val prison = Prison(
-        id = 1,
         code = "HEI",
         active = true,
       )
@@ -343,7 +342,6 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       val prison = Prison(
-        id = 1,
         code = "HEI",
         active = true,
       )
@@ -396,7 +394,6 @@ class SessionServiceTest {
       )
 
       val prison = Prison(
-        id = 1,
         code = "HEI",
         active = true,
       )

@@ -10,8 +10,8 @@ data class PrisonDto(
   var code: String,
 
   @Schema(description = "is prison active", example = "true", required = true)
-  var active: Boolean,
+  var active: Boolean = false,
 
   @Schema(description = "exclude dates", required = false)
-  var excludeDates: List<LocalDate> = mutableListOf(),
+  var excludeDates: Set<LocalDate> = mutableSetOf(),
 )
