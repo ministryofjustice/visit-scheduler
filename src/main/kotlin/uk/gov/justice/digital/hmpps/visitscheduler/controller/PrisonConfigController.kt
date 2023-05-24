@@ -63,7 +63,7 @@ class PrisonConfigController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to get supported prisons",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -89,7 +89,7 @@ class PrisonConfigController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to get prison",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -125,7 +125,7 @@ class PrisonConfigController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to get all prisons",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -193,7 +193,7 @@ class PrisonConfigController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Session Template not found",
+        description = "prison cant be found to activate",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -228,7 +228,7 @@ class PrisonConfigController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Session Template not found",
+        description = "prison cant be found to deactivate",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],

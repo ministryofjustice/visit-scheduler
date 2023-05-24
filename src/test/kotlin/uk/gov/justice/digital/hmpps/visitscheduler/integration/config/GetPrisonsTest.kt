@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.config
 
+import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -146,7 +147,7 @@ class GetPrisonsTest : IntegrationTestBase() {
   fun `create prison`() {
     // Given
     val excludeDate = LocalDate.now()
-    val prisonDto = PrisonDto("AWE", true, listOf(excludeDate))
+    val prisonDto = PrisonDto("AWE", true, sortedSetOf(excludeDate))
 
     // When
     val responseSpec = webTestClient.post().uri(PRISON_CONFIG_PATH.replace("{prisonCode}", "AWE"))
@@ -160,7 +161,28 @@ class GetPrisonsTest : IntegrationTestBase() {
     val result = getPrisonResults(returnResult)
     assertThat(result.code).isEqualTo("AWE")
     assertThat(result.active).isTrue
-    assertThat(result.excludeDates[0]).isEqualTo(excludeDate)
+    assertThat(result.excludeDates.toList()[0]).isEqualTo(excludeDate)
+  }
+
+  @Test
+  fun `create prison when it exists throws an exception`() {
+    // Given
+    prisonEntityHelper.create(prisonCode = "AWE", activePrison = true)
+
+    val excludeDate = LocalDate.now()
+    val prisonDto = PrisonDto("AWE", true, sortedSetOf(excludeDate))
+
+    // When
+    val responseSpec = webTestClient.post().uri(PRISON_CONFIG_PATH.replace("{prisonCode}", "AWE"))
+      .headers(setAuthorisation(roles = requiredRole))
+      .body(BodyInserters.fromValue(prisonDto))
+      .exchange()
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+    val errorResponse = getErrorResponse(responseSpec)
+    assertThat(errorResponse.userMessage).isEqualTo("Validation failure: null")
+    assertThat(errorResponse.developerMessage).isEqualTo("Prison code AWE found, already exists cannot create!")
   }
 
   @Test

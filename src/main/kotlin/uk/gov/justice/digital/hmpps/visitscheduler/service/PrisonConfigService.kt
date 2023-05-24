@@ -38,7 +38,7 @@ class PrisonConfigService(
   }
 
   private fun mapEntityToDto(it: Prison): PrisonDto {
-    return PrisonDto(it.code, it.active, it.excludeDates.map { it.excludeDate })
+    return PrisonDto(it.code, it.active, it.excludeDates.map { it.excludeDate }.toSortedSet())
   }
 
   @Transactional(readOnly = true)
@@ -55,6 +55,10 @@ class PrisonConfigService(
 
   @Transactional
   fun createPrison(prisonDto: PrisonDto): PrisonDto {
+    if (prisonRepository.findByCode(prisonDto.code) != null) {
+      throw ValidationException(messageService.getMessage("validation.create.prison.found", prisonDto.code))
+    }
+
     val newPrison = Prison(prisonDto.code, prisonDto.active)
     val savedPrison = prisonRepository.saveAndFlush(newPrison)
     val excludeDates = prisonDto.excludeDates.map { PrisonExcludeDate(prisonId = savedPrison.id, prison = savedPrison, it) }

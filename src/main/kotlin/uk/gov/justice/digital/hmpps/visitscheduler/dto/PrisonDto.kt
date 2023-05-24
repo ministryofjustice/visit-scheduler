@@ -13,5 +13,5 @@ data class PrisonDto(
   var active: Boolean = false,
 
   @Schema(description = "exclude dates", required = false)
-  var excludeDates: List<LocalDate> = mutableListOf(),
+  var excludeDates: Set<LocalDate> = mutableSetOf(),
 )
