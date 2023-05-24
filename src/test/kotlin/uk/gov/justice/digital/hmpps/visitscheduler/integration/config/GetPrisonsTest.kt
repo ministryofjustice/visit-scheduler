@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.config
 
-import org.assertj.core.api.Assertions
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.AfterEach
 import org.junit.jupiter.api.BeforeEach
@@ -12,6 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.cache.CacheManager
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
+import org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED
+import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
+import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.ACTIVATE_PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.DEACTIVATE_PRISON
@@ -25,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
 
 @DisplayName("Get $SUPPORTED_PRISONS")
+@Transactional(propagation = NOT_SUPPORTED)
 class GetPrisonsTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var prisonRepository: PrisonRepository
@@ -36,8 +39,11 @@ class GetPrisonsTest : IntegrationTestBase() {
 
   @BeforeEach
   @AfterEach
-  fun clearCache() {
+  fun cleanTests() {
     cacheManager.getCache("supported-prisons")?.clear()
+    cacheManager.getCache("get-prisons")?.clear()
+    cacheManager.getCache("get-prison")?.clear()
+    deleteEntityHelper.deleteAll()
   }
 
   @Test
@@ -118,9 +124,14 @@ class GetPrisonsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val result = getPrisonResults(returnResult)
-
     assertThat(result.code).isEqualTo("AWE")
     assertThat(result.active).isTrue
+
+    val prisonEntity = prisonRepository.findByCode("AWE")
+    prisonEntity?.let {
+      assertThat(prisonEntity.code).isEqualTo("AWE")
+      assertThat(prisonEntity.active).isTrue
+    }
   }
 
   @Test
@@ -141,8 +152,15 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     assertThat(result.code).isEqualTo("AWE")
     assertThat(result.active).isFalse
+
+    val prisonEnitiy = prisonRepository.findByCode("AWE")
+    prisonEnitiy?.let {
+      assertThat(prisonEnitiy.code).isEqualTo("AWE")
+      assertThat(prisonEnitiy.active).isFalse
+    }
   }
 
+  @Transactional(propagation = REQUIRES_NEW)
   @Test
   fun `create prison`() {
     // Given
@@ -162,6 +180,13 @@ class GetPrisonsTest : IntegrationTestBase() {
     assertThat(result.code).isEqualTo("AWE")
     assertThat(result.active).isTrue
     assertThat(result.excludeDates.toList()[0]).isEqualTo(excludeDate)
+
+    val prisonEntity = prisonRepository.findByCode("AWE")
+    prisonEntity?.let {
+      assertThat(prisonEntity.code).isEqualTo("AWE")
+      assertThat(prisonEntity.active).isTrue
+      assertThat(prisonEntity.excludeDates.toList()[0].excludeDate).isEqualTo(excludeDate)
+    }
   }
 
   @Test

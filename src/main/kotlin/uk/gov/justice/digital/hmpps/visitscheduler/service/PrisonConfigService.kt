@@ -29,7 +29,7 @@ class PrisonConfigService(
     return mapEntityToDto(prison)
   }
 
-  @Cacheable("get-prison")
+  @Cacheable("get-prisons")
   @Transactional(readOnly = true)
   fun getPrisons(): List<PrisonDto> {
     val prisons = prisonRepository.findAllByOrderByCodeAsc()
