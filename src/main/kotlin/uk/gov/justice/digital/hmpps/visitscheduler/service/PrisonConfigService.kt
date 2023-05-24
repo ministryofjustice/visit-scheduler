@@ -6,6 +6,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
 
@@ -25,7 +26,19 @@ class PrisonConfigService(
   @Transactional(readOnly = true)
   fun getPrison(prisonCode: String): PrisonDto {
     val prison = findPrisonByCode(prisonCode)
-    return PrisonDto(prisonCode, prison.active, prison.excludeDates.map { it.excludeDate })
+    return mapEntityToDto(prison)
+  }
+
+  @Cacheable("get-prison")
+  @Transactional(readOnly = true)
+  fun getPrisons(): List<PrisonDto> {
+    val prisons = prisonRepository.findAllByOrderByCodeAsc()
+
+    return prisons.map { mapEntityToDto(it) }
+  }
+
+  private fun mapEntityToDto(it: Prison): PrisonDto {
+    return PrisonDto(it.code, it.active, it.excludeDates.map { it.excludeDate })
   }
 
   @Transactional(readOnly = true)
@@ -38,5 +51,29 @@ class PrisonConfigService(
   @Transactional(readOnly = true)
   fun getSupportedPrisons(): List<String> {
     return prisonRepository.getSupportedPrisons()
+  }
+
+  @Transactional
+  fun createPrison(prisonDto: PrisonDto): PrisonDto {
+    val newPrison = Prison(prisonDto.code, prisonDto.active)
+    val savedPrison = prisonRepository.saveAndFlush(newPrison)
+    val excludeDates = prisonDto.excludeDates.map { PrisonExcludeDate(prisonId = savedPrison.id, prison = savedPrison, it) }
+    savedPrison.excludeDates.addAll(excludeDates)
+
+    return mapEntityToDto(savedPrison)
+  }
+
+  @Transactional
+  fun activatePrison(prisonCode: String): PrisonDto {
+    val prisonToUpdate = findPrisonByCode(prisonCode)
+    prisonToUpdate.active = true
+    return mapEntityToDto(prisonToUpdate)
+  }
+
+  @Transactional
+  fun deActivatePrison(prisonCode: String): PrisonDto {
+    val prisonToUpdate = findPrisonByCode(prisonCode)
+    prisonToUpdate.active = false
+    return mapEntityToDto(prisonToUpdate)
   }
 }

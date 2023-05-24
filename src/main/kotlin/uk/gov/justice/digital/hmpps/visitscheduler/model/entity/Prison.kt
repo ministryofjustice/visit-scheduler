@@ -18,11 +18,6 @@ import java.time.LocalDateTime
 @Entity
 @Table(name = "PRISON")
 class Prison(
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  @Column(name = "ID")
-  val id: Long = 0,
-
   @Column(name = "CODE", unique = true)
   var code: String,
 
@@ -43,6 +38,12 @@ class Prison(
   var excludeDates: MutableList<PrisonExcludeDate> = mutableListOf(),
 
 ) {
+
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  @Column(name = "ID")
+  val id: Long = 0
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is Prison) return false

@@ -11,7 +11,12 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.cache.CacheManager
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_PRISON
+import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.ACTIVATE_PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.DEACTIVATE_PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISONS_CONFIG_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_CONFIG_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.SUPPORTED_PRISONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -35,7 +40,7 @@ class GetPrisonsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `all supported prisons are returned in correct order`() {
+  fun `get supported prisons are returned in correct order`() {
     // Given
     prisonEntityHelper.create(prisonCode = "AWE")
     prisonEntityHelper.create(prisonCode = "GRE")
@@ -64,14 +69,16 @@ class GetPrisonsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `get prison by prison id-code`() {
+  fun `get all prisons are returned in correct order`() {
     // Given
-    val excludeDate = LocalDate.now()
-
-    prisonEntityHelper.create(prisonCode = "AWE", excludeDates = listOf(excludeDate))
+    prisonEntityHelper.create(prisonCode = "AWE")
+    prisonEntityHelper.create(prisonCode = "GRE", activePrison = false)
+    prisonEntityHelper.create(prisonCode = "CDE")
+    prisonEntityHelper.create(prisonCode = "BDE", activePrison = false)
+    prisonEntityHelper.create(prisonCode = "WDE")
 
     // When
-    val responseSpec = webTestClient.get().uri(GET_PRISON.replace("{prisonCode}", "AWE"))
+    val responseSpec = webTestClient.get().uri(PRISONS_CONFIG_PATH)
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -79,16 +86,107 @@ class GetPrisonsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val results = getPrisonsResults(returnResult)
+
+    assertThat(results.size).isEqualTo(5)
+    assertThat(results[0].code).isEqualTo("AWE")
+    assertThat(results[0].active).isTrue
+    assertThat(results[1].code).isEqualTo("BDE")
+    assertThat(results[1].active).isFalse
+    assertThat(results[2].code).isEqualTo("CDE")
+    assertThat(results[2].active).isTrue
+    assertThat(results[3].code).isEqualTo("GRE")
+    assertThat(results[3].active).isFalse
+    assertThat(results[4].code).isEqualTo("WDE")
+    assertThat(results[4].active).isTrue
+
+    verify(prisonRepository, times(1)).findAllByOrderByCodeAsc()
+  }
+
+  @Test
+  fun `make prison active prison`() {
+    // Given
+
+    prisonEntityHelper.create(prisonCode = "AWE", activePrison = false)
+
+    // When
+    val responseSpec = webTestClient.put().uri(ACTIVATE_PRISON.replace("{prisonCode}", "AWE"))
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val result = getPrisonResults(returnResult)
+
+    assertThat(result.code).isEqualTo("AWE")
+    assertThat(result.active).isTrue
+  }
+
+  @Test
+  fun `deactivate prison`() {
+    // Given
+
+    prisonEntityHelper.create(prisonCode = "AWE", activePrison = true)
+
+    // When
+    val responseSpec = webTestClient.put().uri(DEACTIVATE_PRISON.replace("{prisonCode}", "AWE"))
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val result = getPrisonResults(returnResult)
+
+    assertThat(result.code).isEqualTo("AWE")
+    assertThat(result.active).isFalse
+  }
+
+  @Test
+  fun `create prison`() {
+    // Given
+    val excludeDate = LocalDate.now()
+    val prisonDto = PrisonDto("AWE", true, listOf(excludeDate))
+
+    // When
+    val responseSpec = webTestClient.post().uri(PRISON_CONFIG_PATH.replace("{prisonCode}", "AWE"))
+      .headers(setAuthorisation(roles = requiredRole))
+      .body(BodyInserters.fromValue(prisonDto))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val result = getPrisonResults(returnResult)
+    assertThat(result.code).isEqualTo("AWE")
+    assertThat(result.active).isTrue
+    assertThat(result.excludeDates[0]).isEqualTo(excludeDate)
+  }
+
+  @Test
+  fun `get prison by prison id-code`() {
+    // Given
+    val excludeDate = LocalDate.now()
+
+    prisonEntityHelper.create(prisonCode = "AWE", excludeDates = listOf(excludeDate))
+
+    // When
+    val responseSpec = webTestClient.get().uri(PRISON.replace("{prisonCode}", "AWE"))
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val results = getPrisonResults(returnResult)
     assertThat(results.code).isEqualTo("AWE")
-    assertThat(results.active).isTrue()
+    assertThat(results.active).isTrue
     assertThat(results.excludeDates).contains(excludeDate)
   }
 
   @Test
   fun `when supported prisons is called twice cached values are returned the second time`() {
     // Given
-    val today = LocalDate.now()
-
     prisonEntityHelper.create(prisonCode = "AWE")
     prisonEntityHelper.create(prisonCode = "GRE")
     prisonEntityHelper.create(prisonCode = "CDE")
@@ -144,7 +242,11 @@ class GetPrisonsTest : IntegrationTestBase() {
     return objectMapper.readValue(returnResult.returnResult().responseBody, Array<String>::class.java)
   }
 
-  private fun getPrisonsResults(returnResult: BodyContentSpec): PrisonDto {
+  private fun getPrisonResults(returnResult: BodyContentSpec): PrisonDto {
     return objectMapper.readValue(returnResult.returnResult().responseBody, PrisonDto::class.java)
+  }
+
+  private fun getPrisonsResults(returnResult: BodyContentSpec): Array<PrisonDto> {
+    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<PrisonDto>::class.java)
   }
 }
