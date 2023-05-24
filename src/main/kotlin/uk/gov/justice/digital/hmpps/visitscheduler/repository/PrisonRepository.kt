@@ -15,4 +15,6 @@ interface PrisonRepository : JpaRepository<Prison, Long> {
       "where p.active = true order by p.code",
   )
   fun getSupportedPrisons(): List<String>
+
+  fun findAllByOrderByCodeAsc(): List<Prison>
 }

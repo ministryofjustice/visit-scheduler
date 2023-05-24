@@ -869,12 +869,13 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   fun `Migrated session match - for Bi weekly session templates`() {
     // Given
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStartTimeAndDate = LocalDateTime.now().plusDays(5))
+    val startDate = migrateVisitRequestDto.startTimestamp.toLocalDate()
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
     val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
 
     sessionTemplateEntityHelper.create(
-      validFromDate = LocalDate.now().minusDays(7),
+      validFromDate = startDate.minusDays(7),
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = dayOfWeek,
       visitRoom = "wrongSession1",
@@ -884,7 +885,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     )
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
-      validFromDate = LocalDate.now().minusDays(14),
+      validFromDate = startDate.minusDays(14),
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = dayOfWeek,
       visitRoom = "correctSession",
@@ -894,7 +895,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     )
 
     sessionTemplateEntityHelper.create(
-      validFromDate = LocalDate.now().minusDays(21),
+      validFromDate = startDate.minusDays(21),
       prisonCode = migrateVisitRequestDto.prisonCode,
       dayOfWeek = dayOfWeek,
       visitRoom = "wrongSession2",
