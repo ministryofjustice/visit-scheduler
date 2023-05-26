@@ -14,7 +14,7 @@ update visit set session_template_reference = (
 where prison_id = (select id from prison where code = 'BLI')
   and BTRIM(To_Char(visit_start , 'DAY')) = 'TUESDAY'
   and visit_start::time = '14:00:00'
-  and end_time::time = '15:00:00'
+  and visit_end::time = '15:00:00'
   and visit_start >= current_date
   and session_template_reference =
       (select st.reference from session_template st
@@ -37,7 +37,7 @@ update visit set session_template_reference = (
 where prison_id = (select id from prison where code = 'BLI')
   and BTRIM(To_Char(visit_start , 'DAY')) = 'TUESDAY'
   and visit_start::time = '15:30:00'
-  and end_time::time = '16:30:00'
+  and visit_end::time = '16:30:00'
   and visit_start >= current_date
   and session_template_reference =
       (select st.reference from session_template st
@@ -60,7 +60,7 @@ update visit set session_template_reference = (
 where prison_id = (select id from prison where code = 'BLI')
   and BTRIM(To_Char(visit_start , 'DAY')) = 'WEDNESDAY'
   and visit_start::time = '14:00:00'
-  and end_time::time = '16:00:00'
+  and visit_end::time = '16:00:00'
   and visit_start >= current_date
   and session_template_reference =
       (select st.reference from session_template st
@@ -83,7 +83,7 @@ update visit set session_template_reference = (
 where prison_id = (select id from prison where code = 'BLI')
   and BTRIM(To_Char(visit_start , 'DAY')) = 'FRIDAY'
   and visit_start::time = '14:00:00'
-  and end_time::time = '16:00:00'
+  and visit_end::time = '16:00:00'
   and visit_start >= current_date
   and session_template_reference =
       (select st.reference from session_template st
@@ -106,7 +106,7 @@ update visit set session_template_reference = (
 where prison_id = (select id from prison where code = 'BLI')
   and BTRIM(To_Char(visit_start , 'DAY')) = 'SATURDAY'
   and visit_start::time = '14:00:00'
-  and end_time::time = '15:00:00'
+  and visit_end::time = '15:00:00'
   and visit_start >= current_date
   and session_template_reference =
       (select st.reference from session_template st
@@ -129,7 +129,7 @@ update visit set session_template_reference = (
 where prison_id = (select id from prison where code = 'BLI')
   and BTRIM(To_Char(visit_start , 'DAY')) = 'SATURDAY'
   and visit_start::time = '15:30:00'
-  and end_time::time = '16:30:00'
+  and visit_end::time = '16:30:00'
   and visit_start >= current_date
   and session_template_reference =
       (select st.reference from session_template st
@@ -152,7 +152,7 @@ update visit set session_template_reference = (
 where prison_id = (select id from prison where code = 'BLI')
   and BTRIM(To_Char(visit_start , 'DAY')) = 'SUNDAY'
   and visit_start::time = '14:00:00'
-  and end_time::time = '15:00:00'
+  and visit_end::time = '15:00:00'
   and visit_start >= current_date
   and session_template_reference =
       (select st.reference from session_template st
@@ -175,7 +175,7 @@ update visit set session_template_reference = (
 where prison_id = (select id from prison where code = 'BLI')
   and BTRIM(To_Char(visit_start , 'DAY')) = 'SUNDAY'
   and visit_start::time = '15:30:00'
-  and end_time::time = '16:30:00'
+  and visit_end::time = '16:30:00'
   and visit_start >= current_date
   and session_template_reference =
       (select st.reference from session_template st
