@@ -78,6 +78,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitFull.applicationReference
@@ -109,6 +110,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
       .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!!.first().type)
       .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!!.first().text!!)
+      .jsonPath("$.sessionTemplateReference").isEqualTo(updateRequest.sessionTemplateReference)
       .jsonPath("$.createdTimestamp").isNotEmpty
       .returnResult()
 
@@ -135,6 +137,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitBooked.visitStart,
       visitContact = ContactDto("John Smith", "01234 567890"),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -172,6 +175,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeVisitSlotRequestDto(
       visitRestriction = visitBooked.visitRestriction,
       visitContact = ContactDto("John Smith", "01234 567890"),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -209,6 +213,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitBooked.visitStart.minusDays(1),
       visitContact = ContactDto("John Smith", "01234 567890"),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -246,6 +251,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeVisitSlotRequestDto(
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -283,6 +289,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeVisitSlotRequestDto(
       startTimestamp = visitBooked.visitStart,
       visitContact = ContactDto("John Smith", "01234 567890"),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -320,6 +327,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeVisitSlotRequestDto(
       visitRestriction = visitBooked.visitRestriction,
       visitContact = ContactDto("John Smith", "01234 567890"),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitReserved.applicationReference
@@ -357,6 +365,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.CLOSED,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = true)),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
     val applicationReference = visitFull.applicationReference
 
@@ -377,6 +386,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = emptySet(),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
     val applicationReference = visitFull.applicationReference
 
@@ -404,6 +414,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         VisitorDto(11, false), VisitorDto(12, false),
       ),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
     val applicationReference = visitFull.applicationReference
 
@@ -419,6 +430,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Given
     val updateRequest = ChangeVisitSlotRequestDto(
       visitContact = ContactDto("John Smith", "01234 567890"),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitFull.applicationReference
@@ -452,6 +464,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Given
     val updateRequest = ChangeVisitSlotRequestDto(
       visitors = setOf(VisitorDto(123L, visitContact = true)),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitFull.applicationReference
@@ -481,10 +494,49 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when reserved slot changed if session template updated then visit has new session template reference`() {
+    // Given
+    val updateRequest = ChangeVisitSlotRequestDto(
+      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      sessionTemplateReference = "xx-yy-zz-aa",
+    )
+
+    val applicationReference = visitFull.applicationReference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.reference").isEqualTo(visitFull.reference)
+      .jsonPath("$.applicationReference").isEqualTo(applicationReference)
+      .jsonPath("$.prisonerId").isEqualTo(visitFull.prisonerId)
+      .jsonPath("$.prisonId").isEqualTo(visitFull.prison.code)
+      .jsonPath("$.sessionTemplateReference").isEqualTo(updateRequest.sessionTemplateReference)
+      .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-slot-changed"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull(),
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
+  }
+
+  @Test
   fun `change reserved slot - amend support`() {
     // Given
     val updateRequest = ChangeVisitSlotRequestDto(
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      sessionTemplateReference = "aa-bb-cc-dd",
     )
 
     val applicationReference = visitFull.applicationReference
@@ -517,7 +569,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   @Test
   fun `change reserved slot - not found`() {
     // Given
-    val updateRequest = ChangeVisitSlotRequestDto()
+    val updateRequest = ChangeVisitSlotRequestDto(sessionTemplateReference = "aa-bb-cc-dd")
     val applicationReference = "IM NOT HERE"
 
     // When
@@ -531,7 +583,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `change reserved slot - access forbidden when no role`() {
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val updateRequest = ChangeVisitSlotRequestDto()
+    val updateRequest = ChangeVisitSlotRequestDto(sessionTemplateReference = "aa-bb-cc-dd")
     val applicationReference = visitFull.applicationReference
 
     // When
@@ -547,7 +599,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   @Test
   fun `change reserved slot - unauthorised when no token`() {
     // Given
-    val jsonBody = BodyInserters.fromValue(ChangeVisitSlotRequestDto())
+    val jsonBody = BodyInserters.fromValue(ChangeVisitSlotRequestDto(sessionTemplateReference = "aa-bb-cc-dd"))
     val applicationReference = visitFull.applicationReference
 
     // When
