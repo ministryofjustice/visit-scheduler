@@ -182,6 +182,8 @@ class VisitService(
       }
     }
 
+    visitEntity.sessionTemplateReference = changeVisitSlotRequestDto.sessionTemplateReference
+
     trackEvent(
       TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT.eventName,
       mapOf(

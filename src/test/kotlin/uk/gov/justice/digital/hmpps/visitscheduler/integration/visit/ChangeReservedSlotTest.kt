@@ -110,6 +110,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       .jsonPath("$.visitorSupport.length()").isEqualTo(updateRequest.visitorSupport!!.size)
       .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!!.first().type)
       .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!!.first().text!!)
+      .jsonPath("$.sessionTemplateReference").isEqualTo(updateRequest.sessionTemplateReference)
       .jsonPath("$.createdTimestamp").isNotEmpty
       .returnResult()
 
@@ -476,6 +477,44 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.visitors.length()").isEqualTo(updateRequest.visitors!!.size)
       .jsonPath("$.visitors[0].nomisPersonId").isEqualTo(updateRequest.visitors!!.first().nomisPersonId)
+      .returnResult()
+
+    // And
+    val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    verify(telemetryClient).trackEvent(
+      eq("visit-slot-changed"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+      },
+      isNull(),
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
+  }
+
+  @Test
+  fun `when reserved slot changed if session template updated then visit has new session template reference`() {
+    // Given
+    val updateRequest = ChangeVisitSlotRequestDto(
+      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      sessionTemplateReference = "xx-yy-zz-aa",
+    )
+
+    val applicationReference = visitFull.applicationReference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = responseSpec
+      .expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.reference").isEqualTo(visitFull.reference)
+      .jsonPath("$.applicationReference").isEqualTo(applicationReference)
+      .jsonPath("$.prisonerId").isEqualTo(visitFull.prisonerId)
+      .jsonPath("$.prisonId").isEqualTo(visitFull.prison.code)
+      .jsonPath("$.sessionTemplateReference").isEqualTo(updateRequest.sessionTemplateReference)
       .returnResult()
 
     // And
