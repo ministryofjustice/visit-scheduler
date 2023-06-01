@@ -117,8 +117,8 @@ policy:
 task:
   expired-visit:
     enabled: true
-    cron: 0 0/10 * * * *
-    validity-minutes: 20
+    cron: 0 0/5 * * * * #frequency of delete expired reserved visits cron job - every 5 minutes
+    validity-minutes: 10 #delete reserved visits older than 10 minutes
   log-non-associations:
     enabled: true
     cron: "0 0 3 * * ?" #every day at 3 AM
