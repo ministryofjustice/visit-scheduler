@@ -243,7 +243,7 @@ class PrisonConfigController(
     return prisonConfigService.deActivatePrison(prisonCode)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('PRISON_VISITS_ADMIN')")
   @PutMapping(UPDATE_PRISON_EXCLUDE_DATES)
   @Operation(
     summary = "Update prison's exclude dates.",
