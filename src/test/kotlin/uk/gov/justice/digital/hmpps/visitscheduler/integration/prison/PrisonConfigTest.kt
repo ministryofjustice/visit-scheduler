@@ -42,7 +42,7 @@ class PrisonConfigTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+    roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("PRISON_VISITS_ADMIN"))
   }
 
   @Test
