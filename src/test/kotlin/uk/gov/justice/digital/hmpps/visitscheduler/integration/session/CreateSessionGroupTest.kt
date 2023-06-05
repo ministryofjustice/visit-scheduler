@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 @DisplayName("Get /visit-sessions")
 class CreateSessionGroupTest : IntegrationTestBase() {
 
-  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+  private val adminRole = listOf("ROLE_PRISON_VISITS_ADMIN")
 
   private var prison: Prison = Prison(code = "MDI", active = true)
 
@@ -29,7 +29,7 @@ class CreateSessionGroupTest : IntegrationTestBase() {
     val dto = createCreateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
 
     // When
-    val responseSpec = callCreateSessionGroup(webTestClient, dto, setAuthorisation(roles = requiredRole))
+    val responseSpec = callCreateSessionGroup(webTestClient, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk

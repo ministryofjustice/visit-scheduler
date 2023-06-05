@@ -35,7 +35,8 @@ class GetPrisonsTest : IntegrationTestBase() {
   @Autowired
   private lateinit var cacheManager: CacheManager
 
-  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+  private val visitRole = listOf("ROLE_VISIT_SCHEDULER")
+  private val adminRole = listOf("ROLE_PRISON_VISITS_ADMIN")
 
   @BeforeEach
   @AfterEach
@@ -57,7 +58,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When
     val responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = visitRole))
       .exchange()
 
     // Then
@@ -86,7 +87,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When
     val responseSpec = webTestClient.get().uri(PRISONS_CONFIG_PATH)
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -117,7 +118,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When
     val responseSpec = webTestClient.put().uri(ACTIVATE_PRISON.replace("{prisonCode}", "AWE"))
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -142,7 +143,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When
     val responseSpec = webTestClient.put().uri(DEACTIVATE_PRISON.replace("{prisonCode}", "AWE"))
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -169,7 +170,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When
     val responseSpec = webTestClient.post().uri(PRISON_CONFIG_PATH.replace("{prisonCode}", "AWE"))
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .body(BodyInserters.fromValue(prisonDto))
       .exchange()
 
@@ -199,7 +200,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When
     val responseSpec = webTestClient.post().uri(PRISON_CONFIG_PATH.replace("{prisonCode}", "AWE"))
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .body(BodyInserters.fromValue(prisonDto))
       .exchange()
 
@@ -219,7 +220,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When
     val responseSpec = webTestClient.get().uri(PRISON.replace("{prisonCode}", "AWE"))
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -242,7 +243,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When
     var responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -254,7 +255,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When a call to supported prisons is made a 2nd time same values are returned but from cache
     responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -273,7 +274,7 @@ class GetPrisonsTest : IntegrationTestBase() {
 
     // When
     val responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then

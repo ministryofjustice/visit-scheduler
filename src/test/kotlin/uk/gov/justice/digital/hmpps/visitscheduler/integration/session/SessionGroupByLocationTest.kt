@@ -23,7 +23,7 @@ class SessionGroupByLocationTest(
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
 
-  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+  private val adminRole = listOf("ROLE_PRISON_VISITS_ADMIN")
 
   private var prison: Prison = Prison(code = "MDI", active = true)
 
@@ -57,7 +57,7 @@ class SessionGroupByLocationTest(
     // Given
     val prisonCode = prison.code
     // When
-    val responseSpec = callGetGroupsByPrisonId(webTestClient, prisonCode, setAuthorisation(roles = requiredRole))
+    val responseSpec = callGetGroupsByPrisonId(webTestClient, prisonCode, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -104,7 +104,7 @@ class SessionGroupByLocationTest(
     // Given
     val reference = sessionGroup1.reference
     // When
-    val responseSpec = callGetGroupByReference(webTestClient, reference, setAuthorisation(roles = requiredRole))
+    val responseSpec = callGetGroupByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -129,7 +129,7 @@ class SessionGroupByLocationTest(
     val reference = sessionGroupWithNoTemplate.reference
 
     // When
-    val responseSpec = callDeleteGroupByReference(webTestClient, reference, setAuthorisation(roles = requiredRole))
+    val responseSpec = callDeleteGroupByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -145,7 +145,7 @@ class SessionGroupByLocationTest(
     val reference = sessionGroup1.reference
 
     // When
-    val responseSpec = callDeleteGroupByReference(webTestClient, reference, setAuthorisation(roles = requiredRole))
+    val responseSpec = callDeleteGroupByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
