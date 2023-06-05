@@ -4,16 +4,23 @@ import jakarta.validation.ValidationException
 import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDatesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateAction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateExcludeDatesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
+import java.util.function.Predicate
+import java.util.stream.Collectors
 
 @Service
 @Transactional
 class PrisonConfigService(
   private val prisonRepository: PrisonRepository,
+  private val prisonExcludeDateRepository: PrisonExcludeDateRepository,
   private val messageService: MessageService,
 ) {
 
@@ -79,5 +86,51 @@ class PrisonConfigService(
     val prisonToUpdate = findPrisonByCode(prisonCode)
     prisonToUpdate.active = false
     return mapEntityToDto(prisonToUpdate)
+  }
+
+  @Transactional
+  fun updateExcludeDates(prisonCode: String, updateExcludeDatesDto: UpdateExcludeDatesDto) {
+    val prison = findPrisonByCode(prisonCode)
+    val existingExcludeDates = getExistingExcludeDates(prison)
+    val excludeDatesList = updateExcludeDatesDto.excludeDates.stream().toList()
+    val addExcludeDates = getPrisonExcludeDatesByAction(prison, existingExcludeDates, excludeDatesList, UpdateAction.ADD)
+    val removeExcludeDates = getPrisonExcludeDatesByAction(prison, existingExcludeDates, excludeDatesList, UpdateAction.REMOVE)
+
+    if (addExcludeDates.isNotEmpty()) {
+      prisonExcludeDateRepository.saveAll(addExcludeDates)
+    }
+
+    if (removeExcludeDates.isNotEmpty()) {
+      removeExcludeDates.forEach {
+        prisonExcludeDateRepository.deleteByPrisonIdAndExcludeDate(prison.id, it.excludeDate)
+      }
+    }
+  }
+
+  private fun getExistingExcludeDates(prison: Prison): Set<LocalDate> {
+    return prison.excludeDates.stream().map { it.excludeDate }.collect(Collectors.toSet())
+  }
+
+  private fun getPrisonExcludeDatesByAction(
+    prison: Prison,
+    existingExcludeDates: Set<LocalDate>,
+    excludeDatesList: List<ExcludeDatesDto>,
+    updateAction: UpdateAction,
+  ): List<PrisonExcludeDate> {
+    val addFilter = Predicate { excludeDatesDto: ExcludeDatesDto -> excludeDatesDto.action == UpdateAction.ADD }
+    val removeFilter = Predicate { excludeDatesDto: ExcludeDatesDto -> excludeDatesDto.action == UpdateAction.REMOVE }
+
+    return when (updateAction) {
+      UpdateAction.ADD -> {
+        excludeDatesList.stream().filter { addFilter.test(it) }
+          .filter { !existingExcludeDates.contains(it.excludeDate) }
+          .map { PrisonExcludeDate(prison.id, prison, it.excludeDate) }.toList()
+      }
+      UpdateAction.REMOVE -> {
+        excludeDatesList.stream().filter { removeFilter.test(it) }
+          .filter { existingExcludeDates.contains(it.excludeDate) }
+          .map { PrisonExcludeDate(prison.id, prison, it.excludeDate) }.toList()
+      }
+    }
   }
 }

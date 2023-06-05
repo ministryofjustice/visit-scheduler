@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateExcludeDatesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
 
 const val PRISONS_CONFIG_PATH: String = "/config/prisons"
@@ -28,6 +29,7 @@ const val PRISON_CONFIG_PATH: String = "$PRISONS_CONFIG_PATH/prison"
 const val PRISON: String = "$PRISON_CONFIG_PATH/{prisonCode}"
 const val ACTIVATE_PRISON: String = "$PRISON/activate"
 const val DEACTIVATE_PRISON: String = "$PRISON/deactivate"
+const val UPDATE_PRISON_EXCLUDE_DATES: String = "$PRISON/update/exclude-dates"
 
 @RestController
 @Validated
@@ -239,5 +241,43 @@ class PrisonConfigController(
     prisonCode: String,
   ): PrisonDto {
     return prisonConfigService.deActivatePrison(prisonCode)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping(UPDATE_PRISON_EXCLUDE_DATES)
+  @Operation(
+    summary = "Update prison's exclude dates.",
+    description = "Update prison's exclude dates.",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "added / removed exclude dates to / from prison",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to add / remove exclude dates for prison",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "prison cant be found to add / remove exclude dates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun updatePrisonExcludeDates(
+    @Schema(description = "prison id", example = "BHI", required = true)
+    @PathVariable
+    prisonCode: String,
+    @RequestBody
+    @Valid
+    excludeDatesDto: UpdateExcludeDatesDto,
+  ) {
+    return prisonConfigService.updateExcludeDates(prisonCode, excludeDatesDto)
   }
 }
