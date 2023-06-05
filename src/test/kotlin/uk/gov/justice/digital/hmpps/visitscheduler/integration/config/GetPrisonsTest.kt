@@ -36,7 +36,7 @@ class GetPrisonsTest : IntegrationTestBase() {
   private lateinit var cacheManager: CacheManager
 
   private val visitRole = listOf("ROLE_VISIT_SCHEDULER")
-  private val adminRole = listOf("ROLE_PRISON_VISITS_ADMIN")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   @BeforeEach
   @AfterEach

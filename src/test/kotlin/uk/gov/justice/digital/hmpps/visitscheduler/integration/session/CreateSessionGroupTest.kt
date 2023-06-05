@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 @DisplayName("Get /visit-sessions")
 class CreateSessionGroupTest : IntegrationTestBase() {
 
-  private val adminRole = listOf("ROLE_PRISON_VISITS_ADMIN")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   private var prison: Prison = Prison(code = "MDI", active = true)
 

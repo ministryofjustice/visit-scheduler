@@ -20,7 +20,7 @@ class GetSessionTemplateTest(
   @Autowired private val repository: TestSessionTemplateRepository,
 ) : IntegrationTestBase() {
 
-  private val adminRole = listOf("ROLE_PRISON_VISITS_ADMIN")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   @Test
   fun `all session templates are returned empty list`() {

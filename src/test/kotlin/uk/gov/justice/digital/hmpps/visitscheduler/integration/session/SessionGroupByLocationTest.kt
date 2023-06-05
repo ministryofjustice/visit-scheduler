@@ -23,7 +23,7 @@ class SessionGroupByLocationTest(
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
 
-  private val adminRole = listOf("ROLE_PRISON_VISITS_ADMIN")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   private var prison: Prison = Prison(code = "MDI", active = true)
 

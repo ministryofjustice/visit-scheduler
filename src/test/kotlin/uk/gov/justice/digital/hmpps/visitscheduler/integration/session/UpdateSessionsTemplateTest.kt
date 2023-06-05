@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentiv
 @DisplayName("Get /visit-sessions")
 class UpdateSessionsTemplateTest : IntegrationTestBase() {
 
-  private val adminRole = listOf("ROLE_PRISON_VISITS_ADMIN")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   private var prison: Prison = Prison(code = "MDI", active = true)
   private lateinit var sessionTemplate: SessionTemplate

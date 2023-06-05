@@ -20,7 +20,7 @@ class DeleteSessionTemplateTest(
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
 
-  private val adminRole = listOf("ROLE_PRISON_VISITS_ADMIN")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   private lateinit var sessionTemplate: SessionTemplate
   private lateinit var sessionGroup1: SessionLocationGroup

@@ -42,7 +42,7 @@ class VisitSessionAdminController(
   private val sessionTemplateService: SessionTemplateService,
 ) {
 
-  @PreAuthorize("hasRole('PRISON_VISITS_ADMIN')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(SESSION_TEMPLATES_PATH)
   @Operation(
     summary = "Get session templates",
@@ -95,7 +95,7 @@ class VisitSessionAdminController(
     return sessionTemplateService.getSessionTemplates(prisonCode, dayOfWeek, rangeStartDate, rangeEndDate)
   }
 
-  @PreAuthorize("hasRole('PRISON_VISITS_ADMIN')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(REFERENCE_SESSION_TEMPLATE_PATH)
   @Operation(
     summary = "Get session template",
@@ -130,7 +130,7 @@ class VisitSessionAdminController(
     return sessionTemplateService.getSessionTemplates(reference)
   }
 
-  @PreAuthorize("hasRole('PRISON_VISITS_ADMIN')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH)
   @Operation(
     summary = "Delete session template by reference",
@@ -166,7 +166,7 @@ class VisitSessionAdminController(
     return ResponseEntity.status(HttpStatus.OK).body("Session Template Deleted $reference!")
   }
 
-  @PreAuthorize("hasRole('PRISON_VISITS_ADMIN')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(SESSION_TEMPLATE_PATH)
   @Operation(
     summary = "Create a session template",
@@ -203,7 +203,7 @@ class VisitSessionAdminController(
     return sessionTemplateService.createSessionTemplate(createSessionTemplateDto)
   }
 
-  @PreAuthorize("hasRole('PRISON_VISITS_ADMIN')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(REFERENCE_SESSION_TEMPLATE_PATH)
   @Operation(
     summary = "Update a session template",
