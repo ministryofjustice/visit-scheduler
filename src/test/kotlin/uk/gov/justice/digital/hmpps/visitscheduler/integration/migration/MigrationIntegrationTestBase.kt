@@ -146,6 +146,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     housingLocations: String? = null,
     category: String? = null,
     incentiveLevelCode: IncentiveLevel? = null,
+    lastPermanentLevels: String? = null,
   ) {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(
       prisonerId,
@@ -159,7 +160,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
       prisonerDetailsDto = PrisonerDetailsDto(nomsId = prisonerId, establishmentCode = prisonCode, bookingId = 1),
     )
     housingLocations?.let {
-      prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, housingLocations)
+      prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, housingLocations, lastPermanentLevels)
     }
   }
 
