@@ -113,7 +113,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
 
     // Then
-    responseSpec.expectStatus().isBadRequest
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to prison - ${prison.code} as it already exists")
     verify(prisonExcludeDateRepositorySpy, times(0)).save(PrisonExcludeDate(createdPrison.id, createdPrison, excludeDate))
   }
 
@@ -150,7 +151,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     val responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
 
     // Then
-    responseSpec.expectStatus().isBadRequest
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Cannot remove exclude date $excludeDate from prison - ${prison.code} as it does not exist")
     verify(prisonExcludeDateRepositorySpy, times(0)).deleteByPrisonIdAndExcludeDate(createdPrison.id, excludeDate)
   }
 
@@ -164,7 +166,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, nonExistentPrisonCode, excludeDate)
 
     // Then
-    responseSpec.expectStatus().isBadRequest
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Prison code $nonExistentPrisonCode not found!")
     verify(prisonExcludeDateRepositorySpy, times(0)).save(any())
     verify(prisonExcludeDateRepositorySpy, times(0)).deleteByPrisonIdAndExcludeDate(any(), any())
   }
@@ -179,7 +182,8 @@ class PrisonConfigTest : IntegrationTestBase() {
     val responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, nonExistentPrisonCode, excludeDate)
 
     // Then
-    responseSpec.expectStatus().isBadRequest
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Prison code $nonExistentPrisonCode not found!")
     verify(prisonExcludeDateRepositorySpy, times(0)).save(any())
     verify(prisonExcludeDateRepositorySpy, times(0)).deleteByPrisonIdAndExcludeDate(any(), any())
   }
