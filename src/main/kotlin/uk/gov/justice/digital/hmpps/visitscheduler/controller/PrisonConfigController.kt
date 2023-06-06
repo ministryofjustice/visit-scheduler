@@ -289,13 +289,13 @@ class PrisonConfigController(
     description = "Remove exclude date from a prison.",
     responses = [
       ApiResponse(
+        responseCode = "200",
+        description = "successfully removed exclude date from a prison",
+      ),
+      ApiResponse(
         responseCode = "400",
         description = "exclude date does not exist for prison or prison can't be found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "200",
-        description = "successfully removed exclude date from a prison",
       ),
       ApiResponse(
         responseCode = "401",
