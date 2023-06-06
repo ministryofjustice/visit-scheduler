@@ -9,5 +9,5 @@ BLI,BLI_G2_C2,C,2,001:002:003:004:005:006:007:008:025:026:027:028:029:030:031:03
 BNI,BNI_A_WING,A,,,,"A Wing"
 BNI,BNI_OTHER_WINGS,B:C:D:E:F:S:H,,,,"Wings B, C, D, E, F, SSCU and Healthcare"
 DMI,DMI_C_F_WING,C:F,,,,"Wings C and F"
-DMI,DMI_OTHER_WINGS,A:B:C:D:E:G:I:M,,,,"Wings A, B, C, D, E, G, I, M"
+DMI,DMI_OTHER_WINGS,A:B:D:E:G:I:M,,,,"Wings A, B, D, E, G, I, M"
 DMI,DMI_F_WING,F,,,,"Wing F"
