@@ -91,13 +91,7 @@ class PrisonConfigService(
     val existingExcludeDates = getExistingExcludeDates(prison)
 
     if (existingExcludeDates.contains(excludeDate)) {
-      throw ValidationException(
-        messageService.getMessage(
-          "validation.add.prison.excludedate.alreadyexists",
-          prisonCode,
-          excludeDate.toString()
-        )
-      )
+      throw ValidationException(messageService.getMessage("validation.add.prison.excludedate.alreadyexists", prisonCode, excludeDate.toString()))
     } else {
       prisonExcludeDateRepository.save(PrisonExcludeDate(prison.id, prison, excludeDate))
     }
@@ -110,13 +104,7 @@ class PrisonConfigService(
     val existingExcludeDates = getExistingExcludeDates(prison)
 
     if (!existingExcludeDates.contains(excludeDate)) {
-      throw ValidationException(
-        messageService.getMessage(
-          "validation.remove.prison.excludedate.doesnotexist",
-          prisonCode,
-          excludeDate.toString()
-        )
-      )
+      throw ValidationException(messageService.getMessage("validation.remove.prison.excludedate.doesnotexist", prisonCode, excludeDate.toString()))
     } else {
       prisonExcludeDateRepository.deleteByPrisonIdAndExcludeDate(prison.id, excludeDate)
     }
