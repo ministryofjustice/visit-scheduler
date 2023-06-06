@@ -66,7 +66,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `All session schedules are returned for a prison for that day`() {
+  fun `All session schedules are returned for a prison for that day in time order`() {
     // Given
     val sessionDate = LocalDate.now()
 
@@ -86,6 +86,22 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       dayOfWeek = sessionDate.dayOfWeek,
     )
 
+    val sessionTemplate3 = sessionTemplateEntityHelper.create(
+      validFromDate = sessionDate,
+      validToDate = sessionDate.plusDays(7),
+      startTime = LocalTime.parse("08:00"),
+      endTime = LocalTime.parse("09:00"),
+      dayOfWeek = sessionDate.dayOfWeek,
+    )
+
+    val sessionTemplate4 = sessionTemplateEntityHelper.create(
+      validFromDate = sessionDate,
+      validToDate = sessionDate.plusDays(7),
+      startTime = LocalTime.parse("08:00"),
+      endTime = LocalTime.parse("08:30"),
+      dayOfWeek = sessionDate.dayOfWeek,
+    )
+
     // When
     val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
 
@@ -93,11 +109,15 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val sessionScheduleResults = getResults(returnResult)
-    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(2)
-    Assertions.assertThat(sessionScheduleResults[0].startTime).isEqualTo(sessionTemplate1.startTime)
-    Assertions.assertThat(sessionScheduleResults[0].endTime).isEqualTo(sessionTemplate1.endTime)
-    Assertions.assertThat(sessionScheduleResults[1].startTime).isEqualTo(sessionTemplate2.startTime)
-    Assertions.assertThat(sessionScheduleResults[1].endTime).isEqualTo(sessionTemplate2.endTime)
+    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(4)
+    Assertions.assertThat(sessionScheduleResults[0].startTime).isEqualTo(sessionTemplate4.startTime)
+    Assertions.assertThat(sessionScheduleResults[0].endTime).isEqualTo(sessionTemplate4.endTime)
+    Assertions.assertThat(sessionScheduleResults[1].startTime).isEqualTo(sessionTemplate3.startTime)
+    Assertions.assertThat(sessionScheduleResults[1].endTime).isEqualTo(sessionTemplate3.endTime)
+    Assertions.assertThat(sessionScheduleResults[2].startTime).isEqualTo(sessionTemplate1.startTime)
+    Assertions.assertThat(sessionScheduleResults[2].endTime).isEqualTo(sessionTemplate1.endTime)
+    Assertions.assertThat(sessionScheduleResults[3].startTime).isEqualTo(sessionTemplate2.startTime)
+    Assertions.assertThat(sessionScheduleResults[3].endTime).isEqualTo(sessionTemplate2.endTime)
   }
 
   @Test
