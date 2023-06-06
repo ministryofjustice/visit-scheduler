@@ -20,7 +20,7 @@ class GetSessionTemplateTest(
   @Autowired private val repository: TestSessionTemplateRepository,
 ) : IntegrationTestBase() {
 
-  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   @Test
   fun `all session templates are returned empty list`() {
@@ -29,7 +29,7 @@ class GetSessionTemplateTest(
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode")
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -48,7 +48,7 @@ class GetSessionTemplateTest(
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode")
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -68,7 +68,7 @@ class GetSessionTemplateTest(
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -95,7 +95,7 @@ class GetSessionTemplateTest(
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then
@@ -119,7 +119,7 @@ class GetSessionTemplateTest(
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")
-      .headers(setAuthorisation(roles = requiredRole))
+      .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
     // Then

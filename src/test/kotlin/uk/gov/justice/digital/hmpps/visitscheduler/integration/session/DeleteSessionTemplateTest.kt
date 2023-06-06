@@ -20,7 +20,7 @@ class DeleteSessionTemplateTest(
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
 
-  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   private lateinit var sessionTemplate: SessionTemplate
   private lateinit var sessionGroup1: SessionLocationGroup
@@ -49,7 +49,7 @@ class DeleteSessionTemplateTest(
     val grp2Id = sessionTemplate.permittedSessionLocationGroups[1].id
 
     // When
-    val responseSpec = callDeleteSessionTemplateByReference(webTestClient, reference, setAuthorisation(roles = requiredRole))
+    val responseSpec = callDeleteSessionTemplateByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk

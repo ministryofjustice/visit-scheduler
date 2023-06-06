@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 @DisplayName("Put update session location groups")
 class UpdateSessionLocationGroupTest : IntegrationTestBase() {
 
-  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   private var prison: Prison = Prison(code = "MDI", active = true)
 
@@ -36,7 +36,7 @@ class UpdateSessionLocationGroupTest : IntegrationTestBase() {
     val dto = updateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
 
     // When
-    val responseSpec = callUpdateLocationSessionGroupByReference(webTestClient, sessionGroup.reference, dto, setAuthorisation(roles = requiredRole))
+    val responseSpec = callUpdateLocationSessionGroupByReference(webTestClient, sessionGroup.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -59,7 +59,7 @@ class UpdateSessionLocationGroupTest : IntegrationTestBase() {
     val reference = "Ref1234"
 
     // When
-    val responseSpec = callUpdateLocationSessionGroupByReference(webTestClient, reference, dto, setAuthorisation(roles = requiredRole))
+    val responseSpec = callUpdateLocationSessionGroupByReference(webTestClient, reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isNotFound
