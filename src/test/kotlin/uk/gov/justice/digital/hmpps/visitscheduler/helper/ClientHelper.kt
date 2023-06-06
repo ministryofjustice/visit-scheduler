@@ -4,13 +4,17 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.MIGRATE_CANCEL
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_CONFIG_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_LOCATION_GROUPS_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_SESSION_TEMPLATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
@@ -19,11 +23,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLO
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
+import java.time.LocalDate
 
 fun callCancelVisit(
   webTestClient: WebTestClient,
@@ -271,6 +277,74 @@ fun getSessionTemplateByReferenceUrl(reference: String): String {
 
 fun getSessionLocationGroupByReferenceUrl(reference: String): String {
   return getReferenceUrl(REFERENCE_LOCATION_GROUP_ADMIN_PATH, reference)
+}
+
+fun getCreatePrisonUrl(): String {
+  return PRISON_CONFIG_PATH
+}
+
+fun getGetPrisonUrl(prisonCode: String): String {
+  return getPrisonIdUrl(PRISON, prisonCode)
+}
+fun getAddPrisonExcludeDateUrl(prisonCode: String, excludeDate: LocalDate): String {
+  return getPrisonIdUrl(ADD_PRISON_EXCLUDE_DATE, prisonCode).replace("{excludeDate}", excludeDate.toString())
+}
+
+fun getRemovePrisonExcludeDateUrl(prisonCode: String, excludeDate: LocalDate): String {
+  return getPrisonIdUrl(REMOVE_PRISON_EXCLUDE_DATE, prisonCode).replace("{excludeDate}", excludeDate.toString())
+}
+
+fun callCreatePrison(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonDto: PrisonDto? = null,
+): ResponseSpec {
+  return callPost(
+    prisonDto,
+    webTestClient,
+    getCreatePrisonUrl(),
+    authHttpHeaders,
+  )
+}
+
+fun callGetPrison(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getGetPrisonUrl(prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callAddPrisonExcludeDate(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+  excludeDate: LocalDate,
+): ResponseSpec {
+  return callPut(
+    null,
+    webTestClient,
+    getAddPrisonExcludeDateUrl(prisonCode, excludeDate),
+    authHttpHeaders,
+  )
+}
+
+fun callRemovePrisonExcludeDate(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+  excludeDate: LocalDate,
+): ResponseSpec {
+  return callPut(
+    null,
+    webTestClient,
+    getRemovePrisonExcludeDateUrl(prisonCode, excludeDate),
+    authHttpHeaders,
+  )
 }
 
 fun callGet(
