@@ -39,7 +39,7 @@ class LocationGroupAdminController(
   private val sessionTemplateService: SessionTemplateService,
 ) {
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(PRISON_LOCATION_GROUPS_ADMIN_PATH)
   @Operation(
     summary = "Get location groups",
@@ -69,7 +69,7 @@ class LocationGroupAdminController(
     return sessionTemplateService.getSessionLocationGroup(prisonCode)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
@@ -105,7 +105,7 @@ class LocationGroupAdminController(
     return sessionTemplateService.getSessionLocationGroupByReference(reference)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(LOCATION_GROUP_ADMIN_PATH)
   @Operation(
     summary = "Create location group",
@@ -143,7 +143,7 @@ class LocationGroupAdminController(
     return sessionTemplateService.createSessionLocationGroup(createLocationSessionGroup)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @DeleteMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
   @Operation(
     summary = "Delete location group",
@@ -179,7 +179,7 @@ class LocationGroupAdminController(
     return ResponseEntity.status(HttpStatus.OK).body("Session location group Deleted $reference!")
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
   @Operation(
     summary = "Update location group",

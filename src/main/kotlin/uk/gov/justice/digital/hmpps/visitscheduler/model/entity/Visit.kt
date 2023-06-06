@@ -41,7 +41,7 @@ class Visit(
   val visitRoom: String,
 
   @Column(nullable = true)
-  val sessionTemplateReference: String? = null,
+  var sessionTemplateReference: String? = null,
 
   @Column(nullable = false)
   var visitStart: LocalDateTime,

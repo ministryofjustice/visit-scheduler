@@ -48,7 +48,7 @@ class VisitService(
   private val sessionTemplateService: SessionTemplateService,
   private val snsService: SnsService,
   private val prisonConfigService: PrisonConfigService,
-  @Value("\${task.expired-visit.validity-minutes:20}") private val expiredPeriodMinutes: Int,
+  @Value("\${task.expired-visit.validity-minutes:10}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
@@ -181,6 +181,8 @@ class VisitService(
         visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
       }
     }
+
+    visitEntity.sessionTemplateReference = changeVisitSlotRequestDto.sessionTemplateReference
 
     trackEvent(
       TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT.eventName,

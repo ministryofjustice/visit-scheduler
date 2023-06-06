@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
+import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -25,4 +26,7 @@ data class ChangeVisitSlotRequestDto(
   val visitors: Set<@Valid VisitorDto>? = null,
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: Set<@Valid VisitorSupportDto>? = null,
+  @Schema(description = "Session template reference", example = "v9d.7ed.7u", required = true)
+  @field:NotBlank
+  val sessionTemplateReference: String,
 )

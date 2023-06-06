@@ -37,7 +37,7 @@ class PrisonConfigController(
   private val prisonConfigService: PrisonConfigService,
 ) {
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG')")
   @GetMapping(SUPPORTED_PRISONS)
   @Operation(
     summary = "Get supported prisons",
@@ -72,7 +72,7 @@ class PrisonConfigController(
     return prisonConfigService.getSupportedPrisons()
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(PRISON)
   @Operation(
     summary = "Gets prison by given prison id/code",
@@ -102,7 +102,7 @@ class PrisonConfigController(
     return prisonConfigService.getPrison(prisonCode)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(PRISONS_CONFIG_PATH)
   @Operation(
     summary = "Get all prisons",
@@ -134,7 +134,7 @@ class PrisonConfigController(
     return prisonConfigService.getPrisons()
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(PRISON_CONFIG_PATH)
   @Operation(
     summary = "Create a prison",
@@ -171,7 +171,7 @@ class PrisonConfigController(
     return prisonConfigService.createPrison(prisonDto)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(ACTIVATE_PRISON)
   @Operation(
     summary = "Activate prison using given prison id/code",
@@ -206,7 +206,7 @@ class PrisonConfigController(
     return prisonConfigService.activatePrison(prisonCode)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(DEACTIVATE_PRISON)
   @Operation(
     summary = "Deactivate prison using given prison id/code",
