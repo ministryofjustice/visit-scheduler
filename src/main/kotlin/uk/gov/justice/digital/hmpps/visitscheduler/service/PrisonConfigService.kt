@@ -22,14 +22,12 @@ class PrisonConfigService(
     return prisonRepository.findByCode(prisonCode) ?: throw ValidationException(messageService.getMessage("validation.prison.notfound", prisonCode))
   }
 
-  @Cacheable("get-prison")
   @Transactional(readOnly = true)
   fun getPrison(prisonCode: String): PrisonDto {
     val prison = findPrisonByCode(prisonCode)
     return mapEntityToDto(prison)
   }
 
-  @Cacheable("get-prisons")
   @Transactional(readOnly = true)
   fun getPrisons(): List<PrisonDto> {
     val prisons = prisonRepository.findAllByOrderByCodeAsc()
