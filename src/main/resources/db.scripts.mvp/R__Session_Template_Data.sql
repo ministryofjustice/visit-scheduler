@@ -255,26 +255,26 @@
                     (NULL,NULL,NULL,'BSI','Visits Main Hall','SOCIAL',25,6,'14:00','16:00','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 14:00'),
                     (NULL,NULL,NULL,'AGI','Visits Main Hall','SOCIAL',15,0,'14:00','16:00','2023-03-21',NULL,'SATURDAY',false,'SATURDAY, 2023-03-21, 14:00'),
                     (NULL,NULL,NULL,'AGI','Visits Main Hall','SOCIAL',15,0,'14:00','16:00','2023-03-21',NULL,'SUNDAY',false,'SUNDAY, 2023-03-21, 14:00'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'MONDAY',false,'MONDAY, 2023-05-22, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'MONDAY',false,'MONDAY, 2023-05-22, 13:45'),
                     ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-22',NULL,'MONDAY',false,'MONDAY, 2023-05-22, 13:45'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'09:30','11:30','2023-05-22',NULL,'TUESDAY',false,'TUESDAY, 2023-05-22, 09:30'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'09:30','11:30','2023-05-22',NULL,'TUESDAY',false,'TUESDAY, 2023-05-22, 09:30'),
                     ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'09:30','11:30','2023-05-22',NULL,'TUESDAY',false,'TUESDAY, 2023-05-22, 09:30'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'TUESDAY',false,'TUESDAY, 2023-05-22, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'TUESDAY',false,'TUESDAY, 2023-05-22, 13:45'),
                     ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-22',NULL,'TUESDAY',false,'TUESDAY, 2023-05-22, 13:45'),
-                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',27,6,'09:30','11:30','2023-05-22','2023-07-09','WEDNESDAY',false,'WEDNESDAY, 2023-05-22, 09:30'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-22, 13:45'),
+                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',27,6,'09:30','11:30','2023-05-22',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-22, 09:30'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-22, 13:45'),
                     ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-22',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-05-22, 13:45'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'THURSDAY',false,'THURSDAY, 2023-05-22, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'THURSDAY',false,'THURSDAY, 2023-05-22, 13:45'),
                     ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-22',NULL,'THURSDAY',false,'THURSDAY, 2023-05-22, 13:45'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'FRIDAY',false,'FRIDAY, 2023-05-22, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'FRIDAY',false,'FRIDAY, 2023-05-22, 13:45'),
                     ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-22',NULL,'FRIDAY',false,'FRIDAY, 2023-05-22, 13:45'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'09:30','11:30','2023-05-22','2023-07-09','SATURDAY',false,'SATURDAY, 2023-05-22, 09:30'),
-                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'09:30','11:30','2023-05-22','2023-07-09','SATURDAY',false,'SATURDAY, 2023-05-22, 09:30'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'SATURDAY',false,'SATURDAY, 2023-05-22, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'09:30','11:30','2023-05-22',NULL,'SATURDAY',false,'SATURDAY, 2023-05-22, 09:30'),
+                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'09:30','11:30','2023-05-22',NULL,'SATURDAY',false,'SATURDAY, 2023-05-22, 09:30'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'SATURDAY',false,'SATURDAY, 2023-05-22, 13:45'),
                     ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-22',NULL,'SATURDAY',false,'SATURDAY, 2023-05-22, 13:45'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'09:30','11:30','2023-05-22',NULL,'SUNDAY',false,'SUNDAY, 2023-05-22, 09:30'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'09:30','11:30','2023-05-22',NULL,'SUNDAY',false,'SUNDAY, 2023-05-22, 09:30'),
                     ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'09:30','11:30','2023-05-22',NULL,'SUNDAY',false,'SUNDAY, 2023-05-22, 09:30'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'SUNDAY',false,'SUNDAY, 2023-05-22, 13:45'),
+                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','Visits Main Hall','SOCIAL',22,0,'13:45','15:45','2023-05-22',NULL,'SUNDAY',false,'SUNDAY, 2023-05-22, 13:45'),
                     ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',5,0,'13:45','15:45','2023-05-22',NULL,'SUNDAY',false,'SUNDAY, 2023-05-22, 13:45'),
                     ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',25,1,'14:00','15:00','2023-05-22',NULL,'TUESDAY',true,'TUESDAY, 2023-05-22, 14:00'),
                     ('BLI_G1_WING:BLI_G1_C1:BLI_G1_C2:BLI_G1_C3',NULL,NULL,'BLI','WINGS ABGFEH SOME C','SOCIAL',25,1,'15:30','16:30','2023-05-22',NULL,'TUESDAY',true,'TUESDAY, 2023-05-22, 15:30'),
@@ -304,9 +304,7 @@
                     (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'09:30','11:30','2023-06-07',NULL,'SATURDAY',false,'SATURDAY, 2023-06-07, 09:30'),
                     (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'13:45','15:45','2023-06-07',NULL,'SATURDAY',false,'SATURDAY, 2023-06-07, 13:45'),
                     (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'09:30','11:30','2023-06-07',NULL,'SUNDAY',false,'SUNDAY, 2023-06-07, 09:30'),
-                    (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'13:45','15:45','2023-06-07',NULL,'SUNDAY',false,'SUNDAY, 2023-06-07, 13:45'),
-                    ('DMI_OTHER_WINGS',NULL,NULL,'DMI','VMH Wings ABDEGIM','SOCIAL',27,6,'09:30','11:30','2023-07-10',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-07-10, 09:30'),
-                    ('DMI_C_F_WING',NULL,NULL,'DMI','VMH Wings C and F','SOCIAL',27,6,'09:30','11:30','2023-07-10',NULL,'SATURDAY',false,'SATURDAY, 2023-07-10, 09:30')
+                    (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'13:45','15:45','2023-06-07',NULL,'SUNDAY',false,'SUNDAY, 2023-06-07, 13:45')
         ;
 
         -- update tmp session template table with correct prison id for given code.
@@ -317,7 +315,7 @@
         SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{3})(?!$)', '\1.','g')) as reference,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name FROM tmp_session_template order by id;
 
         -- Sequence updated manually as id's were inserted from temp table
-        ALTER SEQUENCE session_template_id_seq RESTART WITH  249;
+        ALTER SEQUENCE session_template_id_seq RESTART WITH  247;
 
         -- Create temporary group table
         CREATE TABLE tmp_session_location_group (
