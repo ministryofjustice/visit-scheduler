@@ -11,7 +11,6 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.cache.CacheManager
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
-import org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
@@ -27,7 +26,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
 
 @DisplayName("Get $SUPPORTED_PRISONS")
-@Transactional(propagation = NOT_SUPPORTED)
 class GetPrisonsTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var prisonRepository: PrisonRepository
@@ -42,8 +40,6 @@ class GetPrisonsTest : IntegrationTestBase() {
   @AfterEach
   fun cleanTests() {
     cacheManager.getCache("supported-prisons")?.clear()
-    cacheManager.getCache("get-prisons")?.clear()
-    cacheManager.getCache("get-prison")?.clear()
     deleteEntityHelper.deleteAll()
   }
 
@@ -228,7 +224,7 @@ class GetPrisonsTest : IntegrationTestBase() {
       .expectBody()
     val results = getPrisonResults(returnResult)
     assertThat(results.code).isEqualTo("AWE")
-    assertThat(results.active).isTrue
+    assertThat(results.active).isTrue()
     assertThat(results.excludeDates).contains(excludeDate)
   }
 

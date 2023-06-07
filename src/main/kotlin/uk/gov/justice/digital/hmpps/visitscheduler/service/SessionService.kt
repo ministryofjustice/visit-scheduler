@@ -385,7 +385,10 @@ class SessionService(
   ): List<SessionTemplate> {
     return sessionTemplates.filter { sessionTemplate ->
       sessionDatesUtil.isBiWeeklySessionActiveForDate(date, sessionTemplate)
-    }
+    }.sortedWith(
+      Comparator.comparing(SessionTemplate::startTime)
+        .thenComparing(SessionTemplate::endTime),
+    )
   }
 
   fun getSessionSchedule(prisonCode: String, scheduleDate: LocalDate): List<SessionScheduleDto> {
