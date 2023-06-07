@@ -301,7 +301,7 @@
                     (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'13:45','15:45','2023-06-07',NULL,'WEDNESDAY',false,'WEDNESDAY, 2023-06-07, 13:45'),
                     (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'13:45','15:45','2023-06-07',NULL,'THURSDAY',false,'THURSDAY, 2023-06-07, 13:45'),
                     (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'13:45','15:45','2023-06-07',NULL,'FRIDAY',false,'FRIDAY, 2023-06-07, 13:45'),
-                    (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'09:30','11:30','2023-06-07',NULL,'SATURDAY',false,'SATURDAY, 2023-06-07, 09:30'),
+                    (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'09:30','11:30','2023-06-07','2023-07-09','SATURDAY',false,'SATURDAY, 2023-06-07, 09:30'),
                     (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'13:45','15:45','2023-06-07',NULL,'SATURDAY',false,'SATURDAY, 2023-06-07, 13:45'),
                     (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'09:30','11:30','2023-06-07',NULL,'SUNDAY',false,'SUNDAY, 2023-06-07, 09:30'),
                     (NULL,NULL,NULL,'DMI','Visits Main Hall','SOCIAL',0,6,'13:45','15:45','2023-06-07',NULL,'SUNDAY',false,'SUNDAY, 2023-06-07, 13:45'),
