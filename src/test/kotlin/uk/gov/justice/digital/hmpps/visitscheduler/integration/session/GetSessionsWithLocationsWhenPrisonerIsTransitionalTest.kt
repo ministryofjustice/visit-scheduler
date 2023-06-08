@@ -42,7 +42,6 @@ class GetSessionsWithLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBa
     val prisonCode = "CR1"
     val prisonerId = "A0000001"
 
-    stubLastCellLocation(prisonCode, listOf(COURT), 1)
     setUpStub(prisonerId, prisonCode, COURT)
     val sessionTemplate = setupSessionTemplate(prisonCode)
 
@@ -59,7 +58,6 @@ class GetSessionsWithLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBa
     val prisonCode = "CR1"
     val prisonerId = "A0000001"
 
-    stubLastCellLocation(prisonCode, listOf(TAP), 1)
     setUpStub(prisonerId, prisonCode, TAP)
     val sessionTemplate = setupSessionTemplate(prisonCode)
 
@@ -140,31 +138,13 @@ class GetSessionsWithLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBa
   }
 
   @Test
-  fun `visit sessions are not returned for prisoner when historic locations are in different prisons`() {
-    // Given
-    val prisonCode = "CR1"
-    val prisonerId = "A0000001"
-    val transitionalLocations = TransitionalLocationTypes.values().asList()
-
-    stubLastCellLocation("BAD", transitionalLocations, 1)
-    setUpStub(prisonerId, prisonCode, transitionalLocations[0])
-    setupSessionTemplate(prisonCode)
-
-    // When
-    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
-
-    // Then
-    assertNoResult(responseSpec)
-  }
-
-  @Test
   fun `visit sessions are not returned for prisoner when we cant find the prisoner historic location`() {
     // Given
     val prisonCode = "CR1"
     val prisonerId = "A0000001"
     val transitionalLocations = TransitionalLocationTypes.values().asList()
 
-    setUpStub(prisonerId, prisonCode, transitionalLocations[0])
+    setUpStub(prisonerId, prisonCode, transitionalLocations[0], lastPermanentLevels = null)
     setupSessionTemplate(prisonCode)
 
     // When
@@ -242,8 +222,9 @@ class GetSessionsWithLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBa
     prisonerId: String,
     prisonerPrisonCode: String,
     prisonerTransitionalLocation: TransitionalLocationTypes,
+    lastPermanentLevels: String? = "$prisonerPrisonCode-A-1-100-1",
   ) {
-    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonerPrisonCode-${prisonerTransitionalLocation.name}")
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonerPrisonCode-${prisonerTransitionalLocation.name}", lastPermanentLevels = lastPermanentLevels)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerPrisonCode)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prison.code)
   }
