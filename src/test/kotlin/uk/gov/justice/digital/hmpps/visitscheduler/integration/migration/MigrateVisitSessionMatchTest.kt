@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentiv
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.DEFAULT_MAX_PROX_MINUTES
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Migrate POST /visits")
@@ -792,7 +793,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     // Given
     val migrateVisitRequestDto = createMigrateVisitRequestDto(
       visitRestriction = OPEN,
-      visitStartTimeAndDate = LocalDateTime.now().plusDays(10).withHour(10).withMinute(30),
+      visitStartTimeAndDate = LocalDateTime.now().plusDays(10).withHour(10).withMinute(30).truncatedTo(ChronoUnit.MINUTES),
     )
 
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
@@ -868,7 +869,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   @Test
   fun `Migrated session match - for Bi weekly session templates`() {
     // Given
-    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStartTimeAndDate = LocalDateTime.now().plusDays(5))
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStartTimeAndDate = LocalDateTime.now().plusDays(5).truncatedTo(ChronoUnit.MINUTES))
     val startDate = migrateVisitRequestDto.startTimestamp.toLocalDate()
     val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
     val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
