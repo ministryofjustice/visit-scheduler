@@ -59,7 +59,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun isApplicationBooked(applicationReference: String): Boolean
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference AND (v.visitStatus = 'CANCELLED') AND (v.outcomeStatus != 'SUPERSEDED_CANCELLATION')",
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference AND (v.visitStatus = 'CANCELLED') AND (v.outcomeStatus <> 'SUPERSEDED_CANCELLATION')",
   )
   fun isBookingCancelled(reference: String): Boolean
 
