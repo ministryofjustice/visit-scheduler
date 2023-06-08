@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentiv
 @DisplayName("Get /visit-sessions")
 class UpdateSessionsTemplateTest : IntegrationTestBase() {
 
-  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   private var prison: Prison = Prison(code = "MDI", active = true)
   private lateinit var sessionTemplate: SessionTemplate
@@ -55,7 +55,7 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = requiredRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -86,7 +86,7 @@ class UpdateSessionsTemplateTest : IntegrationTestBase() {
     val reference = "Ref1234"
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, reference, dto, setAuthorisation(roles = requiredRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isNotFound

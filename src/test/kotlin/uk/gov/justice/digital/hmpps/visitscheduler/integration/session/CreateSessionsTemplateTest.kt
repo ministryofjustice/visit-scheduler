@@ -16,7 +16,7 @@ import java.time.LocalDate
 @DisplayName("Get /visit-sessions")
 class CreateSessionsTemplateTest : IntegrationTestBase() {
 
-  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+  private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   private var prison: Prison = Prison(code = "MDI", active = true)
 
@@ -45,7 +45,7 @@ class CreateSessionsTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callCreateSessionTemplate(webTestClient, dto, setAuthorisation(roles = requiredRole))
+    val responseSpec = callCreateSessionTemplate(webTestClient, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
