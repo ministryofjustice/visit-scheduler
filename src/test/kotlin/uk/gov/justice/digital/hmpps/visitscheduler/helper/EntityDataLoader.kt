@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentiv
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionPrisonerIncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
@@ -310,6 +311,7 @@ class SessionTemplateEntityHelper(
 class DeleteEntityHelper(
   private val visitRepository: VisitRepository,
   private val prisonRepository: PrisonRepository,
+  private val prisonExcludeDateRepository: PrisonExcludeDateRepository,
   private val sessionRepository: TestSessionTemplateRepository,
   private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
@@ -329,6 +331,8 @@ class DeleteEntityHelper(
     permittedSessionLocationRepository.flush()
     prisonRepository.deleteAll()
     prisonRepository.flush()
+    prisonExcludeDateRepository.deleteAll()
+    prisonExcludeDateRepository.flush()
     sessionCategoryGroupRepository.deleteAll()
     sessionCategoryGroupRepository.flush()
   }

@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
+import java.time.LocalDate
 
 const val PRISONS_CONFIG_PATH: String = "/config/prisons"
 const val SUPPORTED_PRISONS: String = "$PRISONS_CONFIG_PATH/supported"
@@ -28,6 +29,8 @@ const val PRISON_CONFIG_PATH: String = "$PRISONS_CONFIG_PATH/prison"
 const val PRISON: String = "$PRISON_CONFIG_PATH/{prisonCode}"
 const val ACTIVATE_PRISON: String = "$PRISON/activate"
 const val DEACTIVATE_PRISON: String = "$PRISON/deactivate"
+const val ADD_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-dates/add/{excludeDate}"
+const val REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-dates/remove/{excludeDate}"
 
 @RestController
 @Validated
@@ -37,7 +40,7 @@ class PrisonConfigController(
   private val prisonConfigService: PrisonConfigService,
 ) {
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG')")
   @GetMapping(SUPPORTED_PRISONS)
   @Operation(
     summary = "Get supported prisons",
@@ -72,7 +75,7 @@ class PrisonConfigController(
     return prisonConfigService.getSupportedPrisons()
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(PRISON)
   @Operation(
     summary = "Gets prison by given prison id/code",
@@ -102,7 +105,7 @@ class PrisonConfigController(
     return prisonConfigService.getPrison(prisonCode)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(PRISONS_CONFIG_PATH)
   @Operation(
     summary = "Get all prisons",
@@ -134,7 +137,7 @@ class PrisonConfigController(
     return prisonConfigService.getPrisons()
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(PRISON_CONFIG_PATH)
   @Operation(
     summary = "Create a prison",
@@ -171,7 +174,7 @@ class PrisonConfigController(
     return prisonConfigService.createPrison(prisonDto)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(ACTIVATE_PRISON)
   @Operation(
     summary = "Activate prison using given prison id/code",
@@ -206,7 +209,7 @@ class PrisonConfigController(
     return prisonConfigService.activatePrison(prisonCode)
   }
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(DEACTIVATE_PRISON)
   @Operation(
     summary = "Deactivate prison using given prison id/code",
@@ -239,5 +242,81 @@ class PrisonConfigController(
     prisonCode: String,
   ): PrisonDto {
     return prisonConfigService.deActivatePrison(prisonCode)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PutMapping(ADD_PRISON_EXCLUDE_DATE)
+  @Operation(
+    summary = "Add exclude date to a prison.",
+    description = "Add exclude date to a prison.",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "successfully added exclude date to a prison",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "exclude date  provided already exists for prison or prison can't be found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to add exclude dates to a prison",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun addPrisonExcludeDate(
+    @Schema(description = "prison id", example = "BHI", required = true)
+    @PathVariable
+    prisonCode: String,
+    @PathVariable
+    @Valid
+    excludeDate: LocalDate,
+  ) {
+    return prisonConfigService.addExcludeDate(prisonCode, excludeDate)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PutMapping(REMOVE_PRISON_EXCLUDE_DATE)
+  @Operation(
+    summary = "Remove exclude date from a prison.",
+    description = "Remove exclude date from a prison.",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "successfully removed exclude date from a prison",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "exclude date does not exist for prison or prison can't be found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to add exclude dates to a prison",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun removePrisonExcludeDate(
+    @Schema(description = "prison id", example = "BHI", required = true)
+    @PathVariable
+    prisonCode: String,
+    @PathVariable
+    @Valid
+    excludeDate: LocalDate,
+  ) {
+    return prisonConfigService.removeExcludeDate(prisonCode, excludeDate)
   }
 }
