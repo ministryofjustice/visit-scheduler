@@ -49,6 +49,11 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun findApplication(applicationReference: String): Visit?
 
   @Query(
+    "SELECT v.reference FROM Visit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') ",
+  )
+  fun getApplicationBookingReference(applicationReference: String): String?
+
+  @Query(
     "SELECT v FROM Visit v WHERE v.applicationReference = :applicationReference AND v.visitStatus = 'BOOKED' ",
   )
   fun findBookedApplication(applicationReference: String): Visit?
@@ -117,6 +122,11 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
   )
   fun findBookedVisit(reference: String): Visit?
+
+  @Query(
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
+  )
+  fun doseBookedVisitExist(reference: String): Boolean
 
   @Transactional
   @Modifying

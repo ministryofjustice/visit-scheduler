@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation.NEVER
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
@@ -20,21 +21,20 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateD
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.util.PersistVisitHelper
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -47,6 +47,7 @@ class VisitService(
   private val telemetryClient: TelemetryClient,
   private val sessionTemplateService: SessionTemplateService,
   private val snsService: SnsService,
+  private val persistVisitHelper: PersistVisitHelper,
   private val prisonConfigService: PrisonConfigService,
   @Value("\${task.expired-visit.validity-minutes:10}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
@@ -107,10 +108,10 @@ class VisitService(
       }
     }
 
+    val visitDto = VisitDto(visitEntity)
     val eventName = if (bookingReference.isBlank()) TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT.eventName else TelemetryVisitEvents.VISIT_CHANGED_EVENT.eventName
-    trackEvent(eventName, createVisitTrackEventFromVisitEntity(visitEntity, reserveVisitSlotDto.actionedBy))
-
-    return VisitDto(visitEntity)
+    trackEvent(eventName, createVisitTrackEventFromVisitEntity(visitDto, reserveVisitSlotDto.actionedBy))
+    return visitDto
   }
 
   private fun getStartingStatus(
@@ -229,6 +230,7 @@ class VisitService(
     )
   }
 
+  @Transactional(propagation = NEVER)
   fun bookVisit(applicationReference: String): VisitDto {
     if (visitRepository.isApplicationBooked(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
@@ -237,46 +239,33 @@ class VisitService(
       return VisitDto(bookedApplication)
     }
 
-    val visitToBook = visitRepository.findApplication(applicationReference) ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
-    val existingBookedVisit = visitRepository.findBookedVisit(visitToBook.reference)
-
-    // check if the existing visit is in the past
-    existingBookedVisit?.let {
-      validateVisitStartDate(existingBookedVisit, "changed")
+    val bookingReferenceFromApplication = visitRepository.getApplicationBookingReference(applicationReference) ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
+    val hasExistingBooking = visitRepository.doseBookedVisitExist(bookingReferenceFromApplication)
+    if (hasExistingBooking) {
+      // check if the existing visit is in the past
+      validateVisitStartDate(visitRepository.findBookedVisit(bookingReferenceFromApplication)!!, "changed")
     }
 
-    val changedVisit = existingBookedVisit != null
-    if (changedVisit) {
-      // the existing booking should always be saved before the new booking, see VisitRepository.findByReference
+    val bookedVisitDto = persistVisitHelper.persistBooking(applicationReference)
 
-      existingBookedVisit?.let { existingBooking ->
-        existingBooking.visitStatus = CANCELLED
-        existingBooking.outcomeStatus = SUPERSEDED_CANCELLATION
-        existingBooking.cancelledBy = visitToBook.createdBy
-        visitRepository.saveAndFlush(existingBooking)
+    processBookingEvents(bookedVisitDto, hasExistingBooking)
 
-        // set the new bookings updated by to current username and set createdBy to existing booking username
-        visitToBook.updatedBy = visitToBook.createdBy
-        visitToBook.createdBy = existingBooking.createdBy
-      }
-    }
+    return bookedVisitDto
+  }
 
-    visitToBook.visitStatus = VisitStatus.BOOKED
+  private fun processBookingEvents(
+    bookedVisitDto: VisitDto,
+    hasExistingBooking: Boolean,
+  ) {
+    val bookEvent = createVisitTrackEventFromVisitEntity(bookedVisitDto, bookedVisitDto.createdBy)
+    bookEvent["isUpdated"] = hasExistingBooking.toString()
+    trackEvent(VISIT_BOOKED_EVENT.eventName, bookEvent)
 
-    val visit = VisitDto(visitRepository.saveAndFlush(visitToBook))
-
-    val bookEvent = createVisitTrackEventFromVisitEntity(visitToBook, visitToBook.createdBy)
-    bookEvent["isUpdated"] = changedVisit.toString()
-
-    trackEvent(TelemetryVisitEvents.VISIT_BOOKED_EVENT.eventName, bookEvent)
-
-    if (changedVisit) {
-      snsService.sendChangedVisitBookedEvent(visit)
+    if (hasExistingBooking) {
+      snsService.sendChangedVisitBookedEvent(bookedVisitDto)
     } else {
-      snsService.sendVisitBookedEvent(visit)
+      snsService.sendVisitBookedEvent(bookedVisitDto)
     }
-
-    return visit
   }
 
   @Deprecated("This method has been deprecated.")
@@ -285,9 +274,8 @@ class VisitService(
     return cancelVisit(reference, cancelVisitDto)
   }
 
+  @Transactional(propagation = NEVER)
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
-    val cancelOutcome = cancelVisitDto.cancelOutcome
-
     if (visitRepository.isBookingCancelled(reference)) {
       // If already canceled then just return object and do nothing more!
       LOG.debug("The visit $reference has already been canceled!")
@@ -295,33 +283,38 @@ class VisitService(
       return VisitDto(canceledVisit)
     }
 
-    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
-    validateVisitStartDate(visitEntity, "cancelled", getAllowedCancellationDate(visitCancellationDayLimit = visitCancellationDayLimit))
+    validateCancelRequest(reference)
 
-    visitEntity.visitStatus = CANCELLED
-    visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
-    visitEntity.cancelledBy = cancelVisitDto.actionedBy
+    val visitDto = persistVisitHelper.persistCancel(reference, cancelVisitDto)
 
-    cancelOutcome.text?.let {
-      visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
-    }
+    processCancelEvents(visitDto, cancelVisitDto)
 
-    visitRepository.saveAndFlush(visitEntity)
+    return visitDto
+  }
 
-    val eventsMap = createVisitTrackEventFromVisitEntity(visitEntity, cancelVisitDto.actionedBy)
-    visitEntity.outcomeStatus?.let {
+  private fun validateCancelRequest(reference: String) {
+    val visitEntity =
+      visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+    validateVisitStartDate(
+      visitEntity,
+      "cancelled",
+      getAllowedCancellationDate(visitCancellationDayLimit = visitCancellationDayLimit),
+    )
+  }
+
+  private fun processCancelEvents(
+    visitDto: VisitDto,
+    cancelVisitDto: CancelVisitDto,
+  ) {
+    val eventsMap = createVisitTrackEventFromVisitEntity(visitDto, cancelVisitDto.actionedBy)
+    visitDto.outcomeStatus?.let {
       eventsMap.put("outcomeStatus", it.name)
     }
-
     trackEvent(
-      TelemetryVisitEvents.VISIT_CANCELLED_EVENT.eventName,
+      VISIT_CANCELLED_EVENT.eventName,
       eventsMap,
     )
-
-    val visit = VisitDto(visitEntity)
-    snsService.sendVisitCancelledEvent(visit)
-
-    return visit
+    snsService.sendVisitCancelledEvent(visitDto)
   }
 
   @Transactional(readOnly = true)
@@ -332,15 +325,6 @@ class VisitService(
   @Transactional(readOnly = true)
   fun getVisitHistoryByReference(reference: String): List<VisitDto> {
     return visitRepository.findAllByReference(reference).map { VisitDto(it) }
-  }
-
-  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
-    return VisitNote(
-      visitId = visit.id,
-      type = type,
-      text = text,
-      visit = visit,
-    )
   }
 
   private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {
@@ -393,17 +377,17 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
-  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit, actionedBy: String): MutableMap<String, String> {
+  private fun createVisitTrackEventFromVisitEntity(visitDto: VisitDto, actionedBy: String): MutableMap<String, String> {
     return mutableMapOf(
-      "reference" to visitEntity.reference,
-      "prisonerId" to visitEntity.prisonerId,
-      "prisonId" to visitEntity.prison.code,
-      "visitType" to visitEntity.visitType.name,
-      "visitRoom" to visitEntity.visitRoom,
-      "visitRestriction" to visitEntity.visitRestriction.name,
-      "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
-      "visitStatus" to visitEntity.visitStatus.name,
-      "applicationReference" to visitEntity.applicationReference,
+      "reference" to visitDto.reference,
+      "prisonerId" to visitDto.prisonerId,
+      "prisonId" to visitDto.prisonCode,
+      "visitType" to visitDto.visitType.name,
+      "visitRoom" to visitDto.visitRoom,
+      "visitRestriction" to visitDto.visitRestriction.name,
+      "visitStart" to visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStatus" to visitDto.visitStatus.name,
+      "applicationReference" to visitDto.applicationReference,
       "actionedBy" to actionedBy,
     )
   }
