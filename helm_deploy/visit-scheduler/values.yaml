@@ -1,7 +1,7 @@
 ---
 generic-service:
   nameOverride: visit-scheduler
-
+  serviceAccountName: visit-someone-in-prison
   replicaCount: 4
 
   image:
@@ -23,6 +23,7 @@ generic-service:
     APPLICATIONINSIGHTS_CONNECTION_STRING: "InstrumentationKey=$(APPINSIGHTS_INSTRUMENTATIONKEY)"
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 28
+    HMPPS_SQS_USE_WEB_TOKEN: "true"
   # Pre-existing kubernetes secrets to load as environment variables in the deployment.
   # namespace_secrets:
   #   [name of kubernetes secret]:
@@ -39,8 +40,8 @@ generic-service:
       DATABASE_NAME: "database_name"
       DATABASE_ENDPOINT: "rds_instance_endpoint"
     hmpps-domain-events-topic:
-      HMPPS_SQS_TOPICS_DOMAINEVENTS_ACCESS_KEY_ID: "access_key_id"
-      HMPPS_SQS_TOPICS_DOMAINEVENTS_SECRET_ACCESS_KEY: "secret_access_key"
+      #HMPPS_SQS_TOPICS_DOMAINEVENTS_ACCESS_KEY_ID: "access_key_id"
+      #HMPPS_SQS_TOPICS_DOMAINEVENTS_SECRET_ACCESS_KEY: "secret_access_key"
       HMPPS_SQS_TOPICS_DOMAINEVENTS_ARN: "topic_arn"
 
   allowlist:
