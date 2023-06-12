@@ -103,7 +103,9 @@ class SnsService(
         null,
       )
     } catch (e: Throwable) {
-      throw PublishEventException("Failed (publishToDomainEventsTopic) to publish Event $payloadEvent.eventType to $TOPIC_ID", e)
+      val message = "Failed (publishToDomainEventsTopic) to publish Event $payloadEvent.eventType to $TOPIC_ID"
+      log.error(message, e)
+      throw PublishEventException(message, e)
     }
   }
 
