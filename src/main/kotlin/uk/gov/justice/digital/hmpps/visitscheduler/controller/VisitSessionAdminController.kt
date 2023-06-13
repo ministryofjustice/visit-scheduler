@@ -79,19 +79,14 @@ class VisitSessionAdminController(
     @RequestParam(value = "rangeType", required = true)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
-      description = "Filters session templates depending on there from and to Date",
+      description = "Filters session templates depending on their from and to Date",
       example = "ACTIVE_OR_FUTURE",
     )
     rangeType: SessionTemplateRangeType,
   ): List<SessionTemplateDto> {
-    var fromDate: LocalDate? = null
-    var toDate: LocalDate? = null
-    if (ACTIVE_OR_FUTURE == rangeType) {
-      fromDate = LocalDate.now()
-    }
-    if (HISTORIC == rangeType) {
-      toDate = LocalDate.now().minusDays(1)
-    }
+    val toDay = LocalDate.now()
+    val fromDate: LocalDate? = if (ACTIVE_OR_FUTURE == rangeType) toDay else null
+    val toDate: LocalDate? = if (HISTORIC == rangeType) toDay.minusDays(1) else null
     return sessionTemplateService.getSessionTemplates(prisonCode, rangeStartDate = fromDate, rangeEndDate = toDate)
   }
 
