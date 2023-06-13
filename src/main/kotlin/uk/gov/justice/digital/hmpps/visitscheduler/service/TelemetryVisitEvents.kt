@@ -13,4 +13,5 @@ enum class TelemetryVisitEvents(val eventName: String) {
   INTERNAL_SERVER_ERROR_EVENT("visit-internal-server-error"),
   BAD_REQUEST_ERROR_EVENT("visit-bad-request-error"),
   PUBLISH_ERROR_EVENT("visit-publish-event-error"),
+  FLAG_EVENT("flag-visit"),
 }

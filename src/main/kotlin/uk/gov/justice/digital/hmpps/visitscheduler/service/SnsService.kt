@@ -83,6 +83,7 @@ class SnsService(
       log.info("Publish to domain events topic Disabled : {payloadEvent}")
       return
     }
+    log.debug("Entered : publishToDomainEventsTopic $payloadEvent")
 
     try {
       val messageAttributes = mutableMapOf(
@@ -102,7 +103,9 @@ class SnsService(
         null,
       )
     } catch (e: Throwable) {
-      throw PublishEventException("Failed to publish Event $payloadEvent.eventType to $TOPIC_ID", e)
+      val message = "Failed (publishToDomainEventsTopic) to publish Event $payloadEvent.eventType to $TOPIC_ID"
+      log.error(message, e)
+      throw PublishEventException(message, e)
     }
   }
 
