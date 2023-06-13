@@ -31,6 +31,32 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "select u from SessionTemplate u " +
+      "where u.prison.code = :prisonCode order by u.validFromDate,u.validToDate",
+  )
+  fun findSessionTemplatesByPrisonCode(
+    @Param("prisonCode") prisonCode: String,
+  ): List<SessionTemplate>
+
+  @Query(
+    "select u from SessionTemplate u " +
+      "where u.prison.code = :prisonCode " +
+      "and (u.validToDate >= CURRENT_DATE or u.validToDate is null) order by u.validToDate",
+  )
+  fun findActiveSessionTemplates(
+    @Param("prisonCode") prisonCode: String,
+  ): List<SessionTemplate>
+
+  @Query(
+    "select u from SessionTemplate u " +
+      "where u.prison.code = :prisonCode " +
+      "and u.validFromDate <= CURRENT_DATE and u.validToDate <= CURRENT_DATE order by u.validFromDate,u.validToDate",
+  )
+  fun findInActiveSessionTemplates(
+    @Param("prisonCode") prisonCode: String,
+  ): List<SessionTemplate>
+
+  @Query(
+    "select u from SessionTemplate u " +
       "where u.prison.code = :prisonCode " +
       "and (u.validToDate is null or u.validToDate >= :sessionDate) " +
       "and (u.validFromDate <= :sessionDate) " +

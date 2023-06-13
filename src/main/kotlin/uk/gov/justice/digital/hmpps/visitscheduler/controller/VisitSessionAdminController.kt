@@ -23,13 +23,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.ACTIVE_OR_FUTURE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
-import java.time.LocalDate
 
 const val SESSION_TEMPLATES_PATH: String = "/visit-session-templates"
 const val SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATES_PATH/template"
@@ -84,10 +81,7 @@ class VisitSessionAdminController(
     )
     rangeType: SessionTemplateRangeType,
   ): List<SessionTemplateDto> {
-    val toDay = LocalDate.now()
-    val fromDate: LocalDate? = if (ACTIVE_OR_FUTURE == rangeType) toDay else null
-    val toDate: LocalDate? = if (HISTORIC == rangeType) toDay.minusDays(1) else null
-    return sessionTemplateService.getSessionTemplates(prisonCode, rangeStartDate = fromDate, rangeEndDate = toDate)
+    return sessionTemplateService.getSessionTemplates(prisonCode, rangeType)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")

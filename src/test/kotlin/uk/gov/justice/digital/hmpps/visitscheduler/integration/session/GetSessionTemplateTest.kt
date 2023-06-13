@@ -62,10 +62,11 @@ class GetSessionTemplateTest(
     // Given
     val prisonCode = "MDI"
 
-    sessionTemplateEntityHelper.create(name = "pass1_", validFromDate = LocalDate.now(), prisonCode = prisonCode)
-    sessionTemplateEntityHelper.create(name = "pass2_", validFromDate = LocalDate.now().plusDays(10), prisonCode = prisonCode)
-    sessionTemplateEntityHelper.create(name = "pass3_", validFromDate = LocalDate.now().plusDays(10), validToDate = LocalDate.now().plusDays(15), prisonCode = prisonCode)
     sessionTemplateEntityHelper.create(name = "fail_", validFromDate = LocalDate.now().minusDays(100), validToDate = LocalDate.now().minusDays(1), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "pass1_", validFromDate = LocalDate.now().minusDays(90), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "pass2_", validFromDate = LocalDate.now(), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "pass3_", validFromDate = LocalDate.now().plusDays(10), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "pass4_", validFromDate = LocalDate.now().plusDays(11), validToDate = LocalDate.now().plusDays(15), prisonCode = prisonCode)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=ACTIVE_OR_FUTURE")
@@ -76,10 +77,11 @@ class GetSessionTemplateTest(
     responseSpec.expectStatus().isOk
 
     val sessionTemplateDtos = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionTemplateDto>::class.java)
-    Assertions.assertThat(sessionTemplateDtos).hasSize(3)
+    Assertions.assertThat(sessionTemplateDtos).hasSize(4)
     Assertions.assertThat(sessionTemplateDtos[0].name).isEqualTo("pass1_FRIDAYFRIDAY")
     Assertions.assertThat(sessionTemplateDtos[1].name).isEqualTo("pass2_FRIDAYFRIDAY")
     Assertions.assertThat(sessionTemplateDtos[2].name).isEqualTo("pass3_FRIDAYFRIDAY")
+    Assertions.assertThat(sessionTemplateDtos[3].name).isEqualTo("pass4_FRIDAYFRIDAY")
   }
 
   @Test
@@ -91,6 +93,7 @@ class GetSessionTemplateTest(
     sessionTemplateEntityHelper.create(name = "fail2_", validFromDate = LocalDate.now().plusDays(10), prisonCode = prisonCode)
     sessionTemplateEntityHelper.create(name = "fail3_", validFromDate = LocalDate.now().plusDays(10), validToDate = LocalDate.now().plusDays(15), prisonCode = prisonCode)
     sessionTemplateEntityHelper.create(name = "pass1_", validFromDate = LocalDate.now().minusDays(100), validToDate = LocalDate.now().minusDays(1), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "fail4_", validFromDate = LocalDate.now().plusDays(10), prisonCode = prisonCode)
 
     // When
     val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=HISTORIC")
