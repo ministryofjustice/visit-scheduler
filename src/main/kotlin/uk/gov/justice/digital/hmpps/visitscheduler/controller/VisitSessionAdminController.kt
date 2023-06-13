@@ -23,16 +23,21 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.ACTIVE_OR_FUTURE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
-import java.time.DayOfWeek
 import java.time.LocalDate
 
 const val SESSION_TEMPLATES_PATH: String = "/visit-session-templates"
 const val SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATES_PATH/template"
 const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}"
+
+enum class SessionTemplateRangeType {
+  ACTIVE_OR_FUTURE, HISTORIC, ALL
+}
 
 @RestController
 @Validated
@@ -71,28 +76,23 @@ class VisitSessionAdminController(
       example = "MDI",
     )
     prisonCode: String,
-    @RequestParam(value = "dayOfWeek", required = false)
-    @Parameter(
-      description = "Filter results by day of week",
-      example = "MONDAY",
-    )
-    dayOfWeek: DayOfWeek?,
-    @RequestParam(value = "validFrom", required = false)
+    @RequestParam(value = "rangeType", required = true)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
-      description = "Filter results by that when the session template is valid from",
-      example = "2021-11-03",
+      description = "Filters session templates depending on there from and to Date",
+      example = "ACTIVE_OR_FUTURE",
     )
-    rangeStartDate: LocalDate?,
-    @RequestParam(value = "validTo", required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @Parameter(
-      description = "Filter results by that when the session template is valid to",
-      example = "2021-11-03",
-    )
-    rangeEndDate: LocalDate?,
+    rangeType: SessionTemplateRangeType,
   ): List<SessionTemplateDto> {
-    return sessionTemplateService.getSessionTemplates(prisonCode, dayOfWeek, rangeStartDate, rangeEndDate)
+    var fromDate: LocalDate? = null
+    var toDate: LocalDate? = null
+    if (ACTIVE_OR_FUTURE == rangeType) {
+      fromDate = LocalDate.now()
+    }
+    if (HISTORIC == rangeType) {
+      toDate = LocalDate.now().minusDays(1)
+    }
+    return sessionTemplateService.getSessionTemplates(prisonCode, rangeStartDate = fromDate, rangeEndDate = toDate)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
