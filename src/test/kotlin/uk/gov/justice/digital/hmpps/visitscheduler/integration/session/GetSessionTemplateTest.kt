@@ -28,7 +28,7 @@ class GetSessionTemplateTest(
     val prisonCode = "MDI"
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode")
+    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=ALL")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -47,7 +47,7 @@ class GetSessionTemplateTest(
     sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), prisonCode = prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode")
+    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=ALL")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -55,6 +55,54 @@ class GetSessionTemplateTest(
     responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.length()").isEqualTo(2)
+  }
+
+  @Test
+  fun `all active or future session templates are returned`() {
+    // Given
+    val prisonCode = "MDI"
+
+    sessionTemplateEntityHelper.create(name = "pass1_", validFromDate = LocalDate.now(), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "pass2_", validFromDate = LocalDate.now().plusDays(10), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "pass3_", validFromDate = LocalDate.now().plusDays(10), validToDate = LocalDate.now().plusDays(15), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "fail_", validFromDate = LocalDate.now().minusDays(100), validToDate = LocalDate.now().minusDays(1), prisonCode = prisonCode)
+
+    // When
+    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=ACTIVE_OR_FUTURE")
+      .headers(setAuthorisation(roles = adminRole))
+      .exchange()
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDtos = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionTemplateDto>::class.java)
+    Assertions.assertThat(sessionTemplateDtos).hasSize(3)
+    Assertions.assertThat(sessionTemplateDtos[0].name).isEqualTo("pass1_FRIDAYFRIDAY")
+    Assertions.assertThat(sessionTemplateDtos[1].name).isEqualTo("pass2_FRIDAYFRIDAY")
+    Assertions.assertThat(sessionTemplateDtos[2].name).isEqualTo("pass3_FRIDAYFRIDAY")
+  }
+
+  @Test
+  fun `all historic session templates are returned`() {
+    // Given
+    val prisonCode = "MDI"
+
+    sessionTemplateEntityHelper.create(name = "fail1_", validFromDate = LocalDate.now(), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "fail2_", validFromDate = LocalDate.now().plusDays(10), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "fail3_", validFromDate = LocalDate.now().plusDays(10), validToDate = LocalDate.now().plusDays(15), prisonCode = prisonCode)
+    sessionTemplateEntityHelper.create(name = "pass1_", validFromDate = LocalDate.now().minusDays(100), validToDate = LocalDate.now().minusDays(1), prisonCode = prisonCode)
+
+    // When
+    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=HISTORIC")
+      .headers(setAuthorisation(roles = adminRole))
+      .exchange()
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDtos = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionTemplateDto>::class.java)
+    Assertions.assertThat(sessionTemplateDtos).hasSize(1)
+    Assertions.assertThat(sessionTemplateDtos[0].name).isEqualTo("pass1_FRIDAYFRIDAY")
   }
 
   @Test

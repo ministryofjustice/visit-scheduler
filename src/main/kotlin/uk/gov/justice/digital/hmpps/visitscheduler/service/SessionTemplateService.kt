@@ -41,7 +41,7 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionTemplates(prisonCode: String, dayOfWeek: DayOfWeek?, rangeStartDate: LocalDate?, rangeEndDate: LocalDate?): List<SessionTemplateDto> {
+  fun getSessionTemplates(prisonCode: String, dayOfWeek: DayOfWeek? = null, rangeStartDate: LocalDate?, rangeEndDate: LocalDate?): List<SessionTemplateDto> {
     val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
       prisonCode = prisonCode,
       rangeStartDate = rangeStartDate,
