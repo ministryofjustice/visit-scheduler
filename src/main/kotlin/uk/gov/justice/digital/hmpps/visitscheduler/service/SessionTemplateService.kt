@@ -49,7 +49,6 @@ class SessionTemplateService(
       HISTORIC -> sessionTemplateRepository.findInActiveSessionTemplates(prisonCode)
       ACTIVE_OR_FUTURE -> sessionTemplateRepository.findActiveAndFutureSessionTemplates(prisonCode)
     }
-
     return sessionTemplates.sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
   }
 
