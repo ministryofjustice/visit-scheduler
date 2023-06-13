@@ -47,7 +47,7 @@ class SessionTemplateService(
     val sessionTemplates = when (rangeType) {
       ALL -> sessionTemplateRepository.findSessionTemplatesByPrisonCode(prisonCode)
       HISTORIC -> sessionTemplateRepository.findInActiveSessionTemplates(prisonCode)
-      ACTIVE_OR_FUTURE -> sessionTemplateRepository.findActiveSessionTemplates(prisonCode)
+      ACTIVE_OR_FUTURE -> sessionTemplateRepository.findActiveAndFutureSessionTemplates(prisonCode)
     }
 
     return sessionTemplates.sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }

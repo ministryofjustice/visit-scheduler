@@ -42,7 +42,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "where u.prison.code = :prisonCode " +
       "and (u.validToDate >= CURRENT_DATE or u.validToDate is null) order by u.validToDate",
   )
-  fun findActiveSessionTemplates(
+  fun findActiveAndFutureSessionTemplates(
     @Param("prisonCode") prisonCode: String,
   ): List<SessionTemplate>
 
