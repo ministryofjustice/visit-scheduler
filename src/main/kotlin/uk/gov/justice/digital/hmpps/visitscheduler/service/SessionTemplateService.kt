@@ -4,6 +4,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.ACTIVE_OR_FUTURE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.ALL
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
@@ -22,8 +26,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGro
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
-import java.time.DayOfWeek
-import java.time.LocalDate
 import java.util.function.Supplier
 
 @Service
@@ -41,14 +43,12 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionTemplates(prisonCode: String, dayOfWeek: DayOfWeek? = null, rangeStartDate: LocalDate?, rangeEndDate: LocalDate?): List<SessionTemplateDto> {
-    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
-      prisonCode = prisonCode,
-      rangeStartDate = rangeStartDate,
-      rangeEndDate = rangeEndDate,
-      dayOfWeek = dayOfWeek,
-    )
-
+  fun getSessionTemplates(prisonCode: String, rangeType: SessionTemplateRangeType): List<SessionTemplateDto> {
+    val sessionTemplates = when (rangeType) {
+      ALL -> sessionTemplateRepository.findSessionTemplatesByPrisonCode(prisonCode)
+      HISTORIC -> sessionTemplateRepository.findInActiveSessionTemplates(prisonCode)
+      ACTIVE_OR_FUTURE -> sessionTemplateRepository.findActiveAndFutureSessionTemplates(prisonCode)
+    }
     return sessionTemplates.sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
   }
 

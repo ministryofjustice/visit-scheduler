@@ -23,13 +23,10 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.ACTIVE_OR_FUTURE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
-import java.time.LocalDate
 
 const val SESSION_TEMPLATES_PATH: String = "/visit-session-templates"
 const val SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATES_PATH/template"
@@ -79,20 +76,12 @@ class VisitSessionAdminController(
     @RequestParam(value = "rangeType", required = true)
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
-      description = "Filters session templates depending on there from and to Date",
+      description = "Filters session templates depending on their from and to Date",
       example = "ACTIVE_OR_FUTURE",
     )
     rangeType: SessionTemplateRangeType,
   ): List<SessionTemplateDto> {
-    var fromDate: LocalDate? = null
-    var toDate: LocalDate? = null
-    if (ACTIVE_OR_FUTURE == rangeType) {
-      fromDate = LocalDate.now()
-    }
-    if (HISTORIC == rangeType) {
-      toDate = LocalDate.now().minusDays(1)
-    }
-    return sessionTemplateService.getSessionTemplates(prisonCode, rangeStartDate = fromDate, rangeEndDate = toDate)
+    return sessionTemplateService.getSessionTemplates(prisonCode, rangeType)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
