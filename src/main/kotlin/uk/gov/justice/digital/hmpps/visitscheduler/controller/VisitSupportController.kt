@@ -15,9 +15,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SupportTypeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SupportService
 
+const val VISIT_SUPPORT_PATH: String = "/visit-support"
+
 @RestController
 @Validated
-@RequestMapping(name = "Support Resource", path = ["/visit-support"], produces = [MediaType.APPLICATION_JSON_VALUE])
+@RequestMapping(name = "Support Resource", path = [VISIT_SUPPORT_PATH], produces = [MediaType.APPLICATION_JSON_VALUE])
 @Tag(name = "3. Visit support rest controller")
 class VisitSupportController(
   private val supportService: SupportService,
