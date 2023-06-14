@@ -1,9 +1,11 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -16,7 +18,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @DisplayName("Get /visit-session-templates")
-class GetSessionTemplateTest(
+class AdminGetSessionTemplateTest(
   @Autowired private val repository: TestSessionTemplateRepository,
 ) : IntegrationTestBase() {
 
@@ -28,7 +30,7 @@ class GetSessionTemplateTest(
     val prisonCode = "MDI"
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=ALL")
+    val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATES_PATH?prisonCode=$prisonCode&rangeType=ALL")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -47,7 +49,7 @@ class GetSessionTemplateTest(
     sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), prisonCode = prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=ALL")
+    val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATES_PATH?prisonCode=$prisonCode&rangeType=ALL")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -69,7 +71,7 @@ class GetSessionTemplateTest(
     sessionTemplateEntityHelper.create(name = "pass4_", validFromDate = LocalDate.now().plusDays(11), validToDate = LocalDate.now().plusDays(15), prisonCode = prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=ACTIVE_OR_FUTURE")
+    val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATES_PATH?prisonCode=$prisonCode&rangeType=ACTIVE_OR_FUTURE")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -96,7 +98,7 @@ class GetSessionTemplateTest(
     sessionTemplateEntityHelper.create(name = "fail4_", validFromDate = LocalDate.now().plusDays(10), prisonCode = prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates?prisonCode=$prisonCode&rangeType=HISTORIC")
+    val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATES_PATH?prisonCode=$prisonCode&rangeType=HISTORIC")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -118,7 +120,7 @@ class GetSessionTemplateTest(
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")
+    val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATES_PATH/template/${sessionTemplate.reference}")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -145,7 +147,7 @@ class GetSessionTemplateTest(
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")
+    val responseSpec = webTestClient.get().uri("$SESSION_TEMPLATE_PATH/${sessionTemplate.reference}")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -169,7 +171,7 @@ class GetSessionTemplateTest(
     repository.save(sessionTemplate)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-session-templates/template/${sessionTemplate.reference}")
+    val responseSpec = webTestClient.get().uri("$SESSION_TEMPLATE_PATH/${sessionTemplate.reference}")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 

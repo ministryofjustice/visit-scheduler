@@ -1,9 +1,8 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
-import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -23,10 +22,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
 import java.time.LocalDate
 
-const val PRISONS_CONFIG_PATH: String = "/config/prisons"
-const val SUPPORTED_PRISONS: String = "$PRISONS_CONFIG_PATH/supported"
-const val PRISON_CONFIG_PATH: String = "$PRISONS_CONFIG_PATH/prison"
-const val PRISON: String = "$PRISON_CONFIG_PATH/{prisonCode}"
+const val ADMIN_PRISONS_PATH: String = "/admin/prisons"
+const val PRISON_ADMIN_PATH: String = "$ADMIN_PRISONS_PATH/prison"
+const val PRISON: String = "$PRISON_ADMIN_PATH/{prisonCode}"
 const val ACTIVATE_PRISON: String = "$PRISON/activate"
 const val DEACTIVATE_PRISON: String = "$PRISON/deactivate"
 const val ADD_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-dates/add/{excludeDate}"
@@ -34,46 +32,11 @@ const val REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-dates/remove/{ex
 
 @RestController
 @Validated
-@Tag(name = "6. Prison admin rest controller")
+@Tag(name = "5. Prison admin rest controller")
 @RequestMapping(name = "Prison Configuration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
-class PrisonConfigController(
+class PrisonAdminController(
   private val prisonConfigService: PrisonConfigService,
 ) {
-
-  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG')")
-  @GetMapping(SUPPORTED_PRISONS)
-  @Operation(
-    summary = "Get supported prisons",
-    description = "Get all supported prisons id's",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Supported prisons returned",
-        content = [
-          Content(
-            mediaType = "application/json",
-            array = ArraySchema(schema = Schema(implementation = String::class)),
-            examples = [
-              ExampleObject(value = "[\"HEI\", \"MDI\"]"),
-            ],
-          ),
-        ],
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to get supported prisons",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun getSupportedPrisons(): List<String> {
-    return prisonConfigService.getSupportedPrisons()
-  }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(PRISON)
@@ -106,7 +69,7 @@ class PrisonConfigController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @GetMapping(PRISONS_CONFIG_PATH)
+  @GetMapping(ADMIN_PRISONS_PATH)
   @Operation(
     summary = "Get all prisons",
     description = "Get all prisons",
@@ -138,7 +101,7 @@ class PrisonConfigController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @PostMapping(PRISON_CONFIG_PATH)
+  @PostMapping(PRISON_ADMIN_PATH)
   @Operation(
     summary = "Create a prison",
     description = "Create a prison",

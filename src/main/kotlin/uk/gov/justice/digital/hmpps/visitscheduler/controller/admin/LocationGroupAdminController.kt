@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -26,14 +26,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.Session
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 
-const val LOCATION_GROUPS_ADMIN_PATH: String = "/location-groups"
-const val PRISON_LOCATION_GROUPS_ADMIN_PATH: String = "$LOCATION_GROUPS_ADMIN_PATH/{prisonCode}"
-const val LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUPS_ADMIN_PATH/group"
+const val ADMIN_LOCATION_GROUPS_ADMIN_PATH: String = "/admin/location-groups"
+const val PRISON_LOCATION_GROUPS_ADMIN_PATH: String = "$ADMIN_LOCATION_GROUPS_ADMIN_PATH/{prisonCode}"
+const val LOCATION_GROUP_ADMIN_PATH: String = "$ADMIN_LOCATION_GROUPS_ADMIN_PATH/group"
 const val REFERENCE_LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUP_ADMIN_PATH/{reference}"
 
 @RestController
 @Validated
-@Tag(name = "5. Location group admin rest controller")
+@Tag(name = "7. Location group admin rest controller")
 @RequestMapping(name = "Location group resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class LocationGroupAdminController(
   private val sessionTemplateService: SessionTemplateService,

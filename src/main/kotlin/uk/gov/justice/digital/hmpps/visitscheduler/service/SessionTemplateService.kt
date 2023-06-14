@@ -4,10 +4,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.ACTIVE_OR_FUTURE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.ALL
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SessionTemplateRangeType.HISTORIC
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.ACTIVE_OR_FUTURE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.ALL
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto

@@ -1,17 +1,18 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateSessionGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createPermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 
-@DisplayName("Get /visit-sessions")
-class CreateSessionGroupTest : IntegrationTestBase() {
+@DisplayName("Get $LOCATION_GROUP_ADMIN_PATH")
+class AdminCreateSessionTemplateGroupTest : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
