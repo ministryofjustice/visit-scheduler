@@ -17,6 +17,7 @@ generic-service:
     PRISONER_OFFENDER_SEARCH_URL: https://prisoner-offender-search-dev.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 50
+    TASK_LOG_NON_ASSOCIATIONS_CRON: "0 0 0/1 * * ?" #every hour on dev
 
 # CloudPlatform AlertManager receiver to route promethues alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
