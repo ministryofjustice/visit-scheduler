@@ -4,23 +4,23 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.LOCATION_GROUP_ADMIN_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.MIGRATE_CANCEL
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_CONFIG_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_LOCATION_GROUPS_ADMIN_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_LOCATION_GROUP_ADMIN_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_SESSION_TEMPLATE_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.REMOVE_PRISON_EXCLUDE_DATE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_LOCATION_GROUPS_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LOCATION_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
@@ -280,7 +280,7 @@ fun getSessionLocationGroupByReferenceUrl(reference: String): String {
 }
 
 fun getCreatePrisonUrl(): String {
-  return PRISON_CONFIG_PATH
+  return PRISON_ADMIN_PATH
 }
 
 fun getGetPrisonUrl(prisonCode: String): String {

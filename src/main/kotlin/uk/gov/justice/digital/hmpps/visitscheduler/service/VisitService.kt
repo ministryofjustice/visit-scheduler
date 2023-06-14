@@ -270,6 +270,7 @@ class VisitService(
 
   @Deprecated("This method has been deprecated.")
   fun cancelVisit(reference: String, outcomeDto: OutcomeDto): VisitDto {
+    LOG.debug("Enter legacy call to cancelVisit $reference")
     val cancelVisitDto = CancelVisitDto(outcomeDto, NOT_KNOWN_NOMIS)
     return cancelVisit(reference, cancelVisitDto)
   }

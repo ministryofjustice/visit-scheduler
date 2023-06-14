@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.apache.http.HttpStatus
 import org.assertj.core.api.Assertions.assertThat
@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatusCode
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -25,8 +26,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import java.time.LocalDate
 import java.time.LocalTime
 
-@DisplayName("Get /visit-sessions")
-class GetSessionsWithLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBase() {
+@DisplayName("Get  $ADMIN_SESSION_TEMPLATES_PATH with temp location")
+class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBase() {
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
   private val prison: Prison = Prison(code = "MDI", active = true)
 

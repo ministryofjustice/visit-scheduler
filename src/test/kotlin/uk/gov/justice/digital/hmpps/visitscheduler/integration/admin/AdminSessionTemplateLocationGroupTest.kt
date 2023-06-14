@@ -1,10 +1,11 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetGroupByReference
@@ -17,8 +18,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocatio
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
 
-@DisplayName("Get /location-groups")
-class SessionGroupByLocationTest(
+@DisplayName("Get/Delete $LOCATION_GROUP_ADMIN_PATH")
+class AdminSessionTemplateLocationGroupTest(
   @Autowired val testTemplateRepository: TestSessionTemplateRepository,
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {

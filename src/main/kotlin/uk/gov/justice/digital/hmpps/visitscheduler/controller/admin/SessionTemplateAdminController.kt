@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
@@ -28,8 +28,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 
-const val SESSION_TEMPLATES_PATH: String = "/visit-session-templates"
-const val SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATES_PATH/template"
+const val ADMIN_SESSION_TEMPLATES_PATH: String = "/admin/session-templates"
+const val SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/template"
 const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}"
 
 enum class SessionTemplateRangeType {
@@ -38,14 +38,14 @@ enum class SessionTemplateRangeType {
 
 @RestController
 @Validated
-@RequestMapping(name = "Session Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
-@Tag(name = "4. Session admin rest controller")
-class VisitSessionAdminController(
+@RequestMapping(name = "Session Template Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "6. Session template admin rest controller")
+class SessionTemplateAdminController(
   private val sessionTemplateService: SessionTemplateService,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @GetMapping(SESSION_TEMPLATES_PATH)
+  @GetMapping(ADMIN_SESSION_TEMPLATES_PATH)
   @Operation(
     summary = "Get session templates",
     description = "Get session templates by given parameters",

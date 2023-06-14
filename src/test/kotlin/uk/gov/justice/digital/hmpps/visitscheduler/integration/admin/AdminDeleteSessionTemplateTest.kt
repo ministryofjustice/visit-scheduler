@@ -1,10 +1,11 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteSessionTemplateByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -14,8 +15,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocatio
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
 
-@DisplayName("Delete session template tests")
-class DeleteSessionTemplateTest(
+@DisplayName("Delete session template tests $ADMIN_SESSION_TEMPLATES_PATH")
+class AdminDeleteSessionTemplateTest(
   @Autowired private val testTemplateRepository: TestSessionTemplateRepository,
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
