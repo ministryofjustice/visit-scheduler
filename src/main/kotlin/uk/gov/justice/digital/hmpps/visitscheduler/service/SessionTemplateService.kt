@@ -11,6 +11,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
@@ -19,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationExcep
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
@@ -217,7 +221,7 @@ class SessionTemplateService(
   fun deleteSessionLocationGroup(reference: String) {
     val group = getLocationGroupByReference(reference)
     if (group.sessionTemplates.isNotEmpty()) {
-      throw VSiPValidationException("Group cannot be deleted $reference because session templates are using it!")
+      throw VSiPValidationException("Location group cannot be deleted $reference because session templates are using it!")
     }
 
     val deleted = sessionLocationGroupRepository.deleteByReference(reference)
@@ -245,6 +249,81 @@ class SessionTemplateService(
   private fun getSessionTemplate(reference: String): SessionTemplate {
     return sessionTemplateRepository.findByReference(reference)
       ?: throw TemplateNotFoundException("Template reference:$reference not found")
+  }
+
+  fun deleteSessionCategoryGroup(reference: String) {
+    val group = getSessionCategoryGroupEntityByReference(reference)
+    if (group.sessionTemplates.isNotEmpty()) {
+      throw VSiPValidationException("Category group cannot be deleted $reference because session templates are using it!")
+    }
+
+    val deleted = sessionCategoryGroupRepository.deleteByReference(reference)
+    if (deleted == 0) {
+      throw ItemNotFoundException("Session category group not found : $reference")
+    }
+    if (deleted > 1) {
+      throw java.lang.IllegalStateException("More than one Session category group $reference was deleted!")
+    }
+  }
+
+  fun updateSessionCategoryGroup(
+    reference: String,
+    updateCategorySessionGroup: UpdateCategoryGroupDto,
+  ): SessionCategoryGroupDto {
+    val groupToUpdate = getSessionCategoryGroupEntityByReference(reference)
+    groupToUpdate.name = updateCategorySessionGroup.name
+    groupToUpdate.sessionCategories.clear()
+
+    val sessionPrisonerCategorys = updateCategorySessionGroup.types.map {
+      SessionPrisonerCategory(
+        sessionCategoryGroupId = groupToUpdate.id,
+        sessionCategoryGroup = groupToUpdate,
+        prisonerCategoryType = it,
+      )
+    }
+
+    groupToUpdate.sessionCategories.addAll(sessionPrisonerCategorys)
+
+    val updatedGroup = sessionCategoryGroupRepository.saveAndFlush(groupToUpdate)
+    return SessionCategoryGroupDto(updatedGroup)
+  }
+
+  fun createSessionCategoryGroup(createCategorySessionGroup: CreateCategoryGroupDto): SessionCategoryGroupDto {
+    val prison = prisonConfigService.findPrisonByCode(createCategorySessionGroup.prisonCode)
+    val groupToCreate = SessionCategoryGroup(
+      prison = prison,
+      prisonId = prison.id,
+      name = createCategorySessionGroup.name,
+    )
+
+    val sessionPrisonerCategorys = createCategorySessionGroup.locations.map {
+      SessionPrisonerCategory(
+        sessionCategoryGroupId = groupToCreate.id,
+        sessionCategoryGroup = groupToCreate,
+        prisonerCategoryType = it,
+      )
+    }
+
+    groupToCreate.sessionCategories.addAll(sessionPrisonerCategorys)
+
+    val createdGroup = sessionCategoryGroupRepository.saveAndFlush(groupToCreate)
+    return SessionCategoryGroupDto(createdGroup)
+  }
+
+  @Transactional(readOnly = true)
+  fun getSessionCategoryGroupByReference(reference: String): SessionCategoryGroupDto {
+    return SessionCategoryGroupDto(getSessionCategoryGroupEntityByReference(reference))
+  }
+
+  private fun getSessionCategoryGroupEntityByReference(reference: String): SessionCategoryGroup {
+    return sessionCategoryGroupRepository.findByReference(reference)
+      ?: throw ItemNotFoundException("SessionCategoryGroupDto reference:$reference not found")
+  }
+
+  @Transactional(readOnly = true)
+  fun getSessionCategoryGroup(prisonCode: String): List<SessionCategoryGroupDto> {
+    val test = sessionCategoryGroupRepository.findByPrisonCode(prisonCode)
+    return test.map { SessionCategoryGroupDto(it) }
   }
 }
 

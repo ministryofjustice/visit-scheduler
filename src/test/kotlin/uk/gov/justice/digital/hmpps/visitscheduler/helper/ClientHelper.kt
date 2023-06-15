@@ -15,7 +15,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_E
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_CATEGORY_GROUPS_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_LOCATION_GROUPS_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
@@ -224,7 +226,43 @@ fun callDeleteGroupByReference(
 ): ResponseSpec {
   return callDelete(
     webTestClient,
-    getReferenceUrl(REFERENCE_LOCATION_GROUP_ADMIN_PATH, prisonCode),
+    getReferenceUrl(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callGetCategoryGroupsByPrisonId(
+  webTestClient: WebTestClient,
+  prisonCode: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getPrisonIdUrl(PRISON_CATEGORY_GROUPS_ADMIN_PATH, prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callGetCategoryGroupByReference(
+  webTestClient: WebTestClient,
+  reference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getReferenceUrl(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, reference),
+    authHttpHeaders,
+  )
+}
+
+fun callDeleteCategoryGroupByReference(
+  webTestClient: WebTestClient,
+  prisonCode: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callDelete(
+    webTestClient,
+    getReferenceUrl(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, prisonCode),
     authHttpHeaders,
   )
 }
