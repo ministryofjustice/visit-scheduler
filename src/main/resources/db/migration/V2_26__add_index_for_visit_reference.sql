@@ -1,0 +1,1 @@
+CREATE INDEX idx_visit_reference ON visit(reference);
