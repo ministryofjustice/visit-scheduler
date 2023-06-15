@@ -152,6 +152,6 @@ class AdminSessionTemplateLocationGroupTest(
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failed")
-      .jsonPath("$.developerMessage").isEqualTo("Group cannot be deleted $reference because session templates are using it!")
+      .jsonPath("$.developerMessage").isEqualTo("Location group cannot be deleted $reference because session templates are using it!")
   }
 }

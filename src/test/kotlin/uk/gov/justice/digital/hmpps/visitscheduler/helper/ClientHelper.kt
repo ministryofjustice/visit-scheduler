@@ -226,7 +226,7 @@ fun callDeleteGroupByReference(
 ): ResponseSpec {
   return callDelete(
     webTestClient,
-    getReferenceUrl(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, prisonCode),
+    getReferenceUrl(REFERENCE_LOCATION_GROUP_ADMIN_PATH, prisonCode),
     authHttpHeaders,
   )
 }

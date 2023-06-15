@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteCategoryGroupByReference
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetCategoryGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetCategoryGroupsByPrisonId
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -151,7 +150,7 @@ class AdminSessionTemplateCategoryGroupTest(
     val reference = categoryGroup.reference
 
     // When
-    val responseSpec = callDeleteGroupByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
+    val responseSpec = callDeleteCategoryGroupByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
