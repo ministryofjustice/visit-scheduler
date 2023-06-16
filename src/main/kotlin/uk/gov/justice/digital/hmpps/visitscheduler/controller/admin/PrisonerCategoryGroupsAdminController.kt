@@ -33,7 +33,7 @@ const val REFERENCE_CATEGORY_GROUP_ADMIN_PATH: String = "$CATEGORY_GROUP_ADMIN_P
 
 @RestController
 @Validated
-@Tag(name = "7. Category group admin rest controller")
+@Tag(name = "8. Category group admin rest controller")
 @RequestMapping(name = "Category group resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonerCategoryGroupsAdminController(
   private val sessionTemplateService: SessionTemplateService,
@@ -66,7 +66,7 @@ class PrisonerCategoryGroupsAdminController(
     @PathVariable
     prisonCode: String,
   ): List<SessionCategoryGroupDto> {
-    return sessionTemplateService.getSessionCategoryGroup(prisonCode)
+    return sessionTemplateService.getSessionCategoryGroups(prisonCode)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -102,7 +102,7 @@ class PrisonerCategoryGroupsAdminController(
     @PathVariable
     reference: String,
   ): SessionCategoryGroupDto {
-    return sessionTemplateService.getSessionCategoryGroupByReference(reference)
+    return sessionTemplateService.getSessionCategoryGroup(reference)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -110,14 +110,6 @@ class PrisonerCategoryGroupsAdminController(
   @Operation(
     summary = "Create category group",
     description = "Create category group",
-    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
-      content = [
-        Content(
-          mediaType = "application/json",
-          schema = Schema(implementation = SessionCategoryGroupDto::class),
-        ),
-      ],
-    ),
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -141,42 +133,6 @@ class PrisonerCategoryGroupsAdminController(
     createCategorySessionGroup: CreateCategoryGroupDto,
   ): SessionCategoryGroupDto {
     return sessionTemplateService.createSessionCategoryGroup(createCategorySessionGroup)
-  }
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_CATEGORY_GROUP_ADMIN_PATH)
-  @Operation(
-    summary = "Delete category group",
-    description = "Delete category group by reference",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Session templates deleted",
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to view session templates",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Session category group not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun deleteSessionCategoryGroup(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable
-    reference: String,
-  ): ResponseEntity<String> {
-    sessionTemplateService.deleteSessionCategoryGroup(reference)
-    return ResponseEntity.status(HttpStatus.OK).body("Session category group Deleted $reference!")
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -222,5 +178,41 @@ class PrisonerCategoryGroupsAdminController(
     updateCategorySessionGroup: UpdateCategoryGroupDto,
   ): SessionCategoryGroupDto {
     return sessionTemplateService.updateSessionCategoryGroup(reference, updateCategorySessionGroup)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @DeleteMapping(REFERENCE_CATEGORY_GROUP_ADMIN_PATH)
+  @Operation(
+    summary = "Delete category group",
+    description = "Delete category group by reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session templates deleted",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to view session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Session category group not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun deleteSessionCategoryGroup(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+  ): ResponseEntity<String> {
+    sessionTemplateService.deleteSessionCategoryGroup(reference)
+    return ResponseEntity.status(HttpStatus.OK).body("Session category group Deleted $reference!")
   }
 }

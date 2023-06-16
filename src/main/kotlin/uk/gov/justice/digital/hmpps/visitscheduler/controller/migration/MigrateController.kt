@@ -28,7 +28,7 @@ const val MIGRATE_CANCEL: String = "$MIGRATE_VISITS/{reference}/cancel"
 
 @RestController
 @Validated
-@Tag(name = "8. Visit migration rest controller")
+@Tag(name = "10. Visit migration rest controller")
 @RequestMapping(name = "Visit Migration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class MigrateController(
   private val migrateVisitService: MigrateVisitService,

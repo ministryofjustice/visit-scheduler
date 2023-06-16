@@ -14,6 +14,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.CreateIncentiveGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
@@ -24,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionPrisonerIncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
@@ -62,12 +66,12 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionLocationGroupByReference(reference: String): SessionLocationGroupDto {
+  fun getSessionLocationGroup(reference: String): SessionLocationGroupDto {
     return SessionLocationGroupDto(getLocationGroupByReference(reference))
   }
 
   @Transactional(readOnly = true)
-  fun getSessionLocationGroup(prisonCode: String): List<SessionLocationGroupDto> {
+  fun getSessionLocationGroups(prisonCode: String): List<SessionLocationGroupDto> {
     return sessionLocationGroupRepository.findByPrisonCode(prisonCode).map { SessionLocationGroupDto(it) }
   }
 
@@ -147,7 +151,7 @@ class SessionTemplateService(
     }
 
     createSessionTemplateDto.incentiveLevelGroupReferences?.let {
-      it.toSet().forEach { ref -> sessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getPrisonerIncentiveLevelGroupByReference(ref)) }
+      it.toSet().forEach { ref -> sessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getIncentiveLevelGroupByReference(ref)) }
     }
 
     val sessionTemplateEntitySave = sessionTemplateRepository.saveAndFlush(sessionTemplateEntity)
@@ -206,7 +210,7 @@ class SessionTemplateService(
 
     updateSessionTemplateDto.incentiveLevelGroupReferences?.let {
       updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.clear()
-      it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getPrisonerIncentiveLevelGroupByReference(ref)) }
+      it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getIncentiveLevelGroupByReference(ref)) }
     }
     return SessionTemplateDto(updatedSessionTemplateEntity)
   }
@@ -237,10 +241,6 @@ class SessionTemplateService(
     return sessionCategoryGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerCategory reference:$reference not found")
   }
 
-  private fun getPrisonerIncentiveLevelGroupByReference(reference: String): SessionIncentiveLevelGroup {
-    return sessionIncentiveLevelGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerIncentiveLevel reference:$reference not found")
-  }
-
   private fun getLocationGroupByReference(reference: String): SessionLocationGroup {
     return sessionLocationGroupRepository.findByReference(reference)
       ?: throw ItemNotFoundException("SessionLocationGroup reference:$reference not found")
@@ -249,43 +249,6 @@ class SessionTemplateService(
   private fun getSessionTemplate(reference: String): SessionTemplate {
     return sessionTemplateRepository.findByReference(reference)
       ?: throw TemplateNotFoundException("Template reference:$reference not found")
-  }
-
-  fun deleteSessionCategoryGroup(reference: String) {
-    val group = getSessionCategoryGroupEntityByReference(reference)
-    if (group.sessionTemplates.isNotEmpty()) {
-      throw VSiPValidationException("Category group cannot be deleted $reference because session templates are using it!")
-    }
-
-    val deleted = sessionCategoryGroupRepository.deleteByReference(reference)
-    if (deleted == 0) {
-      throw ItemNotFoundException("Session category group not found : $reference")
-    }
-    if (deleted > 1) {
-      throw java.lang.IllegalStateException("More than one Session category group $reference was deleted!")
-    }
-  }
-
-  fun updateSessionCategoryGroup(
-    reference: String,
-    updateCategorySessionGroup: UpdateCategoryGroupDto,
-  ): SessionCategoryGroupDto {
-    val groupToUpdate = getSessionCategoryGroupEntityByReference(reference)
-    groupToUpdate.name = updateCategorySessionGroup.name
-    groupToUpdate.sessionCategories.clear()
-
-    val sessionPrisonerCategorys = updateCategorySessionGroup.categories.toSet().map {
-      SessionPrisonerCategory(
-        sessionCategoryGroupId = groupToUpdate.id,
-        sessionCategoryGroup = groupToUpdate,
-        prisonerCategoryType = it,
-      )
-    }
-
-    groupToUpdate.sessionCategories.addAll(sessionPrisonerCategorys)
-
-    val updatedGroup = sessionCategoryGroupRepository.saveAndFlush(groupToUpdate)
-    return SessionCategoryGroupDto(updatedGroup)
   }
 
   fun createSessionCategoryGroup(createCategorySessionGroup: CreateCategoryGroupDto): SessionCategoryGroupDto {
@@ -310,8 +273,45 @@ class SessionTemplateService(
     return SessionCategoryGroupDto(createdGroup)
   }
 
+  fun updateSessionCategoryGroup(
+    reference: String,
+    updateCategorySessionGroup: UpdateCategoryGroupDto,
+  ): SessionCategoryGroupDto {
+    val groupToUpdate = getSessionCategoryGroupEntityByReference(reference)
+    groupToUpdate.name = updateCategorySessionGroup.name
+    groupToUpdate.sessionCategories.clear()
+
+    val sessionPrisonerCategorys = updateCategorySessionGroup.categories.toSet().map {
+      SessionPrisonerCategory(
+        sessionCategoryGroupId = groupToUpdate.id,
+        sessionCategoryGroup = groupToUpdate,
+        prisonerCategoryType = it,
+      )
+    }
+
+    groupToUpdate.sessionCategories.addAll(sessionPrisonerCategorys)
+
+    val updatedGroup = sessionCategoryGroupRepository.saveAndFlush(groupToUpdate)
+    return SessionCategoryGroupDto(updatedGroup)
+  }
+
+  fun deleteSessionCategoryGroup(reference: String) {
+    val group = getSessionCategoryGroupEntityByReference(reference)
+    if (group.sessionTemplates.isNotEmpty()) {
+      throw VSiPValidationException("Category group cannot be deleted $reference because session templates are using it!")
+    }
+
+    val deleted = sessionCategoryGroupRepository.deleteByReference(reference)
+    if (deleted == 0) {
+      throw ItemNotFoundException("Session category group not found : $reference")
+    }
+    if (deleted > 1) {
+      throw java.lang.IllegalStateException("More than one Session category group $reference was deleted!")
+    }
+  }
+
   @Transactional(readOnly = true)
-  fun getSessionCategoryGroupByReference(reference: String): SessionCategoryGroupDto {
+  fun getSessionCategoryGroup(reference: String): SessionCategoryGroupDto {
     return SessionCategoryGroupDto(getSessionCategoryGroupEntityByReference(reference))
   }
 
@@ -321,9 +321,81 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionCategoryGroup(prisonCode: String): List<SessionCategoryGroupDto> {
-    val test = sessionCategoryGroupRepository.findByPrisonCode(prisonCode)
-    return test.map { SessionCategoryGroupDto(it) }
+  fun getSessionCategoryGroups(prisonCode: String): List<SessionCategoryGroupDto> {
+    return sessionCategoryGroupRepository.findByPrisonCode(prisonCode).map { SessionCategoryGroupDto(it) }
+  }
+
+  @Transactional(readOnly = true)
+  fun getSessionIncentiveGroups(prisonCode: String): List<SessionIncentiveLevelGroupDto> {
+    return sessionIncentiveLevelGroupRepository.findByPrisonCode(prisonCode).map { SessionIncentiveLevelGroupDto(it) }
+  }
+
+  @Transactional(readOnly = true)
+  fun getSessionIncentiveGroup(reference: String): SessionIncentiveLevelGroupDto {
+    return SessionIncentiveLevelGroupDto(getIncentiveLevelGroupByReference(reference))
+  }
+
+  private fun getIncentiveLevelGroupByReference(reference: String): SessionIncentiveLevelGroup {
+    return sessionIncentiveLevelGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerIncentiveLevel reference:$reference not found")
+  }
+
+  fun createSessionIncentiveGroup(createIncentiveSessionGroup: CreateIncentiveGroupDto): SessionIncentiveLevelGroupDto {
+    val prison = prisonConfigService.findPrisonByCode(createIncentiveSessionGroup.prisonCode)
+    val groupToCreate = SessionIncentiveLevelGroup(
+      prison = prison,
+      prisonId = prison.id,
+      name = createIncentiveSessionGroup.name,
+    )
+
+    val sessionIncentiveLevels = createIncentiveSessionGroup.incentiveLevels.toSet().map {
+      SessionPrisonerIncentiveLevel(
+        sessionIncentiveGroupId = groupToCreate.id,
+        sessionIncentiveLevelGroup = groupToCreate,
+        prisonerIncentiveLevel = it,
+      )
+    }
+
+    groupToCreate.sessionIncentiveLevels.addAll(sessionIncentiveLevels)
+
+    val createdGroup = sessionIncentiveLevelGroupRepository.saveAndFlush(groupToCreate)
+    return SessionIncentiveLevelGroupDto(createdGroup)
+  }
+
+  fun updateSessionIncentiveGroup(
+    reference: String,
+    updateIncentiveSessionGroup: UpdateIncentiveGroupDto,
+  ): SessionIncentiveLevelGroupDto {
+    val groupToUpdate = getIncentiveLevelGroupByReference(reference)
+    groupToUpdate.name = updateIncentiveSessionGroup.name
+    groupToUpdate.sessionIncentiveLevels.clear()
+
+    val sessionIncentiveLevels = updateIncentiveSessionGroup.incentiveLevels.toSet().map {
+      SessionPrisonerIncentiveLevel(
+        sessionIncentiveGroupId = groupToUpdate.id,
+        sessionIncentiveLevelGroup = groupToUpdate,
+        prisonerIncentiveLevel = it,
+      )
+    }
+
+    groupToUpdate.sessionIncentiveLevels.addAll(sessionIncentiveLevels)
+
+    val updatedGroup = sessionIncentiveLevelGroupRepository.saveAndFlush(groupToUpdate)
+    return SessionIncentiveLevelGroupDto(updatedGroup)
+  }
+
+  fun deleteSessionIncentiveGroup(reference: String) {
+    val group = getIncentiveLevelGroupByReference(reference)
+    if (group.sessionTemplates.isNotEmpty()) {
+      throw VSiPValidationException("Incentive group cannot be deleted $reference because session templates are using it!")
+    }
+
+    val deleted = sessionIncentiveLevelGroupRepository.deleteByReference(reference)
+    if (deleted == 0) {
+      throw ItemNotFoundException("Incentive group  group not found : $reference")
+    }
+    if (deleted > 1) {
+      throw java.lang.IllegalStateException("More than one Incentive group $reference was deleted!")
+    }
   }
 }
 
