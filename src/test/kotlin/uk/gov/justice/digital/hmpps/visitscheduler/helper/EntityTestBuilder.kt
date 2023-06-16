@@ -2,12 +2,15 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.DayOfWeek
@@ -127,7 +130,7 @@ fun createCreateLocationGroupDto(
   )
 }
 
-fun updateLocationGroupDto(
+fun createUpdateLocationGroupDto(
   name: String = "update",
   permittedSessionLocations: MutableList<PermittedSessionLocationDto> = mutableListOf(),
 ): UpdateLocationGroupDto {
@@ -148,5 +151,27 @@ fun createPermittedSessionLocationDto(
     levelTwoCode = levelTwoCode,
     levelThreeCode = levelThreeCode,
     levelFourCode = levelFourCode,
+  )
+}
+
+fun createCategoryGroupDto(
+  name: String,
+  prisonCode: String,
+  vararg type: PrisonerCategoryType,
+): CreateCategoryGroupDto {
+  return CreateCategoryGroupDto(
+    name = name,
+    prisonCode = prisonCode,
+    categories = type.toList(),
+  )
+}
+
+fun updateCategoryGroupDto(
+  name: String,
+  vararg type: PrisonerCategoryType,
+): UpdateCategoryGroupDto {
+  return UpdateCategoryGroupDto(
+    name = name,
+    categories = type.toList(),
   )
 }

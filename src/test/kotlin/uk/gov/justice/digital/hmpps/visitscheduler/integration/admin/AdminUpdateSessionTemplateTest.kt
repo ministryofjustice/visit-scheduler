@@ -49,10 +49,10 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       startTime = sessionTemplate.startTime.plusHours(1),
       endTime = sessionTemplate.endTime.plusHours(2),
       dayOfWeek = sessionTemplate.dayOfWeek.minus(1),
-      locationGroupReferences = mutableListOf(sessionGroup.reference),
+      locationGroupReferences = mutableListOf(sessionGroup.reference, sessionGroup.reference),
+      categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
+      incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
       biWeekly = !sessionTemplate.biWeekly,
-      categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference),
-      incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference),
     )
 
     // When

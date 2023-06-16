@@ -8,7 +8,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GRO
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateLocationSessionGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createPermittedSessionLocationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.updateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createUpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
@@ -31,10 +31,11 @@ class AdminUpdateSessionTemplateLocationGroupTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `update session group test`() {
+  fun `update session group with out duplicates test`() {
     // Given
     val locationDto = createPermittedSessionLocationDto("C", "L1", "S1", "001")
-    val dto = updateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
+    val duplicateLocationDto = createPermittedSessionLocationDto("C", "L1", "S1", "001")
+    val dto = createUpdateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto, duplicateLocationDto))
 
     // When
     val responseSpec = callUpdateLocationSessionGroupByReference(webTestClient, sessionGroup.reference, dto, setAuthorisation(roles = adminRole))
@@ -56,7 +57,7 @@ class AdminUpdateSessionTemplateLocationGroupTest : IntegrationTestBase() {
   fun `exception thrown when reference not found during update session group test`() {
     // Given
     val locationDto = createPermittedSessionLocationDto("C", "L1", "S1", "001")
-    val dto = updateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
+    val dto = createUpdateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
     val reference = "Ref1234"
 
     // When
