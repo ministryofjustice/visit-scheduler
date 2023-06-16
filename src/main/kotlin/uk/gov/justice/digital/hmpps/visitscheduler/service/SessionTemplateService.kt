@@ -79,7 +79,7 @@ class SessionTemplateService(
       name = createLocationSessionGroup.name,
     )
 
-    val sessionLocations = createLocationSessionGroup.locations.map {
+    val sessionLocations = createLocationSessionGroup.locations.toSet().map {
       PermittedSessionLocation(
         groupId = sessionLocationGroup.id,
         sessionLocationGroup = sessionLocationGroup,
@@ -101,7 +101,7 @@ class SessionTemplateService(
     sessionLocationGroup.name = updateLocationSessionGroup.name
     sessionLocationGroup.sessionLocations.clear()
 
-    val sessionLocations = updateLocationSessionGroup.locations.map {
+    val sessionLocations = updateLocationSessionGroup.locations.toSet().map {
       PermittedSessionLocation(
         groupId = sessionLocationGroup.id,
         sessionLocationGroup = sessionLocationGroup,
@@ -139,15 +139,15 @@ class SessionTemplateService(
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
-      it.forEach { ref -> sessionTemplateEntity.permittedSessionCategoryGroups.add(this.getPrisonerCategoryGroupByReference(ref)) }
+      it.toSet().forEach { ref -> sessionTemplateEntity.permittedSessionCategoryGroups.add(this.getPrisonerCategoryGroupByReference(ref)) }
     }
 
     createSessionTemplateDto.locationGroupReferences?.let {
-      it.forEach { ref -> sessionTemplateEntity.permittedSessionLocationGroups.add(this.getLocationGroupByReference(ref)) }
+      it.toSet().forEach { ref -> sessionTemplateEntity.permittedSessionLocationGroups.add(this.getLocationGroupByReference(ref)) }
     }
 
     createSessionTemplateDto.incentiveLevelGroupReferences?.let {
-      it.forEach { ref -> sessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getPrisonerIncentiveLevelGroupByReference(ref)) }
+      it.toSet().forEach { ref -> sessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getPrisonerIncentiveLevelGroupByReference(ref)) }
     }
 
     val sessionTemplateEntitySave = sessionTemplateRepository.saveAndFlush(sessionTemplateEntity)
@@ -196,17 +196,17 @@ class SessionTemplateService(
 
     updateSessionTemplateDto.locationGroupReferences?.let {
       updatedSessionTemplateEntity.permittedSessionLocationGroups.clear()
-      it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionLocationGroups.add(this.getLocationGroupByReference(ref)) }
+      it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionLocationGroups.add(this.getLocationGroupByReference(ref)) }
     }
 
     updateSessionTemplateDto.categoryGroupReferences?.let {
       updatedSessionTemplateEntity.permittedSessionCategoryGroups.clear()
-      it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionCategoryGroups.add(this.getPrisonerCategoryGroupByReference(ref)) }
+      it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionCategoryGroups.add(this.getPrisonerCategoryGroupByReference(ref)) }
     }
 
     updateSessionTemplateDto.incentiveLevelGroupReferences?.let {
       updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.clear()
-      it.forEach { ref -> updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getPrisonerIncentiveLevelGroupByReference(ref)) }
+      it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getPrisonerIncentiveLevelGroupByReference(ref)) }
     }
     return SessionTemplateDto(updatedSessionTemplateEntity)
   }
@@ -274,7 +274,7 @@ class SessionTemplateService(
     groupToUpdate.name = updateCategorySessionGroup.name
     groupToUpdate.sessionCategories.clear()
 
-    val sessionPrisonerCategorys = updateCategorySessionGroup.types.map {
+    val sessionPrisonerCategorys = updateCategorySessionGroup.categories.toSet().map {
       SessionPrisonerCategory(
         sessionCategoryGroupId = groupToUpdate.id,
         sessionCategoryGroup = groupToUpdate,
@@ -296,7 +296,7 @@ class SessionTemplateService(
       name = createCategorySessionGroup.name,
     )
 
-    val sessionPrisonerCategorys = createCategorySessionGroup.locations.map {
+    val sessionPrisonerCategorys = createCategorySessionGroup.categories.toSet().map {
       SessionPrisonerCategory(
         sessionCategoryGroupId = groupToCreate.id,
         sessionCategoryGroup = groupToCreate,

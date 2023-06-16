@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
@@ -29,6 +30,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import java.time.LocalDate
@@ -263,6 +266,33 @@ fun callDeleteCategoryGroupByReference(
   return callDelete(
     webTestClient,
     getReferenceUrl(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callCreateCategorySessionGroupByReference(
+  webTestClient: WebTestClient,
+  dto: CreateCategoryGroupDto,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPost(
+    dto,
+    webTestClient,
+    CATEGORY_GROUP_ADMIN_PATH,
+    authHttpHeaders,
+  )
+}
+
+fun callUpdateCategoryGroupByReference(
+  webTestClient: WebTestClient,
+  reference: String,
+  dto: UpdateCategoryGroupDto,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPut(
+    dto,
+    webTestClient,
+    getReferenceUrl(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, reference),
     authHttpHeaders,
   )
 }

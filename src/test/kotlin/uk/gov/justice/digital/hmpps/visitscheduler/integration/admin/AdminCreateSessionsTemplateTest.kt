@@ -27,7 +27,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `create session template`() {
+  fun `create session template without duplicate location,category,incentive`() {
     // Given
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
     val sessionLocationGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
@@ -40,9 +40,9 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
     val dto = createSessionTemplateDto(
       validToDate = LocalDate.now().plusDays(1),
-      locationGroupReferences = mutableListOf(sessionLocationGroup.reference),
-      categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference),
-      incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference),
+      locationGroupReferences = mutableListOf(sessionLocationGroup.reference, sessionLocationGroup.reference),
+      categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
+      incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
     )
 
     // When

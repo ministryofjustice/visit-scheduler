@@ -16,5 +16,5 @@ data class CreateCategoryGroupDto(
   val prisonCode: String,
 
   @Schema(description = "list of categories for group", required = false)
-  val locations: List<PrisonerCategoryType> = listOf(),
+  val categories: List<PrisonerCategoryType> = listOf(),
 )

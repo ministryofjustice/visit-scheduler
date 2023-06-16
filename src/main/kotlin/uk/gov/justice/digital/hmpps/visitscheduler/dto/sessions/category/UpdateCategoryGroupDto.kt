@@ -12,5 +12,5 @@ data class UpdateCategoryGroupDto(
   val name: String,
 
   @Schema(description = "list of category for group", required = false)
-  val types: List<PrisonerCategoryType> = listOf(),
+  val categories: List<PrisonerCategoryType> = listOf(),
 )
