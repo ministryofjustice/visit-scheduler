@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -144,18 +145,21 @@ internal class QuotableEncoderTest {
   @DisplayName("Encoder Collisions")
   inner class EncoderCollisions {
 
+    @BeforeEach
+    fun setupTest() {
+      // Try to run garbage collector, this may prevent memory issues.
+      Runtime.getRuntime().gc()
+      // Sleep and hope the garbage collector runs
+      Thread.sleep(1000)
+    }
+
     @Test
     fun `lots of hashes has no collisions`() {
       // Given
       // Not designed for testing extremely large values.
       val encoder = QuotableEncoder(minLength = 8)
 
-      val hashes = mutableListOf<String>()
-      for (n in 0..100000) {
-        // When
-        val hash = encoder.encode(n.toLong())
-        hashes.add(hash)
-      }
+      val hashes = Array(100000) { encoder.encode(it.toLong()) }
 
       // Then
       val collisions = hashes.groupingBy { it }.eachCount().filter { it.value > 1 }
