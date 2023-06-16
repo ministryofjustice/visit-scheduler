@@ -56,7 +56,7 @@ class PrisonerIncentiveGroupsAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to view incentive groups",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -78,7 +78,7 @@ class PrisonerIncentiveGroupsAdminController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Incentive groups returned for given prison",
+        description = "Incentive group returned for given reference",
       ),
       ApiResponse(
         responseCode = "401",
@@ -87,7 +87,7 @@ class PrisonerIncentiveGroupsAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to view incentive group",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
@@ -180,7 +180,7 @@ class PrisonerIncentiveGroupsAdminController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Session templates deleted",
+        description = "Incentive group deleted",
       ),
       ApiResponse(
         responseCode = "401",
@@ -189,7 +189,7 @@ class PrisonerIncentiveGroupsAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to view  incentive group",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(

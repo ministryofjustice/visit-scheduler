@@ -218,7 +218,7 @@ class SessionTemplateAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to delete session templates",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(

@@ -56,7 +56,7 @@ class PrisonerCategoryGroupsAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to view category groups",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -87,7 +87,7 @@ class PrisonerCategoryGroupsAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to view category group",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
@@ -188,7 +188,7 @@ class PrisonerCategoryGroupsAdminController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Session templates deleted",
+        description = "Category group deleted",
       ),
       ApiResponse(
         responseCode = "401",
@@ -197,7 +197,7 @@ class PrisonerCategoryGroupsAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to view category group",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
