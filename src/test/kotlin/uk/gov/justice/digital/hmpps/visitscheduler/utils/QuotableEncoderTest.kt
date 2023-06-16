@@ -159,7 +159,7 @@ internal class QuotableEncoderTest {
       // Not designed for testing extremely large values.
       val encoder = QuotableEncoder(minLength = 8)
 
-      val hashes = Array(100000) { encoder.encode(it.toLong()) }
+      val hashes = Array(100000) { encoder.encode(it.toLong()).toCharArray() }
 
       // Then
       val collisions = hashes.groupingBy { it }.eachCount().filter { it.value > 1 }
