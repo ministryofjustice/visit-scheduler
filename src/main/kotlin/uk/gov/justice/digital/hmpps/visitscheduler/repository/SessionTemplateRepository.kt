@@ -108,7 +108,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Modifying
   @Query("Update SessionTemplate s set s.validToDate = :validToDate WHERE s.reference = :reference")
-  fun updateValidToDateByReference(reference: String, validToDate: LocalDate): Int
+  fun updateValidToDateByReference(reference: String, validToDate: LocalDate?): Int
 
   @Modifying
   @Query("Update SessionTemplate s set s.closedCapacity = :closedCapacity WHERE s.reference = :reference")

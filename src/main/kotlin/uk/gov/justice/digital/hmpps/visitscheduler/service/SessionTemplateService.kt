@@ -126,13 +126,13 @@ class SessionTemplateService(
       prisonId = prison.id,
       prison = prison,
       name = createSessionTemplateDto.name,
-      startTime = createSessionTemplateDto.startTime,
-      endTime = createSessionTemplateDto.endTime,
-      validFromDate = createSessionTemplateDto.validFromDate,
-      validToDate = createSessionTemplateDto.validToDate,
+      startTime = createSessionTemplateDto.sessionTemplateTime.startTime,
+      endTime = createSessionTemplateDto.sessionTemplateTime.endTime,
+      validFromDate = createSessionTemplateDto.sessionTemplateValidDate.validFromDate,
+      validToDate = createSessionTemplateDto.sessionTemplateValidDate.validToDate,
       visitRoom = createSessionTemplateDto.visitRoom,
-      closedCapacity = createSessionTemplateDto.closedCapacity,
-      openCapacity = createSessionTemplateDto.openCapacity,
+      closedCapacity = createSessionTemplateDto.sessionTemplateCapacity.closedCapacity,
+      openCapacity = createSessionTemplateDto.sessionTemplateCapacity.openCapacity,
       biWeekly = createSessionTemplateDto.biWeekly,
       dayOfWeek = createSessionTemplateDto.dayOfWeek,
       visitType = VisitType.SOCIAL,
@@ -163,28 +163,19 @@ class SessionTemplateService(
         sessionTemplateRepository.updateNameByReference(reference, name)
       }
 
-      startTime?.let {
-        sessionTemplateRepository.updateStartTimeByReference(reference, startTime)
+      sessionTemplateTime?.let {
+        sessionTemplateRepository.updateStartTimeByReference(reference, it.startTime)
+        sessionTemplateRepository.updateEndTimeByReference(reference, it.endTime)
       }
 
-      endTime?.let {
-        sessionTemplateRepository.updateEndTimeByReference(reference, endTime)
+      sessionTemplateValidDate?.let {
+        sessionTemplateRepository.updateValidFromDateByReference(reference, it.validFromDate)
+        sessionTemplateRepository.updateValidToDateByReference(reference, it.validToDate)
       }
 
-      validFromDate?.let {
-        sessionTemplateRepository.updateValidFromDateByReference(reference, validFromDate)
-      }
-
-      validToDate?.let {
-        sessionTemplateRepository.updateValidToDateByReference(reference, validToDate)
-      }
-
-      closedCapacity?.let {
-        sessionTemplateRepository.updateClosedCapacityByReference(reference, closedCapacity)
-      }
-
-      openCapacity?.let {
-        sessionTemplateRepository.updateOpenCapacityByReference(reference, openCapacity)
+      sessionTemplateCapacity?.let {
+        sessionTemplateRepository.updateClosedCapacityByReference(reference, it.closedCapacity)
+        sessionTemplateRepository.updateOpenCapacityByReference(reference, it.openCapacity)
       }
 
       biWeekly?.let {

@@ -186,7 +186,8 @@ class SessionTemplateAdminController(
     ],
   )
   fun createSessionTemplate(
-    @RequestBody @Valid
+    @RequestBody
+    @Valid
     createSessionTemplateDto: CreateSessionTemplateDto,
   ): SessionTemplateDto {
     return sessionTemplateService.createSessionTemplate(createSessionTemplateDto)
