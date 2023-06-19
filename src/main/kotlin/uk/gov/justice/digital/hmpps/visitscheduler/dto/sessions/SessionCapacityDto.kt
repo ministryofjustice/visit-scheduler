@@ -1,13 +1,16 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.Min
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 
 @Schema(description = "Session Capacity")
 data class SessionCapacityDto(
   @Schema(description = "closed capacity", example = "10", required = true)
+  @field:Min(0)
   val closed: Int,
   @Schema(description = "open capacity", example = "50", required = true)
+  @field:Min(0)
   val open: Int,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(

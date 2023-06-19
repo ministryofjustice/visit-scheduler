@@ -1,40 +1,38 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
+import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
-import java.time.LocalDate
-import java.time.LocalTime
+import jakarta.validation.constraints.Size
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionCapacityValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeSlotValidation
 
 data class UpdateSessionTemplateDto(
-
   @Schema(description = "Name for Session template", example = "Monday Xmas", required = true)
   @field:NotBlank
+  @field:Size(max = 100)
   val name: String? = null,
 
-  @Schema(description = "The start time of the generated visit session(s)", example = "13:45", required = true)
-  val startTime: LocalTime? = null,
+  @JsonFormat(pattern = "HH:mm", shape = JsonFormat.Shape.STRING)
+  @Schema(description = "The start and end time of the generated visit session(s)", required = false)
+  @field:SessionTimeSlotValidation
+  val sessionTimeSlot: SessionTimeSlotDto?,
 
-  @Schema(description = "The end time of the generated visit session(s)", example = "13:45", required = true)
-  val endTime: LocalTime? = null,
+  @Schema(description = "The start and end date of the Validity period for the session template", required = false)
+  @field:SessionDateRangeValidation
+  val sessionDateRange: SessionDateRangeDto?,
 
-  @Schema(description = "The start of the Validity period for the session template", example = "2019-12-02", required = true)
-  @field:NotNull
-  val validFromDate: LocalDate? = null,
-
-  @Schema(description = "The end of the Validity period for the session template", example = "2019-12-02", required = false)
-  val validToDate: LocalDate? = null,
-
-  @Schema(description = "closed capacity", example = "10", required = true)
-  val closedCapacity: Int? = null,
-
-  @Schema(description = "open capacity", example = "50", required = true)
-  val openCapacity: Int? = null,
+  @Schema(description = "The open and closed capacity of the session template", required = false)
+  @field:SessionCapacityValidation
+  @field:Valid
+  val sessionCapacity: SessionCapacityDto?,
 
   @Schema(description = "list of group references for permitted session location groups", required = false)
   val locationGroupReferences: List<String>? = null,
 
-  @Schema(description = "biWeekly time table", example = "true", required = true)
+  @Schema(description = "biWeekly time table", example = "true", required = false)
   val biWeekly: Boolean? = null,
 
   @Schema(description = "list of group references for allowed prisoner category groups", required = false)
