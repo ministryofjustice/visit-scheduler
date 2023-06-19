@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSIO
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteSessionTemplateByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
@@ -62,5 +63,25 @@ class AdminDeleteSessionTemplateTest(
     Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp2Id)).isTrue
     Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionTemplate.id, sessionGroup1.id)).isFalse
     Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionTemplate.id, sessionGroup2.id)).isFalse
+  }
+
+  @Test
+  fun `cannot delete session template by reference with existing visits test`() {
+    // Given
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = sessionTemplate.reference)
+
+    val reference = sessionTemplate.reference
+    sessionTemplate.permittedSessionLocationGroups[0].id
+    sessionTemplate.permittedSessionLocationGroups[1].id
+
+    // When
+    val responseSpec = callDeleteSessionTemplateByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Validation failed")
+      .jsonPath("$.developerMessage").isEqualTo("Cannot delete session template $reference with existing visits!")
   }
 }
