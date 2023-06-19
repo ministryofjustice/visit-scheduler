@@ -62,6 +62,7 @@ workflows:
           filters:
             tags:
               ignore: /.*/
+          parallelism: 4
       - hmpps/helm_lint:
           name: helm_lint
       - hmpps/build_docker:
