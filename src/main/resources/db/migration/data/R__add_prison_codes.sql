@@ -42,7 +42,7 @@ INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-10-17' 
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-11-21' from prison where code = 'PNI';
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-12-12' from prison where code = 'PNI';
 
--- HMP Durham (PNI)
+-- HMP Durham (DMI)
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-06-22' from prison where code = 'DMI';
 
 -- HMP Wandsworth (WWI)
