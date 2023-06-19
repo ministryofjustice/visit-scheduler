@@ -7,6 +7,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateV
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.CreateIncentiveGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
@@ -15,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -164,5 +167,27 @@ fun updateCategoryGroupDto(
   return UpdateCategoryGroupDto(
     name = name,
     categories = type.toList(),
+  )
+}
+
+fun createIncentiveGroupDto(
+  name: String,
+  prisonCode: String,
+  vararg type: IncentiveLevel,
+): CreateIncentiveGroupDto {
+  return CreateIncentiveGroupDto(
+    name = name,
+    prisonCode = prisonCode,
+    incentiveLevels = type.toList(),
+  )
+}
+
+fun updateIncentiveGroupDto(
+  name: String,
+  vararg type: IncentiveLevel,
+): UpdateIncentiveGroupDto {
+  return UpdateIncentiveGroupDto(
+    name = name,
+    incentiveLevels = type.toList(),
   )
 }

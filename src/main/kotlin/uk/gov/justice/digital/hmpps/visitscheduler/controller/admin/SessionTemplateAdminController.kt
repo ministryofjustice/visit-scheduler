@@ -120,42 +120,6 @@ class SessionTemplateAdminController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH)
-  @Operation(
-    summary = "Delete session template by reference",
-    description = "Delete session template by reference",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Session templates deleted",
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to view session templates",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Session Template not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun deleteSessionTemplate(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable
-    reference: String,
-  ): ResponseEntity<String> {
-    sessionTemplateService.deleteSessionTemplates(reference)
-    return ResponseEntity.status(HttpStatus.OK).body("Session Template Deleted $reference!")
-  }
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(SESSION_TEMPLATE_PATH)
   @Operation(
     summary = "Create a session template",
@@ -236,5 +200,41 @@ class SessionTemplateAdminController(
     updateSessionTemplateDto: UpdateSessionTemplateDto,
   ): SessionTemplateDto {
     return sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH)
+  @Operation(
+    summary = "Delete session template by reference",
+    description = "Delete session template by reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session templates deleted",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to delete session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Session Template not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun deleteSessionTemplate(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+  ): ResponseEntity<String> {
+    sessionTemplateService.deleteSessionTemplates(reference)
+    return ResponseEntity.status(HttpStatus.OK).body("Session Template Deleted $reference!")
   }
 }
