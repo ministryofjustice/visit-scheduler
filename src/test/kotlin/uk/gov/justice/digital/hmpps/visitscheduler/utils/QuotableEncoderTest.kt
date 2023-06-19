@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Ignore
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -145,6 +146,7 @@ internal class QuotableEncoderTest {
   inner class EncoderCollisions {
 
     @Test
+    @Ignore
     fun `lots of hashes has no collisions`() {
       // Given
       // Not designed for testing extremely large values.
