@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGro
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.util.function.Supplier
 
 @Service
@@ -43,6 +44,7 @@ class SessionTemplateService(
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
+  private val visitRepository: VisitRepository,
   private val prisonConfigService: PrisonConfigService,
 ) {
 
@@ -216,6 +218,10 @@ class SessionTemplateService(
   }
 
   fun deleteSessionTemplates(reference: String) {
+    if (visitRepository.hasVisitsForSessionTemplate(reference)) {
+      throw VSiPValidationException("Cannot delete session template $reference with existing visits!")
+    }
+
     val deleted = sessionTemplateRepository.deleteByReference(reference)
     if (deleted == 0) {
       throw ItemNotFoundException("Session template not found : $reference")
