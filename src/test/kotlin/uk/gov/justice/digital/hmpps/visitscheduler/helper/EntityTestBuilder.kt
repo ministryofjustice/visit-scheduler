@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateCapacity
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateTime
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateValidDate
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
@@ -63,9 +63,9 @@ fun sessionTemplate(
 
 fun createSessionTemplateDto(
   name: String = "sessionTemplate_",
-  sessionTemplateValidDate: SessionTemplateValidDate = SessionTemplateValidDate(LocalDate.now().minusDays(1), null),
-  sessionTemplateCapacity: SessionTemplateCapacity = SessionTemplateCapacity(10, 5),
-  sessionTemplateTime: SessionTemplateTime = SessionTemplateTime(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
+  sessionDateRangeDto: SessionDateRangeDto = SessionDateRangeDto(LocalDate.now().minusDays(1), null),
+  sessionCapacity: SessionCapacityDto = SessionCapacityDto(closed = 10, open = 5),
+  sessionTimeSlotDto: SessionTimeSlotDto = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
   prisonCode: String = "MDI",
   visitRoom: String = "visitRoom",
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
@@ -77,9 +77,9 @@ fun createSessionTemplateDto(
   return CreateSessionTemplateDto(
     name = name + dayOfWeek,
     prisonCode = prisonCode,
-    sessionTemplateValidDate = sessionTemplateValidDate,
-    sessionTemplateCapacity = sessionTemplateCapacity,
-    sessionTemplateTime = sessionTemplateTime,
+    sessionDateRange = sessionDateRangeDto,
+    sessionCapacity = sessionCapacity,
+    sessionTimeSlot = sessionTimeSlotDto,
     visitRoom = visitRoom,
     dayOfWeek = dayOfWeek,
     locationGroupReferences = locationGroupReferences,
@@ -91,9 +91,9 @@ fun createSessionTemplateDto(
 
 fun createUpdateSessionTemplateDto(
   name: String? = "sessionTemplate_",
-  sessionTemplateValidDate: SessionTemplateValidDate? = SessionTemplateValidDate(LocalDate.now().minusDays(1), null),
-  sessionTemplateCapacity: SessionTemplateCapacity? = SessionTemplateCapacity(10, 5),
-  sessionTemplateTime: SessionTemplateTime? = SessionTemplateTime(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
+  sessionDateRangeDto: SessionDateRangeDto? = SessionDateRangeDto(LocalDate.now().minusDays(1), null),
+  sessionCapacity: SessionCapacityDto? = SessionCapacityDto(closed = 10, open = 5),
+  sessionTimeSlotDto: SessionTimeSlotDto? = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
   dayOfWeek: DayOfWeek? = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean? = false,
@@ -102,9 +102,9 @@ fun createUpdateSessionTemplateDto(
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
-    sessionTemplateValidDate = sessionTemplateValidDate,
-    sessionTemplateCapacity = sessionTemplateCapacity,
-    sessionTemplateTime = sessionTemplateTime,
+    sessionDateRange = sessionDateRangeDto,
+    sessionCapacity = sessionCapacity,
+    sessionTimeSlot = sessionTimeSlotDto,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
     categoryGroupReferences = categoryGroupReferences,

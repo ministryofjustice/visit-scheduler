@@ -9,8 +9,8 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionCapacityValidation
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeValidation
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionValidDateValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeSlotValidation
 import java.time.DayOfWeek
 
 data class CreateSessionTemplateDto(
@@ -27,13 +27,13 @@ data class CreateSessionTemplateDto(
 
   @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
   @Schema(description = "The start and end time of the generated visit session(s)", required = true)
-  @field:SessionTimeValidation
-  val sessionTemplateTime: SessionTemplateTime,
+  @field:SessionTimeSlotValidation
+  val sessionTimeSlot: SessionTimeSlotDto,
 
   @Schema(description = "The start and end date of the Validity period for the session template", required = true)
   @field:NotNull
-  @field:SessionValidDateValidation
-  val sessionTemplateValidDate: SessionTemplateValidDate,
+  @field:SessionDateRangeValidation
+  val sessionDateRange: SessionDateRangeDto,
 
   @Schema(description = "Visit Room", example = "Visits Main Hall", required = true)
   @field:NotBlank
@@ -43,7 +43,7 @@ data class CreateSessionTemplateDto(
   @Schema(description = "The open and closed capacity of the session template", required = true)
   @field:Valid
   @field:SessionCapacityValidation
-  val sessionTemplateCapacity: SessionTemplateCapacity,
+  val sessionCapacity: SessionCapacityDto,
 
   @Schema(description = "day of week fpr visit", example = "MONDAY", required = true)
   val dayOfWeek: DayOfWeek,

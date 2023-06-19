@@ -6,8 +6,8 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionCapacityValidation
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeValidation
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionValidDateValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeSlotValidation
 
 data class UpdateSessionTemplateDto(
   @Schema(description = "Name for Session template", example = "Monday Xmas", required = true)
@@ -17,17 +17,17 @@ data class UpdateSessionTemplateDto(
 
   @JsonFormat(pattern = "HH:mm", shape = JsonFormat.Shape.STRING)
   @Schema(description = "The start and end time of the generated visit session(s)", required = false)
-  @field:SessionTimeValidation
-  val sessionTemplateTime: SessionTemplateTime?,
+  @field:SessionTimeSlotValidation
+  val sessionTimeSlot: SessionTimeSlotDto?,
 
   @Schema(description = "The start and end date of the Validity period for the session template", required = false)
-  @field:SessionValidDateValidation
-  val sessionTemplateValidDate: SessionTemplateValidDate?,
+  @field:SessionDateRangeValidation
+  val sessionDateRange: SessionDateRangeDto?,
 
   @Schema(description = "The open and closed capacity of the session template", required = false)
   @field:SessionCapacityValidation
   @field:Valid
-  val sessionTemplateCapacity: SessionTemplateCapacity?,
+  val sessionCapacity: SessionCapacityDto?,
 
   @Schema(description = "list of group references for permitted session location groups", required = false)
   val locationGroupReferences: List<String>? = null,

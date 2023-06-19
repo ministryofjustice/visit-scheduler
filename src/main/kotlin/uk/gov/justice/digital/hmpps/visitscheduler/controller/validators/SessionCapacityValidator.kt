@@ -4,7 +4,7 @@ import jakarta.validation.Constraint
 import jakarta.validation.ConstraintValidator
 import jakarta.validation.ConstraintValidatorContext
 import jakarta.validation.Payload
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateCapacity
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import kotlin.reflect.KClass
 
 @Target(AnnotationTarget.FIELD)
@@ -16,11 +16,11 @@ annotation class SessionCapacityValidation(
   val payload: Array<KClass<out Payload>> = [],
 )
 
-class SessionCapacityValidator : ConstraintValidator<SessionCapacityValidation, SessionTemplateCapacity?> {
-  override fun isValid(sessionTemplateCapacity: SessionTemplateCapacity?, context: ConstraintValidatorContext?): Boolean {
+class SessionCapacityValidator : ConstraintValidator<SessionCapacityValidation, SessionCapacityDto?> {
+  override fun isValid(sessionCapacity: SessionCapacityDto?, context: ConstraintValidatorContext?): Boolean {
     // open or closed capacity needs to be greater than 0
-    sessionTemplateCapacity?.let {
-      return (sessionTemplateCapacity.openCapacity > 0 || sessionTemplateCapacity.closedCapacity > 0)
+    sessionCapacity?.let {
+      return (sessionCapacity.open > 0 || sessionCapacity.closed > 0)
     }
 
     return true

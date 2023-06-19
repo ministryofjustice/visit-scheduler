@@ -1,14 +1,15 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions
+import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateCapacity
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateTime
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateValidDate
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateSessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createSessionTemplateDto
@@ -44,7 +45,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val sessionIncentiveGroup = sessionPrisonerIncentiveLevelHelper.create(prisonCode = prison.code, incentiveLevelList = enhancedIncentives)
 
     val dto = createSessionTemplateDto(
-      sessionTemplateValidDate = SessionTemplateValidDate(LocalDate.now().plusDays(1), null),
+      sessionDateRangeDto = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
       locationGroupReferences = mutableListOf(sessionLocationGroup.reference, sessionLocationGroup.reference),
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
       incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
@@ -58,14 +59,14 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
-    Assertions.assertThat(sessionTemplateDto.validFromDate).isEqualTo(dto.sessionTemplateValidDate.validFromDate)
-    Assertions.assertThat(sessionTemplateDto.validToDate).isEqualTo(dto.sessionTemplateValidDate.validToDate)
-    Assertions.assertThat(sessionTemplateDto.closedCapacity).isEqualTo(dto.sessionTemplateCapacity.closedCapacity)
-    Assertions.assertThat(sessionTemplateDto.openCapacity).isEqualTo(dto.sessionTemplateCapacity.openCapacity)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange.validToDate)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.closed).isEqualTo(dto.sessionCapacity.closed)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.open).isEqualTo(dto.sessionCapacity.open)
     Assertions.assertThat(sessionTemplateDto.prisonCode).isEqualTo(dto.prisonCode)
     Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(dto.visitRoom)
-    Assertions.assertThat(sessionTemplateDto.startTime).isEqualTo(dto.sessionTemplateTime.startTime)
-    Assertions.assertThat(sessionTemplateDto.endTime).isEqualTo(dto.sessionTemplateTime.endTime)
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.startTime).isEqualTo(dto.sessionTimeSlot.startTime)
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.endTime).isEqualTo(dto.sessionTimeSlot.endTime)
     Assertions.assertThat(sessionTemplateDto.dayOfWeek).isEqualTo(dto.dayOfWeek)
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups[0].reference).isEqualTo(dto.locationGroupReferences!![0])
@@ -110,7 +111,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
   fun `when session template end time is less than start time then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createSessionTemplateDto(
-      sessionTemplateTime = SessionTemplateTime(LocalTime.of(9, 0), LocalTime.of(8, 0)),
+      sessionTimeSlotDto = SessionTimeSlotDto(LocalTime.of(9, 0), LocalTime.of(8, 0)),
     )
 
     // When
@@ -118,13 +119,15 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.containsString("Session end time should be greater than start time"))
   }
 
   @Test
   fun `when session template end time is same as start time then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createSessionTemplateDto(
-      sessionTemplateTime = SessionTemplateTime(LocalTime.of(9, 0), LocalTime.of(9, 0)),
+      sessionTimeSlotDto = SessionTimeSlotDto(LocalTime.of(9, 0), LocalTime.of(9, 0)),
     )
 
     // When
@@ -132,13 +135,15 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.containsString("Session end time should be greater than start time"))
   }
 
   @Test
   fun `when session template end time is greater than start time then session template is created`() {
     // Given
     val dto = createSessionTemplateDto(
-      sessionTemplateTime = SessionTemplateTime(LocalTime.of(9, 0), LocalTime.of(9, 1)),
+      sessionTimeSlotDto = SessionTimeSlotDto(LocalTime.of(9, 0), LocalTime.of(9, 1)),
     )
 
     // When
@@ -155,7 +160,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val validToDate = LocalDate.of(2022, 12, 31)
 
     val dto = createSessionTemplateDto(
-      sessionTemplateValidDate = SessionTemplateValidDate(validFromDate, validToDate),
+      sessionDateRangeDto = SessionDateRangeDto(validFromDate, validToDate),
     )
 
     // When
@@ -163,6 +168,8 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.containsString("Session valid to date cannot be less than valid from date"))
   }
 
   @Test
@@ -172,7 +179,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val validToDate = LocalDate.of(2023, 1, 1)
 
     val dto = createSessionTemplateDto(
-      sessionTemplateValidDate = SessionTemplateValidDate(validFromDate, validToDate),
+      sessionDateRangeDto = SessionDateRangeDto(validFromDate, validToDate),
     )
 
     // When
@@ -188,7 +195,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val validFromDate = LocalDate.of(2023, 1, 1)
     val validToDate = LocalDate.of(2023, 1, 31)
     val dto = createSessionTemplateDto(
-      sessionTemplateValidDate = SessionTemplateValidDate(validFromDate, validToDate),
+      sessionDateRangeDto = SessionDateRangeDto(validFromDate, validToDate),
     )
 
     // When
@@ -205,7 +212,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val validToDate = null
 
     val dto = createSessionTemplateDto(
-      sessionTemplateValidDate = SessionTemplateValidDate(validFromDate, validToDate),
+      sessionDateRangeDto = SessionDateRangeDto(validFromDate, validToDate),
     )
 
     // When
@@ -222,7 +229,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val closedCapacity = 0
 
     val dto = createSessionTemplateDto(
-      sessionTemplateCapacity = SessionTemplateCapacity(openCapacity, closedCapacity),
+      sessionCapacity = SessionCapacityDto(open = openCapacity, closed = closedCapacity),
     )
 
     // When
@@ -230,6 +237,8 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.containsString("Either open capacity or closed capacity should be greater than 0"))
   }
 
   @Test
@@ -239,7 +248,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val closedCapacity = 10
 
     val dto = createSessionTemplateDto(
-      sessionTemplateCapacity = SessionTemplateCapacity(openCapacity, closedCapacity),
+      sessionCapacity = SessionCapacityDto(open = openCapacity, closed = closedCapacity),
     )
 
     // When
@@ -256,7 +265,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val closedCapacity = -1
 
     val dto = createSessionTemplateDto(
-      sessionTemplateCapacity = SessionTemplateCapacity(openCapacity, closedCapacity),
+      sessionCapacity = SessionCapacityDto(open = openCapacity, closed = closedCapacity),
     )
 
     // When
@@ -273,7 +282,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val closedCapacity = 0
 
     val dto = createSessionTemplateDto(
-      sessionTemplateCapacity = SessionTemplateCapacity(openCapacity, closedCapacity),
+      sessionCapacity = SessionCapacityDto(open = openCapacity, closed = closedCapacity),
     )
 
     // When
@@ -289,7 +298,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val openCapacity = 0
     val closedCapacity = 3
     val dto = createSessionTemplateDto(
-      sessionTemplateCapacity = SessionTemplateCapacity(openCapacity, closedCapacity),
+      sessionCapacity = SessionCapacityDto(open = openCapacity, closed = closedCapacity),
     )
 
     // When

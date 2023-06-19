@@ -181,12 +181,12 @@ class AdminGetSessionTemplateTest(
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(sessionTemplate.name)
     Assertions.assertThat(sessionTemplateDto.reference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(sessionTemplateDto.prisonCode).isEqualTo(sessionTemplate.prison.code)
-    Assertions.assertThat(sessionTemplateDto.startTime).isEqualTo(sessionTemplate.startTime)
-    Assertions.assertThat(sessionTemplateDto.endTime).isEqualTo(sessionTemplate.endTime)
-    Assertions.assertThat(sessionTemplateDto.validFromDate).isEqualTo(LocalDate.now().format(DateTimeFormatter.ISO_DATE))
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.startTime).isEqualTo(sessionTemplate.startTime)
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.endTime).isEqualTo(sessionTemplate.endTime)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(LocalDate.now().format(DateTimeFormatter.ISO_DATE))
     Assertions.assertThat(sessionTemplateDto.visitType).isEqualTo(VisitType.SOCIAL)
     Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(sessionTemplate.visitRoom)
-    Assertions.assertThat(sessionTemplateDto.closedCapacity).isEqualTo(sessionTemplate.closedCapacity)
-    Assertions.assertThat(sessionTemplateDto.openCapacity).isEqualTo(sessionTemplate.openCapacity)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.closed).isEqualTo(sessionTemplate.closedCapacity)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.open).isEqualTo(sessionTemplate.openCapacity)
   }
 }
