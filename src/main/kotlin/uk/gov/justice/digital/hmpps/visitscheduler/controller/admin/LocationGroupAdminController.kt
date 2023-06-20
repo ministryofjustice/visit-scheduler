@@ -1,13 +1,11 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
 import io.swagger.v3.oas.annotations.Operation
-import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
@@ -20,37 +18,36 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
-import java.time.DayOfWeek
-import java.time.LocalDate
 
-const val SESSION_TEMPLATES_PATH: String = "/visit-session-templates"
-const val SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATES_PATH/template"
-const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}"
+const val ADMIN_LOCATION_GROUPS_ADMIN_PATH: String = "/admin/location-groups"
+const val PRISON_LOCATION_GROUPS_ADMIN_PATH: String = "$ADMIN_LOCATION_GROUPS_ADMIN_PATH/{prisonCode}"
+const val LOCATION_GROUP_ADMIN_PATH: String = "$ADMIN_LOCATION_GROUPS_ADMIN_PATH/group"
+const val REFERENCE_LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUP_ADMIN_PATH/{reference}"
 
 @RestController
 @Validated
-@RequestMapping(name = "Session Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
-@Tag(name = "4. Session admin rest controller")
-class VisitSessionAdminController(
+@Tag(name = "7. Location group admin rest controller")
+@RequestMapping(name = "Location group resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+class LocationGroupAdminController(
   private val sessionTemplateService: SessionTemplateService,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @GetMapping(SESSION_TEMPLATES_PATH)
+  @GetMapping(PRISON_LOCATION_GROUPS_ADMIN_PATH)
   @Operation(
-    summary = "Get session templates",
-    description = "Get session templates by given parameters",
+    summary = "Get location groups",
+    description = "Get all location groups for given prison",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Session templates returned",
+        description = "Location groups returned for given prison",
       ),
       ApiResponse(
         responseCode = "401",
@@ -64,46 +61,24 @@ class VisitSessionAdminController(
       ),
     ],
   )
-  fun getSessionTemplates(
-    @RequestParam(value = "prisonCode", required = true)
-    @Parameter(
-      description = "Filter results by prison id/code",
-      example = "MDI",
-    )
+  fun getLocationGroups(
+    @Schema(description = "prisonCode", example = "MDI", required = true)
+    @PathVariable
     prisonCode: String,
-    @RequestParam(value = "dayOfWeek", required = false)
-    @Parameter(
-      description = "Filter results by day of week",
-      example = "MONDAY",
-    )
-    dayOfWeek: DayOfWeek?,
-    @RequestParam(value = "validFrom", required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @Parameter(
-      description = "Filter results by that when the session template is valid from",
-      example = "2021-11-03",
-    )
-    rangeStartDate: LocalDate?,
-    @RequestParam(value = "validTo", required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
-    @Parameter(
-      description = "Filter results by that when the session template is valid to",
-      example = "2021-11-03",
-    )
-    rangeEndDate: LocalDate?,
-  ): List<SessionTemplateDto> {
-    return sessionTemplateService.getSessionTemplates(prisonCode, dayOfWeek, rangeStartDate, rangeEndDate)
+  ): List<SessionLocationGroupDto> {
+    return sessionTemplateService.getSessionLocationGroups(prisonCode)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @GetMapping(REFERENCE_SESSION_TEMPLATE_PATH)
+  @GetMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
+  @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "Get session template",
-    description = "Get session template by reference",
+    summary = "Get location group",
+    description = "Get location group by reference",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Session templates returned",
+        description = "Location groups returned for given prison",
       ),
       ApiResponse(
         responseCode = "401",
@@ -117,24 +92,62 @@ class VisitSessionAdminController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Session Template not found",
+        description = "Location group not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  fun getSessionTemplate(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+  fun getLocationGroup(
+    @Schema(description = "reference", example = "afe~dcb~fc", required = true)
     @PathVariable
     reference: String,
-  ): SessionTemplateDto {
-    return sessionTemplateService.getSessionTemplates(reference)
+  ): SessionLocationGroupDto {
+    return sessionTemplateService.getSessionLocationGroup(reference)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH)
+  @PostMapping(LOCATION_GROUP_ADMIN_PATH)
   @Operation(
-    summary = "Delete session template by reference",
-    description = "Delete session template by reference",
+    summary = "Create location group",
+    description = "Create location group",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = SessionLocationGroupDto::class),
+        ),
+      ],
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Created location group",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to create location group",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun createLocationGroup(
+    @RequestBody
+    @Valid
+    createLocationSessionGroup: CreateLocationGroupDto,
+  ): SessionLocationGroupDto {
+    return sessionTemplateService.createSessionLocationGroup(createLocationSessionGroup)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @DeleteMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
+  @Operation(
+    summary = "Delete location group",
+    description = "Delete location group by reference",
     responses = [
       ApiResponse(
         responseCode = "200",
@@ -152,37 +165,37 @@ class VisitSessionAdminController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Session Template not found",
+        description = "Session location group not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  fun deleteSessionTemplate(
+  fun deleteSessionLocationGroup(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
     reference: String,
   ): ResponseEntity<String> {
-    sessionTemplateService.deleteSessionTemplates(reference)
-    return ResponseEntity.status(HttpStatus.OK).body("Session Template Deleted $reference!")
+    sessionTemplateService.deleteSessionLocationGroup(reference)
+    return ResponseEntity.status(HttpStatus.OK).body("Session location group Deleted $reference!")
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @PostMapping(SESSION_TEMPLATE_PATH)
+  @PutMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
   @Operation(
-    summary = "Create a session template",
-    description = "Create a session templates",
+    summary = "Update location group",
+    description = "Update existing location group by reference",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = CreateSessionTemplateDto::class),
+          schema = Schema(implementation = SessionLocationGroupDto::class),
         ),
       ],
     ),
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Session templates created",
+        description = "Updated location group",
       ),
       ApiResponse(
         responseCode = "401",
@@ -191,60 +204,23 @@ class VisitSessionAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to create session templates",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun createSessionTemplate(
-    @RequestBody @Valid
-    createSessionTemplateDto: CreateSessionTemplateDto,
-  ): SessionTemplateDto {
-    return sessionTemplateService.createSessionTemplate(createSessionTemplateDto)
-  }
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @PutMapping(REFERENCE_SESSION_TEMPLATE_PATH)
-  @Operation(
-    summary = "Update a session template",
-    description = "Update a session templates",
-    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
-      content = [
-        Content(
-          mediaType = "application/json",
-          schema = Schema(implementation = UpdateSessionTemplateDto::class),
-        ),
-      ],
-    ),
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Session templates updated",
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to update session templates",
+        description = "Incorrect permissions to update location group",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Session Template not found",
+        description = "Location group not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  fun updateSessionTemplate(
+  fun updateLocationGroup(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    updateSessionTemplateDto: UpdateSessionTemplateDto,
-  ): SessionTemplateDto {
-    return sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto)
+    updateLocationSessionGroup: UpdateLocationGroupDto,
+  ): SessionLocationGroupDto {
+    return sessionTemplateService.updateSessionLocationGroup(reference, updateLocationSessionGroup)
   }
 }

@@ -150,16 +150,19 @@ internal class QuotableEncoderTest {
       // Not designed for testing extremely large values.
       val encoder = QuotableEncoder(minLength = 8)
 
-      val hashes = mutableListOf<String>()
-      for (n in 0..100000) {
-        // When
-        val hash = encoder.encode(n.toLong())
-        hashes.add(hash)
-      }
+      var count = 0
+      for (chunkLoop in 0..1000) {
+        val hashes = mutableListOf<String>()
+        for (n in 0..10000) {
+          // When
+          hashes.add(encoder.encode(count.toLong()))
+          count++
+        }
 
-      // Then
-      val collisions = hashes.groupingBy { it }.eachCount().filter { it.value > 1 }
-      assert(collisions.isEmpty())
+        // Then
+        val collisions = hashes.groupingBy { it }.eachCount().filter { it.value > 1 }
+        assert(collisions.isEmpty())
+      }
     }
   }
 }

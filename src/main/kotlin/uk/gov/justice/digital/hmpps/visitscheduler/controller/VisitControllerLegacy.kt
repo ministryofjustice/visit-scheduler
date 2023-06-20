@@ -25,7 +25,7 @@ import kotlin.DeprecationLevel.WARNING
 @Suppress("KotlinDeprecation")
 @RestController
 @Validated
-@Tag(name = "8. Legacy rest controller")
+@Tag(name = "9. Legacy rest controller")
 @RequestMapping(name = "Visit Resource Legacy", path = ["/visits"], produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitControllerLegacy(
   private val visitService: VisitService,
