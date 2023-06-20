@@ -405,7 +405,7 @@ class SessionPrisonerIncentiveLevelHelper(
     for (prisonerIncentiveLevel in incentiveLevelList) {
       val permittedIncentiveLevelGroup =
         SessionPrisonerIncentiveLevel(
-          sessionCategoryGroupId = group.id,
+          sessionIncentiveGroupId = group.id,
           sessionIncentiveLevelGroup = group,
           prisonerIncentiveLevel = prisonerIncentiveLevel,
         )

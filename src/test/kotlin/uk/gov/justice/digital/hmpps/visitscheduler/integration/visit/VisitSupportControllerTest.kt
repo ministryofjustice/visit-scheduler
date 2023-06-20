@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.junit.jupiter.api.AfterEach
@@ -13,9 +13,11 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.cache.CacheManager
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SUPPORT_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 
-@DisplayName("Get /visit-support")
+@DisplayName("Get $VISIT_SUPPORT_PATH")
 class VisitSupportControllerTest : IntegrationTestBase() {
 
   @SpyBean
@@ -39,7 +41,7 @@ class VisitSupportControllerTest : IntegrationTestBase() {
     val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-support")
+    val responseSpec = webTestClient.get().uri(VISIT_SUPPORT_PATH)
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -57,7 +59,7 @@ class VisitSupportControllerTest : IntegrationTestBase() {
     val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
     // When
-    var responseSpec = webTestClient.get().uri("/visit-support")
+    var responseSpec = webTestClient.get().uri(VISIT_SUPPORT_PATH)
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -87,7 +89,7 @@ class VisitSupportControllerTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = webTestClient.get().uri("/visit-support")
+    val responseSpec = webTestClient.get().uri(VISIT_SUPPORT_PATH)
       .headers(setAuthorisation(roles = emptyRoles))
       .exchange()
 
@@ -100,7 +102,7 @@ class VisitSupportControllerTest : IntegrationTestBase() {
   fun `unauthorised when no token`() {
     // Given
     // When
-    val responseSpec = webTestClient.get().uri("/visit-support")
+    val responseSpec = webTestClient.get().uri(VISIT_SUPPORT_PATH)
       .exchange()
 
     // Then

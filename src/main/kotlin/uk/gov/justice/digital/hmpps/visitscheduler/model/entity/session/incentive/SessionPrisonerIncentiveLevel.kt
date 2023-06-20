@@ -21,7 +21,7 @@ import java.time.LocalDateTime
 class SessionPrisonerIncentiveLevel(
 
   @Column(name = "SESSION_INCENTIVE_GROUP_ID", nullable = false)
-  val sessionCategoryGroupId: Long,
+  val sessionIncentiveGroupId: Long,
 
   @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.DETACH])
   @JoinColumn(name = "SESSION_INCENTIVE_GROUP_ID", updatable = false, insertable = false)

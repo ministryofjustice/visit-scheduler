@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller
 
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.media.ArraySchema
 import io.swagger.v3.oas.annotations.media.Content
+import io.swagger.v3.oas.annotations.media.ExampleObject
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
@@ -12,28 +14,36 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SupportTypeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SupportService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
 
-const val VISIT_SUPPORT_PATH: String = "/visit-support"
+const val PRISONS_PATH: String = "/config/prisons/supported"
 
 @RestController
 @Validated
-@RequestMapping(name = "Support Resource", path = [VISIT_SUPPORT_PATH], produces = [MediaType.APPLICATION_JSON_VALUE])
-@Tag(name = "3. Visit support rest controller")
-class VisitSupportController(
-  private val supportService: SupportService,
+@Tag(name = "4. Visit prisons rest controller")
+@RequestMapping(name = "Visit Prisons Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+class VisitPrisonsController(
+  private val prisonConfigService: PrisonConfigService,
 ) {
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG')")
+  @GetMapping(PRISONS_PATH)
   @Operation(
-    summary = "Available Support",
-    description = "Retrieve all available support types",
+    summary = "Get supported prisons",
+    description = "Get all supported prisons id's",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Available Support information returned",
+        description = "Supported prisons returned",
+        content = [
+          Content(
+            mediaType = "application/json",
+            array = ArraySchema(schema = Schema(implementation = String::class)),
+            examples = [
+              ExampleObject(value = "[\"HEI\", \"MDI\"]"),
+            ],
+          ),
+        ],
       ),
       ApiResponse(
         responseCode = "401",
@@ -41,11 +51,13 @@ class VisitSupportController(
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
-        responseCode = "400",
-        description = "Incorrect request to Get Available Support",
+        responseCode = "403",
+        description = "Incorrect permissions to get supported prisons",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  fun getSupportTypes(): List<SupportTypeDto> = supportService.getSupportTypes()
+  fun getSupportedPrisons(): List<String> {
+    return prisonConfigService.getSupportedPrisons()
+  }
 }

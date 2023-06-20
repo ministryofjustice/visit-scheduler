@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.controller.migration
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -28,7 +28,7 @@ const val MIGRATE_CANCEL: String = "$MIGRATE_VISITS/{reference}/cancel"
 
 @RestController
 @Validated
-@Tag(name = "7. Visit migration rest controller")
+@Tag(name = "10. Visit migration rest controller")
 @RequestMapping(name = "Visit Migration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class MigrateController(
   private val migrateVisitService: MigrateVisitService,

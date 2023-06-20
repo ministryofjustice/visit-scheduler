@@ -1,76 +1,31 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.config
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.jupiter.api.AfterEach
-import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
-import org.springframework.cache.CacheManager
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.ACTIVATE_PRISON
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.DEACTIVATE_PRISON
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISONS_CONFIG_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_CONFIG_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SUPPORTED_PRISONS
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_PRISONS_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
 
-@DisplayName("Get $SUPPORTED_PRISONS")
-class GetPrisonsTest : IntegrationTestBase() {
+@DisplayName("Admin $ADMIN_PRISONS_PATH")
+class AdminPrisonsTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var prisonRepository: PrisonRepository
 
-  @Autowired
-  private lateinit var cacheManager: CacheManager
-
-  private val visitRole = listOf("ROLE_VISIT_SCHEDULER")
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
-
-  @BeforeEach
-  @AfterEach
-  fun cleanTests() {
-    cacheManager.getCache("supported-prisons")?.clear()
-    deleteEntityHelper.deleteAll()
-  }
-
-  @Test
-  fun `get supported prisons are returned in correct order`() {
-    // Given
-    prisonEntityHelper.create(prisonCode = "AWE")
-    prisonEntityHelper.create(prisonCode = "GRE")
-    prisonEntityHelper.create(prisonCode = "CDE")
-    prisonEntityHelper.create(prisonCode = "BDE")
-    prisonEntityHelper.create(prisonCode = "WDE")
-
-    // When
-    val responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
-      .headers(setAuthorisation(roles = visitRole))
-      .exchange()
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val results = getSupportedPrisonsResults(returnResult)
-
-    assertThat(results.size).isEqualTo(5)
-    assertThat(results[0]).isEqualTo("AWE")
-    assertThat(results[1]).isEqualTo("BDE")
-    assertThat(results[2]).isEqualTo("CDE")
-    assertThat(results[3]).isEqualTo("GRE")
-    assertThat(results[4]).isEqualTo("WDE")
-
-    verify(prisonRepository, times(1)).getSupportedPrisons()
-  }
 
   @Test
   fun `get all prisons are returned in correct order`() {
@@ -82,7 +37,7 @@ class GetPrisonsTest : IntegrationTestBase() {
     prisonEntityHelper.create(prisonCode = "WDE")
 
     // When
-    val responseSpec = webTestClient.get().uri(PRISONS_CONFIG_PATH)
+    val responseSpec = webTestClient.get().uri(ADMIN_PRISONS_PATH)
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 
@@ -165,7 +120,7 @@ class GetPrisonsTest : IntegrationTestBase() {
     val prisonDto = PrisonDto("AWE", true, sortedSetOf(excludeDate))
 
     // When
-    val responseSpec = webTestClient.post().uri(PRISON_CONFIG_PATH.replace("{prisonCode}", "AWE"))
+    val responseSpec = webTestClient.post().uri(PRISON_ADMIN_PATH.replace("{prisonCode}", "AWE"))
       .headers(setAuthorisation(roles = adminRole))
       .body(BodyInserters.fromValue(prisonDto))
       .exchange()
@@ -195,7 +150,7 @@ class GetPrisonsTest : IntegrationTestBase() {
     val prisonDto = PrisonDto("AWE", true, sortedSetOf(excludeDate))
 
     // When
-    val responseSpec = webTestClient.post().uri(PRISON_CONFIG_PATH.replace("{prisonCode}", "AWE"))
+    val responseSpec = webTestClient.post().uri(PRISON_ADMIN_PATH.replace("{prisonCode}", "AWE"))
       .headers(setAuthorisation(roles = adminRole))
       .body(BodyInserters.fromValue(prisonDto))
       .exchange()
@@ -226,64 +181,6 @@ class GetPrisonsTest : IntegrationTestBase() {
     assertThat(results.code).isEqualTo("AWE")
     assertThat(results.active).isTrue()
     assertThat(results.excludeDates).contains(excludeDate)
-  }
-
-  @Test
-  fun `when supported prisons is called twice cached values are returned the second time`() {
-    // Given
-    prisonEntityHelper.create(prisonCode = "AWE")
-    prisonEntityHelper.create(prisonCode = "GRE")
-    prisonEntityHelper.create(prisonCode = "CDE")
-    prisonEntityHelper.create(prisonCode = "BDE")
-    prisonEntityHelper.create(prisonCode = "WDE")
-
-    // When
-    var responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
-      .headers(setAuthorisation(roles = adminRole))
-      .exchange()
-
-    // Then
-    var returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    var results = getSupportedPrisonsResults(returnResult)
-
-    assertThat(results.size).isEqualTo(5)
-
-    // When a call to supported prisons is made a 2nd time same values are returned but from cache
-    responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
-      .headers(setAuthorisation(roles = adminRole))
-      .exchange()
-
-    // Then
-    returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    results = getSupportedPrisonsResults(returnResult)
-    assertThat(results.size).isEqualTo(5)
-    verify(prisonRepository, times(1)).getSupportedPrisons()
-  }
-
-  @Test
-  fun `sessions with inactive prisons are not returned`() {
-    // Given
-    prisonEntityHelper.create(prisonCode = "GRE", activePrison = false)
-    prisonEntityHelper.create(prisonCode = "CDE", activePrison = false)
-
-    // When
-    val responseSpec = webTestClient.get().uri(SUPPORTED_PRISONS)
-      .headers(setAuthorisation(roles = adminRole))
-      .exchange()
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val results = getSupportedPrisonsResults(returnResult)
-
-    assertThat(results.size).isEqualTo(0)
-    verify(prisonRepository, times(1)).getSupportedPrisons()
-  }
-
-  private fun getSupportedPrisonsResults(returnResult: BodyContentSpec): Array<String> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<String>::class.java)
   }
 
   private fun getPrisonResults(returnResult: BodyContentSpec): PrisonDto {

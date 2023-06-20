@@ -4,29 +4,39 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.LOCATION_GROUP_ADMIN_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.MIGRATE_CANCEL
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_CONFIG_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISON_LOCATION_GROUPS_ADMIN_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_LOCATION_GROUP_ADMIN_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.REFERENCE_SESSION_TEMPLATE_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.REMOVE_PRISON_EXCLUDE_DATE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_CATEGORY_GROUPS_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_INCENTIVE_GROUPS_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_LOCATION_GROUPS_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_CATEGORY_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_INCENTIVE_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LOCATION_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.CreateIncentiveGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import java.time.LocalDate
@@ -229,6 +239,128 @@ fun callDeleteGroupByReference(
   )
 }
 
+fun callGetCategoryGroupsByPrisonId(
+  webTestClient: WebTestClient,
+  prisonCode: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getPrisonIdUrl(PRISON_CATEGORY_GROUPS_ADMIN_PATH, prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callGetCategoryGroupByReference(
+  webTestClient: WebTestClient,
+  reference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getReferenceUrl(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, reference),
+    authHttpHeaders,
+  )
+}
+
+fun callDeleteCategoryGroupByReference(
+  webTestClient: WebTestClient,
+  prisonCode: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callDelete(
+    webTestClient,
+    getReferenceUrl(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callCreateCategorySessionGroupByReference(
+  webTestClient: WebTestClient,
+  dto: CreateCategoryGroupDto,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPost(
+    dto,
+    webTestClient,
+    CATEGORY_GROUP_ADMIN_PATH,
+    authHttpHeaders,
+  )
+}
+
+fun callUpdateCategoryGroupByReference(
+  webTestClient: WebTestClient,
+  reference: String,
+  dto: UpdateCategoryGroupDto,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPut(
+    dto,
+    webTestClient,
+    getReferenceUrl(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, reference),
+    authHttpHeaders,
+  )
+}
+
+fun callGetIncentiveGroupsByPrisonId(webTestClient: WebTestClient, prisonCode: String, authHttpHeaders: (HttpHeaders) -> Unit): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getPrisonIdUrl(PRISON_INCENTIVE_GROUPS_ADMIN_PATH, prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callGetIncentiveGroupByReference(
+  webTestClient: WebTestClient,
+  reference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getReferenceUrl(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH, reference),
+    authHttpHeaders,
+  )
+}
+
+fun callDeleteIncentiveGroupByReference(
+  webTestClient: WebTestClient,
+  prisonCode: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callDelete(
+    webTestClient,
+    getReferenceUrl(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH, prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callCreateIncentiveSessionGroupByReference(
+  webTestClient: WebTestClient,
+  dto: CreateIncentiveGroupDto,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPost(
+    dto,
+    webTestClient,
+    INCENTIVE_GROUP_ADMIN_PATH,
+    authHttpHeaders,
+  )
+}
+
+fun callUpdateIncentiveGroupByReference(
+  webTestClient: WebTestClient,
+  reference: String,
+  dto: UpdateIncentiveGroupDto,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPut(
+    dto,
+    webTestClient,
+    getReferenceUrl(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH, reference),
+    authHttpHeaders,
+  )
+}
+
 fun callDeleteSessionTemplateByReference(
   webTestClient: WebTestClient,
   prisonCode: String,
@@ -280,7 +412,7 @@ fun getSessionLocationGroupByReferenceUrl(reference: String): String {
 }
 
 fun getCreatePrisonUrl(): String {
-  return PRISON_CONFIG_PATH
+  return PRISON_ADMIN_PATH
 }
 
 fun getGetPrisonUrl(prisonCode: String): String {

@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.controller
+package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -21,33 +21,33 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.CreateIncentiveGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 
-const val LOCATION_GROUPS_ADMIN_PATH: String = "/location-groups"
-const val PRISON_LOCATION_GROUPS_ADMIN_PATH: String = "$LOCATION_GROUPS_ADMIN_PATH/{prisonCode}"
-const val LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUPS_ADMIN_PATH/group"
-const val REFERENCE_LOCATION_GROUP_ADMIN_PATH: String = "$LOCATION_GROUP_ADMIN_PATH/{reference}"
+const val ADMIN_INCENTIVE_GROUPS_ADMIN_PATH: String = "/admin/incentive-groups"
+const val PRISON_INCENTIVE_GROUPS_ADMIN_PATH: String = "$ADMIN_INCENTIVE_GROUPS_ADMIN_PATH/{prisonCode}"
+const val INCENTIVE_GROUP_ADMIN_PATH: String = "$ADMIN_INCENTIVE_GROUPS_ADMIN_PATH/group"
+const val REFERENCE_INCENTIVE_GROUP_ADMIN_PATH: String = "$INCENTIVE_GROUP_ADMIN_PATH/{reference}"
 
 @RestController
 @Validated
-@Tag(name = "5. Location group admin rest controller")
-@RequestMapping(name = "Location group resource", produces = [MediaType.APPLICATION_JSON_VALUE])
-class LocationGroupAdminController(
+@Tag(name = "9. Incentive group admin rest controller")
+@RequestMapping(name = "Incentive group resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+class PrisonerIncentiveGroupsAdminController(
   private val sessionTemplateService: SessionTemplateService,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @GetMapping(PRISON_LOCATION_GROUPS_ADMIN_PATH)
+  @GetMapping(PRISON_INCENTIVE_GROUPS_ADMIN_PATH)
   @Operation(
-    summary = "Get location groups",
-    description = "Get all location groups for given prison",
+    summary = "Get incentive groups",
+    description = "Get all incentive groups for given prison",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Location groups returned for given prison",
+        description = "Incentive groups returned for given prison",
       ),
       ApiResponse(
         responseCode = "401",
@@ -56,29 +56,29 @@ class LocationGroupAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to view incentive groups",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  fun getLocationGroups(
+  fun getIncentiveGroups(
     @Schema(description = "prisonCode", example = "MDI", required = true)
     @PathVariable
     prisonCode: String,
-  ): List<SessionLocationGroupDto> {
-    return sessionTemplateService.getSessionLocationGroup(prisonCode)
+  ): List<SessionIncentiveLevelGroupDto> {
+    return sessionTemplateService.getSessionIncentiveGroups(prisonCode)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @GetMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
+  @GetMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "Get location group",
-    description = "Get location group by reference",
+    summary = "Get incentive group",
+    description = "Get incentive group by reference",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Location groups returned for given prison",
+        description = "Incentive group returned for given reference",
       ),
       ApiResponse(
         responseCode = "401",
@@ -87,41 +87,33 @@ class LocationGroupAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to view incentive group",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Location group not found",
+        description = "Incentive group not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  fun getLocationGroup(
+  fun getIncentiveGroup(
     @Schema(description = "reference", example = "afe~dcb~fc", required = true)
     @PathVariable
     reference: String,
-  ): SessionLocationGroupDto {
-    return sessionTemplateService.getSessionLocationGroupByReference(reference)
+  ): SessionIncentiveLevelGroupDto {
+    return sessionTemplateService.getSessionIncentiveGroup(reference)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @PostMapping(LOCATION_GROUP_ADMIN_PATH)
+  @PostMapping(INCENTIVE_GROUP_ADMIN_PATH)
   @Operation(
-    summary = "Create location group",
-    description = "Create location group",
-    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
-      content = [
-        Content(
-          mediaType = "application/json",
-          schema = Schema(implementation = SessionLocationGroupDto::class),
-        ),
-      ],
-    ),
+    summary = "Create incentive group",
+    description = "Create incentive group",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Created location group",
+        description = "Created incentive group",
       ),
       ApiResponse(
         responseCode = "401",
@@ -130,28 +122,28 @@ class LocationGroupAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to create location group",
+        description = "Incorrect permissions to create incentive group",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  fun createLocationGroup(
+  fun createIncentiveGroup(
     @RequestBody
     @Valid
-    createLocationSessionGroup: CreateLocationGroupDto,
-  ): SessionLocationGroupDto {
-    return sessionTemplateService.createSessionLocationGroup(createLocationSessionGroup)
+    createIncentiveSessionGroup: CreateIncentiveGroupDto,
+  ): SessionIncentiveLevelGroupDto {
+    return sessionTemplateService.createSessionIncentiveGroup(createIncentiveSessionGroup)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
+  @PutMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH)
   @Operation(
-    summary = "Delete location group",
-    description = "Delete location group by reference",
+    summary = "Update incentive group",
+    description = "Update existing incentive group by reference",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Session templates deleted",
+        description = "Updated incentive group",
       ),
       ApiResponse(
         responseCode = "401",
@@ -160,67 +152,59 @@ class LocationGroupAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to view session templates",
+        description = "Incorrect permissions to update incentive group",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Session location group not found",
+        description = "Incentive group not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
-  fun deleteSessionLocationGroup(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable
-    reference: String,
-  ): ResponseEntity<String> {
-    sessionTemplateService.deleteSessionLocationGroup(reference)
-    return ResponseEntity.status(HttpStatus.OK).body("Session location group Deleted $reference!")
-  }
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @PutMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
-  @Operation(
-    summary = "Update location group",
-    description = "Update existing location group by reference",
-    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
-      content = [
-        Content(
-          mediaType = "application/json",
-          schema = Schema(implementation = SessionLocationGroupDto::class),
-        ),
-      ],
-    ),
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Updated location group",
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to update location group",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "404",
-        description = "Location group not found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun updateLocationGroup(
+  fun updateIncentiveGroup(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    updateLocationSessionGroup: UpdateLocationGroupDto,
-  ): SessionLocationGroupDto {
-    return sessionTemplateService.updateSessionLocationGroup(reference, updateLocationSessionGroup)
+    updateIncentiveSessionGroup: UpdateIncentiveGroupDto,
+  ): SessionIncentiveLevelGroupDto {
+    return sessionTemplateService.updateSessionIncentiveGroup(reference, updateIncentiveSessionGroup)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @DeleteMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH)
+  @Operation(
+    summary = "Delete incentive group",
+    description = "Delete incentive group by reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Incentive group deleted",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to view  incentive group",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Session incentive group not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun deleteSessionIncentiveGroup(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+  ): ResponseEntity<String> {
+    sessionTemplateService.deleteSessionIncentiveGroup(reference)
+    return ResponseEntity.status(HttpStatus.OK).body("Session incentive group Deleted $reference!")
   }
 }

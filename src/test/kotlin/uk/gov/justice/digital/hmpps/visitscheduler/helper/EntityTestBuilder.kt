@@ -1,14 +1,23 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.CreateIncentiveGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -54,14 +63,11 @@ fun sessionTemplate(
 
 fun createSessionTemplateDto(
   name: String = "sessionTemplate_",
-  validFromDate: LocalDate = LocalDate.now().minusDays(1),
-  validToDate: LocalDate? = null,
-  closedCapacity: Int = 5,
-  openCapacity: Int = 10,
+  sessionDateRangeDto: SessionDateRangeDto = SessionDateRangeDto(LocalDate.now().minusDays(1), null),
+  sessionCapacity: SessionCapacityDto = SessionCapacityDto(closed = 10, open = 5),
+  sessionTimeSlotDto: SessionTimeSlotDto = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
   prisonCode: String = "MDI",
   visitRoom: String = "visitRoom",
-  startTime: LocalTime = LocalTime.parse("09:00"),
-  endTime: LocalTime = LocalTime.parse("10:00"),
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
@@ -71,13 +77,10 @@ fun createSessionTemplateDto(
   return CreateSessionTemplateDto(
     name = name + dayOfWeek,
     prisonCode = prisonCode,
-    validFromDate = validFromDate,
-    validToDate = validToDate,
-    closedCapacity = closedCapacity,
-    openCapacity = openCapacity,
+    sessionDateRange = sessionDateRangeDto,
+    sessionCapacity = sessionCapacity,
+    sessionTimeSlot = sessionTimeSlotDto,
     visitRoom = visitRoom,
-    startTime = startTime,
-    endTime = endTime,
     dayOfWeek = dayOfWeek,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
@@ -87,27 +90,21 @@ fun createSessionTemplateDto(
 }
 
 fun createUpdateSessionTemplateDto(
-  name: String = "sessionTemplate_",
-  validFromDate: LocalDate = LocalDate.now().minusDays(1),
-  validToDate: LocalDate? = null,
-  closedCapacity: Int = 5,
-  openCapacity: Int = 10,
-  startTime: LocalTime = LocalTime.parse("09:00"),
-  endTime: LocalTime = LocalTime.parse("10:00"),
-  dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
+  name: String? = "sessionTemplate_",
+  sessionDateRangeDto: SessionDateRangeDto? = SessionDateRangeDto(LocalDate.now().minusDays(1), null),
+  sessionCapacity: SessionCapacityDto? = SessionCapacityDto(closed = 10, open = 5),
+  sessionTimeSlotDto: SessionTimeSlotDto? = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
+  dayOfWeek: DayOfWeek? = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
-  biWeekly: Boolean = false,
+  biWeekly: Boolean? = false,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
-    validFromDate = validFromDate,
-    validToDate = validToDate,
-    closedCapacity = closedCapacity,
-    openCapacity = openCapacity,
-    startTime = startTime,
-    endTime = endTime,
+    sessionDateRange = sessionDateRangeDto,
+    sessionCapacity = sessionCapacity,
+    sessionTimeSlot = sessionTimeSlotDto,
     locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
     categoryGroupReferences = categoryGroupReferences,
@@ -127,7 +124,7 @@ fun createCreateLocationGroupDto(
   )
 }
 
-fun updateLocationGroupDto(
+fun createUpdateLocationGroupDto(
   name: String = "update",
   permittedSessionLocations: MutableList<PermittedSessionLocationDto> = mutableListOf(),
 ): UpdateLocationGroupDto {
@@ -148,5 +145,49 @@ fun createPermittedSessionLocationDto(
     levelTwoCode = levelTwoCode,
     levelThreeCode = levelThreeCode,
     levelFourCode = levelFourCode,
+  )
+}
+
+fun createCategoryGroupDto(
+  name: String,
+  prisonCode: String,
+  vararg type: PrisonerCategoryType,
+): CreateCategoryGroupDto {
+  return CreateCategoryGroupDto(
+    name = name,
+    prisonCode = prisonCode,
+    categories = type.toList(),
+  )
+}
+
+fun updateCategoryGroupDto(
+  name: String,
+  vararg type: PrisonerCategoryType,
+): UpdateCategoryGroupDto {
+  return UpdateCategoryGroupDto(
+    name = name,
+    categories = type.toList(),
+  )
+}
+
+fun createIncentiveGroupDto(
+  name: String,
+  prisonCode: String,
+  vararg type: IncentiveLevel,
+): CreateIncentiveGroupDto {
+  return CreateIncentiveGroupDto(
+    name = name,
+    prisonCode = prisonCode,
+    incentiveLevels = type.toList(),
+  )
+}
+
+fun updateIncentiveGroupDto(
+  name: String,
+  vararg type: IncentiveLevel,
+): UpdateIncentiveGroupDto {
+  return UpdateIncentiveGroupDto(
+    name = name,
+    incentiveLevels = type.toList(),
   )
 }
