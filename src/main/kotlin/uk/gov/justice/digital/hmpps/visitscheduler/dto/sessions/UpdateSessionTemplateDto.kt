@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
-import com.fasterxml.jackson.annotation.JsonFormat
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
@@ -15,7 +14,6 @@ data class UpdateSessionTemplateDto(
   @field:Size(max = 100)
   val name: String? = null,
 
-  @JsonFormat(pattern = "HH:mm", shape = JsonFormat.Shape.STRING)
   @Schema(description = "The start and end time of the generated visit session(s)", required = false)
   @field:SessionTimeSlotValidation
   val sessionTimeSlot: SessionTimeSlotDto?,

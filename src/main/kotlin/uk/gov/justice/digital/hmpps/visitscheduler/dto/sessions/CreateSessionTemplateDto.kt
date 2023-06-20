@@ -1,12 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
-import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonFormat.Shape
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
-import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionCapacityValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
@@ -25,13 +22,11 @@ data class CreateSessionTemplateDto(
   @field:NotBlank
   val prisonCode: String,
 
-  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
   @Schema(description = "The start and end time of the generated visit session(s)", required = true)
   @field:SessionTimeSlotValidation
   val sessionTimeSlot: SessionTimeSlotDto,
 
   @Schema(description = "The start and end date of the Validity period for the session template", required = true)
-  @field:NotNull
   @field:SessionDateRangeValidation
   val sessionDateRange: SessionDateRangeDto,
 
@@ -41,8 +36,8 @@ data class CreateSessionTemplateDto(
   val visitRoom: String,
 
   @Schema(description = "The open and closed capacity of the session template", required = true)
-  @field:Valid
   @field:SessionCapacityValidation
+  @field:Valid
   val sessionCapacity: SessionCapacityDto,
 
   @Schema(description = "day of week fpr visit", example = "MONDAY", required = true)
