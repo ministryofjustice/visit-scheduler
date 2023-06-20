@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
-import com.fasterxml.jackson.annotation.JsonFormat
-import com.fasterxml.jackson.annotation.JsonFormat.Shape
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
@@ -23,7 +21,6 @@ data class SessionTemplateDto(
   @Schema(description = "prisonId", example = "MDI", required = true)
   @field:NotBlank
   val prisonCode: String,
-  @JsonFormat(pattern = "HH:mm", shape = Shape.STRING)
   @Schema(description = "The time slot of the generated visit session(s)", required = true)
   val sessionTimeSlot: SessionTimeSlotDto,
   @Schema(description = "Validity period for the session template", required = true)
