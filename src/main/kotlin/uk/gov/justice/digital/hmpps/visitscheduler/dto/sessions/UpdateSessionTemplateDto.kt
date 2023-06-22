@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionCapacityValidation
@@ -31,6 +32,7 @@ data class UpdateSessionTemplateDto(
   val locationGroupReferences: List<String>? = null,
 
   @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
+  @field:Min(1)
   val weeklyFrequency: Int?,
 
   @Schema(description = "list of group references for allowed prisoner category groups", required = false)

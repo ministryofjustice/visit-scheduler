@@ -120,5 +120,5 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Modifying
   @Query("Update SessionTemplate s set s.weeklyFrequency = :weeklyFrequency WHERE s.reference = :reference")
-  fun updateBiWeeklyByReference(reference: String, weeklyFrequency: Int): Int
+  fun updateWeeklyFrequencyByReference(reference: String, weeklyFrequency: Int): Int
 }

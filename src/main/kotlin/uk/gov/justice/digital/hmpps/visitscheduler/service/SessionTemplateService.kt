@@ -185,7 +185,7 @@ class SessionTemplateService(
       }
 
       weeklyFrequency?.let {
-        sessionTemplateRepository.updateBiWeeklyByReference(reference, weeklyFrequency)
+        sessionTemplateRepository.updateWeeklyFrequencyByReference(reference, weeklyFrequency)
       }
     }
 
