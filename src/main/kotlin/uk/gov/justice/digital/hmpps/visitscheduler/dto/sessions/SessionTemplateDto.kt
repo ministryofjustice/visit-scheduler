@@ -27,8 +27,8 @@ data class SessionTemplateDto(
   val sessionDateRange: SessionDateRangeDto,
   @Schema(description = "visit type", example = "SOCIAL", required = true)
   val visitType: VisitType,
-  @Schema(description = "biWeekly", example = "true", required = true)
-  val biWeekly: Boolean,
+  @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
+  val weeklyFrequency: Int,
   @Schema(description = "Visit Room", example = "A1 L3", required = true)
   @field:NotBlank
   val visitRoom: String,
@@ -56,6 +56,6 @@ data class SessionTemplateDto(
     permittedLocationGroups = sessionTemplateEntity.permittedSessionLocationGroups.map { SessionLocationGroupDto(it) },
     prisonerCategoryGroups = sessionTemplateEntity.permittedSessionCategoryGroups.map { SessionCategoryGroupDto(it) },
     prisonerIncentiveLevelGroups = sessionTemplateEntity.permittedSessionIncentiveLevelGroups.map { SessionIncentiveLevelGroupDto(it) },
-    biWeekly = sessionTemplateEntity.biWeekly,
+    weeklyFrequency = sessionTemplateEntity.weeklyFrequency,
   )
 }

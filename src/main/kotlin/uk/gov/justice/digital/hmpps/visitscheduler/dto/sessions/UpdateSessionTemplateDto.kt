@@ -30,8 +30,8 @@ data class UpdateSessionTemplateDto(
   @Schema(description = "list of group references for permitted session location groups", required = false)
   val locationGroupReferences: List<String>? = null,
 
-  @Schema(description = "biWeekly time table", example = "true", required = false)
-  val biWeekly: Boolean? = null,
+  @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
+  val weeklyFrequency: Int?,
 
   @Schema(description = "list of group references for allowed prisoner category groups", required = false)
   val categoryGroupReferences: List<String>? = listOf(),

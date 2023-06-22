@@ -38,7 +38,7 @@ fun sessionTemplate(
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
   permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
-  biWeekly: Boolean = false,
+  weeklyFrequency: Int = 1,
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = true)
 
@@ -57,7 +57,7 @@ fun sessionTemplate(
     dayOfWeek = dayOfWeek,
     permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
-    biWeekly = biWeekly,
+    weeklyFrequency = weeklyFrequency,
   ).also { it.reference = UUID.randomUUID().toString() }
 }
 
@@ -70,7 +70,7 @@ fun createSessionTemplateDto(
   visitRoom: String = "visitRoom",
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
-  biWeekly: Boolean = false,
+  weeklyFrequency: Int = 1,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): CreateSessionTemplateDto {
@@ -83,7 +83,7 @@ fun createSessionTemplateDto(
     visitRoom = visitRoom,
     dayOfWeek = dayOfWeek,
     locationGroupReferences = locationGroupReferences,
-    biWeekly = biWeekly,
+    weeklyFrequency = weeklyFrequency,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
@@ -96,7 +96,7 @@ fun createUpdateSessionTemplateDto(
   sessionTimeSlotDto: SessionTimeSlotDto? = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
   dayOfWeek: DayOfWeek? = DayOfWeek.FRIDAY,
   locationGroupReferences: MutableList<String> = mutableListOf(),
-  biWeekly: Boolean? = false,
+  weeklyFrequency: Int = 1,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): UpdateSessionTemplateDto {
@@ -106,7 +106,7 @@ fun createUpdateSessionTemplateDto(
     sessionCapacity = sessionCapacity,
     sessionTimeSlot = sessionTimeSlotDto,
     locationGroupReferences = locationGroupReferences,
-    biWeekly = biWeekly,
+    weeklyFrequency = weeklyFrequency,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
