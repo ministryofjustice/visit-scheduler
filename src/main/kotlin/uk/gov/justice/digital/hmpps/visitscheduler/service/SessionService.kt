@@ -8,11 +8,12 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
@@ -26,7 +27,6 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.temporal.ChronoUnit.DAYS
 import java.time.temporal.TemporalAdjusters
 import java.util.stream.Stream
 
@@ -384,7 +384,7 @@ class SessionService(
     sessionTemplates: List<SessionTemplate>,
   ): List<SessionTemplate> {
     return sessionTemplates.filter { sessionTemplate ->
-      sessionDatesUtil.isBiWeeklySessionActiveForDate(date, sessionTemplate)
+      sessionDatesUtil.isActiveForDate(date, sessionTemplate)
     }.sortedWith(
       Comparator.comparing(SessionTemplate::startTime)
         .thenComparing(SessionTemplate::endTime),
@@ -407,38 +407,16 @@ class SessionService(
   }
 
   private fun createSessionInfoDto(sessionTemplate: SessionTemplate): SessionScheduleDto {
-    val sessionTemplateFrequency = getSessionTemplateFrequency(sessionTemplate)
-
     return SessionScheduleDto(
       sessionTemplateReference = sessionTemplate.reference,
-      startTime = sessionTemplate.startTime,
-      endTime = sessionTemplate.endTime,
+      sessionTimeSlot = SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
       capacity = SessionCapacityDto(sessionTemplate),
       prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
       prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
       prisonerIncentiveLevelGroupNames = sessionTemplate.permittedSessionIncentiveLevelGroups.map { it.name }.toList(),
-      sessionTemplateFrequency = sessionTemplateFrequency,
-      sessionTemplateEndDate = sessionTemplate.validToDate,
+      weeklyFrequency = sessionTemplate.weeklyFrequency,
+      sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
     )
-  }
-
-  private fun getSessionTemplateFrequency(sessionTemplate: SessionTemplate): SessionTemplateFrequency {
-    val firstSessionDate = adjustDateByDayOfWeek(sessionTemplate.dayOfWeek, sessionTemplate.validFromDate)
-
-    if (isNotMoreThanAWeek(firstSessionDate, sessionTemplate)) {
-      return SessionTemplateFrequency.ONE_OFF
-    }
-    if (sessionTemplate.biWeekly) {
-      return SessionTemplateFrequency.BI_WEEKLY
-    }
-    return SessionTemplateFrequency.WEEKLY
-  }
-
-  private fun isNotMoreThanAWeek(
-    firstSessionDate: LocalDate,
-    sessionTemplate: SessionTemplate,
-  ): Boolean {
-    return sessionTemplate.validToDate != null && DAYS.between(firstSessionDate, sessionTemplate.validToDate) < 7
   }
 
   private fun adjustDateByDayOfWeek(dayOfWeek: DayOfWeek, startDate: LocalDate): LocalDate {

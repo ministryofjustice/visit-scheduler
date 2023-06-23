@@ -240,7 +240,7 @@ class SessionTemplateEntityHelper(
     dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
     activePrison: Boolean = true,
     permittedLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
-    biWeekly: Boolean = false,
+    weeklyFrequency: Int = 1,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
   ): SessionTemplate {
@@ -259,7 +259,7 @@ class SessionTemplateEntityHelper(
       endTime = endTime,
       dayOfWeek = dayOfWeek,
       permittedSessionGroups = permittedLocationGroups,
-      biWeekly = biWeekly,
+      weeklyFrequency = weeklyFrequency,
       permittedCategories = permittedCategories,
       permittedIncentiveLevels = permittedIncentiveLevels,
     )
@@ -279,7 +279,7 @@ class SessionTemplateEntityHelper(
     dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
     activePrison: Boolean = true,
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
-    biWeekly: Boolean = false,
+    weeklyFrequency: Int = 1,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
   ): SessionTemplate {
@@ -298,7 +298,7 @@ class SessionTemplateEntityHelper(
         endTime = endTime,
         dayOfWeek = dayOfWeek,
         permittedSessionLocationGroups = permittedSessionGroups,
-        biWeekly = biWeekly,
+        weeklyFrequency = weeklyFrequency,
         permittedSessionCategoryGroups = permittedCategories,
         permittedSessionIncentiveLevelGroups = permittedIncentiveLevels,
       ),

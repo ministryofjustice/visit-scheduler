@@ -80,7 +80,7 @@ class MigrationSessionTemplateMatcher(
     )
 
     templates = templates.filter {
-      sessionDatesUtil.isBiWeeklySessionActiveForDate(sessionDate, it)
+      sessionDatesUtil.isActiveForDate(sessionDate, it)
     }
 
     return removeUnwantedRestrictionTypes(restriction, templates)

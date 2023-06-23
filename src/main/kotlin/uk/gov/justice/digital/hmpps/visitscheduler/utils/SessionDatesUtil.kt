@@ -17,54 +17,50 @@ class SessionDatesUtil {
     lastBookableSessionDay: LocalDate,
     sessionTemplate: SessionTemplate,
   ): Stream<LocalDate> {
-    if (sessionTemplate.biWeekly) {
-      return biWeeklyDates(firstBookableSessionDay, sessionTemplate, lastBookableSessionDay)
-    }
+    val lastBookableSessionDayAdjusted = lastBookableSessionDay.plusDays(1)
 
-    return firstBookableSessionDay.datesUntil(lastBookableSessionDay.plusDays(1), Period.ofWeeks(1))
+    val weeklyFirstBookableSessionDay = getFirstBookableSessionDayAdjustForFrequency(firstBookableSessionDay, sessionTemplate)
+    if (lastBookableSessionDayAdjusted.isBefore(weeklyFirstBookableSessionDay)) {
+      // There is no sessions because the first bookable date is after
+      return Stream.empty()
+    }
+    return weeklyFirstBookableSessionDay.datesUntil(
+      lastBookableSessionDayAdjusted,
+      Period.ofWeeks(sessionTemplate.weeklyFrequency),
+    )
   }
 
-  fun isBiWeeklySessionActiveForDate(date: LocalDate, sessionTemplate: SessionTemplate): Boolean {
-    if (sessionTemplate.biWeekly) {
-      val validFromMonday = getValidFromMonday(sessionTemplate)
-      return !isBiWeeklySkipDate(validFromMonday, date)
+  private fun getFirstBookableSessionDayAdjustForFrequency(
+    firstBookableSessionDay: LocalDate,
+    sessionTemplate: SessionTemplate,
+  ): LocalDate {
+    if (isWeeklySkipDate(firstBookableSessionDay, sessionTemplate)) {
+      return firstBookableSessionDay.plusWeeks(sessionTemplate.weeklyFrequency.minus(1).toLong())
+    }
+    return firstBookableSessionDay
+  }
+
+  fun isActiveForDate(date: LocalDate, sessionTemplate: SessionTemplate): Boolean {
+    if (sessionTemplate.weeklyFrequency > 1) {
+      return !isWeeklySkipDate(date, sessionTemplate)
     }
     return true
   }
 
-  private fun biWeeklyDates(
-    firstBookableSessionDay: LocalDate,
-    sessionTemplate: SessionTemplate,
-    lastBookableSessionDay: LocalDate,
-  ): Stream<LocalDate> {
-    // This has been added just encase some one wants the session template start date other than the start of week.
-    // Therefore, this use of validFromMonday will allow the bi-weekly to still work.
-    val validFromMonday = getValidFromMonday(sessionTemplate)
-
-    var biWeeklyFirstBookableSessionDay = firstBookableSessionDay
-    if (isBiWeeklySkipDate(validFromMonday, firstBookableSessionDay)) {
-      biWeeklyFirstBookableSessionDay = firstBookableSessionDay.plusWeeks(1)
-    }
-    val adjustedLastBookableSessionDay = lastBookableSessionDay.plusDays(1)
-    if (adjustedLastBookableSessionDay < biWeeklyFirstBookableSessionDay) {
-      // This is to prevent a IllegalArgumentException with datesUntil call
-      return Stream.empty()
-    }
-    return biWeeklyFirstBookableSessionDay.datesUntil(
-      adjustedLastBookableSessionDay,
-      Period.ofWeeks(2),
-    )
-  }
-
   private fun getValidFromMonday(sessionTemplate: SessionTemplate): LocalDate {
+    // This has been added just encase someone wants the session template start date other than the start of week.
+    // Therefore, this use of validFromMonday will allow the bi-weekly to still work.
     if (sessionTemplate.validFromDate.dayOfWeek != MONDAY) {
       return sessionTemplate.validFromDate.with(TemporalAdjusters.previous(MONDAY))
     }
     return sessionTemplate.validFromDate
   }
 
-  fun isBiWeeklySkipDate(
-    validFromDate: LocalDate,
+  fun isWeeklySkipDate(
     sessionDate: LocalDate,
-  ) = WEEKS.between(validFromDate, sessionDate).toInt() % 2 != 0
+    sessionTemplate: SessionTemplate,
+  ): Boolean {
+    val validFromMonday = getValidFromMonday(sessionTemplate)
+    return WEEKS.between(validFromMonday, sessionDate).toInt() % sessionTemplate.weeklyFrequency != 0
+  }
 }
