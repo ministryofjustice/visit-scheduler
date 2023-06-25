@@ -66,6 +66,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
       incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
       biWeekly = !sessionTemplate.biWeekly,
+      isActive = !sessionTemplate.active,
     )
 
     // When
@@ -91,6 +92,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.incentiveLevels }).containsExactlyInAnyOrder(nonEnhancedIncentives)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
+    Assertions.assertThat(sessionTemplateDto.active).isEqualTo(dto.active)
   }
 
   @Test

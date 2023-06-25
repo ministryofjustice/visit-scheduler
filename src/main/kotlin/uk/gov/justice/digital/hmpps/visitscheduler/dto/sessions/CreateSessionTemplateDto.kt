@@ -43,11 +43,15 @@ data class CreateSessionTemplateDto(
   @Schema(description = "day of week fpr visit", example = "MONDAY", required = true)
   val dayOfWeek: DayOfWeek,
 
-  @Schema(description = "list of group references for permitted session location groups", required = false)
-  val locationGroupReferences: List<String>? = listOf(),
 
   @Schema(description = "biWeekly time table", example = "true", required = true)
   val biWeekly: Boolean,
+
+  @Schema(description = "is session template active", example = "true", required = true)
+  val active: Boolean,
+
+  @Schema(description = "list of group references for permitted session location groups", required = false)
+  val locationGroupReferences: List<String>? = listOf(),
 
   @Schema(description = "list of group references for allowed prisoner category groups", required = false)
   val categoryGroupReferences: List<String>? = listOf(),

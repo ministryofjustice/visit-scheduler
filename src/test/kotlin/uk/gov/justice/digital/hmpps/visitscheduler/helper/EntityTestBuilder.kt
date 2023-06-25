@@ -39,6 +39,7 @@ fun sessionTemplate(
   permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
   permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
   biWeekly: Boolean = false,
+  isActive: Boolean = true,
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = true)
 
@@ -58,6 +59,7 @@ fun sessionTemplate(
     permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     biWeekly = biWeekly,
+    active = isActive,
   ).also { it.reference = UUID.randomUUID().toString() }
 }
 
@@ -69,8 +71,9 @@ fun createSessionTemplateDto(
   prisonCode: String = "MDI",
   visitRoom: String = "visitRoom",
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
-  locationGroupReferences: MutableList<String> = mutableListOf(),
   biWeekly: Boolean = false,
+  isActive: Boolean = true,
+  locationGroupReferences: MutableList<String> = mutableListOf(),
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): CreateSessionTemplateDto {
@@ -82,8 +85,9 @@ fun createSessionTemplateDto(
     sessionTimeSlot = sessionTimeSlotDto,
     visitRoom = visitRoom,
     dayOfWeek = dayOfWeek,
-    locationGroupReferences = locationGroupReferences,
     biWeekly = biWeekly,
+    active = isActive,
+    locationGroupReferences = locationGroupReferences,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
@@ -99,6 +103,7 @@ fun createUpdateSessionTemplateDto(
   biWeekly: Boolean? = false,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
+  isActive: Boolean? = true,
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -109,6 +114,7 @@ fun createUpdateSessionTemplateDto(
     biWeekly = biWeekly,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
+    active = isActive,
   )
 }
 

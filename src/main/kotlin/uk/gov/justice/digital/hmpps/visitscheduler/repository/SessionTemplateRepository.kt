@@ -19,7 +19,8 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "and (cast(:rangeEndDate as date) is null or u.validFromDate <= :rangeEndDate) " +
       "and (cast(:rangeStartDate as date) is null or (u.validToDate is null or u.validToDate >= :rangeStartDate)) " +
       "and (:dayOfWeek is null or u.dayOfWeek = :dayOfWeek) " +
-      "and (:visitRoom is null or u.visitRoom = :visitRoom)",
+      "and (:visitRoom is null or u.visitRoom = :visitRoom)" +
+      "and (u.active = true)",
   )
   fun findValidSessionTemplatesBy(
     @Param("prisonCode") prisonCode: String,
@@ -51,7 +52,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "where u.prison.code = :prisonCode " +
       "and u.validFromDate <= CURRENT_DATE and u.validToDate <= CURRENT_DATE order by u.validFromDate,u.validToDate",
   )
-  fun findInActiveSessionTemplates(
+  fun findHistoricSessionTemplates(
     @Param("prisonCode") prisonCode: String,
   ): List<SessionTemplate>
 
@@ -62,7 +63,8 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "and (u.validFromDate <= :sessionDate) " +
       "and (u.startTime = :sessionStartTime) " +
       "and (u.endTime = :sessionEndTime) " +
-      "and (u.dayOfWeek = :dayOfWeek)",
+      "and (u.dayOfWeek = :dayOfWeek)" +
+      "and (u.active = true)",
   )
   fun findValidSessionTemplatesForSession(
     @Param("prisonCode") prisonCode: String,
@@ -77,7 +79,8 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "where u.prison.code = :prisonCode " +
       "and (u.validToDate is null or u.validToDate >= :sessionDate) " +
       "and (u.validFromDate <= :sessionDate) " +
-      "and (u.dayOfWeek = :dayOfWeek)",
+      "and (u.dayOfWeek = :dayOfWeek)" +
+      "and (u.active = true)",
   )
   fun findValidSessionTemplatesForSession(
     @Param("prisonCode") prisonCode: String,
@@ -121,4 +124,8 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   @Modifying
   @Query("Update SessionTemplate s set s.biWeekly = :biWeekly WHERE s.reference = :reference")
   fun updateBiWeeklyByReference(reference: String, biWeekly: Boolean): Int
+
+  @Modifying
+  @Query("Update SessionTemplate s set s.active = :isActive WHERE s.reference = :reference")
+  fun updateActiveByReference(reference: String, isActive: Boolean): Int
 }

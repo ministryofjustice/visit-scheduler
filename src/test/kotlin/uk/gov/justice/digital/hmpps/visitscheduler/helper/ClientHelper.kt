@@ -11,8 +11,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
@@ -383,6 +385,32 @@ fun callUpdateLocationSessionGroupByReference(
     dto,
     webTestClient,
     getSessionLocationGroupByReferenceUrl(reference),
+    authHttpHeaders,
+  )
+}
+
+fun callActivateSessionTemplate(
+  webTestClient: WebTestClient,
+  sessionTemplateReference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPut(
+    null,
+    webTestClient,
+    getReferenceUrl(ACTIVATE_SESSION_TEMPLATE, sessionTemplateReference),
+    authHttpHeaders,
+  )
+}
+
+fun callDeActivateSessionTemplate(
+  webTestClient: WebTestClient,
+  sessionTemplateReference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPut(
+    null,
+    webTestClient,
+    getReferenceUrl(DEACTIVATE_SESSION_TEMPLATE, sessionTemplateReference),
     authHttpHeaders,
   )
 }

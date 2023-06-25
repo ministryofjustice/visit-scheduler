@@ -95,6 +95,61 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `only active visit sessions are returned for a prison`() {
+    // Given
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    //active session 1
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+    )
+
+    //active session 2
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("11:00"),
+      endTime = LocalTime.parse("12:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+    )
+
+    //active session 3
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("12:00"),
+      endTime = LocalTime.parse("13:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+    )
+
+    //inactive session
+    val sessionTemplateInactive = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("13:00"),
+      endTime = LocalTime.parse("14:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      isActive = false,
+    )
+
+    // When
+    val responseSpec = callGetSessions()
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    val visitSessionResultsReferences = visitSessionResults.map { it.sessionTemplateReference }.toList()
+    assertThat(visitSessionResults.size).isEqualTo(3)
+    assertThat(visitSessionResultsReferences).doesNotContain(sessionTemplateInactive.reference)
+  }
+
+  @Test
   fun `visit sessions are returned for enhanced prisoner when prison has enhanced schedule`() {
     // Given
     val prisonCode = "MDI"
