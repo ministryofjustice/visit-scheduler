@@ -122,8 +122,8 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   fun updateOpenCapacityByReference(reference: String, openCapacity: Int): Int
 
   @Modifying
-  @Query("Update SessionTemplate s set s.biWeekly = :biWeekly WHERE s.reference = :reference")
-  fun updateBiWeeklyByReference(reference: String, biWeekly: Boolean): Int
+  @Query("Update SessionTemplate s set s.weeklyFrequency = :weeklyFrequency WHERE s.reference = :reference")
+  fun updateWeeklyFrequencyByReference(reference: String, weeklyFrequency: Int): Int
 
   @Modifying
   @Query("Update SessionTemplate s set s.active = :isActive WHERE s.reference = :reference")

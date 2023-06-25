@@ -100,7 +100,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     val nextAllowedDay = getNextAllowedDay()
 
-    //active session 1
+    // active session 1
     sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
@@ -109,7 +109,7 @@ class GetSessionsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
-    //active session 2
+    // active session 2
     sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
@@ -118,7 +118,7 @@ class GetSessionsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
-    //active session 3
+    // active session 3
     sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
@@ -127,7 +127,7 @@ class GetSessionsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
     )
 
-    //inactive session
+    // inactive session
     val sessionTemplateInactive = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,
@@ -565,7 +565,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = startFromWeek1,
       visitRoom = "Alternate 1",
       dayOfWeek = SUNDAY,
-      biWeekly = true,
+      weeklyFrequency = 2,
     )
 
     val startFromWeek2 = LocalDate.now().with(TemporalAdjusters.next(MONDAY)).minusWeeks(2)
@@ -574,7 +574,7 @@ class GetSessionsTest : IntegrationTestBase() {
       validFromDate = startFromWeek2,
       visitRoom = "Alternate 2",
       dayOfWeek = SUNDAY,
-      biWeekly = true,
+      weeklyFrequency = 2,
     )
 
     // When
@@ -594,6 +594,84 @@ class GetSessionsTest : IntegrationTestBase() {
       assertThat(visitSessionResults[0].visitRoom).isEqualTo("Alternate 1")
       assertThat(visitSessionResults[1].visitRoom).isEqualTo("Alternate 2")
     }
+  }
+
+  @Test
+  fun `Weekly schedule - test`() {
+    val today = LocalDate.now()
+
+    // Given
+    val startFromWeek1 = today.with(TemporalAdjusters.previous(MONDAY))
+    sessionTemplateEntityHelper.create(
+      validFromDate = startFromWeek1,
+      dayOfWeek = today.dayOfWeek,
+      weeklyFrequency = 1,
+    )
+
+    // When
+    val responseSpec = callGetSessions(policyNoticeDaysMin = 0, policyNoticeDaysMax = 14)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(3)
+    assertThat(visitSessionResults[0].startTimestamp.toLocalDate()).isEqualTo(today)
+    assertThat(visitSessionResults[1].startTimestamp.toLocalDate()).isEqualTo(today.plusWeeks(1))
+    assertThat(visitSessionResults[2].startTimestamp.toLocalDate()).isEqualTo(today.plusWeeks(2))
+  }
+
+  @Test
+  fun `bi weekly schedule - test`() {
+    val today = LocalDate.now()
+
+    // Given
+    val startFromWeek1 = today.with(TemporalAdjusters.previous(MONDAY))
+    sessionTemplateEntityHelper.create(
+      validFromDate = startFromWeek1,
+      dayOfWeek = today.dayOfWeek,
+      weeklyFrequency = 2,
+    )
+
+    // When
+    val responseSpec = callGetSessions(policyNoticeDaysMin = 0, policyNoticeDaysMax = 28)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(3)
+    assertThat(visitSessionResults[0].startTimestamp.toLocalDate()).isEqualTo(today)
+    assertThat(visitSessionResults[1].startTimestamp.toLocalDate()).isEqualTo(today.plusWeeks(2))
+    assertThat(visitSessionResults[2].startTimestamp.toLocalDate()).isEqualTo(today.plusWeeks(4))
+  }
+
+  @Test
+  fun `three weekly schedule - test`() {
+    val today = LocalDate.now()
+
+    // Given
+    val startFromWeek1 = today.with(TemporalAdjusters.previous(MONDAY))
+    sessionTemplateEntityHelper.create(
+      validFromDate = startFromWeek1,
+      dayOfWeek = today.dayOfWeek,
+      weeklyFrequency = 3,
+    )
+
+    // When
+    val responseSpec = callGetSessions(policyNoticeDaysMin = 0, policyNoticeDaysMax = 42)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(3)
+    assertThat(visitSessionResults[0].startTimestamp.toLocalDate()).isEqualTo(today)
+    assertThat(visitSessionResults[1].startTimestamp.toLocalDate()).isEqualTo(today.plusWeeks(3))
+    assertThat(visitSessionResults[2].startTimestamp.toLocalDate()).isEqualTo(today.plusWeeks(6))
   }
 
   @Test

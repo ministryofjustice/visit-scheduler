@@ -9,13 +9,9 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_SESSION_SCHEDULE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionTemplateFrequency
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
-import java.time.DayOfWeek.MONDAY
-import java.time.DayOfWeek.TUESDAY
 import java.time.LocalDate
 import java.time.LocalTime
-import java.time.temporal.TemporalAdjusters
 
 @DisplayName("Get $GET_SESSION_SCHEDULE")
 class GetSessionScheduleTest : IntegrationTestBase() {
@@ -54,11 +50,11 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       .expectBody()
     val sessionScheduleResults = getResults(returnResult)
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
-    Assertions.assertThat(sessionScheduleResults[0].startTime).isEqualTo(sessionTemplate.startTime)
-    Assertions.assertThat(sessionScheduleResults[0].endTime).isEqualTo(sessionTemplate.endTime)
+    Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.startTime).isEqualTo(sessionTemplate.startTime)
+    Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.endTime).isEqualTo(sessionTemplate.endTime)
     Assertions.assertThat(sessionScheduleResults[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(sessionScheduleResults[0].sessionTemplateFrequency).isEqualTo(SessionTemplateFrequency.WEEKLY)
-    Assertions.assertThat(sessionScheduleResults[0].sessionTemplateEndDate).isEqualTo(sessionTemplate.validToDate)
+    Assertions.assertThat(sessionScheduleResults[0].weeklyFrequency).isEqualTo(1)
+    Assertions.assertThat(sessionScheduleResults[0].sessionDateRange.validToDate).isEqualTo(sessionTemplate.validToDate)
     Assertions.assertThat(sessionScheduleResults[0].capacity.open).isEqualTo(sessionTemplate.openCapacity)
     Assertions.assertThat(sessionScheduleResults[0].capacity.closed).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[0]).isEqualTo(sessionLocationGroup.name)
@@ -110,14 +106,14 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       .expectBody()
     val sessionScheduleResults = getResults(returnResult)
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(4)
-    Assertions.assertThat(sessionScheduleResults[0].startTime).isEqualTo(sessionTemplate4.startTime)
-    Assertions.assertThat(sessionScheduleResults[0].endTime).isEqualTo(sessionTemplate4.endTime)
-    Assertions.assertThat(sessionScheduleResults[1].startTime).isEqualTo(sessionTemplate3.startTime)
-    Assertions.assertThat(sessionScheduleResults[1].endTime).isEqualTo(sessionTemplate3.endTime)
-    Assertions.assertThat(sessionScheduleResults[2].startTime).isEqualTo(sessionTemplate1.startTime)
-    Assertions.assertThat(sessionScheduleResults[2].endTime).isEqualTo(sessionTemplate1.endTime)
-    Assertions.assertThat(sessionScheduleResults[3].startTime).isEqualTo(sessionTemplate2.startTime)
-    Assertions.assertThat(sessionScheduleResults[3].endTime).isEqualTo(sessionTemplate2.endTime)
+    Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.startTime).isEqualTo(sessionTemplate4.startTime)
+    Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.endTime).isEqualTo(sessionTemplate4.endTime)
+    Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.startTime).isEqualTo(sessionTemplate3.startTime)
+    Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.endTime).isEqualTo(sessionTemplate3.endTime)
+    Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.startTime).isEqualTo(sessionTemplate1.startTime)
+    Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.endTime).isEqualTo(sessionTemplate1.endTime)
+    Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.startTime).isEqualTo(sessionTemplate2.startTime)
+    Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.endTime).isEqualTo(sessionTemplate2.endTime)
   }
 
   @Test
@@ -125,7 +121,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     // Given
     val sessionDate = LocalDate.now()
 
-    //active session 1
+    // active session 1
     sessionTemplateEntityHelper.create(
       validFromDate = sessionDate,
       validToDate = sessionDate.plusDays(7),
@@ -134,7 +130,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       dayOfWeek = sessionDate.dayOfWeek,
     )
 
-    //active session 2
+    // active session 2
     sessionTemplateEntityHelper.create(
       validFromDate = sessionDate,
       validToDate = sessionDate.plusDays(7),
@@ -143,7 +139,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       dayOfWeek = sessionDate.dayOfWeek,
     )
 
-    //inactive session
+    // inactive session
     val inactiveSession = sessionTemplateEntityHelper.create(
       validFromDate = sessionDate,
       validToDate = sessionDate.plusDays(7),
@@ -163,7 +159,6 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     val sessionScheduleReferences = sessionScheduleResults.map { it.sessionTemplateReference }.toList()
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(2)
     Assertions.assertThat(sessionScheduleReferences).doesNotContain(inactiveSession.reference)
-
   }
 
   @Test
@@ -208,31 +203,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `One off session schedule are returned for a schedules that only have one session between valid from to valid to dates`() {
-    // Given
-    val nextMonday = LocalDate.now().with(TemporalAdjusters.next(MONDAY))
-    val firstSessionDate = nextMonday.with(TemporalAdjusters.next(TUESDAY))
-    val nextMondayAfterFirstSessionDate = firstSessionDate.with(TemporalAdjusters.next(MONDAY))
-
-    sessionTemplateEntityHelper.create(
-      validFromDate = nextMonday,
-      validToDate = nextMondayAfterFirstSessionDate,
-      dayOfWeek = firstSessionDate.dayOfWeek,
-    )
-
-    // When
-    val responseSpec = callGetSessionSchedule(prisonCode, firstSessionDate)
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val sessionScheduleResults = getResults(returnResult)
-    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
-    Assertions.assertThat(sessionScheduleResults[0].sessionTemplateFrequency).isEqualTo(SessionTemplateFrequency.ONE_OFF)
-  }
-
-  @Test
-  fun `BiWeekly session schedule are returned for a prison`() {
+  fun `weeklyFrequency session schedule are returned for a prison`() {
     // Given
     val sessionDate = LocalDate.now()
 
@@ -240,7 +211,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validFromDate = sessionDate,
       validToDate = sessionDate.plusMonths(4),
       dayOfWeek = sessionDate.dayOfWeek,
-      biWeekly = true,
+      weeklyFrequency = 2,
     )
     // When
     val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
@@ -250,11 +221,11 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       .expectBody()
     val sessionScheduleResults = getResults(returnResult)
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
-    Assertions.assertThat(sessionScheduleResults[0].sessionTemplateFrequency).isEqualTo(SessionTemplateFrequency.BI_WEEKLY)
+    Assertions.assertThat(sessionScheduleResults[0].weeklyFrequency).isEqualTo(2)
   }
 
   @Test
-  fun `BiWeekly session schedule are not returned for a prison when BiWeekly not for this week`() {
+  fun `weeklyFrequency session schedule are not returned for a prison when weeklyFrequency not for this week`() {
     // Given
     val sessionDate = LocalDate.now()
 
@@ -262,7 +233,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       validFromDate = sessionDate.minusWeeks(1),
       validToDate = sessionDate.plusMonths(4),
       dayOfWeek = sessionDate.dayOfWeek,
-      biWeekly = true,
+      weeklyFrequency = 2,
     )
     // When
     val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
@@ -272,29 +243,6 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       .expectBody()
     val sessionScheduleResults = getResults(returnResult)
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(0)
-  }
-
-  @Test
-  fun `BiWeekly configured session schedule are returned for a prison as one off if not more than a week`() {
-    // Given
-    val sessionDate = LocalDate.now()
-
-    sessionTemplateEntityHelper.create(
-      validFromDate = sessionDate,
-      validToDate = sessionDate,
-      dayOfWeek = sessionDate.dayOfWeek,
-      biWeekly = true,
-    )
-
-    // When
-    val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val sessionScheduleResults = getResults(returnResult)
-    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(1)
-    Assertions.assertThat(sessionScheduleResults[0].sessionTemplateFrequency).isEqualTo(SessionTemplateFrequency.ONE_OFF)
   }
 
   @Test

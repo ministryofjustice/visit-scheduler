@@ -54,7 +54,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       openCapacity = 20,
       closedCapacity = 0,
-      biWeekly = true,
+      weeklyFrequency = 2,
     )
 
     sessionTemplateEntityHelper.create(
@@ -64,7 +64,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       openCapacity = 0,
       closedCapacity = 10,
-      biWeekly = true,
+      weeklyFrequency = 2,
     )
 
     // When
@@ -181,7 +181,7 @@ class GetSessionCapacityTest : IntegrationTestBase() {
       openCapacity = 1,
     )
 
-    //inactive session
+    // inactive session
     sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
       validToDate = nextAllowedDay,

@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
+import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionCapacityValidation
@@ -27,8 +28,9 @@ data class UpdateSessionTemplateDto(
   @field:Valid
   val sessionCapacity: SessionCapacityDto?,
 
-  @Schema(description = "biWeekly time table", example = "true", required = false)
-  val biWeekly: Boolean? = null,
+  @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
+  @field:Min(1)
+  val weeklyFrequency: Int?,
 
   @Schema(description = "is prison active", example = "true", required = false)
   val active: Boolean? = null,

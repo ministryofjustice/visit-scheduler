@@ -71,7 +71,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.dayOfWeek).isEqualTo(dto.dayOfWeek)
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups[0].reference).isEqualTo(dto.locationGroupReferences!![0])
-    Assertions.assertThat(sessionTemplateDto.biWeekly).isEqualTo(dto.biWeekly)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(dto.weeklyFrequency)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.stream().map { it.categories }).containsExactlyInAnyOrder(categoryAs)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups[0].reference).isEqualTo(dto.categoryGroupReferences!![0])
