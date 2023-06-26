@@ -601,7 +601,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val today = LocalDate.now()
 
     // Given
-    val startFromWeek1 = today.with(TemporalAdjusters.previous(MONDAY))
+    val startFromWeek1 = getStartOfWeek(today)
     sessionTemplateEntityHelper.create(
       validFromDate = startFromWeek1,
       dayOfWeek = today.dayOfWeek,
@@ -627,7 +627,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val today = LocalDate.now()
 
     // Given
-    val startFromWeek1 = today.with(TemporalAdjusters.previous(MONDAY))
+    val startFromWeek1 = getStartOfWeek(today)
     sessionTemplateEntityHelper.create(
       validFromDate = startFromWeek1,
       dayOfWeek = today.dayOfWeek,
@@ -653,7 +653,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val today = LocalDate.now()
 
     // Given
-    val startFromWeek1 = today.with(TemporalAdjusters.previous(MONDAY))
+    val startFromWeek1 = getStartOfWeek(today)
     sessionTemplateEntityHelper.create(
       validFromDate = startFromWeek1,
       dayOfWeek = today.dayOfWeek,
@@ -1621,6 +1621,9 @@ class GetSessionsTest : IntegrationTestBase() {
     // The two days is based on the default SessionService.policyNoticeDaysMin
     return LocalDate.now().plusDays(2)
   }
+
+  private fun getStartOfWeek(today: LocalDate) =
+    if (MONDAY == today.dayOfWeek) today else today.with(TemporalAdjusters.previous(MONDAY))
 
   private fun assertSession(
     visitSessionResult: VisitSessionDto,
