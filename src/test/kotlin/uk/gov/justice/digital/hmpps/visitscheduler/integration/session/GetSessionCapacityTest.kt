@@ -166,6 +166,45 @@ class GetSessionCapacityTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `Sessions capacity ignores inactive session capacity`() {
+    // Given
+
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      closedCapacity = 1,
+      openCapacity = 1,
+    )
+
+    // inactive session
+    sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      closedCapacity = 10,
+      openCapacity = 11,
+      isActive = false,
+    )
+
+    // When
+    val responseSpec = callGetSessionCapacity(sessionTemplate1.prison.code, sessionTemplate1.validFromDate, sessionTemplate1.startTime, sessionTemplate1.endTime)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionCapacity = getResults(returnResult)
+    Assertions.assertThat(sessionCapacity.closed).isEqualTo(sessionTemplate1.closedCapacity)
+    Assertions.assertThat(sessionCapacity.open).isEqualTo(sessionTemplate1.openCapacity)
+  }
+
+  @Test
   fun `throw 404 Not found exception when more than one capacity is found`() {
     // Given
 

@@ -36,6 +36,8 @@ data class SessionTemplateDto(
   val sessionCapacity: SessionCapacityDto,
   @Schema(description = "day of week for visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
+  @Schema(description = "is session template active", example = "true", required = true)
+  val active: Boolean,
   @Schema(description = "list of permitted session location groups", required = false)
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
   @Schema(description = "list of permitted prisoner category groups", required = false)
@@ -57,5 +59,6 @@ data class SessionTemplateDto(
     prisonerCategoryGroups = sessionTemplateEntity.permittedSessionCategoryGroups.map { SessionCategoryGroupDto(it) },
     prisonerIncentiveLevelGroups = sessionTemplateEntity.permittedSessionIncentiveLevelGroups.map { SessionIncentiveLevelGroupDto(it) },
     weeklyFrequency = sessionTemplateEntity.weeklyFrequency,
+    active = sessionTemplateEntity.active,
   )
 }

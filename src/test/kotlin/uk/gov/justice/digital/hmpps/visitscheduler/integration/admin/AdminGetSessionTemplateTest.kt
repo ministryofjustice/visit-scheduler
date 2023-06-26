@@ -71,7 +71,7 @@ class AdminGetSessionTemplateTest(
     sessionTemplateEntityHelper.create(name = "pass4_", validFromDate = LocalDate.now().plusDays(11), validToDate = LocalDate.now().plusDays(15), prisonCode = prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATES_PATH?prisonCode=$prisonCode&rangeType=ACTIVE_OR_FUTURE")
+    val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATES_PATH?prisonCode=$prisonCode&rangeType=CURRENT_OR_FUTURE")
       .headers(setAuthorisation(roles = adminRole))
       .exchange()
 

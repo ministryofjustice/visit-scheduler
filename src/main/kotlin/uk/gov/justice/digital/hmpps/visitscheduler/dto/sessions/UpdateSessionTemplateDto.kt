@@ -28,12 +28,12 @@ data class UpdateSessionTemplateDto(
   @field:Valid
   val sessionCapacity: SessionCapacityDto?,
 
-  @Schema(description = "list of group references for permitted session location groups", required = false)
-  val locationGroupReferences: List<String>? = null,
-
   @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
   @field:Min(1)
   val weeklyFrequency: Int?,
+
+  @Schema(description = "list of group references for permitted session location groups", required = false)
+  val locationGroupReferences: List<String>? = null,
 
   @Schema(description = "list of group references for allowed prisoner category groups", required = false)
   val categoryGroupReferences: List<String>? = listOf(),

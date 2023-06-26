@@ -117,6 +117,51 @@ class GetSessionScheduleTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `only active session schedules are returned for a prison`() {
+    // Given
+    val sessionDate = LocalDate.now()
+
+    // active session 1
+    sessionTemplateEntityHelper.create(
+      validFromDate = sessionDate,
+      validToDate = sessionDate.plusDays(7),
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = sessionDate.dayOfWeek,
+    )
+
+    // active session 2
+    sessionTemplateEntityHelper.create(
+      validFromDate = sessionDate,
+      validToDate = sessionDate.plusDays(7),
+      startTime = LocalTime.parse("11:00"),
+      endTime = LocalTime.parse("12:00"),
+      dayOfWeek = sessionDate.dayOfWeek,
+    )
+
+    // inactive session
+    val inactiveSession = sessionTemplateEntityHelper.create(
+      validFromDate = sessionDate,
+      validToDate = sessionDate.plusDays(7),
+      startTime = LocalTime.parse("14:00"),
+      endTime = LocalTime.parse("15:00"),
+      dayOfWeek = sessionDate.dayOfWeek,
+      isActive = false,
+    )
+
+    // When
+    val responseSpec = callGetSessionSchedule(prisonCode, sessionDate)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val sessionScheduleResults = getResults(returnResult)
+    val sessionScheduleReferences = sessionScheduleResults.map { it.sessionTemplateReference }.toList()
+    Assertions.assertThat(sessionScheduleResults.size).isEqualTo(2)
+    Assertions.assertThat(sessionScheduleReferences).doesNotContain(inactiveSession.reference)
+  }
+
+  @Test
   fun `Session schedule is not returned when date is excluded`() {
     // Given
     val sessionDate = LocalDate.now()

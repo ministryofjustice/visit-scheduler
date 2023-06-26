@@ -77,6 +77,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.incentiveLevels }).containsExactlyInAnyOrder(enhancedIncentives)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
+    Assertions.assertThat(sessionTemplateDto.active).isFalse
   }
 
   @Test
@@ -220,6 +221,8 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.active).isFalse
   }
 
   @Test
