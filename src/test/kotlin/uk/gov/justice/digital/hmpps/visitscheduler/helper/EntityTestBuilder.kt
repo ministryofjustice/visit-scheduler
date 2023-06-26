@@ -72,7 +72,6 @@ fun createSessionTemplateDto(
   visitRoom: String = "visitRoom",
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   weeklyFrequency: Int = 1,
-  isActive: Boolean = true,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
@@ -86,7 +85,6 @@ fun createSessionTemplateDto(
     visitRoom = visitRoom,
     dayOfWeek = dayOfWeek,
     weeklyFrequency = weeklyFrequency,
-    active = isActive,
     locationGroupReferences = locationGroupReferences,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
@@ -100,7 +98,6 @@ fun createUpdateSessionTemplateDto(
   sessionTimeSlotDto: SessionTimeSlotDto? = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
   dayOfWeek: DayOfWeek? = DayOfWeek.FRIDAY,
   weeklyFrequency: Int = 1,
-  isActive: Boolean? = true,
   locationGroupReferences: MutableList<String> = mutableListOf(),
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
@@ -114,7 +111,6 @@ fun createUpdateSessionTemplateDto(
     weeklyFrequency = weeklyFrequency,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
-    active = isActive,
   )
 }
 

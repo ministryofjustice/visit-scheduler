@@ -32,9 +32,6 @@ data class UpdateSessionTemplateDto(
   @field:Min(1)
   val weeklyFrequency: Int?,
 
-  @Schema(description = "is prison active", example = "true", required = false)
-  val active: Boolean? = null,
-
   @Schema(description = "list of group references for permitted session location groups", required = false)
   val locationGroupReferences: List<String>? = null,
 

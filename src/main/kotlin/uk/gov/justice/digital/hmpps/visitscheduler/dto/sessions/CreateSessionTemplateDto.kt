@@ -48,9 +48,6 @@ data class CreateSessionTemplateDto(
   @field:Min(1)
   val weeklyFrequency: Int,
 
-  @Schema(description = "is session template active", example = "true", required = true)
-  val active: Boolean,
-
   @Schema(description = "list of group references for permitted session location groups", required = false)
   val locationGroupReferences: List<String>? = listOf(),
 

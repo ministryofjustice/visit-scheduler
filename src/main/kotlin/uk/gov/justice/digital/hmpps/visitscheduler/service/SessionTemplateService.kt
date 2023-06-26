@@ -58,7 +58,7 @@ class SessionTemplateService(
     val sessionTemplates = when (rangeType) {
       ALL -> sessionTemplateRepository.findSessionTemplatesByPrisonCode(prisonCode)
       HISTORIC -> sessionTemplateRepository.findHistoricSessionTemplates(prisonCode)
-      CURRENT_OR_FUTURE -> sessionTemplateRepository.findActiveAndFutureSessionTemplates(prisonCode)
+      CURRENT_OR_FUTURE -> sessionTemplateRepository.findCurrentAndFutureSessionTemplates(prisonCode)
     }
     return sessionTemplates.sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
   }
@@ -143,7 +143,7 @@ class SessionTemplateService(
       weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
       dayOfWeek = createSessionTemplateDto.dayOfWeek,
       visitType = VisitType.SOCIAL,
-      active = createSessionTemplateDto.active,
+      active = false,
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
@@ -188,10 +188,6 @@ class SessionTemplateService(
 
       weeklyFrequency?.let {
         sessionTemplateRepository.updateWeeklyFrequencyByReference(reference, weeklyFrequency)
-      }
-
-      active?.let {
-        sessionTemplateRepository.updateActiveByReference(reference, active)
       }
     }
 
