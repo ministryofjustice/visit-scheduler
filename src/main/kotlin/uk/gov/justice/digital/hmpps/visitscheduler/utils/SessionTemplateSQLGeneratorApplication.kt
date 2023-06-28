@@ -85,7 +85,21 @@ class SessionTemplateSQLGenerator {
     }
   }
 
-  private fun validateSessionTemplate(
+  private fun validateSessionTemplateColumns(sessionTemplateColumns: SessionTemplateColumns) {
+    with(sessionTemplateColumns) {
+      if (open < 0 || closed < 0) {
+        throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity be cant be less than zero for (prison:$prisonCode key:$this)!")
+      }
+      if (open > maxCapacity || closed > maxCapacity) {
+        throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity seems a little high for (prison:$prisonCode key:$this)!")
+      }
+      if (weeklyFrequency < 1) {
+        throw IllegalArgumentException("Session Template : weeklyFrequency($weeklyFrequency) should be equal to or more than 1 for (prison:$prisonCode key:$this)!")
+      }
+    }
+  }
+
+  private fun validateSessionTemplateGroupColumn(
     groupType: GroupType,
     groupColumns: List<GroupColumns>,
     sessionTemplateColumns: List<SessionTemplateColumns>,
@@ -98,13 +112,6 @@ class SessionTemplateSQLGenerator {
           GroupType.PRISONER_INCENTIVE_LEVEL -> getPrisonerIncentiveLevelList()
         }
         validateSessionTemplateGroupColumn(groupType, sessionTemplateColumn, keyList, groupColumns)
-
-        if (open < 0 || closed < 0) {
-          throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity be cant be less than zero for (prison:$prisonCode key:$locationKeys)!")
-        }
-        if (open > maxCapacity || closed > maxCapacity) {
-          throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity seems a little high for (prison:$prisonCode key:$locationKeys)!")
-        }
       }
     }
   }
@@ -131,7 +138,9 @@ class SessionTemplateSQLGenerator {
       if (record.size() != SessionColumnNames.values().size) {
         throw IllegalArgumentException("Some session columns are missing line number: ${record.recordNumber}, expected ${SessionColumnNames.values().size} but got ${record.size()} ${record.toList()}")
       }
-      prisonTemplateRecords.add(SessionTemplateColumns(record))
+      val sessionTemplateColumn = SessionTemplateColumns(record)
+      validateSessionTemplateColumns(sessionTemplateColumn)
+      prisonTemplateRecords.add(sessionTemplateColumn)
     }
     return prisonTemplateRecords.toList()
   }
@@ -238,7 +247,7 @@ class SessionTemplateSQLGenerator {
           groupType,
           groupDataFile,
         )
-      validateSessionTemplate(groupType, groupsColumns, sessionTemplateColumns)
+      validateSessionTemplateGroupColumn(groupType, groupsColumns, sessionTemplateColumns)
 
       val sessionItems = getSessionItems(groupsColumns)
       val sessionGroups = getSessionGroups(groupsColumns)

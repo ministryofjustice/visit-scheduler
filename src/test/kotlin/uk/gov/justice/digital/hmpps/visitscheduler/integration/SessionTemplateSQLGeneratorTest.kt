@@ -81,6 +81,81 @@ class SessionTemplateSQLGeneratorTest {
   }
 
   @Test
+  fun `Data parsed - session template - weekly frequency is invalid`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_invalid_weekly_frequency.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : weeklyFrequency(0) should be equal to or more than 1")
+  }
+
+  @Test
+  fun `Data parsed - session template - open capacity is greater than max capacity`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_invalid_open_capacity.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : open(201) or close(1) capacity seems a little high for (prison:BL1 ")
+  }
+
+  @Test
+  fun `Data parsed - session template - closed capacity is greater than max capacity`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_invalid_closed_capacity.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : open(1) or close(201) capacity seems a little high for (prison:BL1 ")
+  }
+
+  @Test
+  fun `Data parsed - session template - open capacity is less than 0`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_less_than_0_open_capacity.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : open(-3) or close(1) capacity be cant be less than zero for (prison:BL1 ")
+  }
+
+  @Test
+  fun `Data parsed - session template - closed capacity is less than 0`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_less_than_0_closed_capacity.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : open(25) or close(-1) capacity be cant be less than zero for (prison:BL1 ")
+  }
+
+  @Test
   fun `Data parsed - session location is parsed correctly`() {
     // Given
     val path = "src/test/resources/session-template-data/"
