@@ -264,7 +264,7 @@ class SessionTemplateSQLGenerator {
     val weeklyFrequency: Int,
     val categoryKeys: String?,
     val incentiveLevelKeys: String?,
-    val active: Boolean= false,
+    val active: Boolean = false,
   ) {
     constructor(sessionRecord: CSVRecord) : this(
       prisonCode = sessionRecord.get(SessionColumnNames.PRISON.name).uppercase(),
