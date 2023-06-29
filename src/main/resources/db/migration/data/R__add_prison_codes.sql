@@ -48,6 +48,9 @@ INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-08' 
 
 -- HMP Cardiff (CFI)
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-26' from prison where code = 'CFI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-12' from prison where code = 'CFI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-19' from prison where code = 'CFI';
+
 
 -- HMP Wandsworth (WWI)
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-05' from prison where code = 'WWI';
