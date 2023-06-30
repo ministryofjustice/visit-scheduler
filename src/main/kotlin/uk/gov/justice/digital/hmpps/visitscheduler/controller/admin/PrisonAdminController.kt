@@ -19,16 +19,16 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
-import java.time.LocalDate
 
 const val ADMIN_PRISONS_PATH: String = "/admin/prisons"
 const val PRISON_ADMIN_PATH: String = "$ADMIN_PRISONS_PATH/prison"
 const val PRISON: String = "$PRISON_ADMIN_PATH/{prisonCode}"
 const val ACTIVATE_PRISON: String = "$PRISON/activate"
 const val DEACTIVATE_PRISON: String = "$PRISON/deactivate"
-const val ADD_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-dates/add/{excludeDate}"
-const val REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-dates/remove/{excludeDate}"
+const val ADD_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-date/add"
+const val REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-date/remove"
 
 @RestController
 @Validated
@@ -238,11 +238,10 @@ class PrisonAdminController(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
-    @PathVariable
-    @Valid
-    excludeDate: LocalDate,
-  ) {
-    return prisonConfigService.addExcludeDate(prisonCode, excludeDate)
+    @RequestBody @Valid
+    prisonExcludeDateDto: PrisonExcludeDateDto,
+  ): PrisonDto {
+    return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -276,10 +275,9 @@ class PrisonAdminController(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
-    @PathVariable
-    @Valid
-    excludeDate: LocalDate,
+    @RequestBody @Valid
+    prisonExcludeDateDto: PrisonExcludeDateDto,
   ) {
-    return prisonConfigService.removeExcludeDate(prisonCode, excludeDate)
+    return prisonConfigService.removeExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate)
   }
 }
