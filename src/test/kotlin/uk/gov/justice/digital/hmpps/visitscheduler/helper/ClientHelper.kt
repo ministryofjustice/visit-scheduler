@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
@@ -446,12 +447,12 @@ fun getCreatePrisonUrl(): String {
 fun getGetPrisonUrl(prisonCode: String): String {
   return getPrisonIdUrl(PRISON, prisonCode)
 }
-fun getAddPrisonExcludeDateUrl(prisonCode: String, excludeDate: LocalDate): String {
-  return getPrisonIdUrl(ADD_PRISON_EXCLUDE_DATE, prisonCode).replace("{excludeDate}", excludeDate.toString())
+fun getAddPrisonExcludeDateUrl(prisonCode: String): String {
+  return getPrisonIdUrl(ADD_PRISON_EXCLUDE_DATE, prisonCode)
 }
 
-fun getRemovePrisonExcludeDateUrl(prisonCode: String, excludeDate: LocalDate): String {
-  return getPrisonIdUrl(REMOVE_PRISON_EXCLUDE_DATE, prisonCode).replace("{excludeDate}", excludeDate.toString())
+fun getRemovePrisonExcludeDateUrl(prisonCode: String): String {
+  return getPrisonIdUrl(REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
 }
 
 fun callCreatePrison(
@@ -486,9 +487,9 @@ fun callAddPrisonExcludeDate(
   excludeDate: LocalDate,
 ): ResponseSpec {
   return callPut(
-    null,
+    PrisonExcludeDateDto(excludeDate),
     webTestClient,
-    getAddPrisonExcludeDateUrl(prisonCode, excludeDate),
+    getAddPrisonExcludeDateUrl(prisonCode),
     authHttpHeaders,
   )
 }
@@ -500,9 +501,9 @@ fun callRemovePrisonExcludeDate(
   excludeDate: LocalDate,
 ): ResponseSpec {
   return callPut(
-    null,
+    PrisonExcludeDateDto(excludeDate),
     webTestClient,
-    getRemovePrisonExcludeDateUrl(prisonCode, excludeDate),
+    getRemovePrisonExcludeDateUrl(prisonCode),
     authHttpHeaders,
   )
 }
