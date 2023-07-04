@@ -210,7 +210,11 @@ class SessionTemplateService(
     return SessionTemplateDto(updatedSessionTemplateEntity)
   }
 
-  fun deleteSessionTemplates(reference: String) {
+  fun deleteSessionTemplate(reference: String) {
+    val sessionTemplate = getSessionTemplate(reference)
+    if (sessionTemplate.active) {
+      throw VSiPValidationException("Cannot delete session template $reference since it is active!")
+    }
     if (visitRepository.hasVisitsForSessionTemplate(reference)) {
       throw VSiPValidationException("Cannot delete session template $reference with existing visits!")
     }

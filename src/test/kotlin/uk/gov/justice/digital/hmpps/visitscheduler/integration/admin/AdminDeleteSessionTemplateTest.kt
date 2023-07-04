@@ -30,7 +30,7 @@ class AdminDeleteSessionTemplateTest(
 
   @BeforeEach
   internal fun setUp() {
-    sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
+    sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), isActive = false)
 
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
     sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, prisonHierarchies = allowedPermittedLocations1)
@@ -83,5 +83,38 @@ class AdminDeleteSessionTemplateTest(
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failed")
       .jsonPath("$.developerMessage").isEqualTo("Cannot delete session template $reference with existing visits!")
+  }
+
+  @Test
+  fun `cannot delete active session template `() {
+    // Given
+    val activeSessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
+
+    val reference = activeSessionTemplate.reference
+
+    // When
+    val responseSpec = callDeleteSessionTemplateByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Validation failed")
+      .jsonPath("$.developerMessage").isEqualTo("Cannot delete session template $reference since it is active!")
+  }
+
+  @Test
+  fun `when session template reference does not exist then error is thrown`() {
+    // Given
+    val reference = "does-not-exist"
+
+    // When
+    val responseSpec = callDeleteSessionTemplateByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec
+      .expectStatus().isNotFound
+      .expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Template reference:$reference not found")
   }
 }
