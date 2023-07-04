@@ -7,11 +7,11 @@ import java.time.LocalTime
 
 class SessionTimeSlotDto(
   @JsonFormat(pattern = "HH:mm", shape = JsonFormat.Shape.STRING)
-  @Schema(description = "The start time of the generated visit session(s)", example = "13:45", required = true)
+  @Schema(description = "The start time of the generated visit session(s)", example = "10:30", required = true)
   @field:SessionTimeSlotValidation
   val startTime: LocalTime,
 
   @JsonFormat(pattern = "HH:mm", shape = JsonFormat.Shape.STRING)
-  @Schema(description = "The end time of the generated visit session(s)", example = "13:45", required = true)
+  @Schema(description = "The end time of the generated visit session(s)", example = "11:30", required = true)
   val endTime: LocalTime,
 )

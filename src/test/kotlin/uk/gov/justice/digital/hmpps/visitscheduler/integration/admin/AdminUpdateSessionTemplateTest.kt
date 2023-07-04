@@ -32,7 +32,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   @BeforeEach
   internal fun setUpTests() {
     prison = prisonEntityHelper.create(prison.code, prison.active)
-    sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code)
+    sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true)
   }
 
   @Test
@@ -65,7 +65,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       locationGroupReferences = mutableListOf(sessionGroup.reference, sessionGroup.reference),
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
       incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
-      biWeekly = !sessionTemplate.biWeekly,
+      weeklyFrequency = sessionTemplate.weeklyFrequency + 1,
     )
 
     // When
@@ -84,13 +84,14 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.endTime).isEqualTo(dto.sessionTimeSlot?.endTime)
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.permittedLocationGroups[0].reference).isEqualTo(dto.locationGroupReferences!![0])
-    Assertions.assertThat(sessionTemplateDto.biWeekly).isEqualTo(dto.biWeekly)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(dto.weeklyFrequency)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups.stream().map { it.categories }).containsExactlyInAnyOrder(categoryAs)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups[0].reference).isEqualTo(dto.categoryGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.size).isEqualTo(1)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.incentiveLevels }).containsExactlyInAnyOrder(nonEnhancedIncentives)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
+    Assertions.assertThat(sessionTemplateDto.active).isEqualTo(true)
   }
 
   @Test
@@ -379,20 +380,6 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Given
     val dto = createUpdateSessionTemplateDto(
       dayOfWeek = null,
-    )
-
-    // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
-
-    // Then
-    responseSpec.expectStatus().isOk
-  }
-
-  @Test
-  fun `when session template bi weekly is null then session template is created`() {
-    // Given
-    val dto = createUpdateSessionTemplateDto(
-      biWeekly = null,
     )
 
     // When

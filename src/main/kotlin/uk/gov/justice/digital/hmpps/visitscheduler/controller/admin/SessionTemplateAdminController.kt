@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -31,9 +32,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateServic
 const val ADMIN_SESSION_TEMPLATES_PATH: String = "/admin/session-templates"
 const val SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/template"
 const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}"
+const val ACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/activate"
+const val DEACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/deactivate"
 
 enum class SessionTemplateRangeType {
-  ACTIVE_OR_FUTURE, HISTORIC, ALL
+  CURRENT_OR_FUTURE, HISTORIC, ALL
 }
 
 @RestController
@@ -42,6 +45,7 @@ enum class SessionTemplateRangeType {
 @Tag(name = "6. Session template admin rest controller")
 class SessionTemplateAdminController(
   private val sessionTemplateService: SessionTemplateService,
+  private val objectMapper: ObjectMapper,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -77,7 +81,7 @@ class SessionTemplateAdminController(
     @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
     @Parameter(
       description = "Filters session templates depending on their from and to Date",
-      example = "ACTIVE_OR_FUTURE",
+      example = "CURRENT_OR_FUTURE",
     )
     rangeType: SessionTemplateRangeType,
   ): List<SessionTemplateDto> {
@@ -203,7 +207,7 @@ class SessionTemplateAdminController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH)
+  @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
     summary = "Delete session template by reference",
     description = "Delete session template by reference",
@@ -234,7 +238,77 @@ class SessionTemplateAdminController(
     @PathVariable
     reference: String,
   ): ResponseEntity<String> {
-    sessionTemplateService.deleteSessionTemplates(reference)
-    return ResponseEntity.status(HttpStatus.OK).body("Session Template Deleted $reference!")
+    sessionTemplateService.deleteSessionTemplate(reference)
+    return ResponseEntity.status(HttpStatus.OK).body(objectMapper.writeValueAsString("Session Template Deleted $reference!"))
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PutMapping(ACTIVATE_SESSION_TEMPLATE)
+  @Operation(
+    summary = "Activate session template using given session template reference",
+    description = "Activate session template using given session template reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "session template activated",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to activate session template",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "session template can't be found to activate",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun activateSessionTemplate(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+  ): SessionTemplateDto {
+    return sessionTemplateService.activateSessionTemplate(reference)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PutMapping(DEACTIVATE_SESSION_TEMPLATE)
+  @Operation(
+    summary = "Deactivate session template using given session template reference",
+    description = "Deactivate session template using given session template reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session template deactivated",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to deactivate session template",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "session template can't be found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun deActivateSessionTemplate(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+  ): SessionTemplateDto {
+    return sessionTemplateService.deActivateSessionTemplate(reference)
   }
 }

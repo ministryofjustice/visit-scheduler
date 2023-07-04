@@ -38,7 +38,8 @@ fun sessionTemplate(
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
   permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
-  biWeekly: Boolean = false,
+  weeklyFrequency: Int = 1,
+  isActive: Boolean = true,
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = true)
 
@@ -55,9 +56,10 @@ fun sessionTemplate(
     startTime = startTime,
     endTime = endTime,
     dayOfWeek = dayOfWeek,
+    weeklyFrequency = weeklyFrequency,
+    active = isActive,
     permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
-    biWeekly = biWeekly,
   ).also { it.reference = UUID.randomUUID().toString() }
 }
 
@@ -69,8 +71,8 @@ fun createSessionTemplateDto(
   prisonCode: String = "MDI",
   visitRoom: String = "visitRoom",
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
+  weeklyFrequency: Int = 1,
   locationGroupReferences: MutableList<String> = mutableListOf(),
-  biWeekly: Boolean = false,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): CreateSessionTemplateDto {
@@ -82,8 +84,8 @@ fun createSessionTemplateDto(
     sessionTimeSlot = sessionTimeSlotDto,
     visitRoom = visitRoom,
     dayOfWeek = dayOfWeek,
+    weeklyFrequency = weeklyFrequency,
     locationGroupReferences = locationGroupReferences,
-    biWeekly = biWeekly,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )
@@ -95,8 +97,8 @@ fun createUpdateSessionTemplateDto(
   sessionCapacity: SessionCapacityDto? = SessionCapacityDto(closed = 10, open = 5),
   sessionTimeSlotDto: SessionTimeSlotDto? = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
   dayOfWeek: DayOfWeek? = DayOfWeek.FRIDAY,
+  weeklyFrequency: Int = 1,
   locationGroupReferences: MutableList<String> = mutableListOf(),
-  biWeekly: Boolean? = false,
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
 ): UpdateSessionTemplateDto {
@@ -106,7 +108,7 @@ fun createUpdateSessionTemplateDto(
     sessionCapacity = sessionCapacity,
     sessionTimeSlot = sessionTimeSlotDto,
     locationGroupReferences = locationGroupReferences,
-    biWeekly = biWeekly,
+    weeklyFrequency = weeklyFrequency,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   )

@@ -40,22 +40,23 @@
              valid_from_date   date          NOT NULL,
              valid_to_date     date          ,
              day_of_week       VARCHAR(40)   NOT NULL,
-             bi_weekly         BOOLEAN       NOT NULL,
-             name              varchar(100)  NOT NULL
+             weekly_frequency  integer       NOT NULL,
+             name              varchar(100)  NOT NULL,
+             active            BOOLEAN NOT NULL
             );
 
-        INSERT INTO tmp_session_template (locationKeys, categoryKeys, incentiveLevelKeys, prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week,bi_weekly,name)
+        INSERT INTO tmp_session_template (locationKeys, categoryKeys, incentiveLevelKeys, prison_code, visit_room, visit_type, open_capacity, closed_capacity, start_time, end_time, valid_from_date, valid_to_date, day_of_week, weekly_frequency, name, active)
         VALUES
         <#list sessionRecords as s>
-            (<#if s.locationKeys??>'${s.locationKeys}'<#else>NULL</#if>,<#if s.categoryKeys??>'${s.categoryKeys}'<#else>NULL</#if>,<#if s.incentiveLevelKeys??>'${s.incentiveLevelKeys}'<#else>NULL</#if>,'${s.prisonCode}','${s.visitRoom}','${s.type}',${s.open},${s.closed},'${s.startTime}','${s.endTime}','${s.startDate}',<#if s.endDate??>'${s.endDate}'<#else>NULL</#if>,'${s.dayOfWeek}',${s.biWeekly?string},'${s.dayOfWeek}, ${s.startDate}, ${s.startTime}')<#if s_has_next>,</#if>
+            (<#if s.locationKeys??>'${s.locationKeys}'<#else>NULL</#if>,<#if s.categoryKeys??>'${s.categoryKeys}'<#else>NULL</#if>,<#if s.incentiveLevelKeys??>'${s.incentiveLevelKeys}'<#else>NULL</#if>,'${s.prisonCode}','${s.visitRoom}','${s.type}',${s.open},${s.closed},'${s.startTime}','${s.endTime}','${s.startDate}',<#if s.endDate??>'${s.endDate}'<#else>NULL</#if>,'${s.dayOfWeek}',${s.weeklyFrequency},'${s.dayOfWeek}, ${s.startDate}, ${s.startTime}',${s.active?string})<#if s_has_next>,</#if>
         </#list>;
 
         -- update tmp session template table with correct prison id for given code.
         UPDATE tmp_session_template SET prison_id = prison.id FROM prison WHERE tmp_session_template.prison_code = prison.code;
 
         -- insert data into real session template table from temporary one.
-        INSERT INTO session_template(id,reference,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name)
-        SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{3})(?!$)', '\1.','g')) as reference,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,bi_weekly,name FROM tmp_session_template order by id;
+        INSERT INTO session_template(id,reference,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,weekly_frequency,name, active)
+        SELECT id,CONCAT('-',REGEXP_REPLACE(to_hex((ROW_NUMBER () OVER (ORDER BY id))+2951597050), '(.{3})(?!$)', '\1.','g')) as reference,visit_room,visit_type,open_capacity,closed_capacity,start_time,end_time,valid_from_date,valid_to_date,day_of_week,prison_id,weekly_frequency,name, active FROM tmp_session_template order by id;
 
         -- Sequence updated manually as id's were inserted from temp table
         ALTER SEQUENCE session_template_id_seq RESTART WITH  ${session_template_id_index};

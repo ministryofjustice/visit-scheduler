@@ -240,9 +240,10 @@ class SessionTemplateEntityHelper(
     dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
     activePrison: Boolean = true,
     permittedLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
-    biWeekly: Boolean = false,
+    weeklyFrequency: Int = 1,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
+    isActive: Boolean = true,
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -259,9 +260,10 @@ class SessionTemplateEntityHelper(
       endTime = endTime,
       dayOfWeek = dayOfWeek,
       permittedSessionGroups = permittedLocationGroups,
-      biWeekly = biWeekly,
+      weeklyFrequency = weeklyFrequency,
       permittedCategories = permittedCategories,
       permittedIncentiveLevels = permittedIncentiveLevels,
+      isActive = isActive,
     )
   }
 
@@ -278,8 +280,9 @@ class SessionTemplateEntityHelper(
     endTime: LocalTime = LocalTime.parse("10:00"),
     dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
     activePrison: Boolean = true,
+    weeklyFrequency: Int = 1,
+    isActive: Boolean = true,
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
-    biWeekly: Boolean = false,
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
   ): SessionTemplate {
@@ -297,8 +300,9 @@ class SessionTemplateEntityHelper(
         startTime = startTime,
         endTime = endTime,
         dayOfWeek = dayOfWeek,
+        weeklyFrequency = weeklyFrequency,
+        active = isActive,
         permittedSessionLocationGroups = permittedSessionGroups,
-        biWeekly = biWeekly,
         permittedSessionCategoryGroups = permittedCategories,
         permittedSessionIncentiveLevelGroups = permittedIncentiveLevels,
       ),

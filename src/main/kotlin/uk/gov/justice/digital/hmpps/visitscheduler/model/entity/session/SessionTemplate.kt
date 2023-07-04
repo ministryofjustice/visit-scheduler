@@ -84,10 +84,13 @@ class SessionTemplate(
   @Column(nullable = false)
   val openCapacity: Int,
 
-  @Column(name = "bi_weekly", nullable = false)
-  val biWeekly: Boolean = false,
+  @Column(name = "weeklyFrequency", nullable = false)
+  val weeklyFrequency: Int = 1,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   val dayOfWeek: DayOfWeek,
+
+  @Column(name = "active", nullable = false)
+  var active: Boolean,
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

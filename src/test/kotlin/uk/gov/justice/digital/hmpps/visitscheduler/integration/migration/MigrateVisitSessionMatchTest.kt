@@ -882,7 +882,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = "wrongSession1",
       startTime = startTime,
       endTime = endTime,
-      biWeekly = true,
+      weeklyFrequency = 2,
     )
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
@@ -892,7 +892,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = "correctSession",
       startTime = startTime,
       endTime = endTime,
-      biWeekly = true,
+      weeklyFrequency = 2,
     )
 
     sessionTemplateEntityHelper.create(
@@ -902,7 +902,115 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = "wrongSession2",
       startTime = startTime,
       endTime = endTime,
-      biWeekly = true,
+      weeklyFrequency = 2,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitRoom).isEqualTo(sessionTemplate.visitRoom)
+      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    }
+  }
+
+  @Test
+  fun `Migrated session match - for Three weekly session templates`() {
+    // Given
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStartTimeAndDate = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES))
+    val startDate = migrateVisitRequestDto.startTimestamp.toLocalDate()
+    val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
+    val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = startDate.minusWeeks(2),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = "wrongSession1",
+      startTime = startTime,
+      endTime = endTime,
+      weeklyFrequency = 3,
+    )
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = startDate.minusWeeks(3),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = "correctSession",
+      startTime = startTime,
+      endTime = endTime,
+      weeklyFrequency = 3,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = startDate.minusWeeks(4),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = "wrongSession2",
+      startTime = startTime,
+      endTime = endTime,
+      weeklyFrequency = 3,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitRoom).isEqualTo(sessionTemplate.visitRoom)
+      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    }
+  }
+
+  @Test
+  fun `Migrated session match - for Six weekly session templates`() {
+    // Given
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStartTimeAndDate = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES))
+    val startDate = migrateVisitRequestDto.startTimestamp.toLocalDate()
+    val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
+    val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = startDate.minusWeeks(5),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = "wrongSession1",
+      startTime = startTime,
+      endTime = endTime,
+      weeklyFrequency = 6,
+    )
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = startDate.minusWeeks(6),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = "correctSession",
+      startTime = startTime,
+      endTime = endTime,
+      weeklyFrequency = 6,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = startDate.minusWeeks(7),
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = "wrongSession2",
+      startTime = startTime,
+      endTime = endTime,
+      weeklyFrequency = 6,
     )
 
     // When

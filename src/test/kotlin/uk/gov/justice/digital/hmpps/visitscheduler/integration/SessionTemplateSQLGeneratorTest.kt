@@ -55,10 +55,11 @@ class SessionTemplateSQLGeneratorTest {
       assertThat(startDate).isEqualTo(LocalDate.parse("2022-11-16"))
       assertThat(endDate).isNull()
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
-      assertThat(biWeekly).isFalse
+      assertThat(weeklyFrequency).isEqualTo(1)
       assertThat(locationKeys).isEqualTo("BLI_G1")
       assertThat(categoryKeys).isEqualTo("INC_CAT")
       assertThat(incentiveLevelKeys).isEqualTo("INCENTIVE_LEVEL_1")
+      assertThat(active).isTrue
     }
     with(sessionRecords[1]) {
       assertThat(prisonCode).isEqualTo("BL2")
@@ -71,11 +72,87 @@ class SessionTemplateSQLGeneratorTest {
       assertThat(startDate).isEqualTo(LocalDate.parse("2022-11-17"))
       assertThat(endDate).isEqualTo(LocalDate.parse("2022-12-17"))
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.WEDNESDAY)
-      assertThat(biWeekly).isTrue
+      assertThat(weeklyFrequency).isEqualTo(11)
       assertThat(locationKeys).isEqualTo("BLI_G2")
       assertThat(categoryKeys).isEqualTo("INC_CAT")
       assertThat(incentiveLevelKeys).isNull()
+      assertThat(active).isFalse
     }
+  }
+
+  @Test
+  fun `Data parsed - session template - weekly frequency is invalid`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_invalid_weekly_frequency.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : weeklyFrequency(0) should be equal to or more than 1")
+  }
+
+  @Test
+  fun `Data parsed - session template - open capacity is greater than max capacity`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_invalid_open_capacity.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : open(201) or close(1) capacity seems a little high for (prison:BL1 ")
+  }
+
+  @Test
+  fun `Data parsed - session template - closed capacity is greater than max capacity`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_invalid_closed_capacity.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : open(1) or close(201) capacity seems a little high for (prison:BL1 ")
+  }
+
+  @Test
+  fun `Data parsed - session template - open capacity is less than 0`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_less_than_0_open_capacity.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : open(-3) or close(1) capacity be cant be less than zero for (prison:BL1 ")
+  }
+
+  @Test
+  fun `Data parsed - session template - closed capacity is less than 0`() {
+    // Given
+    val path = "src/test/resources/session-template-data/"
+    val sessionDataFile = File(path, "session-data_less_than_0_closed_capacity.csv")
+
+    // When
+    val exception = assertThrows(IllegalArgumentException::class.java) {
+      sessionTemplateSQLGenerator.getSessionRecords(sessionDataFile)
+    }
+
+    // Then
+    assertThat(exception.message).startsWith("Session Template : open(25) or close(-1) capacity be cant be less than zero for (prison:BL1 ")
   }
 
   @Test
@@ -163,8 +240,9 @@ class SessionTemplateSQLGeneratorTest {
       assertThat(type).isEqualTo(SOCIAL)
       assertThat(dayOfWeek).isEqualTo(DayOfWeek.TUESDAY)
       assertThat(locationKeys).isEqualTo("BLI_G1")
-      assertThat(biWeekly).isFalse
+      assertThat(weeklyFrequency).isEqualTo(1)
       assertThat(categoryKeys).isEqualTo("INC_CAT")
+      assertThat(active).isFalse
     }
   }
 

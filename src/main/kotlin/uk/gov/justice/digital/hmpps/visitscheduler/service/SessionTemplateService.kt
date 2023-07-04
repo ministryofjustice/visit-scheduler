@@ -5,8 +5,8 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.ACTIVE_OR_FUTURE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.ALL
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.CURRENT_OR_FUTURE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGro
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.util.function.Supplier
+import kotlin.jvm.Throws
 
 @Service
 @Transactional
@@ -56,8 +57,8 @@ class SessionTemplateService(
   fun getSessionTemplates(prisonCode: String, rangeType: SessionTemplateRangeType): List<SessionTemplateDto> {
     val sessionTemplates = when (rangeType) {
       ALL -> sessionTemplateRepository.findSessionTemplatesByPrisonCode(prisonCode)
-      HISTORIC -> sessionTemplateRepository.findInActiveSessionTemplates(prisonCode)
-      ACTIVE_OR_FUTURE -> sessionTemplateRepository.findActiveAndFutureSessionTemplates(prisonCode)
+      HISTORIC -> sessionTemplateRepository.findHistoricSessionTemplates(prisonCode)
+      CURRENT_OR_FUTURE -> sessionTemplateRepository.findCurrentAndFutureSessionTemplates(prisonCode)
     }
     return sessionTemplates.sortedBy { it.validFromDate }.map { SessionTemplateDto(it) }
   }
@@ -139,9 +140,10 @@ class SessionTemplateService(
       visitRoom = createSessionTemplateDto.visitRoom,
       closedCapacity = createSessionTemplateDto.sessionCapacity.closed,
       openCapacity = createSessionTemplateDto.sessionCapacity.open,
-      biWeekly = createSessionTemplateDto.biWeekly,
+      weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
       dayOfWeek = createSessionTemplateDto.dayOfWeek,
       visitType = VisitType.SOCIAL,
+      active = false,
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
@@ -184,8 +186,8 @@ class SessionTemplateService(
         sessionTemplateRepository.updateOpenCapacityByReference(reference, it.open)
       }
 
-      biWeekly?.let {
-        sessionTemplateRepository.updateBiWeeklyByReference(reference, biWeekly)
+      weeklyFrequency?.let {
+        sessionTemplateRepository.updateWeeklyFrequencyByReference(reference, weeklyFrequency)
       }
     }
 
@@ -208,7 +210,11 @@ class SessionTemplateService(
     return SessionTemplateDto(updatedSessionTemplateEntity)
   }
 
-  fun deleteSessionTemplates(reference: String) {
+  fun deleteSessionTemplate(reference: String) {
+    val sessionTemplate = getSessionTemplate(reference)
+    if (sessionTemplate.active) {
+      throw VSiPValidationException("Cannot delete session template $reference since it is active!")
+    }
     if (visitRepository.hasVisitsForSessionTemplate(reference)) {
       throw VSiPValidationException("Cannot delete session template $reference with existing visits!")
     }
@@ -217,6 +223,22 @@ class SessionTemplateService(
     if (deleted == 0) {
       throw ItemNotFoundException("Session template not found : $reference")
     }
+  }
+
+  @Throws(TemplateNotFoundException::class)
+  fun activateSessionTemplate(reference: String): SessionTemplateDto {
+    val sessionTemplate = getSessionTemplate(reference)
+    sessionTemplate.active = true
+    sessionTemplateRepository.updateActiveByReference(reference, true)
+    return SessionTemplateDto(sessionTemplate)
+  }
+
+  @Throws(TemplateNotFoundException::class)
+  fun deActivateSessionTemplate(reference: String): SessionTemplateDto {
+    val sessionTemplate = getSessionTemplate(reference)
+    sessionTemplate.active = false
+    sessionTemplateRepository.updateActiveByReference(reference, false)
+    return SessionTemplateDto(sessionTemplate)
   }
 
   fun deleteSessionLocationGroup(reference: String) {

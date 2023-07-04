@@ -27,8 +27,8 @@ data class SessionTemplateDto(
   val sessionDateRange: SessionDateRangeDto,
   @Schema(description = "visit type", example = "SOCIAL", required = true)
   val visitType: VisitType,
-  @Schema(description = "biWeekly", example = "true", required = true)
-  val biWeekly: Boolean,
+  @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
+  val weeklyFrequency: Int,
   @Schema(description = "Visit Room", example = "A1 L3", required = true)
   @field:NotBlank
   val visitRoom: String,
@@ -36,6 +36,8 @@ data class SessionTemplateDto(
   val sessionCapacity: SessionCapacityDto,
   @Schema(description = "day of week for visit", example = "MONDAY", required = false)
   val dayOfWeek: DayOfWeek?,
+  @Schema(description = "is session template active", example = "true", required = true)
+  val active: Boolean,
   @Schema(description = "list of permitted session location groups", required = false)
   val permittedLocationGroups: List<SessionLocationGroupDto> = listOf(),
   @Schema(description = "list of permitted prisoner category groups", required = false)
@@ -56,6 +58,7 @@ data class SessionTemplateDto(
     permittedLocationGroups = sessionTemplateEntity.permittedSessionLocationGroups.map { SessionLocationGroupDto(it) },
     prisonerCategoryGroups = sessionTemplateEntity.permittedSessionCategoryGroups.map { SessionCategoryGroupDto(it) },
     prisonerIncentiveLevelGroups = sessionTemplateEntity.permittedSessionIncentiveLevelGroups.map { SessionIncentiveLevelGroupDto(it) },
-    biWeekly = sessionTemplateEntity.biWeekly,
+    weeklyFrequency = sessionTemplateEntity.weeklyFrequency,
+    active = sessionTemplateEntity.active,
   )
 }
