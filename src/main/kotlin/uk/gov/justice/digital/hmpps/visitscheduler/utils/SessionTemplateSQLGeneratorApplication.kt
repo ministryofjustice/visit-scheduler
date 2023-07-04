@@ -10,19 +10,20 @@ import reactor.util.function.Tuples
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.BI_WEEKLY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CATEGORY_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.DAY_OF_WEEK
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.END_TIME
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.INCENTIVE_LEVEL_KEYS
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.IS_ACTIVE
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.LOCATION_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.START_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.START_TIME
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.TYPE
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.VISIT_ROOM
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.WEEKLY_FREQUENCY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.KEY
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.LEVEL_FOUR
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionLocationColumnNames.LEVEL_ONE
@@ -45,7 +46,7 @@ private const val maxCapacity = 200
 class SessionTemplateSQLGenerator {
 
   private enum class SessionColumnNames {
-    PRISON, VISIT_ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, BI_WEEKLY, LOCATION_KEYS, CATEGORY_KEYS, INCENTIVE_LEVEL_KEYS;
+    PRISON, VISIT_ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, WEEKLY_FREQUENCY, LOCATION_KEYS, CATEGORY_KEYS, INCENTIVE_LEVEL_KEYS, IS_ACTIVE;
   }
 
   private enum class SessionLocationColumnNames {
@@ -84,7 +85,21 @@ class SessionTemplateSQLGenerator {
     }
   }
 
-  private fun validateSessionTemplate(
+  private fun validateSessionTemplateColumns(sessionTemplateColumns: SessionTemplateColumns) {
+    with(sessionTemplateColumns) {
+      if (open < 0 || closed < 0) {
+        throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity be cant be less than zero for (prison:$prisonCode key:$this)!")
+      }
+      if (open > maxCapacity || closed > maxCapacity) {
+        throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity seems a little high for (prison:$prisonCode key:$this)!")
+      }
+      if (weeklyFrequency < 1) {
+        throw IllegalArgumentException("Session Template : weeklyFrequency($weeklyFrequency) should be equal to or more than 1 for (prison:$prisonCode key:$this)!")
+      }
+    }
+  }
+
+  private fun validateSessionTemplateGroupColumn(
     groupType: GroupType,
     groupColumns: List<GroupColumns>,
     sessionTemplateColumns: List<SessionTemplateColumns>,
@@ -97,13 +112,6 @@ class SessionTemplateSQLGenerator {
           GroupType.PRISONER_INCENTIVE_LEVEL -> getPrisonerIncentiveLevelList()
         }
         validateSessionTemplateGroupColumn(groupType, sessionTemplateColumn, keyList, groupColumns)
-
-        if (open < 0 || closed < 0) {
-          throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity be cant be less than zero for (prison:$prisonCode key:$locationKeys)!")
-        }
-        if (open > maxCapacity || closed > maxCapacity) {
-          throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity seems a little high for (prison:$prisonCode key:$locationKeys)!")
-        }
       }
     }
   }
@@ -130,7 +138,9 @@ class SessionTemplateSQLGenerator {
       if (record.size() != SessionColumnNames.values().size) {
         throw IllegalArgumentException("Some session columns are missing line number: ${record.recordNumber}, expected ${SessionColumnNames.values().size} but got ${record.size()} ${record.toList()}")
       }
-      prisonTemplateRecords.add(SessionTemplateColumns(record))
+      val sessionTemplateColumn = SessionTemplateColumns(record)
+      validateSessionTemplateColumns(sessionTemplateColumn)
+      prisonTemplateRecords.add(sessionTemplateColumn)
     }
     return prisonTemplateRecords.toList()
   }
@@ -237,7 +247,7 @@ class SessionTemplateSQLGenerator {
           groupType,
           groupDataFile,
         )
-      validateSessionTemplate(groupType, groupsColumns, sessionTemplateColumns)
+      validateSessionTemplateGroupColumn(groupType, groupsColumns, sessionTemplateColumns)
 
       val sessionItems = getSessionItems(groupsColumns)
       val sessionGroups = getSessionGroups(groupsColumns)
@@ -260,9 +270,10 @@ class SessionTemplateSQLGenerator {
     val endDate: LocalDate?,
     val dayOfWeek: DayOfWeek,
     val locationKeys: String?,
-    val biWeekly: Boolean = false,
+    val weeklyFrequency: Int,
     val categoryKeys: String?,
     val incentiveLevelKeys: String?,
+    val active: Boolean,
   ) {
     constructor(sessionRecord: CSVRecord) : this(
       prisonCode = sessionRecord.get(SessionColumnNames.PRISON.name).uppercase(),
@@ -276,9 +287,10 @@ class SessionTemplateSQLGenerator {
       endDate = sessionRecord.get(END_DATE.name)?.let { LocalDate.parse(it) },
       dayOfWeek = DayOfWeek.valueOf(sessionRecord.get(DAY_OF_WEEK.name).uppercase()),
       locationKeys = sessionRecord.get(LOCATION_KEYS.name)?.uppercase(),
-      biWeekly = sessionRecord.get(BI_WEEKLY.name)?.uppercase().toBoolean(),
+      weeklyFrequency = Integer.parseInt(sessionRecord.get(WEEKLY_FREQUENCY.name)),
       categoryKeys = sessionRecord.get(CATEGORY_KEYS.name)?.uppercase(),
       incentiveLevelKeys = sessionRecord.get(INCENTIVE_LEVEL_KEYS.name)?.uppercase(),
+      active = sessionRecord.get(IS_ACTIVE.name).uppercase().toBoolean(),
     )
 
     fun getLocationList(): List<String> {

@@ -84,7 +84,7 @@ class PrisonConfigService(
 
   @Throws(ValidationException::class)
   @Transactional
-  fun addExcludeDate(prisonCode: String, excludeDate: LocalDate) {
+  fun addExcludeDate(prisonCode: String, excludeDate: LocalDate): PrisonDto {
     val prison = findPrisonByCode(prisonCode)
     val existingExcludeDates = getExistingExcludeDates(prison)
 
@@ -93,6 +93,7 @@ class PrisonConfigService(
     } else {
       prisonExcludeDateRepository.save(PrisonExcludeDate(prison.id, prison, excludeDate))
     }
+    return PrisonDto(findPrisonByCode(prisonCode))
   }
 
   @Throws(ValidationException::class)
