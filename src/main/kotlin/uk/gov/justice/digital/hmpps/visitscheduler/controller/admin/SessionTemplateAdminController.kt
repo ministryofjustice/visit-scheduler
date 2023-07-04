@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
@@ -44,6 +45,7 @@ enum class SessionTemplateRangeType {
 @Tag(name = "6. Session template admin rest controller")
 class SessionTemplateAdminController(
   private val sessionTemplateService: SessionTemplateService,
+  private val objectMapper: ObjectMapper,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -205,7 +207,7 @@ class SessionTemplateAdminController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH)
+  @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
     summary = "Delete session template by reference",
     description = "Delete session template by reference",
@@ -236,8 +238,8 @@ class SessionTemplateAdminController(
     @PathVariable
     reference: String,
   ): ResponseEntity<String> {
-    sessionTemplateService.deleteSessionTemplates(reference)
-    return ResponseEntity.status(HttpStatus.OK).body("Session Template Deleted $reference!")
+    sessionTemplateService.deleteSessionTemplate(reference)
+    return ResponseEntity.status(HttpStatus.OK).body(objectMapper.writeValueAsString("Session Template Deleted $reference!"))
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
