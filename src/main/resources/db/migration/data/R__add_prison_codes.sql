@@ -44,6 +44,18 @@ INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-12-12' 
 
 -- HMP Durham (DMI)
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-06-22' from prison where code = 'DMI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-08' from prison where code = 'DMI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023/07/31' from prison where code = 'DMI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023/09/25' from prison where code = 'DMI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023/10/30' from prison where code = 'DMI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023/11/27' from prison where code = 'DMI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023/12/18' from prison where code = 'DMI';
+
+-- HMP Cardiff (CFI)
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-26' from prison where code = 'CFI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-12' from prison where code = 'CFI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-19' from prison where code = 'CFI';
+
 
 -- HMP Wandsworth (WWI)
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-05' from prison where code = 'WWI';
@@ -65,8 +77,15 @@ INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2024-10-02' 
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2024-11-06' from prison where code = 'WWI';
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2024-12-04' from prison where code = 'WWI';
 
-
-
-
-
-
+-- HMP Foston Hall (FHI)
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-05' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-26' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-08-09' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-08-23' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-09-27' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-10-25' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-11-01' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-11-22' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-12-06' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-12-20' from prison where code = 'FHI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-12-27' from prison where code = 'FHI';
