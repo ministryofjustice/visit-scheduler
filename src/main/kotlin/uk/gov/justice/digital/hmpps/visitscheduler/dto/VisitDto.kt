@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -60,9 +62,12 @@ data class VisitDto(
   @Schema(description = "The visit modified date and time", example = "2018-12-01T13:45:00", required = true)
   @field:NotBlank
   val modifiedTimestamp: LocalDateTime,
-
+  @Schema(description = "What was the last application method", required = true)
+  @field:NotNull
+  val lastApplicationMethod : ApplicationMethod
 ) {
   constructor(visitEntity: Visit) : this(
+    lastApplicationMethod = ApplicationMethod.UNKNOWN,
     applicationReference = visitEntity.applicationReference,
     reference = visitEntity.reference,
     prisonerId = visitEntity.prisonerId,

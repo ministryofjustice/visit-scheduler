@@ -7,6 +7,7 @@ import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import java.time.LocalDateTime
 
@@ -38,4 +39,7 @@ data class ReserveVisitSlotDto(
   val visitorSupport: Set<@Valid VisitorSupportDto>? = setOf(),
   @Schema(description = "Username for user who actioned this request", required = true)
   val actionedBy: String,
+  @Schema(description = "application method", required = true)
+  @field:NotNull
+  val applicationMethod : ApplicationMethod
 )
