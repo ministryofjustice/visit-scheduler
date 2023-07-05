@@ -144,7 +144,7 @@ class PrisonerCategoryGroupsAdminController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = SessionCategoryGroupDto::class),
+          schema = Schema(implementation = UpdateCategoryGroupDto::class),
         ),
       ],
     ),
