@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.UNKNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import java.time.LocalDateTime
@@ -29,7 +29,7 @@ class CancelZeroDayLimitConfiguredTest : IntegrationTestBase() {
         "No longer joining.",
       ),
       "user-1",
-      applicationMethod = UNKNOWN,
+      applicationMethod = NOT_KNOWN,
     )
     // Given
     val visitStart = LocalDateTime.now().plusDays(1)

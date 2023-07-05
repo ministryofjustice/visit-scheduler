@@ -24,7 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitReserveSlotUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.UNKNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
@@ -63,7 +63,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
       actionedBy = actionedBy,
       sessionTemplateReference = sessionTemplateReference,
-      applicationMethod = UNKNOWN,
+      applicationMethod = NOT_KNOWN,
     )
   }
 
@@ -149,7 +149,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "01234 567890"),
       actionedBy = actionedByUserName,
       sessionTemplateReference = "sessionTemplateReference",
-      applicationMethod = UNKNOWN,
+      applicationMethod = NOT_KNOWN,
     )
 
     // When
@@ -202,7 +202,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       ),
       actionedBy = actionedByUserName,
       sessionTemplateReference = "sessionTemplateReference",
-      applicationMethod = UNKNOWN,
+      applicationMethod = NOT_KNOWN,
     )
 
     // When
@@ -225,7 +225,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitorSupport = setOf(VisitorSupportDto("ANYTHINGWILLDO")),
       actionedBy = actionedByUserName,
       sessionTemplateReference = "sessionTemplateReference",
-      applicationMethod = UNKNOWN,
+      applicationMethod = NOT_KNOWN,
     )
 
     // When

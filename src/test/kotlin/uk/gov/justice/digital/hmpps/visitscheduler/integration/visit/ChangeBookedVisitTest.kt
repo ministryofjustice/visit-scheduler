@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitChangeUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.UNKNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
@@ -91,7 +91,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
       actionedBy = actionedByUserName,
       sessionTemplateReference = sessionTemplateReference,
-      applicationMethod = UNKNOWN,
+      applicationMethod = NOT_KNOWN,
     )
   }
 

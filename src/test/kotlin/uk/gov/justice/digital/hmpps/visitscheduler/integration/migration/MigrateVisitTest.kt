@@ -14,12 +14,12 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.NOTKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.UNKNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
@@ -178,8 +178,8 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
+      assertThat(visit.visitContact!!.name).isEqualTo(NOTKNOWN_TOKEN)
+      assertThat(visit.visitContact!!.telephone).isEqualTo(NOTKNOWN_TOKEN)
     }
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
@@ -289,8 +289,8 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
-      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
+      assertThat(visit.visitContact!!.telephone).isEqualTo(NOTKNOWN_TOKEN)
+      assertThat(visit.visitContact!!.name).isEqualTo(NOTKNOWN_TOKEN)
     }
 
     // And
@@ -325,8 +325,8 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
+      assertThat(visit.visitContact!!.name).isEqualTo(NOTKNOWN_TOKEN)
+      assertThat(visit.visitContact!!.telephone).isEqualTo(NOTKNOWN_TOKEN)
       assertThat(visit.outcomeStatus).isEqualTo(NOT_RECORDED)
     }
 
@@ -467,7 +467,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
         "Prisoner got covid",
       ),
       CANCELLED_BY_BY_USER,
-      UNKNOWN,
+      NOT_KNOWN,
     )
     val reference = visit.reference
 
