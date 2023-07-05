@@ -31,7 +31,7 @@ data class ChangeVisitSlotRequestDto(
   @Schema(description = "Session template reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank
   val sessionTemplateReference: String,
-  @Schema(description = "application method", required = true)
+  @Schema(description = "application method", required = false)
   @field:NotNull
   val applicationMethod: ApplicationMethod,
 )
