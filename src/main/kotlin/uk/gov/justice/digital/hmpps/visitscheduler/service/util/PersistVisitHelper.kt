@@ -47,6 +47,7 @@ class PersistVisitHelper(
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
     visitEntity.cancelledBy = cancelVisitDto.actionedBy
+    visitEntity.lastApplicationMethod = cancelVisitDto.applicationMethod
 
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))

@@ -67,7 +67,7 @@ data class VisitDto(
   val lastApplicationMethod: ApplicationMethod,
 ) {
   constructor(visitEntity: Visit) : this(
-    lastApplicationMethod = ApplicationMethod.NOT_KNOWN,
+    lastApplicationMethod = visitEntity.lastApplicationMethod,
     applicationReference = visitEntity.applicationReference,
     reference = visitEntity.reference,
     prisonerId = visitEntity.prisonerId,

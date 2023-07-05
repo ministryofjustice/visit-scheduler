@@ -27,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
@@ -291,6 +292,7 @@ class SessionServiceTest {
         visitRestriction = OPEN,
         visitRoom = "1",
         createdBy = "TEST-USER",
+        lastApplicationMethod = NOT_KNOWN,
       )
 
       val openVisit2 = Visit(
@@ -304,6 +306,7 @@ class SessionServiceTest {
         visitRestriction = OPEN,
         visitRoom = "1",
         createdBy = "TEST-USER",
+        lastApplicationMethod = NOT_KNOWN,
       )
 
       val closedVisit = Visit(
@@ -317,6 +320,7 @@ class SessionServiceTest {
         visitRestriction = CLOSED,
         visitRoom = "1",
         createdBy = "TEST-USER",
+        lastApplicationMethod = NOT_KNOWN,
       )
       mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession)
 
@@ -357,6 +361,7 @@ class SessionServiceTest {
         visitRestriction = OPEN,
         visitRoom = "1",
         createdBy = "TEST-USER",
+        lastApplicationMethod = NOT_KNOWN,
       )
 
       val closedVisit = Visit(
@@ -370,6 +375,7 @@ class SessionServiceTest {
         visitRestriction = CLOSED,
         visitRoom = "1",
         createdBy = "TEST-USER",
+        lastApplicationMethod = NOT_KNOWN,
       )
       mockVisitRepositoryCountResponse(listOf(openVisit, closedVisit), singleSession)
 
@@ -409,6 +415,7 @@ class SessionServiceTest {
         visitRestriction = UNKNOWN,
         visitRoom = "1",
         createdBy = "TEST-USER",
+        lastApplicationMethod = NOT_KNOWN,
       )
 
       mockSessionTemplateRepositoryResponse(listOf(singleSession))

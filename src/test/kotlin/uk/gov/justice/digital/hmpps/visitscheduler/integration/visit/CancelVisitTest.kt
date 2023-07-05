@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.PHONE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
@@ -55,7 +56,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
-      NOT_KNOWN,
+      PHONE,
     )
     val reference = visit.reference
 
@@ -74,6 +75,7 @@ class CancelVisitTest : IntegrationTestBase() {
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
     Assertions.assertThat(visitCancelled.createdBy).isEqualTo(visit.createdBy)
     Assertions.assertThat(visitCancelled.updatedBy).isEqualTo(visit.updatedBy)
+    Assertions.assertThat(visitCancelled.lastApplicationMethod).isEqualTo(PHONE)
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)

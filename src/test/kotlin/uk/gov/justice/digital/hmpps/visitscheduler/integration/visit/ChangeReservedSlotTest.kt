@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotCh
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitReserveSlotChangeUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.WEBSITE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
@@ -80,7 +81,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
       sessionTemplateReference = "aa-bb-cc-dd",
-      applicationMethod = NOT_KNOWN,
+      applicationMethod = WEBSITE,
     )
 
     val applicationReference = visitFull.applicationReference
@@ -113,6 +114,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       .jsonPath("$.visitorSupport[0].type").isEqualTo(updateRequest.visitorSupport!!.first().type)
       .jsonPath("$.visitorSupport[0].text").isEqualTo(updateRequest.visitorSupport!!.first().text!!)
       .jsonPath("$.sessionTemplateReference").isEqualTo(updateRequest.sessionTemplateReference)
+      .jsonPath("$.lastApplicationMethod").isEqualTo(updateRequest.applicationMethod!!.name)
       .jsonPath("$.createdTimestamp").isNotEmpty
       .returnResult()
 
@@ -442,7 +444,6 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeVisitSlotRequestDto(
       visitContact = ContactDto("John Smith", "01234 567890"),
       sessionTemplateReference = "aa-bb-cc-dd",
-      applicationMethod = NOT_KNOWN,
     )
 
     val applicationReference = visitFull.applicationReference

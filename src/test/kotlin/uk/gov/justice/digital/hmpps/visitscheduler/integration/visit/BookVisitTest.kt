@@ -93,6 +93,7 @@ class BookVisitTest : IntegrationTestBase() {
       .jsonPath("$.visitorSupport[0].text").isEqualTo(reservedVisit.support.first().text!!)
       .jsonPath("$.createdBy").isNotEmpty
       .jsonPath("$.createdTimestamp").isNotEmpty
+      .jsonPath("$.lastApplicationMethod").isEqualTo(reservedVisit.lastApplicationMethod.name)
       .returnResult()
 
     // And

@@ -14,14 +14,12 @@ import org.springframework.transaction.annotation.Propagation.NEVER
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
@@ -89,6 +87,7 @@ class VisitService(
         visitEnd = reserveVisitSlotDto.endTimestamp,
         _reference = bookingReference,
         createdBy = reserveVisitSlotDto.actionedBy,
+        lastApplicationMethod = reserveVisitSlotDto.applicationMethod,
       ),
     )
 
@@ -186,6 +185,10 @@ class VisitService(
 
     visitEntity.sessionTemplateReference = changeVisitSlotRequestDto.sessionTemplateReference
 
+    changeVisitSlotRequestDto.applicationMethod?.let {
+      visitEntity.lastApplicationMethod = it
+    }
+
     trackEvent(
       TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT.eventName,
       mapOf(
@@ -267,13 +270,6 @@ class VisitService(
     } else {
       snsService.sendVisitBookedEvent(bookedVisitDto)
     }
-  }
-
-  @Deprecated("This method has been deprecated.")
-  fun cancelVisit(reference: String, outcomeDto: OutcomeDto): VisitDto {
-    LOG.debug("Enter legacy call to cancelVisit $reference")
-    val cancelVisitDto = CancelVisitDto(outcomeDto, NOT_KNOWN_NOMIS, NOT_KNOWN)
-    return cancelVisit(reference, cancelVisitDto)
   }
 
   @Transactional(propagation = NEVER)

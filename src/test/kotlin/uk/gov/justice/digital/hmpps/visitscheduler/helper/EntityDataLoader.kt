@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation.REQUIRED
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -82,6 +83,7 @@ class VisitEntityHelper(
     createdBy: String = "CREATED_BY",
     updatedBy: String? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
+    lastApplicationMethod: ApplicationMethod = ApplicationMethod.PHONE,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -101,6 +103,7 @@ class VisitEntityHelper(
         createdBy = createdBy,
         updatedBy = updatedBy,
         sessionTemplateReference = sessionTemplateReference,
+        lastApplicationMethod = lastApplicationMethod,
       ),
     )
   }

@@ -15,6 +15,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.NaturalId
 import org.hibernate.annotations.UpdateTimestamp
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -85,6 +86,10 @@ class Visit(
 
   @Column
   var cancelledBy: String? = null,
+
+  @Column(nullable = false)
+  @Enumerated(EnumType.STRING)
+  var lastApplicationMethod: ApplicationMethod,
 
   @Transient
   private val _reference: String = "",
