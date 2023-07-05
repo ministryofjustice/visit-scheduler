@@ -32,5 +32,5 @@ data class ChangeVisitSlotRequestDto(
   @field:NotBlank
   val sessionTemplateReference: String,
   @Schema(description = "application method", required = false)
-  val applicationMethod: ApplicationMethod,
+  val applicationMethod: ApplicationMethod? = null,
 )
