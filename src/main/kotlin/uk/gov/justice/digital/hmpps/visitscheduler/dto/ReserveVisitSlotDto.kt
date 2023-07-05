@@ -41,5 +41,5 @@ data class ReserveVisitSlotDto(
   val actionedBy: String,
   @Schema(description = "application method", required = true)
   @field:NotNull
-  val applicationMethod : ApplicationMethod
+  val applicationMethod: ApplicationMethod,
 )

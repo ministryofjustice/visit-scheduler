@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
@@ -54,6 +55,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      UNKNOWN,
     )
     val reference = visit.reference
 
@@ -87,6 +89,7 @@ class CancelVisitTest : IntegrationTestBase() {
         outcomeStatus = OutcomeStatus.VISITOR_CANCELLED,
       ),
       cancelledByByUser,
+      UNKNOWN,
     )
     val reference = visit.reference
 
@@ -119,6 +122,7 @@ class CancelVisitTest : IntegrationTestBase() {
         outcomeStatus = OutcomeStatus.VISITOR_CANCELLED,
       ),
       cancelledByByUser,
+      UNKNOWN,
     )
 
     // When
@@ -173,6 +177,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner has updated the existing booking",
       ),
       cancelledByByUser,
+      UNKNOWN,
     )
     val reference = visit.reference
 
@@ -212,6 +217,7 @@ class CancelVisitTest : IntegrationTestBase() {
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       actionedBy = reservedByByUser,
       sessionTemplateReference = sessionTemplate.reference,
+      applicationMethod = UNKNOWN,
     )
 
     // call visit change and then book the visit
@@ -229,6 +235,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      applicationMethod = UNKNOWN,
     )
     val reference = bookedVisit.reference
 
@@ -262,6 +269,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Visit does not exist",
       ),
       cancelledByByUser,
+      applicationMethod = UNKNOWN,
     )
 
     // When
@@ -285,6 +293,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      applicationMethod = UNKNOWN,
     )
 
     // When
@@ -312,6 +321,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      applicationMethod = UNKNOWN,
     )
 
     // When
@@ -338,6 +348,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      applicationMethod = UNKNOWN,
     )
     val reference = expiredVisit.reference
 
@@ -366,6 +377,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "No longer joining.",
       ),
       cancelledByByUser,
+      applicationMethod = UNKNOWN,
     )
     // Given
     val visitStart = LocalDateTime.now().minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS).withHour(1)
@@ -392,6 +404,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "No longer joining.",
       ),
       cancelledByByUser,
+      applicationMethod = UNKNOWN,
     )
     // Given
     val visitStart = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
@@ -418,6 +431,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "No longer joining.",
       ),
       cancelledByByUser,
+      applicationMethod = UNKNOWN,
     )
     // Given
     val visitStart = LocalDateTime.now().plusDays(1)

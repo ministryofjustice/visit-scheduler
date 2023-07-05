@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
@@ -466,6 +467,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
         "Prisoner got covid",
       ),
       CANCELLED_BY_BY_USER,
+      UNKNOWN,
     )
     val reference = visit.reference
 

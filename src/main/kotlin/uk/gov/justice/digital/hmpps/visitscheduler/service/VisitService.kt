@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateD
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethod.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
@@ -271,7 +272,7 @@ class VisitService(
   @Deprecated("This method has been deprecated.")
   fun cancelVisit(reference: String, outcomeDto: OutcomeDto): VisitDto {
     LOG.debug("Enter legacy call to cancelVisit $reference")
-    val cancelVisitDto = CancelVisitDto(outcomeDto, NOT_KNOWN_NOMIS)
+    val cancelVisitDto = CancelVisitDto(outcomeDto, NOT_KNOWN_NOMIS, UNKNOWN)
     return cancelVisit(reference, cancelVisitDto)
   }
 

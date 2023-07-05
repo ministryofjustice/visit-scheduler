@@ -64,7 +64,7 @@ data class VisitDto(
   val modifiedTimestamp: LocalDateTime,
   @Schema(description = "What was the last application method", required = true)
   @field:NotNull
-  val lastApplicationMethod : ApplicationMethod
+  val lastApplicationMethod: ApplicationMethod,
 ) {
   constructor(visitEntity: Visit) : this(
     lastApplicationMethod = ApplicationMethod.UNKNOWN,
