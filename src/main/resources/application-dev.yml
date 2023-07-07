@@ -11,12 +11,6 @@ spring:
     username: visit_scheduler
     password: visit_scheduler
 
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          public-key-location: classpath:local-public-key.pub
-
 hmpps.auth.url: http://localhost:8090/auth
 
 prison:

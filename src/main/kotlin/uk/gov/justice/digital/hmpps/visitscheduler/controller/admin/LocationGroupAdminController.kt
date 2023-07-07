@@ -114,7 +114,7 @@ class LocationGroupAdminController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = SessionLocationGroupDto::class),
+          schema = Schema(implementation = CreateLocationGroupDto::class),
         ),
       ],
     ),
@@ -188,7 +188,7 @@ class LocationGroupAdminController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = SessionLocationGroupDto::class),
+          schema = Schema(implementation = UpdateLocationGroupDto::class),
         ),
       ],
     ),
