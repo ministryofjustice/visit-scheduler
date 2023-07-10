@@ -144,7 +144,7 @@ fun callVisitBook(
   applicationMethodType: ApplicationMethodType = PHONE,
   bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType),
 
-  ): ResponseSpec {
+): ResponseSpec {
   return callPut(
     bodyValue = bookingRequestDto,
     webTestClient,
