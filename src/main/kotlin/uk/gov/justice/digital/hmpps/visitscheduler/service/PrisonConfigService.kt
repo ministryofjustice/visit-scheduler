@@ -91,7 +91,7 @@ class PrisonConfigService(
     if (existingExcludeDates.contains(excludeDate)) {
       throw ValidationException(messageService.getMessage("validation.add.prison.excludedate.alreadyexists", prisonCode, excludeDate.toString()))
     } else {
-      prisonExcludeDateRepository.save(PrisonExcludeDate(prison.id, prison, excludeDate))
+      prisonExcludeDateRepository.saveAndFlush(PrisonExcludeDate(prison.id, prison, excludeDate))
     }
     return PrisonDto(findPrisonByCode(prisonCode))
   }

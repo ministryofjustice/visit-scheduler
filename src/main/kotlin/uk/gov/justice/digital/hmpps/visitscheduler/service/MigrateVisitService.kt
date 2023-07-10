@@ -4,20 +4,25 @@ import com.microsoft.applicationinsights.TelemetryClient
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.MIGRATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion
@@ -33,6 +38,7 @@ const val NOT_KNOWN_NOMIS = "NOT_KNOWN_NOMIS"
 class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
+  private val eventAuditRepository: EventAuditRepository,
   private val prisonConfigService: PrisonConfigService,
   private val snsService: SnsService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
@@ -74,7 +80,17 @@ class MigrateVisitService(
         visitRestriction = migrateVisitRequest.visitRestriction,
         visitStart = migrateVisitRequest.startTimestamp,
         visitEnd = migrateVisitRequest.endTimestamp,
-        createdBy = actionedBy,
+      ),
+    )
+
+    eventAuditRepository.saveAndFlush(
+      EventAudit(
+        actionedBy = actionedBy,
+        bookingReference = visitEntity.reference,
+        applicationReference = visitEntity.applicationReference,
+        sessionTemplateReference = visitEntity.sessionTemplateReference,
+        type = MIGRATED_VISIT,
+        applicationMethodType = NOT_KNOWN,
       ),
     )
 
@@ -125,7 +141,7 @@ class MigrateVisitService(
     return !migrateVisitRequest.startTimestamp.toLocalDate().isBefore(startDate)
   }
 
-  fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
+  fun cancelVisit(reference: String, cancelVisitDto: MigratedCancelVisitDto): VisitDto {
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
     if (visitRepository.isBookingCancelled(reference)) {
@@ -139,7 +155,17 @@ class MigrateVisitService(
 
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
-    visitEntity.cancelledBy = cancelVisitDto.actionedBy
+
+    eventAuditRepository.saveAndFlush(
+      EventAudit(
+        actionedBy = cancelVisitDto.actionedBy,
+        bookingReference = visitEntity.reference,
+        applicationReference = visitEntity.applicationReference,
+        sessionTemplateReference = visitEntity.sessionTemplateReference,
+        type = CANCELED_VISIT,
+        applicationMethodType = NOT_KNOWN,
+      ),
+    )
 
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))

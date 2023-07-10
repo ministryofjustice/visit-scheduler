@@ -8,6 +8,8 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.UNKNOWN
@@ -76,6 +78,14 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     assertThat(visit).isNotNull
     visit?.let {
       assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+
+      val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
+      assertThat(eventAudit.type).isEqualTo(EventAuditType.MIGRATED_VISIT)
+      assertThat(eventAudit.actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
+      assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionTemplateReference)
+      assertThat(eventAudit.applicationReference).isEqualTo(visit.applicationReference)
     }
   }
 

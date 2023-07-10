@@ -91,7 +91,6 @@ class BookVisitTest : IntegrationTestBase() {
       .jsonPath("$.visitorSupport.length()").isEqualTo(reservedVisit.support.size)
       .jsonPath("$.visitorSupport[0].type").isEqualTo(reservedVisit.support.first().type)
       .jsonPath("$.visitorSupport[0].text").isEqualTo(reservedVisit.support.first().text!!)
-      .jsonPath("$.createdBy").isNotEmpty
       .jsonPath("$.createdTimestamp").isNotEmpty
       .returnResult()
 
@@ -160,14 +159,8 @@ class BookVisitTest : IntegrationTestBase() {
     val reservedEntity = visits.single { it.id == reservedVisit.id }
 
     Assertions.assertThat(bookedEntity.visitStatus).isEqualTo(CANCELLED)
-    Assertions.assertThat(bookedEntity.cancelledBy).isEqualTo("John Reserved")
     Assertions.assertThat(bookedEntity.outcomeStatus).isEqualTo(OutcomeStatus.SUPERSEDED_CANCELLATION)
-
     Assertions.assertThat(reservedEntity.visitStatus).isEqualTo(BOOKED)
-    Assertions.assertThat(reservedEntity.createdBy).isNotNull
-    Assertions.assertThat(reservedEntity.createdBy).isEqualTo(bookedEntity.createdBy)
-    Assertions.assertThat(reservedEntity.updatedBy).isNotNull
-    Assertions.assertThat(reservedEntity.cancelledBy).isNull()
 
     // And
     val visit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
@@ -272,6 +265,8 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   private fun assertBookedEvent(visit: VisitDto, isUpdated: Boolean) {
+    val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
+
     verify(telemetryClient).trackEvent(
       eq("visit-booked"),
       org.mockito.kotlin.check {
@@ -285,7 +280,7 @@ class BookVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
         Assertions.assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
-        Assertions.assertThat(it["actionedBy"]).isEqualTo(visit.createdBy)
+        Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
       },
       isNull(),
     )
