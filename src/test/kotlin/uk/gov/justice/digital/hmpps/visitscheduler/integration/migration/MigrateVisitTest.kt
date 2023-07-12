@@ -13,12 +13,13 @@ import org.mockito.kotlin.verify
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
@@ -85,7 +86,6 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
           tuple(VISIT_COMMENT, "A visit comment"),
           tuple(STATUS_CHANGED_REASON, "Status has changed"),
         )
-      assertThat(visit.createdBy).isEqualTo("Aled Evans")
 
       val legacyData = legacyDataRepository.findByVisitId(visit.id)
       assertThat(legacyData).isNotNull
@@ -114,7 +114,9 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.createdBy).isEqualTo("NOT_KNOWN_NOMIS")
+      val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
+      assertThat(eventAuditList).hasSize(1)
+      assertThat(eventAuditList[0].actionedBy).isEqualTo("NOT_KNOWN_NOMIS")
     }
   }
 
@@ -460,7 +462,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     // Given
     val visit = visitEntityHelper.create(visitStatus = BOOKED)
 
-    val cancelVisitDto = CancelVisitDto(
+    val cancelVisitDto = MigratedCancelVisitDto(
       OutcomeDto(
         PRISONER_CANCELLED,
         "Prisoner got covid",
@@ -479,11 +481,9 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertVisitCancellation(visitCancelled, PRISONER_CANCELLED, cancelVisitDto.actionedBy)
     assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
-    assertThat(visitCancelled.createdBy).isEqualTo(visit.createdBy)
-    assertThat(visitCancelled.updatedBy).isEqualTo(visit.updatedBy)
+    assertHelper.assertVisitCancellation(visitCancelled, cancelledBy = cancelVisitDto.actionedBy, applicationMethodType = NOT_KNOWN, expectedOutcomeStatus = PRISONER_CANCELLED)
 
     assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
     assertCancelledDomainEvent(visitCancelled)

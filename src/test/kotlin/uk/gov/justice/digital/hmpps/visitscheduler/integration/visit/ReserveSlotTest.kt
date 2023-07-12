@@ -98,7 +98,6 @@ class ReserveSlotTest : IntegrationTestBase() {
       .jsonPath("$.visitorSupport[0].type").isEqualTo("OTHER")
       .jsonPath("$.visitorSupport[0].text").isEqualTo("Some Text")
       .jsonPath("$.createdTimestamp").isNotEmpty
-      .jsonPath("$.createdBy").isEqualTo(actionedByUserName)
       .returnResult()
 
     // And
