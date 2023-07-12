@@ -30,27 +30,27 @@ INSERT INTO event_audit (booking_reference, application_reference, session_templ
             reference,
             application_reference,
             session_template_reference,
-     CASE
-         WHEN visit_status   = 'RESERVED' THEN 'RESERVED_VISIT'
-         WHEN visit_status   = 'CHANGING' THEN 'CHANGING_VISIT'
-         WHEN outcome_status = 'SUPERSEDED_CANCELLATION'  THEN 'BOOKED_VISIT'
-         WHEN visit_status  = 'CANCELLED' THEN 'CANCELLED_VISIT'
-         WHEN id in (select * from tmp_updated_visits) THEN 'UPDATED_VISIT'
-        else  'BOOKED_VISIT'
-    END as type,
-    'NOT_KNOWN' AS application_method_type,
-    case
-        WHEN visit_status   = 'RESERVED' THEN created_by
-        WHEN visit_status   = 'CHANGING' THEN created_by
-        WHEN outcome_status = 'SUPERSEDED_CANCELLATION' THEN created_by
-        WHEN visit_status  = 'CANCELLED' THEN cancelled_by
-        WHEN id in (select * from tmp_updated_visits) THEN updated_by
-        else  created_by
-    END AS actioned_by,
-    CASE
-        WHEN modify_timestamp is null THEN create_timestamp
-        ELSE modify_timestamp
-    END AS create_timestamp
+            CASE
+                WHEN visit_status   = 'RESERVED' THEN 'RESERVED_VISIT'
+                WHEN visit_status   = 'CHANGING' THEN 'CHANGING_VISIT'
+                WHEN outcome_status = 'SUPERSEDED_CANCELLATION' and updated_by is null THEN 'BOOKED_VISIT'
+                WHEN visit_status  = 'CANCELLED' and  outcome_status != 'SUPERSEDED_CANCELLATION' THEN 'CANCELLED_VISIT'
+                WHEN id in (select * from tmp_updated_visits) or (updated_by is not null)  THEN 'UPDATED_VISIT'
+                else  'BOOKED_VISIT'
+                END as type,
+            'NOT_KNOWN' AS application_method_type,
+            case
+                WHEN visit_status   = 'RESERVED' THEN created_by
+                WHEN visit_status   = 'CHANGING' THEN created_by
+                WHEN outcome_status = 'SUPERSEDED_CANCELLATION' and updated_by is null THEN created_by
+                WHEN visit_status  = 'CANCELLED' and  outcome_status != 'SUPERSEDED_CANCELLATION' THEN cancelled_by
+                WHEN id in (select * from tmp_updated_visits) or (updated_by is not null)  THEN updated_by
+                else  created_by
+                END AS actioned_by,
+            CASE
+                WHEN modify_timestamp is null THEN create_timestamp
+                ELSE modify_timestamp
+            END AS create_timestamp
     FROM visit v where created_by is not null
     ORDER BY reference desc);
 

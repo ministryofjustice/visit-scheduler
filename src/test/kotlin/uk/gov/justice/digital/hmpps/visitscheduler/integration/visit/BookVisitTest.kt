@@ -50,7 +50,7 @@ class BookVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedVisit = visitEntityHelper.create(createdBy = "John Reserved")
+    reservedVisit = visitEntityHelper.create()
 
     visitEntityHelper.createNote(visit = reservedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = reservedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
@@ -129,7 +129,7 @@ class BookVisitTest : IntegrationTestBase() {
     // Given
     val reference = reservedVisit.reference
 
-    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, reference = reference, createdBy = "John Booked")
+    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, reference = reference)
 
     visitEntityHelper.createNote(visit = bookedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = bookedVisit, text = "Some text concerns", type = VISITOR_CONCERN)

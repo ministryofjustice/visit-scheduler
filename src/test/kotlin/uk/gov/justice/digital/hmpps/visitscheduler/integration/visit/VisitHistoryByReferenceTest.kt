@@ -55,8 +55,10 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
 
     val reservedDto = reserveVisit(reserveVisitSlotDto)
     val bookedDto = bookVisit(reservedDto.applicationReference, PHONE)
-    val changingVisitDto = updateBooking(sessionTemplate, bookedDto.reference)
-    bookVisit(changingVisitDto.applicationReference, EMAIL)
+    val changingVisitDto1 = updateBooking(sessionTemplate, bookedDto.reference)
+    bookVisit(changingVisitDto1.applicationReference, EMAIL)
+    val changingVisitDto2 = updateBooking(sessionTemplate, bookedDto.reference)
+    bookVisit(changingVisitDto2.applicationReference, EMAIL)
     cancelVisit(bookedDto)
 
     // When
@@ -66,7 +68,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     val eventAuditList = getEventAuditList(responseSpec)
 
-    Assertions.assertThat(eventAuditList.size).isEqualTo(5)
+    Assertions.assertThat(eventAuditList.size).isEqualTo(7)
 
     Assertions.assertThat(eventAuditList[0].actionedBy).isEqualTo("reserve_guy")
     Assertions.assertThat(eventAuditList[0].type).isEqualTo(RESERVED_VISIT)
@@ -90,13 +92,25 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     Assertions.assertThat(eventAuditList[3].type).isEqualTo(UPDATED_VISIT)
     Assertions.assertThat(eventAuditList[3].applicationMethodType).isEqualTo(EMAIL)
     Assertions.assertThat(eventAuditList[3].createTimestamp).isNotNull
-    Assertions.assertThat(eventAuditList[4].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    Assertions.assertThat(eventAuditList[3].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
 
-    Assertions.assertThat(eventAuditList[4].actionedBy).isEqualTo("cancel_guy")
-    Assertions.assertThat(eventAuditList[4].type).isEqualTo(CANCELED_VISIT)
-    Assertions.assertThat(eventAuditList[4].applicationMethodType).isEqualTo(WEBSITE)
+    Assertions.assertThat(eventAuditList[4].actionedBy).isEqualTo("updated_by")
+    Assertions.assertThat(eventAuditList[4].type).isEqualTo(CHANGING_VISIT)
+    Assertions.assertThat(eventAuditList[4].applicationMethodType).isEqualTo(EMAIL)
     Assertions.assertThat(eventAuditList[4].createTimestamp).isNotNull
     Assertions.assertThat(eventAuditList[4].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+
+    Assertions.assertThat(eventAuditList[5].actionedBy).isEqualTo("booking_guy")
+    Assertions.assertThat(eventAuditList[5].type).isEqualTo(UPDATED_VISIT)
+    Assertions.assertThat(eventAuditList[5].applicationMethodType).isEqualTo(EMAIL)
+    Assertions.assertThat(eventAuditList[5].createTimestamp).isNotNull
+    Assertions.assertThat(eventAuditList[5].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+
+    Assertions.assertThat(eventAuditList[6].actionedBy).isEqualTo("cancel_guy")
+    Assertions.assertThat(eventAuditList[6].type).isEqualTo(CANCELED_VISIT)
+    Assertions.assertThat(eventAuditList[6].applicationMethodType).isEqualTo(WEBSITE)
+    Assertions.assertThat(eventAuditList[6].createTimestamp).isNotNull
+    Assertions.assertThat(eventAuditList[6].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
   }
 
   @Test
