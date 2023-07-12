@@ -22,7 +22,7 @@ INSERT INTO tmp_updated_visits(visit_id)
                          group by reference  having count(reference) > 1) as tmp
                          join visit v on v.reference = tmp.reference
     where visit_status = 'BOOKED'
-    order by v.reference,v.id
+    order by v.reference,v.id;
 
 -- Copy data over from session_template table
 INSERT INTO event_audit (booking_reference, application_reference, session_template_reference, type, application_method_type, actioned_by, create_timestamp)
@@ -49,7 +49,7 @@ INSERT INTO event_audit (booking_reference, application_reference, session_templ
         WHEN modify_timestamp is null THEN create_timestamp
         ELSE modify_timestamp
     END AS create_timestamp
-    FROM visit v  	where created_by is not null
+    FROM visit v where created_by is not null
     ORDER BY reference desc);
 
 UPDATE event_audit	SET type = 'MIGRATED_VISIT'
