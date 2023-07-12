@@ -165,25 +165,45 @@ class SessionTemplateService(
     )
   }
 
+  private fun validateUpdateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto) {
+    val sessionTemplate = SessionTemplateDto(getSessionTemplate(reference))
+    val hasVisits = visitRepository.hasVisitsForSessionTemplate(reference)
+    validateUpdateSessionTemplateTime(sessionTemplate, updateSessionTemplateDto, hasVisits)
+    validateUpdateSessionTemplateFromDate(sessionTemplate, updateSessionTemplateDto, hasVisits)
+  }
+
+  private fun validateUpdateSessionTemplateTime(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean) {
+    // if a session has visits its time cannot be updated.
+    if (updateSessionTemplateDto.sessionTimeSlot != null && existingSessionTemplate.sessionTimeSlot != updateSessionTemplateDto.sessionTimeSlot && hasVisits) {
+      throw VSiPValidationException("Cannot update session times for ${existingSessionTemplate.reference} as there are existing visits associated with this session template!")
+    }
+  }
+
+  private fun validateUpdateSessionTemplateFromDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean) {
+    // if a session has visits from date cannot be updated.
+    if (updateSessionTemplateDto.sessionDateRange != null && existingSessionTemplate.sessionDateRange.validFromDate != updateSessionTemplateDto.sessionDateRange.validFromDate && hasVisits) {
+      throw VSiPValidationException("Cannot update session valid from date for ${existingSessionTemplate.reference} as there are existing visits associated with this session template!")
+    }
+  }
+
   fun updateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
+    validateUpdateSessionTemplate(reference, updateSessionTemplateDto)
+
     with(updateSessionTemplateDto) {
       name?.let {
         sessionTemplateRepository.updateNameByReference(reference, name)
       }
 
       sessionTimeSlot?.let {
-        sessionTemplateRepository.updateStartTimeByReference(reference, it.startTime)
-        sessionTemplateRepository.updateEndTimeByReference(reference, it.endTime)
+        sessionTemplateRepository.updateSessionTimeSlotByReference(reference, it)
       }
 
       sessionDateRange?.let {
-        sessionTemplateRepository.updateValidFromDateByReference(reference, it.validFromDate)
-        sessionTemplateRepository.updateValidToDateByReference(reference, it.validToDate)
+        sessionTemplateRepository.updateSessionDateRangeByReference(reference, it)
       }
 
       sessionCapacity?.let {
-        sessionTemplateRepository.updateClosedCapacityByReference(reference, it.closed)
-        sessionTemplateRepository.updateOpenCapacityByReference(reference, it.open)
+        sessionTemplateRepository.updateCapacityByReference(reference, it)
       }
 
       weeklyFrequency?.let {

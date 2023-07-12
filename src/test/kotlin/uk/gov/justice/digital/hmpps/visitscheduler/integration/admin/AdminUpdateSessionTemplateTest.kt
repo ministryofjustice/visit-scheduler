@@ -49,7 +49,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     val dto = createUpdateSessionTemplateDto(
       name = sessionTemplate.name + " Updated",
-      sessionDateRangeDto = SessionDateRangeDto(
+      sessionDateRange = SessionDateRangeDto(
         validFromDate = sessionTemplate.validFromDate.plusDays(1),
         validToDate = sessionTemplate.validToDate?.plusDays(10),
       ),
@@ -57,7 +57,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
         closed = sessionTemplate.closedCapacity + 1,
         open = sessionTemplate.openCapacity + 1,
       ),
-      sessionTimeSlotDto = SessionTimeSlotDto(
+      sessionTimeSlot = SessionTimeSlotDto(
         startTime = sessionTemplate.startTime.plusHours(1),
         endTime = sessionTemplate.endTime.plusHours(2),
       ),
@@ -92,6 +92,58 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.incentiveLevels }).containsExactlyInAnyOrder(nonEnhancedIncentives)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.active).isEqualTo(true)
+  }
+
+  @Test
+  fun `when session template updated with new time slot and visits exist for session template update should fail`() {
+    // Given
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionTimeSlot = SessionTimeSlotDto(
+        startTime = sessionTemplate.startTime.plusHours(1),
+        endTime = sessionTemplate.endTime.plusHours(2),
+      ),
+    )
+
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitStart = LocalDate.now().atTime(dto.sessionTimeSlot?.startTime),
+      visitEnd = LocalDate.now().atTime(dto.sessionTimeSlot?.endTime),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+  }
+
+  @Test
+  fun `when session template updated with new from date and visits exist for session template update should fail`() {
+    // Given
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionDateRange = SessionDateRangeDto(
+        // valid from date updated
+        validFromDate = sessionTemplate.validFromDate.plusDays(2),
+      ),
+    )
+
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitStart = LocalDate.now().atTime(dto.sessionTimeSlot?.startTime),
+      visitEnd = LocalDate.now().atTime(dto.sessionTimeSlot?.endTime),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
   }
 
   @Test
@@ -142,7 +194,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template end time is less than start time then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionTimeSlotDto = SessionTimeSlotDto(
+      sessionTimeSlot = SessionTimeSlotDto(
         startTime = LocalTime.of(9, 0),
         endTime = LocalTime.of(8, 0),
       ),
@@ -161,7 +213,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template end time is same as start time then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionTimeSlotDto = SessionTimeSlotDto(
+      sessionTimeSlot = SessionTimeSlotDto(
         startTime = LocalTime.of(9, 0),
         endTime = LocalTime.of(9, 0),
       ),
@@ -180,7 +232,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template session times not passed session template successfully updated`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionTimeSlotDto = null,
+      sessionTimeSlot = null,
     )
 
     // When
@@ -194,7 +246,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template end time is greater than start time then session template is created`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionTimeSlotDto = SessionTimeSlotDto(
+      sessionTimeSlot = SessionTimeSlotDto(
         startTime = LocalTime.of(9, 0),
         endTime = LocalTime.of(9, 1),
       ),
@@ -211,7 +263,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template valid to date is less than valid from date then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(
+      sessionDateRange = SessionDateRangeDto(
         validFromDate = LocalDate.of(2023, 1, 1),
         validToDate = LocalDate.of(2022, 12, 31),
       ),
@@ -230,7 +282,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template valid to date is same as valid from date then session template is created`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(
+      sessionDateRange = SessionDateRangeDto(
         validFromDate = LocalDate.of(2023, 1, 1),
         validToDate = LocalDate.of(2023, 1, 1),
       ),
@@ -247,7 +299,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template valid to date is greater than valid from date then session template is created`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(
+      sessionDateRange = SessionDateRangeDto(
         validFromDate = LocalDate.of(2023, 1, 1),
         validToDate = LocalDate.of(2023, 1, 31),
       ),
@@ -264,7 +316,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template valid to date is null then session template is created`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionDateRangeDto = null,
+      sessionDateRange = null,
     )
 
     // When
