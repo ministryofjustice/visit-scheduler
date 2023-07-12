@@ -26,8 +26,10 @@ INSERT INTO tmp_updated_visits(visit_id)
 
 -- Copy data over from session_template table
 INSERT INTO event_audit (booking_reference, application_reference, session_template_reference, type, application_method_type, actioned_by, create_timestamp)
-    (SELECT 	    application_reference,
-     session_template_reference,
+    (SELECT
+            reference,
+            application_reference,
+            session_template_reference,
      CASE
          WHEN visit_status   = 'RESERVED' THEN 'RESERVED_VISIT'
          WHEN visit_status   = 'CHANGING' THEN 'CHANGING_VISIT'
@@ -52,12 +54,14 @@ INSERT INTO event_audit (booking_reference, application_reference, session_templ
     FROM visit v where created_by is not null
     ORDER BY reference desc);
 
+-- use application Id because this will be unique for first migrated visit
 UPDATE event_audit	SET type = 'MIGRATED_VISIT'
-    FROM (select reference  from visit v join legacy_data ld on ld.visit_id  = v.id WHERE v.visit_status  = 'BOOKED') AS v
-WHERE event_audit.booking_reference = v.reference;
+    FROM (select application_reference  from visit v join legacy_data ld on ld.visit_id  = v.id WHERE v.visit_status  = 'BOOKED') AS v
+WHERE event_audit.application_reference = v.application_reference AND type = 'BOOKED_VISIT';
 
-ALTER TABLE visit DROP created_by;
-ALTER TABLE visit DROP updated_by;
-ALTER TABLE visit DROP cancelled_by;
+-- need to delete at later stage... but leaving for now to allow us to check data
+-- ALTER TABLE visit DROP created_by;
+-- ALTER TABLE visit DROP updated_by;
+-- ALTER TABLE visit DROP cancelled_by;
 
 
