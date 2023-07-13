@@ -146,7 +146,7 @@ class LocationGroupAdminController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
+  @DeleteMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
     summary = "Delete location group",
     description = "Delete location group by reference",

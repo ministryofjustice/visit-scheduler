@@ -183,7 +183,7 @@ class PrisonerCategoryGroupsAdminController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_CATEGORY_GROUP_ADMIN_PATH)
+  @DeleteMapping(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
     summary = "Delete category group",
     description = "Delete category group by reference",

@@ -175,7 +175,7 @@ class PrisonerIncentiveGroupsAdminController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH)
+  @DeleteMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
     summary = "Delete incentive group",
     description = "Delete incentive group by reference",
