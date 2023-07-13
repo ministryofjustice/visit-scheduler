@@ -136,7 +136,7 @@ class AdminSessionTemplateCategoryGroupTest(
   }
 
   @Test
-  fun `create create category group witho out duplicate types test`() {
+  fun `create create category group without duplicate types test`() {
     // Given
     val categoryGroup = createCategoryGroupDto("test Updated", prisonCode = prison.code, A_HIGH, A_PROVISIONAL, A_HIGH)
 
@@ -154,6 +154,14 @@ class AdminSessionTemplateCategoryGroupTest(
       Assertions.assertThat(categories[0]).isEqualTo(A_HIGH)
       Assertions.assertThat(categories[1]).isEqualTo(A_PROVISIONAL)
     }
+
+    // also check against the database post fix for VB-2458
+    val sessionCategoryGroupEntity = testSessionCategoryGroupRepository.findByReference(group.reference)
+    Assertions.assertThat(sessionCategoryGroupEntity).isNotNull
+    val sessionCategories = testSessionCategoryGroupRepository.findSessionCategoriesByGroup(sessionCategoryGroupEntity!!)
+    Assertions.assertThat(sessionCategories?.size).isEqualTo(2)
+    Assertions.assertThat(sessionCategories!![0].prisonerCategoryType).isEqualTo(A_HIGH)
+    Assertions.assertThat(sessionCategories[1].prisonerCategoryType).isEqualTo(A_PROVISIONAL)
   }
 
   @Test
