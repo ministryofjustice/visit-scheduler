@@ -153,6 +153,8 @@ class VisitTask(
   }
 
   private fun getFlaggedVisitTrackEvent(visit: VisitDto): MutableMap<String, String> {
+    val eventAudit = this.visitService.getLastEventForBooking(visit.reference)
+
     return mutableMapOf(
       "reference" to visit.reference,
       "prisonerId" to visit.prisonerId,
@@ -162,7 +164,7 @@ class VisitTask(
       "visitStart" to visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitEnd" to visit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visit.visitStatus.name,
-      "createdBy" to visit.createdBy,
+      "createdBy" to eventAudit.actionedBy,
     )
   }
 }

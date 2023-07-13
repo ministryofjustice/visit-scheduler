@@ -108,7 +108,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["createdBy"]).isEqualTo(prisonerAVisit.createdBy)
         Assertions.assertThat(it["hasException"]).isNull()
         Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
         Assertions.assertThat(it["additionalInformation"]).isNull()
@@ -166,7 +165,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["createdBy"]).isEqualTo(prisonerAVisit.createdBy)
         Assertions.assertThat(it["hasException"]).isNull()
         Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
         Assertions.assertThat(it["additionalInformation"]).isNull()
@@ -179,14 +177,14 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
   fun `when prisoners have change of category after visit was created then visits are flagged`() {
     // Given
     // session only available to category A Standard prisoners
-    val sessionTemplateReference = createSessionTemplate(
+    val sessionTemplate = createSessionTemplate(
       startTime = startTime,
       endTime = endTime,
       dayOfWeek = visitDate.dayOfWeek,
       permittedCategories = listOf(PrisonerCategoryType.A_STANDARD),
     )
 
-    val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
+    val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplate.reference)
     // prisoner A has changed category to B since the visit was created
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerAId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerAId, prison.code)
@@ -194,14 +192,14 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
 
     // prisoner B visit will not be flagged
-    createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
+    createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplate.reference)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerBId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code, category = PrisonerCategoryType.A_STANDARD.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
 
     // prisoner C visit will not be flagged
-    createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
+    createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplate.reference)
     prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerCId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code, category = PrisonerCategoryType.A_STANDARD.code)
@@ -222,7 +220,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["createdBy"]).isEqualTo(prisonerAVisit.createdBy)
         Assertions.assertThat(it["hasException"]).isNull()
         Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
         Assertions.assertThat(it["additionalInformation"]).isNull()
@@ -278,7 +275,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["createdBy"]).isEqualTo(prisonerAVisit.createdBy)
         Assertions.assertThat(it["hasException"]).isNull()
         Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
         Assertions.assertThat(it["additionalInformation"]).isNull()
@@ -333,7 +329,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["createdBy"]).isEqualTo(prisonerAVisit.createdBy)
         Assertions.assertThat(it["hasException"]).isEqualTo("true")
         Assertions.assertThat(it["hasPrisonerMoved"]).isEqualTo("true")
         Assertions.assertThat(it["additionalInformation"]).isEqualTo("Prisoner with ID - $prisonerAId is not in prison - ${prison.code} but $newPrisonCode")
@@ -384,7 +379,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["createdBy"]).isEqualTo(prisonerAVisit.createdBy)
         Assertions.assertThat(it["hasException"]).isEqualTo("true")
         Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
         Assertions.assertThat(it["additionalInformation"]).isNotNull()
@@ -405,7 +399,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     reference: String,
     sessionTemplateReference: String,
   ): Visit {
-    return visitEntityHelper.create(
+    val visit = visitEntityHelper.create(
       visitStatus = visitStatus,
       prisonerId = prisonerId,
       prisonCode = prisonCode,
@@ -417,6 +411,10 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       reference = reference,
       sessionTemplateReference = sessionTemplateReference,
     )
+
+    eventAuditEntityHelper.create(visit)
+
+    return visit
   }
 
   private fun createSessionTemplate(

@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -36,6 +37,7 @@ const val REFERENCE_INCENTIVE_GROUP_ADMIN_PATH: String = "$INCENTIVE_GROUP_ADMIN
 @Tag(name = "9. Incentive group admin rest controller")
 @RequestMapping(name = "Incentive group resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonerIncentiveGroupsAdminController(
+  private val objectMapper: ObjectMapper,
   private val sessionTemplateService: SessionTemplateService,
 ) {
 
@@ -173,7 +175,7 @@ class PrisonerIncentiveGroupsAdminController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @DeleteMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH)
+  @DeleteMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
   @Operation(
     summary = "Delete incentive group",
     description = "Delete incentive group by reference",
@@ -205,6 +207,6 @@ class PrisonerIncentiveGroupsAdminController(
     reference: String,
   ): ResponseEntity<String> {
     sessionTemplateService.deleteSessionIncentiveGroup(reference)
-    return ResponseEntity.status(HttpStatus.OK).body("Session incentive group Deleted $reference!")
+    return ResponseEntity.status(HttpStatus.OK).body(objectMapper.writeValueAsString("Session incentive group Deleted $reference!"))
   }
 }

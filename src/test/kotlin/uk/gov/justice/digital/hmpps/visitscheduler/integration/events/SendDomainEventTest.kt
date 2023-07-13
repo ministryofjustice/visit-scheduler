@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -70,6 +71,8 @@ class SendDomainEventTest : IntegrationTestBase() {
     fun `send visit booked event on update`() {
       // Given
       val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
+      eventAuditEntityHelper.create(visitEntity)
+
       val applicationReference = visitEntity.applicationReference
       val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
@@ -132,6 +135,7 @@ class SendDomainEventTest : IntegrationTestBase() {
           "Prisoner got covid",
         ),
         "user-1",
+        NOT_KNOWN,
       )
 
       // When

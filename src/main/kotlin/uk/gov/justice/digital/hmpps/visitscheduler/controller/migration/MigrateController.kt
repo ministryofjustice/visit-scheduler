@@ -18,8 +18,8 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.MigrateVisitService
 
@@ -85,7 +85,7 @@ class MigrateController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = CancelVisitDto::class),
+          schema = Schema(implementation = MigratedCancelVisitDto::class),
         ),
       ],
     ),
@@ -121,7 +121,7 @@ class MigrateController(
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    cancelVisitDto: CancelVisitDto,
+    cancelVisitDto: MigratedCancelVisitDto,
   ): VisitDto {
     return migrateVisitService.cancelVisit(reference.trim(), cancelVisitDto)
   }
