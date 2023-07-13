@@ -207,6 +207,6 @@ class PrisonerIncentiveGroupsAdminController(
     reference: String,
   ): ResponseEntity<String> {
     sessionTemplateService.deleteSessionIncentiveGroup(reference)
-    return ResponseEntity.status(HttpStatus.OK).body(objectMapper.writeValueAsString("Session incentive group Deleted $reference!"))
+    return ResponseEntity.status(HttpStatus.OK).body(objectMapper.writeValueAsString("Session incentive group deleted $reference!"))
   }
 }
