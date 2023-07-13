@@ -178,7 +178,7 @@ class LocationGroupAdminController(
     reference: String,
   ): ResponseEntity<String> {
     sessionTemplateService.deleteSessionLocationGroup(reference)
-    return ResponseEntity.status(HttpStatus.OK).body(objectMapper.writeValueAsString("Session location group deleted $reference!"))
+    return ResponseEntity.status(HttpStatus.OK).body(objectMapper.writeValueAsString("Session location group Deleted $reference!"))
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
