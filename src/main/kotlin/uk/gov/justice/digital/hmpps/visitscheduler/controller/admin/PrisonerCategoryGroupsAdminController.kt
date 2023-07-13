@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.controller.admin
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -37,6 +38,7 @@ const val REFERENCE_CATEGORY_GROUP_ADMIN_PATH: String = "$CATEGORY_GROUP_ADMIN_P
 @RequestMapping(name = "Category group resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonerCategoryGroupsAdminController(
   private val sessionTemplateService: SessionTemplateService,
+  private val objectMapper: ObjectMapper,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -213,6 +215,6 @@ class PrisonerCategoryGroupsAdminController(
     reference: String,
   ): ResponseEntity<String> {
     sessionTemplateService.deleteSessionCategoryGroup(reference)
-    return ResponseEntity.status(HttpStatus.OK).body("Session category group Deleted $reference!")
+    return ResponseEntity.status(HttpStatus.OK).body(objectMapper.writeValueAsString("Session category group Deleted $reference!"))
   }
 }
