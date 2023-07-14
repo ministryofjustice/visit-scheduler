@@ -80,12 +80,13 @@ class SessionTemplateService(
 
   fun createSessionLocationGroup(createLocationSessionGroup: CreateLocationGroupDto): SessionLocationGroupDto {
     val prison = prisonConfigService.findPrisonByCode(createLocationSessionGroup.prisonCode)
-    var sessionLocationGroup = SessionLocationGroup(
-      prison = prison,
-      prisonId = prison.id,
-      name = createLocationSessionGroup.name,
+    val sessionLocationGroup = sessionLocationGroupRepository.saveAndFlush(
+      SessionLocationGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = createLocationSessionGroup.name,
+      ),
     )
-    sessionLocationGroup = sessionLocationGroupRepository.saveAndFlush(sessionLocationGroup)
 
     val sessionLocations = createLocationSessionGroup.locations.toSet().map {
       PermittedSessionLocation(
@@ -292,13 +293,13 @@ class SessionTemplateService(
 
   fun createSessionCategoryGroup(createCategorySessionGroup: CreateCategoryGroupDto): SessionCategoryGroupDto {
     val prison = prisonConfigService.findPrisonByCode(createCategorySessionGroup.prisonCode)
-    var sessionCategoryGroup = SessionCategoryGroup(
-      prison = prison,
-      prisonId = prison.id,
-      name = createCategorySessionGroup.name,
+    val sessionCategoryGroup = sessionCategoryGroupRepository.saveAndFlush(
+      SessionCategoryGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = createCategorySessionGroup.name,
+      ),
     )
-
-    sessionCategoryGroup = sessionCategoryGroupRepository.saveAndFlush(sessionCategoryGroup)
 
     val sessionPrisonerCategories = createCategorySessionGroup.categories.toSet().map {
       SessionPrisonerCategory(
@@ -381,13 +382,13 @@ class SessionTemplateService(
 
   fun createSessionIncentiveGroup(createIncentiveSessionGroup: CreateIncentiveGroupDto): SessionIncentiveLevelGroupDto {
     val prison = prisonConfigService.findPrisonByCode(createIncentiveSessionGroup.prisonCode)
-    var sessionIncentiveLevelGroup = SessionIncentiveLevelGroup(
-      prison = prison,
-      prisonId = prison.id,
-      name = createIncentiveSessionGroup.name,
+    val sessionIncentiveLevelGroup = sessionIncentiveLevelGroupRepository.saveAndFlush(
+      SessionIncentiveLevelGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = createIncentiveSessionGroup.name,
+      ),
     )
-
-    sessionIncentiveLevelGroup = sessionIncentiveLevelGroupRepository.saveAndFlush(sessionIncentiveLevelGroup)
 
     val sessionIncentiveLevels = createIncentiveSessionGroup.incentiveLevels.toSet().map {
       SessionPrisonerIncentiveLevel(
