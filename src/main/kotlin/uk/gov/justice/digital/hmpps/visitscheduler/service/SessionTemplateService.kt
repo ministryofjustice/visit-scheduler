@@ -80,10 +80,12 @@ class SessionTemplateService(
 
   fun createSessionLocationGroup(createLocationSessionGroup: CreateLocationGroupDto): SessionLocationGroupDto {
     val prison = prisonConfigService.findPrisonByCode(createLocationSessionGroup.prisonCode)
-    val sessionLocationGroup = SessionLocationGroup(
-      prison = prison,
-      prisonId = prison.id,
-      name = createLocationSessionGroup.name,
+    val sessionLocationGroup = sessionLocationGroupRepository.saveAndFlush(
+      SessionLocationGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = createLocationSessionGroup.name,
+      ),
     )
 
     val sessionLocations = createLocationSessionGroup.locations.toSet().map {
@@ -99,8 +101,7 @@ class SessionTemplateService(
 
     sessionLocationGroup.sessionLocations.addAll(sessionLocations)
 
-    val saveSessionLocationGroup = sessionLocationGroupRepository.saveAndFlush(sessionLocationGroup)
-    return SessionLocationGroupDto(saveSessionLocationGroup)
+    return SessionLocationGroupDto(sessionLocationGroup)
   }
 
   fun updateSessionLocationGroup(reference: String, updateLocationSessionGroup: UpdateLocationGroupDto): SessionLocationGroupDto {
@@ -292,24 +293,25 @@ class SessionTemplateService(
 
   fun createSessionCategoryGroup(createCategorySessionGroup: CreateCategoryGroupDto): SessionCategoryGroupDto {
     val prison = prisonConfigService.findPrisonByCode(createCategorySessionGroup.prisonCode)
-    val groupToCreate = SessionCategoryGroup(
-      prison = prison,
-      prisonId = prison.id,
-      name = createCategorySessionGroup.name,
+    val sessionCategoryGroup = sessionCategoryGroupRepository.saveAndFlush(
+      SessionCategoryGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = createCategorySessionGroup.name,
+      ),
     )
 
-    val sessionPrisonerCategorys = createCategorySessionGroup.categories.toSet().map {
+    val sessionPrisonerCategories = createCategorySessionGroup.categories.toSet().map {
       SessionPrisonerCategory(
-        sessionCategoryGroupId = groupToCreate.id,
-        sessionCategoryGroup = groupToCreate,
+        sessionCategoryGroupId = sessionCategoryGroup.id,
+        sessionCategoryGroup = sessionCategoryGroup,
         prisonerCategoryType = it,
       )
     }
 
-    groupToCreate.sessionCategories.addAll(sessionPrisonerCategorys)
+    sessionCategoryGroup.sessionCategories.addAll(sessionPrisonerCategories)
 
-    val createdGroup = sessionCategoryGroupRepository.saveAndFlush(groupToCreate)
-    return SessionCategoryGroupDto(createdGroup)
+    return SessionCategoryGroupDto(sessionCategoryGroup)
   }
 
   fun updateSessionCategoryGroup(
@@ -380,24 +382,24 @@ class SessionTemplateService(
 
   fun createSessionIncentiveGroup(createIncentiveSessionGroup: CreateIncentiveGroupDto): SessionIncentiveLevelGroupDto {
     val prison = prisonConfigService.findPrisonByCode(createIncentiveSessionGroup.prisonCode)
-    val groupToCreate = SessionIncentiveLevelGroup(
-      prison = prison,
-      prisonId = prison.id,
-      name = createIncentiveSessionGroup.name,
+    val sessionIncentiveLevelGroup = sessionIncentiveLevelGroupRepository.saveAndFlush(
+      SessionIncentiveLevelGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = createIncentiveSessionGroup.name,
+      ),
     )
 
     val sessionIncentiveLevels = createIncentiveSessionGroup.incentiveLevels.toSet().map {
       SessionPrisonerIncentiveLevel(
-        sessionIncentiveGroupId = groupToCreate.id,
-        sessionIncentiveLevelGroup = groupToCreate,
+        sessionIncentiveGroupId = sessionIncentiveLevelGroup.id,
+        sessionIncentiveLevelGroup = sessionIncentiveLevelGroup,
         prisonerIncentiveLevel = it,
       )
     }
 
-    groupToCreate.sessionIncentiveLevels.addAll(sessionIncentiveLevels)
-
-    val createdGroup = sessionIncentiveLevelGroupRepository.saveAndFlush(groupToCreate)
-    return SessionIncentiveLevelGroupDto(createdGroup)
+    sessionIncentiveLevelGroup.sessionIncentiveLevels.addAll(sessionIncentiveLevels)
+    return SessionIncentiveLevelGroupDto(sessionIncentiveLevelGroup)
   }
 
   fun updateSessionIncentiveGroup(
