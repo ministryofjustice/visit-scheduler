@@ -86,7 +86,7 @@ class AdminSessionTemplateVisitsTest(
   private fun getSessionTemplateVisitStatsDto(responseSpec: ResponseSpec) =
     objectMapper.readValue(
       responseSpec.expectBody().returnResult().responseBody,
-      SessionTemplateVisitStatsDto::class.java
+      SessionTemplateVisitStatsDto::class.java,
     )
 
   @Test
