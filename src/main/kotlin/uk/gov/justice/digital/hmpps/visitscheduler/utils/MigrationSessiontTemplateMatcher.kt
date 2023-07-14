@@ -73,7 +73,7 @@ class MigrationSessionTemplateMatcher(
     sessionDate: LocalDate,
     restriction: VisitRestriction,
   ): List<SessionTemplate> {
-    var templates = sessionTemplateRepository.findValidSessionTemplatesBy(
+    var templates = sessionTemplateRepository.findSessionTemplateMinCapacityBy(
       rangeStartDate = sessionDate,
       prisonCode = prisonCode,
       dayOfWeek = sessionDate.dayOfWeek,

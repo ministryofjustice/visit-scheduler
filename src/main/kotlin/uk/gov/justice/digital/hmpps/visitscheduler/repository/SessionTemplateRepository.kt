@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
+import jakarta.persistence.Tuple
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -17,6 +18,35 @@ import java.time.LocalTime
 interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
+    "SELECT MAX(open),MAX(closed) FROM" +
+      "(SELECT  COUNT(CASE WHEN v.visit_restriction = 'OPEN' THEN 1 END) AS open, " +
+      " COUNT(CASE WHEN v.visit_restriction = 'CLOSED' THEN 1 END) AS closed  FROM visit v " +
+      " JOIN session_template st ON st.reference = v.session_template_reference " +
+      " WHERE st.reference = :reference AND v.visit_start > :visitsFromDate AND v.visit_start < :visitsToDate " +
+      " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
+      " GROUP BY v.visit_start ) AS tmp ",
+    nativeQuery = true,
+  )
+  fun findSessionTemplateMinCapacityBy(
+    @Param("reference") reference: String,
+    @Param("visitsFromDate") visitsFromDate: LocalDate,
+    @Param("visitsToDate") visitsToDate: LocalDate,
+  ): Tuple
+
+  @Query(
+    "select count(*) from visit v " +
+      " JOIN session_template st ON st.reference = v.session_template_reference " +
+      " WHERE st.reference = :reference AND v.visit_start > :visitsFromDate AND v.visit_start < :visitsToDate " +
+      " AND visit_status IN ('BOOKED','RESERVED','CHANGING')",
+    nativeQuery = true,
+  )
+  fun getVisitCount(
+    @Param("reference") reference: String,
+    @Param("visitsFromDate") visitsFromDate: LocalDate,
+    @Param("visitsToDate") visitsToDate: LocalDate,
+  ): Int
+
+  @Query(
     "select u from SessionTemplate u " +
       "where u.prison.code = :prisonCode " +
       "and (cast(:rangeEndDate as date) is null or u.validFromDate <= :rangeEndDate) " +
@@ -25,7 +55,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "and (:visitRoom is null or u.visitRoom = :visitRoom)" +
       "and (u.active = true)",
   )
-  fun findValidSessionTemplatesBy(
+  fun findSessionTemplateMinCapacityBy(
     @Param("prisonCode") prisonCode: String,
     @Param("rangeStartDate") rangeStartDate: LocalDate? = null,
     @Param("rangeEndDate") rangeEndDate: LocalDate? = null,

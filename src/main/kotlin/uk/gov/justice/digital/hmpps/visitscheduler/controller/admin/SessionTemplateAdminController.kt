@@ -25,13 +25,16 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 
 const val ADMIN_SESSION_TEMPLATES_PATH: String = "/admin/session-templates"
 const val SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/template"
 const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}"
+const val SESSION_TEMPLATE_VISIT_STATS: String = "$SESSION_TEMPLATE_PATH/{reference}/stats"
 const val ACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/activate"
 const val DEACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/deactivate"
 
@@ -310,5 +313,42 @@ class SessionTemplateAdminController(
     reference: String,
   ): SessionTemplateDto {
     return sessionTemplateService.deActivateSessionTemplate(reference)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PostMapping(SESSION_TEMPLATE_VISIT_STATS)
+  @Operation(
+    summary = "Get session template visits stats using given session template reference",
+    description = "Session template visits stats using given session template reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session template visits stats",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get Session template visits stats",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "session template can't be found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getSessionTemplateVisitStats(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+    @RequestBody @Valid
+    requestSessionTemplateVisitStatsDto: RequestSessionTemplateVisitStatsDto,
+  ): SessionTemplateVisitStatsDto {
+    return sessionTemplateService.getSessionTemplateVisitStats(reference, requestSessionTemplateVisitStatsDto)
   }
 }
