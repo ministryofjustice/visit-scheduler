@@ -76,5 +76,3 @@ cache:
   evict:
     support-types:
       cron: "0 0 */23 * * ?" #every 23 hours
-    supported-prisons:
-      cron: "0 0 0/23 * * ?" #every 23 hours

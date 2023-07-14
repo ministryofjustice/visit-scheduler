@@ -20,10 +20,4 @@ class ScheduledCacheEvictTask {
   fun evictSupportTypesCache() {
     LOG.debug("Evicting support types cache.")
   }
-
-  @Scheduled(cron = "\${cache.evict.supported-prisons.cron:0 0 */3 * * ?}")
-  @CacheEvict(value = ["supported-prisons"], allEntries = true)
-  fun evictSupportedPrisonsCache() {
-    LOG.debug("Evicting supported prisons cache.")
-  }
 }

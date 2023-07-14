@@ -40,5 +40,3 @@ cache:
   evict:
     support-types:
       cron: "0 */15 * * * ?"
-    supported-prisons:
-      cron: "0 */15 * * * ?"

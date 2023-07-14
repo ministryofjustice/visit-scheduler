@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import jakarta.validation.ValidationException
-import org.springframework.cache.annotation.Cacheable
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
@@ -48,7 +47,6 @@ class PrisonConfigService(
     return prison.excludeDates.find { it.excludeDate.compareTo(date) == 0 } != null
   }
 
-  @Cacheable("supported-prisons")
   @Transactional(readOnly = true)
   fun getSupportedPrisons(): List<String> {
     return prisonRepository.getSupportedPrisons()
