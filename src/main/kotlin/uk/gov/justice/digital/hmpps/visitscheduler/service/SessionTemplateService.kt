@@ -452,7 +452,7 @@ class SessionTemplateService(
   ): SessionTemplateVisitStatsDto {
     val visitsToDate = LocalDate.now().plusDays(policyNoticeDaysMax)
 
-    val minimumCapacityTuple = this.sessionTemplateRepository.findValidSessionTemplatesBy(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+    val minimumCapacityTuple = this.sessionTemplateRepository.findSessionTemplateMinCapacityBy(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
     val emptyResults = minimumCapacityTuple.get(0) == null
     val open = if (emptyResults) 0 else (minimumCapacityTuple.get(0) as Long).toInt()
     val closed = if (emptyResults) 0 else (minimumCapacityTuple.get(1) as Long).toInt()

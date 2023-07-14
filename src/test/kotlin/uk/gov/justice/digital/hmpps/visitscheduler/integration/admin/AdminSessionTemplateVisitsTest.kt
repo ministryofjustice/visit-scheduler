@@ -14,6 +14,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetActivateSession
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
@@ -61,14 +63,14 @@ class AdminSessionTemplateVisitsTest(
 
     val visitsFromDateTime = LocalDateTime.now()
 
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(1))
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(1))
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(1))
+    visitEntityHelper.create(visitStatus = CHANGING, sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(1))
     visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(2))
     visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(3))
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = visitsFromDateTime.plusDays(4))
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = visitsFromDateTime.plusDays(4))
     visitEntityHelper.create(sessionTemplateReference = reference2, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(3))
     visitEntityHelper.create(sessionTemplateReference = reference2, visitRestriction = CLOSED, visitStart = visitsFromDateTime.plusDays(3))
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(policyNoticeDaysMax))
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(policyNoticeDaysMax))
     visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = visitsFromDateTime.plusDays(policyNoticeDaysMax - 1))
 
     // When

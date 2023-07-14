@@ -77,7 +77,7 @@ class SessionService(
 
     val prisoner = prisonerId?.let { prisonerService.getPrisoner(prisonerId) }
 
-    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesBy(
+    var sessionTemplates = sessionTemplateRepository.findSessionTemplateMinCapacityBy(
       prisonCode = prisonCode,
       rangeStartDate = requestedBookableStartDate,
       rangeEndDate = requestedBookableEndDate,
