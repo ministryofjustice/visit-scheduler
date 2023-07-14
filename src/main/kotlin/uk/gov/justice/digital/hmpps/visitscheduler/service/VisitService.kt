@@ -374,7 +374,7 @@ class VisitService(
     bookingRequestDto: BookingRequestDto,
     hasExistingBooking: Boolean,
   ) {
-    val bookEvent = createVisitTrackEventFromVisitEntity(bookedVisitDto, bookingRequestDto.actionedBy)
+    val bookEvent = createVisitTrackEventFromVisitEntity(bookedVisitDto, bookingRequestDto.actionedBy, bookingRequestDto.applicationMethodType)
     bookEvent["isUpdated"] = hasExistingBooking.toString()
     trackEvent(VISIT_BOOKED_EVENT.eventName, bookEvent)
 
@@ -399,7 +399,7 @@ class VisitService(
     visitDto: VisitDto,
     cancelVisitDto: CancelVisitDto,
   ) {
-    val eventsMap = createVisitTrackEventFromVisitEntity(visitDto, cancelVisitDto.actionedBy)
+    val eventsMap = createVisitTrackEventFromVisitEntity(visitDto, cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType)
     visitDto.outcomeStatus?.let {
       eventsMap.put("outcomeStatus", it.name)
     }
@@ -475,8 +475,8 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
-  private fun createVisitTrackEventFromVisitEntity(visitDto: VisitDto, actionedBy: String): MutableMap<String, String> {
-    return mutableMapOf(
+  private fun createVisitTrackEventFromVisitEntity(visitDto: VisitDto, actionedBy: String, applicationMethodType: ApplicationMethodType? = null): MutableMap<String, String> {
+    val data = mutableMapOf(
       "reference" to visitDto.reference,
       "prisonerId" to visitDto.prisonerId,
       "prisonId" to visitDto.prisonCode,
@@ -488,6 +488,12 @@ class VisitService(
       "applicationReference" to visitDto.applicationReference,
       "actionedBy" to actionedBy,
     )
+
+    applicationMethodType?.let {
+      data.put("applicationMethodType", it.name)
+    }
+
+    return data
   }
 
   private fun trackEvent(eventName: String, properties: Map<String, String>) {
