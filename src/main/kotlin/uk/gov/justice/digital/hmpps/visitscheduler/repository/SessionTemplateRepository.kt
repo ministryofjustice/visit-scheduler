@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
+import jakarta.persistence.Tuple
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
@@ -15,6 +16,33 @@ import java.time.LocalTime
 
 @Repository
 interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
+
+  @Query(
+    "SELECT MAX(open),MAX(closed) FROM" +
+      "(SELECT  COUNT(CASE WHEN v.visit_restriction = 'OPEN' THEN 1 END) AS open, " +
+      " COUNT(CASE WHEN v.visit_restriction = 'CLOSED' THEN 1 END) AS closed  FROM visit v " +
+      " JOIN session_template st ON st.reference = v.session_template_reference " +
+      " WHERE st.reference = :reference AND v.visit_start > :visitsFromDate AND v.visit_start < :visitsToDate " +
+      " GROUP BY v.visit_start ) AS tmp ",
+    nativeQuery = true,
+  )
+  fun findValidSessionTemplatesBy(
+    @Param("reference") reference: String,
+    @Param("visitsFromDate") visitsFromDate: LocalDate,
+    @Param("visitsToDate") visitsToDate: LocalDate,
+  ): Tuple
+
+  @Query(
+    "select count(*) from visit v " +
+      " JOIN session_template st ON st.reference = v.session_template_reference " +
+      " WHERE st.reference = :reference AND v.visit_start > :visitsFromDate AND v.visit_start < :visitsToDate ",
+    nativeQuery = true,
+  )
+  fun getVisitCount(
+    @Param("reference") reference: String,
+    @Param("visitsFromDate") visitsFromDate: LocalDate,
+    @Param("visitsToDate") visitsToDate: LocalDate,
+  ): Int
 
   @Query(
     "select u from SessionTemplate u " +

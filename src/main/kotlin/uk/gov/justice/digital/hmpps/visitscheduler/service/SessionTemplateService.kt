@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType
@@ -9,7 +10,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.CURRENT_OR_FUTURE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
@@ -35,6 +39,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLe
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.LocalDate
 import java.util.function.Supplier
 import kotlin.jvm.Throws
 
@@ -47,6 +52,8 @@ class SessionTemplateService(
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
   private val visitRepository: VisitRepository,
   private val prisonConfigService: PrisonConfigService,
+  @Value("\${policy.session.booking-notice-period.maximum-days:28}")
+  private val policyNoticeDaysMax: Long,
 ) {
 
   companion object {
@@ -437,6 +444,21 @@ class SessionTemplateService(
     if (deleted > 1) {
       throw java.lang.IllegalStateException("More than one Incentive group $reference was deleted!")
     }
+  }
+
+  fun getSessionTemplateVisitStats(
+    reference: String,
+    requestSessionTemplateVisitStatsDto: RequestSessionTemplateVisitStatsDto,
+  ): SessionTemplateVisitStatsDto {
+    val visitsToDate = LocalDate.now().plusDays(policyNoticeDaysMax)
+
+    val minimumCapacityTuple = this.sessionTemplateRepository.findValidSessionTemplatesBy(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+    val emptyResults = minimumCapacityTuple.get(0) == null
+    val open = if (emptyResults) 0 else (minimumCapacityTuple.get(0) as Long).toInt()
+    val closed = if (emptyResults) 0 else (minimumCapacityTuple.get(1) as Long).toInt()
+
+    val visitCount = this.sessionTemplateRepository.getVisitCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+    return SessionTemplateVisitStatsDto(SessionCapacityDto(closed, open), visitCount)
   }
 }
 
