@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
@@ -75,12 +76,18 @@ class AdminSessionTemplateVisitsTest(
 
     // Then
     responseSpec.expectStatus().isOk
-    val sessionTemplateVisitStatsDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateVisitStatsDto::class.java)
+    val sessionTemplateVisitStatsDto = getSessionTemplateVisitStatsDto(responseSpec)
 
     Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(6)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(2)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.closed).isEqualTo(1)
   }
+
+  private fun getSessionTemplateVisitStatsDto(responseSpec: ResponseSpec) =
+    objectMapper.readValue(
+      responseSpec.expectBody().returnResult().responseBody,
+      SessionTemplateVisitStatsDto::class.java
+    )
 
   @Test
   fun `when session templates has no visits then return expected results`() {
@@ -93,7 +100,7 @@ class AdminSessionTemplateVisitsTest(
 
     // Then
     responseSpec.expectStatus().isOk
-    val sessionTemplateVisitStatsDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateVisitStatsDto::class.java)
+    val sessionTemplateVisitStatsDto = getSessionTemplateVisitStatsDto(responseSpec)
 
     Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(0)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(0)
@@ -114,7 +121,7 @@ class AdminSessionTemplateVisitsTest(
 
     // Then
     responseSpec.expectStatus().isOk
-    val sessionTemplateVisitStatsDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateVisitStatsDto::class.java)
+    val sessionTemplateVisitStatsDto = getSessionTemplateVisitStatsDto(responseSpec)
 
     Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(0)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(0)
@@ -134,7 +141,7 @@ class AdminSessionTemplateVisitsTest(
 
     // Then
     responseSpec.expectStatus().isOk
-    val sessionTemplateVisitStatsDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateVisitStatsDto::class.java)
+    val sessionTemplateVisitStatsDto = getSessionTemplateVisitStatsDto(responseSpec)
 
     Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(0)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(0)
