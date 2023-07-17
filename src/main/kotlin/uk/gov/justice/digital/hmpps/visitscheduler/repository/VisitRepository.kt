@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Repository
@@ -85,20 +86,12 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT count(v) > 0 FROM Visit v " +
-      "WHERE v.sessionTemplateReference = :sessionTemplateReference",
+      "WHERE v.sessionTemplateReference = :sessionTemplateReference AND " +
+      "(cast(:visitsFromDate as date)  is null or cast(v.visitStart as date) >= :visitsFromDate) ",
   )
   fun hasVisitsForSessionTemplate(
     sessionTemplateReference: String,
-  ): Boolean
-
-  @Query(
-    "SELECT count(v) > 0 FROM Visit v " +
-      "WHERE v.sessionTemplateReference = :sessionTemplateReference AND " +
-      "v.visitStart >= :visitsFromDate",
-  )
-  fun hasVisitsForSessionTemplateFromDate(
-    sessionTemplateReference: String,
-    visitsFromDate: LocalDateTime,
+    visitsFromDate: LocalDate? = null,
   ): Boolean
 
   @Query(

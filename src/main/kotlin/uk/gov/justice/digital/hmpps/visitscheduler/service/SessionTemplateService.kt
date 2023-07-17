@@ -204,7 +204,7 @@ class SessionTemplateService(
         // if the new validToDate is not null or before existing validToDate
         if ((newValidToDate != null && existingValidToDate == null) || (newValidToDate != null && newValidToDate.isBefore(existingValidToDate))) {
           // check if there are any visits (any visit status) after the new valid to date
-          if (visitRepository.hasVisitsForSessionTemplateFromDate(existingSessionTemplate.reference, newValidToDate.plusDays(1).atStartOfDay())) {
+          if (visitRepository.hasVisitsForSessionTemplate(existingSessionTemplate.reference, newValidToDate.plusDays(1))) {
             throw VSiPValidationException("Cannot update session valid to date to $newValidToDate for session template - ${existingSessionTemplate.reference} as there are visits associated with this session template after $newValidToDate.")
           }
         }

@@ -365,7 +365,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplateFromDate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
   }
 
   @Test
@@ -391,7 +391,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplateFromDate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
   }
 
   @Test
@@ -418,7 +418,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplateFromDate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
   }
 
   @Test
@@ -458,7 +458,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplateFromDate(any(), any())
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(any(), any())
   }
 
   @Test
@@ -488,7 +488,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplateFromDate(any(), any())
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are visits associated with this session template after $newValidToDate."))
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(any(), any())
   }
 
   @Test
