@@ -178,6 +178,7 @@ class SessionTemplateService(
     val hasVisits = visitRepository.hasVisitsForSessionTemplate(reference)
     validateUpdateSessionTemplateTime(sessionTemplate, updateSessionTemplateDto, hasVisits)
     validateUpdateSessionTemplateFromDate(sessionTemplate, updateSessionTemplateDto, hasVisits)
+    validateUpdateSessionTemplateToDate(sessionTemplate, updateSessionTemplateDto)
   }
 
   private fun validateUpdateSessionTemplateTime(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean) {
@@ -191,6 +192,23 @@ class SessionTemplateService(
     // if a session has visits from date cannot be updated.
     if (updateSessionTemplateDto.sessionDateRange != null && existingSessionTemplate.sessionDateRange.validFromDate != updateSessionTemplateDto.sessionDateRange.validFromDate && hasVisits) {
       throw VSiPValidationException("Cannot update session valid from date for ${existingSessionTemplate.reference} as there are existing visits associated with this session template!")
+    }
+  }
+
+  private fun validateUpdateSessionTemplateToDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto) {
+    updateSessionTemplateDto.sessionDateRange?.let {
+      val newValidToDate = it.validToDate
+      val existingValidToDate = existingSessionTemplate.sessionDateRange.validToDate
+
+      if (newValidToDate != existingValidToDate) {
+        // if the new validToDate is not null or before existing validToDate
+        if ((newValidToDate != null && existingValidToDate == null) || (newValidToDate != null && newValidToDate.isBefore(existingValidToDate))) {
+          // check if there are any visits (any visit status) after the new valid to date
+          if (visitRepository.hasVisitsForSessionTemplate(existingSessionTemplate.reference, newValidToDate.plusDays(1))) {
+            throw VSiPValidationException("Cannot update session valid to date to $newValidToDate for session template - ${existingSessionTemplate.reference} as there are visits associated with this session template after $newValidToDate.")
+          }
+        }
+      }
     }
   }
 

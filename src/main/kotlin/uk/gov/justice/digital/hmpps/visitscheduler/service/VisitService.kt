@@ -276,7 +276,7 @@ class VisitService(
 
     val bookingReferenceFromApplication = visitRepository.getApplicationBookingReference(applicationReference)
       ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
-    val hasExistingBooking = visitRepository.doseBookedVisitExist(bookingReferenceFromApplication)
+    val hasExistingBooking = visitRepository.doesBookedVisitExist(bookingReferenceFromApplication)
     if (hasExistingBooking) {
       // check if the existing visit is in the past
       validateVisitStartDate(visitRepository.findBookedVisit(bookingReferenceFromApplication)!!, "changed")
