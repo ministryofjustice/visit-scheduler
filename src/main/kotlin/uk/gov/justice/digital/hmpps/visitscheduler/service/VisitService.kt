@@ -48,7 +48,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeReposit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_DELETED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -261,7 +261,7 @@ class VisitService(
       val deleted = visitRepository.deleteByApplicationReferenceAndVisitStatusIn(it, EXPIRED_VISIT_STATUSES)
       if (deleted > 0) {
         val bookEvent = createVisitTrackEventFromVisitEntity(applicationToBeDeleted)
-        trackEvent(VISIT_DELETED_EVENT.eventName, bookEvent)
+        trackEvent(VISIT_SLOT_RELEASED_EVENT.eventName, bookEvent)
       }
     }
   }

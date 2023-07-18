@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -94,7 +95,7 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
 
   private fun assertDeleteEvent(visit: Visit) {
     verify(telemetryClient).trackEvent(
-      eq("visit-expired-visits-deleted"),
+      eq(VISIT_SLOT_RELEASED_EVENT.eventName),
       org.mockito.kotlin.check {
         assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
         assertThat(it["reference"]).isEqualTo(visit.reference)
