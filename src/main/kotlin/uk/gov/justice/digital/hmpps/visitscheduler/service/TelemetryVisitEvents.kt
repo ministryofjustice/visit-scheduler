@@ -6,7 +6,7 @@ enum class TelemetryVisitEvents(val eventName: String) {
   VISIT_BOOKED_EVENT("visit-booked"),
   VISIT_SLOT_CHANGED_EVENT("visit-slot-changed"),
   VISIT_CANCELLED_EVENT("visit-cancelled"),
-  VISIT_DELETED_EVENT("visit-expired-visits-deleted"),
+  VISIT_SLOT_RELEASED_EVENT("visit-slot-released"),
   VISIT_MIGRATED_EVENT("visit-migrated"),
   CANCELLED_VISIT_MIGRATED_EVENT("cancelled-visit-migrated"),
   ACCESS_DENIED_ERROR_EVENT("visit-access-denied-error"),
