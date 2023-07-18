@@ -7,7 +7,6 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
-import org.mockito.kotlin.check
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
@@ -28,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepositor
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Clean K")
@@ -90,13 +90,25 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
     assertThat(testVisitRepository.findByApplicationReference(visitExpiredApplicationReference)).isNull()
     assertThat(testVisitRepository.findByApplicationReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
 
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-expired-visits-deleted"), any(), isNull())
+    verify(telemetryClient, times(2)).trackEvent(eq("visit-expired-visits-deleted"), any(), isNull())
 
+    assertDeleteEvent(reservedVisitExpired)
+    assertDeleteEvent(reservedVisitExpiredChangingStatus)
+  }
+
+  private fun assertDeleteEvent(visit: Visit) {
     verify(telemetryClient).trackEvent(
       eq("visit-expired-visits-deleted"),
-      check {
-        assertThat(it["applicationReferences"]).contains(visitExpiredApplicationReference)
-        assertThat(it["applicationReferences"]).contains(visitExpiredApplicationReferenceChangingStatus)
+      org.mockito.kotlin.check {
+        assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
+        assertThat(it["reference"]).isEqualTo(visit.reference)
+        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+        assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+        assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+        assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        assertThat(it["visitStart"]).isEqualTo(visit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
       },
       isNull(),
     )
