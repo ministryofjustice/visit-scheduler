@@ -60,36 +60,45 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
     reservedVisitNotExpired = createVisit(prisonerId = "NOT_EXPIRED")
     visitRepository.saveAndFlush(reservedVisitNotExpired)
 
-    reservedVisitNotExpiredChangingStatus = createVisit(prisonerId = "NOT_EXPIRED", visitStatus = CHANGING)
-    visitRepository.saveAndFlush(reservedVisitNotExpiredChangingStatus)
+    reservedVisitNotExpiredChangingStatus = visitRepository.saveAndFlush(createVisit(prisonerId = "NOT_EXPIRED", visitStatus = CHANGING))
 
     reservedVisitExpired = createVisit(prisonerId = "EXPIRED")
     visitRepository.saveAndFlush(reservedVisitExpired)
     visitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
 
-    reservedVisitExpiredChangingStatus = createVisit(prisonerId = "EXPIRED", visitStatus = CHANGING)
-    visitRepository.saveAndFlush(reservedVisitExpiredChangingStatus)
+    reservedVisitExpiredChangingStatus = visitRepository.saveAndFlush(createVisit(prisonerId = "EXPIRED", visitStatus = CHANGING))
     visitRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
   }
 
   @Test
-  fun `delete only expired reservations`() {
+  fun `delete only expired reserved applications`() {
     // Given
     val notExpiredApplicationReference = reservedVisitNotExpired.applicationReference
-    val notExpiredApplicationReferenceChangingStatus = reservedVisitNotExpiredChangingStatus.applicationReference
     val visitExpiredApplicationReference = reservedVisitExpired.applicationReference
-    val visitExpiredApplicationReferenceChangingStatus = reservedVisitExpiredChangingStatus.applicationReference
 
     // When
     visitTask.deleteExpiredReservations()
 
     // Then
     assertThat(testVisitRepository.findByApplicationReference(notExpiredApplicationReference)).isNotNull
-    assertThat(testVisitRepository.findByApplicationReference(notExpiredApplicationReferenceChangingStatus)).isNotNull
     assertThat(testVisitRepository.findByApplicationReference(visitExpiredApplicationReference)).isNull()
-    assertThat(testVisitRepository.findByApplicationReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
 
     assertDeleteEvent(reservedVisitExpired)
+  }
+
+  @Test
+  fun `delete only expired changing applications`() {
+    // Given
+    val notExpiredApplicationReferenceChangingStatus = reservedVisitNotExpiredChangingStatus.applicationReference
+    val visitExpiredApplicationReferenceChangingStatus = reservedVisitExpiredChangingStatus.applicationReference
+
+    // When
+    visitTask.deleteExpiredReservations()
+
+    // Then
+    assertThat(testVisitRepository.findByApplicationReference(notExpiredApplicationReferenceChangingStatus)).isNotNull
+    assertThat(testVisitRepository.findByApplicationReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
+
     assertDeleteEvent(reservedVisitExpiredChangingStatus)
   }
 
