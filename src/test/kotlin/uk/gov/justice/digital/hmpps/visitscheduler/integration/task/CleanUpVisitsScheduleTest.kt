@@ -27,6 +27,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Clean K")
@@ -112,7 +114,7 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
-        // assertThat(it["visitStart"]).isEqualTo(visit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["visitStart"]).isEqualTo(visit.visitStart.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
       },
