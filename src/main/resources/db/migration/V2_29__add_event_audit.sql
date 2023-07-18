@@ -59,6 +59,8 @@ UPDATE event_audit	SET type = 'MIGRATED_VISIT'
     FROM (select application_reference  from visit v join legacy_data ld on ld.visit_id  = v.id WHERE v.visit_status  = 'BOOKED') AS v
 WHERE event_audit.application_reference = v.application_reference AND type = 'BOOKED_VISIT';
 
+DROP TABLE tmp_updated_visits;
+
 -- need to delete at later stage... but leaving for now to allow us to check data
 -- ALTER TABLE visit DROP created_by;
 -- ALTER TABLE visit DROP updated_by;
