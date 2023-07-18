@@ -21,7 +21,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Query(
     "SELECT v.applicationReference FROM Visit v " +
       "WHERE (v.visitStatus = 'RESERVED' OR v.visitStatus = 'CHANGING')" +
-      " AND v.modifyTimestamp < :expiredDateAndTime",
+      " AND v.modifyTimestamp < :expiredDateAndTime ORDER BY v.id",
   )
   fun findExpiredApplicationReferences(expiredDateAndTime: LocalDateTime): List<String>
 
