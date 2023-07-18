@@ -6,6 +6,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.boot.test.mock.mockito.SpyBean
@@ -34,6 +35,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   private var prison: Prison = Prison(code = "MDI", active = true)
   private lateinit var sessionTemplate: SessionTemplate
   private lateinit var sessionTemplateWithValidDates: SessionTemplate
+  private lateinit var sessionTemplateWithWeeklyFrequencyOf6: SessionTemplate
 
   @SpyBean
   private lateinit var visitRepository: VisitRepository
@@ -49,6 +51,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       validFromDate = LocalDate.now().plusYears(1),
       validToDate = LocalDate.now().plusYears(2),
     )
+    sessionTemplateWithWeeklyFrequencyOf6 = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true, weeklyFrequency = 6)
   }
 
   @Test
@@ -458,7 +461,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateWithValidDates.reference), eq(newValidToDate.plusDays(1)))
   }
 
   @Test
@@ -490,7 +493,151 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.developerMessage").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are visits associated with this session template after $newValidToDate."))
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateWithValidDates.reference), eq(newValidToDate.plusDays(1)))
+  }
+
+  @Test
+  fun `when session template updated with higher weekly frequency but visits do not exist for session template update session template should be successful`() {
+    // Given
+    val newWeeklyFrequency = sessionTemplate.weeklyFrequency + 2
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateDto.reference), eq(null))
+  }
+
+  @Test
+  fun `when session template updated with lower weekly frequency which is not a factor but visits do not exist for session template update session template should be successful`() {
+    // Given
+    val newWeeklyFrequency = 4
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithWeeklyFrequencyOf6.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateDto.reference), eq(null))
+  }
+
+  @Test
+  fun `when session template updated with lower weekly frequency which is a factor of existing weekly frequency but visits do not exist for session template update session template should be successful`() {
+    // Given
+    val newWeeklyFrequency = 2
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithWeeklyFrequencyOf6.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template updated with higher weekly frequency but visits exist for session template update session template should fail`() {
+    // Given
+    val newWeeklyFrequency = sessionTemplate.weeklyFrequency + 2
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+      sessionDateRange = null,
+    )
+
+    // visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+    )
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplate.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplate.reference} as existing visits for ${sessionTemplate.reference} might be affected!"))
+  }
+
+  @Test
+  fun `when session template updated with lower weekly frequency which is not a factor and visits exist for session template update session template fails`() {
+    // Given
+    val newWeeklyFrequency = 4
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithWeeklyFrequencyOf6.name + " Updated",
+      sessionDateRange = null,
+      weeklyFrequency = newWeeklyFrequency,
+    )
+
+    // visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplateWithWeeklyFrequencyOf6.reference,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplateWithWeeklyFrequencyOf6.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateWithWeeklyFrequencyOf6.reference} as existing visits for ${sessionTemplateWithWeeklyFrequencyOf6.reference} might be affected!"))
+  }
+
+  @Test
+  fun `when session template updated with lower weekly frequency which is a factor of existing weekly frequency and visits exist for session template update session template should be successful`() {
+    // Given
+    val newWeeklyFrequency = 2
+
+    // updating weekly frequency from 6 to 2 - valid scenario
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithWeeklyFrequencyOf6.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+      sessionDateRange = null,
+    )
+
+    // visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplateWithWeeklyFrequencyOf6.reference,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
   }
 
   @Test
