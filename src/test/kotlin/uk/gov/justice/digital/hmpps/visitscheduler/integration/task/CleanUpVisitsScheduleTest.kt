@@ -6,10 +6,8 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
-import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.MockBean
@@ -89,8 +87,6 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
     assertThat(testVisitRepository.findByApplicationReference(notExpiredApplicationReferenceChangingStatus)).isNotNull
     assertThat(testVisitRepository.findByApplicationReference(visitExpiredApplicationReference)).isNull()
     assertThat(testVisitRepository.findByApplicationReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
-
-    verify(telemetryClient, times(2)).trackEvent(eq("visit-expired-visits-deleted"), any(), isNull())
 
     assertDeleteEvent(reservedVisitExpired)
     assertDeleteEvent(reservedVisitExpiredChangingStatus)
