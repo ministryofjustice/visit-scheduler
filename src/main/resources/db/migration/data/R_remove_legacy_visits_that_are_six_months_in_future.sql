@@ -1,4 +1,3 @@
--- *** THIS WILL REMOVE ALL MIGRATED DATA FROM THE VSIP DB ****
 -- start a transaction
 BEGIN;
 
@@ -20,5 +19,5 @@ BEGIN;
 
     DROP TABLE tmp_future_visits;
 
--- commit the change
-COMMIT;
+
+END;
