@@ -179,6 +179,7 @@ class SessionTemplateService(
     validateUpdateSessionTemplateTime(sessionTemplate, updateSessionTemplateDto, hasVisits)
     validateUpdateSessionTemplateFromDate(sessionTemplate, updateSessionTemplateDto, hasVisits)
     validateUpdateSessionTemplateToDate(sessionTemplate, updateSessionTemplateDto)
+    validateUpdateSessionTemplateWeeklyFrequency(sessionTemplate, updateSessionTemplateDto, hasVisits)
   }
 
   private fun validateUpdateSessionTemplateTime(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean) {
@@ -208,6 +209,21 @@ class SessionTemplateService(
             throw VSiPValidationException("Cannot update session valid to date to $newValidToDate for session template - ${existingSessionTemplate.reference} as there are visits associated with this session template after $newValidToDate.")
           }
         }
+      }
+    }
+  }
+
+  private fun validateUpdateSessionTemplateWeeklyFrequency(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean) {
+    // if a session has visits weekly frequency can only be updated if the new weekly frequency is lower than current weekly frequency
+    // and the new weekly frequency is a factor of the existing weekly frequency
+    val newWeeklyFrequency = updateSessionTemplateDto.weeklyFrequency
+
+    if (newWeeklyFrequency != null && (newWeeklyFrequency != existingSessionTemplate.weeklyFrequency)) {
+      // if weekly frequency is being upped  and there are existing visits for the template
+      // or weekly frequency is reduced to a non factor and there are existing visits for the template
+      // throw a VSiPValidationException
+      if ((newWeeklyFrequency > existingSessionTemplate.weeklyFrequency || existingSessionTemplate.weeklyFrequency % newWeeklyFrequency != 0) && hasVisits) {
+        throw VSiPValidationException("Cannot update session template weekly frequency from ${existingSessionTemplate.weeklyFrequency} to $newWeeklyFrequency for ${existingSessionTemplate.reference} as existing visits for ${existingSessionTemplate.reference} might be affected!")
       }
     }
   }
