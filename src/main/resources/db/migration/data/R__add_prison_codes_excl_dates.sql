@@ -37,6 +37,7 @@ INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-12-28' 
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-05-16' from prison where code = 'PNI';
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-06-15' from prison where code = 'PNI';
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-07-18' from prison where code = 'PNI';
+INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-09-13' from prison where code = 'PNI';
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-09-19' from prison where code = 'PNI';
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-10-17' from prison where code = 'PNI';
 INSERT INTO prison_exclude_date(prison_id, exclude_date) Select id,'2023-11-21' from prison where code = 'PNI';
