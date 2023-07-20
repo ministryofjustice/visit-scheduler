@@ -34,5 +34,6 @@ class EventAuditDto(
     applicationMethodType = eventAuditEntity.applicationMethodType,
     actionedBy = eventAuditEntity.actionedBy,
     sessionTemplateReference = eventAuditEntity.sessionTemplateReference,
+    createTimestamp = eventAuditEntity.createTimestamp,
   )
 }
