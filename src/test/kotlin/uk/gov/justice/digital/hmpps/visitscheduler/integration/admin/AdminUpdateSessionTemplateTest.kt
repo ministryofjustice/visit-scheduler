@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateSessionTemplateByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createUpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
@@ -118,6 +119,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Given
     val dto = createUpdateSessionTemplateDto(
       name = sessionTemplate.name + " Updated",
+      sessionDateRange = null,
       sessionTimeSlot = SessionTimeSlotDto(
         startTime = sessionTemplate.startTime.plusHours(1),
         endTime = sessionTemplate.endTime.plusHours(2),
@@ -136,7 +138,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.developerMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
   }
 
   @Test
@@ -162,7 +164,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.developerMessages[0]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
   }
 
   @Test
@@ -492,7 +494,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are visits associated with this session template after $newValidToDate."))
+      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are visits associated with this session template after $newValidToDate."))
     verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateWithValidDates.reference), eq(newValidToDate.plusDays(1)))
   }
 
@@ -583,7 +585,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplate.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplate.reference} as existing visits for ${sessionTemplate.reference} might be affected!"))
+      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplate.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplate.reference} as existing visits for ${sessionTemplate.reference} might be affected!"))
   }
 
   @Test
@@ -608,7 +610,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplateWithWeeklyFrequencyOf6.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateWithWeeklyFrequencyOf6.reference} as existing visits for ${sessionTemplateWithWeeklyFrequencyOf6.reference} might be affected!"))
+      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplateWithWeeklyFrequencyOf6.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateWithWeeklyFrequencyOf6.reference} as existing visits for ${sessionTemplateWithWeeklyFrequencyOf6.reference} might be affected!"))
   }
 
   @Test
@@ -638,6 +640,228 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
     verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template capacity upped update session template should be successful`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity + 1, open = sessionTemplate.openCapacity + 1)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template capacity same as existing update session template should be successful`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity, open = sessionTemplate.openCapacity)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template open capacity lowered and no visits exist update session template should be successful`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity - 1, open = sessionTemplate.openCapacity - 1)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null)
+  }
+
+  @Test
+  fun `when session template open capacity lowered above minimum allowed capacity update session template should be successful`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = 1, open = 2)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // 2 open visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.OPEN,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    visitEntityHelper.create(
+      prisonerId = "AABBCC1",
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.OPEN,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    // 1 closed visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null)
+  }
+
+  @Test
+  fun `when session template closed capacity lowered below minimum allowed capacity update session template should fail`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = 1, open = sessionTemplate.openCapacity)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+
+    // 2 open visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    visitEntityHelper.create(
+      prisonerId = "AABBCC1",
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session template closed capacity from ${sessionTemplate.closedCapacity} to ${newSessionCapacity.closed} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
+  }
+
+  @Test
+  fun `when session template open capacity lowered below minimum allowed capacity update session template should fail`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity, open = 1)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+
+    // 2 open visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.OPEN,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    visitEntityHelper.create(
+      prisonerId = "AABBCC1",
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.OPEN,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to ${newSessionCapacity.open} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
+  }
+
+  @Test
+  fun `update session template fails for multiple reasons`() {
+    // Given
+    // update fails for multiple reasons
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionDateRange = SessionDateRangeDto(sessionTemplate.validFromDate.minusDays(1)),
+      sessionTimeSlot = SessionTimeSlotDto(
+        startTime = sessionTemplate.startTime.plusHours(1),
+        endTime = sessionTemplate.endTime.plusHours(2),
+      ),
+      sessionCapacity = SessionCapacityDto(closed = 1, open = 0),
+    )
+
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitStart = LocalDate.now().atTime(dto.sessionTimeSlot?.startTime),
+      visitEnd = LocalDate.now().atTime(dto.sessionTimeSlot?.endTime),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.developerMessages[1]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.developerMessages[2]").value(Matchers.equalTo("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to 0 for ${sessionTemplate.reference} as its lower than minimum capacity of 1!"))
   }
 
   @Test
