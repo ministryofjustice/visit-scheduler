@@ -1,7 +1,7 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.2.2"
-  kotlin("plugin.spring") version "1.8.22"
-  kotlin("plugin.jpa") version "1.8.22"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.3.0-beta"
+  kotlin("plugin.spring") version "1.9.0"
+  kotlin("plugin.jpa") version "1.9.0"
   idea
 }
 
@@ -28,17 +28,17 @@ dependencies {
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.15.2")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:1.27.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:1.28.0")
 
   implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
-  implementation("org.springframework.data:spring-data-commons:3.1.1")
+  implementation("org.springframework.data:spring-data-commons:3.1.2")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.1.0")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0")
   implementation("org.springdoc:springdoc-openapi-starter-common:2.1.0")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:5.5.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.5.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:5.6.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.6.0")
   implementation("org.apache.commons:commons-csv:1.10.0")
   implementation("org.freemarker:freemarker:2.3.32")
 
@@ -58,7 +58,7 @@ dependencies {
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.testcontainers:postgresql:1.18.3")
   testImplementation("org.testcontainers:localstack:1.18.3")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.501")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.513")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0")
 }
 
