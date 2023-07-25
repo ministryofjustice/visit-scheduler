@@ -212,7 +212,6 @@ class AdminSessionTemplateIncentiveGroupTest(
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Validation failed")
-      .jsonPath("$.developerMessage").isEqualTo("Incentive group cannot be deleted $reference because session templates are using it!")
+      .jsonPath("$.validationMessages[0]").isEqualTo("Incentive group cannot be deleted $reference because session templates are using it!")
   }
 }

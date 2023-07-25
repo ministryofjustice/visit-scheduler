@@ -212,9 +212,7 @@ class VisitSchedulerExceptionHandler(
       .status(HttpStatus.BAD_REQUEST)
       .body(
         ValidationErrorResponse(
-          status = HttpStatus.BAD_REQUEST,
-          userMessage = "Validation failed",
-          developerMessages = e.messages.asList(),
+          validationMessages = e.messages.asList(),
         ),
       )
   }
@@ -248,10 +246,10 @@ class VisitSchedulerExceptionHandler(
   }
 }
 
-open class ErrorResponse(
-  open val status: Int,
-  open val errorCode: Int? = null,
-  open val userMessage: String? = null,
+data class ErrorResponse(
+  val status: Int,
+  val errorCode: Int? = null,
+  val userMessage: String? = null,
   val developerMessage: String? = null,
 ) {
   constructor(
@@ -264,16 +262,5 @@ open class ErrorResponse(
 }
 
 data class ValidationErrorResponse(
-  override val status: Int,
-  override val errorCode: Int? = null,
-  override val userMessage: String? = null,
-  val developerMessages: List<String>,
-) : ErrorResponse(status, errorCode, userMessage, developerMessages.joinToString()) {
-  constructor(
-    status: HttpStatus,
-    errorCode: Int? = null,
-    userMessage: String? = null,
-    developerMessages: List<String>,
-  ) :
-    this(status.value(), errorCode, userMessage, developerMessages)
-}
+  val validationMessages: List<String>,
+)

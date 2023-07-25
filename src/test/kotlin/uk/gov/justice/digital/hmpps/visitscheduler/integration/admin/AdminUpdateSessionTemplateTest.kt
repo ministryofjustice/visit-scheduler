@@ -138,7 +138,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
   }
 
   @Test
@@ -164,7 +164,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessages[0]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
   }
 
   @Test
@@ -494,7 +494,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are visits associated with this session template after $newValidToDate."))
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are visits associated with this session template after $newValidToDate."))
     verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateWithValidDates.reference), eq(newValidToDate.plusDays(1)))
   }
 
@@ -585,7 +585,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplate.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplate.reference} as existing visits for ${sessionTemplate.reference} might be affected!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplate.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplate.reference} as existing visits for ${sessionTemplate.reference} might be affected!"))
   }
 
   @Test
@@ -610,7 +610,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplateWithWeeklyFrequencyOf6.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateWithWeeklyFrequencyOf6.reference} as existing visits for ${sessionTemplateWithWeeklyFrequencyOf6.reference} might be affected!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplateWithWeeklyFrequencyOf6.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateWithWeeklyFrequencyOf6.reference} as existing visits for ${sessionTemplateWithWeeklyFrequencyOf6.reference} might be affected!"))
   }
 
   @Test
@@ -793,7 +793,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session template closed capacity from ${sessionTemplate.closedCapacity} to ${newSessionCapacity.closed} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template closed capacity from ${sessionTemplate.closedCapacity} to ${newSessionCapacity.closed} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
   }
 
   @Test
@@ -830,7 +830,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessages[0]").value(Matchers.containsString("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to ${newSessionCapacity.open} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to ${newSessionCapacity.open} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
   }
 
   @Test
@@ -859,9 +859,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
-      .jsonPath("$.developerMessages[1]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
-      .jsonPath("$.developerMessages[2]").value(Matchers.equalTo("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to 0 for ${sessionTemplate.reference} as its lower than minimum capacity of 1!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[1]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[2]").value(Matchers.equalTo("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to 0 for ${sessionTemplate.reference} as its lower than minimum capacity of 1!"))
   }
 
   @Test
