@@ -81,8 +81,7 @@ class AdminDeleteSessionTemplateTest(
     responseSpec
       .expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Validation failed")
-      .jsonPath("$.developerMessage").isEqualTo("Cannot delete session template $reference with existing visits!")
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot delete session template $reference with existing visits!")
   }
 
   @Test
@@ -99,8 +98,7 @@ class AdminDeleteSessionTemplateTest(
     responseSpec
       .expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Validation failed")
-      .jsonPath("$.developerMessage").isEqualTo("Cannot delete session template $reference since it is active!")
+      .jsonPath("$.validationMessages[0]").isEqualTo("Cannot delete session template $reference since it is active!")
   }
 
   @Test

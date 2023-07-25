@@ -39,6 +39,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLe
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.UpdateSessionTemplateValidator
 import java.time.LocalDate
 import java.util.function.Supplier
 import kotlin.jvm.Throws
@@ -52,6 +53,7 @@ class SessionTemplateService(
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
   private val visitRepository: VisitRepository,
   private val prisonConfigService: PrisonConfigService,
+  private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
   @Value("\${policy.session.booking-notice-period.maximum-days:28}")
   private val policyNoticeDaysMax: Long,
 ) {
@@ -173,63 +175,12 @@ class SessionTemplateService(
     )
   }
 
-  private fun validateUpdateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto) {
-    val sessionTemplate = SessionTemplateDto(getSessionTemplate(reference))
-    val hasVisits = visitRepository.hasVisitsForSessionTemplate(reference)
-    validateUpdateSessionTemplateTime(sessionTemplate, updateSessionTemplateDto, hasVisits)
-    validateUpdateSessionTemplateFromDate(sessionTemplate, updateSessionTemplateDto, hasVisits)
-    validateUpdateSessionTemplateToDate(sessionTemplate, updateSessionTemplateDto)
-    validateUpdateSessionTemplateWeeklyFrequency(sessionTemplate, updateSessionTemplateDto, hasVisits)
-  }
-
-  private fun validateUpdateSessionTemplateTime(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean) {
-    // if a session has visits its time cannot be updated.
-    if (updateSessionTemplateDto.sessionTimeSlot != null && existingSessionTemplate.sessionTimeSlot != updateSessionTemplateDto.sessionTimeSlot && hasVisits) {
-      throw VSiPValidationException("Cannot update session times for ${existingSessionTemplate.reference} as there are existing visits associated with this session template!")
-    }
-  }
-
-  private fun validateUpdateSessionTemplateFromDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean) {
-    // if a session has visits from date cannot be updated.
-    if (updateSessionTemplateDto.sessionDateRange != null && existingSessionTemplate.sessionDateRange.validFromDate != updateSessionTemplateDto.sessionDateRange.validFromDate && hasVisits) {
-      throw VSiPValidationException("Cannot update session valid from date for ${existingSessionTemplate.reference} as there are existing visits associated with this session template!")
-    }
-  }
-
-  private fun validateUpdateSessionTemplateToDate(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto) {
-    updateSessionTemplateDto.sessionDateRange?.let {
-      val newValidToDate = it.validToDate
-      val existingValidToDate = existingSessionTemplate.sessionDateRange.validToDate
-
-      if (newValidToDate != existingValidToDate) {
-        // if the new validToDate is not null or before existing validToDate
-        if ((newValidToDate != null && existingValidToDate == null) || (newValidToDate != null && newValidToDate.isBefore(existingValidToDate))) {
-          // check if there are any visits (any visit status) after the new valid to date
-          if (visitRepository.hasVisitsForSessionTemplate(existingSessionTemplate.reference, newValidToDate.plusDays(1))) {
-            throw VSiPValidationException("Cannot update session valid to date to $newValidToDate for session template - ${existingSessionTemplate.reference} as there are visits associated with this session template after $newValidToDate.")
-          }
-        }
-      }
-    }
-  }
-
-  private fun validateUpdateSessionTemplateWeeklyFrequency(existingSessionTemplate: SessionTemplateDto, updateSessionTemplateDto: UpdateSessionTemplateDto, hasVisits: Boolean) {
-    // if a session has visits weekly frequency can only be updated if the new weekly frequency is lower than current weekly frequency
-    // and the new weekly frequency is a factor of the existing weekly frequency
-    val newWeeklyFrequency = updateSessionTemplateDto.weeklyFrequency
-
-    if (newWeeklyFrequency != null && (newWeeklyFrequency != existingSessionTemplate.weeklyFrequency)) {
-      // if weekly frequency is being upped  and there are existing visits for the template
-      // or weekly frequency is reduced to a non factor and there are existing visits for the template
-      // throw a VSiPValidationException
-      if ((newWeeklyFrequency > existingSessionTemplate.weeklyFrequency || existingSessionTemplate.weeklyFrequency % newWeeklyFrequency != 0) && hasVisits) {
-        throw VSiPValidationException("Cannot update session template weekly frequency from ${existingSessionTemplate.weeklyFrequency} to $newWeeklyFrequency for ${existingSessionTemplate.reference} as existing visits for ${existingSessionTemplate.reference} might be affected!")
-      }
-    }
-  }
-
   fun updateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
-    validateUpdateSessionTemplate(reference, updateSessionTemplateDto)
+    val existingSessionTemplate = SessionTemplateDto(getSessionTemplate(reference))
+    val errorMessages = updateSessionTemplateValidator.validate(existingSessionTemplate, updateSessionTemplateDto)
+    if (errorMessages.isNotEmpty()) {
+      throw VSiPValidationException(errorMessages.toTypedArray())
+    }
 
     with(updateSessionTemplateDto) {
       name?.let {
@@ -275,10 +226,10 @@ class SessionTemplateService(
   fun deleteSessionTemplate(reference: String) {
     val sessionTemplate = getSessionTemplate(reference)
     if (sessionTemplate.active) {
-      throw VSiPValidationException("Cannot delete session template $reference since it is active!")
+      throw VSiPValidationException(arrayOf("Cannot delete session template $reference since it is active!"))
     }
     if (visitRepository.hasVisitsForSessionTemplate(reference)) {
-      throw VSiPValidationException("Cannot delete session template $reference with existing visits!")
+      throw VSiPValidationException(arrayOf("Cannot delete session template $reference with existing visits!"))
     }
 
     val deleted = sessionTemplateRepository.deleteByReference(reference)
@@ -306,7 +257,7 @@ class SessionTemplateService(
   fun deleteSessionLocationGroup(reference: String) {
     val group = getLocationGroupByReference(reference)
     if (group.sessionTemplates.isNotEmpty()) {
-      throw VSiPValidationException("Location group cannot be deleted $reference because session templates are using it!")
+      throw VSiPValidationException(arrayOf("Location group cannot be deleted $reference because session templates are using it!"))
     }
 
     val deleted = sessionLocationGroupRepository.deleteByReference(reference)
@@ -363,7 +314,7 @@ class SessionTemplateService(
     groupToUpdate.name = updateCategorySessionGroup.name
     groupToUpdate.sessionCategories.clear()
 
-    val sessionPrisonerCategorys = updateCategorySessionGroup.categories.toSet().map {
+    val sessionPrisonerCategories = updateCategorySessionGroup.categories.toSet().map {
       SessionPrisonerCategory(
         sessionCategoryGroupId = groupToUpdate.id,
         sessionCategoryGroup = groupToUpdate,
@@ -371,7 +322,7 @@ class SessionTemplateService(
       )
     }
 
-    groupToUpdate.sessionCategories.addAll(sessionPrisonerCategorys)
+    groupToUpdate.sessionCategories.addAll(sessionPrisonerCategories)
 
     val updatedGroup = sessionCategoryGroupRepository.saveAndFlush(groupToUpdate)
     return SessionCategoryGroupDto(updatedGroup)
@@ -380,7 +331,7 @@ class SessionTemplateService(
   fun deleteSessionCategoryGroup(reference: String) {
     val group = getSessionCategoryGroupEntityByReference(reference)
     if (group.sessionTemplates.isNotEmpty()) {
-      throw VSiPValidationException("Category group cannot be deleted $reference because session templates are using it!")
+      throw VSiPValidationException(arrayOf("Category group cannot be deleted $reference because session templates are using it!"))
     }
 
     val deleted = sessionCategoryGroupRepository.deleteByReference(reference)
@@ -468,7 +419,7 @@ class SessionTemplateService(
   fun deleteSessionIncentiveGroup(reference: String) {
     val group = getIncentiveLevelGroupByReference(reference)
     if (group.sessionTemplates.isNotEmpty()) {
-      throw VSiPValidationException("Incentive group cannot be deleted $reference because session templates are using it!")
+      throw VSiPValidationException(arrayOf("Incentive group cannot be deleted $reference because session templates are using it!"))
     }
 
     val deleted = sessionIncentiveLevelGroupRepository.deleteByReference(reference)

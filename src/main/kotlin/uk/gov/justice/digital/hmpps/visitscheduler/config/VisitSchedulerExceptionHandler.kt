@@ -206,15 +206,13 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(VSiPValidationException::class)
-  fun handleVSiPValidationException(e: VSiPValidationException): ResponseEntity<ErrorResponse?>? {
+  fun handleVSiPValidationException(e: VSiPValidationException): ResponseEntity<ValidationErrorResponse?>? {
     log.error("Validation exception", e)
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
       .body(
-        ErrorResponse(
-          status = HttpStatus.BAD_REQUEST,
-          userMessage = "Validation failed",
-          developerMessage = e.message,
+        ValidationErrorResponse(
+          validationMessages = e.messages.asList(),
         ),
       )
   }
@@ -262,3 +260,7 @@ data class ErrorResponse(
   ) :
     this(status.value(), errorCode, userMessage, developerMessage)
 }
+
+data class ValidationErrorResponse(
+  val validationMessages: List<String>,
+)
