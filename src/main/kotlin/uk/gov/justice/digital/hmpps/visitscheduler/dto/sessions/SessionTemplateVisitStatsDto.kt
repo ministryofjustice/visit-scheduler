@@ -13,4 +13,7 @@ data class SessionTemplateVisitStatsDto(
   @Schema(description = "visit count for given date", example = "10", required = true)
   @field:Min(0)
   val visitCount: Int,
+
+  @Schema(description = "count of visits by date", required = false)
+  val visitsByDate: List<SessionTemplateVisitCountsDto>?,
 )
