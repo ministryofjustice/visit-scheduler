@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
@@ -442,8 +443,11 @@ class SessionTemplateService(
     val open = if (emptyResults) 0 else (minimumCapacityTuple.get(0) as Long).toInt()
     val closed = if (emptyResults) 0 else (minimumCapacityTuple.get(1) as Long).toInt()
 
+    val visitCountsByDate = this.sessionTemplateRepository.getVisitCountsByDate(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate).map {
+      SessionTemplateVisitCountsDto(it.visitDate, it.visitCount)
+    }.toList()
     val visitCount = this.sessionTemplateRepository.getVisitCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
-    return SessionTemplateVisitStatsDto(SessionCapacityDto(closed, open), visitCount)
+    return SessionTemplateVisitStatsDto(SessionCapacityDto(closed, open), visitCount, visitCountsByDate)
   }
 }
 

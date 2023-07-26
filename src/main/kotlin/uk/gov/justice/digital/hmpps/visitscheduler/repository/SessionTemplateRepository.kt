@@ -9,6 +9,7 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitCountsByDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -45,6 +46,21 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("visitsFromDate") visitsFromDate: LocalDate,
     @Param("visitsToDate") visitsToDate: LocalDate,
   ): Int
+
+  @Query(
+    "select cast(v.visit_start as date) as visitDate, count(*) as visitCount from visit v " +
+      " JOIN session_template st ON st.reference = v.session_template_reference " +
+      " WHERE st.reference = :reference AND v.visit_start > :visitsFromDate AND v.visit_start < :visitsToDate " +
+      " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
+      " GROUP BY v.visit_start" +
+      " ORDER BY v.visit_start",
+    nativeQuery = true,
+  )
+  fun getVisitCountsByDate(
+    @Param("reference") reference: String,
+    @Param("visitsFromDate") visitsFromDate: LocalDate,
+    @Param("visitsToDate") visitsToDate: LocalDate,
+  ): List<VisitCountsByDate>
 
   @Query(
     "select u from SessionTemplate u " +
