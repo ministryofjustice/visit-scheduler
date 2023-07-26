@@ -11,6 +11,7 @@ data class SessionTemplateVisitCountsDto(
   val visitDate: LocalDate,
 
   @Schema(description = "Count of booked or reserved visits for a date", example = "10", required = true)
+  @field:NotNull
   @field:Min(1)
   val visitCount: Int,
 )
