@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
@@ -64,9 +65,10 @@ class UpdateSessionTemplateValidator(
       if (newValidToDate != existingValidToDate) {
         // if the new validToDate is not null or before existing validToDate
         if ((newValidToDate != null && existingValidToDate == null) || (newValidToDate != null && newValidToDate.isBefore(existingValidToDate))) {
-          // check if there are any visits (any visit status) after the new valid to date
-          if (visitRepository.hasVisitsForSessionTemplate(existingSessionTemplate.reference, newValidToDate.plusDays(1))) {
-            return "Cannot update session valid to date to $newValidToDate for session template - ${existingSessionTemplate.reference} as there are visits associated with this session template after $newValidToDate."
+          // check if there are any booked or reserved visits (any visit status) after the new valid to date
+          val visitStatues = listOf<VisitStatus>(VisitStatus.BOOKED, VisitStatus.RESERVED, VisitStatus.CHANGING)
+          if (visitRepository.hasVisitsForSessionTemplate(existingSessionTemplate.reference, newValidToDate.plusDays(1), visitStatues)) {
+            return "Cannot update session valid to date to $newValidToDate for session template - ${existingSessionTemplate.reference} as there are booked or reserved visits associated with this session template after $newValidToDate."
           }
         }
       }

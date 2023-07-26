@@ -7,6 +7,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.boot.test.mock.mockito.SpyBean
@@ -20,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateSessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createUpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
@@ -370,7 +372,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any(), any())
   }
 
   @Test
@@ -396,7 +398,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any(), any())
   }
 
   @Test
@@ -423,11 +425,11 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any(), any())
   }
 
   @Test
-  fun `when session template updated with reduced valid to date but visits not affected update session template should be successful`() {
+  fun `when session template updated with reduced valid to date but booked visits not affected update session template should be successful`() {
     // Given
     val newValidToDate = sessionTemplateWithValidDates.validToDate!!.minusMonths(1)
     val newSessionDateRange = SessionDateRangeDto(
@@ -463,11 +465,55 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateWithValidDates.reference), eq(newValidToDate.plusDays(1)))
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(
+      eq(sessionTemplateWithValidDates.reference),
+      eq(newValidToDate.plusDays(1)),
+      eq(listOf(VisitStatus.BOOKED, VisitStatus.RESERVED, VisitStatus.CHANGING)),
+    )
   }
 
   @Test
-  fun `when session template updated with reduced valid to date but visits affected update session template validation fails`() {
+  fun `when session template updated with reduced valid to date but only cancelled visits are affected update session template should be successful`() {
+    // Given
+    val newValidToDate = sessionTemplateWithValidDates.validToDate!!.minusMonths(1)
+    val newSessionDateRange = SessionDateRangeDto(
+      validFromDate = sessionTemplateWithValidDates.validFromDate,
+      validToDate = newValidToDate,
+    )
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithValidDates.name + " Updated",
+      sessionDateRange = newSessionDateRange,
+    )
+
+    // cancelled visit exists 1 day after the new valid to date
+    val visitDate = newValidToDate.plusDays(1)
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplateWithValidDates.reference,
+      visitStart = visitDate.atTime(10, 0),
+      visitEnd = visitDate.atTime(11, 0),
+      visitStatus = VisitStatus.CANCELLED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(
+      eq(sessionTemplateWithValidDates.reference),
+      eq(newValidToDate.plusDays(1)),
+      eq(listOf(VisitStatus.BOOKED, VisitStatus.RESERVED, VisitStatus.CHANGING)),
+    )
+  }
+
+  @Test
+  fun `when session template updated with reduced valid to date but booked visits affected update session template validation fails`() {
     // Given
     val newValidToDate = sessionTemplateWithValidDates.validToDate!!.minusMonths(1)
     val newSessionDateRange = SessionDateRangeDto(
@@ -494,8 +540,8 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are visits associated with this session template after $newValidToDate."))
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateWithValidDates.reference), eq(newValidToDate.plusDays(1)))
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are booked or reserved visits associated with this session template after $newValidToDate."))
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateWithValidDates.reference), eq(newValidToDate.plusDays(1)), eq(listOf(VisitStatus.BOOKED, VisitStatus.RESERVED, VisitStatus.CHANGING)))
   }
 
   @Test
@@ -517,7 +563,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateDto.reference), eq(null))
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateDto.reference), eq(null), isNull())
   }
 
   @Test
@@ -539,7 +585,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateDto.reference), eq(null))
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateDto.reference), eq(null), isNull())
   }
 
   @Test
@@ -561,7 +607,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any(), any())
   }
 
   @Test
@@ -639,7 +685,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any(), any())
   }
 
   @Test
@@ -663,7 +709,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any(), any())
   }
 
   @Test
@@ -686,7 +732,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
-    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any(), any())
   }
 
   @Test
@@ -709,7 +755,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null, null)
   }
 
   @Test
@@ -756,7 +802,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null, null)
   }
 
   @Test
