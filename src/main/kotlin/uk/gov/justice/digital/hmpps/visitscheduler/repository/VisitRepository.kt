@@ -87,6 +87,17 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
+    "SELECT count(v) > 0 FROM Visit v " +
+      "WHERE v.sessionTemplateReference = :sessionTemplateReference AND " +
+      "(cast(:visitsFromDate as date)  is null or cast(v.visitStart as date) >= :visitsFromDate) AND " +
+      "(v.visitStatus IN ('BOOKED','RESERVED','CHANGING'))",
+  )
+  fun hasBookedVisitsForSessionTemplate(
+    sessionTemplateReference: String,
+    visitsFromDate: LocalDate? = null,
+  ): Boolean
+
+  @Query(
     "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
       "WHERE v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
