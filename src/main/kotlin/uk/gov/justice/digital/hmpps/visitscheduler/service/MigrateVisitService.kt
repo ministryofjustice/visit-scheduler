@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.MIGRATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
@@ -162,7 +162,7 @@ class MigrateVisitService(
         bookingReference = visitEntity.reference,
         applicationReference = visitEntity.applicationReference,
         sessionTemplateReference = visitEntity.sessionTemplateReference,
-        type = CANCELED_VISIT,
+        type = CANCELLED_VISIT,
         applicationMethodType = NOT_KNOWN,
       ),
     )

@@ -26,7 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.E
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.PHONE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.WEBSITE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.BOOKED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.UPDATED_VISIT
@@ -107,7 +107,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     Assertions.assertThat(eventAuditList[5].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
 
     Assertions.assertThat(eventAuditList[6].actionedBy).isEqualTo("cancel_guy")
-    Assertions.assertThat(eventAuditList[6].type).isEqualTo(CANCELED_VISIT)
+    Assertions.assertThat(eventAuditList[6].type).isEqualTo(CANCELLED_VISIT)
     Assertions.assertThat(eventAuditList[6].applicationMethodType).isEqualTo(WEBSITE)
     Assertions.assertThat(eventAuditList[6].createTimestamp).isNotNull
     Assertions.assertThat(eventAuditList[6].sessionTemplateReference).isEqualTo(sessionTemplate.reference)

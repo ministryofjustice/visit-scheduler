@@ -83,7 +83,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitCancelled.reference)
 
-    Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELED_VISIT)
+    Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
     Assertions.assertThat(eventAudit.actionedBy).isEqualTo(cancelledByByUser)
     Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(PHONE)
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
