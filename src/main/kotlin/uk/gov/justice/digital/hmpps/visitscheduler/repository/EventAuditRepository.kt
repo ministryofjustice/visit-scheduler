@@ -30,7 +30,6 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
   )
   fun updateVisitApplication(applicationReference: String, applicationMethodType: ApplicationMethodType): Int?
 
-
   @Transactional
   @Modifying
   @Query(
@@ -38,5 +37,4 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
     nativeQuery = true,
   )
   fun updateCreateTimestamp(createTimestamp: LocalDateTime, id: Long): Int
-
 }

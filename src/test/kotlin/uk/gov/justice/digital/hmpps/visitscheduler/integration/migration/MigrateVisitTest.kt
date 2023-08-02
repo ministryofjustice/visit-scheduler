@@ -31,7 +31,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import java.time.LocalDate
@@ -104,8 +103,6 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       assertThat(eventAuditList[0].actionedBy).isEqualTo("Aled Evans")
       assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.MIGRATED_VISIT)
       assertThat(eventAuditList[0].createTimestamp).isEqualTo(migrateVisitRequestDto.createDateTime)
-
-
     }
   }
 
