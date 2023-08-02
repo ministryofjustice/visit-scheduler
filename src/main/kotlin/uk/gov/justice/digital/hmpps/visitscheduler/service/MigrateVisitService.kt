@@ -83,7 +83,7 @@ class MigrateVisitService(
       ),
     )
 
-    eventAuditRepository.saveAndFlush(
+    val eventAudit = eventAuditRepository.saveAndFlush(
       EventAudit(
         actionedBy = actionedBy,
         bookingReference = visitEntity.reference,
@@ -126,6 +126,7 @@ class MigrateVisitService(
 
     migrateVisitRequest.createDateTime?.let {
       visitRepository.updateCreateTimestamp(it, visitEntity.id)
+      eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
     }
 
     // Do this at end of this method, otherwise modify date would be overridden

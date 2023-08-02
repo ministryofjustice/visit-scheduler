@@ -109,6 +109,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     category: String? = null,
     incentiveLevelCode: IncentiveLevel? = null,
     visitRestriction: VisitRestriction = OPEN,
+    createDateTime: LocalDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
   ): MigrateVisitRequestDto {
     val migrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = PRISON_CODE,
@@ -129,7 +130,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
         VisitNoteDto(type = STATUS_CHANGED_REASON, "Status has changed"),
       ),
       legacyData = CreateLegacyDataRequestDto(123),
-      createDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
+      createDateTime = createDateTime,
       modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30),
       actionedBy = actionedBy,
     )
