@@ -5,6 +5,11 @@ import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
+import org.springframework.boot.test.mock.mockito.SpyBean
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -14,10 +19,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateSessionTemplateByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createUpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
 import java.time.LocalTime
 
@@ -28,11 +36,24 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
   private var prison: Prison = Prison(code = "MDI", active = true)
   private lateinit var sessionTemplate: SessionTemplate
+  private lateinit var sessionTemplateWithValidDates: SessionTemplate
+  private lateinit var sessionTemplateWithWeeklyFrequencyOf6: SessionTemplate
+
+  @SpyBean
+  private lateinit var visitRepository: VisitRepository
 
   @BeforeEach
   internal fun setUpTests() {
     prison = prisonEntityHelper.create(prison.code, prison.active)
     sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true)
+    sessionTemplateWithValidDates = sessionTemplateEntityHelper.create(
+      name = "session-template-for-update",
+      prisonCode = prison.code,
+      isActive = true,
+      validFromDate = LocalDate.now().plusYears(1),
+      validToDate = LocalDate.now().plusYears(2),
+    )
+    sessionTemplateWithWeeklyFrequencyOf6 = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true, weeklyFrequency = 6)
   }
 
   @Test
@@ -49,7 +70,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     val dto = createUpdateSessionTemplateDto(
       name = sessionTemplate.name + " Updated",
-      sessionDateRangeDto = SessionDateRangeDto(
+      sessionDateRange = SessionDateRangeDto(
         validFromDate = sessionTemplate.validFromDate.plusDays(1),
         validToDate = sessionTemplate.validToDate?.plusDays(10),
       ),
@@ -57,7 +78,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
         closed = sessionTemplate.closedCapacity + 1,
         open = sessionTemplate.openCapacity + 1,
       ),
-      sessionTimeSlotDto = SessionTimeSlotDto(
+      sessionTimeSlot = SessionTimeSlotDto(
         startTime = sessionTemplate.startTime.plusHours(1),
         endTime = sessionTemplate.endTime.plusHours(2),
       ),
@@ -92,6 +113,59 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.incentiveLevels }).containsExactlyInAnyOrder(nonEnhancedIncentives)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.active).isEqualTo(true)
+  }
+
+  @Test
+  fun `when session template updated with new time slot and visits exist for session template update should fail`() {
+    // Given
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionDateRange = null,
+      sessionTimeSlot = SessionTimeSlotDto(
+        startTime = sessionTemplate.startTime.plusHours(1),
+        endTime = sessionTemplate.endTime.plusHours(2),
+      ),
+    )
+
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitStart = LocalDate.now().atTime(dto.sessionTimeSlot?.startTime),
+      visitEnd = LocalDate.now().atTime(dto.sessionTimeSlot?.endTime),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+  }
+
+  @Test
+  fun `when session template updated with new from date and visits exist for session template update should fail`() {
+    // Given
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionDateRange = SessionDateRangeDto(
+        // valid from date updated
+        validFromDate = sessionTemplate.validFromDate.plusDays(2),
+      ),
+    )
+
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitStart = LocalDate.now().atTime(dto.sessionTimeSlot?.startTime),
+      visitEnd = LocalDate.now().atTime(dto.sessionTimeSlot?.endTime),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
   }
 
   @Test
@@ -142,7 +216,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template end time is less than start time then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionTimeSlotDto = SessionTimeSlotDto(
+      sessionTimeSlot = SessionTimeSlotDto(
         startTime = LocalTime.of(9, 0),
         endTime = LocalTime.of(8, 0),
       ),
@@ -161,7 +235,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template end time is same as start time then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionTimeSlotDto = SessionTimeSlotDto(
+      sessionTimeSlot = SessionTimeSlotDto(
         startTime = LocalTime.of(9, 0),
         endTime = LocalTime.of(9, 0),
       ),
@@ -180,7 +254,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template session times not passed session template successfully updated`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionTimeSlotDto = null,
+      sessionTimeSlot = null,
     )
 
     // When
@@ -194,7 +268,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template end time is greater than start time then session template is created`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionTimeSlotDto = SessionTimeSlotDto(
+      sessionTimeSlot = SessionTimeSlotDto(
         startTime = LocalTime.of(9, 0),
         endTime = LocalTime.of(9, 1),
       ),
@@ -211,7 +285,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template valid to date is less than valid from date then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(
+      sessionDateRange = SessionDateRangeDto(
         validFromDate = LocalDate.of(2023, 1, 1),
         validToDate = LocalDate.of(2022, 12, 31),
       ),
@@ -230,7 +304,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template valid to date is same as valid from date then session template is created`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(
+      sessionDateRange = SessionDateRangeDto(
         validFromDate = LocalDate.of(2023, 1, 1),
         validToDate = LocalDate.of(2023, 1, 1),
       ),
@@ -247,7 +321,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template valid to date is greater than valid from date then session template is created`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(
+      sessionDateRange = SessionDateRangeDto(
         validFromDate = LocalDate.of(2023, 1, 1),
         validToDate = LocalDate.of(2023, 1, 31),
       ),
@@ -264,7 +338,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template valid to date is null then session template is created`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      sessionDateRangeDto = null,
+      sessionDateRange = null,
     )
 
     // When
@@ -272,6 +346,568 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template updated with new valid to date greater than current valid to date update session template should be successful`() {
+    // Given
+    val newSessionDateRange = SessionDateRangeDto(
+      validFromDate = sessionTemplateWithValidDates.validFromDate,
+      validToDate = sessionTemplateWithValidDates.validToDate!!.plusYears(1),
+    )
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithValidDates.name + " Updated",
+      sessionDateRange = newSessionDateRange,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template updated with new valid to date same as current valid to date update session template should be successful`() {
+    // Given
+    val newSessionDateRange = SessionDateRangeDto(
+      validFromDate = sessionTemplateWithValidDates.validFromDate,
+      validToDate = sessionTemplateWithValidDates.validToDate,
+    )
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithValidDates.name + " Updated",
+      sessionDateRange = newSessionDateRange,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template updated with new valid to date as null update session template should be successful`() {
+    // Given
+    val newSessionDateRange = SessionDateRangeDto(
+      validFromDate = sessionTemplateWithValidDates.validFromDate,
+      // setting new valid to date to null
+      validToDate = null,
+    )
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithValidDates.name + " Updated",
+      sessionDateRange = newSessionDateRange,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template updated with reduced valid to date but booked visits not affected update session template should be successful`() {
+    // Given
+    val newValidToDate = sessionTemplateWithValidDates.validToDate!!.minusMonths(1)
+    val newSessionDateRange = SessionDateRangeDto(
+      validFromDate = sessionTemplateWithValidDates.validFromDate,
+      validToDate = newValidToDate,
+    )
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithValidDates.name + " Updated",
+      sessionDateRange = newSessionDateRange,
+    )
+
+    // visit exists 1 day before the new valid to date
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplateWithValidDates.reference,
+      visitStart = newValidToDate.minusDays(1).atTime(10, 0),
+      visitEnd = newValidToDate.minusDays(1).atTime(11, 0),
+    )
+
+    // visit exists same day as new valid to date
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplateWithValidDates.reference,
+      visitStart = newValidToDate.atTime(10, 0),
+      visitEnd = newValidToDate.atTime(11, 0),
+    )
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(1)).hasBookedVisitsForSessionTemplate(
+      eq(sessionTemplateWithValidDates.reference),
+      eq(newValidToDate.plusDays(1)),
+    )
+  }
+
+  @Test
+  fun `when session template updated with reduced valid to date but only cancelled visits are affected update session template should be successful`() {
+    // Given
+    val newValidToDate = sessionTemplateWithValidDates.validToDate!!.minusMonths(1)
+    val newSessionDateRange = SessionDateRangeDto(
+      validFromDate = sessionTemplateWithValidDates.validFromDate,
+      validToDate = newValidToDate,
+    )
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithValidDates.name + " Updated",
+      sessionDateRange = newSessionDateRange,
+    )
+
+    // cancelled visit exists 1 day after the new valid to date
+    val visitDate = newValidToDate.plusDays(1)
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplateWithValidDates.reference,
+      visitStart = visitDate.atTime(10, 0),
+      visitEnd = visitDate.atTime(11, 0),
+      visitStatus = VisitStatus.CANCELLED,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(1)).hasBookedVisitsForSessionTemplate(
+      eq(sessionTemplateWithValidDates.reference),
+      eq(newValidToDate.plusDays(1)),
+    )
+  }
+
+  @Test
+  fun `when session template updated with reduced valid to date but booked visits affected update session template validation fails`() {
+    // Given
+    val newValidToDate = sessionTemplateWithValidDates.validToDate!!.minusMonths(1)
+    val newSessionDateRange = SessionDateRangeDto(
+      validFromDate = sessionTemplateWithValidDates.validFromDate,
+      validToDate = newValidToDate,
+    )
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithValidDates.name + " Updated",
+      sessionDateRange = newSessionDateRange,
+    )
+
+    // visit exists 1 day after the new valid to date
+    val visitDate = newValidToDate.plusDays(1)
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplateWithValidDates.reference,
+      visitStart = visitDate.atTime(10, 0),
+      visitEnd = visitDate.atTime(11, 0),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session valid to date to $newValidToDate for session template - ${sessionTemplateWithValidDates.reference} as there are booked or reserved visits associated with this session template after $newValidToDate."))
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+    verify(visitRepository, times(1)).hasBookedVisitsForSessionTemplate(eq(sessionTemplateWithValidDates.reference), eq(newValidToDate.plusDays(1)))
+  }
+
+  @Test
+  fun `when session template updated with higher weekly frequency but visits do not exist for session template update session template should be successful`() {
+    // Given
+    val newWeeklyFrequency = sessionTemplate.weeklyFrequency + 2
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateDto.reference), eq(null))
+  }
+
+  @Test
+  fun `when session template updated with lower weekly frequency which is not a factor but visits do not exist for session template update session template should be successful`() {
+    // Given
+    val newWeeklyFrequency = 4
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithWeeklyFrequencyOf6.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(eq(sessionTemplateDto.reference), eq(null))
+  }
+
+  @Test
+  fun `when session template updated with lower weekly frequency which is a factor of existing weekly frequency but visits do not exist for session template update session template should be successful`() {
+    // Given
+    val newWeeklyFrequency = 2
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithWeeklyFrequencyOf6.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template updated with higher weekly frequency but visits exist for session template update session template should fail`() {
+    // Given
+    val newWeeklyFrequency = sessionTemplate.weeklyFrequency + 2
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+      sessionDateRange = null,
+    )
+
+    // visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+    )
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplate.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplate.reference} as existing visits for ${sessionTemplate.reference} might be affected!"))
+  }
+
+  @Test
+  fun `when session template updated with lower weekly frequency which is not a factor and visits exist for session template update session template fails`() {
+    // Given
+    val newWeeklyFrequency = 4
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithWeeklyFrequencyOf6.name + " Updated",
+      sessionDateRange = null,
+      weeklyFrequency = newWeeklyFrequency,
+    )
+
+    // visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplateWithWeeklyFrequencyOf6.reference,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplateWithWeeklyFrequencyOf6.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateWithWeeklyFrequencyOf6.reference} as existing visits for ${sessionTemplateWithWeeklyFrequencyOf6.reference} might be affected!"))
+  }
+
+  @Test
+  fun `when session template updated with lower weekly frequency which is a factor of existing weekly frequency and visits exist for session template update session template should be successful`() {
+    // Given
+    val newWeeklyFrequency = 2
+
+    // updating weekly frequency from 6 to 2 - valid scenario
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateWithWeeklyFrequencyOf6.name + " Updated",
+      weeklyFrequency = newWeeklyFrequency,
+      sessionDateRange = null,
+    )
+
+    // visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplateWithWeeklyFrequencyOf6.reference,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithWeeklyFrequencyOf6.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(newWeeklyFrequency)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template capacity upped update session template should be successful`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity + 1, open = sessionTemplate.openCapacity + 1)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template capacity same as existing update session template should be successful`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity, open = sessionTemplate.openCapacity)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
+    verify(visitRepository, times(0)).hasVisitsForSessionTemplate(any(), any())
+  }
+
+  @Test
+  fun `when session template open capacity lowered and no visits exist update session template should be successful`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity - 1, open = sessionTemplate.openCapacity - 1)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null)
+  }
+
+  @Test
+  fun `when session template open capacity lowered above minimum allowed capacity update session template should be successful`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = 1, open = 2)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // 2 open visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.OPEN,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    visitEntityHelper.create(
+      prisonerId = "AABBCC1",
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.OPEN,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    // 1 closed visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null)
+  }
+
+  @Test
+  fun `when session template closed capacity lowered below minimum allowed capacity update session template should fail`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = 1, open = sessionTemplate.openCapacity)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+
+    // 2 open visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    visitEntityHelper.create(
+      prisonerId = "AABBCC1",
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.CLOSED,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template closed capacity from ${sessionTemplate.closedCapacity} to ${newSessionCapacity.closed} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
+  }
+
+  @Test
+  fun `when session template open capacity lowered below minimum allowed capacity update session template should fail`() {
+    // Given
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity, open = 1)
+
+    // updating session template capacity
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionCapacity = newSessionCapacity,
+      sessionDateRange = null,
+    )
+
+    // 2 open visit exists for session template
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.OPEN,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    visitEntityHelper.create(
+      prisonerId = "AABBCC1",
+      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = VisitRestriction.OPEN,
+      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
+      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to ${newSessionCapacity.open} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
+  }
+
+  @Test
+  fun `update session template fails for multiple reasons`() {
+    // Given
+    // update fails for multiple reasons
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      sessionDateRange = SessionDateRangeDto(sessionTemplate.validFromDate.minusDays(1)),
+      sessionTimeSlot = SessionTimeSlotDto(
+        startTime = sessionTemplate.startTime.plusHours(1),
+        endTime = sessionTemplate.endTime.plusHours(2),
+      ),
+      sessionCapacity = SessionCapacityDto(closed = 1, open = 0),
+    )
+
+    visitEntityHelper.create(
+      sessionTemplateReference = sessionTemplate.reference,
+      visitStart = LocalDate.now().atTime(dto.sessionTimeSlot?.startTime),
+      visitEnd = LocalDate.now().atTime(dto.sessionTimeSlot?.endTime),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[1]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[2]").value(Matchers.equalTo("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to 0 for ${sessionTemplate.reference} as its lower than minimum capacity of 1!"))
   }
 
   @Test

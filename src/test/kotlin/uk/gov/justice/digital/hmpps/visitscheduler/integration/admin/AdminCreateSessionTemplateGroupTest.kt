@@ -4,15 +4,19 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateSessionGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createPermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 
 @DisplayName("Get $LOCATION_GROUP_ADMIN_PATH")
-class AdminCreateSessionTemplateGroupTest : IntegrationTestBase() {
+class AdminCreateSessionTemplateGroupTest(
+  @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
+) : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
@@ -24,7 +28,7 @@ class AdminCreateSessionTemplateGroupTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `create session group test`() {
+  fun `create session location group test`() {
     // Given
     val locationDto = createPermittedSessionLocationDto("C", "L1", "S1", "001")
     val dto = createCreateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
@@ -37,11 +41,23 @@ class AdminCreateSessionTemplateGroupTest : IntegrationTestBase() {
 
     val sessionLocationGroupDto = getSessionLocationGroup(responseSpec)
     Assertions.assertThat(sessionLocationGroupDto.name).isEqualTo(dto.name)
-    Assertions.assertThat(sessionLocationGroupDto.reference).isNotNull()
+    Assertions.assertThat(sessionLocationGroupDto.reference).isNotNull
     Assertions.assertThat(sessionLocationGroupDto.locations.size).isEqualTo(1)
-    Assertions.assertThat(sessionLocationGroupDto.locations[0].levelOneCode).isEqualTo(locationDto.levelOneCode)
-    Assertions.assertThat(sessionLocationGroupDto.locations[0].levelTwoCode).isEqualTo(locationDto.levelTwoCode)
-    Assertions.assertThat(sessionLocationGroupDto.locations[0].levelThreeCode).isEqualTo(locationDto.levelThreeCode)
-    Assertions.assertThat(sessionLocationGroupDto.locations[0].levelFourCode).isEqualTo(locationDto.levelFourCode)
+    val permittedSessionLocationDto = sessionLocationGroupDto.locations[0]
+    Assertions.assertThat(permittedSessionLocationDto.levelOneCode).isEqualTo(locationDto.levelOneCode)
+    Assertions.assertThat(permittedSessionLocationDto.levelTwoCode).isEqualTo(locationDto.levelTwoCode)
+    Assertions.assertThat(permittedSessionLocationDto.levelThreeCode).isEqualTo(locationDto.levelThreeCode)
+    Assertions.assertThat(permittedSessionLocationDto.levelFourCode).isEqualTo(locationDto.levelFourCode)
+
+    // also check against the database post fix for VB-2458
+    val sessionLocationGroupEntity = testSessionLocationGroupRepository.findByReference(sessionLocationGroupDto.reference)
+    Assertions.assertThat(sessionLocationGroupEntity).isNotNull
+    val permittedSessionLocationEntities = testSessionLocationGroupRepository.findPermittedSessionLocationsByGroup(sessionLocationGroupEntity!!)
+    Assertions.assertThat(permittedSessionLocationEntities?.size).isEqualTo(1)
+    val permittedSessionLocationEntity = permittedSessionLocationEntities?.get(0)!!
+    Assertions.assertThat(permittedSessionLocationEntity.levelOneCode).isEqualTo(permittedSessionLocationDto.levelOneCode)
+    Assertions.assertThat(permittedSessionLocationEntity.levelTwoCode).isEqualTo(permittedSessionLocationDto.levelTwoCode)
+    Assertions.assertThat(permittedSessionLocationEntity.levelThreeCode).isEqualTo(permittedSessionLocationDto.levelThreeCode)
+    Assertions.assertThat(permittedSessionLocationEntity.levelFourCode).isEqualTo(permittedSessionLocationDto.levelFourCode)
   }
 }

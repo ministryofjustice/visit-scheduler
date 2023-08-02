@@ -28,7 +28,7 @@ data class UpdateSessionTemplateDto(
   @field:Valid
   val sessionCapacity: SessionCapacityDto?,
 
-  @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
+  @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = false)
   @field:Min(1)
   val weeklyFrequency: Int?,
 

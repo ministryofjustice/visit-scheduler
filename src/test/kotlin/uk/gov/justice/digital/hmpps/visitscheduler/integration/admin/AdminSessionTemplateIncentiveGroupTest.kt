@@ -136,7 +136,7 @@ class AdminSessionTemplateIncentiveGroupTest(
   }
 
   @Test
-  fun `create create incentive group with out duplicate types test`() {
+  fun `create create incentive group without duplicate types test`() {
     // Given
     val incentiveGroup = createIncentiveGroupDto("test Updated", prisonCode = prison.code, ENHANCED_3, ENHANCED, ENHANCED_3)
 
@@ -149,11 +149,19 @@ class AdminSessionTemplateIncentiveGroupTest(
     val group = getSessionIncentiveGroup(responseSpec)
     with(group) {
       Assertions.assertThat(name).isEqualTo(incentiveGroup.name)
-      Assertions.assertThat(reference).isNotNull()
+      Assertions.assertThat(reference).isNotNull
       Assertions.assertThat(incentiveLevels.size).isEqualTo(2)
       Assertions.assertThat(incentiveLevels[0]).isEqualTo(ENHANCED_3)
       Assertions.assertThat(incentiveLevels[1]).isEqualTo(ENHANCED)
     }
+
+    // also check against the database post fix for VB-2458
+    val sessionIncentiveGroupEntity = testSessionIncentiveGroupRepository.findByReference(group.reference)
+    Assertions.assertThat(sessionIncentiveGroupEntity).isNotNull
+    val sessionIncentiveLevels = testSessionIncentiveGroupRepository.findSessionIncentiveLevelsByGroup(sessionIncentiveGroupEntity!!)
+    Assertions.assertThat(sessionIncentiveLevels?.size).isEqualTo(2)
+    Assertions.assertThat(sessionIncentiveLevels!![0].prisonerIncentiveLevel).isEqualTo(ENHANCED_3)
+    Assertions.assertThat(sessionIncentiveLevels[1].prisonerIncentiveLevel).isEqualTo(ENHANCED)
   }
 
   @Test
@@ -170,7 +178,7 @@ class AdminSessionTemplateIncentiveGroupTest(
     val group = getSessionIncentiveGroup(responseSpec)
     with(group) {
       Assertions.assertThat(name).isEqualTo(updateGroup.name)
-      Assertions.assertThat(reference).isNotNull()
+      Assertions.assertThat(reference).isNotNull
       Assertions.assertThat(incentiveLevels.size).isEqualTo(2)
       Assertions.assertThat(incentiveLevels[0]).isEqualTo(BASIC)
       Assertions.assertThat(incentiveLevels[1]).isEqualTo(ENHANCED_2)
@@ -204,7 +212,6 @@ class AdminSessionTemplateIncentiveGroupTest(
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Validation failed")
-      .jsonPath("$.developerMessage").isEqualTo("Incentive group cannot be deleted $reference because session templates are using it!")
+      .jsonPath("$.validationMessages[0]").isEqualTo("Incentive group cannot be deleted $reference because session templates are using it!")
   }
 }

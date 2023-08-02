@@ -6,6 +6,8 @@ spring:
     url: jdbc:postgresql://localhost:5432/visit_scheduler
     username: visit_scheduler
     password: visit_scheduler
+    hikari:
+      maximum-pool-size: 2
 
   jpa:
     show-sql: true
@@ -76,5 +78,3 @@ cache:
   evict:
     support-types:
       cron: "0 0 */23 * * ?" #every 23 hours
-    supported-prisons:
-      cron: "0 0 0/23 * * ?" #every 23 hours

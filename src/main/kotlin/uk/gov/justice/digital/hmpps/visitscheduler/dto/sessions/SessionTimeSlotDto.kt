@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeSlotValidation
 import java.time.LocalTime
 
-class SessionTimeSlotDto(
+data class SessionTimeSlotDto(
   @JsonFormat(pattern = "HH:mm", shape = JsonFormat.Shape.STRING)
   @Schema(description = "The start time of the generated visit session(s)", example = "10:30", required = true)
   @field:SessionTimeSlotValidation

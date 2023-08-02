@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType
@@ -9,7 +10,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.CURRENT_OR_FUTURE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
@@ -35,6 +40,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLe
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.UpdateSessionTemplateValidator
+import java.time.LocalDate
 import java.util.function.Supplier
 import kotlin.jvm.Throws
 
@@ -47,6 +54,9 @@ class SessionTemplateService(
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
   private val visitRepository: VisitRepository,
   private val prisonConfigService: PrisonConfigService,
+  private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
+  @Value("\${policy.session.booking-notice-period.maximum-days:28}")
+  private val policyNoticeDaysMax: Long,
 ) {
 
   companion object {
@@ -80,10 +90,12 @@ class SessionTemplateService(
 
   fun createSessionLocationGroup(createLocationSessionGroup: CreateLocationGroupDto): SessionLocationGroupDto {
     val prison = prisonConfigService.findPrisonByCode(createLocationSessionGroup.prisonCode)
-    val sessionLocationGroup = SessionLocationGroup(
-      prison = prison,
-      prisonId = prison.id,
-      name = createLocationSessionGroup.name,
+    val sessionLocationGroup = sessionLocationGroupRepository.saveAndFlush(
+      SessionLocationGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = createLocationSessionGroup.name,
+      ),
     )
 
     val sessionLocations = createLocationSessionGroup.locations.toSet().map {
@@ -99,8 +111,7 @@ class SessionTemplateService(
 
     sessionLocationGroup.sessionLocations.addAll(sessionLocations)
 
-    val saveSessionLocationGroup = sessionLocationGroupRepository.saveAndFlush(sessionLocationGroup)
-    return SessionLocationGroupDto(saveSessionLocationGroup)
+    return SessionLocationGroupDto(sessionLocationGroup)
   }
 
   fun updateSessionLocationGroup(reference: String, updateLocationSessionGroup: UpdateLocationGroupDto): SessionLocationGroupDto {
@@ -166,24 +177,27 @@ class SessionTemplateService(
   }
 
   fun updateSessionTemplate(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto): SessionTemplateDto {
+    val existingSessionTemplate = SessionTemplateDto(getSessionTemplate(reference))
+    val errorMessages = updateSessionTemplateValidator.validate(existingSessionTemplate, updateSessionTemplateDto)
+    if (errorMessages.isNotEmpty()) {
+      throw VSiPValidationException(errorMessages.toTypedArray())
+    }
+
     with(updateSessionTemplateDto) {
       name?.let {
         sessionTemplateRepository.updateNameByReference(reference, name)
       }
 
       sessionTimeSlot?.let {
-        sessionTemplateRepository.updateStartTimeByReference(reference, it.startTime)
-        sessionTemplateRepository.updateEndTimeByReference(reference, it.endTime)
+        sessionTemplateRepository.updateSessionTimeSlotByReference(reference, it)
       }
 
       sessionDateRange?.let {
-        sessionTemplateRepository.updateValidFromDateByReference(reference, it.validFromDate)
-        sessionTemplateRepository.updateValidToDateByReference(reference, it.validToDate)
+        sessionTemplateRepository.updateSessionDateRangeByReference(reference, it)
       }
 
       sessionCapacity?.let {
-        sessionTemplateRepository.updateClosedCapacityByReference(reference, it.closed)
-        sessionTemplateRepository.updateOpenCapacityByReference(reference, it.open)
+        sessionTemplateRepository.updateCapacityByReference(reference, it)
       }
 
       weeklyFrequency?.let {
@@ -213,10 +227,10 @@ class SessionTemplateService(
   fun deleteSessionTemplate(reference: String) {
     val sessionTemplate = getSessionTemplate(reference)
     if (sessionTemplate.active) {
-      throw VSiPValidationException("Cannot delete session template $reference since it is active!")
+      throw VSiPValidationException(arrayOf("Cannot delete session template $reference since it is active!"))
     }
     if (visitRepository.hasVisitsForSessionTemplate(reference)) {
-      throw VSiPValidationException("Cannot delete session template $reference with existing visits!")
+      throw VSiPValidationException(arrayOf("Cannot delete session template $reference with existing visits!"))
     }
 
     val deleted = sessionTemplateRepository.deleteByReference(reference)
@@ -244,7 +258,7 @@ class SessionTemplateService(
   fun deleteSessionLocationGroup(reference: String) {
     val group = getLocationGroupByReference(reference)
     if (group.sessionTemplates.isNotEmpty()) {
-      throw VSiPValidationException("Location group cannot be deleted $reference because session templates are using it!")
+      throw VSiPValidationException(arrayOf("Location group cannot be deleted $reference because session templates are using it!"))
     }
 
     val deleted = sessionLocationGroupRepository.deleteByReference(reference)
@@ -272,24 +286,25 @@ class SessionTemplateService(
 
   fun createSessionCategoryGroup(createCategorySessionGroup: CreateCategoryGroupDto): SessionCategoryGroupDto {
     val prison = prisonConfigService.findPrisonByCode(createCategorySessionGroup.prisonCode)
-    val groupToCreate = SessionCategoryGroup(
-      prison = prison,
-      prisonId = prison.id,
-      name = createCategorySessionGroup.name,
+    val sessionCategoryGroup = sessionCategoryGroupRepository.saveAndFlush(
+      SessionCategoryGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = createCategorySessionGroup.name,
+      ),
     )
 
-    val sessionPrisonerCategorys = createCategorySessionGroup.categories.toSet().map {
+    val sessionPrisonerCategories = createCategorySessionGroup.categories.toSet().map {
       SessionPrisonerCategory(
-        sessionCategoryGroupId = groupToCreate.id,
-        sessionCategoryGroup = groupToCreate,
+        sessionCategoryGroupId = sessionCategoryGroup.id,
+        sessionCategoryGroup = sessionCategoryGroup,
         prisonerCategoryType = it,
       )
     }
 
-    groupToCreate.sessionCategories.addAll(sessionPrisonerCategorys)
+    sessionCategoryGroup.sessionCategories.addAll(sessionPrisonerCategories)
 
-    val createdGroup = sessionCategoryGroupRepository.saveAndFlush(groupToCreate)
-    return SessionCategoryGroupDto(createdGroup)
+    return SessionCategoryGroupDto(sessionCategoryGroup)
   }
 
   fun updateSessionCategoryGroup(
@@ -300,7 +315,7 @@ class SessionTemplateService(
     groupToUpdate.name = updateCategorySessionGroup.name
     groupToUpdate.sessionCategories.clear()
 
-    val sessionPrisonerCategorys = updateCategorySessionGroup.categories.toSet().map {
+    val sessionPrisonerCategories = updateCategorySessionGroup.categories.toSet().map {
       SessionPrisonerCategory(
         sessionCategoryGroupId = groupToUpdate.id,
         sessionCategoryGroup = groupToUpdate,
@@ -308,7 +323,7 @@ class SessionTemplateService(
       )
     }
 
-    groupToUpdate.sessionCategories.addAll(sessionPrisonerCategorys)
+    groupToUpdate.sessionCategories.addAll(sessionPrisonerCategories)
 
     val updatedGroup = sessionCategoryGroupRepository.saveAndFlush(groupToUpdate)
     return SessionCategoryGroupDto(updatedGroup)
@@ -317,7 +332,7 @@ class SessionTemplateService(
   fun deleteSessionCategoryGroup(reference: String) {
     val group = getSessionCategoryGroupEntityByReference(reference)
     if (group.sessionTemplates.isNotEmpty()) {
-      throw VSiPValidationException("Category group cannot be deleted $reference because session templates are using it!")
+      throw VSiPValidationException(arrayOf("Category group cannot be deleted $reference because session templates are using it!"))
     }
 
     val deleted = sessionCategoryGroupRepository.deleteByReference(reference)
@@ -360,24 +375,24 @@ class SessionTemplateService(
 
   fun createSessionIncentiveGroup(createIncentiveSessionGroup: CreateIncentiveGroupDto): SessionIncentiveLevelGroupDto {
     val prison = prisonConfigService.findPrisonByCode(createIncentiveSessionGroup.prisonCode)
-    val groupToCreate = SessionIncentiveLevelGroup(
-      prison = prison,
-      prisonId = prison.id,
-      name = createIncentiveSessionGroup.name,
+    val sessionIncentiveLevelGroup = sessionIncentiveLevelGroupRepository.saveAndFlush(
+      SessionIncentiveLevelGroup(
+        prison = prison,
+        prisonId = prison.id,
+        name = createIncentiveSessionGroup.name,
+      ),
     )
 
     val sessionIncentiveLevels = createIncentiveSessionGroup.incentiveLevels.toSet().map {
       SessionPrisonerIncentiveLevel(
-        sessionIncentiveGroupId = groupToCreate.id,
-        sessionIncentiveLevelGroup = groupToCreate,
+        sessionIncentiveGroupId = sessionIncentiveLevelGroup.id,
+        sessionIncentiveLevelGroup = sessionIncentiveLevelGroup,
         prisonerIncentiveLevel = it,
       )
     }
 
-    groupToCreate.sessionIncentiveLevels.addAll(sessionIncentiveLevels)
-
-    val createdGroup = sessionIncentiveLevelGroupRepository.saveAndFlush(groupToCreate)
-    return SessionIncentiveLevelGroupDto(createdGroup)
+    sessionIncentiveLevelGroup.sessionIncentiveLevels.addAll(sessionIncentiveLevels)
+    return SessionIncentiveLevelGroupDto(sessionIncentiveLevelGroup)
   }
 
   fun updateSessionIncentiveGroup(
@@ -405,7 +420,7 @@ class SessionTemplateService(
   fun deleteSessionIncentiveGroup(reference: String) {
     val group = getIncentiveLevelGroupByReference(reference)
     if (group.sessionTemplates.isNotEmpty()) {
-      throw VSiPValidationException("Incentive group cannot be deleted $reference because session templates are using it!")
+      throw VSiPValidationException(arrayOf("Incentive group cannot be deleted $reference because session templates are using it!"))
     }
 
     val deleted = sessionIncentiveLevelGroupRepository.deleteByReference(reference)
@@ -415,6 +430,24 @@ class SessionTemplateService(
     if (deleted > 1) {
       throw java.lang.IllegalStateException("More than one Incentive group $reference was deleted!")
     }
+  }
+
+  fun getSessionTemplateVisitStats(
+    reference: String,
+    requestSessionTemplateVisitStatsDto: RequestSessionTemplateVisitStatsDto,
+  ): SessionTemplateVisitStatsDto {
+    val visitsToDate = LocalDate.now().plusDays(policyNoticeDaysMax)
+
+    val minimumCapacityTuple = this.sessionTemplateRepository.findSessionTemplateMinCapacityBy(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+    val emptyResults = minimumCapacityTuple.get(0) == null
+    val open = if (emptyResults) 0 else (minimumCapacityTuple.get(0) as Long).toInt()
+    val closed = if (emptyResults) 0 else (minimumCapacityTuple.get(1) as Long).toInt()
+
+    val visitCountsByDate = this.sessionTemplateRepository.getVisitCountsByDate(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate).map {
+      SessionTemplateVisitCountsDto(it.visitDate, it.visitCount)
+    }.toList()
+    val visitCount = this.sessionTemplateRepository.getVisitCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+    return SessionTemplateVisitStatsDto(SessionCapacityDto(closed, open), visitCount, visitCountsByDate)
   }
 }
 

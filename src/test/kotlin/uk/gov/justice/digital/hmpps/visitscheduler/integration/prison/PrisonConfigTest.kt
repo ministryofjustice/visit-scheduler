@@ -91,7 +91,7 @@ class PrisonConfigTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(prisonExcludeDateRepositorySpy, times(1)).save(any())
+    verify(prisonExcludeDateRepositorySpy, times(1)).saveAndFlush(any())
 
     val getResponseSpec = callGetPrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
