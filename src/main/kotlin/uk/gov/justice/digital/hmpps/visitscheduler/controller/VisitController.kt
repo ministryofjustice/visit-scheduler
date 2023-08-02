@@ -23,10 +23,12 @@ import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
@@ -223,8 +225,10 @@ class VisitController(
     @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
     @PathVariable
     applicationReference: String,
+    @RequestBody @Valid
+    bookingRequestDto: BookingRequestDto,
   ): VisitDto {
-    return visitService.bookVisit(applicationReference.trim())
+    return visitService.bookVisit(applicationReference.trim(), bookingRequestDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -446,7 +450,7 @@ class VisitController(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
     reference: String,
-  ): List<VisitDto> {
-    return visitService.getVisitHistoryByReference(reference.trim())
+  ): List<EventAuditDto> {
+    return visitService.getHistoryByReference(reference.trim())
   }
 }

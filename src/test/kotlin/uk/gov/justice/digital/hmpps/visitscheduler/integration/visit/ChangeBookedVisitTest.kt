@@ -97,8 +97,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `change visit has given reference`() {
     // Given
     val reference = bookedVisit.reference
-    val sessionTemplate = sessionTemplateEntityHelper.create()
-    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = bookedVisit.sessionTemplateReference!!)
 
     // When
     val responseSpec = callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, reference)

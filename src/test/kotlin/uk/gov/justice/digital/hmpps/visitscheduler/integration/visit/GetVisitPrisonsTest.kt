@@ -7,9 +7,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
-import org.springframework.cache.CacheManager
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISONS_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -20,16 +18,12 @@ class GetVisitPrisonsTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var prisonRepository: PrisonRepository
 
-  @Autowired
-  private lateinit var cacheManager: CacheManager
-
   private val visitRole = listOf("ROLE_VISIT_SCHEDULER")
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   @BeforeEach
   @AfterEach
   fun cleanTests() {
-    cacheManager.getCache("supported-prisons")?.clear()
     deleteEntityHelper.deleteAll()
   }
 
@@ -77,7 +71,7 @@ class GetVisitPrisonsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when supported prisons is called twice cached values are returned the second time`() {
+  fun `when supported prisons is called twice cached values are not returned the second time`() {
     // Given
     prisonEntityHelper.create(prisonCode = "AWE")
     prisonEntityHelper.create(prisonCode = "GRE")
@@ -97,7 +91,7 @@ class GetVisitPrisonsTest : IntegrationTestBase() {
 
     assertThat(results.size).isEqualTo(5)
 
-    // When a call to supported prisons is made a 2nd time same values are returned but from cache
+    // When a call to supported prisons is made a 2nd time values are not returned any longer from cache
     responseSpec = webTestClient.get().uri(PRISONS_PATH)
       .headers(setAuthorisation(roles = visitRole))
       .exchange()
@@ -107,7 +101,9 @@ class GetVisitPrisonsTest : IntegrationTestBase() {
       .expectBody()
     results = getSupportedPrisonsResults(returnResult)
     assertThat(results.size).isEqualTo(5)
-    verify(prisonRepository, times(1)).getSupportedPrisons()
+
+    // 2 calls made to DB - which means the data is not being cached anymore
+    verify(prisonRepository, times(2)).getSupportedPrisons()
   }
 
   @Test

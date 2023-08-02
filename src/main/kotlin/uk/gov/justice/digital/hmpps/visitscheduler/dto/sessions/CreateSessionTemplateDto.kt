@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionCapacityValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
@@ -46,6 +47,7 @@ data class CreateSessionTemplateDto(
 
   @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
   @field:Min(1)
+  @field:NotNull
   val weeklyFrequency: Int,
 
   @Schema(description = "list of group references for permitted session location groups", required = false)

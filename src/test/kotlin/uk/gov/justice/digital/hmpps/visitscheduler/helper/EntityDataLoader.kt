@@ -3,12 +3,15 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation.REQUIRED
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -30,6 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
@@ -79,8 +83,6 @@ class VisitEntityHelper(
     reference: String = "",
     activePrison: Boolean = true,
     outcomeStatus: OutcomeStatus? = null,
-    createdBy: String = "CREATED_BY",
-    updatedBy: String? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
@@ -98,8 +100,6 @@ class VisitEntityHelper(
         visitRestriction = visitRestriction,
         _reference = reference,
         outcomeStatus = outcomeStatus,
-        createdBy = createdBy,
-        updatedBy = updatedBy,
         sessionTemplateReference = sessionTemplateReference,
       ),
     )
@@ -165,6 +165,53 @@ class VisitEntityHelper(
 
   fun save(visit: Visit): Visit {
     return visitRepository.saveAndFlush(visit)
+  }
+}
+
+@Component
+@Transactional
+class EventAuditEntityHelper(
+  private val eventAuditRepository: TestEventAuditRepository,
+) {
+
+  fun create(
+    visit: Visit,
+    actionedBy: String = "ACTIONED_BY",
+    applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
+    type: EventAuditType = EventAuditType.BOOKED_VISIT,
+  ): EventAudit {
+    return create(
+      reference = visit.reference,
+      applicationReference = visit.applicationReference,
+      sessionTemplateReference = visit.sessionTemplateReference,
+      actionedBy = actionedBy,
+      type = type,
+      applicationMethodType = applicationMethodType,
+    )
+  }
+
+  fun create(
+    reference: String = "",
+    applicationReference: String = "",
+    actionedBy: String = "ACTIONED_BY",
+    sessionTemplateReference: String? = "sessionTemplateReference",
+    applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
+    type: EventAuditType = EventAuditType.BOOKED_VISIT,
+  ): EventAudit {
+    return save(
+      EventAudit(
+        actionedBy = actionedBy,
+        bookingReference = reference,
+        applicationReference = applicationReference,
+        sessionTemplateReference = sessionTemplateReference,
+        type = type,
+        applicationMethodType = applicationMethodType,
+      ),
+    )
+  }
+
+  fun save(event: EventAudit): EventAudit {
+    return eventAuditRepository.saveAndFlush(event)
   }
 }
 
@@ -320,6 +367,7 @@ class DeleteEntityHelper(
   private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
+  private val eventAuditRepository: TestEventAuditRepository,
 ) {
 
   fun deleteAll() {
@@ -339,6 +387,8 @@ class DeleteEntityHelper(
     prisonExcludeDateRepository.flush()
     sessionCategoryGroupRepository.deleteAll()
     sessionCategoryGroupRepository.flush()
+    eventAuditRepository.deleteAll()
+    eventAuditRepository.flush()
   }
 }
 

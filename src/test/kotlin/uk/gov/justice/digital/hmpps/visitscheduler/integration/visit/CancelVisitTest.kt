@@ -25,8 +25,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.PHONE
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
@@ -37,6 +39,12 @@ import java.time.temporal.ChronoUnit
 @DisplayName("Put $VISIT_CANCEL")
 @TestPropertySource(properties = ["visit.cancel.day-limit=7"])
 class CancelVisitTest : IntegrationTestBase() {
+
+  companion object {
+    const val reservedByByUser = "reserved_by"
+    const val cancelledByByUser = "canceled_by"
+  }
+
   @Value("\${visit.cancel.day-limit:14}")
   var visitCancellationDayLimit: Long = 14
 
@@ -54,6 +62,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      PHONE,
     )
     val reference = visit.reference
 
@@ -67,11 +76,19 @@ class CancelVisitTest : IntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED, cancelVisitDto.actionedBy)
+
+    assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED, cancelVisitDto.actionedBy)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
-    Assertions.assertThat(visitCancelled.createdBy).isEqualTo(visit.createdBy)
-    Assertions.assertThat(visitCancelled.updatedBy).isEqualTo(visit.updatedBy)
+
+    val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitCancelled.reference)
+
+    Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELED_VISIT)
+    Assertions.assertThat(eventAudit.actionedBy).isEqualTo(cancelledByByUser)
+    Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(PHONE)
+    Assertions.assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
+    Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionTemplateReference)
+    Assertions.assertThat(eventAudit.applicationReference).isEqualTo(visit.applicationReference)
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
@@ -87,6 +104,7 @@ class CancelVisitTest : IntegrationTestBase() {
         outcomeStatus = OutcomeStatus.VISITOR_CANCELLED,
       ),
       cancelledByByUser,
+      NOT_KNOWN,
     )
     val reference = visit.reference
 
@@ -100,9 +118,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertVisitCancellation(visitCancelled, OutcomeStatus.VISITOR_CANCELLED, cancelVisitDto.actionedBy)
-    Assertions.assertThat(visitCancelled.createdBy).isEqualTo(visit.createdBy)
-    Assertions.assertThat(visitCancelled.updatedBy).isEqualTo(visit.updatedBy)
+    assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.VISITOR_CANCELLED, cancelVisitDto.actionedBy, NOT_KNOWN)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(0)
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
@@ -119,6 +135,7 @@ class CancelVisitTest : IntegrationTestBase() {
         outcomeStatus = OutcomeStatus.VISITOR_CANCELLED,
       ),
       cancelledByByUser,
+      NOT_KNOWN,
     )
 
     // When
@@ -173,6 +190,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner has updated the existing booking",
       ),
       cancelledByByUser,
+      NOT_KNOWN,
     )
     val reference = visit.reference
 
@@ -186,11 +204,9 @@ class CancelVisitTest : IntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertVisitCancellation(visitCancelled, OutcomeStatus.SUPERSEDED_CANCELLATION, cancelVisitDto.actionedBy)
+    assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.SUPERSEDED_CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner has updated the existing booking")
-    Assertions.assertThat(visitCancelled.createdBy).isEqualTo(visit.createdBy)
-    Assertions.assertThat(visitCancelled.updatedBy).isEqualTo(visit.updatedBy)
   }
 
   @Test
@@ -229,6 +245,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      applicationMethodType = NOT_KNOWN,
     )
     val reference = bookedVisit.reference
 
@@ -242,11 +259,9 @@ class CancelVisitTest : IntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED, cancelVisitDto.actionedBy)
+    assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED, cancelVisitDto.actionedBy, NOT_KNOWN)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
-    Assertions.assertThat(visitCancelled.createdBy).isEqualTo(bookedVisit.createdBy)
-    Assertions.assertThat(visitCancelled.updatedBy).isEqualTo(reservedByByUser)
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
   }
@@ -262,6 +277,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Visit does not exist",
       ),
       cancelledByByUser,
+      applicationMethodType = NOT_KNOWN,
     )
 
     // When
@@ -285,6 +301,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      applicationMethodType = NOT_KNOWN,
     )
 
     // When
@@ -312,6 +329,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      applicationMethodType = NOT_KNOWN,
     )
 
     // When
@@ -338,6 +356,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       cancelledByByUser,
+      applicationMethodType = NOT_KNOWN,
     )
     val reference = expiredVisit.reference
 
@@ -366,6 +385,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "No longer joining.",
       ),
       cancelledByByUser,
+      applicationMethodType = NOT_KNOWN,
     )
     // Given
     val visitStart = LocalDateTime.now().minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS).withHour(1)
@@ -381,7 +401,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy)
+    assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
   }
 
   @Test
@@ -392,6 +412,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "No longer joining.",
       ),
       cancelledByByUser,
+      applicationMethodType = NOT_KNOWN,
     )
     // Given
     val visitStart = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
@@ -407,7 +428,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy)
+    assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
   }
 
   @Test
@@ -418,6 +439,7 @@ class CancelVisitTest : IntegrationTestBase() {
         "No longer joining.",
       ),
       cancelledByByUser,
+      applicationMethodType = NOT_KNOWN,
     )
     // Given
     val visitStart = LocalDateTime.now().plusDays(1)
@@ -433,13 +455,15 @@ class CancelVisitTest : IntegrationTestBase() {
 
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy)
+    assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
   }
 
   fun assertTelemetryClientEvents(
     cancelledVisit: VisitDto,
     type: TelemetryVisitEvents,
   ) {
+    val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(cancelledVisit.reference)
+
     verify(telemetryClient).trackEvent(
       eq(type.eventName),
       org.mockito.kotlin.check {
@@ -453,7 +477,8 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
-        Assertions.assertThat(it["actionedBy"]).isEqualTo(cancelledVisit.cancelledBy)
+        Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
+        Assertions.assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
       },
       isNull(),
     )
@@ -469,7 +494,8 @@ class CancelVisitTest : IntegrationTestBase() {
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,
       "outcomeStatus" to cancelledVisit.outcomeStatus!!.name,
-      "actionedBy" to cancelledVisit.cancelledBy,
+      "actionedBy" to eventAudit.actionedBy,
+      "applicationMethodType" to eventAudit.applicationMethodType.name,
     )
     verify(telemetryClient, times(1)).trackEvent(type.eventName, eventsMap, null)
   }
@@ -485,20 +511,5 @@ class CancelVisitTest : IntegrationTestBase() {
       isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
-  }
-
-  companion object {
-    const val reservedByByUser = "user-1"
-    const val cancelledByByUser = "user-2"
-
-    fun assertVisitCancellation(
-      cancelledVisit: VisitDto,
-      expectedOutcomeStatus: OutcomeStatus,
-      cancelledBy: String,
-    ) {
-      Assertions.assertThat(cancelledVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
-      Assertions.assertThat(cancelledVisit.outcomeStatus).isEqualTo(expectedOutcomeStatus)
-      Assertions.assertThat(cancelledVisit.cancelledBy).isEqualTo(cancelledBy)
-    }
   }
 }

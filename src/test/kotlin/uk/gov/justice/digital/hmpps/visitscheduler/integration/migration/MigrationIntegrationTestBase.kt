@@ -35,7 +35,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -243,16 +242,6 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
       isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
-  }
-
-  protected fun assertVisitCancellation(
-    cancelledVisit: VisitDto,
-    expectedOutcomeStatus: OutcomeStatus,
-    cancelledBy: String,
-  ) {
-    Assertions.assertThat(cancelledVisit.visitStatus).isEqualTo(VisitStatus.CANCELLED)
-    Assertions.assertThat(cancelledVisit.outcomeStatus).isEqualTo(expectedOutcomeStatus)
-    Assertions.assertThat(cancelledVisit.cancelledBy).isEqualTo(cancelledBy)
   }
 
   protected fun cratePermittedCategories(

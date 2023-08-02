@@ -20,7 +20,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.AssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.EventAuditEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.JwtAuthHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionLocationGroupHelper
@@ -33,6 +35,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.Postgre
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -50,10 +53,16 @@ abstract class IntegrationTestBase {
   protected lateinit var visitEntityHelper: VisitEntityHelper
 
   @Autowired
+  protected lateinit var eventAuditEntityHelper: EventAuditEntityHelper
+
+  @Autowired
   protected lateinit var sessionTemplateEntityHelper: SessionTemplateEntityHelper
 
   @Autowired
   protected lateinit var sessionPrisonerCategoryHelper: SessionPrisonerCategoryHelper
+
+  @Autowired
+  protected lateinit var eventAuditRepository: TestEventAuditRepository
 
   @Autowired
   protected lateinit var sessionPrisonerIncentiveLevelHelper: SessionPrisonerIncentiveLevelHelper
@@ -69,6 +78,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var jwtAuthHelper: JwtAuthHelper
+
+  @Autowired
+  protected lateinit var assertHelper: AssertHelper
 
   init {
     // Resolves an issue where Wiremock keeps previous sockets open from other tests causing connection resets

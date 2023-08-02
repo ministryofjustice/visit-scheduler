@@ -28,13 +28,17 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LO
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
@@ -42,6 +46,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.Create
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.PHONE
 import java.time.LocalDate
 
 fun callCancelVisit(
@@ -66,7 +72,7 @@ fun callMigrateCancelVisit(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   reference: String,
-  cancelVisitDto: CancelVisitDto? = null,
+  cancelVisitDto: MigratedCancelVisitDto? = null,
 ): ResponseSpec {
   return callPut(
     cancelVisitDto,
@@ -137,9 +143,12 @@ fun callVisitBook(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   applicationReference: String,
+  applicationMethodType: ApplicationMethodType = PHONE,
+  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType),
+
 ): ResponseSpec {
   return callPut(
-    bodyValue = null,
+    bodyValue = bookingRequestDto,
     webTestClient,
     getVisitBookUrl(applicationReference),
     authHttpHeaders,
@@ -386,6 +395,20 @@ fun callUpdateLocationSessionGroupByReference(
     dto,
     webTestClient,
     getSessionLocationGroupByReferenceUrl(reference),
+    authHttpHeaders,
+  )
+}
+
+fun callGetActivateSessionTemplate(
+  webTestClient: WebTestClient,
+  sessionTemplateReference: String,
+  visitsFromDate: LocalDate,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPost(
+    RequestSessionTemplateVisitStatsDto(visitsFromDate),
+    webTestClient,
+    getReferenceUrl(SESSION_TEMPLATE_VISIT_STATS, sessionTemplateReference),
     authHttpHeaders,
   )
 }
