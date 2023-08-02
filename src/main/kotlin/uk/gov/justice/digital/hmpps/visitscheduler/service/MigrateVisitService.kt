@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplateMatcher
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
@@ -83,7 +84,7 @@ class MigrateVisitService(
       ),
     )
 
-    eventAuditRepository.saveAndFlush(
+    val eventAudit = eventAuditRepository.saveAndFlush(
       EventAudit(
         actionedBy = actionedBy,
         bookingReference = visitEntity.reference,
@@ -126,6 +127,7 @@ class MigrateVisitService(
 
     migrateVisitRequest.createDateTime?.let {
       visitRepository.updateCreateTimestamp(it, visitEntity.id)
+      eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
     }
 
     // Do this at end of this method, otherwise modify date would be overridden

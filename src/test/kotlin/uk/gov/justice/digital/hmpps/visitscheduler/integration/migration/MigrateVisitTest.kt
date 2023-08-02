@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
@@ -30,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import java.time.LocalDate
@@ -96,6 +98,14 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
         assertThat(legacyData.migrateDateTime?.toLocalDate()).isEqualTo(LocalDate.now())
       }
       assertTelemetryClientEvents(VisitDto(visit), TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
+
+      val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
+      assertThat(eventAuditList).hasSize(1)
+      assertThat(eventAuditList[0].actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.MIGRATED_VISIT)
+      assertThat(eventAuditList[0].createTimestamp).isEqualTo(migrateVisitRequestDto.createDateTime)
+
+
     }
   }
 
