@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -98,6 +99,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
   }
 
   protected fun createMigrateVisitRequestDto(
+    visitStatus: VisitStatus = BOOKED,
     actionedBy: String? = "Aled Evans",
     visitStartTimeAndDate: LocalDateTime = VISIT_TIME,
     visitRoom: String = "A1",
@@ -110,6 +112,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     incentiveLevelCode: IncentiveLevel? = null,
     visitRestriction: VisitRestriction = OPEN,
     createDateTime: LocalDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
+    modifyDateTime: LocalDateTime? = null,
   ): MigrateVisitRequestDto {
     val migrateVisitRequestDto = MigrateVisitRequestDto(
       prisonCode = PRISON_CODE,
@@ -118,7 +121,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
       visitType = SOCIAL,
       startTimestamp = visitStartTimeAndDate,
       endTimestamp = visitStartTimeAndDate.plusHours(1),
-      visitStatus = BOOKED,
+      visitStatus = visitStatus,
       outcomeStatus = outcomeStatus,
       visitRestriction = visitRestriction,
       visitContact = CreateLegacyContactOnVisitRequestDto(contactName!!, "013448811538"),
@@ -131,7 +134,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
       ),
       legacyData = CreateLegacyDataRequestDto(123),
       createDateTime = createDateTime,
-      modifyDateTime = LocalDateTime.of(2022, 10, 1, 12, 30),
+      modifyDateTime = modifyDateTime,
       actionedBy = actionedBy,
     )
 

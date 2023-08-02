@@ -43,7 +43,7 @@ data class MigrateVisitRequestDto(
   @Schema(description = "The date and time of when the visit was created in NOMIS", example = "2018-12-01T13:45:00", required = false)
   val createDateTime: LocalDateTime? = null,
   @Schema(description = "The date and time of when the visit was modified in NOMIS", example = "2018-12-10T13:45:00", required = false)
-  val modifyDateTime: LocalDateTime? = null,
+  val modifyDateTime: LocalDateTime? = createDateTime,
   @Schema(description = "Create legacy data", required = false)
   val legacyData: CreateLegacyDataRequestDto? = null,
   @Schema(description = "Contact associated with the visit", required = false)
