@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.BOOKED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.UPDATED_VISIT
@@ -334,7 +334,7 @@ class VisitService(
     saveEventAudit(
       cancelVisitDto.actionedBy,
       visitDto,
-      CANCELED_VISIT,
+      CANCELLED_VISIT,
       cancelVisitDto.applicationMethodType,
     )
 
