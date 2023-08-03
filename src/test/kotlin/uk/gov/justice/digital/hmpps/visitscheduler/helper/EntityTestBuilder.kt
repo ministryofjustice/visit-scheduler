@@ -3,14 +3,19 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.CreateIncentiveGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -63,7 +68,7 @@ fun sessionTemplate(
   ).also { it.reference = UUID.randomUUID().toString() }
 }
 
-fun createSessionTemplateDto(
+fun createCreateSessionTemplateDto(
   name: String = "sessionTemplate_",
   sessionDateRangeDto: SessionDateRangeDto = SessionDateRangeDto(LocalDate.now().minusDays(1), null),
   sessionCapacity: SessionCapacityDto = SessionCapacityDto(closed = 10, open = 5),
@@ -88,6 +93,29 @@ fun createSessionTemplateDto(
     locationGroupReferences = locationGroupReferences,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
+  )
+}
+
+fun createCreateSessionTemplateDto(
+  name: String = "new_sessionTemplate_",
+  sessionTemplateDto: SessionTemplateDto,
+  dayOfWeek: DayOfWeek? = sessionTemplateDto.dayOfWeek,
+  sessionDateRange: SessionDateRangeDto? = sessionTemplateDto.sessionDateRange,
+  sessionTimeSlot: SessionTimeSlotDto? = sessionTemplateDto.sessionTimeSlot,
+  weeklyFrequency: Int? = sessionTemplateDto.weeklyFrequency,
+): CreateSessionTemplateDto {
+  return CreateSessionTemplateDto(
+    name = name + sessionTemplateDto.dayOfWeek,
+    prisonCode = sessionTemplateDto.prisonCode,
+    sessionDateRange = sessionDateRange ?: sessionTemplateDto.sessionDateRange,
+    sessionCapacity = sessionTemplateDto.sessionCapacity,
+    sessionTimeSlot = sessionTimeSlot ?: sessionTemplateDto.sessionTimeSlot,
+    visitRoom = sessionTemplateDto.visitRoom,
+    dayOfWeek = dayOfWeek ?: sessionTemplateDto.dayOfWeek,
+    weeklyFrequency = weeklyFrequency ?: sessionTemplateDto.weeklyFrequency,
+    locationGroupReferences = sessionTemplateDto.permittedLocationGroups.stream().map { it.reference }.toList(),
+    categoryGroupReferences = sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
+    incentiveLevelGroupReferences = sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
   )
 }
 
@@ -191,5 +219,43 @@ fun updateIncentiveGroupDto(
   return UpdateIncentiveGroupDto(
     name = name,
     incentiveLevels = type.toList(),
+  )
+}
+
+fun getSessionDetailsDto(
+  createSessionTemplateDto: CreateSessionTemplateDto,
+  permittedLocationGroups: List<SessionLocationGroupDto>? = emptyList(),
+  prisonerCategoryGroups: List<SessionCategoryGroupDto>? = emptyList(),
+  prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto>? = emptyList(),
+): SessionDetailsDto {
+  return SessionDetailsDto(
+    prisonCode = createSessionTemplateDto.prisonCode,
+    sessionTimeSlot = createSessionTemplateDto.sessionTimeSlot,
+    sessionDateRange = createSessionTemplateDto.sessionDateRange,
+    sessionCapacity = createSessionTemplateDto.sessionCapacity,
+    dayOfWeek = createSessionTemplateDto.dayOfWeek,
+    weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
+    permittedLocationGroups = permittedLocationGroups ?: emptyList(),
+    prisonerCategoryGroups = prisonerCategoryGroups ?: emptyList(),
+    prisonerIncentiveLevelGroups = prisonerIncentiveLevelGroups ?: emptyList(),
+  )
+}
+
+fun createSessionLocationGroupDto(allowedSessionLocations: List<AllowedSessionLocationHierarchy>): SessionLocationGroupDto {
+  val permittedGroupLocations = mutableListOf<PermittedSessionLocationDto>()
+  for (allowedSessionLocation in allowedSessionLocations) {
+    val permittedSessionLocation =
+      PermittedSessionLocationDto(
+        levelOneCode = allowedSessionLocation.levelOneCode,
+        levelTwoCode = allowedSessionLocation.levelTwoCode,
+        levelThreeCode = allowedSessionLocation.levelThreeCode,
+        levelFourCode = allowedSessionLocation.levelFourCode,
+      )
+    permittedGroupLocations.add(permittedSessionLocation)
+  }
+  return SessionLocationGroupDto(
+    name = "location_group_",
+    reference = "location_group_ref",
+    locations = permittedGroupLocations,
   )
 }

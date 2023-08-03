@@ -23,7 +23,7 @@ class SessionDatesUtilTest {
 
     fun test(): Boolean {
       val sessionTemplate = sessionTemplate(validFromDate = validFromDate, weeklyFrequency = weeklyFrequency)
-      return SessionDatesUtil().isWeeklySkipDate(firstBookableSessionDay, sessionTemplate)
+      return SessionDatesUtil().isWeeklySkipDate(firstBookableSessionDay, sessionTemplate.validFromDate, sessionTemplate.weeklyFrequency)
     }
   }
 
