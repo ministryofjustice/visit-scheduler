@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
@@ -40,6 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLe
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateComparator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.UpdateSessionTemplateValidator
 import java.time.LocalDate
 import java.util.function.Supplier
@@ -55,6 +57,7 @@ class SessionTemplateService(
   private val visitRepository: VisitRepository,
   private val prisonConfigService: PrisonConfigService,
   private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
+  private val sessionTemplateComparator: SessionTemplateComparator,
   @Value("\${policy.session.booking-notice-period.maximum-days:28}")
   private val policyNoticeDaysMax: Long,
 ) {
@@ -448,6 +451,60 @@ class SessionTemplateService(
     }.toList()
     val visitCount = this.sessionTemplateRepository.getVisitCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
     return SessionTemplateVisitStatsDto(SessionCapacityDto(closed, open), visitCount, visitCountsByDate)
+  }
+
+  fun hasMatchingSessionTemplates(
+    createSessionTemplateDto: CreateSessionTemplateDto,
+  ) {
+    val existingSessionTemplates = getSessionTemplates(createSessionTemplateDto.prisonCode, CURRENT_OR_FUTURE)
+    val toBeCreatedSessionDetails = SessionDetailsDto(
+      prisonCode = createSessionTemplateDto.prisonCode,
+      sessionTimeSlot = createSessionTemplateDto.sessionTimeSlot,
+      sessionDateRange = createSessionTemplateDto.sessionDateRange,
+      sessionCapacity = createSessionTemplateDto.sessionCapacity,
+      dayOfWeek = createSessionTemplateDto.dayOfWeek,
+      weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
+      permittedLocationGroups = getSessionLocationGroups(createSessionTemplateDto.locationGroupReferences),
+      prisonerCategoryGroups = getSessionCategoryGroups(createSessionTemplateDto.categoryGroupReferences),
+      prisonerIncentiveLevelGroups = getSessionIncentiveLevelGroups(createSessionTemplateDto.incentiveLevelGroupReferences),
+    )
+    existingSessionTemplates.forEach {
+      val existingSessionDetails = SessionDetailsDto(it)
+      sessionTemplateComparator.hasOverlap(toBeCreatedSessionDetails, existingSessionDetails)
+    }
+  }
+
+  private fun getSessionLocationGroups(locationGroupReferences: List<String>?): List<SessionLocationGroupDto> {
+    val locationGroups = mutableListOf<SessionLocationGroupDto>()
+    locationGroupReferences?.toSet()?.forEach { locationGroupReference ->
+      sessionLocationGroupRepository.findByReference(locationGroupReference)?.let {
+        locationGroups.add(SessionLocationGroupDto(it))
+      }
+    }
+
+    return locationGroups
+  }
+
+  private fun getSessionCategoryGroups(categoryGroupReferences: List<String>?): List<SessionCategoryGroupDto> {
+    val categoryGroups = mutableListOf<SessionCategoryGroupDto>()
+    categoryGroupReferences?.toSet()?.forEach { categoryGroupReference ->
+      sessionCategoryGroupRepository.findByReference(categoryGroupReference)?.let {
+        categoryGroups.add(SessionCategoryGroupDto(it))
+      }
+    }
+
+    return categoryGroups
+  }
+
+  private fun getSessionIncentiveLevelGroups(incentiveLevelGroupReferences: List<String>?): List<SessionIncentiveLevelGroupDto> {
+    val incentiveLevelGroups = mutableListOf<SessionIncentiveLevelGroupDto>()
+    incentiveLevelGroupReferences?.toSet()?.forEach { incentiveLevelGroupReference ->
+      sessionIncentiveLevelGroupRepository.findByReference(incentiveLevelGroupReference)?.let {
+        incentiveLevelGroups.add(SessionIncentiveLevelGroupDto(it))
+      }
+    }
+
+    return incentiveLevelGroups
   }
 }
 

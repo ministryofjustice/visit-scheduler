@@ -35,7 +35,7 @@ data class SessionTemplateDto(
   @Schema(description = "session capacity", required = true)
   val sessionCapacity: SessionCapacityDto,
   @Schema(description = "day of week for visit", example = "MONDAY", required = false)
-  val dayOfWeek: DayOfWeek?,
+  val dayOfWeek: DayOfWeek,
   @Schema(description = "is session template active", example = "true", required = true)
   val active: Boolean,
   @Schema(description = "list of permitted session location groups", required = false)
