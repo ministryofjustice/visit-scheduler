@@ -30,10 +30,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Migrate POST /visits")
@@ -49,7 +51,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   fun `Migrate visit`() {
     // Given
 
-    val migrateVisitRequestDto = createMigrateVisitRequestDto()
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
     createSessionTemplateFrom(migrateVisitRequestDto)
 
     // When
@@ -103,6 +105,29 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       assertThat(eventAuditList[0].actionedBy).isEqualTo("Aled Evans")
       assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.MIGRATED_VISIT)
       assertThat(eventAuditList[0].createTimestamp).isEqualTo(migrateVisitRequestDto.createDateTime)
+    }
+  }
+
+  @Test
+  fun `Migrate cancelled visit`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStatus = CANCELLED, modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
+    createSessionTemplateFrom(migrateVisitRequestDto)
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.visitStatus).isEqualTo(CANCELLED)
+      val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
+      assertThat(eventAuditList[0].createTimestamp).isEqualTo(migrateVisitRequestDto.modifyDateTime)
     }
   }
 

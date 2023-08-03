@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.MIGRATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
@@ -126,12 +127,17 @@ class MigrateVisitService(
 
     migrateVisitRequest.createDateTime?.let {
       visitRepository.updateCreateTimestamp(it, visitEntity.id)
-      eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
+      if (migrateVisitRequest.visitStatus == BOOKED) {
+        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
+      }
     }
 
     // Do this at end of this method, otherwise modify date would be overridden
     migrateVisitRequest.modifyDateTime?.let {
       visitRepository.updateModifyTimestamp(it, visitEntity.id)
+      if (migrateVisitRequest.visitStatus == CANCELLED) {
+        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
+      }
     }
 
     return visitEntity.reference
