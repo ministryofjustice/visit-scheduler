@@ -24,7 +24,7 @@ class AssertHelper {
   ) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(cancelledVisit.reference)
 
-    Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELED_VISIT)
+    Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
     Assertions.assertThat(eventAudit.actionedBy).isEqualTo(cancelledBy)
     Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(applicationMethodType)
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(cancelledVisit.reference)
