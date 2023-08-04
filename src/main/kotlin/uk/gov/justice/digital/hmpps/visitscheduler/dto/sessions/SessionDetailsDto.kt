@@ -48,39 +48,4 @@ data class SessionDetailsDto(
       prisonerCategoryGroups = sessionTemplateDto.prisonerCategoryGroups,
       prisonerIncentiveLevelGroups = sessionTemplateDto.prisonerIncentiveLevelGroups,
     )
-
-  /*constructor(
-    createSessionTemplateDto: CreateSessionTemplateDto,
-    permittedLocationGroups: List<SessionLocationGroupDto>,
-    permittedCategoryGroups: List<SessionCategoryGroupDto>,
-    permittedIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto>,
-  ) : this(
-    prisonCode = createSessionTemplateDto.prisonCode,
-    sessionTimeSlot = createSessionTemplateDto.sessionTimeSlot,
-    sessionCapacity = createSessionTemplateDto.sessionCapacity,
-    sessionDateRange = createSessionTemplateDto.sessionDateRange,
-    weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
-    dayOfWeek = createSessionTemplateDto.dayOfWeek,
-    permittedLocationGroups = permittedLocationGroups,
-    prisonerCategoryGroups = permittedCategoryGroups,
-    prisonerIncentiveLevelGroups = permittedIncentiveLevelGroups,
-  )*/
-
-  constructor(
-    updateSessionTemplateDto: UpdateSessionTemplateDto,
-    sessionTemplateDto: SessionTemplateDto,
-    permittedLocationGroups: List<SessionLocationGroupDto>?,
-    permittedCategoryGroups: List<SessionCategoryGroupDto>?,
-    permittedIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto>?,
-  ) : this(
-    prisonCode = sessionTemplateDto.prisonCode,
-    sessionTimeSlot = updateSessionTemplateDto.sessionTimeSlot ?: sessionTemplateDto.sessionTimeSlot,
-    sessionCapacity = updateSessionTemplateDto.sessionCapacity ?: sessionTemplateDto.sessionCapacity,
-    sessionDateRange = updateSessionTemplateDto.sessionDateRange ?: sessionTemplateDto.sessionDateRange,
-    weeklyFrequency = updateSessionTemplateDto.weeklyFrequency ?: sessionTemplateDto.weeklyFrequency,
-    dayOfWeek = sessionTemplateDto.dayOfWeek,
-    permittedLocationGroups = permittedLocationGroups ?: sessionTemplateDto.permittedLocationGroups,
-    prisonerCategoryGroups = permittedCategoryGroups ?: sessionTemplateDto.prisonerCategoryGroups,
-    prisonerIncentiveLevelGroups = permittedIncentiveLevelGroups ?: sessionTemplateDto.prisonerIncentiveLevelGroups,
-  )
 }

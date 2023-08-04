@@ -70,23 +70,23 @@ fun sessionTemplate(
 
 fun createCreateSessionTemplateDto(
   name: String = "sessionTemplate_",
-  sessionDateRangeDto: SessionDateRangeDto = SessionDateRangeDto(LocalDate.now().minusDays(1), null),
+  sessionDateRange: SessionDateRangeDto = SessionDateRangeDto(LocalDate.now().minusDays(1), null),
   sessionCapacity: SessionCapacityDto = SessionCapacityDto(closed = 10, open = 5),
-  sessionTimeSlotDto: SessionTimeSlotDto = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
+  sessionTimeSlot: SessionTimeSlotDto = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
   prisonCode: String = "MDI",
   visitRoom: String = "visitRoom",
   dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
   weeklyFrequency: Int = 1,
-  locationGroupReferences: MutableList<String> = mutableListOf(),
-  categoryGroupReferences: MutableList<String> = mutableListOf(),
-  incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
+  locationGroupReferences: List<String> = listOf(),
+  categoryGroupReferences: List<String> = listOf(),
+  incentiveLevelGroupReferences: List<String> = listOf(),
 ): CreateSessionTemplateDto {
   return CreateSessionTemplateDto(
     name = name + dayOfWeek,
     prisonCode = prisonCode,
-    sessionDateRange = sessionDateRangeDto,
+    sessionDateRange = sessionDateRange,
     sessionCapacity = sessionCapacity,
-    sessionTimeSlot = sessionTimeSlotDto,
+    sessionTimeSlot = sessionTimeSlot,
     visitRoom = visitRoom,
     dayOfWeek = dayOfWeek,
     weeklyFrequency = weeklyFrequency,
@@ -139,6 +139,22 @@ fun createUpdateSessionTemplateDto(
     weeklyFrequency = weeklyFrequency,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
+  )
+}
+
+fun createUpdateSessionTemplateDto(
+  sessionTemplateDto: SessionTemplateDto,
+  sessionTimeSlot: SessionTimeSlotDto? = null,
+): UpdateSessionTemplateDto {
+  return UpdateSessionTemplateDto(
+    name = sessionTemplateDto.name,
+    sessionDateRange = sessionTemplateDto.sessionDateRange,
+    sessionCapacity = sessionTemplateDto.sessionCapacity,
+    sessionTimeSlot = sessionTimeSlot ?: sessionTemplateDto.sessionTimeSlot,
+    locationGroupReferences = sessionTemplateDto.permittedLocationGroups.stream().map { it.reference }.toList(),
+    weeklyFrequency = sessionTemplateDto.weeklyFrequency,
+    categoryGroupReferences = sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
+    incentiveLevelGroupReferences = sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
   )
 }
 

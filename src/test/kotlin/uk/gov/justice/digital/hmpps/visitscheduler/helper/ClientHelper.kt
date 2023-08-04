@@ -15,6 +15,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
@@ -201,6 +203,19 @@ fun callCreateSessionTemplate(
   )
 }
 
+fun callCheckingMatchingTemplatesOnCreate(
+  webTestClient: WebTestClient,
+  dto: CreateSessionTemplateDto? = null,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPost(
+    dto,
+    webTestClient,
+    FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE,
+    authHttpHeaders,
+  )
+}
+
 fun callUpdateSessionTemplateByReference(
   webTestClient: WebTestClient,
   reference: String,
@@ -211,6 +226,20 @@ fun callUpdateSessionTemplateByReference(
     dto,
     webTestClient,
     getSessionTemplateByReferenceUrl(reference),
+    authHttpHeaders,
+  )
+}
+
+fun callCheckingMatchingTemplatesOnUpdate(
+  webTestClient: WebTestClient,
+  reference: String,
+  dto: UpdateSessionTemplateDto? = null,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPost(
+    dto,
+    webTestClient,
+    getCheckMatchingTemplatesByReferenceUrl(reference),
     authHttpHeaders,
   )
 }
@@ -457,6 +486,10 @@ fun getVisitHistoryByReferenceUrl(reference: String): String {
 
 fun getSessionTemplateByReferenceUrl(reference: String): String {
   return getReferenceUrl(REFERENCE_SESSION_TEMPLATE_PATH, reference)
+}
+
+fun getCheckMatchingTemplatesByReferenceUrl(reference: String): String {
+  return getReferenceUrl(FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE, reference)
 }
 
 fun getSessionLocationGroupByReferenceUrl(reference: String): String {

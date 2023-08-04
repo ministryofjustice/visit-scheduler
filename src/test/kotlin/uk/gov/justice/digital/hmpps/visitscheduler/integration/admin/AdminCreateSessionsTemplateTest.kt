@@ -45,7 +45,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val sessionIncentiveGroup = sessionPrisonerIncentiveLevelHelper.create(prisonCode = prison.code, incentiveLevelList = enhancedIncentives)
 
     val dto = createCreateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
+      sessionDateRange = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
       locationGroupReferences = mutableListOf(sessionLocationGroup.reference, sessionLocationGroup.reference),
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
       incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
@@ -112,7 +112,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
   fun `when session template end time is less than start time then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createCreateSessionTemplateDto(
-      sessionTimeSlotDto = SessionTimeSlotDto(LocalTime.of(9, 0), LocalTime.of(8, 0)),
+      sessionTimeSlot = SessionTimeSlotDto(LocalTime.of(9, 0), LocalTime.of(8, 0)),
     )
 
     // When
@@ -128,7 +128,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
   fun `when session template end time is same as start time then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createCreateSessionTemplateDto(
-      sessionTimeSlotDto = SessionTimeSlotDto(LocalTime.of(9, 0), LocalTime.of(9, 0)),
+      sessionTimeSlot = SessionTimeSlotDto(LocalTime.of(9, 0), LocalTime.of(9, 0)),
     )
 
     // When
@@ -144,7 +144,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
   fun `when session template end time is greater than start time then session template is created`() {
     // Given
     val dto = createCreateSessionTemplateDto(
-      sessionTimeSlotDto = SessionTimeSlotDto(LocalTime.of(9, 0), LocalTime.of(9, 1)),
+      sessionTimeSlot = SessionTimeSlotDto(LocalTime.of(9, 0), LocalTime.of(9, 1)),
     )
 
     // When
@@ -161,7 +161,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val validToDate = LocalDate.of(2022, 12, 31)
 
     val dto = createCreateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(validFromDate, validToDate),
+      sessionDateRange = SessionDateRangeDto(validFromDate, validToDate),
     )
 
     // When
@@ -180,7 +180,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val validToDate = LocalDate.of(2023, 1, 1)
 
     val dto = createCreateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(validFromDate, validToDate),
+      sessionDateRange = SessionDateRangeDto(validFromDate, validToDate),
     )
 
     // When
@@ -196,7 +196,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val validFromDate = LocalDate.of(2023, 1, 1)
     val validToDate = LocalDate.of(2023, 1, 31)
     val dto = createCreateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(validFromDate, validToDate),
+      sessionDateRange = SessionDateRangeDto(validFromDate, validToDate),
     )
 
     // When
@@ -213,7 +213,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     val validToDate = null
 
     val dto = createCreateSessionTemplateDto(
-      sessionDateRangeDto = SessionDateRangeDto(validFromDate, validToDate),
+      sessionDateRange = SessionDateRangeDto(validFromDate, validToDate),
     )
 
     // When
