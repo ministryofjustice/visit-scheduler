@@ -47,23 +47,6 @@ class SessionDatesUtil {
     return true
   }
 
-/*  private fun getValidFromMonday(sessionTemplate: SessionTemplate): LocalDate {
-    // This has been added just encase someone wants the session template start date other than the start of week.
-    // Therefore, this use of validFromMonday will allow the bi-weekly to still work.
-    if (sessionTemplate.validFromDate.dayOfWeek != MONDAY) {
-      return sessionTemplate.validFromDate.with(TemporalAdjusters.previous(MONDAY))
-    }
-    return sessionTemplate.validFromDate
-  }
-
-  fun isWeeklySkipDate(
-    sessionDate: LocalDate,
-    sessionTemplate: SessionTemplate,
-  ): Boolean {
-    val validFromMonday = getValidFromMonday(sessionTemplate)
-    return WEEKS.between(validFromMonday, sessionDate).toInt() % sessionTemplate.weeklyFrequency != 0
-  }*/
-
   private fun getValidFromMonday(validFromDate: LocalDate): LocalDate {
     // This has been added just encase someone wants the session template start date other than the start of week.
     // Therefore, this use of validFromMonday will allow the bi-weekly to still work.
