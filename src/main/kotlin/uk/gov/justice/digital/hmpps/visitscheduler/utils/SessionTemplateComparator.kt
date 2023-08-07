@@ -12,7 +12,7 @@ import java.util.stream.Collectors
 @Component
 class SessionTemplateComparator(private val sessionDatesUtil: SessionDatesUtil) {
 
-  private val validMatch = object : BiPredicate<String?, String?> {
+  private val validSessionLocationMatch = object : BiPredicate<String?, String?> {
     override fun test(permittedSessionLevel: String?, prisonerLevel: String?): Boolean {
       permittedSessionLevel?.let {
         return it == prisonerLevel
@@ -25,10 +25,10 @@ class SessionTemplateComparator(private val sessionDatesUtil: SessionDatesUtil) 
   private val multipleLocationMatcher =
     BiPredicate<PermittedSessionLocationDto, Set<PermittedSessionLocationDto>> { primarySessionLocation, comparedSessionLocations ->
       comparedSessionLocations.stream().anyMatch { comparedSessionLocation ->
-        validMatch.test(primarySessionLocation.levelOneCode, comparedSessionLocation.levelOneCode)
-          .and(validMatch.test(primarySessionLocation.levelTwoCode, comparedSessionLocation.levelTwoCode))
-          .and(validMatch.test(primarySessionLocation.levelThreeCode, comparedSessionLocation.levelThreeCode))
-          .and(validMatch.test(primarySessionLocation.levelFourCode, comparedSessionLocation.levelFourCode))
+        validSessionLocationMatch.test(primarySessionLocation.levelOneCode, comparedSessionLocation.levelOneCode)
+          .and(validSessionLocationMatch.test(primarySessionLocation.levelTwoCode, comparedSessionLocation.levelTwoCode))
+          .and(validSessionLocationMatch.test(primarySessionLocation.levelThreeCode, comparedSessionLocation.levelThreeCode))
+          .and(validSessionLocationMatch.test(primarySessionLocation.levelFourCode, comparedSessionLocation.levelFourCode))
       }
     }
 
@@ -43,9 +43,9 @@ class SessionTemplateComparator(private val sessionDatesUtil: SessionDatesUtil) 
 
     return (
       // new from date between existing from and to dates
-      (newFromDate >= existingFromDate && newFromDate <= existingToDate) ||
+      (newFromDate in existingFromDate..existingToDate) ||
         // new to date between existing from and to dates
-        (newToDate >= existingFromDate && newToDate <= existingToDate) ||
+        (newToDate in existingFromDate..existingToDate) ||
         // new from date less than existing from date and new to date greater than existing to date
         (newFromDate <= existingFromDate && newToDate >= existingToDate)
       )
@@ -62,9 +62,9 @@ class SessionTemplateComparator(private val sessionDatesUtil: SessionDatesUtil) 
 
     return (
       // new start time between existing start and end times
-      (newStartTime >= existingStartTime && newStartTime <= existingEndTime) ||
+      (newStartTime in existingStartTime..existingEndTime) ||
         // new end time between existing start and end times
-        (newEndTime >= existingStartTime && newEndTime <= existingEndTime) ||
+        (newEndTime in existingStartTime..existingEndTime) ||
         // new start time less than existing start time and new end time greater than existing end time
         (newStartTime <= existingStartTime && newEndTime >= existingEndTime)
       )
@@ -139,7 +139,7 @@ class SessionTemplateComparator(private val sessionDatesUtil: SessionDatesUtil) 
       val existingSessionCategoryTypes = getPermittedPrisonerCategoryTypes(existingSessionDetails)
       val newSessionCategoryTypes = getPermittedPrisonerCategoryTypes(newSessionDetails)
 
-      return existingSessionCategoryTypes.stream().anyMatch { newSessionCategoryTypes.contains(it) }
+      existingSessionCategoryTypes.stream().anyMatch { newSessionCategoryTypes.contains(it) }
     } else {
       false
     }
@@ -152,7 +152,7 @@ class SessionTemplateComparator(private val sessionDatesUtil: SessionDatesUtil) 
       val existingSessionIncentiveLevels = getPermittedIncentiveLevels(existingSessionDetails)
       val newSessionIncentiveLevels = getPermittedIncentiveLevels(newSessionDetails)
 
-      return existingSessionIncentiveLevels.stream().anyMatch { newSessionIncentiveLevels.contains(it) }
+      existingSessionIncentiveLevels.stream().anyMatch { newSessionIncentiveLevels.contains(it) }
     } else {
       false
     }

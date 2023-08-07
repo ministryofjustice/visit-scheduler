@@ -34,7 +34,7 @@ data class SessionTemplateDto(
   val visitRoom: String,
   @Schema(description = "session capacity", required = true)
   val sessionCapacity: SessionCapacityDto,
-  @Schema(description = "day of week for visit", example = "MONDAY", required = false)
+  @Schema(description = "day of week for visit", example = "MONDAY", required = true)
   val dayOfWeek: DayOfWeek,
   @Schema(description = "is session template active", example = "true", required = true)
   val active: Boolean,
