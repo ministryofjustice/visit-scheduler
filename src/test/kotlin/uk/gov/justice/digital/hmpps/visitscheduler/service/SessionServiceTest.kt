@@ -109,8 +109,9 @@ class SessionServiceTest {
       visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
         sessionTemplate.prison.code,
         sessionTemplateReference = sessionTemplate.reference,
-        startDateTime,
-        endDateTime,
+        startDateTime.toLocalDate(),
+        startDateTime.toLocalTime(),
+        endDateTime.toLocalTime(),
       ),
     ).thenReturn(getVisitRestrictionStatsList(visits))
   }
@@ -352,6 +353,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = OPEN,
+        sessionTemplateReference = singleSession.reference,
         visitRoom = "1",
       )
 
@@ -364,6 +366,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = CLOSED,
+        sessionTemplateReference = singleSession.reference,
         visitRoom = "1",
       )
       mockVisitRepositoryCountResponse(listOf(openVisit, closedVisit), singleSession)
