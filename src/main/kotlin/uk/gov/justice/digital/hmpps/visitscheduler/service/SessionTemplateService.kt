@@ -196,6 +196,10 @@ class SessionTemplateService(
         sessionTemplateRepository.updateSessionDateRangeByReference(reference, it)
       }
 
+      visitRoom?.let {
+        sessionTemplateRepository.updateVisitRoomByReference(reference, it)
+      }
+
       sessionCapacity?.let {
         sessionTemplateRepository.updateCapacityByReference(reference, it)
       }
