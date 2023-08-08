@@ -33,6 +33,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateServic
 
 const val ADMIN_SESSION_TEMPLATES_PATH: String = "/admin/session-templates"
 const val SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/template"
+const val FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE: String = "$SESSION_TEMPLATE_PATH/matching/"
+const val FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE: String = "$SESSION_TEMPLATE_PATH/{reference}/matching/"
 const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}"
 const val SESSION_TEMPLATE_VISIT_STATS: String = "$SESSION_TEMPLATE_PATH/{reference}/stats"
 const val ACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/activate"
@@ -350,5 +352,76 @@ class SessionTemplateAdminController(
     requestSessionTemplateVisitStatsDto: RequestSessionTemplateVisitStatsDto,
   ): SessionTemplateVisitStatsDto {
     return sessionTemplateService.getSessionTemplateVisitStats(reference, requestSessionTemplateVisitStatsDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PostMapping(FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE)
+  @Operation(
+    summary = "Get matching session templates",
+    description = "Get matching session templates",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "List of clashing session templates or empty list if no matches found",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get matching session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Invalid request",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getMatchingSessionTemplatesOnCreate(
+    @RequestBody @Valid
+    createSessionTemplateDto: CreateSessionTemplateDto,
+  ): List<String> {
+    return sessionTemplateService.hasMatchingSessionTemplates(createSessionTemplateDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PostMapping(FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE)
+  @Operation(
+    summary = "Get matching session templates",
+    description = "Get matching session templates",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "List of clashing session templates or empty list if no matches found",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get matching session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Invalid request",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getMatchingSessionTemplatesOnUpdate(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+    @RequestBody @Valid
+    updateSessionTemplateDto: UpdateSessionTemplateDto,
+  ): List<String> {
+    return sessionTemplateService.hasMatchingSessionTemplates(reference, updateSessionTemplateDto)
   }
 }
