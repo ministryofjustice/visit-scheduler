@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Repository
 interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
@@ -98,37 +99,48 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
-    "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
-      "WHERE v.prison.code = :prisonCode AND " +
-      "v.visitStart >= :startDateTime AND " +
-      "v.visitStart < :endDateTime AND " +
-      "(:sessionTemplateReference is null or v.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
-      "v.visitStatus = 'BOOKED'  " +
-      "GROUP BY v.visitRestriction",
+    "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
+      "JOIN prison p ON p.id = v.prison_id " +
+      "JOIN session_template st ON st.reference = v.session_template_reference " +
+      "WHERE p.code = :prisonCode AND " +
+      "v.session_template_reference = :sessionTemplateReference AND " +
+      "Date(v.visit_start) = :sessionDate AND " +
+      "st.start_time = :sessionStartTime AND " +
+      "st.end_time = :sessionEndTime AND " +
+      "v.visit_restriction in ('OPEN','CLOSED') AND " +
+      "v.visit_status = 'BOOKED' " +
+      "GROUP BY v.visit_restriction",
+    nativeQuery = true,
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
-    sessionTemplateReference: String ? = null,
-    startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime,
+    sessionTemplateReference: String,
+    sessionDate: LocalDate,
+    sessionStartTime: LocalTime,
+    sessionEndTime: LocalTime,
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
-      "WHERE v.prison.code = :prisonCode AND " +
-      "v.visitStart >= :startDateTime AND " +
-      "v.visitStart < :endDateTime AND " +
-      "(:sessionTemplateReference is null or v.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
-      "v.visitStatus = 'RESERVED' AND v.modifyTimestamp >= :expiredDateAndTime " +
-      "GROUP BY v.visitRestriction",
+    "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
+      "JOIN prison p ON p.id = v.prison_id " +
+      "JOIN session_template st ON st.reference = v.session_template_reference " +
+      "WHERE p.code = :prisonCode AND " +
+      "Date(v.visit_start) = :sessionDate AND " +
+      "st.start_time = :sessionStartTime AND " +
+      "st.end_time = :sessionEndTime AND " +
+      "v.session_template_reference = :sessionTemplateReference AND " +
+      "v.visit_restriction IN ('OPEN','CLOSED') AND " +
+      "v.visit_status = 'RESERVED' AND " +
+      "v.modify_timestamp >= :expiredDateAndTime " +
+      "GROUP BY v.visit_restriction",
+    nativeQuery = true,
   )
   fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
-    sessionTemplateReference: String ? = null,
-    startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime,
+    sessionTemplateReference: String,
+    sessionDate: LocalDate,
+    sessionStartTime: LocalTime,
+    sessionEndTime: LocalTime,
     expiredDateAndTime: LocalDateTime,
   ): List<VisitRestrictionStats>
 

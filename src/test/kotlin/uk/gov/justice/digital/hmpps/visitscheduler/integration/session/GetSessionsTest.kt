@@ -1006,7 +1006,7 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions visit count includes only visits within session period`() {
+  fun `visit sessions visit count includes only visits within session template period`() {
     // Given
     val nextAllowedDay = this.getNextAllowedDay()
     val dateTime = nextAllowedDay.atTime(9, 0)
@@ -1069,11 +1069,23 @@ class GetSessionsTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplate.reference,
     )
 
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = "MDI",
+      visitRoom = sessionTemplate.visitRoom,
+      visitStart = dateTime,
+      visitEnd = endTime,
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN,
+      sessionTemplateReference = sessionTemplate.reference + "other",
+    )
+
     // When
     val responseSpec = callGetSessions()
 
     // Then
-    assertBookCounts(responseSpec, openCount = 2, closeCount = 0)
+    assertBookCounts(responseSpec, openCount = 4, closeCount = 0)
   }
 
   @Test
