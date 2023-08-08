@@ -82,6 +82,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
         startTime = sessionTemplate.startTime.plusHours(1),
         endTime = sessionTemplate.endTime.plusHours(2),
       ),
+      visitRoom = "new room name",
       dayOfWeek = sessionTemplate.dayOfWeek.minus(1),
       locationGroupReferences = mutableListOf(sessionGroup.reference, sessionGroup.reference),
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
@@ -99,6 +100,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange?.validFromDate)
     Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange?.validToDate)
+    Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(dto.visitRoom)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity.closed).isEqualTo(dto.sessionCapacity?.closed)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity.open).isEqualTo(dto.sessionCapacity?.open)
     Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.startTime).isEqualTo(dto.sessionTimeSlot?.startTime)
