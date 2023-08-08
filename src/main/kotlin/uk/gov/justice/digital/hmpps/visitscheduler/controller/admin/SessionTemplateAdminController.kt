@@ -24,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
@@ -181,6 +182,11 @@ class SessionTemplateAdminController(
       ApiResponse(
         responseCode = "200",
         description = "Session templates updated",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Session Template update validation errors",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ValidationErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
