@@ -104,7 +104,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "JOIN session_template st ON st.reference = v.session_template_reference " +
       "WHERE p.code = :prisonCode AND " +
       "v.session_template_reference = :sessionTemplateReference AND " +
-      "Date(v.visit_start) = :sessionDate AND " +
+      "(v.visit_start >= :sessionDate AND v.visit_start < CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL)) AND " +
       "st.start_time = :sessionStartTime AND " +
       "st.end_time = :sessionEndTime AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
@@ -125,7 +125,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "JOIN prison p ON p.id = v.prison_id " +
       "JOIN session_template st ON st.reference = v.session_template_reference " +
       "WHERE p.code = :prisonCode AND " +
-      "Date(v.visit_start) = :sessionDate AND " +
+      "(v.visit_start >= :sessionDate AND v.visit_start < CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL)) AND " +
       "st.start_time = :sessionStartTime AND " +
       "st.end_time = :sessionEndTime AND " +
       "v.session_template_reference = :sessionTemplateReference AND " +
