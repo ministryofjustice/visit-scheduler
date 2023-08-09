@@ -337,16 +337,12 @@ class SessionService(
       prisonCode = session.prisonCode,
       sessionTemplateReference = session.sessionTemplateReference,
       sessionDate = session.startTimestamp.toLocalDate(),
-      sessionStartTime = session.startTimestamp.toLocalTime(),
-      sessionEndTime = session.endTimestamp.toLocalTime(),
     )
 
     val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
       prisonCode = session.prisonCode,
       sessionTemplateReference = session.sessionTemplateReference,
       sessionDate = session.startTimestamp.toLocalDate(),
-      sessionStartTime = session.startTimestamp.toLocalTime(),
-      sessionEndTime = session.endTimestamp.toLocalTime(),
       expiredDateAndTime = visitService.getReservedExpiredDateAndTime(),
     )
 
