@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 
 @Repository
 interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
@@ -105,8 +104,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "WHERE p.code = :prisonCode AND " +
       "v.session_template_reference = :sessionTemplateReference AND " +
       "(v.visit_start >= :sessionDate AND v.visit_start < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
-      "st.start_time = :sessionStartTime AND " +
-      "st.end_time = :sessionEndTime AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
       "v.visit_status = 'BOOKED' " +
       "GROUP BY v.visit_restriction",
@@ -116,8 +113,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     prisonCode: String,
     sessionTemplateReference: String,
     sessionDate: LocalDate,
-    sessionStartTime: LocalTime,
-    sessionEndTime: LocalTime,
   ): List<VisitRestrictionStats>
 
   @Query(
@@ -126,8 +121,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "JOIN session_template st ON st.reference = v.session_template_reference " +
       "WHERE p.code = :prisonCode AND " +
       "(v.visit_start >= :sessionDate AND v.visit_start < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
-      "st.start_time = :sessionStartTime AND " +
-      "st.end_time = :sessionEndTime AND " +
       "v.session_template_reference = :sessionTemplateReference AND " +
       "v.visit_restriction IN ('OPEN','CLOSED') AND " +
       "v.visit_status = 'RESERVED' AND " +
@@ -139,8 +132,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     prisonCode: String,
     sessionTemplateReference: String,
     sessionDate: LocalDate,
-    sessionStartTime: LocalTime,
-    sessionEndTime: LocalTime,
     expiredDateAndTime: LocalDateTime,
   ): List<VisitRestrictionStats>
 
