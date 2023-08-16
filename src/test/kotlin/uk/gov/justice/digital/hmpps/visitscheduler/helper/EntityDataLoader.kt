@@ -166,6 +166,10 @@ class VisitEntityHelper(
   fun save(visit: Visit): Visit {
     return visitRepository.saveAndFlush(visit)
   }
+
+  fun getVisit(applicationReference: String): Visit? {
+    return visitRepository.findApplication(applicationReference)
+  }
 }
 
 @Component

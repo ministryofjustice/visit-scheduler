@@ -28,7 +28,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.Session
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitCountsByDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
@@ -43,10 +45,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRep
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateComparator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateMapper
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.UpdateSessionTemplateValidator
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.validators.SessionTemplateVisitMoveValidator
 import java.time.LocalDate
 import java.util.function.Supplier
-import kotlin.jvm.Throws
 
 @Service
 @Transactional
@@ -60,6 +63,8 @@ class SessionTemplateService(
   private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
   private val sessionTemplateComparator: SessionTemplateComparator,
   private val sessionTemplateMapper: SessionTemplateMapper,
+  private val sessionTemplateUtil: SessionTemplateUtil,
+  private val visitMoveValidator: SessionTemplateVisitMoveValidator,
   @Value("\${policy.session.booking-notice-period.maximum-days:28}")
   private val policyNoticeDaysMax: Long,
 ) {
@@ -444,15 +449,29 @@ class SessionTemplateService(
     val visitsToDate = LocalDate.now().plusDays(policyNoticeDaysMax)
 
     val minimumCapacityTuple = this.sessionTemplateRepository.findSessionTemplateMinCapacityBy(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
-    val emptyResults = minimumCapacityTuple.get(0) == null
-    val open = if (emptyResults) 0 else (minimumCapacityTuple.get(0) as Long).toInt()
-    val closed = if (emptyResults) 0 else (minimumCapacityTuple.get(1) as Long).toInt()
+    val sessionCapacity = sessionTemplateUtil.getMinimumSessionCapacity(minimumCapacityTuple)
 
-    val visitCountsByDate = this.sessionTemplateRepository.getVisitCountsByDate(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate).map {
-      SessionTemplateVisitCountsDto(it.visitDate, it.visitCount)
-    }.toList()
+    val visitCountsByDate = this.sessionTemplateRepository.getVisitCountsByDate(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+    val visitCountsList = getVisitCountsList(visitCountsByDate)
+
     val visitCount = this.sessionTemplateRepository.getVisitCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
-    return SessionTemplateVisitStatsDto(SessionCapacityDto(closed, open), visitCount, visitCountsByDate)
+    return SessionTemplateVisitStatsDto(sessionCapacity, visitCount, visitCountsList)
+  }
+
+  fun getVisitCountsList(visitCountsByDate: List<VisitCountsByDate>): MutableList<SessionTemplateVisitCountsDto> {
+    val visitCountsList = mutableListOf<SessionTemplateVisitCountsDto>()
+    val visitCountsByDateMap = visitCountsByDate.groupBy { it.visitDate }
+    visitCountsByDateMap.entries.forEach { entry ->
+      var openCount = 0
+      var closedCount = 0
+      entry.value.forEach {
+        if (it.visitRestriction == VisitRestriction.OPEN) openCount = it.visitCount else closedCount = it.visitCount
+      }
+
+      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = entry.key, SessionCapacityDto(closed = closedCount, open = openCount)))
+    }
+
+    return visitCountsList
   }
 
   fun hasMatchingSessionTemplates(
@@ -481,6 +500,16 @@ class SessionTemplateService(
     }
 
     return overlappingSessions
+  }
+
+  fun moveSessionTemplateVisits(fromSessionTemplateReference: String, toSessionTemplateReference: String, fromDate: LocalDate): Int {
+    val fromSessionTemplate = SessionTemplateDto(getSessionTemplate(fromSessionTemplateReference))
+    val toSessionTemplate = SessionTemplateDto(getSessionTemplate(toSessionTemplateReference))
+    val fromSessionTemplateVisitStats = getSessionTemplateVisitStats(fromSessionTemplate.reference, RequestSessionTemplateVisitStatsDto(fromDate))
+    val toSessionTemplateVisitStats = getSessionTemplateVisitStats(toSessionTemplate.reference, RequestSessionTemplateVisitStatsDto(fromDate))
+
+    visitMoveValidator.validateMoveSessionTemplateVisits(fromSessionTemplate, fromSessionTemplateVisitStats, toSessionTemplate, toSessionTemplateVisitStats, fromDate)
+    return visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, toSessionTemplate.sessionTimeSlot.startTime, toSessionTemplate.sessionTimeSlot.endTime)
   }
 }
 

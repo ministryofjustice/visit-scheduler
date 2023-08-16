@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 
 @Repository
 interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
@@ -172,4 +173,22 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     @Param("startDateTime") startDateTime: LocalDateTime,
     @Param("endDateTime") endDateTime: LocalDateTime? = null,
   ): Boolean
+
+  @Modifying
+  @Query(
+    "Update visit set session_template_reference = :newSessionTemplateReference " +
+      ",visit_start =  (cast(visit_start as date) + cast(:newStartTime as time)) " +
+      ",visit_end =  (cast(visit_end as date) + cast(:newEndTime as time)) " +
+      "WHERE (visit_status = 'BOOKED' OR visit_status = 'RESERVED')  AND " +
+      "(session_template_reference = :existingSessionTemplateReference) AND " +
+      "(cast(visit_start as date) >= :fromDate)",
+    nativeQuery = true,
+  )
+  fun updateVisitSessionTemplateReference(
+    existingSessionTemplateReference: String,
+    newSessionTemplateReference: String,
+    fromDate: LocalDate,
+    newStartTime: LocalTime,
+    newEndTime: LocalTime,
+  ): Int
 }

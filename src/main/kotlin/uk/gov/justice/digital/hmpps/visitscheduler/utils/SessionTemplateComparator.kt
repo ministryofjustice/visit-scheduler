@@ -2,35 +2,18 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDetailsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
-import java.util.*
-import java.util.function.BiPredicate
-import java.util.stream.Collectors
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.matchers.SessionCategoryMatcher
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.matchers.SessionIncentiveLevelMatcher
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.matchers.SessionLocationMatcher
 
 @Component
-class SessionTemplateComparator(private val sessionDatesUtil: SessionDatesUtil) {
-
-  private val validSessionLocationMatch = object : BiPredicate<String?, String?> {
-    override fun test(permittedSessionLevel: String?, prisonerLevel: String?): Boolean {
-      permittedSessionLevel?.let {
-        return it == prisonerLevel
-      }
-      // If no prison level then match
-      return true
-    }
-  }
-
-  private val multipleLocationMatcher =
-    BiPredicate<PermittedSessionLocationDto, Set<PermittedSessionLocationDto>> { primarySessionLocation, comparedSessionLocations ->
-      comparedSessionLocations.stream().anyMatch { comparedSessionLocation ->
-        validSessionLocationMatch.test(primarySessionLocation.levelOneCode, comparedSessionLocation.levelOneCode)
-          .and(validSessionLocationMatch.test(primarySessionLocation.levelTwoCode, comparedSessionLocation.levelTwoCode))
-          .and(validSessionLocationMatch.test(primarySessionLocation.levelThreeCode, comparedSessionLocation.levelThreeCode))
-          .and(validSessionLocationMatch.test(primarySessionLocation.levelFourCode, comparedSessionLocation.levelFourCode))
-      }
-    }
+class SessionTemplateComparator(
+  private val sessionDatesUtil: SessionDatesUtil,
+  private val sessionLocationMatcher: SessionLocationMatcher,
+  private val sessionCategoryMatcher: SessionCategoryMatcher,
+  private val sessionIncentiveLevelMatcher: SessionIncentiveLevelMatcher,
+  private val sessionTemplateUtil: SessionTemplateUtil,
+) {
 
   private fun hasOverlappingDates(
     newSessionDetails: SessionDetailsDto,
@@ -120,42 +103,27 @@ class SessionTemplateComparator(private val sessionDatesUtil: SessionDatesUtil) 
   }
 
   private fun hasCommonSessionLocations(newSessionDetails: SessionDetailsDto, existingSessionDetails: SessionDetailsDto): Boolean {
-    return if (newSessionDetails.permittedLocationGroups.isEmpty() || existingSessionDetails.permittedLocationGroups.isEmpty()) {
-      true
-    } else if (newSessionDetails.permittedLocationGroups.isNotEmpty() && existingSessionDetails.permittedLocationGroups.isNotEmpty()) {
-      val existingSessionLocations = getPermittedSessionLocationDtos(existingSessionDetails)
-      val newSessionLocations = getPermittedSessionLocationDtos(newSessionDetails)
+    val existingSessionLocations = sessionTemplateUtil.getPermittedSessionLocations(existingSessionDetails.permittedLocationGroups)
+    val newSessionLocations = sessionTemplateUtil.getPermittedSessionLocations(newSessionDetails.permittedLocationGroups)
 
-      hasLocationMatch(newSessionLocations, existingSessionLocations)
-    } else {
-      false
-    }
+    return sessionLocationMatcher.hasAnyMatch(newSessionLocations, existingSessionLocations) ||
+      sessionLocationMatcher.hasAnyMatch(existingSessionLocations, newSessionLocations)
   }
 
   private fun hasCommonCategories(newSessionDetails: SessionDetailsDto, existingSessionDetails: SessionDetailsDto): Boolean {
-    return if (newSessionDetails.prisonerCategoryGroups.isEmpty() || existingSessionDetails.prisonerCategoryGroups.isEmpty()) {
-      true
-    } else if (newSessionDetails.prisonerCategoryGroups.isNotEmpty() && existingSessionDetails.prisonerCategoryGroups.isNotEmpty()) {
-      val existingSessionCategoryTypes = getPermittedPrisonerCategoryTypes(existingSessionDetails)
-      val newSessionCategoryTypes = getPermittedPrisonerCategoryTypes(newSessionDetails)
+    val existingSessionCategoryTypes = sessionTemplateUtil.getPermittedPrisonerCategoryTypes(existingSessionDetails.prisonerCategoryGroups)
+    val newSessionCategoryTypes = sessionTemplateUtil.getPermittedPrisonerCategoryTypes(newSessionDetails.prisonerCategoryGroups)
 
-      existingSessionCategoryTypes.stream().anyMatch { newSessionCategoryTypes.contains(it) }
-    } else {
-      false
-    }
+    return sessionCategoryMatcher.hasAnyMatch(newSessionCategoryTypes, existingSessionCategoryTypes) ||
+      sessionCategoryMatcher.hasAnyMatch(existingSessionCategoryTypes, newSessionCategoryTypes)
   }
 
   private fun hasCommonIncentiveLevels(newSessionDetails: SessionDetailsDto, existingSessionDetails: SessionDetailsDto): Boolean {
-    return if (newSessionDetails.prisonerIncentiveLevelGroups.isEmpty() || existingSessionDetails.prisonerIncentiveLevelGroups.isEmpty()) {
-      true
-    } else if (newSessionDetails.prisonerIncentiveLevelGroups.isNotEmpty() && existingSessionDetails.prisonerIncentiveLevelGroups.isNotEmpty()) {
-      val existingSessionIncentiveLevels = getPermittedIncentiveLevels(existingSessionDetails)
-      val newSessionIncentiveLevels = getPermittedIncentiveLevels(newSessionDetails)
+    val existingSessionIncentiveLevels = sessionTemplateUtil.getPermittedIncentiveLevels(existingSessionDetails.prisonerIncentiveLevelGroups)
+    val newSessionIncentiveLevels = sessionTemplateUtil.getPermittedIncentiveLevels(newSessionDetails.prisonerIncentiveLevelGroups)
 
-      existingSessionIncentiveLevels.stream().anyMatch { newSessionIncentiveLevels.contains(it) }
-    } else {
-      false
-    }
+    return sessionIncentiveLevelMatcher.hasAnyMatch(newSessionIncentiveLevels, existingSessionIncentiveLevels) ||
+      sessionIncentiveLevelMatcher.hasAnyMatch(existingSessionIncentiveLevels, newSessionIncentiveLevels)
   }
 
   fun hasOverlap(newSessionDetails: SessionDetailsDto, existingSessionDetails: SessionDetailsDto): Boolean {
@@ -166,41 +134,5 @@ class SessionTemplateComparator(private val sessionDatesUtil: SessionDatesUtil) 
         hasOverlappingWeeklyFrequency(newSessionDetails, existingSessionDetails) &&
         hasOverlappingPrisonerGroups(newSessionDetails, existingSessionDetails)
       )
-  }
-
-  fun getPermittedSessionLocationDtos(sessionDetails: SessionDetailsDto): Set<PermittedSessionLocationDto> {
-    return sessionDetails.permittedLocationGroups.stream()
-      .map { it.locations }
-      .flatMap(List<PermittedSessionLocationDto>::stream).collect(Collectors.toSet())
-  }
-
-  fun getPermittedPrisonerCategoryTypes(sessionDetails: SessionDetailsDto): Set<PrisonerCategoryType> {
-    return sessionDetails.prisonerCategoryGroups.stream()
-      .map { it.categories }
-      .flatMap(List<PrisonerCategoryType>::stream).collect(Collectors.toSet())
-  }
-
-  fun getPermittedIncentiveLevels(sessionDetails: SessionDetailsDto): Set<IncentiveLevel> {
-    return sessionDetails.prisonerIncentiveLevelGroups.stream()
-      .map { it.incentiveLevels }
-      .flatMap(List<IncentiveLevel>::stream).collect(Collectors.toSet())
-  }
-
-  fun hasLocationMatch(
-    primarySessionLocations: Set<PermittedSessionLocationDto>,
-    comparedSessionLocations: Set<PermittedSessionLocationDto>,
-  ): Boolean {
-    var hasMatch = false
-    primarySessionLocations.forEach { primarySessionLocation ->
-      hasMatch = multipleLocationMatcher.test(primarySessionLocation, comparedSessionLocations)
-    }
-
-    if (!hasMatch) {
-      comparedSessionLocations.forEach { primarySessionLocation ->
-        hasMatch = multipleLocationMatcher.test(primarySessionLocation, primarySessionLocations)
-      }
-    }
-
-    return hasMatch
   }
 }
