@@ -509,7 +509,12 @@ class SessionTemplateService(
     val toSessionTemplateVisitStats = getSessionTemplateVisitStats(toSessionTemplate.reference, RequestSessionTemplateVisitStatsDto(fromDate))
 
     visitMoveValidator.validateMoveSessionTemplateVisits(fromSessionTemplate, fromSessionTemplateVisitStats, toSessionTemplate, toSessionTemplateVisitStats, fromDate)
-    return visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, toSessionTemplate.sessionTimeSlot.startTime, toSessionTemplate.sessionTimeSlot.endTime)
+
+    return if (fromSessionTemplate.sessionTimeSlot == toSessionTemplate.sessionTimeSlot) {
+      visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
+    } else {
+      visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, toSessionTemplate.sessionTimeSlot.startTime, toSessionTemplate.sessionTimeSlot.endTime)
+    }
   }
 }
 
