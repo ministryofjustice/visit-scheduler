@@ -789,4 +789,37 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.validationMessages[0]").isEqualTo("New session template incentive levels cannot accommodate all incentive levels in existing session template.")
   }
+
+  @Test
+  fun `when move visits is fired only visits after the from date are moved to new session template`() {
+    // Given
+    val fromSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY)
+    val toSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, startTime = fromSession.startTime.minusMinutes(30), endTime = fromSession.endTime.minusMinutes(30))
+    val futureVisitDate = LocalDate.now().plusDays(1)
+    val futureVisit = visitEntityHelper.create(sessionTemplateReference = fromSession.reference, visitStart = futureVisitDate.atTime(fromSession.startTime), visitEnd = futureVisitDate.atTime(fromSession.endTime))
+    val pastVisitDate = LocalDate.now().minusDays(1)
+    val pastVisit = visitEntityHelper.create(sessionTemplateReference = fromSession.reference, visitStart = pastVisitDate.atTime(fromSession.startTime), visitEnd = pastVisitDate.atTime(fromSession.endTime))
+    val moveRequest = MoveVisitsDto(fromSession.reference, toSession.reference, LocalDate.now())
+
+    // When
+    val responseSpec = callMoveVisits(webTestClient, moveRequest, setAuthorisation(roles = adminRole))
+    val updatedFutureVisit = visitEntityHelper.getVisit(futureVisit.applicationReference)
+    val pastVisitPostMove = visitEntityHelper.getVisit(pastVisit.applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val responseBody = responseSpec.expectBody().returnResult().responseBody
+    val updateCount = String(responseBody!!, StandardCharsets.UTF_8).toInt()
+
+    Assertions.assertThat(updateCount).isEqualTo(1)
+    Assertions.assertThat(updatedFutureVisit!!.sessionTemplateReference).isEqualTo(toSession.reference)
+    Assertions.assertThat(updatedFutureVisit.visitStart).isEqualTo(futureVisit.visitStart.toLocalDate().atTime(toSession.startTime))
+    Assertions.assertThat(updatedFutureVisit.visitEnd).isEqualTo(futureVisit.visitStart.toLocalDate().atTime(toSession.endTime))
+
+    // past visit should not be updated
+    Assertions.assertThat(pastVisitPostMove!!.sessionTemplateReference).isEqualTo(fromSession.reference)
+    Assertions.assertThat(pastVisitPostMove.visitStart).isEqualTo(pastVisit.visitStart.toLocalDate().atTime(fromSession.startTime))
+    Assertions.assertThat(pastVisitPostMove.visitEnd).isEqualTo(pastVisit.visitStart.toLocalDate().atTime(fromSession.endTime))
+  }
 }
