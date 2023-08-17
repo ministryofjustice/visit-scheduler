@@ -33,7 +33,7 @@ data class UpdateSessionTemplateDto(
   val weeklyFrequency: Int?,
 
   @Schema(description = "list of group references for permitted session location groups", required = false)
-  val locationGroupReferences: List<String>? = null,
+  val locationGroupReferences: List<String>? = listOf(),
 
   @Schema(description = "list of group references for allowed prisoner category groups", required = false)
   val categoryGroupReferences: List<String>? = listOf(),
