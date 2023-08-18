@@ -6,7 +6,7 @@ import java.util.Comparator
 import java.util.function.BiPredicate
 
 @Component
-class SessionLocationMatcher : SessionGroupMatcher<Set<PermittedSessionLocationDto>>, Comparator<PermittedSessionLocationDto> {
+class SessionLocationMatcher : SessionGroupMatcher<PermittedSessionLocationDto>, Comparator<PermittedSessionLocationDto> {
   private enum class LocationMatchLevel(val matchValue: Int) {
     EXACT_MATCH(0),
     LEFT_LOWER_MATCH(1),
