@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import io.swagger.v3.oas.annotations.media.Schema
-import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 
@@ -10,8 +9,7 @@ data class SessionTemplateVisitCountsDto(
   @field:NotNull
   val visitDate: LocalDate,
 
-  @Schema(description = "Count of booked or reserved visits for a date", example = "10", required = true)
+  @Schema(description = "Open and closed visit counts for the day", required = true)
   @field:NotNull
-  @field:Min(1)
-  val visitCount: Int,
+  val visitCounts: SessionCapacityDto,
 )

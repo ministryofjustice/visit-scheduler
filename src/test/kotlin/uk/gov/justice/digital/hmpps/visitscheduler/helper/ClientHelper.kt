@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHIN
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.MOVE_VISITS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_CATEGORY_GROUPS_ADMIN_PATH
@@ -40,6 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
@@ -212,6 +214,19 @@ fun callCheckingMatchingTemplatesOnCreate(
     dto,
     webTestClient,
     FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE,
+    authHttpHeaders,
+  )
+}
+
+fun callMoveVisits(
+  webTestClient: WebTestClient,
+  dto: MoveVisitsDto,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPost(
+    dto,
+    webTestClient,
+    MOVE_VISITS,
     authHttpHeaders,
   )
 }

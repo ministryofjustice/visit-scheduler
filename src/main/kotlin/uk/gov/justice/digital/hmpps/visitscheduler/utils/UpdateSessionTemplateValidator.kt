@@ -12,6 +12,7 @@ import java.time.LocalDate
 class UpdateSessionTemplateValidator(
   private val visitRepository: VisitRepository,
   private val sessionTemplateRepository: SessionTemplateRepository,
+  private val sessionTemplateUtil: SessionTemplateUtil,
   @Value("\${policy.session.booking-notice-period.maximum-days:28}")
   private val policyNoticeDaysMax: Long,
 ) {
@@ -106,16 +107,14 @@ class UpdateSessionTemplateValidator(
           LocalDate.now(),
           LocalDate.now().plusDays(policyNoticeDaysMax),
         )
-        val emptyResults = minimumCapacityTuple.get(0) == null
-        val minOpenCapacity = if (emptyResults) 0 else (minimumCapacityTuple.get(0) as Long).toInt()
-        val minClosedCapacity = if (emptyResults) 0 else (minimumCapacityTuple.get(1) as Long).toInt()
+        val minimumCapacity = sessionTemplateUtil.getMinimumSessionCapacity(minimumCapacityTuple)
 
-        if (newSessionCapacity.closed < minClosedCapacity) {
-          errorMessages.add(String.format(errorMessage, "closed", existingSessionCapacity.closed, newSessionCapacity.closed, existingSessionTemplate.reference, minClosedCapacity))
+        if (newSessionCapacity.closed < minimumCapacity.closed) {
+          errorMessages.add(String.format(errorMessage, "closed", existingSessionCapacity.closed, newSessionCapacity.closed, existingSessionTemplate.reference, minimumCapacity.closed))
         }
 
-        if (newSessionCapacity.open < minOpenCapacity) {
-          errorMessages.add(String.format(errorMessage, "open", existingSessionCapacity.open, newSessionCapacity.open, existingSessionTemplate.reference, minOpenCapacity))
+        if (newSessionCapacity.open < minimumCapacity.open) {
+          errorMessages.add(String.format(errorMessage, "open", existingSessionCapacity.open, newSessionCapacity.open, existingSessionTemplate.reference, minimumCapacity.open))
         }
       }
     }

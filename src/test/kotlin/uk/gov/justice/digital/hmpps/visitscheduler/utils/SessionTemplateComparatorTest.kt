@@ -14,6 +14,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCreateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createSessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getSessionDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.matchers.SessionCategoryMatcher
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.matchers.SessionIncentiveLevelMatcher
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.matchers.SessionLocationMatcher
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -22,7 +25,7 @@ import java.time.LocalTime
 class SessionTemplateComparatorTest {
 
   @InjectMocks
-  val toTest: SessionTemplateComparator = SessionTemplateComparator(SessionDatesUtil())
+  val toTest: SessionTemplateComparator = SessionTemplateComparator(SessionDatesUtil(), SessionLocationMatcher(), SessionCategoryMatcher(), SessionIncentiveLevelMatcher(), SessionTemplateUtil())
 
   @Test
   fun `when new session template has same details as existing session template and hence it overlaps`() {

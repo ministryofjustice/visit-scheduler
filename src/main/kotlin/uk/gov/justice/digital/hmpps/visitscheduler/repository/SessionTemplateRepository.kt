@@ -48,11 +48,11 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   ): Int
 
   @Query(
-    "select cast(v.visit_start as date) as visitDate, count(*) as visitCount from visit v " +
+    "select cast(v.visit_start as date) as visitDate, v.visit_restriction as visitRestriction, count(*) as visitCount from visit v " +
       " JOIN session_template st ON st.reference = v.session_template_reference " +
       " WHERE st.reference = :reference AND v.visit_start > :visitsFromDate AND v.visit_start < :visitsToDate " +
       " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
-      " GROUP BY v.visit_start" +
+      " GROUP BY v.visit_start, v.visit_restriction" +
       " ORDER BY v.visit_start",
     nativeQuery = true,
   )
