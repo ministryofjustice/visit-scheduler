@@ -7,9 +7,12 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateSessionGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetGroupsByPrisonId
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCreateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.createPermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -18,8 +21,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocatio
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
 
-@DisplayName("Get/Delete $LOCATION_GROUP_ADMIN_PATH")
-class AdminSessionTemplateLocationGroupTest(
+@DisplayName("Get/Create/Update/Delete $LOCATION_GROUP_ADMIN_PATH")
+class AdminCreateSessionTemplateLocationGroupTest(
   @Autowired val testTemplateRepository: TestSessionTemplateRepository,
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
 ) : IntegrationTestBase() {
@@ -36,13 +39,19 @@ class AdminSessionTemplateLocationGroupTest(
 
   @BeforeEach
   internal fun setUpTests() {
+    prison = prisonEntityHelper.create(prison.code, prison.active)
+
     sessionTemplateWithGrps = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 
-    prison = prisonEntityHelper.create(prison.code, prison.active)
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
-    sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations1)
+    sessionGroup1 =
+      sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations1)
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))
-    sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
+    sessionGroup2 = sessionLocationGroupHelper.create(
+      prisonCode = prison.code,
+      name = "get 2",
+      prisonHierarchies = allowedPermittedLocations2,
+    )
 
     sessionTemplateWithGrps.permittedSessionLocationGroups.add(sessionGroup1)
     sessionTemplateWithGrps.permittedSessionLocationGroups.add(sessionGroup2)
@@ -50,7 +59,109 @@ class AdminSessionTemplateLocationGroupTest(
     testTemplateRepository.saveAndFlush(sessionTemplateWithGrps)
 
     val allowedPermittedLocations3 = listOf(AllowedSessionLocationHierarchy("B"))
-    sessionGroupWithNoTemplate = sessionLocationGroupHelper.create(prisonCode = prison.code, name = "get 3", prisonHierarchies = allowedPermittedLocations3)
+    sessionGroupWithNoTemplate = sessionLocationGroupHelper.create(
+      prisonCode = prison.code,
+      name = "get 3",
+      prisonHierarchies = allowedPermittedLocations3,
+    )
+  }
+
+  @Test
+  fun `create session location group test`() {
+    // Given
+    val locationDto = createPermittedSessionLocationDto("C", "L1", "S1", "001")
+    val dto = createCreateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
+
+    // When
+    val responseSpec = callCreateSessionGroup(webTestClient, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionLocationGroupDto = getSessionLocationGroup(responseSpec)
+    Assertions.assertThat(sessionLocationGroupDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionLocationGroupDto.reference).isNotNull
+    Assertions.assertThat(sessionLocationGroupDto.locations.size).isEqualTo(1)
+    val permittedSessionLocationDto = sessionLocationGroupDto.locations[0]
+    Assertions.assertThat(permittedSessionLocationDto.levelOneCode).isEqualTo(locationDto.levelOneCode)
+    Assertions.assertThat(permittedSessionLocationDto.levelTwoCode).isEqualTo(locationDto.levelTwoCode)
+    Assertions.assertThat(permittedSessionLocationDto.levelThreeCode).isEqualTo(locationDto.levelThreeCode)
+    Assertions.assertThat(permittedSessionLocationDto.levelFourCode).isEqualTo(locationDto.levelFourCode)
+
+    // also check against the database post fix for VB-2458
+    val sessionLocationGroupEntity = testSessionLocationGroupRepository.findByReference(sessionLocationGroupDto.reference)
+    Assertions.assertThat(sessionLocationGroupEntity).isNotNull
+    val permittedSessionLocationEntities = testSessionLocationGroupRepository.findPermittedSessionLocationsByGroup(sessionLocationGroupEntity!!)
+    Assertions.assertThat(permittedSessionLocationEntities?.size).isEqualTo(1)
+    val permittedSessionLocationEntity = permittedSessionLocationEntities?.get(0)!!
+    Assertions.assertThat(permittedSessionLocationEntity.levelOneCode).isEqualTo(permittedSessionLocationDto.levelOneCode)
+    Assertions.assertThat(permittedSessionLocationEntity.levelTwoCode).isEqualTo(permittedSessionLocationDto.levelTwoCode)
+    Assertions.assertThat(permittedSessionLocationEntity.levelThreeCode).isEqualTo(permittedSessionLocationDto.levelThreeCode)
+    Assertions.assertThat(permittedSessionLocationEntity.levelFourCode).isEqualTo(permittedSessionLocationDto.levelFourCode)
+  }
+
+  @Test
+  fun `create session location group with null level one code, validation fails`() {
+    // Given
+    val jsonCreateDto = "{'name':'create','prisonId':'MDI','locations':[{}]}"
+
+    // When
+    val responseSpec = callCreateSessionGroup(webTestClient, jsonCreateDto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+  }
+
+  @Test
+  fun `create session location group with blank level one code, validation fails`() {
+    // Given
+    val locationDto = createPermittedSessionLocationDto(" ")
+    val dto = createCreateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
+
+    // When
+    val responseSpec = callCreateSessionGroup(webTestClient, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+  }
+
+  @Test
+  fun `create session location group with blank level two code, validation fails`() {
+    // Given
+    val locationDto = createPermittedSessionLocationDto("1", levelTwoCode = "")
+    val dto = createCreateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
+
+    // When
+    val responseSpec = callCreateSessionGroup(webTestClient, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+  }
+
+  @Test
+  fun `create session location group with blank level three code, validation fails`() {
+    // Given
+    val locationDto = createPermittedSessionLocationDto("1", levelTwoCode = "2", levelThreeCode = "")
+    val dto = createCreateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
+
+    // When
+    val responseSpec = callCreateSessionGroup(webTestClient, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+  }
+
+  @Test
+  fun `create session location group with blank level four code, validation fails`() {
+    // Given
+    val locationDto = createPermittedSessionLocationDto("1", levelTwoCode = "2", levelThreeCode = "3", levelFourCode = "")
+    val dto = createCreateLocationGroupDto(permittedSessionLocations = mutableListOf(locationDto))
+
+    // When
+    val responseSpec = callCreateSessionGroup(webTestClient, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
   }
 
   @Test
