@@ -23,6 +23,10 @@ data class UpdateSessionTemplateDto(
   @field:SessionDateRangeValidation
   val sessionDateRange: SessionDateRangeDto?,
 
+  @Schema(description = "Visit Room", example = "Visits Main Hall", required = false)
+  @field:Size(max = 255)
+  val visitRoom: String?,
+
   @Schema(description = "The open and closed capacity of the session template", required = false)
   @field:SessionCapacityValidation
   @field:Valid

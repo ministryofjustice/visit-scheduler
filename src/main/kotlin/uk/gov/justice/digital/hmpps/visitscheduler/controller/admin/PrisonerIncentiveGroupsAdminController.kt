@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.CreateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
@@ -183,6 +184,11 @@ class PrisonerIncentiveGroupsAdminController(
       ApiResponse(
         responseCode = "200",
         description = "Incentive group deleted",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incentive group delete validation errors",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ValidationErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",

@@ -333,19 +333,17 @@ class SessionService(
   }
 
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
-    val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
-      prisonCode = session.prisonCode,
-      sessionTemplateReference = session.sessionTemplateReference,
-      startDateTime = session.startTimestamp,
-      endDateTime = session.endTimestamp,
-      expiredDateAndTime = visitService.getReservedExpiredDateAndTime(),
-    )
-
     val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
       prisonCode = session.prisonCode,
       sessionTemplateReference = session.sessionTemplateReference,
-      startDateTime = session.startTimestamp,
-      endDateTime = session.endTimestamp,
+      sessionDate = session.startTimestamp.toLocalDate(),
+    )
+
+    val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
+      prisonCode = session.prisonCode,
+      sessionTemplateReference = session.sessionTemplateReference,
+      sessionDate = session.startTimestamp.toLocalDate(),
+      expiredDateAndTime = visitService.getReservedExpiredDateAndTime(),
     )
 
     return restrictionReservedStats + restrictionBookedStats

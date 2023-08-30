@@ -206,6 +206,10 @@ class SessionTemplateService(
         sessionTemplateRepository.updateSessionDateRangeByReference(reference, it)
       }
 
+      visitRoom?.let {
+        sessionTemplateRepository.updateVisitRoomByReference(reference, it)
+      }
+
       sessionCapacity?.let {
         sessionTemplateRepository.updateCapacityByReference(reference, it)
       }
@@ -505,16 +509,26 @@ class SessionTemplateService(
   fun moveSessionTemplateVisits(fromSessionTemplateReference: String, toSessionTemplateReference: String, fromDate: LocalDate): Int {
     val fromSessionTemplate = SessionTemplateDto(getSessionTemplate(fromSessionTemplateReference))
     val toSessionTemplate = SessionTemplateDto(getSessionTemplate(toSessionTemplateReference))
-    val fromSessionTemplateVisitStats = getSessionTemplateVisitStats(fromSessionTemplate.reference, RequestSessionTemplateVisitStatsDto(fromDate))
-    val toSessionTemplateVisitStats = getSessionTemplateVisitStats(toSessionTemplate.reference, RequestSessionTemplateVisitStatsDto(fromDate))
-
-    visitMoveValidator.validateMoveSessionTemplateVisits(fromSessionTemplate, fromSessionTemplateVisitStats, toSessionTemplate, toSessionTemplateVisitStats, fromDate)
+    // validate move before updating session template reference
+    validateMoveSessionTemplateVisits(fromSessionTemplate, toSessionTemplate, fromDate)
 
     return if (fromSessionTemplate.sessionTimeSlot == toSessionTemplate.sessionTimeSlot) {
       visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
     } else {
       visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, toSessionTemplate.sessionTimeSlot.startTime, toSessionTemplate.sessionTimeSlot.endTime)
     }
+  }
+
+  @Throws(VSiPValidationException::class)
+  fun validateMoveSessionTemplateVisits(
+    fromSessionTemplate: SessionTemplateDto,
+    toSessionTemplate: SessionTemplateDto,
+    fromDate: LocalDate,
+  ) {
+    val fromSessionTemplateVisitStats = getSessionTemplateVisitStats(fromSessionTemplate.reference, RequestSessionTemplateVisitStatsDto(fromDate))
+    val toSessionTemplateVisitStats = getSessionTemplateVisitStats(toSessionTemplate.reference, RequestSessionTemplateVisitStatsDto(fromDate))
+
+    visitMoveValidator.validateMoveSessionTemplateVisits(fromSessionTemplate, fromSessionTemplateVisitStats, toSessionTemplate, toSessionTemplateVisitStats, fromDate)
   }
 }
 

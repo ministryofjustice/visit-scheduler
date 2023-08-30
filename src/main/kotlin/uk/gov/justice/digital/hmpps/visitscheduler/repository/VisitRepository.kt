@@ -99,37 +99,40 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
-    "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
-      "WHERE v.prison.code = :prisonCode AND " +
-      "v.visitStart >= :startDateTime AND " +
-      "v.visitStart < :endDateTime AND " +
-      "(:sessionTemplateReference is null or v.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
-      "v.visitStatus = 'BOOKED'  " +
-      "GROUP BY v.visitRestriction",
+    "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
+      "JOIN prison p ON p.id = v.prison_id " +
+      "JOIN session_template st ON st.reference = v.session_template_reference " +
+      "WHERE p.code = :prisonCode AND " +
+      "v.session_template_reference = :sessionTemplateReference AND " +
+      "(v.visit_start >= :sessionDate AND v.visit_start < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "v.visit_restriction in ('OPEN','CLOSED') AND " +
+      "v.visit_status = 'BOOKED' " +
+      "GROUP BY v.visit_restriction",
+    nativeQuery = true,
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
-    sessionTemplateReference: String ? = null,
-    startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime,
+    sessionTemplateReference: String,
+    sessionDate: LocalDate,
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
-      "WHERE v.prison.code = :prisonCode AND " +
-      "v.visitStart >= :startDateTime AND " +
-      "v.visitStart < :endDateTime AND " +
-      "(:sessionTemplateReference is null or v.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
-      "v.visitStatus = 'RESERVED' AND v.modifyTimestamp >= :expiredDateAndTime " +
-      "GROUP BY v.visitRestriction",
+    "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
+      "JOIN prison p ON p.id = v.prison_id " +
+      "JOIN session_template st ON st.reference = v.session_template_reference " +
+      "WHERE p.code = :prisonCode AND " +
+      "(v.visit_start >= :sessionDate AND v.visit_start < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "v.session_template_reference = :sessionTemplateReference AND " +
+      "v.visit_restriction IN ('OPEN','CLOSED') AND " +
+      "v.visit_status = 'RESERVED' AND " +
+      "v.modify_timestamp >= :expiredDateAndTime " +
+      "GROUP BY v.visit_restriction",
+    nativeQuery = true,
   )
   fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
-    sessionTemplateReference: String ? = null,
-    startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime,
+    sessionTemplateReference: String,
+    sessionDate: LocalDate,
     expiredDateAndTime: LocalDateTime,
   ): List<VisitRestrictionStats>
 
@@ -179,7 +182,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "Update visit set session_template_reference = :newSessionTemplateReference " +
       ",visit_start =  (cast(visit_start as date) + cast(:newStartTime as time)) " +
       ",visit_end =  (cast(visit_end as date) + cast(:newEndTime as time)) " +
-      "WHERE (visit_status = 'BOOKED' OR visit_status = 'RESERVED')  AND " +
+      "WHERE visit_status IN ('BOOKED', 'RESERVED', 'CHANGING')  AND " +
       "(session_template_reference = :existingSessionTemplateReference) AND " +
       "(cast(visit_start as date) >= :fromDate)",
     nativeQuery = true,
@@ -195,7 +198,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Modifying
   @Query(
     "Update visit set session_template_reference = :newSessionTemplateReference " +
-      "WHERE (visit_status = 'BOOKED' OR visit_status = 'RESERVED')  AND " +
+      "WHERE visit_status IN ('BOOKED', 'RESERVED', 'CHANGING')  AND " +
       "(session_template_reference = :existingSessionTemplateReference) AND " +
       "(cast(visit_start as date) >= :fromDate)",
     nativeQuery = true,

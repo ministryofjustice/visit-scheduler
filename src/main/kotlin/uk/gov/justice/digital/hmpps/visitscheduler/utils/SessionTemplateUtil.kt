@@ -15,10 +15,10 @@ import java.util.stream.Collectors
 @Component
 class SessionTemplateUtil {
   val sessionCapacityComparator: Comparator<SessionCapacityDto> =
-    Comparator { o1: SessionCapacityDto, o2: SessionCapacityDto ->
-      if (o1 == o2) {
+    Comparator { sessionCapacityOne: SessionCapacityDto, sessionCapacityTwo: SessionCapacityDto ->
+      if (sessionCapacityOne == sessionCapacityTwo) {
         0
-      } else if (o1.open < o2.open || o1.closed < o2.closed) {
+      } else if (sessionCapacityOne.open < sessionCapacityTwo.open || sessionCapacityOne.closed < sessionCapacityTwo.closed) {
         -1
       } else {
         1
@@ -31,13 +31,6 @@ class SessionTemplateUtil {
     val closed = if (emptyResults) 0 else (minimumCapacityTuple.get(1) as Long).toInt()
 
     return SessionCapacityDto(closed = closed, open = open)
-  }
-
-  fun getTotalCapacity(a: SessionCapacityDto, b: SessionCapacityDto): SessionCapacityDto {
-    return SessionCapacityDto(
-      open = a.open + b.open,
-      closed = a.closed + b.closed,
-    )
   }
 
   fun getPermittedSessionLocations(permittedLocationGroups: List<SessionLocationGroupDto>): Set<PermittedSessionLocationDto> {
@@ -56,5 +49,9 @@ class SessionTemplateUtil {
     return prisonerIncentiveLevelGroups.stream()
       .map { it.incentiveLevels }
       .flatMap(List<IncentiveLevel>::stream).collect(Collectors.toSet())
+  }
+
+  fun isCapacityExceeded(allowedSessionCapacity: SessionCapacityDto, totalSessionCapacity: SessionCapacityDto): Boolean {
+    return sessionCapacityComparator.compare(allowedSessionCapacity, totalSessionCapacity) < 0
   }
 }
