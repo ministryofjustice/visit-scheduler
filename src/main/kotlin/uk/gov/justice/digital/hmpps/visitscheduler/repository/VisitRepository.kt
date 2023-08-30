@@ -195,7 +195,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Modifying
   @Query(
     "Update visit set session_template_reference = :newSessionTemplateReference " +
-      "WHERE (visit_status = 'BOOKED' OR visit_status = 'RESERVED')  AND " +
+      "WHERE (visit_status = 'BOOKED' OR visit_status = 'RESERVED' OR visit_status = 'CHANGING')  AND " +
       "(session_template_reference = :existingSessionTemplateReference) AND " +
       "(cast(visit_start as date) >= :fromDate)",
     nativeQuery = true,

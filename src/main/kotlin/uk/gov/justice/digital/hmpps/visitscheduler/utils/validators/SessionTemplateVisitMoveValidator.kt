@@ -179,8 +179,8 @@ class SessionTemplateVisitMoveValidator(
       fromSessionTemplateVisitStats.visitsByDate?.forEach {
         val toSessionTemplateVisitsForDate = toSessionVisits[it.visitDate]
         if (toSessionTemplateVisitsForDate != null) {
-          val totalCapacityForVisitDate = sessionTemplateUtil.getTotalCapacity(it.visitCounts, toSessionTemplateVisitsForDate.visitCounts)
-          if (sessionTemplateUtil.sessionCapacityComparator.compare(allowedToSessionCapacity, totalCapacityForVisitDate) < 0) {
+          val totalCapacityForVisitDate = it.visitCounts + toSessionTemplateVisitsForDate.visitCounts
+          if (sessionTemplateUtil.isCapacityExceeded(allowedToSessionCapacity, totalCapacityForVisitDate)) {
             exceededSessionCapacityDates.add(it.visitDate)
           }
         }
