@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek.MONDAY
 import java.time.LocalDate
@@ -34,33 +35,35 @@ class SessionDatesUtil {
     firstBookableSessionDay: LocalDate,
     sessionTemplate: SessionTemplate,
   ): LocalDate {
-    if (isWeeklySkipDate(firstBookableSessionDay, sessionTemplate)) {
+    if (isWeeklySkipDate(firstBookableSessionDay, sessionTemplate.validFromDate, sessionTemplate.weeklyFrequency)) {
       return firstBookableSessionDay.plusWeeks(sessionTemplate.weeklyFrequency.minus(1).toLong())
     }
     return firstBookableSessionDay
   }
 
   fun isActiveForDate(date: LocalDate, sessionTemplate: SessionTemplate): Boolean {
+    return isActiveForDate(date, SessionTemplateDto(sessionTemplate))
+  }
+
+  fun isActiveForDate(date: LocalDate, sessionTemplate: SessionTemplateDto): Boolean {
     if (sessionTemplate.weeklyFrequency > 1) {
-      return !isWeeklySkipDate(date, sessionTemplate)
+      return !isWeeklySkipDate(date, sessionTemplate.sessionDateRange.validFromDate, sessionTemplate.weeklyFrequency)
     }
     return true
   }
 
-  private fun getValidFromMonday(sessionTemplate: SessionTemplate): LocalDate {
+  private fun getValidFromMonday(validFromDate: LocalDate): LocalDate {
     // This has been added just encase someone wants the session template start date other than the start of week.
     // Therefore, this use of validFromMonday will allow the bi-weekly to still work.
-    if (sessionTemplate.validFromDate.dayOfWeek != MONDAY) {
-      return sessionTemplate.validFromDate.with(TemporalAdjusters.previous(MONDAY))
-    }
-    return sessionTemplate.validFromDate
+    return validFromDate.with(TemporalAdjusters.previousOrSame(MONDAY))
   }
 
   fun isWeeklySkipDate(
     sessionDate: LocalDate,
-    sessionTemplate: SessionTemplate,
+    validFromDate: LocalDate,
+    weeklyFrequency: Int,
   ): Boolean {
-    val validFromMonday = getValidFromMonday(sessionTemplate)
-    return WEEKS.between(validFromMonday, sessionDate).toInt() % sessionTemplate.weeklyFrequency != 0
+    val validFromMonday = getValidFromMonday(validFromDate)
+    return WEEKS.between(validFromMonday, sessionDate).toInt() % weeklyFrequency != 0
   }
 }

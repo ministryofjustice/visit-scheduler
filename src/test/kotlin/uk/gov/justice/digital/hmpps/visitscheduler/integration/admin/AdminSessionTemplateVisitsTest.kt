@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetActivateSessionTemplate
@@ -65,7 +66,7 @@ class AdminSessionTemplateVisitsTest(
     val visitsFromDateTime = LocalDateTime.now()
 
     visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(1))
-    visitEntityHelper.create(visitStatus = CHANGING, sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(1))
+    visitEntityHelper.create(visitStatus = CHANGING, sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = visitsFromDateTime.plusDays(1))
     visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(2))
     visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(3))
     visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = visitsFromDateTime.plusDays(4))
@@ -82,15 +83,15 @@ class AdminSessionTemplateVisitsTest(
     val sessionTemplateVisitStatsDto = getSessionTemplateVisitStatsDto(responseSpec)
 
     Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(6)
-    Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(2)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(1)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.closed).isEqualTo(1)
     Assertions.assertThat(sessionTemplateVisitStatsDto.visitsByDate).size().isEqualTo(5)
     val visitsByDate = sessionTemplateVisitStatsDto.visitsByDate
-    Assertions.assertThat(visitsByDate!![0]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(1).toLocalDate(), 2))
-    Assertions.assertThat(visitsByDate[1]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(2).toLocalDate(), 1))
-    Assertions.assertThat(visitsByDate[2]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(3).toLocalDate(), 1))
-    Assertions.assertThat(visitsByDate[3]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(4).toLocalDate(), 1))
-    Assertions.assertThat(visitsByDate[4]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(policyNoticeDaysMax - 1).toLocalDate(), 1))
+    Assertions.assertThat(visitsByDate!![0]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(1).toLocalDate(), SessionCapacityDto(open = 1, closed = 1)))
+    Assertions.assertThat(visitsByDate[1]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(2).toLocalDate(), SessionCapacityDto(open = 1, closed = 0)))
+    Assertions.assertThat(visitsByDate[2]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(3).toLocalDate(), SessionCapacityDto(open = 1, closed = 0)))
+    Assertions.assertThat(visitsByDate[3]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(4).toLocalDate(), SessionCapacityDto(open = 0, closed = 1)))
+    Assertions.assertThat(visitsByDate[4]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(policyNoticeDaysMax - 1).toLocalDate(), SessionCapacityDto(open = 0, closed = 1)))
   }
 
   private fun getSessionTemplateVisitStatsDto(responseSpec: ResponseSpec) =

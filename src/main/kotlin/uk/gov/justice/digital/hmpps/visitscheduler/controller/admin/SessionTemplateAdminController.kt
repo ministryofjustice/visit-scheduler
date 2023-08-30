@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
@@ -34,6 +35,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateServic
 
 const val ADMIN_SESSION_TEMPLATES_PATH: String = "/admin/session-templates"
 const val SESSION_TEMPLATE_PATH: String = "$ADMIN_SESSION_TEMPLATES_PATH/template"
+const val FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE: String = "$SESSION_TEMPLATE_PATH/matching/"
+const val FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE: String = "$SESSION_TEMPLATE_PATH/{reference}/matching/"
+const val MOVE_VISITS: String = "$ADMIN_SESSION_TEMPLATES_PATH/move/"
 const val REFERENCE_SESSION_TEMPLATE_PATH: String = "$SESSION_TEMPLATE_PATH/{reference}"
 const val SESSION_TEMPLATE_VISIT_STATS: String = "$SESSION_TEMPLATE_PATH/{reference}/stats"
 const val ACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/activate"
@@ -361,5 +365,114 @@ class SessionTemplateAdminController(
     requestSessionTemplateVisitStatsDto: RequestSessionTemplateVisitStatsDto,
   ): SessionTemplateVisitStatsDto {
     return sessionTemplateService.getSessionTemplateVisitStats(reference, requestSessionTemplateVisitStatsDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PostMapping(FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE)
+  @Operation(
+    summary = "Get matching session templates",
+    description = "Get matching session templates",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "List of clashing session templates or empty list if no matches found",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get matching session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Invalid request",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getMatchingSessionTemplatesOnCreate(
+    @RequestBody @Valid
+    createSessionTemplateDto: CreateSessionTemplateDto,
+  ): List<String> {
+    return sessionTemplateService.hasMatchingSessionTemplates(createSessionTemplateDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PostMapping(FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE)
+  @Operation(
+    summary = "Get matching session templates",
+    description = "Get matching session templates",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "List of clashing session templates or empty list if no matches found",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get matching session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Invalid request",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getMatchingSessionTemplatesOnUpdate(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+    @RequestBody @Valid
+    updateSessionTemplateDto: UpdateSessionTemplateDto,
+  ): List<String> {
+    return sessionTemplateService.hasMatchingSessionTemplates(reference, updateSessionTemplateDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PostMapping(MOVE_VISITS)
+  @Operation(
+    summary = "Move visits from 1 session template to another.",
+    description = "Move visits from 1 session template to another if the new session template has same details as the current one.",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Number of visits migrated on successful switching of session template.",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Invalid session reference passed.",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get matching session templates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Unable to move visits to session template for reasons detailed",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ValidationErrorResponse::class))],
+      ),
+    ],
+  )
+  fun moveVisits(
+    @RequestBody @Valid
+    moveVisitsDto: MoveVisitsDto,
+  ): Int {
+    return sessionTemplateService.moveSessionTemplateVisits(moveVisitsDto.fromSessionTemplateReference, moveVisitsDto.toSessionTemplateReference, moveVisitsDto.fromDate)
   }
 }

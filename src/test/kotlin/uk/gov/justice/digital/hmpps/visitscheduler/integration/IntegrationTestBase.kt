@@ -119,6 +119,9 @@ abstract class IntegrationTestBase {
   fun getSessionIncentiveGroups(responseSpec: ResponseSpec): Array<SessionIncentiveLevelGroupDto> =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionIncentiveLevelGroupDto>::class.java)
 
+  fun getCheckingMatchingTemplatesOnCreate(responseSpec: ResponseSpec): Array<String> =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<String>::class.java)
+
   fun getErrorResponse(responseSpec: ResponseSpec) =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ErrorResponse::class.java)
 
