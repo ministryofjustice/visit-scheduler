@@ -179,7 +179,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "Update visit set session_template_reference = :newSessionTemplateReference " +
       ",visit_start =  (cast(visit_start as date) + cast(:newStartTime as time)) " +
       ",visit_end =  (cast(visit_end as date) + cast(:newEndTime as time)) " +
-      "WHERE (visit_status = 'BOOKED' OR visit_status = 'RESERVED')  AND " +
+      "WHERE (visit_status = 'BOOKED' OR visit_status = 'RESERVED' OR visit_status = 'CHANGING')  AND " +
       "(session_template_reference = :existingSessionTemplateReference) AND " +
       "(cast(visit_start as date) >= :fromDate)",
     nativeQuery = true,
