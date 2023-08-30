@@ -147,6 +147,10 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   fun updateNameByReference(reference: String, name: String): Int
 
   @Modifying(clearAutomatically = true)
+  @Query("update SessionTemplate s set s.visitRoom = :visitRoom WHERE s.reference = :reference")
+  fun updateVisitRoomByReference(reference: String, visitRoom: String): Int
+
+  @Modifying(clearAutomatically = true)
   @Query("Update SessionTemplate s set s.startTime = :#{#sessionTimeSlot.startTime},  s.endTime = :#{#sessionTimeSlot.endTime} WHERE s.reference = :reference")
   fun updateSessionTimeSlotByReference(reference: String, sessionTimeSlot: SessionTimeSlotDto): Int
 

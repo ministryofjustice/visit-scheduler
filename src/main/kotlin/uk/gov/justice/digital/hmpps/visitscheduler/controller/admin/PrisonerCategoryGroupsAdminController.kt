@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.UpdateCategoryGroupDto
@@ -191,6 +192,11 @@ class PrisonerCategoryGroupsAdminController(
       ApiResponse(
         responseCode = "200",
         description = "Category group deleted",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Category group delete validation errorsvalidation errors",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ValidationErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",

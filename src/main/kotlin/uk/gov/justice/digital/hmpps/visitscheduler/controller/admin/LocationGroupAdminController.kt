@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
@@ -154,6 +155,11 @@ class LocationGroupAdminController(
       ApiResponse(
         responseCode = "200",
         description = "Session templates deleted",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Location group delete validation errors",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ValidationErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",
