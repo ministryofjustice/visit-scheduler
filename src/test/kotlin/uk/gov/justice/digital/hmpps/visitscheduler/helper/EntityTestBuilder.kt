@@ -157,6 +157,7 @@ fun createUpdateSessionTemplateDto(
     weeklyFrequency = sessionTemplateDto.weeklyFrequency,
     categoryGroupReferences = sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
     incentiveLevelGroupReferences = sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
+    visitRoom = sessionTemplateDto.visitRoom,
   )
 }
 
