@@ -147,16 +147,19 @@ fun createUpdateSessionTemplateDto(
 fun createUpdateSessionTemplateDto(
   sessionTemplateDto: SessionTemplateDto,
   sessionTimeSlot: SessionTimeSlotDto? = null,
+  locationGroupReferences: List<String>? = null,
+  categoryGroupReferences: List<String>? = null,
+  incentiveLevelReferences: List<String>? = null,
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = sessionTemplateDto.name,
     sessionDateRange = sessionTemplateDto.sessionDateRange,
     sessionCapacity = sessionTemplateDto.sessionCapacity,
     sessionTimeSlot = sessionTimeSlot ?: sessionTemplateDto.sessionTimeSlot,
-    locationGroupReferences = sessionTemplateDto.permittedLocationGroups.stream().map { it.reference }.toList(),
+    locationGroupReferences = locationGroupReferences ?: sessionTemplateDto.permittedLocationGroups.stream().map { it.reference }.toList(),
     weeklyFrequency = sessionTemplateDto.weeklyFrequency,
-    categoryGroupReferences = sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
-    incentiveLevelGroupReferences = sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
+    categoryGroupReferences = categoryGroupReferences ?: sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
+    incentiveLevelGroupReferences = incentiveLevelReferences ?: sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
     visitRoom = sessionTemplateDto.visitRoom,
   )
 }
