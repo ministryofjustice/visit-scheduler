@@ -46,8 +46,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateComparator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateMapper
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateUtil
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.UpdateSessionTemplateValidator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.validators.SessionTemplateVisitMoveValidator
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.validators.UpdateSessionTemplateValidator
 import java.time.LocalDate
 import java.util.function.Supplier
 
