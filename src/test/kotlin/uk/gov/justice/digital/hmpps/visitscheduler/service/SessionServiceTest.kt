@@ -103,14 +103,12 @@ class SessionServiceTest {
 
   private fun mockVisitRepositoryCountResponse(visits: List<Visit>, sessionTemplate: SessionTemplate) {
     val startDateTime = date.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.startTime)
-    val endDateTime = date.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.endTime)
 
     whenever(
       visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
         sessionTemplate.prison.code,
         sessionTemplateReference = sessionTemplate.reference,
-        startDateTime,
-        endDateTime,
+        startDateTime.toLocalDate(),
       ),
     ).thenReturn(getVisitRestrictionStatsList(visits))
   }
@@ -352,6 +350,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = OPEN,
+        sessionTemplateReference = singleSession.reference,
         visitRoom = "1",
       )
 
@@ -364,6 +363,7 @@ class SessionServiceTest {
         prison = prison,
         visitStatus = RESERVED,
         visitRestriction = CLOSED,
+        sessionTemplateReference = singleSession.reference,
         visitRoom = "1",
       )
       mockVisitRepositoryCountResponse(listOf(openVisit, closedVisit), singleSession)

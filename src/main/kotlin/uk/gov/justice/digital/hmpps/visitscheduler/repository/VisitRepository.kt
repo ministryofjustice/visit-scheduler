@@ -99,37 +99,40 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
-    "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
-      "WHERE v.prison.code = :prisonCode AND " +
-      "v.visitStart >= :startDateTime AND " +
-      "v.visitStart < :endDateTime AND " +
-      "(:sessionTemplateReference is null or v.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
-      "v.visitStatus = 'BOOKED'  " +
-      "GROUP BY v.visitRestriction",
+    "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
+      "JOIN prison p ON p.id = v.prison_id " +
+      "JOIN session_template st ON st.reference = v.session_template_reference " +
+      "WHERE p.code = :prisonCode AND " +
+      "v.session_template_reference = :sessionTemplateReference AND " +
+      "(v.visit_start >= :sessionDate AND v.visit_start < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "v.visit_restriction in ('OPEN','CLOSED') AND " +
+      "v.visit_status = 'BOOKED' " +
+      "GROUP BY v.visit_restriction",
+    nativeQuery = true,
   )
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
-    sessionTemplateReference: String ? = null,
-    startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime,
+    sessionTemplateReference: String,
+    sessionDate: LocalDate,
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT v.visitRestriction AS visitRestriction, COUNT(v) AS count  FROM Visit v " +
-      "WHERE v.prison.code = :prisonCode AND " +
-      "v.visitStart >= :startDateTime AND " +
-      "v.visitStart < :endDateTime AND " +
-      "(:sessionTemplateReference is null or v.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "(v.visitRestriction = 'OPEN' OR v.visitRestriction = 'CLOSED') AND " +
-      "v.visitStatus = 'RESERVED' AND v.modifyTimestamp >= :expiredDateAndTime " +
-      "GROUP BY v.visitRestriction",
+    "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
+      "JOIN prison p ON p.id = v.prison_id " +
+      "JOIN session_template st ON st.reference = v.session_template_reference " +
+      "WHERE p.code = :prisonCode AND " +
+      "(v.visit_start >= :sessionDate AND v.visit_start < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "v.session_template_reference = :sessionTemplateReference AND " +
+      "v.visit_restriction IN ('OPEN','CLOSED') AND " +
+      "v.visit_status = 'RESERVED' AND " +
+      "v.modify_timestamp >= :expiredDateAndTime " +
+      "GROUP BY v.visit_restriction",
+    nativeQuery = true,
   )
   fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
     prisonCode: String,
-    sessionTemplateReference: String ? = null,
-    startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime,
+    sessionTemplateReference: String,
+    sessionDate: LocalDate,
     expiredDateAndTime: LocalDateTime,
   ): List<VisitRestrictionStats>
 

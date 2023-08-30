@@ -124,6 +124,7 @@ fun createUpdateSessionTemplateDto(
   sessionDateRange: SessionDateRangeDto? = SessionDateRangeDto(LocalDate.now().minusDays(1), null),
   sessionCapacity: SessionCapacityDto? = SessionCapacityDto(closed = 10, open = 5),
   sessionTimeSlot: SessionTimeSlotDto? = SessionTimeSlotDto(LocalTime.parse("09:00"), LocalTime.parse("10:00")),
+  visitRoom: String? = null,
   dayOfWeek: DayOfWeek? = DayOfWeek.FRIDAY,
   weeklyFrequency: Int = 1,
   locationGroupReferences: MutableList<String> = mutableListOf(),
@@ -133,6 +134,7 @@ fun createUpdateSessionTemplateDto(
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
     sessionDateRange = sessionDateRange,
+    visitRoom = visitRoom,
     sessionCapacity = sessionCapacity,
     sessionTimeSlot = sessionTimeSlot,
     locationGroupReferences = locationGroupReferences,

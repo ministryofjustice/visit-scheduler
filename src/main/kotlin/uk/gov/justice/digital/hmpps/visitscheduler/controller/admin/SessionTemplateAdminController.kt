@@ -188,6 +188,11 @@ class SessionTemplateAdminController(
         description = "Session templates updated",
       ),
       ApiResponse(
+        responseCode = "400",
+        description = "Session Template update validation errors",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ValidationErrorResponse::class))],
+      ),
+      ApiResponse(
         responseCode = "401",
         description = "Unauthorized to access this endpoint",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
@@ -223,6 +228,11 @@ class SessionTemplateAdminController(
       ApiResponse(
         responseCode = "200",
         description = "Session templates deleted",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Session Template delete validation errors",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ValidationErrorResponse::class))],
       ),
       ApiResponse(
         responseCode = "401",

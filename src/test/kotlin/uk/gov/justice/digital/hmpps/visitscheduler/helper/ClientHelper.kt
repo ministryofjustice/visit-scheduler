@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import org.springframework.http.HttpHeaders
+import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
@@ -185,6 +186,18 @@ fun callCreateSessionGroup(
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   return callPost(
+    dto,
+    webTestClient,
+    LOCATION_GROUP_ADMIN_PATH,
+    authHttpHeaders,
+  )
+}
+fun callCreateSessionGroup(
+  webTestClient: WebTestClient,
+  dto: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callPostByJsonString(
     dto,
     webTestClient,
     LOCATION_GROUP_ADMIN_PATH,
@@ -633,4 +646,21 @@ fun callPost(
       .body(BodyInserters.fromValue(bodyValue))
       .exchange()
   }
+}
+
+fun callPostByJsonString(
+  jsonString: String,
+  webTestClient: WebTestClient,
+  url: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return webTestClient.post().uri(url)
+    .headers(authHttpHeaders)
+    .contentType(MediaType.APPLICATION_JSON)
+    .body(
+      BodyInserters.fromValue(
+        jsonString,
+      ),
+    )
+    .exchange()
 }
