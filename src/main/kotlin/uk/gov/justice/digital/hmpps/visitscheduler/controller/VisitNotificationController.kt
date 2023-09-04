@@ -23,7 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAsso
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationService
 
 const val VISIT_NOTIFICATION_CONTROLLER_PATH: String = "/visits/notification"
-const val VISIT_NOTIFICATION_NONASSOCIATION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/nonAssociation/changed"
+const val VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/non-association/changed"
 
 @RestController
 @Validated
@@ -37,7 +37,7 @@ class VisitNotificationController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PostMapping(VISIT_NOTIFICATION_NONASSOCIATION_CHANGE_PATH)
+  @PostMapping(VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "To notify VSiP that non association between two prisoners has changed",
