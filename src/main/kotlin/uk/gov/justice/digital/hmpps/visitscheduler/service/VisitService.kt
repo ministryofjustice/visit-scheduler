@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import com.microsoft.applicationinsights.TelemetryClient
 import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -33,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
@@ -48,9 +48,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeReposit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CHANGED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 @Service
@@ -58,7 +60,7 @@ import java.time.temporal.ChronoUnit
 class VisitService(
   private val visitRepository: VisitRepository,
   private val supportTypeRepository: SupportTypeRepository,
-  private val telemetryClient: TelemetryClient,
+  private val telemetryClientService: TelemetryClientService,
   private val sessionTemplateService: SessionTemplateService,
   private val eventAuditRepository: EventAuditRepository,
   private val snsService: SnsService,
@@ -145,8 +147,8 @@ class VisitService(
 
     val visitDto = VisitDto(visitEntity)
 
-    val eventName = if (bookingReference.isBlank()) TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT.eventName else TelemetryVisitEvents.VISIT_CHANGED_EVENT.eventName
-    trackEvent(eventName, createVisitTrackEventFromVisitEntity(visitEntity, reserveVisitSlotDto.actionedBy))
+    val eventName = if (bookingReference.isBlank()) VISIT_SLOT_RESERVED_EVENT else VISIT_CHANGED_EVENT
+    telemetryClientService.trackEvent(eventName, telemetryClientService.createVisitTrackEventFromVisitEntity(visitEntity, reserveVisitSlotDto.actionedBy))
     return visitDto
   }
 
@@ -222,8 +224,8 @@ class VisitService(
 
     visitEntity.sessionTemplateReference = changeVisitSlotRequestDto.sessionTemplateReference
 
-    trackEvent(
-      TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT.eventName,
+    telemetryClientService.trackEvent(
+      VISIT_SLOT_CHANGED_EVENT,
       mapOf(
         "applicationReference" to visitEntity.applicationReference,
         "reference" to visitEntity.reference,
@@ -260,8 +262,8 @@ class VisitService(
       val applicationToBeDeleted = getApplication(it)
       val deleted = visitRepository.deleteByApplicationReferenceAndVisitStatusIn(it, EXPIRED_VISIT_STATUSES)
       if (deleted > 0) {
-        val bookEvent = createVisitTrackEventFromVisitEntity(applicationToBeDeleted)
-        trackEvent(VISIT_SLOT_RELEASED_EVENT.eventName, bookEvent)
+        val bookEvent = telemetryClientService.createVisitTrackEventFromVisitEntity(applicationToBeDeleted)
+        telemetryClientService.trackEvent(VISIT_SLOT_RELEASED_EVENT, bookEvent)
       }
     }
   }
@@ -290,7 +292,7 @@ class VisitService(
       visitRepository.saveAndFlush(existingBooking)
     }
 
-    visitToBook.visitStatus = VisitStatus.BOOKED
+    visitToBook.visitStatus = BOOKED
 
     val bookedVisitDto = VisitDto(visitRepository.saveAndFlush(visitToBook))
 
@@ -380,9 +382,9 @@ class VisitService(
     bookingRequestDto: BookingRequestDto,
     hasExistingBooking: Boolean,
   ) {
-    val bookEvent = createVisitTrackEventFromVisitEntity(bookedVisit, bookingRequestDto.actionedBy, bookingRequestDto.applicationMethodType)
+    val bookEvent = telemetryClientService.createVisitTrackEventFromVisitEntity(bookedVisit, bookingRequestDto.actionedBy, bookingRequestDto.applicationMethodType)
     bookEvent["isUpdated"] = hasExistingBooking.toString()
-    trackEvent(VISIT_BOOKED_EVENT.eventName, bookEvent)
+    telemetryClientService.trackEvent(VISIT_BOOKED_EVENT, bookEvent)
 
     if (hasExistingBooking) {
       snsService.sendChangedVisitBookedEvent(bookedVisitDto)
@@ -406,12 +408,12 @@ class VisitService(
     visitDto: VisitDto,
     cancelVisitDto: CancelVisitDto,
   ) {
-    val eventsMap = createVisitTrackEventFromVisitEntity(visit, cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType)
+    val eventsMap = telemetryClientService.createVisitTrackEventFromVisitEntity(visit, cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType)
     visitDto.outcomeStatus?.let {
       eventsMap.put("outcomeStatus", it.name)
     }
-    trackEvent(
-      VISIT_CANCELLED_EVENT.eventName,
+    telemetryClientService.trackEvent(
+      VISIT_CANCELLED_EVENT,
       eventsMap,
     )
     snsService.sendVisitCancelledEvent(visitDto)
@@ -480,37 +482,5 @@ class VisitService(
     }
 
     return visitCancellationDateAllowed
-  }
-
-  private fun createVisitTrackEventFromVisitEntity(visit: Visit, actionedBy: String? = null, applicationMethodType: ApplicationMethodType? = null): MutableMap<String, String> {
-    val data = mutableMapOf(
-      "reference" to visit.reference,
-      "prisonerId" to visit.prisonerId,
-      "prisonId" to visit.prison.code,
-      "visitType" to visit.visitType.name,
-      "visitRoom" to visit.visitRoom,
-      "visitRestriction" to visit.visitRestriction.name,
-      "visitStart" to visit.visitStart.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME),
-      "visitStatus" to visit.visitStatus.name,
-      "applicationReference" to visit.applicationReference,
-    )
-
-    actionedBy?.let {
-      data.put("actionedBy", it)
-    }
-
-    applicationMethodType?.let {
-      data.put("applicationMethodType", it.name)
-    }
-
-    return data
-  }
-
-  private fun trackEvent(eventName: String, properties: Map<String, String>) {
-    try {
-      telemetryClient.trackEvent(eventName, properties, null)
-    } catch (e: RuntimeException) {
-      LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
-    }
   }
 }
