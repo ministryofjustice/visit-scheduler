@@ -67,7 +67,7 @@ class VisitNotificationController(
     @RequestBody @Valid
     nonAssociationChangedNotificationDto: NonAssociationChangedNotificationDto,
   ): ResponseEntity<HttpStatus> {
-    LOG.debug("Entered notifyVSiPOfNonAssociationHasChanged $nonAssociationChangedNotificationDto")
+    LOG.debug("Entered notifyVSiPOfNonAssociationHasChanged {}", nonAssociationChangedNotificationDto)
     visitNotificationService.handleNonAssociations(nonAssociationChangedNotificationDto)
     return ResponseEntity(HttpStatus.OK)
   }

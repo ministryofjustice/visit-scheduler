@@ -57,7 +57,7 @@ class TelemetryClientService(
 
   fun createFlagEventFromVisitDto(
     visit: VisitDto,
-    eventType: EventType,
+    notificationEventType: NotificationEventType,
   ): MutableMap<String, String> {
     return mutableMapOf(
       "reference" to visit.reference,
@@ -69,7 +69,7 @@ class TelemetryClientService(
       "visitStart" to visit.startTimestamp.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visit.visitStatus.name,
       "applicationReference" to visit.applicationReference,
-      "reviewType" to eventType.description,
+      "reviewType" to notificationEventType.reviewType,
     )
   }
 

@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
@@ -18,46 +20,80 @@ class VisitNotificationService(
   private val telemetryClientService: TelemetryClientService,
   private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
 ) {
+  companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
+
   @Transactional
   fun handleNonAssociations(nonAssociationChangedNotification: NonAssociationChangedNotificationDto) {
-    // get the prisoners prison code
-    val prisonerDetails = prisonerOffenderSearchClient.getPrisoner(nonAssociationChangedNotification.prisonerNumber)
-    var overlappingVisits = listOf<VisitDto>()
-    val toDate = nonAssociationChangedNotification.validToDate?.atTime(23, 59)
-
-    if ((toDate == null) || toDate.isAfter(LocalDateTime.now())) {
-      val fromDate = getNowOrFutureDateTimeAtStartOfDay(nonAssociationChangedNotification.validFromDate)
-      val primaryPrisonerVisits = getBookedVisits(nonAssociationChangedNotification.prisonerNumber, prisonerDetails?.prisonId, fromDate, toDate)
-      val nonAssociationPrisonerVisits = getBookedVisits(nonAssociationChangedNotification.nonAssociationPrisonerNumber, prisonerDetails?.prisonId, fromDate, toDate)
-
-      if (primaryPrisonerVisits.isNotEmpty() && nonAssociationPrisonerVisits.isNotEmpty()) {
-        overlappingVisits = getOverLappingVisits(primaryPrisonerVisits, nonAssociationPrisonerVisits)
+    if (isNotificationDatesValid(nonAssociationChangedNotification)) {
+      val overlappingVisits = getOverLappingVisits(nonAssociationChangedNotification)
+      overlappingVisits.forEach {
+        LOG.info("Flagging visit with reference {} for non association", it.reference)
+        handleVisitWithNonAssociation(it)
       }
-    }
-
-    overlappingVisits.forEach {
-      val data = telemetryClientService.createFlagEventFromVisitDto(it, EventType.NON_ASSOCIATION_EVENT)
-      telemetryClientService.trackEvent(TelemetryVisitEvents.FLAG_EVENT, data)
     }
   }
 
-  private fun getNowOrFutureDateTimeAtStartOfDay(validFromDate: LocalDate): LocalDateTime {
-    return if (validFromDate.isAfter(LocalDate.now())) {
-      validFromDate.atStartOfDay()
+  private fun handleVisitWithNonAssociation(impactedVisit: VisitDto) {
+    val data = telemetryClientService.createFlagEventFromVisitDto(impactedVisit, NotificationEventType.NON_ASSOCIATION_EVENT)
+    telemetryClientService.trackEvent(TelemetryVisitEvents.FLAG_EVENT, data)
+  }
+  private fun isNotificationDatesValid(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): Boolean {
+    val toDate = getValidToDateTime(nonAssociationChangedNotification)
+    return (toDate == null) || toDate.isAfter(LocalDateTime.now())
+  }
+
+  private fun getOverLappingVisits(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): List<VisitDto> {
+    // get the prisoners prison code
+    val prisonCode = prisonerOffenderSearchClient.getPrisoner(nonAssociationChangedNotification.prisonerNumber)?.prisonId
+    val fromDate = getValidFromDateTime(nonAssociationChangedNotification)
+    val toDate = getValidToDateTime(nonAssociationChangedNotification)
+
+    val primaryPrisonerVisits = getBookedVisits(nonAssociationChangedNotification.prisonerNumber, prisonCode, fromDate, toDate)
+    val nonAssociationPrisonerVisits = getBookedVisits(nonAssociationChangedNotification.nonAssociationPrisonerNumber, prisonCode, fromDate, toDate)
+    return getOverLappingVisits(primaryPrisonerVisits, nonAssociationPrisonerVisits)
+  }
+
+  private fun getOverLappingVisits(primaryPrisonerVisits: List<VisitDto>, nonAssociationPrisonerVisits: List<VisitDto>): List<VisitDto> {
+    val overlappingVisits = mutableListOf<VisitDto>()
+    if (primaryPrisonerVisits.isNotEmpty() && nonAssociationPrisonerVisits.isNotEmpty()) {
+      val overlappingVisitDates = getOverlappingVisitDatesByPrison(primaryPrisonerVisits, nonAssociationPrisonerVisits)
+      if (overlappingVisitDates.isNotEmpty()) {
+        overlappingVisits.addAll(getVisitsForDateAndPrison(primaryPrisonerVisits, overlappingVisitDates))
+        overlappingVisits.addAll(getVisitsForDateAndPrison(nonAssociationPrisonerVisits, overlappingVisitDates))
+      }
+    }
+
+    return overlappingVisits.toList()
+  }
+
+  private fun getVisitsForDateAndPrison(visits: List<VisitDto>, visitDatesByPrison: List<Pair<LocalDate, String>>): List<VisitDto> {
+    return visits.filter {
+      visitDatesByPrison.contains(Pair(it.startTimestamp.toLocalDate(), it.prisonCode))
+    }
+  }
+
+  private fun getOverlappingVisitDatesByPrison(primaryPrisonerVisits: List<VisitDto>, nonAssociationPrisonerVisits: List<VisitDto>): List<Pair<LocalDate, String>> {
+    // all visits by date and prison for first prisoner
+    val primaryPrisonerVisitDatesByPrison = primaryPrisonerVisits.map { Pair(it.startTimestamp.toLocalDate(), it.prisonCode) }.toSet()
+    // all visits by date and prison for second prisoner
+    val nonAssociationPrisonerVisitDatesByPrison = nonAssociationPrisonerVisits.map { Pair(it.startTimestamp.toLocalDate(), it.prisonCode) }.toSet()
+
+    // return list of matching date and prison pair
+    return primaryPrisonerVisitDatesByPrison.filter { nonAssociationPrisonerVisitDatesByPrison.contains(it) }
+  }
+
+  private fun getValidFromDateTime(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): LocalDateTime {
+    return if (nonAssociationChangedNotification.validFromDate.isAfter(LocalDate.now())) {
+      nonAssociationChangedNotification.validFromDate.atStartOfDay()
     } else {
       LocalDateTime.now()
     }
   }
 
-  private fun getOverLappingVisits(primaryPrisonerVisits: List<VisitDto>, nonAssociationPrisonerVisits: List<VisitDto>): List<VisitDto> {
-    val overlappingVisits = mutableListOf<VisitDto>()
-    val primaryPrisonerVisitDatesByPrison = primaryPrisonerVisits.map { Pair(it.startTimestamp.toLocalDate(), it.prisonCode) }.toSet()
-    val nonAssociationPrisonerVisitDatesByPrison = nonAssociationPrisonerVisits.map { Pair(it.startTimestamp.toLocalDate(), it.prisonCode) }.toSet()
-
-    val overlappingVisitDates = primaryPrisonerVisitDatesByPrison.filter { nonAssociationPrisonerVisitDatesByPrison.contains(it) }
-    overlappingVisits.addAll(primaryPrisonerVisits.filter { overlappingVisitDates.contains(Pair(it.startTimestamp.toLocalDate(), it.prisonCode)) })
-    overlappingVisits.addAll(nonAssociationPrisonerVisits.filter { overlappingVisitDates.contains(Pair(it.startTimestamp.toLocalDate(), it.prisonCode)) })
-    return overlappingVisits.toList()
+  private fun getValidToDateTime(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): LocalDateTime? {
+    return nonAssociationChangedNotification.validToDate?.atTime(23, 59)
   }
 
   fun getBookedVisits(prisonerNumber: String, prisonCode: String?, startDateTime: LocalDateTime, endDateTime: LocalDateTime?): List<VisitDto> {
