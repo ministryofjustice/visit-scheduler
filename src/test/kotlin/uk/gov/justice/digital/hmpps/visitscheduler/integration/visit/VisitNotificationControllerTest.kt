@@ -20,7 +20,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonA
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -34,6 +36,9 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
+  @SpyBean
+  private lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
+
   val primaryPrisonerId = "AA11BCC"
   val secondaryPrisonerId = "XX11YZZ"
   val prisonCode = "ABC"
@@ -45,7 +50,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when prisoners have overlapped visits then visits with same date and prison are flagged`() {
+  fun `when prisoners have overlapped visits then visits with same date and prison are flagged and saved`() {
     // Given
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = LocalDate.now())
 
@@ -99,11 +104,12 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     assertBookedEvent(listOf(primaryVisit1, primaryVisit2, secondaryVisit1, secondaryVisit2))
-    verify(telemetryClient, times(4)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(4)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(4)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
   @Test
-  fun `when both prisoners have no overlapping visits then no visits are flagged`() {
+  fun `when both prisoners have no overlapping visits then no visits are flagged or saved`() {
     // Given
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = LocalDate.now())
 
@@ -157,11 +163,12 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
   @Test
-  fun `when primary prisoner has no future visits then no visits are flagged`() {
+  fun `when primary prisoner has no future visits then no visits are flagged or saved`() {
     // Given
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = LocalDate.now())
 
@@ -201,11 +208,12 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
   @Test
-  fun `when secondary prisoner has no future visits then no visits are flagged`() {
+  fun `when secondary prisoner has no future visits then no visits are flagged or saved`() {
     // Given
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = LocalDate.now())
 
@@ -238,11 +246,12 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
   @Test
-  fun `when both prisoners have overlapping visits only in the past then no visits are flagged`() {
+  fun `when both prisoners have overlapping visits only in the past then no visits are flagged or saved`() {
     // Given
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = LocalDate.now())
 
@@ -294,11 +303,12 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
   @Test
-  fun `when future visits overlap but in different prisons then no visits are flagged`() {
+  fun `when future visits overlap but in different prisons then no visits are flagged or saved`() {
     // Given
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = LocalDate.now())
 
@@ -324,11 +334,12 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
   @Test
-  fun `when prisoners have overlapped visits only visits after from date with same date and prison are flagged`() {
+  fun `when prisoners have overlapped visits only visits after from date with same date and prison are flagged and saved`() {
     // Given
     val fromDate = LocalDate.now().plusDays(2)
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = fromDate)
@@ -385,11 +396,12 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     assertBookedEvent(listOf(primaryVisit2, secondaryVisit2))
-    verify(telemetryClient, times(2)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
   @Test
-  fun `when prisoners have overlapped visits only visits before to date with same date and prison are flagged`() {
+  fun `when prisoners have overlapped visits only visits before to date with same date and prison are flagged and saved`() {
     // Given
     val fromDate = LocalDate.now()
     val toDate = LocalDate.now().plusDays(1)
@@ -447,13 +459,14 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     assertBookedEvent(listOf(primaryVisit1, secondaryVisit1))
-    verify(telemetryClient, times(2)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
   private fun assertBookedEvent(visits: List<Visit>) {
     visits.forEach { visit ->
       verify(telemetryClient).trackEvent(
-        eq("flag-visit"),
+        eq("flagged-visit-event"),
         org.mockito.kotlin.check {
           Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
           Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)

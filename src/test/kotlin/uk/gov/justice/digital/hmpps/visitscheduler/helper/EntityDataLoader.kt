@@ -37,6 +37,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepo
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -372,6 +373,7 @@ class DeleteEntityHelper(
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val eventAuditRepository: TestEventAuditRepository,
+  private val visitNotificationEventRepository: VisitNotificationEventRepository,
 ) {
 
   fun deleteAll() {
@@ -393,6 +395,8 @@ class DeleteEntityHelper(
     sessionCategoryGroupRepository.flush()
     eventAuditRepository.deleteAll()
     eventAuditRepository.flush()
+    visitNotificationEventRepository.deleteAll()
+    visitNotificationEventRepository.flush()
   }
 }
 
