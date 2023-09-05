@@ -20,22 +20,24 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationService
 
 const val VISIT_NOTIFICATION_CONTROLLER_PATH: String = "/visits/notification"
-const val VISIT_NOTIFICATION_NONASSOCIATION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/nonAssociation/changed"
+const val VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/non-association/changed"
 
 @RestController
 @Validated
 @Tag(name = "Visit notification controller $VISIT_NOTIFICATION_CONTROLLER_PATH")
 @RequestMapping(name = "Visit notification Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
-class VisitNotificationController {
-
+class VisitNotificationController(
+  private val visitNotificationService: VisitNotificationService,
+) {
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PostMapping(VISIT_NOTIFICATION_NONASSOCIATION_CHANGE_PATH)
+  @PostMapping(VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "To notify VSiP that non association between two prisoners has changed",
@@ -65,7 +67,8 @@ class VisitNotificationController {
     @RequestBody @Valid
     nonAssociationChangedNotificationDto: NonAssociationChangedNotificationDto,
   ): ResponseEntity<HttpStatus> {
-    LOG.debug("Entered notifyVSiPOfNonAssociationHasChanged $nonAssociationChangedNotificationDto")
+    LOG.debug("Entered notifyVSiPOfNonAssociationHasChanged {}", nonAssociationChangedNotificationDto)
+    visitNotificationService.handleNonAssociations(nonAssociationChangedNotificationDto)
     return ResponseEntity(HttpStatus.OK)
   }
 }

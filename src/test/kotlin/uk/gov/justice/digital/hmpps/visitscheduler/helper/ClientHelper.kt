@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
@@ -51,6 +52,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.Create
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.PHONE
 import java.time.LocalDate
@@ -588,6 +590,19 @@ fun callRemovePrisonExcludeDate(
     PrisonExcludeDateDto(excludeDate),
     webTestClient,
     getRemovePrisonExcludeDateUrl(prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callNotifyVSiPThatNonAssociationHasChanged(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  nonAssociationChangedNotification: NonAssociationChangedNotificationDto? = null,
+): ResponseSpec {
+  return callPost(
+    nonAssociationChangedNotification,
+    webTestClient,
+    VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH,
     authHttpHeaders,
   )
 }
