@@ -28,8 +28,7 @@ import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
-class VisitNotoficationControllerTest : IntegrationTestBase() {
-
+class VisitNotificationControllerTest : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @SpyBean
@@ -248,7 +247,6 @@ class VisitNotoficationControllerTest : IntegrationTestBase() {
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = LocalDate.now())
 
     // no visits overlap
-    // visits for primary prisoners are for today + 1, +2 & +3
     visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
       visitStart = nonAssociationChangedNotification.validFromDate.minusDays(1).atTime(11, 0),
@@ -270,7 +268,6 @@ class VisitNotoficationControllerTest : IntegrationTestBase() {
       visitStatus = BOOKED,
     )
 
-    // visits for secondary prisoners are for today + 4, +5 & +6
     visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
       prisonCode = prisonCode,
@@ -318,7 +315,7 @@ class VisitNotoficationControllerTest : IntegrationTestBase() {
     visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
       prisonCode = "DEF",
-      visitStart = LocalDateTime.now().plusDays(4),
+      visitStart = LocalDateTime.now().plusDays(1),
       visitStatus = BOOKED,
     )
 
