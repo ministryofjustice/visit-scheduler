@@ -5,5 +5,4 @@ enum class PrisonerHousingLevels(val level: Int) {
   LEVEL_TWO(2),
   LEVEL_THREE(3),
   LEVEL_FOUR(4),
-  ;
 }

@@ -95,10 +95,10 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
-      eq("flag-visit"),
+      eq("flagged-visit-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
@@ -152,10 +152,10 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
-      eq("flag-visit"),
+      eq("flagged-visit-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
@@ -207,10 +207,10 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
-      eq("flag-visit"),
+      eq("flagged-visit-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
@@ -262,10 +262,10 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
-      eq("flag-visit"),
+      eq("flagged-visit-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
@@ -316,10 +316,10 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
-      eq("flag-visit"),
+      eq("flagged-visit-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
@@ -366,10 +366,10 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flag-visit"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
     verify(telemetryClient).trackEvent(
-      eq("flag-visit"),
+      eq("flagged-visit-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)

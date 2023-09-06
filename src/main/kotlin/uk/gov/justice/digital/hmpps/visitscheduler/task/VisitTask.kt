@@ -146,7 +146,7 @@ class VisitTask(
 
   private fun trackEvent(properties: Map<String, String>) {
     try {
-      telemetryClient.trackEvent(TelemetryVisitEvents.FLAG_EVENT.eventName, properties, null)
+      telemetryClient.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT.eventName, properties, null)
     } catch (e: RuntimeException) {
       VisitService.LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
     }

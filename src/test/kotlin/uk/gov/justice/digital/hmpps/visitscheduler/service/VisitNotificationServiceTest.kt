@@ -12,7 +12,9 @@ import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
 
@@ -22,6 +24,7 @@ class VisitNotificationServiceTest {
   private val visitRepository = mock<VisitRepository>()
   private val prisonerOffenderSearchClient = mock<PrisonerOffenderSearchClient>()
   private val telemetryClientService = mock<TelemetryClientService>()
+  private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
 
   private lateinit var visitNotificationService: VisitNotificationService
 
@@ -31,7 +34,7 @@ class VisitNotificationServiceTest {
 
   @BeforeEach
   fun beforeEachTestSetup() {
-    visitNotificationService = VisitNotificationService(visitRepository, telemetryClientService, prisonerOffenderSearchClient)
+    visitNotificationService = VisitNotificationService(visitRepository, telemetryClientService, prisonerOffenderSearchClient, visitNotificationEventRepository)
     whenever(prisonerOffenderSearchClient.getPrisoner(primaryNonAssociationNumber)).thenReturn(
       PrisonerSearchResultDto(
         prisonerNumber = primaryNonAssociationNumber,
@@ -41,7 +44,7 @@ class VisitNotificationServiceTest {
   }
 
   @Test
-  fun `when to date is in the past then no call is made to get visits`() {
+  fun `when to date is in the past then no call is made to get visits or save events`() {
     // Given
     val fromDate = LocalDate.now().minusMonths(1)
     val toDate = LocalDate.now().minusDays(1)
@@ -52,10 +55,11 @@ class VisitNotificationServiceTest {
 
     // Then
     Mockito.verify(visitRepository, times(0)).findAll(any<VisitSpecification>())
+    Mockito.verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
   @Test
-  fun `when non association prisoners have no visits then no calls are made to telemetry service to flag visits`() {
+  fun `when non association prisoners have no visits then no calls are made to handle visit with non association`() {
     // Given
     val fromDate = LocalDate.now().minusMonths(1)
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryNonAssociationNumber, secondaryNonAssociationNumber, fromDate, null)
@@ -70,5 +74,6 @@ class VisitNotificationServiceTest {
     // Then
     Mockito.verify(visitRepository, times(2)).findAll(any<VisitSpecification>())
     Mockito.verify(telemetryClientService, times(0)).trackEvent(any(), any())
+    Mockito.verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 }
