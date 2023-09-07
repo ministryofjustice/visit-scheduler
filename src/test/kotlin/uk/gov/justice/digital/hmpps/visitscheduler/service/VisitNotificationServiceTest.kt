@@ -30,6 +30,7 @@ class VisitNotificationServiceTest {
   private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
   private val prisonerService = mock<PrisonerService>()
 
+
   private lateinit var visitNotificationService: VisitNotificationService
 
   private val primaryNonAssociationNumber = "AB23456"
@@ -39,6 +40,7 @@ class VisitNotificationServiceTest {
   @BeforeEach
   fun beforeEachTestSetup() {
     visitNotificationService = VisitNotificationService(visitRepository, telemetryClientService, prisonerOffenderSearchClient, visitNotificationEventRepository, prisonerService)
+
     whenever(prisonerOffenderSearchClient.getPrisoner(primaryNonAssociationNumber)).thenReturn(
       PrisonerSearchResultDto(
         prisonerNumber = primaryNonAssociationNumber,
