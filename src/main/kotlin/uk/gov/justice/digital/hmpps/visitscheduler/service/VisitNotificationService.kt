@@ -23,6 +23,8 @@ class VisitNotificationService(
   private val telemetryClientService: TelemetryClientService,
   private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
+  private val prisonerService: PrisonerService,
+
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -30,7 +32,7 @@ class VisitNotificationService(
 
   @Transactional
   fun handleNonAssociations(nonAssociationChangedNotification: NonAssociationChangedNotificationDto) {
-    if (isNotificationDatesValid(nonAssociationChangedNotification)) {
+    if (isNotificationDatesValid(nonAssociationChangedNotification) && isNotADeleteEvent(nonAssociationChangedNotification)) {
       val overlappingVisits = getOverLappingVisits(nonAssociationChangedNotification)
       overlappingVisits.forEach {
         LOG.info("Flagging visit with reference {} for non association", it.reference)
@@ -39,10 +41,23 @@ class VisitNotificationService(
     }
   }
 
+  private fun isNotADeleteEvent(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): Boolean {
+    val nonAssociations = prisonerService.getOffenderNonAssociationList(nonAssociationChangedNotification.prisonerNumber)
+    return nonAssociations.any { it.offenderNonAssociation.offenderNo == nonAssociationChangedNotification.nonAssociationPrisonerNumber }
+  }
+
   private fun handleVisitWithNonAssociation(impactedVisit: Visit) {
-    val data = telemetryClientService.createFlagEventFromVisitDto(impactedVisit, NotificationEventType.NON_ASSOCIATION_EVENT)
-    telemetryClientService.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT, data)
-    visitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(impactedVisit.id, NotificationEventType.NON_ASSOCIATION_EVENT))
+    if (!visitNotificationEventRepository.isEventARecentDuplicate(impactedVisit.id, NotificationEventType.NON_ASSOCIATION_EVENT)) {
+      val data =
+        telemetryClientService.createFlagEventFromVisitDto(impactedVisit, NotificationEventType.NON_ASSOCIATION_EVENT)
+      telemetryClientService.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT, data)
+      visitNotificationEventRepository.saveAndFlush(
+        VisitNotificationEvent(
+          impactedVisit.id,
+          NotificationEventType.NON_ASSOCIATION_EVENT,
+        ),
+      )
+    }
   }
 
   private fun isNotificationDatesValid(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): Boolean {

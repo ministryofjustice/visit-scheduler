@@ -10,6 +10,9 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
@@ -25,6 +28,7 @@ class VisitNotificationServiceTest {
   private val prisonerOffenderSearchClient = mock<PrisonerOffenderSearchClient>()
   private val telemetryClientService = mock<TelemetryClientService>()
   private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
+  private val prisonerService = mock<PrisonerService>()
 
   private lateinit var visitNotificationService: VisitNotificationService
 
@@ -34,12 +38,27 @@ class VisitNotificationServiceTest {
 
   @BeforeEach
   fun beforeEachTestSetup() {
-    visitNotificationService = VisitNotificationService(visitRepository, telemetryClientService, prisonerOffenderSearchClient, visitNotificationEventRepository)
+    visitNotificationService = VisitNotificationService(visitRepository, telemetryClientService, prisonerOffenderSearchClient, visitNotificationEventRepository, prisonerService)
     whenever(prisonerOffenderSearchClient.getPrisoner(primaryNonAssociationNumber)).thenReturn(
       PrisonerSearchResultDto(
         prisonerNumber = primaryNonAssociationNumber,
         prisonId = prisonCode,
       ),
+    )
+
+    val toDay = LocalDate.now()
+    whenever(
+      prisonerService.getOffenderNonAssociationList(primaryNonAssociationNumber),
+    ).thenReturn(
+      OffenderNonAssociationDetailsDto(
+        listOf(
+          OffenderNonAssociationDetailDto(
+            effectiveDate = toDay.minusMonths(1),
+            expiryDate = toDay.plusMonths(1),
+            offenderNonAssociation = OffenderNonAssociationDto(offenderNo = secondaryNonAssociationNumber),
+          ),
+        ),
+      ).nonAssociations,
     )
   }
 
