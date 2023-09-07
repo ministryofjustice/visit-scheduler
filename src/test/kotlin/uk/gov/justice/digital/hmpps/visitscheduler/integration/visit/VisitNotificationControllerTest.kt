@@ -45,7 +45,6 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
   @Autowired
   private lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
 
-
   val primaryPrisonerId = "AA11BCC"
   val secondaryPrisonerId = "XX11YZZ"
   val prisonCode = "ABC"

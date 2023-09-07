@@ -30,7 +30,6 @@ class VisitNotificationServiceTest {
   private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
   private val prisonerService = mock<PrisonerService>()
 
-
   private lateinit var visitNotificationService: VisitNotificationService
 
   private val primaryNonAssociationNumber = "AB23456"

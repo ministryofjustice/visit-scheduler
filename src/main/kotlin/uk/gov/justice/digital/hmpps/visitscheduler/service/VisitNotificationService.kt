@@ -24,6 +24,22 @@ class VisitNotificationService(
   private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val prisonerService: PrisonerService,
+) {
+
+  companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
+
+  @Transactional
+  fun handleNonAssociations(nonAssociationChangedNotification: NonAssociationChangedNotificationDto) {
+    if (isNotificationDatesValid(nonAssociationChangedNotification) && isNotADeleteEvent(nonAssociationChangedNotification)) {
+      val overlappingVisits = getOverLappingVisits(nonAssociationChangedNotification)
+      overlappingVisits.forEach {
+        LOG.info("Flagging visit with reference {} for non association", it.reference)
+        handleVisitWithNonAssociation(it)
+      }
+    }
+  }
 
   private fun isNotADeleteEvent(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): Boolean {
     val nonAssociations = prisonerService.getOffenderNonAssociationList(nonAssociationChangedNotification.prisonerNumber)
