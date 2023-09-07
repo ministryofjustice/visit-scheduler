@@ -46,11 +46,9 @@ class VisitNotificationServiceTest {
         prisonId = prisonCode,
       ),
     )
-
-    val toDay = LocalDate.now()
   }
 
-  fun mockOffenderNonAssociationList(effectiveDate: LocalDate = LocalDate.now(), expiryDate: LocalDate? = null,) {
+  fun mockOffenderNonAssociationList(effectiveDate: LocalDate = LocalDate.now(), expiryDate: LocalDate? = null) {
     whenever(
       prisonerService.getOffenderNonAssociationList(primaryNonAssociationNumber),
     ).thenReturn(

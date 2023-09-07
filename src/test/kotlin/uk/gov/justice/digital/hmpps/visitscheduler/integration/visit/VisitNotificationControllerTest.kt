@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentiv
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -42,6 +43,9 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
 
+  @SpyBean
+  private lateinit var prisonerService: PrisonerService
+
   @Autowired
   private lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
 
@@ -55,15 +59,17 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, prisonCode, IncentiveLevel.ENHANCED)
   }
 
-  fun stubGetOffenderNonAssociationForPrisonApi(prisonerId: String = primaryPrisonerId,
-                                                nonAssociationId: String = secondaryPrisonerId,
-                                                effectiveDate: LocalDate = LocalDate.now(),
-                                                expiryDate: LocalDate? = null, ) {
+  fun stubGetOffenderNonAssociationForPrisonApi(
+    prisonerId: String = primaryPrisonerId,
+    nonAssociationId: String = secondaryPrisonerId,
+    effectiveDate: LocalDate = LocalDate.now(),
+    expiryDate: LocalDate? = null,
+  ) {
     Companion.prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       nonAssociationId,
       effectiveDate,
-      expiryDate
+      expiryDate,
     )
   }
 
@@ -201,6 +207,25 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+  }
+
+  @Test
+  fun `when non associations event is triggered but prisoner has no non associations they are not flagged or saved 2`() {
+    // This can happen when non associations event is triggered by delete or an update
+
+    // Given
+    val today = LocalDateTime.now()
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = today.toLocalDate())
+    prisonApiMockServer.stubGetOffenderNonAssociationHttpError()
+
+    // When
+    val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(prisonerService, times(1)).getOffenderNonAssociationList(nonAssociationChangedNotification.prisonerNumber)
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }

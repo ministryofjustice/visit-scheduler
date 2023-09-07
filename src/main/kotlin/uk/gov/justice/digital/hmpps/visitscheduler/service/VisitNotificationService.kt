@@ -44,15 +44,22 @@ class VisitNotificationService(
   }
 
   private fun isNotADeleteEvent(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): Boolean {
+    try {
+      val isMatch: Predicate<OffenderNonAssociationDetailDto> = Predicate {
+        (
+          it.offenderNonAssociation.offenderNo == nonAssociationChangedNotification.nonAssociationPrisonerNumber &&
+            it.effectiveDate == nonAssociationChangedNotification.validFromDate &&
+            it.expiryDate == nonAssociationChangedNotification.validToDate
+          )
+      }
 
-    val isMatch : Predicate<OffenderNonAssociationDetailDto> = Predicate {
-      (it.offenderNonAssociation.offenderNo == nonAssociationChangedNotification.nonAssociationPrisonerNumber &&
-      it.effectiveDate ==   nonAssociationChangedNotification.validFromDate &&
-      it.expiryDate == nonAssociationChangedNotification.validToDate)
+      val nonAssociations =
+        prisonerService.getOffenderNonAssociationList(nonAssociationChangedNotification.prisonerNumber)
+      return nonAssociations.any { isMatch.test(it) }
+    } catch (e: Exception) {
+      LOG.error("isNotADeleteEvent: failed, This could be a delete notification ", e)
+      return true
     }
-
-    val nonAssociations = prisonerService.getOffenderNonAssociationList(nonAssociationChangedNotification.prisonerNumber)
-    return nonAssociations.any { isMatch.test(it) }
   }
 
   private fun handleVisitWithNonAssociation(impactedVisit: Visit) {
