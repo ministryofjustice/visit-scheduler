@@ -48,14 +48,17 @@ class VisitNotificationServiceTest {
     )
 
     val toDay = LocalDate.now()
+  }
+
+  fun mockOffenderNonAssociationList(effectiveDate: LocalDate = LocalDate.now(), expiryDate: LocalDate? = null,) {
     whenever(
       prisonerService.getOffenderNonAssociationList(primaryNonAssociationNumber),
     ).thenReturn(
       OffenderNonAssociationDetailsDto(
         listOf(
           OffenderNonAssociationDetailDto(
-            effectiveDate = toDay.minusMonths(1),
-            expiryDate = toDay.plusMonths(1),
+            effectiveDate = effectiveDate,
+            expiryDate = expiryDate,
             offenderNonAssociation = OffenderNonAssociationDto(offenderNo = secondaryNonAssociationNumber),
           ),
         ),
@@ -68,6 +71,9 @@ class VisitNotificationServiceTest {
     // Given
     val fromDate = LocalDate.now().minusMonths(1)
     val toDate = LocalDate.now().minusDays(1)
+
+    mockOffenderNonAssociationList(fromDate, toDate)
+
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryNonAssociationNumber, secondaryNonAssociationNumber, fromDate, toDate)
 
     // When
@@ -82,6 +88,8 @@ class VisitNotificationServiceTest {
   fun `when non association prisoners have no visits then no calls are made to handle visit with non association`() {
     // Given
     val fromDate = LocalDate.now().minusMonths(1)
+    mockOffenderNonAssociationList(fromDate)
+
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryNonAssociationNumber, secondaryNonAssociationNumber, fromDate, null)
 
     whenever(visitRepository.findAll(any<VisitSpecification>())).thenReturn(

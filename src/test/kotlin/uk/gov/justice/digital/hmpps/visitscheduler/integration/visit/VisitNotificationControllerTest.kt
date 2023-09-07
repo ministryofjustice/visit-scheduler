@@ -55,11 +55,15 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, prisonCode, IncentiveLevel.ENHANCED)
   }
 
-  fun stubGetOffenderNonAssociationForPrisonApi(prisonerId: String = primaryPrisonerId, nonAssociationId: String = secondaryPrisonerId) {
+  fun stubGetOffenderNonAssociationForPrisonApi(prisonerId: String = primaryPrisonerId,
+                                                nonAssociationId: String = secondaryPrisonerId,
+                                                effectiveDate: LocalDate = LocalDate.now(),
+                                                expiryDate: LocalDate? = null, ) {
     Companion.prisonApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       nonAssociationId,
-      LocalDate.now(),
+      effectiveDate,
+      expiryDate
     )
   }
 
@@ -126,8 +130,8 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
   @Test
   fun `when prisoner with non associations visits has existing notification then they are not flagged or saved`() {
     // Given
-    stubGetOffenderNonAssociationForPrisonApi()
     val today = LocalDateTime.now()
+    stubGetOffenderNonAssociationForPrisonApi(effectiveDate = today.toLocalDate())
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = today.toLocalDate())
 
     val primaryVisit = visitEntityHelper.create(
@@ -174,8 +178,8 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     // This can happen when non associations event is triggered by delete or an update
 
     // Given
-    stubGetOffenderNonAssociationForPrisonApi(prisonerId = "anotherOne")
     val today = LocalDateTime.now()
+    stubGetOffenderNonAssociationForPrisonApi(prisonerId = "anotherOne", effectiveDate = today.toLocalDate())
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = today.toLocalDate())
 
     val primaryVisit = visitEntityHelper.create(
@@ -441,6 +445,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     // Given
     stubGetOffenderNonAssociationForPrisonApi()
     val fromDate = LocalDate.now().plusDays(2)
+    stubGetOffenderNonAssociationForPrisonApi(effectiveDate = fromDate)
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = fromDate)
 
     // visit not flagged as before from date
@@ -502,9 +507,10 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
   @Test
   fun `when prisoners have overlapped visits only visits before to date with same date and prison are flagged and saved`() {
     // Given
-    stubGetOffenderNonAssociationForPrisonApi()
     val fromDate = LocalDate.now()
     val toDate = LocalDate.now().plusDays(1)
+    stubGetOffenderNonAssociationForPrisonApi(expiryDate = toDate)
+
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = fromDate, validToDate = toDate)
 
     val primaryVisit1 = visitEntityHelper.create(

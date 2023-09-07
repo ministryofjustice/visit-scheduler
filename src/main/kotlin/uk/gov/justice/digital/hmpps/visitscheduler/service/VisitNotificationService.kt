@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -16,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.util.function.Predicate
 
 @Service
 class VisitNotificationService(
@@ -42,8 +44,15 @@ class VisitNotificationService(
   }
 
   private fun isNotADeleteEvent(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): Boolean {
+
+    val isMatch : Predicate<OffenderNonAssociationDetailDto> = Predicate {
+      (it.offenderNonAssociation.offenderNo == nonAssociationChangedNotification.nonAssociationPrisonerNumber &&
+      it.effectiveDate ==   nonAssociationChangedNotification.validFromDate &&
+      it.expiryDate == nonAssociationChangedNotification.validToDate)
+    }
+
     val nonAssociations = prisonerService.getOffenderNonAssociationList(nonAssociationChangedNotification.prisonerNumber)
-    return nonAssociations.any { it.offenderNonAssociation.offenderNo == nonAssociationChangedNotification.nonAssociationPrisonerNumber }
+    return nonAssociations.any { isMatch.test(it) }
   }
 
   private fun handleVisitWithNonAssociation(impactedVisit: Visit) {
