@@ -13,7 +13,7 @@ generic-service:
   env:
     SPRING_PROFILES_ACTIVE: "stdout"
     HMPPS_AUTH_URL: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
-    PRISON_API_URL: https://api-dev.prison.service.justice.gov.uk
+    PRISON_API_URL: https://prison-api-dev.prison.service.justice.gov.uk
     PRISONER_OFFENDER_SEARCH_URL: https://prisoner-offender-search-dev.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     FEATURE_EVENTS_SNS_ENABLED: false
