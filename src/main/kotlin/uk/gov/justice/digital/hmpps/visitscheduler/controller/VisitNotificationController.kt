@@ -20,7 +20,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 
 const val VISIT_NOTIFICATION_CONTROLLER_PATH: String = "/visits/notification"
 const val VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/non-association/changed"
@@ -30,7 +30,7 @@ const val VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH: String = "$VISIT_NOTIF
 @Tag(name = "Visit notification controller $VISIT_NOTIFICATION_CONTROLLER_PATH")
 @RequestMapping(name = "Visit notification Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitNotificationController(
-  private val visitNotificationService: VisitNotificationService,
+  private val visitNotificationEventService: VisitNotificationEventService,
 ) {
   private companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -68,7 +68,7 @@ class VisitNotificationController(
     nonAssociationChangedNotificationDto: NonAssociationChangedNotificationDto,
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPOfNonAssociationHasChanged {}", nonAssociationChangedNotificationDto)
-    visitNotificationService.handleNonAssociations(nonAssociationChangedNotificationDto)
+    visitNotificationEventService.handleNonAssociations(nonAssociationChangedNotificationDto)
     return ResponseEntity(HttpStatus.OK)
   }
 }

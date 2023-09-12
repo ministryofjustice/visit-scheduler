@@ -419,6 +419,17 @@ class VisitService(
     snsService.sendVisitCancelledEvent(visitDto)
   }
 
+  fun getBookedVisits(prisonerNumber: String, prisonCode: String?, startDateTime: LocalDateTime, endDateTime: LocalDateTime?): List<VisitDto> {
+    val visitFilter = VisitFilter(
+      prisonerId = prisonerNumber,
+      prisonCode = prisonCode,
+      startDateTime = startDateTime,
+      endDateTime = endDateTime,
+      visitStatusList = listOf(VisitStatus.BOOKED),
+    )
+    return visitRepository.findAll(VisitSpecification(visitFilter)).map { VisitDto(it) }
+  }
+
   @Transactional(readOnly = true)
   fun getVisitByReference(reference: String): VisitDto {
     return VisitDto(visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found"))
@@ -431,7 +442,7 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun getLastEventForBooking(bookingReference: String): EventAuditDto {
-    return EventAuditDto(eventAuditRepository.findLastEventByBookingReference(bookingReference))
+    return EventAuditDto(eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference))
   }
 
   private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {
