@@ -16,8 +16,8 @@ import java.time.LocalDateTime
 )
 class VisitNotificationEvent(
 
-  @Column(name = "VISIT_ID", unique = false, nullable = false)
-  var visitId: Long,
+  @Column(name = "booking_reference", unique = false, nullable = false)
+  var bookingReference: String,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)

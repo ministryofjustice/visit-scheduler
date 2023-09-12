@@ -13,11 +13,11 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
     "SELECT count(ve) > 0" +
       " FROM visit_notification_event ve " +
       " WHERE ve.create_timestamp BETWEEN NOW() - INTERVAL '1 MINUTE' AND NOW() " +
-      " AND ve.visit_id=:visitId AND ve.type=:#{#notificationEvent.name()}",
+      " AND ve.booking_reference=:bookingReference AND ve.type=:#{#notificationEvent.name()}",
     nativeQuery = true,
   )
   fun isEventARecentDuplicate(
-    visitId: Long,
+    bookingReference: String,
     notificationEvent: NotificationEventType,
   ): Boolean
 }

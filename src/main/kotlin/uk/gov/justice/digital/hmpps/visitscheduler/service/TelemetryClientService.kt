@@ -5,8 +5,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -39,7 +41,7 @@ class TelemetryClientService(
       "visitType" to visit.visitType.name,
       "visitRoom" to visit.visitRoom,
       "visitRestriction" to visit.visitRestriction.name,
-      "visitStart" to visit.startTimestamp.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStart" to formatDateTimeToString(visit.startTimestamp),
       "visitStatus" to visit.visitStatus.name,
       "applicationReference" to visit.applicationReference,
     )
@@ -56,20 +58,23 @@ class TelemetryClientService(
   }
 
   fun createFlagEventFromVisitDto(
-    visit: Visit,
+    visit: VisitDto,
+    bookingEventAudit: EventAuditDto,
     notificationEventType: NotificationEventType,
   ): MutableMap<String, String> {
     return mutableMapOf(
+      "prisonId" to visit.prisonCode,
       "reference" to visit.reference,
-      "prisonerId" to visit.prisonerId,
-      "prisonId" to visit.prison.code,
-      "visitType" to visit.visitType.name,
-      "visitRoom" to visit.visitRoom,
-      "visitRestriction" to visit.visitRestriction.name,
-      "visitStart" to visit.visitStart.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME),
+      "reviewType" to notificationEventType.reviewType,
+      "visitBooked" to formatDateTimeToString(bookingEventAudit.createTimestamp),
       "visitStatus" to visit.visitStatus.name,
       "applicationReference" to visit.applicationReference,
-      "reviewType" to notificationEventType.reviewType,
+      "prisonerId" to visit.prisonerId,
+      "actionedBy" to bookingEventAudit.actionedBy,
+      "visitRestriction" to visit.visitRestriction.name,
+      "visitStart" to formatDateTimeToString(visit.startTimestamp),
+      "visitType" to visit.visitType.name,
+      "visitRoom" to visit.visitRoom,
     )
   }
 
@@ -79,5 +84,9 @@ class TelemetryClientService(
     } catch (e: RuntimeException) {
       LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
     }
+  }
+
+  private fun formatDateTimeToString(dateTime: LocalDateTime): String {
+    return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
   }
 }
