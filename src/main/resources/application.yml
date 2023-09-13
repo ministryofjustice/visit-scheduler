@@ -123,6 +123,10 @@ task:
     enabled: true
     cron: "0 0 3 * * ?" #every day at 3 AM
     number-of-days-ahead: 30
+  reporting:
+    visit-counts-report:
+      enabled: true
+      cron: "0 0 1 * * ?" #every day at 1 AM
 
 feature:
   events:
