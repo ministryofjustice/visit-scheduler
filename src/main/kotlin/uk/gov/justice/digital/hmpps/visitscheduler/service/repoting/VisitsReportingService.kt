@@ -111,40 +111,30 @@ class VisitsReportingService(
     sessionsReportDto: Map<PrisonDto, Map<SessionScheduleDto, Map<Pair<VisitStatus, VisitRestriction>, Int>>>,
   ): List<SessionVisitCountsDto> {
     val sessionVisitCounts = mutableListOf<SessionVisitCountsDto>()
-    var sessionVisitCount = SessionVisitCountsDto(reportDate = reportDate)
 
-    if (sessionsReportDto.isNotEmpty()) {
-      sessionsReportDto.entries.forEach { prisonMap ->
-        val prison = prisonMap.key
-        val sessions = prisonMap.value
-        sessionVisitCount = SessionVisitCountsDto(reportDate = reportDate)
-        setPrisonDetails(sessionVisitCount, prison, sessions.keys, reportDate)
+    sessionsReportDto.entries.forEach { prisonMap ->
+      val prison = prisonMap.key
+      val sessions = prisonMap.value
+      var sessionVisitCount = createSessionVisitCountsDto(reportDate = reportDate, prison, sessions.keys)
 
-        if (sessions.isNotEmpty()) {
-          sessions.forEach { sessionEntry ->
-            sessionVisitCount = SessionVisitCountsDto(reportDate = reportDate)
-            setPrisonDetails(sessionVisitCount, prison, sessions.keys, reportDate)
-            val session = sessionEntry.key
-            val counts = sessionEntry.value
-            setSessionDetails(sessionVisitCount, session, counts)
-            sessionVisitCounts.add(sessionVisitCount)
-          }
-        } else {
+      if (sessions.isNotEmpty()) {
+        sessions.forEach { sessionEntry ->
+          sessionVisitCount = createSessionVisitCountsDto(reportDate = reportDate, prison, sessions.keys)
+          val session = sessionEntry.key
+          val counts = sessionEntry.value
+          setSessionDetails(sessionVisitCount, session, counts)
           sessionVisitCounts.add(sessionVisitCount)
         }
+      } else {
+        sessionVisitCounts.add(sessionVisitCount)
       }
-    } else {
-      sessionVisitCounts.add(sessionVisitCount)
     }
 
     return sessionVisitCounts
   }
 
-  private fun setPrisonDetails(sessionVisitCount: SessionVisitCountsDto, prison: PrisonDto, sessions: Set<SessionScheduleDto>, reportDate: LocalDate) {
-    sessionVisitCount.prisonCode = prison.code
-    sessionVisitCount.isBlockedDate = isExcludedDate(prison, reportDate)
-    val hasSessionsOnDate = sessions.isNotEmpty()
-    sessionVisitCount.hasSessionsOnDate = hasSessionsOnDate
+  private fun createSessionVisitCountsDto(reportDate: LocalDate, prison: PrisonDto, sessions: Set<SessionScheduleDto>): SessionVisitCountsDto {
+    return SessionVisitCountsDto(reportDate = reportDate, prisonCode = prison.code, isBlockedDate = isExcludedDate(prison, reportDate), hasSessionsOnDate = sessions.isNotEmpty())
   }
 
   private fun setSessionDetails(sessionVisitCount: SessionVisitCountsDto, session: SessionScheduleDto, visitCounts: Map<Pair<VisitStatus, VisitRestriction>, Int>) {

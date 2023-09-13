@@ -41,18 +41,6 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when no active prisons only report date is sent`() {
-    // Given
-    val sessionsReport = reportingTask.getVisitCountsReportByDay()[reportDate]!!
-    Assertions.assertThat(sessionsReport.size).isEqualTo(1)
-
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-counts-report"), any(), isNull())
-    assertReportingEvent(
-      reportDate = reportDate.format(DateTimeFormatter.ISO_DATE),
-    )
-  }
-
-  @Test
   fun `when active prisons with no sessions report date and prison details are sent`() {
     // Given
     prisonEntityHelper.create("ABC", activePrison = true, excludeDates = emptyList())
