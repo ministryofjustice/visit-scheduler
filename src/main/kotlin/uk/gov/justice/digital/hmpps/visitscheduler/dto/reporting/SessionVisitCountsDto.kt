@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -9,6 +10,7 @@ import java.time.LocalDate
 
 data class SessionVisitCountsDto(
   @Schema(description = "Date of Report", example = "2023-09-01", required = true)
+  @field:NotNull
   val reportDate: LocalDate,
 
   @Schema(description = "Prison code", example = "MDI", required = true)
@@ -16,9 +18,11 @@ data class SessionVisitCountsDto(
   var prisonCode: String,
 
   @Schema(description = "If the prison had blocked the date for visits", example = "true", required = true)
+  @field:NotNull
   var isBlockedDate: Boolean,
 
   @Schema(description = "False if no sessions on the date for prison, false otherwise", example = "true", required = true)
+  @field:NotNull
   var hasSessionsOnDate: Boolean,
 
   @Schema(description = "Session Template reference", example = "aa-es-cc-qq", required = false)
