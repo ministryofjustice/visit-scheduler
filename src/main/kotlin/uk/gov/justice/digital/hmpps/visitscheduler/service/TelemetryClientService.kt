@@ -88,7 +88,6 @@ class TelemetryClientService(
     }
   }
 
-
   fun formatDateTimeToString(dateTime: LocalDateTime): String {
     return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
   }
