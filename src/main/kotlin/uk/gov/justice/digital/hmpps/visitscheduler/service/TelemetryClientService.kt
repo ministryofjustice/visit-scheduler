@@ -8,7 +8,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
@@ -86,7 +88,16 @@ class TelemetryClientService(
     }
   }
 
-  private fun formatDateTimeToString(dateTime: LocalDateTime): String {
+
+  fun formatDateTimeToString(dateTime: LocalDateTime): String {
     return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
+  }
+
+  fun formatTimeToString(time: LocalTime): String {
+    return time.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_TIME)
+  }
+
+  fun formatDateToString(date: LocalDate): String {
+    return date.format(DateTimeFormatter.ISO_DATE)
   }
 }

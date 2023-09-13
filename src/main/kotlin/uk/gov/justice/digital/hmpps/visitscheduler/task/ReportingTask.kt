@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientServic
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.repoting.VisitsReportingService
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import kotlin.jvm.optionals.getOrNull
 
 @Component
@@ -87,7 +86,7 @@ class ReportingTask(
     sessionReport: SessionVisitCountsDto,
   ): Map<String, String> {
     val reportEvent = mutableMapOf<String, String>()
-    reportEvent["reportDate"] = sessionReport.reportDate.format(DateTimeFormatter.ISO_DATE)
+    reportEvent["reportDate"] = telemetryClientService.formatDateToString(sessionReport.reportDate)
     sessionReport.prisonCode?.let {
       reportEvent["prisonCode"] = it
     }
@@ -98,8 +97,8 @@ class ReportingTask(
       reportEvent["hasSessions"] = it.toString()
     }
     sessionReport.sessionTimeSlot?.let {
-      reportEvent["sessionStart"] = it.startTime.format(DateTimeFormatter.ISO_TIME)
-      reportEvent["sessionEnd"] = it.startTime.format(DateTimeFormatter.ISO_TIME)
+      reportEvent["sessionStart"] = telemetryClientService.formatTimeToString(it.startTime)
+      reportEvent["sessionEnd"] = telemetryClientService.formatTimeToString(it.endTime)
     }
     sessionReport.sessionCapacity?.let {
       reportEvent["openCapacity"] = it.open.toString()
