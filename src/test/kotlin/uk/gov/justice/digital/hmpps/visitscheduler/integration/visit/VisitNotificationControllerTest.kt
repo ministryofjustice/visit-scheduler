@@ -85,6 +85,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       visitStatus = BOOKED,
     )
+    eventAuditEntityHelper.create(primaryVisit1)
 
     val primaryVisit2 = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
@@ -92,6 +93,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       visitStatus = BOOKED,
     )
+    eventAuditEntityHelper.create(primaryVisit2)
 
     // visit does not overlap
     visitEntityHelper.create(
@@ -107,6 +109,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       visitStart = LocalDateTime.now().plusDays(1),
       visitStatus = BOOKED,
     )
+    eventAuditEntityHelper.create(secondaryVisit1)
 
     val secondaryVisit2 = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
@@ -114,6 +117,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       visitStart = LocalDateTime.now().plusDays(2),
       visitStatus = BOOKED,
     )
+    eventAuditEntityHelper.create(secondaryVisit2)
 
     // visit does not overlap
     visitEntityHelper.create(
@@ -156,7 +160,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     testVisitNotificationEventRepository.saveAndFlush(
       VisitNotificationEvent(
-        primaryVisit.id,
+        primaryVisit.reference,
         NotificationEventType.NON_ASSOCIATION_EVENT,
         today,
       ),
@@ -164,7 +168,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     testVisitNotificationEventRepository.saveAndFlush(
       VisitNotificationEvent(
-        secondaryVisit.id,
+        secondaryVisit.reference,
         NotificationEventType.NON_ASSOCIATION_EVENT,
         today,
       ),
@@ -487,6 +491,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       visitStatus = BOOKED,
     )
+    eventAuditEntityHelper.create(primaryVisit2)
 
     // visit does not overlap
     visitEntityHelper.create(
@@ -510,6 +515,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       visitStart = LocalDateTime.now().plusDays(2),
       visitStatus = BOOKED,
     )
+    eventAuditEntityHelper.create(secondaryVisit2)
 
     // visit does not overlap
     visitEntityHelper.create(
@@ -544,6 +550,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       visitStatus = BOOKED,
     )
+    eventAuditEntityHelper.create(primaryVisit1)
 
     // visit not flagged as after to date
     visitEntityHelper.create(
@@ -567,6 +574,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       visitStart = LocalDateTime.now().plusDays(1),
       visitStatus = BOOKED,
     )
+    eventAuditEntityHelper.create(secondaryVisit1)
 
     // visit not flagged as after to date
     visitEntityHelper.create(
@@ -596,23 +604,32 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
   private fun assertBookedEvent(visits: List<Visit>) {
     visits.forEach { visit ->
-      verify(telemetryClient).trackEvent(
-        eq("flagged-visit-event"),
-        org.mockito.kotlin.check {
-          Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-          Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
-          Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-          Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
-          Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-          Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
-          Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-          Assertions.assertThat(it["visitStart"])
-            .isEqualTo(visit.visitStart.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME))
-          Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-          Assertions.assertThat(it["reviewType"]).isEqualTo("Non-association")
-        },
-        isNull(),
-      )
+      run {
+        val eventAudit = eventAuditRepository.findLastBookedVisitEventByBookingReference(visit.reference)
+
+        verify(telemetryClient).trackEvent(
+          eq("flagged-visit-event"),
+          org.mockito.kotlin.check {
+            Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
+            Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+            Assertions.assertThat(it["reviewType"]).isEqualTo("Non-association")
+            Assertions.assertThat(it["visitBooked"]).isEqualTo(formatDateTimeToString(eventAudit.createTimestamp))
+            Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+            Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+            Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+            Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
+            Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+            Assertions.assertThat(it["visitStart"]).isEqualTo(formatDateTimeToString(visit.visitStart))
+            Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+            Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+          },
+          isNull(),
+        )
+      }
     }
+  }
+
+  private fun formatDateTimeToString(dateTime: LocalDateTime): String {
+    return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
   }
 }
