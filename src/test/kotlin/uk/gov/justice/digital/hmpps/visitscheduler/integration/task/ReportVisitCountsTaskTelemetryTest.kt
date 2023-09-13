@@ -67,8 +67,7 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
       hasSessionsOnDate = "false",
     )
   }
-
-
+  
   @Test
   fun `when active prisons with sessions report date and prison and session details with visit counts are sent`() {
     // Given
