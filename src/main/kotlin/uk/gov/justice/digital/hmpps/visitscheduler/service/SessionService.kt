@@ -334,13 +334,11 @@ class SessionService(
 
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
     val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
-      prisonCode = session.prisonCode,
       sessionTemplateReference = session.sessionTemplateReference,
       sessionDate = session.startTimestamp.toLocalDate(),
     )
 
     val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
-      prisonCode = session.prisonCode,
       sessionTemplateReference = session.sessionTemplateReference,
       sessionDate = session.startTimestamp.toLocalDate(),
       expiredDateAndTime = visitService.getReservedExpiredDateAndTime(),
@@ -390,8 +388,8 @@ class SessionService(
   }
 
   fun getSessionSchedule(prisonCode: String, scheduleDate: LocalDate): List<SessionScheduleDto> {
-    if (prisonConfigService.isExcludedDate(prisonCode, scheduleDate)) {
-      return listOf()
+    return if (prisonConfigService.isExcludedDate(prisonCode, scheduleDate)) {
+      listOf()
     } else {
       var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
         prisonCode,
@@ -400,11 +398,11 @@ class SessionService(
       )
 
       sessionTemplates = filterSessionsTemplatesForDate(scheduleDate, sessionTemplates)
-      return sessionTemplates.map { sessionTemplate -> createSessionInfoDto(sessionTemplate) }.toList()
+      sessionTemplates.map { sessionTemplate -> createSessionScheduleDto(sessionTemplate) }.toList()
     }
   }
 
-  private fun createSessionInfoDto(sessionTemplate: SessionTemplate): SessionScheduleDto {
+  private fun createSessionScheduleDto(sessionTemplate: SessionTemplate): SessionScheduleDto {
     return SessionScheduleDto(
       sessionTemplateReference = sessionTemplate.reference,
       sessionTimeSlot = SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
@@ -413,6 +411,7 @@ class SessionService(
       prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
       prisonerIncentiveLevelGroupNames = sessionTemplate.permittedSessionIncentiveLevelGroups.map { it.name }.toList(),
       weeklyFrequency = sessionTemplate.weeklyFrequency,
+      visitType = sessionTemplate.visitType,
       sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
     )
   }

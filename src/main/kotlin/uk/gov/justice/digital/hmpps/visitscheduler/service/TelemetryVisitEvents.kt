@@ -14,4 +14,7 @@ enum class TelemetryVisitEvents(val eventName: String) {
   BAD_REQUEST_ERROR_EVENT("visit-bad-request-error"),
   PUBLISH_ERROR_EVENT("visit-publish-event-error"),
   FLAGGED_VISIT_EVENT("flagged-visit-event"),
+
+  // reporting
+  VISIT_COUNTS_REPORT("visit-counts-report"),
 }

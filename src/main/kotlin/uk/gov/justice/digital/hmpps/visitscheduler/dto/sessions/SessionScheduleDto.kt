@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions
 
 import io.swagger.v3.oas.annotations.media.Schema
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 
 @Schema(description = "Session schedule")
 data class SessionScheduleDto(
@@ -19,6 +20,9 @@ data class SessionScheduleDto(
     required = true,
   )
   val capacity: SessionCapacityDto,
+
+  @Schema(description = "visit type", example = "Social", required = true)
+  val visitType: VisitType,
 
   @Schema(description = "prisoner location groups", example = "Wing C", required = false)
   val prisonerLocationGroupNames: List<String>,
