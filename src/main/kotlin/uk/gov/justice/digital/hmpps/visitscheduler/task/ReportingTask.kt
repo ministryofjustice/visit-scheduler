@@ -3,9 +3,9 @@ package uk.gov.justice.digital.hmpps.visitscheduler.task
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ReportingTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
@@ -21,7 +21,7 @@ class ReportingTask(
   private val visitReportingService: VisitsReportingService,
   private val telemetryClientService: TelemetryClientService,
   private val vsipReportingRepository: VSIPReportingRepository,
-  @Value("\${task.reporting.visit-counts-report.enabled:false}") private val reportingEnabled: Boolean,
+  private val reportingTaskConfiguration: ReportingTaskConfiguration,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -30,13 +30,13 @@ class ReportingTask(
   @Scheduled(cron = "\${task.visit-counts-report.cron:0 0 1 * * ?}")
   @SchedulerLock(
     name = "VSIP Reporting - sessions and book count",
-    lockAtLeastFor = "PT60M",
-    lockAtMostFor = "PT60M",
+    lockAtLeastFor = ReportingTaskConfiguration.LOCK_AT_LEAST_FOR,
+    lockAtMostFor = ReportingTaskConfiguration.LOCK_AT_MOST_FOR,
   )
   fun getVisitCountsReportByDay(): Map<LocalDate, List<SessionVisitCountsDto>> {
     val sessionsReports = mutableMapOf<LocalDate, List<SessionVisitCountsDto>>()
 
-    if (!reportingEnabled) {
+    if (!reportingTaskConfiguration.reportingEnabled) {
       LOG.info("Reporting task for visit counts not enabled")
     } else {
       val reportDate = getNextReportDate()
@@ -87,15 +87,10 @@ class ReportingTask(
   ): Map<String, String> {
     val reportEvent = mutableMapOf<String, String>()
     reportEvent["reportDate"] = telemetryClientService.formatDateToString(sessionReport.reportDate)
-    sessionReport.prisonCode?.let {
-      reportEvent["prisonCode"] = it
-    }
-    sessionReport.isBlockedDate?.let {
-      reportEvent["blockedDate"] = it.toString()
-    }
-    sessionReport.hasSessionsOnDate?.let {
-      reportEvent["hasSessions"] = it.toString()
-    }
+    reportEvent["prisonCode"] = sessionReport.prisonCode
+    reportEvent["blockedDate"] = sessionReport.isBlockedDate.toString()
+    reportEvent["hasSessions"] = sessionReport.hasSessionsOnDate.toString()
+
     sessionReport.sessionTimeSlot?.let {
       reportEvent["sessionStart"] = telemetryClientService.formatTimeToString(it.startTime)
       reportEvent["sessionEnd"] = telemetryClientService.formatTimeToString(it.endTime)
