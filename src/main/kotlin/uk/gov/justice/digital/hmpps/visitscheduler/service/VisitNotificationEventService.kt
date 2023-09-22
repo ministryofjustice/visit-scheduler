@@ -8,6 +8,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearch
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import java.time.LocalDate
@@ -34,7 +39,7 @@ class VisitNotificationEventService(
       val overlappingVisits = getOverLappingVisits(nonAssociationChangedNotification)
       overlappingVisits.forEach {
         LOG.info("Flagging visit with reference {} for non association", it.reference)
-        handleVisitWithNonAssociation(it)
+        handleVisitWithNonAssociationNotification(it)
       }
     }
   }
@@ -58,7 +63,7 @@ class VisitNotificationEventService(
     }
   }
 
-  private fun handleVisitWithNonAssociation(impactedVisit: VisitDto) {
+  private fun handleVisitWithNonAssociationNotification(impactedVisit: VisitDto) {
     if (!visitNotificationEventRepository.isEventARecentDuplicate(impactedVisit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)) {
       val bookingEventAudit = visitService.getLastEventForBooking(impactedVisit.reference)
       val data =
@@ -71,6 +76,26 @@ class VisitNotificationEventService(
         ),
       )
     }
+  }
+
+  fun handlePersonRestrictionChangeNotification(personRestrictionChangeNotificationDto: PersonRestrictionChangeNotificationDto) {
+    // TODO not yet implemented
+  }
+
+  fun handlePrisonerReceivedNotification(dto: PrisonerReceivedNotificationDto) {
+    // TODO not yet implemented
+  }
+
+  fun handlePrisonerReleasedNotification(dto: PrisonerReleasedNotificationDto) {
+    // TODO not yet implemented
+  }
+
+  fun handlePrisonerRestrictionChangeNotification(dto: PrisonerRestrictionChangeNotificationDto) {
+    // TODO not yet implemented
+  }
+
+  fun handleVisitorRestrictionChangeNotification(dto: VisitorRestrictionChangeNotificationDto) {
+    // TODO not yet implemented
   }
 
   private fun isNotificationDatesValid(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): Boolean {
@@ -129,4 +154,5 @@ class VisitNotificationEventService(
   private fun getValidToDateTime(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): LocalDateTime? {
     return nonAssociationChangedNotification.validToDate?.let { LocalDateTime.of(nonAssociationChangedNotification.validToDate, LocalTime.MAX) }
   }
+
 }
