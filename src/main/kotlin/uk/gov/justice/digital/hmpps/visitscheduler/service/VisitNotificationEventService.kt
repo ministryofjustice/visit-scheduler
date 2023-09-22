@@ -154,5 +154,4 @@ class VisitNotificationEventService(
   private fun getValidToDateTime(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): LocalDateTime? {
     return nonAssociationChangedNotification.validToDate?.let { LocalDateTime.of(nonAssociationChangedNotification.validToDate, LocalTime.MAX) }
   }
-
 }

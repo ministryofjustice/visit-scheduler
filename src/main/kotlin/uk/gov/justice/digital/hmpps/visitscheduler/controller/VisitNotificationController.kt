@@ -34,6 +34,7 @@ const val VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH: String = "$VISIT_NOT
 const val VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/released"
 const val VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/restriction/changed"
 const val VISIT_NOTIFICATION_VISITOR_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/restriction/changed"
+
 @RestController
 @Validated
 @Tag(name = "Visit notification controller $VISIT_NOTIFICATION_CONTROLLER_PATH")
@@ -80,7 +81,6 @@ class VisitNotificationController(
     visitNotificationEventService.handleNonAssociations(nonAssociationChangedNotificationDto)
     return ResponseEntity(HttpStatus.OK)
   }
-
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PostMapping(VISIT_NOTIFICATION_PERSON_RESTRICTION_CHANGE_PATH)
