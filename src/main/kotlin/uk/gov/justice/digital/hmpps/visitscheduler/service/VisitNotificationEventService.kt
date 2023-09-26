@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -34,28 +35,25 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun handleNonAssociations(nonAssociationChangedNotification: NonAssociationChangedNotificationDto) {
-    if (isNotificationDatesValid(nonAssociationChangedNotification) && isNotADeleteEvent(nonAssociationChangedNotification)) {
-      val overlappingVisits = getOverLappingVisits(nonAssociationChangedNotification)
-      overlappingVisits.forEach {
-        LOG.info("Flagging visit with reference {} for non association", it.reference)
-        handleVisitWithNonAssociationNotification(it)
-      }
+  fun handleNonAssociations(notificationDto: NonAssociationChangedNotificationDto) {
+    if (isNotificationDatesValid(notificationDto.validToDate) && isNotADeleteEvent(notificationDto)) {
+      val overlappingVisits = getOverLappingVisits(notificationDto)
+      processVisitsWithNotifications(overlappingVisits, NotificationEventType.NON_ASSOCIATION_EVENT)
     }
   }
 
-  private fun isNotADeleteEvent(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): Boolean {
+  private fun isNotADeleteEvent(notificationDto: NonAssociationChangedNotificationDto): Boolean {
     try {
       val isMatch: Predicate<OffenderNonAssociationDetailDto> = Predicate {
         (
-          it.offenderNonAssociation.offenderNo == nonAssociationChangedNotification.nonAssociationPrisonerNumber &&
-            it.effectiveDate == nonAssociationChangedNotification.validFromDate &&
-            it.expiryDate == nonAssociationChangedNotification.validToDate
+          it.offenderNonAssociation.offenderNo == notificationDto.nonAssociationPrisonerNumber &&
+            it.effectiveDate == notificationDto.validFromDate &&
+            it.expiryDate == notificationDto.validToDate
           )
       }
 
       val nonAssociations =
-        prisonerService.getOffenderNonAssociationList(nonAssociationChangedNotification.prisonerNumber)
+        prisonerService.getOffenderNonAssociationList(notificationDto.prisonerNumber)
       return nonAssociations.any { isMatch.test(it) }
     } catch (e: Exception) {
       LOG.error("isNotADeleteEvent: failed, This could be a delete notification ", e)
@@ -63,51 +61,69 @@ class VisitNotificationEventService(
     }
   }
 
-  private fun handleVisitWithNonAssociationNotification(impactedVisit: VisitDto) {
-    if (!visitNotificationEventRepository.isEventARecentDuplicate(impactedVisit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)) {
-      val bookingEventAudit = visitService.getLastEventForBooking(impactedVisit.reference)
-      val data =
-        telemetryClientService.createFlagEventFromVisitDto(impactedVisit, bookingEventAudit, NotificationEventType.NON_ASSOCIATION_EVENT)
-      telemetryClientService.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT, data)
-      visitNotificationEventRepository.saveAndFlush(
-        VisitNotificationEvent(
-          impactedVisit.reference,
-          NotificationEventType.NON_ASSOCIATION_EVENT,
-        ),
-      )
+  fun handlePersonRestrictionChangeNotification(notificationDto: PersonRestrictionChangeNotificationDto) {
+    if (isNotificationDatesValid(notificationDto.validToDate)) {
+      // TODO not yet implemented
     }
   }
 
-  fun handlePersonRestrictionChangeNotification(personRestrictionChangeNotificationDto: PersonRestrictionChangeNotificationDto) {
+  fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
     // TODO not yet implemented
   }
 
-  fun handlePrisonerReceivedNotification(dto: PrisonerReceivedNotificationDto) {
+  fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     // TODO not yet implemented
   }
 
-  fun handlePrisonerReleasedNotification(dto: PrisonerReleasedNotificationDto) {
-    // TODO not yet implemented
+  fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
+    if (isNotificationDatesValid(notificationDto.validToDate)) {
+      // TODO not yet implemented
+    }
   }
 
-  fun handlePrisonerRestrictionChangeNotification(dto: PrisonerRestrictionChangeNotificationDto) {
-    // TODO not yet implemented
+  fun handleVisitorRestrictionChangeNotification(notificationDto: VisitorRestrictionChangeNotificationDto) {
+    if (isNotificationDatesValid(notificationDto.validToDate)) {
+      // TODO not yet implemented
+    }
   }
 
-  fun handleVisitorRestrictionChangeNotification(dto: VisitorRestrictionChangeNotificationDto) {
-    // TODO not yet implemented
+  private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType) {
+    var reference: String? = null
+    affectedVisits.forEach {
+      LOG.info("Flagging visit with reference {} for non association", it.reference)
+      if (!visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type)) {
+        val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
+        val data = telemetryClientService.createFlagEventFromVisitDto(it, bookingEventAudit, type)
+        telemetryClientService.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT, data)
+        reference = saveVisitNotification(it, reference)
+      }
+    }
   }
 
-  private fun isNotificationDatesValid(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): Boolean {
-    val toDate = getValidToDateTime(nonAssociationChangedNotification)
+  private fun saveVisitNotification(
+    impactedVisit: VisitDto,
+    reference: String?,
+  ): String? {
+    val savedVisitNotificationEvent = visitNotificationEventRepository.saveAndFlush(
+      VisitNotificationEvent(
+        impactedVisit.reference,
+        NON_ASSOCIATION_EVENT,
+        _reference = reference,
+      ),
+    )
+    return savedVisitNotificationEvent.reference
+  }
+
+  private fun isNotificationDatesValid(validToDate: LocalDate?): Boolean {
+    val toDate = getValidToDateTime(validToDate)
     return (toDate == null) || toDate.isAfter(LocalDateTime.now())
   }
 
   private fun getOverLappingVisits(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): List<VisitDto> {
     // get the prisoners' prison code
     val prisonCode = prisonerOffenderSearchClient.getPrisoner(nonAssociationChangedNotification.prisonerNumber)?.prisonId
-    val fromDate = getValidFromDateTime(nonAssociationChangedNotification)
-    val toDate = getValidToDateTime(nonAssociationChangedNotification)
+    val fromDate = getValidFromDateTime(nonAssociationChangedNotification.validFromDate)
+    val toDate = getValidToDateTime(nonAssociationChangedNotification.validToDate)
 
     val primaryPrisonerVisits = visitService.getBookedVisits(nonAssociationChangedNotification.prisonerNumber, prisonCode, fromDate, toDate)
     val nonAssociationPrisonerVisits = visitService.getBookedVisits(nonAssociationChangedNotification.nonAssociationPrisonerNumber, prisonCode, fromDate, toDate)
@@ -143,15 +159,15 @@ class VisitNotificationEventService(
     return primaryPrisonerVisitDatesByPrison.filter { nonAssociationPrisonerVisitDatesByPrison.contains(it) }
   }
 
-  private fun getValidFromDateTime(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): LocalDateTime {
-    return if (nonAssociationChangedNotification.validFromDate.isAfter(LocalDate.now())) {
-      nonAssociationChangedNotification.validFromDate.atStartOfDay()
+  private fun getValidFromDateTime(validFromDate: LocalDate): LocalDateTime {
+    return if (validFromDate.isAfter(LocalDate.now())) {
+      validFromDate.atStartOfDay()
     } else {
       LocalDateTime.now()
     }
   }
 
-  private fun getValidToDateTime(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): LocalDateTime? {
-    return nonAssociationChangedNotification.validToDate?.let { LocalDateTime.of(nonAssociationChangedNotification.validToDate, LocalTime.MAX) }
+  private fun getValidToDateTime(validToDate: LocalDate?): LocalDateTime? {
+    return validToDate?.let { LocalDateTime.of(validToDate, LocalTime.MAX) }
   }
 }
