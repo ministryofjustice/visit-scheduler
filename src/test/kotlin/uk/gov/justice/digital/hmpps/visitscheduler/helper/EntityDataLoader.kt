@@ -6,6 +6,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -14,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -37,11 +39,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepo
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VSIPReportingRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import kotlin.jvm.optionals.getOrNull
 
 @Component
 @Transactional
@@ -372,6 +377,8 @@ class DeleteEntityHelper(
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val eventAuditRepository: TestEventAuditRepository,
+  private val visitNotificationEventRepository: VisitNotificationEventRepository,
+  private val vsipReportingRepository: VSIPReportingRepository,
 ) {
 
   fun deleteAll() {
@@ -393,6 +400,10 @@ class DeleteEntityHelper(
     sessionCategoryGroupRepository.flush()
     eventAuditRepository.deleteAll()
     eventAuditRepository.flush()
+    visitNotificationEventRepository.deleteAll()
+    visitNotificationEventRepository.flush()
+    vsipReportingRepository.deleteAll()
+    vsipReportingRepository.flush()
   }
 }
 
@@ -473,6 +484,20 @@ class SessionPrisonerIncentiveLevelHelper(
     group.sessionIncentiveLevels.addAll(permittedIncentiveLevelGroups)
 
     return group
+  }
+}
+
+@Component
+@Transactional
+class VsipReportingEntityHelper(
+  private val vsipReportingRepository: VSIPReportingRepository,
+) {
+  fun create(reportName: VSIPReport, reportDate: LocalDate?) {
+    vsipReportingRepository.save(VSIPReporting(reportName, reportDate))
+  }
+
+  fun get(reportName: VSIPReport): VSIPReporting? {
+    return vsipReportingRepository.findById(reportName).getOrNull()
   }
 }
 

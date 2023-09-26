@@ -4,9 +4,10 @@ import com.microsoft.applicationinsights.TelemetryClient
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ExpiredVisitTaskConfiguration
+import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
@@ -26,9 +27,8 @@ class VisitTask(
   private val sessionService: SessionService,
   private val prisonConfigService: PrisonConfigService,
   private val telemetryClient: TelemetryClient,
-  @Value("\${task.expired-visit.enabled:false}") private val enabled: Boolean,
-  @Value("\${task.log-non-associations.enabled:false}") private val flagVisitsEnabled: Boolean,
-  @Value("\${task.log-non-associations.number-of-days-ahead:30}") private val numberOfDaysAhead: Long,
+  private val expiredVisitTaskConfiguration: ExpiredVisitTaskConfiguration,
+  private val flagVisitTaskConfiguration: FlagVisitTaskConfiguration,
 ) {
 
   companion object {
@@ -38,11 +38,11 @@ class VisitTask(
   @Scheduled(cron = "\${task.expired-visit.cron:0 0/15 * * * ?}")
   @SchedulerLock(
     name = "deleteExpiredVisitsTask",
-    lockAtLeastFor = "PT5M",
-    lockAtMostFor = "PT5M",
+    lockAtLeastFor = ExpiredVisitTaskConfiguration.LOCK_AT_LEAST_FOR,
+    lockAtMostFor = ExpiredVisitTaskConfiguration.LOCK_AT_MOST_FOR,
   )
   fun deleteExpiredReservations() {
-    if (!enabled) {
+    if (!expiredVisitTaskConfiguration.expiredVisitTaskEnabled) {
       return
     }
 
@@ -57,17 +57,17 @@ class VisitTask(
   @Scheduled(cron = "\${task.log-non-associations.cron:0 0 3 * * ?}")
   @SchedulerLock(
     name = "flagVisitsTask",
-    lockAtLeastFor = "PT60M",
-    lockAtMostFor = "PT60M",
+    lockAtLeastFor = FlagVisitTaskConfiguration.LOCK_AT_LEAST_FOR,
+    lockAtMostFor = FlagVisitTaskConfiguration.LOCK_AT_MOST_FOR,
   )
   fun flagVisits() {
-    if (!flagVisitsEnabled) {
+    if (!flagVisitTaskConfiguration.flagVisitsEnabled) {
       return
     }
 
     log.debug("Started flagVisits task.")
     prisonConfigService.getSupportedPrisons().forEach { prisonCode ->
-      for (i in 0..numberOfDaysAhead) {
+      for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
         val visitFilter = VisitFilter(
           prisonCode = prisonCode,
           visitStatusList = listOf(VisitStatus.BOOKED),
@@ -98,7 +98,7 @@ class VisitTask(
     var retry = false
 
     with(visit) {
-      log.debug("Started check, visit with reference - ${this.reference}, prisoner id - ${this.prisonerId}, prison code - ${this.prisonCode}, start time - ${this.startTimestamp}, end time - ${this.endTimestamp}")
+      log.debug("Started check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", this.reference, this.prisonerId, this.prisonCode, this.startTimestamp, this.endTimestamp)
       var sessions = emptyList<VisitSessionDto>()
       var visitTrackEvent = getFlaggedVisitTrackEvent(visit)
 
@@ -117,15 +117,15 @@ class VisitTask(
 
       if (sessions.isEmpty() && !retry) {
         trackEvent(visitTrackEvent)
-        log.info("Flagged Visit: Visit with reference - ${this.reference}, prisoner id - ${this.prisonerId}, prison code - ${this.prisonCode}, start time - ${this.startTimestamp}, end time - ${this.endTimestamp} flagged for check.")
+        log.info("Flagged Visit: Visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check.", this.reference, this.prisonerId, this.prisonCode, this.startTimestamp, this.endTimestamp)
       }
 
-      log.debug("Finished check, visit with reference - ${this.reference}, prisoner id - ${this.prisonerId}, prison code - ${this.prisonCode}, start time - ${this.startTimestamp}, end time - ${this.endTimestamp}")
+      log.debug("Finished check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", this.reference, this.prisonerId, this.prisonCode, this.startTimestamp, this.endTimestamp)
 
       try {
-        Thread.sleep(500)
+        Thread.sleep(FlagVisitTaskConfiguration.THREAD_SLEEP_TIME_IN_MILLISECONDS)
       } catch (e: InterruptedException) {
-        log.debug("Flagged Visit: Sleep failed : $e")
+        log.debug("Flagged Visit: Sleep failed : {}", e.toString())
       }
     }
 
@@ -146,7 +146,7 @@ class VisitTask(
 
   private fun trackEvent(properties: Map<String, String>) {
     try {
-      telemetryClient.trackEvent(TelemetryVisitEvents.FLAG_EVENT.eventName, properties, null)
+      telemetryClient.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT.eventName, properties, null)
     } catch (e: RuntimeException) {
       VisitService.LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
     }

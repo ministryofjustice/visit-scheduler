@@ -45,6 +45,16 @@ class PrisonApiMockServer : WireMockServer(8092) {
     )
   }
 
+  fun stubGetOffenderNonAssociationHttpError(status: HttpStatus = HttpStatus.BAD_REQUEST) {
+    stubFor(
+      get("/api/offenders/FAKE-offenderNo/non-association-details")
+        .willReturn(
+          aResponse()
+            .withStatus(status.value()),
+        ),
+    )
+  }
+
   fun stubGetOffenderNonAssociationEmpty(offenderNo: String) {
     stubGetOffenderNonAssociation(offenderNo, offenderNonAssociationDetailsDto = OffenderNonAssociationDetailsDto())
   }
