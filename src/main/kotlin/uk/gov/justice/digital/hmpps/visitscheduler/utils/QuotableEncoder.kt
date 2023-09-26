@@ -13,8 +13,8 @@ class QuotableEncoder(private val delimiter: String = "-", private val minLength
     require(delimiter.length in 0..1) {
       "delimiter length must be zero or one"
     }
-    require(delimiter.isEmpty() || !delimiter.all { it.isLetterOrDigit() }) {
-      "delimiter must not contain alphanumeric characters"
+    require(delimiter.isEmpty() || !delimiter.all { it.isLetterOrDigit() } || delimiter.all { "$–_.+!*‘(),~".indexOf(it) > -1 }) {
+      "delimiter must not contain alphanumeric characters and must be compatible to the url standard"
     }
     require(minLength > 0) {
       "minimum length must be greater than zero"

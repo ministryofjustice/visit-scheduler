@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.service.repoting
+package uk.gov.justice.digital.hmpps.visitscheduler.service.reporting
 
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto

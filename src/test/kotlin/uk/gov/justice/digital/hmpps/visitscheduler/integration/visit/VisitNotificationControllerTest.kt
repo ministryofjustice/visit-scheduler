@@ -135,6 +135,85 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     assertBookedEvent(listOf(primaryVisit1, primaryVisit2, secondaryVisit1, secondaryVisit2))
     verify(telemetryClient, times(4)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(4)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    Assertions.assertThat(visitNotifications).hasSize(4)
+    val eventRef = visitNotifications[0].reference
+    Assertions.assertThat(eventRef).isNotNull()
+    Assertions.assertThat(visitNotifications[1].reference).isEqualTo(eventRef)
+    Assertions.assertThat(visitNotifications[2].reference).isEqualTo(eventRef)
+    Assertions.assertThat(visitNotifications[3].reference).isEqualTo(eventRef)
+  }
+
+  @Test
+  fun `when two events are consumed they have different references associated for each event`() {
+    // Given
+    stubGetOffenderNonAssociationForPrisonApi()
+    val nonAssociationChangedNotification1 = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = LocalDate.now())
+
+    val primaryPrisonerId2 = primaryPrisonerId + "Extp"
+    val secondaryPrisonerId2 = secondaryPrisonerId + "Exts"
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId2, prisonCode, IncentiveLevel.ENHANCED)
+    stubGetOffenderNonAssociationForPrisonApi(primaryPrisonerId2, secondaryPrisonerId2)
+    val nonAssociationChangedNotification2 = NonAssociationChangedNotificationDto(primaryPrisonerId2, secondaryPrisonerId2, validFromDate = LocalDate.now())
+
+    val primaryVisit1 = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(1),
+      prisonCode = prisonCode,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(primaryVisit1)
+
+    val primaryVisit2 = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId2,
+      visitStart = primaryVisit1.visitStart,
+      prisonCode = prisonCode,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(primaryVisit2)
+
+    val secondaryVisit1 = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId,
+      prisonCode = primaryVisit1.prison.code,
+      visitStart = primaryVisit1.visitStart,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(secondaryVisit1)
+
+    val secondaryVisit2 = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId2,
+      prisonCode = primaryVisit2.prison.code,
+      visitStart = primaryVisit1.visitStart,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(secondaryVisit2)
+
+    // When
+    callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification1)
+    callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification2)
+
+    // Then
+    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    Assertions.assertThat(visitNotifications).hasSize(4)
+
+    with(visitNotifications[0]) {
+      Assertions.assertThat(reference).isNotNull()
+      Assertions.assertThat(bookingReference).isEqualTo(primaryVisit1.reference)
+    }
+    with(visitNotifications[1]) {
+      Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit1.reference)
+      Assertions.assertThat(reference).isEqualTo(visitNotifications[0].reference)
+    }
+    with(visitNotifications[2]) {
+      Assertions.assertThat(reference).isNotNull()
+      Assertions.assertThat(bookingReference).isEqualTo(primaryVisit2.reference)
+    }
+    with(visitNotifications[3]) {
+      Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit2.reference)
+      Assertions.assertThat(reference).isEqualTo(visitNotifications[2].reference)
+    }
   }
 
   @Test
@@ -158,11 +237,10 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       visitStatus = BOOKED,
     )
 
-    testVisitNotificationEventRepository.saveAndFlush(
+    val firstVisit = testVisitNotificationEventRepository.saveAndFlush(
       VisitNotificationEvent(
         primaryVisit.reference,
         NotificationEventType.NON_ASSOCIATION_EVENT,
-        today,
       ),
     )
 
@@ -170,7 +248,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
       VisitNotificationEvent(
         secondaryVisit.reference,
         NotificationEventType.NON_ASSOCIATION_EVENT,
-        today,
+        _reference = firstVisit.reference,
       ),
     )
 

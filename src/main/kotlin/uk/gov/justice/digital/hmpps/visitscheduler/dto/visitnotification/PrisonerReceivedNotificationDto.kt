@@ -5,4 +5,6 @@ import jakarta.validation.constraints.NotBlank
 data class PrisonerReceivedNotificationDto(
   @NotBlank
   val prisonerNumber: String,
+  @NotBlank
+  val prisonCode: String,
 )

@@ -4,10 +4,12 @@ import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDateTime
 
 @Entity
@@ -23,8 +25,24 @@ class VisitNotificationEvent(
   @Enumerated(EnumType.STRING)
   val type: NotificationEventType,
 
+  @Transient
+  private val _reference: String? = "",
+
+) : AbstractIdEntity() {
+
   @CreationTimestamp
   @Column
-  val createTimestamp: LocalDateTime = LocalDateTime.now(),
+  val createTimestamp: LocalDateTime = LocalDateTime.now()
 
-) : AbstractIdEntity()
+  @Column
+  var reference = _reference
+
+  @PostPersist
+  fun createReference() {
+    reference = if (_reference.isNullOrBlank()) {
+      QuotableEncoder(delimiter = "*", minLength = 8).encode(id)
+    } else {
+      _reference
+    }
+  }
+}

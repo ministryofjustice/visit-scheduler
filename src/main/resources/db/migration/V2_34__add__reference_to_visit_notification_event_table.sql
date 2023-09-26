@@ -1,0 +1,2 @@
+ALTER TABLE visit_notification_event ADD reference text;
+CREATE INDEX idx_visit_notification_event_reference ON visit_notification_event(reference);
