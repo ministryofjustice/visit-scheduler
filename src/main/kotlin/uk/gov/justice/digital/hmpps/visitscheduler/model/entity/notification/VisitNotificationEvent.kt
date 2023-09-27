@@ -26,7 +26,7 @@ class VisitNotificationEvent(
   val type: NotificationEventType,
 
   @Transient
-  private val _reference: String? = "",
+  private val _reference: String = "",
 
 ) : AbstractIdEntity() {
 
@@ -34,15 +34,13 @@ class VisitNotificationEvent(
   @Column
   val createTimestamp: LocalDateTime = LocalDateTime.now()
 
-  @Column
+  @Column(nullable = false)
   var reference = _reference
 
   @PostPersist
   fun createReference() {
-    reference = if (_reference.isNullOrBlank()) {
-      QuotableEncoder(delimiter = "*", minLength = 8).encode(id)
-    } else {
-      _reference
+    if (_reference.isBlank()) {
+      reference = QuotableEncoder(delimiter = "*", minLength = 8).encode(id)
     }
   }
 }
