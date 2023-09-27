@@ -1,6 +1,5 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notifications
 
-import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -10,7 +9,6 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -18,36 +16,21 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonAssociationHasChanged
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
-class VisitNotificationControllerTest : IntegrationTestBase() {
+class NonAssociationVisitNotificationControllerTest : NotificationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @SpyBean
-  private lateinit var telemetryClient: TelemetryClient
-
-  @SpyBean
-  private lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
-
-  @SpyBean
   private lateinit var prisonerService: PrisonerService
-
-  @Autowired
-  private lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
 
   val primaryPrisonerId = "AA11BCC"
   val secondaryPrisonerId = "XX11YZZ"
@@ -132,7 +115,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(primaryVisit1, primaryVisit2, secondaryVisit1, secondaryVisit2))
+    assertBookedEvent(listOf(primaryVisit1, primaryVisit2, secondaryVisit1, secondaryVisit2), NotificationEventType.NON_ASSOCIATION_EVENT)
     verify(telemetryClient, times(4)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(4)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -608,7 +591,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(primaryVisit2, secondaryVisit2))
+    assertBookedEvent(listOf(primaryVisit2, secondaryVisit2), NotificationEventType.NON_ASSOCIATION_EVENT)
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
   }
@@ -675,39 +658,8 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(primaryVisit1, secondaryVisit1))
+    assertBookedEvent(listOf(primaryVisit1, secondaryVisit1), NotificationEventType.NON_ASSOCIATION_EVENT)
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
-  }
-
-  private fun assertBookedEvent(visits: List<Visit>) {
-    visits.forEach { visit ->
-      run {
-        val eventAudit = eventAuditRepository.findLastBookedVisitEventByBookingReference(visit.reference)
-
-        verify(telemetryClient).trackEvent(
-          eq("flagged-visit-event"),
-          org.mockito.kotlin.check {
-            Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
-            Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-            Assertions.assertThat(it["reviewType"]).isEqualTo("Non-association")
-            Assertions.assertThat(it["visitBooked"]).isEqualTo(formatDateTimeToString(eventAudit.createTimestamp))
-            Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-            Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
-            Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-            Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
-            Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-            Assertions.assertThat(it["visitStart"]).isEqualTo(formatDateTimeToString(visit.visitStart))
-            Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-            Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
-          },
-          isNull(),
-        )
-      }
-    }
-  }
-
-  private fun formatDateTimeToString(dateTime: LocalDateTime): String {
-    return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
   }
 }
