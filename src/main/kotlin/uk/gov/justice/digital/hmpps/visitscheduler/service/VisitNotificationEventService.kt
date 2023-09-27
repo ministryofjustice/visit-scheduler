@@ -38,7 +38,7 @@ class VisitNotificationEventService(
   fun handleNonAssociations(notificationDto: NonAssociationChangedNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate) && isNotADeleteEvent(notificationDto)) {
       val overlappingVisits = getOverLappingVisits(notificationDto)
-      processVisitsWithNotifications(overlappingVisits, NotificationEventType.NON_ASSOCIATION_EVENT)
+      processVisitsWithNotifications(overlappingVisits, NON_ASSOCIATION_EVENT)
     }
   }
 
@@ -103,13 +103,20 @@ class VisitNotificationEventService(
   private fun saveVisitNotification(
     impactedVisit: VisitDto,
     reference: String?,
-  ): String? {
+  ): String {
     val savedVisitNotificationEvent = visitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        impactedVisit.reference,
-        NON_ASSOCIATION_EVENT,
-        _reference = reference,
-      ),
+      if (reference == null) {
+        VisitNotificationEvent(
+          impactedVisit.reference,
+          NON_ASSOCIATION_EVENT,
+        )
+      } else {
+        VisitNotificationEvent(
+          impactedVisit.reference,
+          NON_ASSOCIATION_EVENT,
+          _reference = reference,
+        )
+      },
     )
     return savedVisitNotificationEvent.reference
   }
