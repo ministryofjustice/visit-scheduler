@@ -188,7 +188,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
-    "SELECT v  FROM Visit v LEFT JOIN v.visitors as vis " +
+    "SELECT v  FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED' AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(v.prison.code = :prisonCode) AND " +
