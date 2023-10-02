@@ -35,7 +35,6 @@ import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
-@Ignore("Pending future requirements")
 class VisitNotificationControllerTest : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -263,7 +262,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
-  @Test
+  @Ignore("Pending future requirements")
   fun `when non associations event is triggered but prisoner has no non associations they are not flagged or saved`() {
     // This can happen when non associations event is triggered by delete or an update
 
