@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
+import uk.gov.justice.digital.hmpps.visitscheduler.client.NonAssociationsApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
@@ -18,9 +19,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppli
 class PrisonerValidationServiceTest {
 
   private val prisonApiClient = mock<PrisonApiClient>()
+  private val nonAssociationsApiClient = mock<NonAssociationsApiClient>()
   private val prisonerOffenderSearchClient = mock<PrisonerOffenderSearchClient>()
 
-  private val prisonerService = PrisonerService(prisonApiClient, prisonerOffenderSearchClient)
+  private val prisonerService = PrisonerService(prisonApiClient, nonAssociationsApiClient, prisonerOffenderSearchClient)
 
   private val prisonerValidationService = PrisonerValidationService(prisonerService)
 

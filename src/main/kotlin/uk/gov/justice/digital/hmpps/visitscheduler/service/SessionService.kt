@@ -288,7 +288,7 @@ class SessionService(
   ): Boolean {
     if (offenderNonAssociationList.isNotEmpty()) {
       val nonAssociationPrisonerIds =
-        getNonAssociationPrisonerIds(session.startTimestamp.toLocalDate(), offenderNonAssociationList)
+        getNonAssociationPrisonerIds(offenderNonAssociationList)
       val startDateTimeFilter = if (policyNonAssociationWholeDay) {
         session.startTimestamp.toLocalDate()
           .atStartOfDay()
@@ -316,11 +316,9 @@ class SessionService(
   }
 
   private fun getNonAssociationPrisonerIds(
-    startTimestamp: LocalDate,
     @NotNull offenderNonAssociationList: List<OffenderNonAssociationDetailDto>,
   ): List<String> {
-    return offenderNonAssociationList.filter { isDateWithinRange(startTimestamp, it.effectiveDate, it.expiryDate) }
-      .map { it.offenderNonAssociation.offenderNo }
+    return offenderNonAssociationList.map { it.offenderNonAssociation.offenderNo }
   }
 
   private fun sessionHasBooking(session: VisitSessionDto, prisonerId: String): Boolean {
@@ -346,9 +344,6 @@ class SessionService(
 
     return restrictionReservedStats + restrictionBookedStats
   }
-
-  private fun isDateWithinRange(sessionDate: LocalDate, startDate: LocalDate, endDate: LocalDate? = null) =
-    sessionDate >= startDate && (endDate == null || sessionDate <= endDate)
 
   fun getSessionCapacity(
     prisonCode: String,

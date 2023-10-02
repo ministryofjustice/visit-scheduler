@@ -12,6 +12,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import uk.gov.justice.digital.hmpps.visitscheduler.client.NonAssociationsApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
@@ -32,9 +33,10 @@ import java.time.LocalDateTime
 class PrisonerServiceTest {
 
   private val prisonApiClient = mock<PrisonApiClient>()
+  private val nonAssociationsApiClient = mock<NonAssociationsApiClient>()
   private val prisonerOffenderSearchClient = mock<PrisonerOffenderSearchClient>()
 
-  private val prisonerService: PrisonerService = PrisonerService(prisonApiClient, prisonerOffenderSearchClient)
+  private val prisonerService: PrisonerService = PrisonerService(prisonApiClient, nonAssociationsApiClient, prisonerOffenderSearchClient)
   private val prisonerCode = "Code"
 
   @Test
@@ -42,7 +44,7 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId),
+      nonAssociationsApiClient.getOffenderNonAssociation(prisonerId),
     ).thenReturn(OffenderNonAssociationDetailsDto())
 
     // When
@@ -50,7 +52,7 @@ class PrisonerServiceTest {
 
     // Then
     assertThat(offenderNonAssociations).isEmpty()
-    Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    Mockito.verify(nonAssociationsApiClient, times(1)).getOffenderNonAssociation(prisonerId)
   }
 
   @Test
@@ -59,7 +61,7 @@ class PrisonerServiceTest {
     val associationId = "AA1234CC"
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId),
+      nonAssociationsApiClient.getOffenderNonAssociation(prisonerId),
     ).thenReturn(
       OffenderNonAssociationDetailsDto(
         listOf(
@@ -79,7 +81,7 @@ class PrisonerServiceTest {
     assertThat(offenderNonAssociations.size).isEqualTo(1)
     val offenderNonAssociationList = offenderNonAssociations.stream().map { o -> o.offenderNonAssociation.offenderNo }.toList()
     assertThat(offenderNonAssociationList.contains(associationId))
-    Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    Mockito.verify(nonAssociationsApiClient, times(1)).getOffenderNonAssociation(prisonerId)
   }
 
   @Test
@@ -102,7 +104,7 @@ class PrisonerServiceTest {
     )
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId),
+      nonAssociationsApiClient.getOffenderNonAssociation(prisonerId),
     ).thenReturn(
       OffenderNonAssociationDetailsDto(
         listOf(
@@ -120,7 +122,7 @@ class PrisonerServiceTest {
     assertThat(offenderNonAssociations.size).isEqualTo(3)
     val offenderNonAssociationList = offenderNonAssociations.stream().map { o -> o.offenderNonAssociation.offenderNo }.toList()
     assertThat(offenderNonAssociationList.containsAll(listOf("AA1234EE", "AA1234EE", "AA1234EE")))
-    Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    Mockito.verify(nonAssociationsApiClient, times(1)).getOffenderNonAssociation(prisonerId)
   }
 
   @Test
@@ -128,7 +130,7 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId),
+      nonAssociationsApiClient.getOffenderNonAssociation(prisonerId),
     ).thenReturn(null)
 
     // When
@@ -136,7 +138,7 @@ class PrisonerServiceTest {
 
     // Then
     assertThat(offenderNonAssociations).isEmpty()
-    Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    Mockito.verify(nonAssociationsApiClient, times(1)).getOffenderNonAssociation(prisonerId)
   }
 
   @Test
@@ -144,7 +146,7 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getOffenderNonAssociation(prisonerId),
+      nonAssociationsApiClient.getOffenderNonAssociation(prisonerId),
     ).thenThrow(
       WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
@@ -155,7 +157,7 @@ class PrisonerServiceTest {
     }
 
     // Then
-    Mockito.verify(prisonApiClient, times(1)).getOffenderNonAssociation(prisonerId)
+    Mockito.verify(nonAssociationsApiClient, times(1)).getOffenderNonAssociation(prisonerId)
   }
 
   @Test

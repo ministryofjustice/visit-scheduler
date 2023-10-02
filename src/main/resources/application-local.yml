@@ -33,6 +33,11 @@ prisoner:
       url: http://localhost:8092
       timeout: 10s
 
+non-associations:
+  api:
+    url: http://localhost:8094
+    timeout: 10s
+
 policy:
   session:
     booking-notice-period:

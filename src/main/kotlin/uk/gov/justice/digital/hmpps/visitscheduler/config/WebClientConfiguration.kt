@@ -16,6 +16,7 @@ import org.springframework.web.reactive.function.client.WebClient
 @Configuration
 class WebClientConfiguration(
   @Value("\${prison.api.url}") private val prisonApiBaseUrl: String,
+  @Value("\${non-associations.api.url}") private val nonAssociationsApiBaseUrl: String,
   @Value("\${prisoner.offender.search.url}") private val prisonOffenderSearchBaseUrl: String,
 ) {
   companion object {
@@ -26,6 +27,12 @@ class WebClientConfiguration(
   fun prisonApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
     val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
     return getWebClient(prisonApiBaseUrl, oauth2Client)
+  }
+
+  @Bean
+  fun nonAssociationsApiWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
+    val oauth2Client = getOauth2Client(authorizedClientManager, CLIENT_REGISTRATION_ID)
+    return getWebClient(nonAssociationsApiBaseUrl, oauth2Client)
   }
 
   @Bean

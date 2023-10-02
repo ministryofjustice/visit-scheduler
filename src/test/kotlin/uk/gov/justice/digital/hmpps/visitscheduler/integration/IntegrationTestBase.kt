@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.VsipReportingEntityHel
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociationsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
@@ -137,18 +138,21 @@ abstract class IntegrationTestBase {
 
   companion object {
     internal val prisonApiMockServer = PrisonApiMockServer()
+    internal val nonAssociationsApiMockServer = NonAssociationsApiMockServer()
     internal val prisonOffenderSearchMockServer = PrisonOffenderSearchMockServer()
 
     @BeforeAll
     @JvmStatic
     fun startMocks() {
       prisonApiMockServer.start()
+      nonAssociationsApiMockServer.start()
       prisonOffenderSearchMockServer.start()
     }
 
     @AfterAll
     @JvmStatic
     fun stopMocks() {
+      nonAssociationsApiMockServer.stop()
       prisonApiMockServer.stop()
       prisonOffenderSearchMockServer.stop()
     }
