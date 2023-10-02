@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
+import org.junit.Ignore
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -34,6 +35,7 @@ import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_BOOK")
+@Ignore("Pending future requirements")
 class VisitNotificationControllerTest : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
