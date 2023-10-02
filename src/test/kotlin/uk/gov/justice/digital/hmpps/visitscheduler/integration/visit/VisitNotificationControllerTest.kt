@@ -65,7 +65,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     effectiveDate: LocalDate = LocalDate.now(),
     expiryDate: LocalDate? = null,
   ) {
-    Companion.prisonApiMockServer.stubGetOffenderNonAssociation(
+    Companion.nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       nonAssociationId,
       effectiveDate,
@@ -300,7 +300,7 @@ class VisitNotificationControllerTest : IntegrationTestBase() {
     // Given
     val today = LocalDateTime.now()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = today.toLocalDate())
-    prisonApiMockServer.stubGetOffenderNonAssociationHttpError()
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationHttpError()
 
     // When
     val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)

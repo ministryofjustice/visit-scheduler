@@ -66,7 +66,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     // prisoner A has non association with prisoner B who has a visit on the same day
     val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
 
-    prisonApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
       prisonerAId,
       prisonerBId,
       LocalDate.now(),
@@ -75,11 +75,11 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // prisoner B has a visit on the same day but offender list is empty for test purposes
     createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
 
     // prisoner C has no non associations
     createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerAId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code)
@@ -131,21 +131,21 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
     // prisoner A has moved location since the visit was created
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerAId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerAId)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
     prisonApiMockServer.stubGetPrisonerDetails(prisonerAId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code)
 
     // prisoner B visit will not be flagged
     createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerBId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A-0-001")
 
     // prisoner C visit will not be flagged
     createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerCId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-A-2")
@@ -186,21 +186,21 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplate.reference)
     // prisoner A has changed category to B since the visit was created
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerAId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerAId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerAId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code, category = PrisonerCategoryType.B.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
 
     // prisoner B visit will not be flagged
     createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplate.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerBId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code, category = PrisonerCategoryType.A_STANDARD.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
 
     // prisoner C visit will not be flagged
     createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplate.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerCId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code, category = PrisonerCategoryType.A_STANDARD.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
@@ -241,21 +241,21 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
     // prisoner A has changed category to B since the visit was created
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerAId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerAId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerAId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code, incentiveLevelCode = IncentiveLevel.STANDARD)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
 
     // prisoner B visit will not be flagged as incentiveLevel is ENHANCED
     createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerBId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code, incentiveLevelCode = IncentiveLevel.ENHANCED)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
 
     // prisoner C visit will not be flagged as incentiveLevel is ENHANCED
     createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerCId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code, incentiveLevelCode = IncentiveLevel.ENHANCED)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
@@ -294,7 +294,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     )
 
     val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerAId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerAId)
     // prisoner is now in prison XYZ
     prisonApiMockServer.stubGetPrisonerDetails(prisonerAId, newPrisonCode)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code)
@@ -302,14 +302,14 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // prisoner B visit will not be flagged as in the same prison
     createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerBId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
 
     // prisoner C visit will not be flagged as in the same prison
     createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerCId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
@@ -347,19 +347,19 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     )
 
     val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociation(prisonerAId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(prisonerAId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerAId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerAId, null)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
 
     createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerBId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerBId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
 
     createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
-    prisonApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerCId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerCId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")

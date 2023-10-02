@@ -3,11 +3,11 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.visitscheduler.client.NonAssociationsApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerCellLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentiv
 @Service
 class PrisonerService(
   private val prisonApiClient: PrisonApiClient,
+  private val nonAssociationsApiClient: NonAssociationsApiClient,
   private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
 ) {
   companion object {
@@ -29,7 +30,7 @@ class PrisonerService(
   }
 
   fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
-    val offenderNonAssociationDetails = prisonApiClient.getOffenderNonAssociation(prisonerId)
+    val offenderNonAssociationDetails = nonAssociationsApiClient.getOffenderNonAssociation(prisonerId)
     offenderNonAssociationDetails?.let {
       val offenderNonAssociationList = offenderNonAssociationDetails.nonAssociations
       LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${offenderNonAssociationList.size} non associations!")
@@ -40,31 +41,6 @@ class PrisonerService(
 
   fun getPrisonerFullStatus(prisonerId: String): PrisonerDetailsDto? {
     return prisonApiClient.getPrisonerDetails(prisonerId)
-  }
-
-  fun getPrisonerLastHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? {
-    val prisonerDetailsDto = prisonApiClient.getPrisonerDetails(prisonerId)
-    prisonerDetailsDto?.let {
-      LOG.debug("Entered getPrisonerLastHousingLocation for : $prisonerDetailsDto")
-      val lastLocation = getLastLocation(prisonerDetailsDto, prisonCode)
-      LOG.debug("getPrisonerLastHousingLocation response : $lastLocation")
-      return lastLocation?.let {
-        return PrisonerHousingLocationsDto(levels = lastLocation.levels)
-      }
-    }
-    return null
-  }
-
-  private fun getLastLocation(
-    prisonerDetails: PrisonerDetailsDto,
-    prisonCode: String,
-  ): PrisonerCellLocationDto? {
-    LOG.debug("Entered getLastLocation : ${prisonerDetails.bookingId}")
-    val cellHistory = prisonApiClient.getCellHistory(prisonerDetails.bookingId)
-    LOG.debug("getLastLocation response : $cellHistory")
-    return cellHistory?.let {
-      return cellHistory.history.firstOrNull { !isPrisonerInTemporaryLocation(it.levels) && it.prisonCode == prisonCode }
-    }
   }
 
   fun getPrisonerHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? {
