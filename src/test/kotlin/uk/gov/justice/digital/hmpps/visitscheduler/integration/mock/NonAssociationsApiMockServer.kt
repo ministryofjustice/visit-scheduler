@@ -28,7 +28,7 @@ class NonAssociationsApiMockServer : WireMockServer(8094) {
     val jsonBody = getJsonString(OffenderNonAssociationDetailsDto(details))
 
     stubFor(
-      get("/legacy/api/offenders/$offenderNo/non-association-details?currentPrisonOnly=false&excludeInactive=true")
+      get("/legacy/api/offenders/$offenderNo/non-association-details?currentPrisonOnly=true&excludeInactive=true")
         .willReturn(
           aResponse()
             .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
@@ -40,7 +40,7 @@ class NonAssociationsApiMockServer : WireMockServer(8094) {
 
   fun stubGetOffenderNonAssociationHttpError(status: HttpStatus = HttpStatus.BAD_REQUEST) {
     stubFor(
-      get("/legacy/api/offenders/FAKE-offenderNo/non-association-details?currentPrisonOnly=false&excludeInactive=true")
+      get("/legacy/api/offenders/FAKE-offenderNo/non-association-details?currentPrisonOnly=true&excludeInactive=true")
         .willReturn(
           aResponse()
             .withStatus(status.value()),
@@ -54,7 +54,7 @@ class NonAssociationsApiMockServer : WireMockServer(8094) {
 
   fun stubGetOffenderNonAssociation(offenderNo: String, offenderNonAssociationDetailsDto: OffenderNonAssociationDetailsDto? = null, status: HttpStatus = HttpStatus.NOT_FOUND) {
     stubFor(
-      get("/legacy/api/offenders/$offenderNo/non-association-details?currentPrisonOnly=false&excludeInactive=true")
+      get("/legacy/api/offenders/$offenderNo/non-association-details?currentPrisonOnly=true&excludeInactive=true")
         .willReturn(
           if (offenderNonAssociationDetailsDto == null) {
             aResponse().withStatus(status.value())

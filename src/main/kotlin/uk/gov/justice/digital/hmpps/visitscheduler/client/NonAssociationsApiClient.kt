@@ -25,7 +25,7 @@ class NonAssociationsApiClient(
   fun getOffenderNonAssociation(offenderNo: String): OffenderNonAssociationDetailsDto? {
     LOG.debug("Entered getOffenderNonAssociation $offenderNo")
     return webClient.get()
-      .uri("/legacy/api/offenders/$offenderNo/non-association-details?currentPrisonOnly=false&excludeInactive=true")
+      .uri("/legacy/api/offenders/$offenderNo/non-association-details?currentPrisonOnly=true&excludeInactive=true")
       .retrieve()
       .bodyToMono(TYPE_FOR_OFFENDER_NONASSOCIATION)
       .onErrorResume {
