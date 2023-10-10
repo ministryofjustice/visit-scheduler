@@ -494,4 +494,8 @@ class VisitService(
 
     return visitCancellationDateAllowed
   }
+
+  fun getFutureVisitsBy(prisonerNumber: String, prisonCode: String): List<VisitDto> {
+    return this.visitRepository.getVisits(prisonerNumber, prisonCode, LocalDateTime.now()).map { VisitDto(it) }
+  }
 }

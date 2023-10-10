@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonR
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
@@ -37,8 +38,8 @@ class VisitNotificationEventService(
   @Transactional
   fun handleNonAssociations(notificationDto: NonAssociationChangedNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate) && isNotADeleteEvent(notificationDto)) {
-      val overlappingVisits = getOverLappingVisits(notificationDto)
-      processVisitsWithNotifications(overlappingVisits, NON_ASSOCIATION_EVENT)
+      val affectedVisits = getOverLappingVisits(notificationDto)
+      processVisitsWithNotifications(affectedVisits, NON_ASSOCIATION_EVENT)
     }
   }
 
@@ -61,6 +62,12 @@ class VisitNotificationEventService(
     }
   }
 
+  fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
+    if (RELEASED == notificationDto.reasonType) {
+      val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, notificationDto.prisonCode)
+      processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RELEASED_EVENT)
+    }
+  }
   fun handlePersonRestrictionChangeNotification(notificationDto: PersonRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
       // TODO not yet implemented
@@ -68,10 +75,6 @@ class VisitNotificationEventService(
   }
 
   fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
-    // TODO not yet implemented
-  }
-
-  fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     // TODO not yet implemented
   }
 
