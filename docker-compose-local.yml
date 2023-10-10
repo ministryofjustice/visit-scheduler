@@ -29,6 +29,21 @@ services:
       - SERVER_PORT=8080
       - SPRING_PROFILES_ACTIVE=nomis-hsqldb
 
+  non-associations-api:
+    image: quay.io/hmpps/hmpps-non-associations-api:latest
+    networks:
+      - hmpps
+    container_name: non-associations-api
+    depends_on:
+      - hmpps-auth
+    ports:
+      - "8094:8080"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+    environment:
+      - SERVER_PORT=8080
+      - SPRING_PROFILES_ACTIVE=dev
+
   visit-scheduler-db:
     image: postgres:13.2
     networks:

@@ -24,7 +24,7 @@ class PrisonerSessionValidatorTest {
   private val prisonerCategoryMatcher = PrisonerCategoryMatcher()
   private val prisonerIncentiveLevelMatcher = PrisonerIncentiveLevelMatcher()
   private val prisonerSessionValidator = PrisonerSessionValidator(prisonerLevelMatcher, prisonerCategoryMatcher, prisonerIncentiveLevelMatcher)
-  private val prisonerService = PrisonerService(mock(), mock())
+  private val prisonerService = PrisonerService(mock(), mock(), mock())
 
   @Nested
   @DisplayName("Tests when a prisoner exists in a prison which has 3 levels")
