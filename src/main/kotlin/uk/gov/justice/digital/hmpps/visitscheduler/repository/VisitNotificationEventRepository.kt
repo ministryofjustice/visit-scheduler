@@ -12,7 +12,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   @Query(
     "SELECT count(ve) > 0" +
       " FROM visit_notification_event ve " +
-      " WHERE ve.create_timestamp BETWEEN NOW() - INTERVAL '1 MINUTE' AND NOW() " +
+      " WHERE ve.create_timestamp BETWEEN NOW() - INTERVAL '10 MINUTE' AND NOW() " +
       " AND ve.booking_reference=:bookingReference AND ve.type=:#{#notificationEvent.name()}",
     nativeQuery = true,
   )
