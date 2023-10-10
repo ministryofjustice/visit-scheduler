@@ -38,6 +38,11 @@ prisoner:
       url: http://localhost:8093
       timeout: 5s
 
+non-associations:
+  api:
+    url: http://localhost:8094
+    timeout: 5s
+
 policy:
   session:
     non-association:

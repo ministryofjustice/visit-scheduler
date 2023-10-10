@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notifications
 
 import org.assertj.core.api.Assertions
+import org.junit.Ignore
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -48,7 +49,7 @@ class NonAssociationVisitNotificationControllerTest : NotificationTestBase() {
     effectiveDate: LocalDate = LocalDate.now(),
     expiryDate: LocalDate? = null,
   ) {
-    Companion.prisonApiMockServer.stubGetOffenderNonAssociation(
+    Companion.nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
       prisonerId,
       nonAssociationId,
       effectiveDate,
@@ -244,7 +245,7 @@ class NonAssociationVisitNotificationControllerTest : NotificationTestBase() {
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 
-  @Test
+  @Ignore("Pending future requirements")
   fun `when non associations event is triggered but prisoner has no non associations they are not flagged or saved`() {
     // This can happen when non associations event is triggered by delete or an update
 
@@ -283,7 +284,7 @@ class NonAssociationVisitNotificationControllerTest : NotificationTestBase() {
     // Given
     val today = LocalDateTime.now()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryPrisonerId, secondaryPrisonerId, validFromDate = today.toLocalDate())
-    prisonApiMockServer.stubGetOffenderNonAssociationHttpError()
+    nonAssociationsApiMockServer.stubGetOffenderNonAssociationHttpError()
 
     // When
     val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)

@@ -103,6 +103,10 @@ prisoner:
     search:
       timeout: 10s
 
+non-associations:
+  api:
+    timeout: 10s
+
 policy:
   session:
     non-association:
