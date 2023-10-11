@@ -88,10 +88,10 @@ class VisitNotificationEventService(
     }
   }
 
-  private fun getPrisonCodeUsingPrisonerNumber(prisonerNumber: String) : String? {
+  private fun getPrisonCodeUsingPrisonerNumber(prisonerNumber: String): String? {
     try {
       val prisonCode = prisonerOffenderSearchClient.getPrisoner(prisonerNumber)?.prisonId
-      if (prisonCode!=null && !"OUT".equals(prisonCode,true)) return prisonCode
+      if (prisonCode != null && !"OUT".equals(prisonCode, true)) return prisonCode
     } catch (_: ItemNotFoundException) { }
     return null
   }
