@@ -4,7 +4,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
@@ -26,7 +25,6 @@ import java.util.function.Predicate
 class VisitNotificationEventService(
   private val visitService: VisitService,
   private val telemetryClientService: TelemetryClientService,
-  private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val prisonerService: PrisonerService,
 ) {
@@ -68,6 +66,7 @@ class VisitNotificationEventService(
       processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RELEASED_EVENT)
     }
   }
+
   fun handlePersonRestrictionChangeNotification(notificationDto: PersonRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
       // TODO not yet implemented
@@ -80,7 +79,9 @@ class VisitNotificationEventService(
 
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
-      // TODO not yet implemented
+      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+      val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
+      processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     }
   }
 
@@ -131,7 +132,7 @@ class VisitNotificationEventService(
 
   private fun getOverLappingVisits(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): List<VisitDto> {
     // get the prisoners' prison code
-    val prisonCode = prisonerOffenderSearchClient.getPrisoner(nonAssociationChangedNotification.prisonerNumber)?.prisonId
+    val prisonCode = prisonerService.getPrisoner(nonAssociationChangedNotification.prisonerNumber)?.prisonCode
     val fromDate = getValidFromDateTime(nonAssociationChangedNotification.validFromDate)
     val toDate = getValidToDateTime(nonAssociationChangedNotification.validToDate)
 

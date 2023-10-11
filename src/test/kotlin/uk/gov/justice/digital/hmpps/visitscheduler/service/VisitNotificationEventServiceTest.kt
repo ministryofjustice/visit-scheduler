@@ -10,11 +10,10 @@ import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
-import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
@@ -24,7 +23,6 @@ import java.time.LocalDate
 class VisitNotificationEventServiceTest {
 
   private val visitService = mock<VisitService>()
-  private val prisonerOffenderSearchClient = mock<PrisonerOffenderSearchClient>()
   private val telemetryClientService = mock<TelemetryClientService>()
   private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
   private val prisonerService = mock<PrisonerService>()
@@ -37,12 +35,12 @@ class VisitNotificationEventServiceTest {
 
   @BeforeEach
   fun beforeEachTestSetup() {
-    visitNotificationEventService = VisitNotificationEventService(visitService, telemetryClientService, prisonerOffenderSearchClient, visitNotificationEventRepository, prisonerService)
+    visitNotificationEventService = VisitNotificationEventService(visitService, telemetryClientService, visitNotificationEventRepository, prisonerService)
 
-    whenever(prisonerOffenderSearchClient.getPrisoner(primaryNonAssociationNumber)).thenReturn(
-      PrisonerSearchResultDto(
-        prisonerNumber = primaryNonAssociationNumber,
-        prisonId = prisonCode,
+    whenever(prisonerService.getPrisoner(primaryNonAssociationNumber)).thenReturn(
+      PrisonerDto(
+        incentiveLevel = null,
+        prisonCode = prisonCode,
       ),
     )
   }

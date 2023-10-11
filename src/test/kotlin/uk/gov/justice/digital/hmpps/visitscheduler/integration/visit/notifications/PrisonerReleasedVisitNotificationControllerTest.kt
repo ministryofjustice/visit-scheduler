@@ -12,7 +12,7 @@ import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED_TO_HOSPITAL
@@ -28,7 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("PUT $VISIT_BOOK")
+@DisplayName("POST $VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH")
 class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -53,21 +53,21 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit1)
 
-    val visit2 = visitEntityHelper.create(
+    visitEntityHelper.create(
       prisonerId = notificationDto.prisonerNumber,
       visitStart = LocalDateTime.now().minusDays(1),
       prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
     )
 
-    val visit3 = visitEntityHelper.create(
+    visitEntityHelper.create(
       prisonerId = notificationDto.prisonerNumber,
       visitStart = LocalDateTime.now().minusDays(1),
       prisonCode = notificationDto.prisonCode,
       visitStatus = CANCELLED,
     )
 
-    val visit4 = visitEntityHelper.create(
+    visitEntityHelper.create(
       prisonerId = "ANOTHERPRISONER",
       visitStart = LocalDateTime.now().plusDays(1),
       prisonCode = notificationDto.prisonCode,
