@@ -26,7 +26,7 @@ class PrisonerOffenderSearchClient(
     private val PRISONER_SEARCH_RESULT_DTO = object : ParameterizedTypeReference<PrisonerSearchResultDto>() {}
   }
 
-  fun getPrisoner(offenderNo: String): PrisonerSearchResultDto? {
+  fun getPrisoner(offenderNo: String): PrisonerSearchResultDto {
     return webClient.get()
       .uri("/prisoner/$offenderNo")
       .accept(MediaType.APPLICATION_JSON)
@@ -40,7 +40,7 @@ class PrisonerOffenderSearchClient(
           LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo using offender search", e)
           Mono.error(e)
         }
-      }.block(apiTimeout)
+      }.block(apiTimeout)!!
   }
 
   private fun isNotFoundError(e: Throwable?) =

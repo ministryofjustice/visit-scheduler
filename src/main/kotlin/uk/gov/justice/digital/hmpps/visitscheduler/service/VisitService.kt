@@ -425,7 +425,7 @@ class VisitService(
       prisonCode = prisonCode,
       startDateTime = startDateTime,
       endDateTime = endDateTime,
-      visitStatusList = listOf(VisitStatus.BOOKED),
+      visitStatusList = listOf(BOOKED),
     )
     return visitRepository.findAll(VisitSpecification(visitFilter)).map { VisitDto(it) }
   }
@@ -437,7 +437,7 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun getHistoryByReference(bookingReference: String): List<EventAuditDto> {
-    return eventAuditRepository.findByBookingReference(bookingReference).map { EventAuditDto(it) }
+    return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
   }
 
   @Transactional(readOnly = true)
@@ -495,7 +495,7 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
-  fun getFutureVisitsBy(prisonerNumber: String, prisonCode: String): List<VisitDto> {
+  fun getFutureVisitsBy(prisonerNumber: String, prisonCode: String?): List<VisitDto> {
     return this.visitRepository.getVisits(prisonerNumber, prisonCode, LocalDateTime.now()).map { VisitDto(it) }
   }
 }

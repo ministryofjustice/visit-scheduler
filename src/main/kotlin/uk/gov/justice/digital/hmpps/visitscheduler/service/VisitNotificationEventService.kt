@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
@@ -68,6 +69,7 @@ class VisitNotificationEventService(
       processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RELEASED_EVENT)
     }
   }
+
   fun handlePersonRestrictionChangeNotification(notificationDto: PersonRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
       // TODO not yet implemented
@@ -80,9 +82,18 @@ class VisitNotificationEventService(
 
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
-      // TODO not yet implemented
+      val prisonCode = getPrisonCodeUsingPrisonerNumber(notificationDto.prisonerNumber)
+      val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
+      processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     }
   }
+
+  private fun getPrisonCodeUsingPrisonerNumber(prisonerNumber: String) =
+    try {
+      prisonerOffenderSearchClient.getPrisoner(prisonerNumber).prisonId
+    } catch (e: ItemNotFoundException) {
+      null
+    }
 
   fun handleVisitorRestrictionChangeNotification(notificationDto: VisitorRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
@@ -131,7 +142,7 @@ class VisitNotificationEventService(
 
   private fun getOverLappingVisits(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): List<VisitDto> {
     // get the prisoners' prison code
-    val prisonCode = prisonerOffenderSearchClient.getPrisoner(nonAssociationChangedNotification.prisonerNumber)?.prisonId
+    val prisonCode = prisonerOffenderSearchClient.getPrisoner(nonAssociationChangedNotification.prisonerNumber).prisonId
     val fromDate = getValidFromDateTime(nonAssociationChangedNotification.validFromDate)
     val toDate = getValidToDateTime(nonAssociationChangedNotification.validToDate)
 
