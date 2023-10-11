@@ -88,12 +88,13 @@ class VisitNotificationEventService(
     }
   }
 
-  private fun getPrisonCodeUsingPrisonerNumber(prisonerNumber: String) =
+  private fun getPrisonCodeUsingPrisonerNumber(prisonerNumber: String) : String? {
     try {
-      prisonerOffenderSearchClient.getPrisoner(prisonerNumber).prisonId
-    } catch (e: ItemNotFoundException) {
-      null
-    }
+      val prisonCode = prisonerOffenderSearchClient.getPrisoner(prisonerNumber)?.prisonId
+      if (prisonCode!=null && !"OUT".equals(prisonCode,true)) return prisonCode
+    } catch (_: ItemNotFoundException) { }
+    return null
+  }
 
   fun handleVisitorRestrictionChangeNotification(notificationDto: VisitorRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
@@ -142,7 +143,7 @@ class VisitNotificationEventService(
 
   private fun getOverLappingVisits(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): List<VisitDto> {
     // get the prisoners' prison code
-    val prisonCode = prisonerOffenderSearchClient.getPrisoner(nonAssociationChangedNotification.prisonerNumber).prisonId
+    val prisonCode = prisonerOffenderSearchClient.getPrisoner(nonAssociationChangedNotification.prisonerNumber)?.prisonId
     val fromDate = getValidFromDateTime(nonAssociationChangedNotification.validFromDate)
     val toDate = getValidToDateTime(nonAssociationChangedNotification.validToDate)
 
