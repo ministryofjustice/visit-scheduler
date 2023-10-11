@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_THREE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_TWO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 
@@ -85,5 +86,13 @@ class PrisonerService(
       }
     }
     return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel, prisonCode = prisonerSearchResultDto?.prisonId)
+  }
+
+  fun getPrisonerPrisonCode(prisonerCode: String): String? {
+    try {
+      val prisonCode = prisonerOffenderSearchClient.getPrisoner(prisonerCode)?.prisonId
+      if (!NonPrisonCodeType.isNonPrisonCodeType(prisonCode)) return prisonCode
+    } catch (_: ItemNotFoundException) {}
+    return null
   }
 }

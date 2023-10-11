@@ -4,7 +4,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
@@ -14,7 +13,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
@@ -27,7 +25,6 @@ import java.util.function.Predicate
 class VisitNotificationEventService(
   private val visitService: VisitService,
   private val telemetryClientService: TelemetryClientService,
-  private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val prisonerService: PrisonerService,
 ) {
@@ -82,18 +79,10 @@ class VisitNotificationEventService(
 
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
-      val prisonCode = getPrisonCodeUsingPrisonerNumber(notificationDto.prisonerNumber)
+      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
       processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     }
-  }
-
-  private fun getPrisonCodeUsingPrisonerNumber(prisonerNumber: String): String? {
-    try {
-      val prisonCode = prisonerOffenderSearchClient.getPrisoner(prisonerNumber)?.prisonId
-      if (prisonCode != null && !"OUT".equals(prisonCode, true)) return prisonCode
-    } catch (_: ItemNotFoundException) { }
-    return null
   }
 
   fun handleVisitorRestrictionChangeNotification(notificationDto: VisitorRestrictionChangeNotificationDto) {
@@ -143,7 +132,7 @@ class VisitNotificationEventService(
 
   private fun getOverLappingVisits(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): List<VisitDto> {
     // get the prisoners' prison code
-    val prisonCode = prisonerOffenderSearchClient.getPrisoner(nonAssociationChangedNotification.prisonerNumber)?.prisonId
+    val prisonCode = prisonerService.getPrisoner(nonAssociationChangedNotification.prisonerNumber)?.prisonCode
     val fromDate = getValidFromDateTime(nonAssociationChangedNotification.validFromDate)
     val toDate = getValidToDateTime(nonAssociationChangedNotification.validToDate)
 
