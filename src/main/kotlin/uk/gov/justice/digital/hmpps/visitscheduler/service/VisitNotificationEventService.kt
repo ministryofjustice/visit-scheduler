@@ -5,7 +5,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
@@ -19,7 +18,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
-import java.util.function.Predicate
 
 @Service
 class VisitNotificationEventService(
@@ -35,28 +33,9 @@ class VisitNotificationEventService(
 
   @Transactional
   fun handleNonAssociations(notificationDto: NonAssociationChangedNotificationDto) {
-    if (isNotificationDatesValid(notificationDto.validToDate) && isNotADeleteEvent(notificationDto)) {
+    if (prisonerService.hasPrisonerGotANonAssociationWith(notificationDto.prisonerNumber, notificationDto.nonAssociationPrisonerNumber)) {
       val affectedVisits = getOverLappingVisits(notificationDto)
       processVisitsWithNotifications(affectedVisits, NON_ASSOCIATION_EVENT)
-    }
-  }
-
-  private fun isNotADeleteEvent(notificationDto: NonAssociationChangedNotificationDto): Boolean {
-    try {
-      val isMatch: Predicate<OffenderNonAssociationDetailDto> = Predicate {
-        (
-          it.offenderNonAssociation.offenderNo == notificationDto.nonAssociationPrisonerNumber &&
-            it.effectiveDate == notificationDto.validFromDate &&
-            it.expiryDate == notificationDto.validToDate
-          )
-      }
-
-      val nonAssociations =
-        prisonerService.getOffenderNonAssociationList(notificationDto.prisonerNumber)
-      return nonAssociations.any { isMatch.test(it) }
-    } catch (e: Exception) {
-      LOG.error("isNotADeleteEvent: failed, This could be a delete notification ", e)
-      return true
     }
   }
 
@@ -125,19 +104,13 @@ class VisitNotificationEventService(
     return savedVisitNotificationEvent.reference
   }
 
-  private fun isNotificationDatesValid(validToDate: LocalDate?): Boolean {
-    val toDate = getValidToDateTime(validToDate)
-    return (toDate == null) || toDate.isAfter(LocalDateTime.now())
-  }
-
   private fun getOverLappingVisits(nonAssociationChangedNotification: NonAssociationChangedNotificationDto): List<VisitDto> {
     // get the prisoners' prison code
     val prisonCode = prisonerService.getPrisoner(nonAssociationChangedNotification.prisonerNumber)?.prisonCode
-    val fromDate = getValidFromDateTime(nonAssociationChangedNotification.validFromDate)
-    val toDate = getValidToDateTime(nonAssociationChangedNotification.validToDate)
+    val fromDate = LocalDate.now().atStartOfDay()
 
-    val primaryPrisonerVisits = visitService.getBookedVisits(nonAssociationChangedNotification.prisonerNumber, prisonCode, fromDate, toDate)
-    val nonAssociationPrisonerVisits = visitService.getBookedVisits(nonAssociationChangedNotification.nonAssociationPrisonerNumber, prisonCode, fromDate, toDate)
+    val primaryPrisonerVisits = visitService.getBookedVisits(nonAssociationChangedNotification.prisonerNumber, prisonCode, fromDate)
+    val nonAssociationPrisonerVisits = visitService.getBookedVisits(nonAssociationChangedNotification.nonAssociationPrisonerNumber, prisonCode, fromDate)
     return getOverLappingVisits(primaryPrisonerVisits, nonAssociationPrisonerVisits)
   }
 
@@ -150,7 +123,6 @@ class VisitNotificationEventService(
         overlappingVisits.addAll(getVisitsForDateAndPrison(nonAssociationPrisonerVisits, overlappingVisitDates))
       }
     }
-
     return overlappingVisits.toList()
   }
 
@@ -170,12 +142,9 @@ class VisitNotificationEventService(
     return primaryPrisonerVisitDatesByPrison.filter { nonAssociationPrisonerVisitDatesByPrison.contains(it) }
   }
 
-  private fun getValidFromDateTime(validFromDate: LocalDate): LocalDateTime {
-    return if (validFromDate.isAfter(LocalDate.now())) {
-      validFromDate.atStartOfDay()
-    } else {
-      LocalDateTime.now()
-    }
+  private fun isNotificationDatesValid(validToDate: LocalDate?): Boolean {
+    val toDate = getValidToDateTime(validToDate)
+    return (toDate == null) || toDate.isAfter(LocalDateTime.now())
   }
 
   private fun getValidToDateTime(validToDate: LocalDate?): LocalDateTime? {

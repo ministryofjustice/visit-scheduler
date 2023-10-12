@@ -20,11 +20,11 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
@@ -468,7 +468,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `session does not contain conflicts when an offender has no non-associations and no double bookings`() {
+    fun `session does not contain conflicts when an prisoner has no non-associations and no double bookings`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -482,8 +482,8 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
-      ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
+        prisonerService.getPrisonerNonAssociationList(prisonerId),
+      ).thenReturn(PrisonerNonAssociationDetailsDto().nonAssociations)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -493,11 +493,11 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
-    fun `session does not contain conflicts when an offender has a valid non-association without bookings`() {
+    fun `session does not contain conflicts when an prisoner has a valid non-association without bookings`() {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -511,19 +511,8 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
-      ).thenReturn(
-        OffenderNonAssociationDetailsDto(
-          listOf(
-            OffenderNonAssociationDetailDto(
-              effectiveDate = date.minusMonths(1),
-              expiryDate = date.plusMonths(1),
-              offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId),
-            ),
-          ),
-        ).nonAssociations,
-      )
+      mockGetPrisonerNoAssociation(prisonerId, associationId)
+
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
       // When
@@ -535,11 +524,11 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, fridayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
-    fun `sessions contain conflicts when an offender has a valid non-association with a booking`() {
+    fun `sessions contain conflicts when an prisoner has a valid non-association with a booking`() {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -554,19 +543,8 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
-      ).thenReturn(
-        OffenderNonAssociationDetailsDto(
-          listOf(
-            OffenderNonAssociationDetailDto(
-              effectiveDate = date.minusMonths(1),
-              expiryDate = date.plusMonths(1),
-              offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId),
-            ),
-          ),
-        ).nonAssociations,
-      )
+      mockGetPrisonerNoAssociation(prisonerId, associationId)
+
       val expectedAssociations = listOf(associationId)
       val startDateTimeFilter = date.plusDays(1).with(singleSession.dayOfWeek).atStartOfDay()
       val endDateTimeFilter = date.plusDays(1).with(singleSession.dayOfWeek).atTime(LocalTime.MAX)
@@ -586,11 +564,11 @@ class SessionServiceTest {
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
-    fun `sessions contain conflicts when an offender has a double booking`() {
+    fun `sessions contain conflicts when an prisoner has a double booking`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -604,8 +582,8 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
-      ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
+        prisonerService.getPrisonerNonAssociationList(prisonerId),
+      ).thenReturn(PrisonerNonAssociationDetailsDto().nonAssociations)
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
@@ -618,11 +596,11 @@ class SessionServiceTest {
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), SATURDAY)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.DOUBLE_BOOKED)
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
-    fun `session does not contain conflicts when an offender non-association NOT FOUND`() {
+    fun `session does not contain conflicts when an prisoner non-association NOT FOUND`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -636,7 +614,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
+        prisonerService.getPrisonerNonAssociationList(prisonerId),
       ).thenReturn(emptyList())
 
       // When
@@ -647,7 +625,7 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
@@ -663,7 +641,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
+        prisonerService.getPrisonerNonAssociationList(prisonerId),
       ).thenThrow(
         WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
       )
@@ -674,7 +652,7 @@ class SessionServiceTest {
       }
 
       // Then
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
@@ -722,7 +700,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `all sessions are returned when an offender has no non-associations and no double bookings`() {
+    fun `all sessions are returned when an prisoner has no non-associations and no double bookings`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -735,9 +713,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
-      ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
+      mockGetPrisonerNoAssociation(prisonerId, "associationID")
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -746,11 +722,11 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
-    fun `only available sessions are returned when an offender has a valid non-association without bookings`() {
+    fun `only available sessions are returned when an prisoner has a valid non-association without bookings`() {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -764,19 +740,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
-      ).thenReturn(
-        OffenderNonAssociationDetailsDto(
-          listOf(
-            OffenderNonAssociationDetailDto(
-              effectiveDate = date.minusMonths(1),
-              expiryDate = date.plusMonths(1),
-              offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId),
-            ),
-          ),
-        ).nonAssociations,
-      )
+      mockGetPrisonerNoAssociation(prisonerId, associationId)
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
@@ -785,11 +749,11 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
-    fun `only available sessions are returned when an offender has a valid non-association with a booking`() {
+    fun `only available sessions are returned when an prisoner has a valid non-association with a booking`() {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -803,19 +767,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
-      ).thenReturn(
-        OffenderNonAssociationDetailsDto(
-          listOf(
-            OffenderNonAssociationDetailDto(
-              effectiveDate = date.minusMonths(1),
-              expiryDate = date.plusMonths(1),
-              offenderNonAssociation = OffenderNonAssociationDto(offenderNo = associationId),
-            ),
-          ),
-        ).nonAssociations,
-      )
+      mockGetPrisonerNoAssociation(prisonerId, associationId)
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
@@ -824,11 +776,11 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
-    fun `only available sessions are returned when an offender has a double booking`() {
+    fun `only available sessions are returned when an prisoner has a double booking`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -841,9 +793,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
-      ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
+      mockGetPrisonerNoAssociation(prisonerId, "associationID")
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
@@ -852,11 +802,11 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
     @Test
-    fun `when multiple sessions prison api get offenders is only called once`() {
+    fun `when multiple sessions prison api get prisoners is only called once`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -877,9 +827,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(firstSession, secondSession))
 
-      whenever(
-        prisonerService.getOffenderNonAssociationList(prisonerId),
-      ).thenReturn(OffenderNonAssociationDetailsDto().nonAssociations)
+      mockGetPrisonerNoAssociation(prisonerId, "associationID")
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
@@ -888,12 +836,26 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
-      Mockito.verify(prisonerService, times(1)).getOffenderNonAssociationList(prisonerId)
+      Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
   }
 
   private fun assertDate(localDateTime: LocalDateTime, expectedlyDateTime: String, dayOfWeek: DayOfWeek) {
     assertThat(localDateTime).isEqualTo(LocalDateTime.parse(expectedlyDateTime))
     assertThat(localDateTime.dayOfWeek).isEqualTo(dayOfWeek)
+  }
+
+  private fun mockGetPrisonerNoAssociation(prisonerId: String, associationId: String) {
+    whenever(
+      prisonerService.getPrisonerNonAssociationList(prisonerId),
+    ).thenReturn(
+      PrisonerNonAssociationDetailsDto(
+        listOf(
+          PrisonerNonAssociationDetailDto(
+            otherPrisonerDetails = OtherPrisonerDetails(prisonerNumber = associationId),
+          ),
+        ),
+      ).nonAssociations,
+    )
   }
 }
