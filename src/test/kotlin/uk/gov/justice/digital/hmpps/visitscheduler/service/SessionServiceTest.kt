@@ -468,7 +468,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `session does not contain conflicts when an prisoner has no non-associations and no double bookings`() {
+    fun `session does not contain conflicts when a prisoner has no non-associations and no double bookings`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -497,7 +497,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `session does not contain conflicts when an prisoner has a valid non-association without bookings`() {
+    fun `session does not contain conflicts when a prisoner has a valid non-association without bookings`() {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -528,7 +528,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `sessions contain conflicts when an prisoner has a valid non-association with a booking`() {
+    fun `sessions contain conflicts when a prisoner has a valid non-association with a booking`() {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -568,7 +568,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `sessions contain conflicts when an prisoner has a double booking`() {
+    fun `sessions contain conflicts when a prisoner has a double booking`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -600,7 +600,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `session does not contain conflicts when an prisoner non-association NOT FOUND`() {
+    fun `session does not contain conflicts when a prisoner non-association NOT FOUND`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -700,7 +700,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `all sessions are returned when an prisoner has no non-associations and no double bookings`() {
+    fun `all sessions are returned when a prisoner has no non-associations and no double bookings`() {
       // Given
       val prisonerId = "A1234AA"
 
@@ -726,7 +726,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `only available sessions are returned when an prisoner has a valid non-association without bookings`() {
+    fun `only available sessions are returned when a prisoner has a valid non-association without bookings`() {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -753,7 +753,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `only available sessions are returned when an prisoner has a valid non-association with a booking`() {
+    fun `only available sessions are returned when a prisoner has a valid non-association with a booking`() {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
@@ -780,7 +780,7 @@ class SessionServiceTest {
     }
 
     @Test
-    fun `only available sessions are returned when an prisoner has a double booking`() {
+    fun `only available sessions are returned when a prisoner has a double booking`() {
       // Given
       val prisonerId = "A1234AA"
 
