@@ -11,13 +11,12 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
-import java.time.LocalDate
 
 @ExtendWith(MockitoExtension::class)
 class VisitNotificationEventServiceTest {
@@ -45,16 +44,20 @@ class VisitNotificationEventServiceTest {
     )
   }
 
-  private fun mockOffenderNonAssociationList(effectiveDate: LocalDate = LocalDate.now(), expiryDate: LocalDate? = null) {
+  private fun mockPrisonerNonAssociationList() {
     whenever(
-      prisonerService.getOffenderNonAssociationList(primaryNonAssociationNumber),
+      prisonerService.hasPrisonerGotANonAssociationWith(primaryNonAssociationNumber, secondaryNonAssociationNumber),
     ).thenReturn(
-      OffenderNonAssociationDetailsDto(
+      true,
+    )
+
+    whenever(
+      prisonerService.getPrisonerNonAssociationList(primaryNonAssociationNumber),
+    ).thenReturn(
+      PrisonerNonAssociationDetailsDto(
         listOf(
-          OffenderNonAssociationDetailDto(
-            effectiveDate = effectiveDate,
-            expiryDate = expiryDate,
-            offenderNonAssociation = OffenderNonAssociationDto(offenderNo = secondaryNonAssociationNumber),
+          PrisonerNonAssociationDetailDto(
+            otherPrisonerDetails = OtherPrisonerDetails(prisonerNumber = secondaryNonAssociationNumber),
           ),
         ),
       ).nonAssociations,
@@ -62,30 +65,11 @@ class VisitNotificationEventServiceTest {
   }
 
   @Test
-  fun `when to date is in the past then no call is made to get visits or save events`() {
-    // Given
-    val fromDate = LocalDate.now().minusMonths(1)
-    val toDate = LocalDate.now().minusDays(1)
-
-    mockOffenderNonAssociationList(fromDate, toDate)
-
-    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryNonAssociationNumber, secondaryNonAssociationNumber, fromDate, toDate)
-
-    // When
-    visitNotificationEventService.handleNonAssociations(nonAssociationChangedNotification)
-
-    // Then
-    Mockito.verify(visitService, times(0)).getBookedVisits(any(), any(), any(), any())
-    Mockito.verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-  }
-
-  @Test
   fun `when non association prisoners have no visits then no calls are made to handle visit with non association`() {
     // Given
-    val fromDate = LocalDate.now().minusMonths(1)
-    mockOffenderNonAssociationList(fromDate)
+    mockPrisonerNonAssociationList()
 
-    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryNonAssociationNumber, secondaryNonAssociationNumber, fromDate, null)
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryNonAssociationNumber, secondaryNonAssociationNumber)
 
     whenever(visitService.getBookedVisits(any(), any(), any(), any())).thenReturn(
       emptyList(),
@@ -95,6 +79,7 @@ class VisitNotificationEventServiceTest {
     visitNotificationEventService.handleNonAssociations(nonAssociationChangedNotification)
 
     // Then
+    Mockito.verify(prisonerService, times(1)).hasPrisonerGotANonAssociationWith(primaryNonAssociationNumber, secondaryNonAssociationNumber)
     Mockito.verify(visitService, times(2)).getBookedVisits(any(), any(), any(), anyOrNull())
     Mockito.verify(telemetryClientService, times(0)).trackEvent(any(), any())
     Mockito.verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())

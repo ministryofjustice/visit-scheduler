@@ -6,7 +6,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
@@ -276,19 +276,19 @@ class SessionService(
     sessions: List<VisitSessionDto>,
     prisonerId: String,
   ): List<VisitSessionDto> {
-    val offenderNonAssociationList = prisonerService.getOffenderNonAssociationList(prisonerId)
+    val prisonerNonAssociationList = prisonerService.getPrisonerNonAssociationList(prisonerId)
     return sessions.filter {
-      sessionHasNonAssociation(it, offenderNonAssociationList)
+      sessionHasNonAssociation(it, prisonerNonAssociationList)
     }
   }
 
   private fun sessionHasNonAssociation(
     session: VisitSessionDto,
-    offenderNonAssociationList: @NotNull List<OffenderNonAssociationDetailDto>,
+    prisonerNonAssociationList: @NotNull List<PrisonerNonAssociationDetailDto>,
   ): Boolean {
-    if (offenderNonAssociationList.isNotEmpty()) {
+    if (prisonerNonAssociationList.isNotEmpty()) {
       val nonAssociationPrisonerIds =
-        getNonAssociationPrisonerIds(offenderNonAssociationList)
+        getNonAssociationPrisonerIds(prisonerNonAssociationList)
       val startDateTimeFilter = if (policyNonAssociationWholeDay) {
         session.startTimestamp.toLocalDate()
           .atStartOfDay()
@@ -316,9 +316,9 @@ class SessionService(
   }
 
   private fun getNonAssociationPrisonerIds(
-    @NotNull offenderNonAssociationList: List<OffenderNonAssociationDetailDto>,
+    @NotNull prisonerNonAssociationList: List<PrisonerNonAssociationDetailDto>,
   ): List<String> {
-    return offenderNonAssociationList.map { it.offenderNonAssociation.offenderNo }
+    return prisonerNonAssociationList.map { it.otherPrisonerDetails.prisonerNumber }
   }
 
   private fun sessionHasBooking(session: VisitSessionDto, prisonerId: String): Boolean {

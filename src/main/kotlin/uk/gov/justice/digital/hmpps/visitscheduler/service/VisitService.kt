@@ -419,7 +419,7 @@ class VisitService(
     snsService.sendVisitCancelledEvent(visitDto)
   }
 
-  fun getBookedVisits(prisonerNumber: String, prisonCode: String?, startDateTime: LocalDateTime, endDateTime: LocalDateTime?): List<VisitDto> {
+  fun getBookedVisits(prisonerNumber: String, prisonCode: String?, startDateTime: LocalDateTime, endDateTime: LocalDateTime? = null): List<VisitDto> {
     val visitFilter = VisitFilter(
       prisonerId = prisonerNumber,
       prisonCode = prisonCode,
