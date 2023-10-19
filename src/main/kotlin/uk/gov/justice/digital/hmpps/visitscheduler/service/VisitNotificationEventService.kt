@@ -184,10 +184,10 @@ class VisitNotificationEventService(
   }
 
   fun getNotificationCountForPrison(prisonCode: String): Int {
-    return 0
+    return this.visitNotificationEventRepository.getNotificationGroupsByPrisonCode(prisonCode)
   }
 
   fun getNotificationCount(): Int {
-    return 0
+    return this.visitNotificationEventRepository.getNotificationGroups()
   }
 }

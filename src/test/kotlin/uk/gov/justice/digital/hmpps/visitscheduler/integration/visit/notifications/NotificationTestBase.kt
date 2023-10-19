@@ -12,6 +12,8 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -75,4 +77,7 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
   fun verifyNoInteractions(vararg mocks: Any) {
     Mockito.verifyNoInteractions(*mocks)
   }
+
+  fun getNotificationCountDto(responseSpec: ResponseSpec): NotificationCountDto =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, NotificationCountDto::class.java)
 }
