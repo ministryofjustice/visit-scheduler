@@ -59,7 +59,7 @@ class VisitNotificationEventService(
 
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
-      val prisonCode = getPrisonCode(notificationDto.prisonerNumber)
+      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
       processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     }
