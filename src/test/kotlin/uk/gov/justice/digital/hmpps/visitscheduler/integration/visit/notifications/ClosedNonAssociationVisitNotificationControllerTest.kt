@@ -201,4 +201,40 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     val visitNotifications = testVisitNotificationEventRepository.findAll()
     Assertions.assertThat(visitNotifications).hasSize(2)
   }
+
+  @Test
+  fun `when prisoners are from a prison that is not supported then notifications are not removed`() {
+    // Given
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
+    stubGetPrisonerNonAssociationEmpty()
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, "AAA", IncentiveLevel.ENHANCED)
+
+    val visitPrimary = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(1),
+      visitStatus = BOOKED,
+      prisonCode = prisonCode,
+    )
+    eventAuditEntityHelper.create(visitPrimary)
+
+    val visitSecondary = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(2),
+      visitStatus = BOOKED,
+      prisonCode = prisonCode,
+    )
+    eventAuditEntityHelper.create(visitSecondary)
+
+    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
+
+    // When
+    val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    Assertions.assertThat(visitNotifications).hasSize(2)
+  }
 }

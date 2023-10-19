@@ -41,20 +41,9 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, prisonCode, IncentiveLevel.ENHANCED)
   }
 
-  fun stubGetPrisonerNonAssociationForPrisonApi(
-    prisonerId: String = primaryPrisonerId,
-    nonAssociationId: String = secondaryPrisonerId,
-  ) {
-    Companion.nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
-      prisonerId,
-      nonAssociationId,
-    )
-  }
-
   @Test
   fun `when prisoners have overlapped visits then visits with same date and prison are flagged and saved`() {
     // Given
-    stubGetPrisonerNonAssociationForPrisonApi()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
     val primaryVisit1 = visitEntityHelper.create(
@@ -126,14 +115,12 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   @Test
   fun `when two events are consumed they have different references associated for each event`() {
     // Given
-    stubGetPrisonerNonAssociationForPrisonApi()
     val nonAssociationChangedNotification1 = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
     val primaryPrisonerId2 = primaryPrisonerId + "Extp"
     val secondaryPrisonerId2 = secondaryPrisonerId + "Exts"
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId2, prisonCode, IncentiveLevel.ENHANCED)
-    stubGetPrisonerNonAssociationForPrisonApi(primaryPrisonerId2, secondaryPrisonerId2)
     val nonAssociationChangedNotification2 = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId2, secondaryPrisonerId2)
 
     val primaryVisit1 = visitEntityHelper.create(
@@ -198,7 +185,6 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   fun `when prisoner with non associations visits has existing notification then they are not flagged or saved`() {
     // Given
     val today = LocalDateTime.now()
-    stubGetPrisonerNonAssociationForPrisonApi()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
     val primaryVisit = visitEntityHelper.create(
@@ -242,7 +228,6 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   @Test
   fun `when both prisoners have no overlapping visits then no visits are flagged or saved`() {
     // Given
-    stubGetPrisonerNonAssociationForPrisonApi()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
     // no visits overlap
@@ -302,7 +287,6 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   @Test
   fun `when primary prisoner has no future visits then no visits are flagged or saved`() {
     // Given
-    stubGetPrisonerNonAssociationForPrisonApi()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
     val visitStart = LocalDate.now()
@@ -350,7 +334,6 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   @Test
   fun `when secondary prisoner has no future visits then no visits are flagged or saved`() {
     // Given
-    stubGetPrisonerNonAssociationForPrisonApi()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
     // no visits overlap
@@ -389,7 +372,6 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   @Test
   fun `when both prisoners have overlapping visits only in the past then no visits are flagged or saved`() {
     // Given
-    stubGetPrisonerNonAssociationForPrisonApi()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
     val visitStart = LocalDate.now()
@@ -449,7 +431,6 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   @Test
   fun `when future visits overlap but in different prisons then no visits are flagged or saved`() {
     // Given
-    stubGetPrisonerNonAssociationForPrisonApi()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
     // no visits overlap
@@ -473,6 +454,21 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
 
     // Then
+    responseSpec.expectStatus().isOk
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+  }
+
+  @Test
+  fun `when prisoners are from a prison that is not supported then notifications are not removed`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, "AAA", IncentiveLevel.ENHANCED)
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
+
+    // When
+    val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
+    // Then
+
     responseSpec.expectStatus().isOk
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())

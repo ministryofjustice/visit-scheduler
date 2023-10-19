@@ -25,6 +25,7 @@ class PrisonerService(
   private val prisonApiClient: PrisonApiClient,
   private val nonAssociationsApiClient: NonAssociationsApiClient,
   private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
+  private val prisonService: PrisonConfigService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -96,10 +97,12 @@ class PrisonerService(
     return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel, prisonCode = prisonerSearchResultDto?.prisonId)
   }
 
-  fun getPrisonerPrisonCode(prisonerCode: String): String? {
+  fun getPrisonerSupportedPrisonCode(prisonerCode: String): String? {
     try {
       val prisonCode = prisonerOffenderSearchClient.getPrisoner(prisonerCode)?.prisonId
-      if (!NonPrisonCodeType.isNonPrisonCodeType(prisonCode)) return prisonCode
+      prisonCode?.let {
+        return this.prisonService.getSupportedPrison(prisonCode)
+      }
     } catch (_: ItemNotFoundException) {}
     return null
   }

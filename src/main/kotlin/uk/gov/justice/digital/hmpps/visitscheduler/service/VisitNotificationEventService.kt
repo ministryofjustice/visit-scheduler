@@ -12,7 +12,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
@@ -37,13 +36,17 @@ class VisitNotificationEventService(
 
   @Transactional
   fun handleNonAssociations(notificationDto: NonAssociationChangedNotificationDto) {
-    with(notificationDto) {
-      if (NON_ASSOCIATION_CREATED == type) {
-        val affectedVisits = getOverLappingVisits(notificationDto)
+    if (NON_ASSOCIATION_CREATED == notificationDto.type) {
+      val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
+      prisonCode?.let {
+        val affectedVisits = getOverLappingVisits(notificationDto, prisonCode)
         processVisitsWithNotifications(affectedVisits, NON_ASSOCIATION_EVENT)
-      } else if (type in arrayOf(NON_ASSOCIATION_DELETED, NON_ASSOCIATION_CLOSED)) {
-        if (!prisonerService.hasPrisonerGotANonAssociationWith(prisonerNumber, nonAssociationPrisonerNumber)) {
-          val affectedNotifications = getAffectedNotifications(notificationDto)
+      }
+    } else if (notificationDto.type in arrayOf(NON_ASSOCIATION_DELETED, NON_ASSOCIATION_CLOSED)) {
+      if (!prisonerService.hasPrisonerGotANonAssociationWith(notificationDto.prisonerNumber, notificationDto.nonAssociationPrisonerNumber)) {
+        val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
+        prisonCode?.let {
+          val affectedNotifications = getAffectedNotifications(notificationDto, it)
           deleteNotificationsThatAreNoLongerValid(affectedNotifications)
         }
       }
@@ -59,7 +62,7 @@ class VisitNotificationEventService(
 
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
-      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+      val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
       processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     }
@@ -119,9 +122,7 @@ class VisitNotificationEventService(
     return savedVisitNotificationEvent.reference
   }
 
-  private fun getOverLappingVisits(notificationDto: NonAssociationChangedNotificationDto): List<VisitDto> {
-    // get the prisoners' prison code
-    val prisonCode = getPrisonCode(notificationDto.prisonerNumber)
+  private fun getOverLappingVisits(notificationDto: NonAssociationChangedNotificationDto, prisonCode: String): List<VisitDto> {
     val fromDate = LocalDate.now().atStartOfDay()
 
     val primaryPrisonerVisits = visitService.getBookedVisits(notificationDto.prisonerNumber, prisonCode, fromDate)
@@ -129,9 +130,8 @@ class VisitNotificationEventService(
     return getOverLappingVisits(primaryPrisonerVisits, nonAssociationPrisonerVisits)
   }
 
-  private fun getAffectedNotifications(notificationDto: NonAssociationChangedNotificationDto): List<VisitNotificationEvent> {
+  private fun getAffectedNotifications(notificationDto: NonAssociationChangedNotificationDto, prisonCode: String): List<VisitNotificationEvent> {
     // get the prisoners' prison code
-    val prisonCode = getPrisonCode(notificationDto.prisonerNumber)
 
     val prisonersNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, prisonCode, NON_ASSOCIATION_EVENT)
     val nonAssociationPrisonersNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.nonAssociationPrisonerNumber, prisonCode, NON_ASSOCIATION_EVENT)
@@ -146,11 +146,6 @@ class VisitNotificationEventService(
     }
 
     return (prisonerEventsToBeDeleted + nsPrisonerEventsToBeDeleted).sortedBy { it.reference }
-  }
-
-  private fun getPrisonCode(prisonerNumber: String): String {
-    return prisonerService.getPrisonerPrisonCode(prisonerNumber)
-      ?: throw ItemNotFoundException("Prison can not be found for prisoner: $prisonerNumber")
   }
 
   private fun getOverLappingVisits(primaryPrisonerVisits: List<VisitDto>, nonAssociationPrisonerVisits: List<VisitDto>): List<VisitDto> {
