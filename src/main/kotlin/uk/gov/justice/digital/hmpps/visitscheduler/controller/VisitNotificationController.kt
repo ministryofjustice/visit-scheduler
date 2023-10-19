@@ -13,6 +13,8 @@ import org.springframework.http.MediaType
 import org.springframework.http.ResponseEntity
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -34,6 +36,8 @@ const val VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH: String = "$VISIT_NOT
 const val VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/released"
 const val VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/restriction/changed"
 const val VISIT_NOTIFICATION_VISITOR_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/restriction/changed"
+const val VISIT_NOTIFICATION_COUNT_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/count"
+const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/count"
 
 @RestController
 @Validated
@@ -260,5 +264,61 @@ class VisitNotificationController(
     LOG.debug("Entered notifyVSiPThatVisitorRestrictionChanged {}", dto)
     visitNotificationEventService.handleVisitorRestrictionChangeNotification(dto)
     return ResponseEntity(HttpStatus.OK)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH)
+  @Operation(
+    summary = "Get notification count for a prison",
+    description = "Retrieve notification count by prison code",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Retrieve notification count for a prison",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getNotificationCountForPrison(
+    @Schema(description = "prisonCode", example = "CFI", required = true)
+    @PathVariable
+    prisonCode: String,
+  ): Int {
+    return visitNotificationEventService.getNotificationCountForPrison(prisonCode)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(VISIT_NOTIFICATION_COUNT_PATH)
+  @Operation(
+    summary = "Get notification count",
+    description = "Retrieve notification count by visit reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Retrieve notification count",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getNotificationCount(): Int {
+    return visitNotificationEventService.getNotificationCount()
   }
 }
