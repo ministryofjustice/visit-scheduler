@@ -150,4 +150,12 @@ class VisitNotificationEventService(
   private fun getValidToDateTime(validToDate: LocalDate?): LocalDateTime? {
     return validToDate?.let { LocalDateTime.of(validToDate, LocalTime.MAX) }
   }
+
+  fun getNotificationCountForPrison(prisonCode: String): Int {
+    return 0
+  }
+
+  fun getNotificationCount(): Int {
+    return 0
+  }
 }
