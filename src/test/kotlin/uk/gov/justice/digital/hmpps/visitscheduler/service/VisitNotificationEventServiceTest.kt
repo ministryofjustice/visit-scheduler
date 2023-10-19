@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 
 @ExtendWith(MockitoExtension::class)
 class VisitNotificationEventServiceTest {
@@ -65,12 +66,15 @@ class VisitNotificationEventServiceTest {
   }
 
   @Test
-  fun `when non association prisoners have no visits then no calls are made to handle visit with non association`() {
+  fun `when create non association prisoners have no visits then no calls are made to handle visit with non association`() {
     // Given
     mockPrisonerNonAssociationList()
 
-    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(primaryNonAssociationNumber, secondaryNonAssociationNumber)
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(NON_ASSOCIATION_CREATED, primaryNonAssociationNumber, secondaryNonAssociationNumber)
 
+    whenever(prisonerService.getPrisonerPrisonCode(any())).thenReturn(
+      "CFI",
+    )
     whenever(visitService.getBookedVisits(any(), any(), any(), any())).thenReturn(
       emptyList(),
     )
@@ -79,7 +83,6 @@ class VisitNotificationEventServiceTest {
     visitNotificationEventService.handleNonAssociations(nonAssociationChangedNotification)
 
     // Then
-    Mockito.verify(prisonerService, times(1)).hasPrisonerGotANonAssociationWith(primaryNonAssociationNumber, secondaryNonAssociationNumber)
     Mockito.verify(visitService, times(2)).getBookedVisits(any(), any(), any(), anyOrNull())
     Mockito.verify(telemetryClientService, times(0)).trackEvent(any(), any())
     Mockito.verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
