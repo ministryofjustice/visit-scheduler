@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
@@ -292,8 +293,8 @@ class VisitNotificationController(
     @Schema(description = "prisonCode", example = "CFI", required = true)
     @PathVariable
     prisonCode: String,
-  ): Int {
-    return visitNotificationEventService.getNotificationCountForPrison(prisonCode)
+  ): NotificationCountDto {
+    return NotificationCountDto(visitNotificationEventService.getNotificationCount())
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -318,7 +319,7 @@ class VisitNotificationController(
       ),
     ],
   )
-  fun getNotificationCount(): Int {
-    return visitNotificationEventService.getNotificationCount()
+  fun getNotificationCount(): NotificationCountDto {
+    return NotificationCountDto(visitNotificationEventService.getNotificationCount())
   }
 }
