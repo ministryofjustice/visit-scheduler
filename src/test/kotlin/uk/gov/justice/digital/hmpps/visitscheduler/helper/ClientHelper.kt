@@ -611,6 +611,18 @@ fun callNotifyVSiPThatNonAssociationHasChanged(
   )
 }
 
+fun callCountVisitNotification(
+  webTestClient: WebTestClient,
+  url: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    url,
+    authHttpHeaders,
+  )
+}
+
 fun callNotifyVSiPThatPrisonerHadBeenReleased(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,

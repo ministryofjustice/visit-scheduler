@@ -294,7 +294,7 @@ class VisitNotificationController(
     @PathVariable
     prisonCode: String,
   ): NotificationCountDto {
-    return NotificationCountDto(visitNotificationEventService.getNotificationCount())
+    return NotificationCountDto(visitNotificationEventService.getNotificationCountForPrison(prisonCode))
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
