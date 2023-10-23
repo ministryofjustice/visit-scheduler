@@ -92,7 +92,7 @@ class VisitNotificationEventService(
         val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
         val data = telemetryClientService.createFlagEventFromVisitDto(it, bookingEventAudit, type)
         telemetryClientService.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT, data)
-        reference = saveVisitNotification(it, reference)
+        reference = saveVisitNotification(it, reference, type)
       }
     }
   }
@@ -104,17 +104,18 @@ class VisitNotificationEventService(
   private fun saveVisitNotification(
     impactedVisit: VisitDto,
     reference: String?,
+    type: NotificationEventType,
   ): String {
     val savedVisitNotificationEvent = visitNotificationEventRepository.saveAndFlush(
       if (reference == null) {
         VisitNotificationEvent(
           impactedVisit.reference,
-          NON_ASSOCIATION_EVENT,
+          type,
         )
       } else {
         VisitNotificationEvent(
           impactedVisit.reference,
-          NON_ASSOCIATION_EVENT,
+          type,
           _reference = reference,
         )
       },
