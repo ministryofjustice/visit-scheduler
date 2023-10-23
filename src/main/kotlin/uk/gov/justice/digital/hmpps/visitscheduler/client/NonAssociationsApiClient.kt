@@ -26,16 +26,16 @@ class NonAssociationsApiClient(
     LOG.debug("Entered getPrisonerNonAssociation $prisonerNumber")
 
     return webClient.get()
-      .uri("/prisoner/$prisonerNumber/non-associations?includeOtherPrisons=true")
+      .uri("/prisoner/$prisonerNumber/non-associations-details?includeOtherPrisons=true")
       .retrieve()
       .bodyToMono(TYPE_FOR_OFFENDER_NONASSOCIATION)
       .onErrorResume {
           e ->
         if (!isNotFoundError(e)) {
-          LOG.error("getPrisonerNonAssociation Failed get request /prisoner/$prisonerNumber/non-associations")
+          LOG.error("getPrisonerNonAssociation Failed get request /prisoner/$prisonerNumber/non-associations-details")
           Mono.error(e)
         } else {
-          LOG.debug("getPrisonerNonAssociation Not Found get request /prisoner/$prisonerNumber/non-associations")
+          LOG.debug("getPrisonerNonAssociation Not Found get request /prisoner/$prisonerNumber/non-associations-details")
           return@onErrorResume Mono.justOrEmpty(null)
         }
       }

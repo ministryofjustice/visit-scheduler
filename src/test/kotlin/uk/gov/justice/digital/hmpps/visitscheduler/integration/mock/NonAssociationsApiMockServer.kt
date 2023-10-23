@@ -23,7 +23,7 @@ class NonAssociationsApiMockServer : WireMockServer(8094) {
     val jsonBody = getJsonString(PrisonerNonAssociationDetailsDto(details))
 
     stubFor(
-      get("/prisoner/$prisonerNumber/non-associations?includeOtherPrisons=true")
+      get("/prisoner/$prisonerNumber/non-associations-details?includeOtherPrisons=true")
         .willReturn(
           aResponse()
             .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
@@ -35,7 +35,7 @@ class NonAssociationsApiMockServer : WireMockServer(8094) {
 
   fun stubGetPrisonerNonAssociationHttpError(status: HttpStatus = HttpStatus.BAD_REQUEST) {
     stubFor(
-      get("/prisoner/FAKE-prisonerNumber/non-associations?includeOtherPrisons=true")
+      get("/prisoner/FAKE-prisonerNumber/non-associations-details?includeOtherPrisons=true")
         .willReturn(
           aResponse()
             .withStatus(status.value()),
@@ -49,7 +49,7 @@ class NonAssociationsApiMockServer : WireMockServer(8094) {
 
   fun stubGetPrisonerNonAssociation(prisonerNumber: String, prisonerNonAssociationDetailsDto: PrisonerNonAssociationDetailsDto? = null, status: HttpStatus = HttpStatus.NOT_FOUND) {
     stubFor(
-      get("/prisoner/$prisonerNumber/non-associations?includeOtherPrisons=true")
+      get("/prisoner/$prisonerNumber/non-associations-details?includeOtherPrisons=true")
         .willReturn(
           if (prisonerNonAssociationDetailsDto == null) {
             aResponse().withStatus(status.value())
