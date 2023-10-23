@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.4.1"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.7.0"
   kotlin("plugin.spring") version "1.9.10"
   kotlin("plugin.jpa") version "1.9.10"
   idea
@@ -30,15 +30,15 @@ dependencies {
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:1.30.0")
 
-  implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.2")
-  implementation("org.springframework.data:spring-data-commons:3.1.3")
+  implementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.3")
+  implementation("org.springframework.data:spring-data-commons:3.1.5")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.2.0")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.2.0")
   implementation("org.springdoc:springdoc-openapi-starter-common:2.2.0")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:5.7.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.7.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:5.9.1")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.9.1")
   implementation("org.apache.commons:commons-csv:1.10.0")
   implementation("org.freemarker:freemarker:2.3.32")
 
@@ -47,18 +47,18 @@ dependencies {
 
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.16")
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.18")
   testImplementation("com.github.tomakehurst:wiremock-jre8-standalone:3.0.1")
   testImplementation("org.mockito:mockito-inline:5.2.0")
-  testImplementation("org.testcontainers:localstack:1.18.3")
+  testImplementation("org.testcontainers:localstack:1.19.1")
   testImplementation("org.awaitility:awaitility-kotlin:4.2.0")
   testImplementation("javax.xml.bind:jaxb-api:2.4.0-b180830.0359")
   testImplementation("org.springframework.boot:spring-boot-starter-test")
-  testImplementation("io.jsonwebtoken:jjwt:0.9.1")
+  testImplementation("io.jsonwebtoken:jjwt:0.12.3")
   testImplementation("org.springframework.security:spring-security-test")
-  testImplementation("org.testcontainers:postgresql:1.19.0")
-  testImplementation("org.testcontainers:localstack:1.19.0")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.550")
+  testImplementation("org.testcontainers:postgresql:1.19.1")
+  testImplementation("org.testcontainers:localstack:1.19.1")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.570")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0")
 }
 
