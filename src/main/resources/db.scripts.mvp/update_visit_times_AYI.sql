@@ -8,4 +8,4 @@ SET visit_start = date_trunc('day', tmp.visit_start) + '14:00:00',
   join prison p on p.id = v.prison_id 
   join session_template st on st.reference = v.session_template_reference
   join legacy_data ld on ld.visit_id = v.id
-  where p.code = 'AYI' and st.day_of_week = 'TUESDAY' and v.visit_start::time = '14:30' and v.visit_end::time = '16:30') AS tmp
+  where p.code = 'AYI' and v.visit_start::time = '14:30' and v.visit_end::time = '16:30') AS tmp
