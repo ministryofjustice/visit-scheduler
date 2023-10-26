@@ -87,6 +87,75 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
   }
 
   @Test
+  fun `when restriction start date is after any visits dates then nothing is flagged`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
+    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now().plusDays(2))
+
+    val visit1 = visitEntityHelper.create(
+      prisonerId = notificationDto.prisonerNumber,
+      visitStart = LocalDateTime.now().plusDays(1),
+      prisonCode = prisonCode,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verifyNoInteractions(telemetryClient)
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+  }
+
+  @Test
+  fun `when restriction start date is in past visits are only return from todays date`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
+    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now().minusDays(2))
+
+    eventAuditEntityHelper.create(
+      visitEntityHelper.create(
+        prisonerId = notificationDto.prisonerNumber,
+        visitStart = LocalDateTime.now().minusDays(1),
+        prisonCode = prisonCode,
+        visitStatus = BOOKED,
+      ),
+    )
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verifyNoInteractions(telemetryClient)
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+  }
+
+  @Test
+  fun `when restriction end date is before any visits dates then nothing is flagged`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
+    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now(), LocalDate.now().plusDays(2))
+    val visit1 = visitEntityHelper.create(
+      prisonerId = notificationDto.prisonerNumber,
+      visitStart = LocalDateTime.now().plusDays(4),
+      prisonCode = prisonCode,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verifyNoInteractions(telemetryClient)
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+  }
+
+  @Test
   fun `when prisoner has had a restriction change and prison location cannot be found then the all visits in all prisons are flagged and saved`() {
     // Given
     val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
