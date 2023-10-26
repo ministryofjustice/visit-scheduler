@@ -9,3 +9,4 @@ SET visit_start = date_trunc('day', tmp.visit_start) + '14:00:00',
   join session_template st on st.reference = v.session_template_reference
   join legacy_data ld on ld.visit_id = v.id
   where p.code = 'AYI' and v.visit_start::time = '14:30' and v.visit_end::time = '16:30') AS tmp
+WHERE tmp.id = visit.id;
