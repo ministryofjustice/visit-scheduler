@@ -39,7 +39,7 @@ jobs:
           name: Change to project directory and run tests
           command: |
             cd hmpps-vsip-ui-tests
-            mvn test -Dbrowser=remote-chrome -Denvironment="STAGING" -Dtest=suites.RunSmokeTest  
+            mvn test -Dbrowser=remote-chrome -Denvironment="STAGING" -Dtest=suites.RunVSSmokeTest  
 
   validate:
     executor:
