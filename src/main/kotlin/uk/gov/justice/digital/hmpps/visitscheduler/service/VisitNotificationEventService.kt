@@ -87,7 +87,7 @@ class VisitNotificationEventService(
   private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType) {
     var reference: String? = null
     affectedVisits.forEach {
-      LOG.info("Flagging visit with reference {} for ${type.reviewType}}", it.reference)
+      LOG.info("Flagging visit with reference {} for ${type.reviewType}", it.reference)
       if (!visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type)) {
         val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
         val data = telemetryClientService.createFlagEventFromVisitDto(it, bookingEventAudit, type)
