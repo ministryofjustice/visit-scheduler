@@ -115,7 +115,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when notification count is requested for a prison without visits then a count of 0 is returned`() {
+  fun `when notification count is requested for a prison and none exist then a count of 0 is returned`() {
     // Given - visits exist but no visit notifications for a prison
 
     val visit = visitEntityHelper.create(
