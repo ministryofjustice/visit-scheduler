@@ -74,7 +74,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when notification count is requested for a prisons`() {
+  fun `when notification count is requested for a prison`() {
     // Given
 
     val visitPrimary = visitEntityHelper.create(
@@ -112,5 +112,46 @@ class CountVisitNotificationTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
     val notificationCount = this.getNotificationCountDto(responseSpec)
     Assertions.assertThat(notificationCount.count).isEqualTo(1)
+  }
+
+  @Test
+  fun `when notification count is requested for a prison and none exist then a count of 0 is returned`() {
+    // Given - visits exist but no visit notifications for a prison
+
+    val visit = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(1),
+      visitStatus = BOOKED,
+      prisonCode = prisonCode,
+    )
+    eventAuditEntityHelper.create(visit)
+
+    // When
+    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", prisonCode), roleVisitSchedulerHttpHeaders)
+
+    // Then count returned is 0
+    responseSpec.expectStatus().isOk
+    val notificationCount = this.getNotificationCountDto(responseSpec)
+    Assertions.assertThat(notificationCount.count).isEqualTo(0)
+  }
+
+  @Test
+  fun `when notification count is requested for all prisons and none exist then a count of 0 is returned`() {
+    // Given - visits exist but no notifications
+    val visit = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(1),
+      visitStatus = BOOKED,
+      prisonCode = prisonCode,
+    )
+    eventAuditEntityHelper.create(visit)
+
+    // When
+    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_PATH, roleVisitSchedulerHttpHeaders)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val notificationCount = this.getNotificationCountDto(responseSpec)
+    Assertions.assertThat(notificationCount.count).isEqualTo(0)
   }
 }

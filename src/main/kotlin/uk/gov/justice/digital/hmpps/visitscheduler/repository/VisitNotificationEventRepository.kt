@@ -47,7 +47,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       "  AND p.code = :prisonCode GROUP BY vne.reference) sq ",
     nativeQuery = true,
   )
-  fun getNotificationGroupsByPrisonCode(prisonCode: String): Int
+  fun getNotificationGroupsByPrisonCode(prisonCode: String): Int?
 
   @Query(
     "SELECT sum(ng) FROM (   " +
@@ -56,5 +56,5 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       "   WHERE v.visit_start >= NOW() GROUP BY vne.reference) sq ",
     nativeQuery = true,
   )
-  fun getNotificationGroups(): Int
+  fun getNotificationGroups(): Int?
 }
