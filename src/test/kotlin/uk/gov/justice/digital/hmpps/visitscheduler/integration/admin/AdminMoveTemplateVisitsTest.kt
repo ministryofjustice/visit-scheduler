@@ -312,18 +312,18 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
   fun `when to session template has higher weekly frequency than current but all visits can be moved are successful`() {
     // Given
     val today = LocalDate.now()
-    val fromSession = sessionTemplateEntityHelper.create(weeklyFrequency = 1, dayOfWeek = today.dayOfWeek)
-    val toSession = sessionTemplateEntityHelper.create(weeklyFrequency = 3, dayOfWeek = today.dayOfWeek, startTime = fromSession.startTime.minusMinutes(30), endTime = fromSession.endTime)
+    val fromSession = sessionTemplateEntityHelper.create(weeklyFrequency = 1, dayOfWeek = today.dayOfWeek, validFromDate = today)
+    val toSession = sessionTemplateEntityHelper.create(weeklyFrequency = 3, dayOfWeek = today.dayOfWeek, validFromDate = today, startTime = fromSession.startTime.minusMinutes(30), endTime = fromSession.endTime)
 
     // visit date falls after 3 weeks
-    val visit1Date = LocalDate.now().plusWeeks(4)
+    val visit1Date = today.plusWeeks(3)
     val visit1 = visitEntityHelper.create(
       sessionTemplateReference = fromSession.reference,
       visitStart = visit1Date.atTime(fromSession.startTime),
       visitEnd = visit1Date.atTime(fromSession.endTime),
     )
 
-    val visit2Date = LocalDate.now().plusWeeks(7)
+    val visit2Date = today.plusWeeks(6)
     val visit2 = visitEntityHelper.create(
       sessionTemplateReference = fromSession.reference,
       visitStart = visit2Date.atTime(fromSession.startTime),

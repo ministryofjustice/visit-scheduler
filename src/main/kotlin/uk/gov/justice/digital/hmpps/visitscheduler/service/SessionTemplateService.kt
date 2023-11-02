@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
-import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType
@@ -65,8 +64,6 @@ class SessionTemplateService(
   private val sessionTemplateMapper: SessionTemplateMapper,
   private val sessionTemplateUtil: SessionTemplateUtil,
   private val visitMoveValidator: SessionTemplateVisitMoveValidator,
-  @Value("\${policy.session.booking-notice-period.maximum-days:28}")
-  private val policyNoticeDaysMax: Long,
 ) {
 
   companion object {
@@ -450,7 +447,7 @@ class SessionTemplateService(
     reference: String,
     requestSessionTemplateVisitStatsDto: RequestSessionTemplateVisitStatsDto,
   ): SessionTemplateVisitStatsDto {
-    val visitsToDate = LocalDate.now().plusDays(policyNoticeDaysMax)
+    val visitsToDate = requestSessionTemplateVisitStatsDto.visitsToDate
 
     val minimumCapacityTuple = this.sessionTemplateRepository.findSessionTemplateMinCapacityBy(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
     val sessionCapacity = sessionTemplateUtil.getMinimumSessionCapacity(minimumCapacityTuple)
