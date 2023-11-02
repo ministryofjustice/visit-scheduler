@@ -460,14 +460,14 @@ fun callUpdateLocationSessionGroupByReference(
   )
 }
 
-fun callGetActivateSessionTemplate(
+fun callGetVisitStats(
   webTestClient: WebTestClient,
   sessionTemplateReference: String,
-  visitsFromDate: LocalDate,
+  requestSessionTemplateVisitStatsDto: RequestSessionTemplateVisitStatsDto,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
   return callPost(
-    RequestSessionTemplateVisitStatsDto(visitsFromDate),
+    requestSessionTemplateVisitStatsDto,
     webTestClient,
     getReferenceUrl(SESSION_TEMPLATE_VISIT_STATS, sessionTemplateReference),
     authHttpHeaders,
