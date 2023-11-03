@@ -5,4 +5,8 @@ BEGIN;
         SET session_template_reference = 'gsa.hlr.pmj'
         WHERE reference in ('dy-lp-xa-cl','mb-lp-xa-un') and session_template_reference = 'jqa.hmm.mmp';
 
+    UPDATE event_audit
+        SET session_template_reference = 'gsa.hlr.pmj'
+        WHERE booking_reference in ('dy-lp-xa-cl','mb-lp-xa-un') and session_template_reference = 'jqa.hmm.mmp';
+
 END;
