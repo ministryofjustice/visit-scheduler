@@ -23,7 +23,9 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       "(SELECT  COUNT(CASE WHEN v.visit_restriction = 'OPEN' THEN 1 END) AS open, " +
       " COUNT(CASE WHEN v.visit_restriction = 'CLOSED' THEN 1 END) AS closed  FROM visit v " +
       " JOIN session_template st ON st.reference = v.session_template_reference " +
-      " WHERE st.reference = :reference AND v.visit_start > :visitsFromDate AND v.visit_start < :visitsToDate " +
+      " WHERE st.reference = :reference" +
+      " AND v.visit_start > :visitsFromDate" +
+      " AND (cast(:visitsToDate as date) is null OR v.visit_start < :visitsToDate)" +
       " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
       " GROUP BY v.visit_start ) AS tmp ",
     nativeQuery = true,
@@ -31,26 +33,30 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   fun findSessionTemplateMinCapacityBy(
     @Param("reference") reference: String,
     @Param("visitsFromDate") visitsFromDate: LocalDate,
-    @Param("visitsToDate") visitsToDate: LocalDate,
+    @Param("visitsToDate") visitsToDate: LocalDate?,
   ): Tuple
 
   @Query(
     "select count(*) from visit v " +
       " JOIN session_template st ON st.reference = v.session_template_reference " +
-      " WHERE st.reference = :reference AND v.visit_start > :visitsFromDate AND v.visit_start < :visitsToDate " +
+      " WHERE st.reference = :reference" +
+      " AND v.visit_start > :visitsFromDate" +
+      " AND (cast(:visitsToDate as date) is null OR v.visit_start < :visitsToDate)" +
       " AND visit_status IN ('BOOKED','RESERVED','CHANGING')",
     nativeQuery = true,
   )
   fun getVisitCount(
     @Param("reference") reference: String,
     @Param("visitsFromDate") visitsFromDate: LocalDate,
-    @Param("visitsToDate") visitsToDate: LocalDate,
+    @Param("visitsToDate") visitsToDate: LocalDate?,
   ): Int
 
   @Query(
     "select cast(v.visit_start as date) as visitDate, v.visit_restriction as visitRestriction, count(*) as visitCount from visit v " +
       " JOIN session_template st ON st.reference = v.session_template_reference " +
-      " WHERE st.reference = :reference AND v.visit_start > :visitsFromDate AND v.visit_start < :visitsToDate " +
+      " WHERE st.reference = :reference" +
+      " AND v.visit_start > :visitsFromDate" +
+      " AND (cast(:visitsToDate as date) is null OR v.visit_start < :visitsToDate)" +
       " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
       " GROUP BY v.visit_start, v.visit_restriction" +
       " ORDER BY v.visit_start",
@@ -59,7 +65,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   fun getVisitCountsByDate(
     @Param("reference") reference: String,
     @Param("visitsFromDate") visitsFromDate: LocalDate,
-    @Param("visitsToDate") visitsToDate: LocalDate,
+    @Param("visitsToDate") visitsToDate: LocalDate?,
   ): List<VisitCountsByDate>
 
   @Query(
