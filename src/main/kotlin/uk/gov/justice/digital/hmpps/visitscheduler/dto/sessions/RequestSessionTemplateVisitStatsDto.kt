@@ -5,7 +5,10 @@ import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 
 data class RequestSessionTemplateVisitStatsDto(
-  @Schema(description = "Visits from date stats", example = "2019-11-02", required = true)
+  @Schema(description = "Visits from date - for stats", example = "2019-11-02", required = true)
   @field:NotNull
   val visitsFromDate: LocalDate,
+
+  @Schema(description = "Visits to date - for stats", example = "2019-11-30", required = false)
+  val visitsToDate: LocalDate? = null,
 )

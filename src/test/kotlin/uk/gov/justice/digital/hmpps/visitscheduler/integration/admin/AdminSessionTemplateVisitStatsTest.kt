@@ -7,12 +7,12 @@ import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetActivateSessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetVisitStats
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
@@ -24,8 +24,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
-@DisplayName("Session template tests for activate - $ACTIVATE_SESSION_TEMPLATE and deactivate  $DEACTIVATE_SESSION_TEMPLATE")
-class AdminSessionTemplateVisitsTest(
+@DisplayName("Session template tests for visit stats - $SESSION_TEMPLATE_VISIT_STATS")
+class AdminSessionTemplateVisitStatsTest(
   @Autowired private val testTemplateRepository: TestSessionTemplateRepository,
   @Value("\${policy.session.booking-notice-period.maximum-days:28}")
   private val policyNoticeDaysMax: Long,
@@ -64,6 +64,7 @@ class AdminSessionTemplateVisitsTest(
     val reference2 = sessionTemplate2.reference
 
     val visitsFromDateTime = LocalDateTime.now()
+    val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDateTime.toLocalDate(), null)
 
     visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(1))
     visitEntityHelper.create(visitStatus = CHANGING, sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = visitsFromDateTime.plusDays(1))
@@ -76,16 +77,16 @@ class AdminSessionTemplateVisitsTest(
     visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = visitsFromDateTime.plusDays(policyNoticeDaysMax - 1))
 
     // When
-    val responseSpec = callGetActivateSessionTemplate(webTestClient, reference1, visitsFromDateTime.toLocalDate(), setAuthorisation(roles = adminRole))
+    val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
     val sessionTemplateVisitStatsDto = getSessionTemplateVisitStatsDto(responseSpec)
 
-    Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(6)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(7)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(1)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.closed).isEqualTo(1)
-    Assertions.assertThat(sessionTemplateVisitStatsDto.visitsByDate).size().isEqualTo(5)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.visitsByDate).size().isEqualTo(6)
     val visitsByDate = sessionTemplateVisitStatsDto.visitsByDate
     Assertions.assertThat(visitsByDate!![0]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(1).toLocalDate(), SessionCapacityDto(open = 1, closed = 1)))
     Assertions.assertThat(visitsByDate[1]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(2).toLocalDate(), SessionCapacityDto(open = 1, closed = 0)))
@@ -105,9 +106,10 @@ class AdminSessionTemplateVisitsTest(
     // Given
     val reference1 = sessionTemplate1.reference
     val visitsFromDateTime = LocalDateTime.now()
+    val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDateTime.toLocalDate(), null)
 
     // When
-    val responseSpec = callGetActivateSessionTemplate(webTestClient, reference1, visitsFromDateTime.toLocalDate(), setAuthorisation(roles = adminRole))
+    val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -124,12 +126,13 @@ class AdminSessionTemplateVisitsTest(
     // Given
     val reference1 = sessionTemplate1.reference
     val visitsFromDateTime = LocalDateTime.now()
+    val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDateTime.toLocalDate(), null)
 
     visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.minusDays(1))
     visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.minusDays(1))
 
     // When
-    val responseSpec = callGetActivateSessionTemplate(webTestClient, reference1, visitsFromDateTime.toLocalDate(), setAuthorisation(roles = adminRole))
+    val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -142,15 +145,70 @@ class AdminSessionTemplateVisitsTest(
   }
 
   @Test
-  fun `when session templates has visits past the policyNoticeDaysMax then return expected results`() {
+  fun `when session templates has visits past the visits to date then return expected results`() {
+    // Given
+    val reference1 = sessionTemplate1.reference
+    val visitsFromDateTime = LocalDateTime.now()
+    val visitsToDate = LocalDate.now().plusDays(policyNoticeDaysMax - 1)
+    val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDateTime.toLocalDate(), visitsToDate)
+
+    // visit falls after to date
+    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(policyNoticeDaysMax))
+
+    // When
+    val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val sessionTemplateVisitStatsDto = getSessionTemplateVisitStatsDto(responseSpec)
+
+    Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(0)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(0)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.closed).isEqualTo(0)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.visitsByDate).size().isEqualTo(0)
+  }
+
+  @Test
+  fun `when session templates has visits before the passed to date then the visit is included in stats`() {
     // Given
     val reference1 = sessionTemplate1.reference
     val visitsFromDateTime = LocalDateTime.now()
 
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusDays(policyNoticeDaysMax))
+    // visitsToDate added
+    val visitsToDate = LocalDate.now().plusMonths(6)
+    val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDateTime.toLocalDate(), visitsToDate)
+
+    // visit date is before visits to Date
+    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusMonths(5))
 
     // When
-    val responseSpec = callGetActivateSessionTemplate(webTestClient, reference1, visitsFromDateTime.toLocalDate(), setAuthorisation(roles = adminRole))
+    val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val sessionTemplateVisitStatsDto = getSessionTemplateVisitStatsDto(responseSpec)
+
+    Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(1)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(1)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.closed).isEqualTo(0)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.visitsByDate).size().isEqualTo(1)
+  }
+
+  @Test
+  fun `when session templates has visits before the passed to date then the visit is not included in stats`() {
+    // Given
+    val reference1 = sessionTemplate1.reference
+    val visitsFromDateTime = LocalDateTime.now()
+
+    // visitsToDate added
+    val visitsToDate = LocalDate.now().plusMonths(6)
+    val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDateTime.toLocalDate(), visitsToDate)
+
+    // visit date is after visits to Date
+    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = visitsFromDateTime.plusMonths(7))
+
+    // When
+    val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
