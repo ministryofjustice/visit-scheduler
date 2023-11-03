@@ -3,6 +3,6 @@ BEGIN;
 
     UPDATE visit
         SET session_template_reference = 'gsa.hlr.pmj'
-        WHERE reference in ('dy-lp-xa-cl','mb-lp-xa-un') and reference = 'jqa.hmm.mmp';
+        WHERE reference in ('dy-lp-xa-cl','mb-lp-xa-un') and session_template_reference = 'jqa.hmm.mmp';
 
 END;
