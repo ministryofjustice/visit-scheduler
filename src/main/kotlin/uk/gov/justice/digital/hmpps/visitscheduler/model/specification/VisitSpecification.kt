@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import java.time.LocalTime
 
 class VisitSpecification(private val filter: VisitFilter) : Specification<Visit> {
   override fun toPredicate(
@@ -62,6 +63,15 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
           ),
         ),
       )
+
+      sessionTemplateReference?.run {
+        predicates.add(criteriaBuilder.equal(root.get<String>(Visit::sessionTemplateReference.name), sessionTemplateReference))
+      }
+
+      sessionDate?.run {
+        predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(Visit::visitStart.name), sessionDate.atStartOfDay()))
+        predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::visitStart.name), sessionDate.atTime(LocalTime.MAX)))
+      }
     }
     return criteriaBuilder.and(*predicates.toTypedArray())
   }

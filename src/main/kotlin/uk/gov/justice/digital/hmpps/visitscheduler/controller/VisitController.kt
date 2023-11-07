@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
@@ -335,6 +336,18 @@ class VisitController(
       example = "2021-11-03T09:00:00",
     )
     endDateTime: LocalDateTime?,
+    @RequestParam(value = "sessionTemplateReference", required = false)
+    @Parameter(
+      description = "Filter results by session template",
+      example = "v9-d7-ed-7u",
+    )
+    sessionTemplateReference: String?,
+    @RequestParam(value = "sessionDate", required = false)
+    @Parameter(
+      description = "Filter results by session date. Provided with session template reference for visits to be filtered by session template reference and date.",
+      example = "2023-05-31",
+    )
+    sessionDate: LocalDate?,
     @RequestParam(value = "visitorId", required = false)
     @Parameter(
       description = "Filter results by visitor (contact id)",
@@ -368,6 +381,8 @@ class VisitController(
         endDateTime = endDateTime,
         visitorId = visitorId,
         visitStatusList = visitStatusList,
+        sessionTemplateReference = sessionTemplateReference,
+        sessionDate = sessionDate,
       ),
       page,
       size,
