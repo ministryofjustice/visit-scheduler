@@ -12,7 +12,7 @@ parameters:
     default: prison-visit-booking-alerts
 
 jobs:
-  acceptance_tests:
+  acceptance_tests_main:
     docker:
       - image: maven:3.8.4-jdk-11
       - image: seleniarm/standalone-chromium
@@ -29,6 +29,8 @@ jobs:
           name: get git status
           command: |
             cd hmpps-vsip-ui-tests
+            git checkout main
+            git pull
             git status
       - run:
           name: Change to project directory then clean install
@@ -40,6 +42,38 @@ jobs:
           command: |
             cd hmpps-vsip-ui-tests
             mvn test -Dbrowser=remote-chrome -Denvironment="STAGING" -Dtest=suites.RunVSSmokeTest  
+
+  acceptance_tests_develop:
+    docker:
+      - image: maven:3.8.4-jdk-11
+      - image: seleniarm/standalone-chromium
+        environment:
+          CHROME_HEADLESS: 1
+    circleci_ip_ranges: true
+
+    steps:
+      - run:
+          name: Checkout VSIP UI Tests
+          command:
+            git clone https://github.com/ministryofjustice/hmpps-vsip-ui-tests.git
+      - run:
+          name: get git status
+          command: |
+            cd hmpps-vsip-ui-tests
+            git checkout develop
+            git pull
+            git status
+      - run:
+          name: Change to project directory then clean install
+          command: |
+            cd hmpps-vsip-ui-tests
+            mvn -f pom.xml clean install -Dmaven.test.skip=true
+      - run:
+          name: Change to project directory and run tests
+          command: |
+            cd hmpps-vsip-ui-tests
+            mvn test -Dbrowser=remote-chrome -Denvironment="STAGING" -Dtest=suites.RunVSSmokeTest  
+
 
   validate:
     executor:
@@ -129,7 +163,7 @@ workflows:
           type: approval
           requires:
             - deploy_staging
-      - acceptance_tests:
+      - acceptance_tests_main:
           requires:
             - request-acceptance-tests-approval
       - request-preprod-approval:
@@ -202,6 +236,13 @@ workflows:
             - visit-scheduler-stage
           requires:
             - request-staging-approval
+      - request-acceptance-tests-approval:
+          type: approval
+          requires:
+            - deploy_staging
+      - acceptance_tests_develop:
+          requires:
+            - request-acceptance-tests-approval
       - request-preprod-approval:
           type: approval
           requires:
