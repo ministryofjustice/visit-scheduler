@@ -338,7 +338,7 @@ class VisitController(
     endDateTime: LocalDateTime?,
     @RequestParam(value = "sessionTemplateReference", required = false)
     @Parameter(
-      description = "Filter results by session template",
+      description = "Filter results by session template reference - if visits are needed for a particular session",
       example = "v9-d7-ed-7u",
     )
     sessionTemplateReference: String?,
