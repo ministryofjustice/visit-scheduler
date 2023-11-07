@@ -29,7 +29,8 @@ jobs:
           name: get git status
           command: |
             cd hmpps-vsip-ui-tests
-            git pull main
+            git checkout main
+            git pull
             git status
       - run:
           name: Change to project directory then clean install
@@ -59,7 +60,8 @@ jobs:
           name: get git status
           command: |
             cd hmpps-vsip-ui-tests
-            git pull develop
+            git checkout develop
+            git pull
             git status
       - run:
           name: Change to project directory then clean install
