@@ -8,7 +8,7 @@ import org.springframework.core.ParameterizedTypeReference
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import reactor.core.publisher.Mono
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 import java.time.Duration
 
 @Component
@@ -19,22 +19,23 @@ class NonAssociationsApiClient(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    private val TYPE_FOR_OFFENDER_NONASSOCIATION = object : ParameterizedTypeReference<OffenderNonAssociationDetailsDto>() {}
+    private val TYPE_FOR_OFFENDER_NONASSOCIATION = object : ParameterizedTypeReference<PrisonerNonAssociationDetailsDto>() {}
   }
 
-  fun getOffenderNonAssociation(offenderNo: String): OffenderNonAssociationDetailsDto? {
-    LOG.debug("Entered getOffenderNonAssociation $offenderNo")
+  fun getPrisonerNonAssociation(prisonerNumber: String): PrisonerNonAssociationDetailsDto? {
+    LOG.debug("Entered getPrisonerNonAssociation $prisonerNumber")
+
     return webClient.get()
-      .uri("/legacy/api/offenders/$offenderNo/non-association-details?currentPrisonOnly=true&excludeInactive=true")
+      .uri("/prisoner/$prisonerNumber/non-associations?includeOtherPrisons=true")
       .retrieve()
       .bodyToMono(TYPE_FOR_OFFENDER_NONASSOCIATION)
       .onErrorResume {
           e ->
         if (!isNotFoundError(e)) {
-          LOG.error("getOffenderNonAssociation Failed get request /legacy/api/offenders/$offenderNo/non-association-details")
+          LOG.error("getPrisonerNonAssociation Failed get request /prisoner/$prisonerNumber/non-associations")
           Mono.error(e)
         } else {
-          LOG.debug("getOffenderNonAssociation Not Found get request /legacy/api/offenders/$offenderNo/non-association-details")
+          LOG.debug("getPrisonerNonAssociation Not Found get request /prisoner/$prisonerNumber/non-associations")
           return@onErrorResume Mono.justOrEmpty(null)
         }
       }

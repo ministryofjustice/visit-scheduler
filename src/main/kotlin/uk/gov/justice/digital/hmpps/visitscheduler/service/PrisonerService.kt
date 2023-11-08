@@ -7,7 +7,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.NonAssociationsApiClie
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
@@ -16,6 +15,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_THREE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_TWO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 
@@ -24,19 +25,28 @@ class PrisonerService(
   private val prisonApiClient: PrisonApiClient,
   private val nonAssociationsApiClient: NonAssociationsApiClient,
   private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
+  private val prisonService: PrisonConfigService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun getOffenderNonAssociationList(prisonerId: String): List<OffenderNonAssociationDetailDto> {
-    val offenderNonAssociationDetails = nonAssociationsApiClient.getOffenderNonAssociation(prisonerId)
-    offenderNonAssociationDetails?.let {
-      val offenderNonAssociationList = offenderNonAssociationDetails.nonAssociations
-      LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${offenderNonAssociationList.size} non associations!")
-      return offenderNonAssociationList
+  fun getPrisonerNonAssociationList(prisonerId: String): List<PrisonerNonAssociationDetailDto> {
+    val prisonerNonAssociationDetails = nonAssociationsApiClient.getPrisonerNonAssociation(prisonerId)
+    prisonerNonAssociationDetails?.let {
+      val nonAssociationList = prisonerNonAssociationDetails.nonAssociations
+      LOG.debug("sessionHasNonAssociation prisonerId : $prisonerId has ${nonAssociationList.size} non associations!")
+      return nonAssociationList
     }
     return emptyList()
+  }
+
+  fun hasPrisonerGotANonAssociationWith(prisonerId: String, nonAssociationPrisonerId: String): Boolean {
+    val prisonerNonAssociationDetails = nonAssociationsApiClient.getPrisonerNonAssociation(prisonerId)
+    prisonerNonAssociationDetails?.let {
+      return prisonerNonAssociationDetails.nonAssociations.any { it.otherPrisonerDetails.prisonerNumber == nonAssociationPrisonerId }
+    }
+    return false
   }
 
   fun getPrisonerFullStatus(prisonerId: String): PrisonerDetailsDto? {
@@ -85,5 +95,15 @@ class PrisonerService(
       }
     }
     return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel, prisonCode = prisonerSearchResultDto?.prisonId)
+  }
+
+  fun getPrisonerSupportedPrisonCode(prisonerCode: String): String? {
+    try {
+      val prisonCode = prisonerOffenderSearchClient.getPrisoner(prisonerCode)?.prisonId
+      prisonCode?.let {
+        return this.prisonService.getSupportedPrison(prisonCode)
+      }
+    } catch (_: ItemNotFoundException) {}
+    return null
   }
 }

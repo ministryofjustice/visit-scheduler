@@ -16,5 +16,11 @@ interface PrisonRepository : JpaRepository<Prison, Long> {
   )
   fun getSupportedPrisons(): List<String>
 
+  @Query(
+    "select p.code from Prison p " +
+      "where p.active = true AND p.code=:prisonCode",
+  )
+  fun getSupportedPrison(prisonCode: String): String?
+
   fun findAllByOrderByCodeAsc(): List<Prison>
 }

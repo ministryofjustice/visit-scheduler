@@ -157,7 +157,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
       incentiveLevelCode,
       category = category,
     )
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(
       prisonerId,
       prisonerDetailsDto = PrisonerDetailsDto(nomsId = prisonerId, establishmentCode = prisonCode, bookingId = 1),

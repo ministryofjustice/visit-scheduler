@@ -5,30 +5,25 @@ import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDetailsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OffenderNonAssociationDto
-import java.time.LocalDate
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 
 class NonAssociationsApiMockServer : WireMockServer(8094) {
 
-  fun stubGetOffenderNonAssociation(
-    offenderNo: String,
+  fun stubGetPrisonerNonAssociation(
+    prisonerNumber: String,
     nonAssociationId: String,
-    effectiveDate: LocalDate,
-    expiryDate: LocalDate? = null,
   ) {
-    val offenderNonAssociation = OffenderNonAssociationDto(offenderNo = nonAssociationId)
-    val details = mutableListOf<OffenderNonAssociationDetailDto>()
-    if (expiryDate == null) {
-      details.add(OffenderNonAssociationDetailDto(effectiveDate = effectiveDate, offenderNonAssociation = offenderNonAssociation))
-    } else {
-      details.add(OffenderNonAssociationDetailDto(effectiveDate, expiryDate, offenderNonAssociation))
-    }
-    val jsonBody = getJsonString(OffenderNonAssociationDetailsDto(details))
+    val otherPrisonerDetails = OtherPrisonerDetails(prisonerNumber = nonAssociationId)
+    val details = mutableListOf<PrisonerNonAssociationDetailDto>()
+
+    details.add(PrisonerNonAssociationDetailDto(otherPrisonerDetails))
+
+    val jsonBody = getJsonString(PrisonerNonAssociationDetailsDto(details))
 
     stubFor(
-      get("/legacy/api/offenders/$offenderNo/non-association-details?currentPrisonOnly=true&excludeInactive=true")
+      get("/prisoner/$prisonerNumber/non-associations?includeOtherPrisons=true")
         .willReturn(
           aResponse()
             .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
@@ -38,32 +33,22 @@ class NonAssociationsApiMockServer : WireMockServer(8094) {
     )
   }
 
-  fun stubGetOffenderNonAssociationHttpError(status: HttpStatus = HttpStatus.BAD_REQUEST) {
-    stubFor(
-      get("/legacy/api/offenders/FAKE-offenderNo/non-association-details?currentPrisonOnly=true&excludeInactive=true")
-        .willReturn(
-          aResponse()
-            .withStatus(status.value()),
-        ),
-    )
+  fun stubGetPrisonerNonAssociationEmpty(prisonerNumber: String) {
+    stubGetPrisonerNonAssociation(prisonerNumber, prisonerNonAssociationDetailsDto = PrisonerNonAssociationDetailsDto())
   }
 
-  fun stubGetOffenderNonAssociationEmpty(offenderNo: String) {
-    stubGetOffenderNonAssociation(offenderNo, offenderNonAssociationDetailsDto = OffenderNonAssociationDetailsDto())
-  }
-
-  fun stubGetOffenderNonAssociation(offenderNo: String, offenderNonAssociationDetailsDto: OffenderNonAssociationDetailsDto? = null, status: HttpStatus = HttpStatus.NOT_FOUND) {
+  fun stubGetPrisonerNonAssociation(prisonerNumber: String, prisonerNonAssociationDetailsDto: PrisonerNonAssociationDetailsDto? = null, status: HttpStatus = HttpStatus.NOT_FOUND) {
     stubFor(
-      get("/legacy/api/offenders/$offenderNo/non-association-details?currentPrisonOnly=true&excludeInactive=true")
+      get("/prisoner/$prisonerNumber/non-associations?includeOtherPrisons=true")
         .willReturn(
-          if (offenderNonAssociationDetailsDto == null) {
+          if (prisonerNonAssociationDetailsDto == null) {
             aResponse().withStatus(status.value())
           } else {
             aResponse()
               .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
               .withStatus(200)
               .withBody(
-                getJsonString(offenderNonAssociationDetailsDto),
+                getJsonString(prisonerNonAssociationDetailsDto),
               )
           },
         ),
