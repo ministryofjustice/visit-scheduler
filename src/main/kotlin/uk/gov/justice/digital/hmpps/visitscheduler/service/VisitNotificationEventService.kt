@@ -6,10 +6,12 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
@@ -192,5 +194,62 @@ class VisitNotificationEventService(
 
   fun getNotificationCount(): Int {
     return this.visitNotificationEventRepository.getNotificationGroups() ?: 0
+  }
+
+  fun getPrisonerVisitNotifications(): List<NotificationGroupDto> {
+    val now = LocalDate.now()
+
+    val list = mutableListOf<NotificationGroupDto>()
+    list.add(
+      NotificationGroupDto(
+        "v7*d7*ed*7u",
+        NotificationEventType.NON_ASSOCIATION_EVENT,
+        listOf(
+          PrisonerVisitsNotificationDto("AF34567G", "John Smith", "Username1", now, "v1-d7-ed-7u"),
+          PrisonerVisitsNotificationDto("BF34567G", "John Smith", "Username1", now.plusDays(1), "v2-d7-ed-7u"),
+        ),
+      ),
+    )
+
+    list.add(
+      NotificationGroupDto(
+        "v8*d7*ed*7u",
+        NotificationEventType.PRISONER_RELEASED_EVENT,
+        listOf(
+          PrisonerVisitsNotificationDto("C34567G", "Aled Smith", "Username2", now.plusDays(1), "v3-d7-ed-7u"),
+          PrisonerVisitsNotificationDto("CF34567G", "John Smith", "Username4", now.plusDays(2), "v4-d7-ed-7u"),
+          PrisonerVisitsNotificationDto("CF34567G", "Jack Evans", "Username3", now.plusDays(2), "v5-d7-ed-7u"),
+        ),
+      ),
+    )
+
+    list.add(
+      NotificationGroupDto(
+        "v9*d7*ed*7u",
+        NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT,
+        listOf(PrisonerVisitsNotificationDto("C34567G", "Ceri Smith", "Username3", now.plusDays(3), "v9-d7-ed-7u")),
+      ),
+    )
+
+    list.add(
+      NotificationGroupDto(
+        "v9*d8*ed*7u",
+        NotificationEventType.PRISONER_RELEASED_EVENT,
+        listOf(PrisonerVisitsNotificationDto("C34567G", "Aled Smith", "Username2", now.plusDays(1), "v6-d7-ed-7u")),
+      ),
+    )
+
+    list.add(
+      NotificationGroupDto(
+        "v9*d9*ed*7u",
+        NotificationEventType.NON_ASSOCIATION_EVENT,
+        listOf(
+          PrisonerVisitsNotificationDto("DF34567G", "John Smith", "Username1", now.plusDays(1), "v9-d7-ed-7u"),
+          PrisonerVisitsNotificationDto("FF34567G", "John Smith", "Username1", now.plusDays(2), "v9-d8-ed-7u"),
+        ),
+      ),
+    )
+
+    return list
   }
 }
