@@ -40,7 +40,7 @@ const val VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH: String = "$VISIT_
 const val VISIT_NOTIFICATION_VISITOR_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/restriction/changed"
 const val VISIT_NOTIFICATION_COUNT_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/count"
 const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/count"
-const val PRISONER_VISITS_NOTIFICATION_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH"
+const val FUTURE_NOTIFICATION_VISIT_GROUPS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/groups"
 
 @RestController
 @Validated
@@ -326,14 +326,14 @@ class VisitNotificationController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(PRISONER_VISITS_NOTIFICATION_PATH)
+  @GetMapping(FUTURE_NOTIFICATION_VISIT_GROUPS)
   @Operation(
-    summary = "Get future prisoner visit notifications",
-    description = "Retrieve future prisoner visit notifications",
+    summary = "get future notification visit groups",
+    description = "Retrieve future notification visit groups",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Retrieve future prisoner visit notifications",
+        description = "Retrieved future notification visit groups",
       ),
       ApiResponse(
         responseCode = "401",
@@ -347,7 +347,7 @@ class VisitNotificationController(
       ),
     ],
   )
-  fun getPrisonerVisitNotifications(): List<NotificationGroupDto> {
-    return visitNotificationEventService.getPrisonerVisitNotifications()
+  fun getFutureNotificationVisitGroups(): List<NotificationGroupDto> {
+    return visitNotificationEventService.getFutureNotificationVisitGroups()
   }
 }

@@ -20,6 +20,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainE
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_DELETED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RELEASED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -58,7 +60,7 @@ class VisitNotificationEventService(
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     if (RELEASED == notificationDto.reasonType) {
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, notificationDto.prisonCode)
-      processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RELEASED_EVENT)
+      processVisitsWithNotifications(affectedVisits, PRISONER_RELEASED_EVENT)
     }
   }
 
@@ -68,7 +70,7 @@ class VisitNotificationEventService(
       val startDateTime = (if (LocalDate.now() > notificationDto.validFromDate) LocalDate.now() else notificationDto.validFromDate).atStartOfDay()
       val endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode, startDateTime, endDateTime)
-      processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+      processVisitsWithNotifications(affectedVisits, PRISONER_RESTRICTION_CHANGE_EVENT)
     }
   }
 
@@ -196,14 +198,14 @@ class VisitNotificationEventService(
     return this.visitNotificationEventRepository.getNotificationGroups() ?: 0
   }
 
-  fun getPrisonerVisitNotifications(): List<NotificationGroupDto> {
+  fun getFutureNotificationVisitGroups(): List<NotificationGroupDto> {
     val now = LocalDate.now()
 
     val list = mutableListOf<NotificationGroupDto>()
     list.add(
       NotificationGroupDto(
         "v7*d7*ed*7u",
-        NotificationEventType.NON_ASSOCIATION_EVENT,
+        NON_ASSOCIATION_EVENT,
         listOf(
           PrisonerVisitsNotificationDto("AF34567G", "John Smith", "Username1", now, "v1-d7-ed-7u"),
           PrisonerVisitsNotificationDto("BF34567G", "John Smith", "Username1", now.plusDays(1), "v2-d7-ed-7u"),
@@ -214,7 +216,7 @@ class VisitNotificationEventService(
     list.add(
       NotificationGroupDto(
         "v8*d7*ed*7u",
-        NotificationEventType.PRISONER_RELEASED_EVENT,
+        PRISONER_RELEASED_EVENT,
         listOf(
           PrisonerVisitsNotificationDto("C34567G", "Aled Smith", "Username2", now.plusDays(1), "v3-d7-ed-7u"),
           PrisonerVisitsNotificationDto("CF34567G", "John Smith", "Username4", now.plusDays(2), "v4-d7-ed-7u"),
@@ -226,7 +228,7 @@ class VisitNotificationEventService(
     list.add(
       NotificationGroupDto(
         "v9*d7*ed*7u",
-        NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT,
+        PRISONER_RESTRICTION_CHANGE_EVENT,
         listOf(PrisonerVisitsNotificationDto("C34567G", "Ceri Smith", "Username3", now.plusDays(3), "v9-d7-ed-7u")),
       ),
     )
@@ -234,7 +236,7 @@ class VisitNotificationEventService(
     list.add(
       NotificationGroupDto(
         "v9*d8*ed*7u",
-        NotificationEventType.PRISONER_RELEASED_EVENT,
+        PRISONER_RELEASED_EVENT,
         listOf(PrisonerVisitsNotificationDto("C34567G", "Aled Smith", "Username2", now.plusDays(1), "v6-d7-ed-7u")),
       ),
     )
@@ -242,7 +244,7 @@ class VisitNotificationEventService(
     list.add(
       NotificationGroupDto(
         "v9*d9*ed*7u",
-        NotificationEventType.NON_ASSOCIATION_EVENT,
+        NON_ASSOCIATION_EVENT,
         listOf(
           PrisonerVisitsNotificationDto("DF34567G", "John Smith", "Username1", now.plusDays(1), "v9-d7-ed-7u"),
           PrisonerVisitsNotificationDto("FF34567G", "John Smith", "Username1", now.plusDays(2), "v9-d8-ed-7u"),
