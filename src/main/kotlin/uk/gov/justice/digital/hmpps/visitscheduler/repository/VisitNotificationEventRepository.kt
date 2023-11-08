@@ -20,4 +20,41 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
     bookingReference: String,
     notificationEvent: NotificationEventType,
   ): Boolean
+
+  @Query(
+    "SELECT vne.* FROM visit_notification_event vne " +
+      " JOIN visit v on v.reference  = vne.booking_reference  " +
+      " JOIN prison p on p.id  = v.prison_id " +
+      " WHERE v.visit_start >= NOW() " +
+      " AND v.prisoner_id = :prisonerNumber " +
+      " AND p.code = :prisonCode " +
+      " AND vne.type=:#{#notificationEvent.name()}" +
+      " ORDER BY vne.reference, vne.id",
+    nativeQuery = true,
+  )
+  fun getEventsBy(
+    prisonerNumber: String,
+    prisonCode: String,
+    notificationEvent: NotificationEventType,
+  ): List<VisitNotificationEvent>
+
+  @Query(
+    "SELECT sum(ng) FROM (   " +
+      "SELECT count(distinct vne.reference) as ng FROM visit_notification_event vne " +
+      " JOIN visit v ON v.reference  = vne.booking_reference  " +
+      " JOIN prison p on p.id  = v.prison_id " +
+      " WHERE v.visit_start >= NOW() " +
+      "  AND p.code = :prisonCode GROUP BY vne.reference) sq ",
+    nativeQuery = true,
+  )
+  fun getNotificationGroupsByPrisonCode(prisonCode: String): Int?
+
+  @Query(
+    "SELECT sum(ng) FROM (   " +
+      "SELECT count(distinct vne.reference) as ng FROM visit_notification_event vne " +
+      "   JOIN visit v ON v.reference  = vne.booking_reference " +
+      "   WHERE v.visit_start >= NOW() GROUP BY vne.reference) sq ",
+    nativeQuery = true,
+  )
+  fun getNotificationGroups(): Int?
 }

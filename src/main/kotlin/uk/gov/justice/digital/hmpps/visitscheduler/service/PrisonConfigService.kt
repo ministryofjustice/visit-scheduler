@@ -52,6 +52,11 @@ class PrisonConfigService(
     return prisonRepository.getSupportedPrisons()
   }
 
+  @Transactional(readOnly = true)
+  fun getSupportedPrison(prisonCode: String): String? {
+    return prisonRepository.getSupportedPrison(prisonCode)
+  }
+
   @Transactional
   fun createPrison(prisonDto: PrisonDto): PrisonDto {
     if (prisonRepository.findByCode(prisonDto.code) != null) {

@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notificati
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.Mockito
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.verify
@@ -11,13 +12,15 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -32,7 +35,7 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
   lateinit var telemetryClient: TelemetryClient
 
   @SpyBean
-  lateinit var visitNotificationEventService: VisitNotificationEventService
+  lateinit var prisonerService: PrisonerService
 
   @SpyBean
   lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
@@ -70,4 +73,11 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
   private fun formatDateTimeToString(dateTime: LocalDateTime): String {
     return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
   }
+
+  fun verifyNoInteractions(vararg mocks: Any) {
+    Mockito.verifyNoInteractions(*mocks)
+  }
+
+  fun getNotificationCountDto(responseSpec: ResponseSpec): NotificationCountDto =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, NotificationCountDto::class.java)
 }

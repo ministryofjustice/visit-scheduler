@@ -456,11 +456,9 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       visitRestriction = VisitRestriction.OPEN,
     )
 
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
       associationId,
-      LocalDate.now().minusMonths(6),
-      LocalDate.now().plusMonths(6),
     )
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)

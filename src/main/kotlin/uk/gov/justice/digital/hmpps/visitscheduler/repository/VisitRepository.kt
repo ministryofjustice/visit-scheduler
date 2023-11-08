@@ -191,13 +191,13 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT v  FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED' AND " +
       "(v.prisonerId = :prisonerId) AND " +
-      "(v.prison.code = :prisonCode) AND " +
+      "(:prisonCode is null or v.prison.code = :prisonCode) AND " +
       "(v.visitStart >= :startDateTime) AND " +
       "(cast(:endDateTime as date) is null OR v.visitStart < :endDateTime) ",
   )
   fun getVisits(
     @Param("prisonerId") prisonerId: String,
-    @Param("prisonCode") prisonCode: String,
+    @Param("prisonCode") prisonCode: String?,
     @Param("startDateTime") startDateTime: LocalDateTime,
     @Param("endDateTime") endDateTime: LocalDateTime? = null,
   ): List<Visit>

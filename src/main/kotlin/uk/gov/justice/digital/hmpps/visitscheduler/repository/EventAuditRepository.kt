@@ -11,7 +11,7 @@ import java.time.LocalDateTime
 
 @Repository
 interface EventAuditRepository : JpaRepository<EventAudit, Long> {
-  fun findByBookingReference(bookingReference: String): List<EventAudit>
+  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAudit>
 
   @Query(
     "SELECT * FROM event_audit " +

@@ -161,7 +161,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
@@ -196,7 +196,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
@@ -231,7 +231,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, null)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
@@ -272,7 +272,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     val nextAllowedDay = getNextAllowedDay()
@@ -311,7 +311,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, null)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     val nextAllowedDay = getNextAllowedDay()
@@ -351,7 +351,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.A_EXCEPTIONAL.code)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
@@ -395,7 +395,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // prisoner is in category B while the session only allows category As
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.B.code)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     val categoryInc1 = sessionPrisonerCategoryHelper.create(name = categoryA, prisonerCategories = categoryAList)
@@ -429,7 +429,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.A_EXCEPTIONAL.code)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
@@ -475,7 +475,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // prisoner is in category A standard - so should be included
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.A_STANDARD.code)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
@@ -525,7 +525,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // prisoner is in category B
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.B.code)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     val categoryIncAHighs = sessionPrisonerCategoryHelper.create(name = categoryAHighs, prisonerCategories = categoryAListHigh)
@@ -1097,7 +1097,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
@@ -1120,10 +1120,9 @@ class GetSessionsTest : IntegrationTestBase() {
     val validFromDate = this.getNextAllowedDay()
     sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
       associationId,
-      validFromDate,
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -1160,10 +1159,9 @@ class GetSessionsTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplate.reference,
     )
 
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
       associationId,
-      validFromDate.plusMonths(6),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -1210,10 +1208,9 @@ class GetSessionsTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplate.reference,
     )
 
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
       associationId,
-      validFromDate.plusMonths(6),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -1260,11 +1257,9 @@ class GetSessionsTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplate.reference,
     )
 
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
       associationId,
-      validFromDate.minusMonths(6),
-      validFromDate.minusMonths(1),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -1301,11 +1296,9 @@ class GetSessionsTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplate.reference,
     )
 
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
       associationPrisonerId,
-      validFromDate.minusMonths(6),
-      validFromDate.plusMonths(1),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -1343,11 +1336,9 @@ class GetSessionsTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplate.reference,
     )
 
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
       associationPrisonerId,
-      validFromDate.minusMonths(6),
-      validFromDate.plusMonths(1),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -1384,11 +1375,9 @@ class GetSessionsTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplate.reference,
     )
 
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
       associationPrisonerId,
-      validFromDate.minusMonths(6),
-      validFromDate.plusMonths(1),
     )
 
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
@@ -1426,11 +1415,9 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prison.code)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
       associationPrisonerId,
-      validFromDate.minusYears(1),
-      validFromDate.plusYears(1),
     )
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
@@ -1478,7 +1465,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerDetailsDto = null)
 
     val nextAllowedDay = getNextAllowedDay()
@@ -1516,7 +1503,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerSearchResultDto = null)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociationEmpty(prisonerId)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerDetailsDto = PrisonerDetailsDto(nomsId = prisonerId, establishmentCode = prisonCode, bookingId = 1))
 
     val nextAllowedDay = getNextAllowedDay()
@@ -1554,7 +1541,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(prisonerId, null)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerId, null)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerDetailsDto = PrisonerDetailsDto(nomsId = prisonerId, establishmentCode = prisonCode, bookingId = 1))
 
     val nextAllowedDay = getNextAllowedDay()
@@ -1590,7 +1577,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val incentiveLevelGroup = sessionPrisonerIncentiveLevelHelper.create(enhancedIncentiveLevelGroup, prisonCode, incentiveLevelList)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    nonAssociationsApiMockServer.stubGetOffenderNonAssociation(prisonerId, status = BAD_REQUEST)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerId, status = BAD_REQUEST)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerDetailsDto = PrisonerDetailsDto(nomsId = prisonerId, establishmentCode = prisonCode, bookingId = 1))
 
     val nextAllowedDay = getNextAllowedDay()
