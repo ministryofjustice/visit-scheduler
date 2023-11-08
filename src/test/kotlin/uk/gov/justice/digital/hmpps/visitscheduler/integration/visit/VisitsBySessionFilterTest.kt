@@ -23,7 +23,7 @@ class VisitsBySessionFilterTest : IntegrationTestBase() {
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
-  
+
   @BeforeEach
   internal fun createVisits() {
     // visit 1 booked for session template reference - session-1
@@ -46,7 +46,7 @@ class VisitsBySessionFilterTest : IntegrationTestBase() {
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED")
 
     // Then
-     responseSpec.expectStatus().isOk
+    responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.content.length()").isEqualTo(1)
       .jsonPath("$.content[0].reference").isEqualTo("visit-booked-1")
@@ -61,7 +61,7 @@ class VisitsBySessionFilterTest : IntegrationTestBase() {
     // When
     val responseSpec = callVisitsBySessionEndPoint(
       sessionTemplateReference,
-      "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED,RESERVED"
+      "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED,RESERVED",
     )
 
     // Then
@@ -112,7 +112,6 @@ class VisitsBySessionFilterTest : IntegrationTestBase() {
       .jsonPath("$.content[2].reference").isEqualTo("visit-booked-1")
   }
 
-
   @Test
   fun `when session has no visits for a date no records are returned`() {
     // Given
@@ -153,7 +152,6 @@ class VisitsBySessionFilterTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isUnauthorized
   }
-
 
   fun callVisitsBySessionEndPoint(
     sessionTemplateReference: String,
