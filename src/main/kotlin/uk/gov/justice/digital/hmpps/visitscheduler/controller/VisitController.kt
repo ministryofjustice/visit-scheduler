@@ -338,10 +338,10 @@ class VisitController(
       example = "2021-11-03T09:00:00",
     )
     endDateTime: LocalDateTime?,
-    @RequestParam(value = "sessionTemplateReference", required = false)
+    @RequestParam(value = "visitorId", required = false)
     @Parameter(
-      description = "Filter results by session template reference - if visits are needed for a particular session",
-      example = "v9-d7-ed-7u",
+      description = "Filter results by visitor (contact id)",
+      example = "12322",
     )
     visitorId: Long?,
     @RequestParam(value = "visitStatus", required = true)
