@@ -201,6 +201,7 @@ class VisitNotificationEventService(
   fun getFutureNotificationVisitGroups(): List<NotificationGroupDto> {
     val now = LocalDate.now()
 
+    //T ODO dummy code is currently here needs to be replaced with actual code
     val list = mutableListOf<NotificationGroupDto>()
     list.add(
       NotificationGroupDto(
