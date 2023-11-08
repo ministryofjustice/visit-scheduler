@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import java.time.LocalDateTime
 
 @DisplayName("GET /visits/{sessionTemplateReference}")
-class VisitsBySessionFilterTest : IntegrationTestBase() {
+class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
   private val visitTime: LocalDateTime = LocalDateTime.of(2023, 11, 1, 11, 30, 0)
 

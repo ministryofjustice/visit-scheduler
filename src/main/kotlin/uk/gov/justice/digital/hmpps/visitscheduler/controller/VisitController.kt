@@ -31,7 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -46,7 +46,7 @@ const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/change"
 const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
-const val GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE: String = "$VISIT_CONTROLLER_PATH/session/{sessionTemplateReference}"
+const val GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE: String = "$VISIT_CONTROLLER_PATH/session-template/{sessionTemplateReference}"
 
 @RestController
 @Validated
@@ -465,11 +465,11 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Returns visits for a session",
+        description = "Returns visits for a session template",
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to get visits by session",
+        description = "Incorrect request to get visits by session template",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
@@ -479,7 +479,7 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to get visits by session",
+        description = "Incorrect permissions to get visits by session template",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -513,8 +513,8 @@ class VisitController(
     )
     size: Int,
   ): Page<VisitDto> {
-    return visitService.findVisitsBySessionFilterPageableDescending(
-      VisitsBySessionFilter(
+    return visitService.findVisitsBySessionTemplateFilterPageableDescending(
+      VisitsBySessionTemplateFilter(
         sessionTemplateReference = sessionTemplateReference,
         fromDate = fromDate,
         toDate = toDate,

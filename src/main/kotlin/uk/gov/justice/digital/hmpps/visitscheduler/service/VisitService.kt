@@ -36,7 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -44,7 +44,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
-import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitsBySessionSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitsBySessionTemplateSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -249,9 +249,9 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun findVisitsBySessionFilterPageableDescending(visitFilter: VisitsBySessionFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
+  fun findVisitsBySessionTemplateFilterPageableDescending(visitFilter: VisitsBySessionTemplateFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
-    return visitRepository.findAll(VisitsBySessionSpecification(visitFilter), page).map { VisitDto(it) }
+    return visitRepository.findAll(VisitsBySessionTemplateSpecification(visitFilter), page).map { VisitDto(it) }
   }
 
   @Transactional(readOnly = true)

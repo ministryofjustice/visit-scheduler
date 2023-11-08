@@ -5,11 +5,11 @@ import jakarta.persistence.criteria.CriteriaQuery
 import jakarta.persistence.criteria.Predicate
 import jakarta.persistence.criteria.Root
 import org.springframework.data.jpa.domain.Specification
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import java.time.LocalTime
 
-class VisitsBySessionSpecification(private val filter: VisitsBySessionFilter) : Specification<Visit> {
+class VisitsBySessionTemplateSpecification(private val filter: VisitsBySessionTemplateFilter) : Specification<Visit> {
   override fun toPredicate(
     root: Root<Visit>,
     query: CriteriaQuery<*>,
