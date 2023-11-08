@@ -491,7 +491,7 @@ class VisitController(
     @Schema(name = "fromDate", description = "Get visits from date", example = "2023-05-31", required = true)
     @RequestParam
     fromDate: LocalDate,
-    @Schema(name = "toDate",  description = "Get visits to date", example = "2023-05-31", required = true)
+    @Schema(name = "toDate", description = "Get visits to date", example = "2023-05-31", required = true)
     @RequestParam
     toDate: LocalDate,
     @RequestParam(value = "visitStatus", required = true)
@@ -518,7 +518,7 @@ class VisitController(
         sessionTemplateReference = sessionTemplateReference,
         fromDate = fromDate,
         toDate = toDate,
-        visitStatusList = visitStatusList
+        visitStatusList = visitStatusList,
       ),
       pageablePage = page,
       pageableSize = size,

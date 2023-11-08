@@ -7,4 +7,4 @@ data class VisitsBySessionFilter(
   val fromDate: LocalDate?,
   val toDate: LocalDate?,
   val visitStatusList: List<VisitStatus>,
-  )
+)
