@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model
 
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 data class VisitFilter(
@@ -10,6 +9,4 @@ data class VisitFilter(
   val endDateTime: LocalDateTime? = null,
   val visitorId: Long? = null,
   val visitStatusList: List<VisitStatus>,
-  val sessionTemplateReference: String? = null,
-  val sessionDate: LocalDate? = null,
 )

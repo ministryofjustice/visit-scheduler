@@ -321,50 +321,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `get visits by session template reference`() {
-    // Given
-    val sessionTemplateReference = "sessionTemplateReference"
-    val prisonId = "MDI"
-
-    // When
-    val responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&sessionTemplateReference=$sessionTemplateReference&visitStatus=BOOKED")
-
-    // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(1)
-      .jsonPath("$.content[0].prisonerId").isEqualTo("GG0000BB")
-      .jsonPath("$.content[0].prisonId").isEqualTo("MDI")
-  }
-
-  @Test
-  fun `get visits by session template reference and session date`() {
-    // Given
-    val sessionTemplateReference = "sessionTemplateReference"
-    val sessionDateWithVisits = "2021-11-02"
-    val sessionDateWithoutVisits = "2023-01-01"
-    val prisonId = "MDI"
-
-    // When
-    var responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&sessionTemplateReference=$sessionTemplateReference&sessionDate=$sessionDateWithVisits&visitStatus=BOOKED")
-
-    // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(1)
-      .jsonPath("$.content[0].prisonerId").isEqualTo("GG0000BB")
-      .jsonPath("$.content[0].prisonId").isEqualTo("MDI")
-
-    // When
-    responseSpec = callSearchVisitEndPoint("prisonId=$prisonId&sessionTemplateReference=$sessionTemplateReference&sessionDate=$sessionDateWithoutVisits&visitStatus=BOOKED")
-
-    // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(0)
-  }
-
-  @Test
   fun `get visits by status`() {
     // Given
     val visitStatus = BOOKED
