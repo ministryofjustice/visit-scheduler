@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import java.time.LocalDateTime
 
-@DisplayName("GET visits/notification/groups")
+@DisplayName("GET /visits/notification/{prisonCode}/groups")
 class FutureNotificationVisitGroupsTest : NotificationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
