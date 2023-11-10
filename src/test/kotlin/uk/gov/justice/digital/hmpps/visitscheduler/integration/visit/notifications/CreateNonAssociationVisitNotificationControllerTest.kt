@@ -42,7 +42,42 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   }
 
   @Test
-  fun `when prisoners have overlapped visits then visits with same date and prison are flagged and saved`() {
+  fun `when prisoners have two overlapped visits then visits with same date and prison are flagged and saved`() {
+    // Given
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
+
+    val primaryVisit = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(1),
+      prisonCode = prisonCode,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(primaryVisit)
+
+    val secondaryVisit = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId,
+      visitStart = primaryVisit.visitStart,
+      prisonCode = primaryVisit.prison.code,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(secondaryVisit)
+
+    // When
+    val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    assertBookedEvent(listOf(primaryVisit, secondaryVisit), NotificationEventType.NON_ASSOCIATION_EVENT)
+    verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    Assertions.assertThat(visitNotifications).hasSize(2)
+    Assertions.assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
+  }
+
+  @Test
+  fun `when prisoners have more than two overlapped visits then visits with same date and prison are flagged and saved`() {
     // Given
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
@@ -101,15 +136,16 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     responseSpec.expectStatus().isOk
     assertBookedEvent(listOf(primaryVisit1, primaryVisit2, secondaryVisit1, secondaryVisit2), NotificationEventType.NON_ASSOCIATION_EVENT)
     verify(telemetryClient, times(4)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(4)).saveAndFlush(any<VisitNotificationEvent>())
+    verify(visitNotificationEventRepository, times(12)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAll()
-    Assertions.assertThat(visitNotifications).hasSize(4)
-    val eventRef = visitNotifications[0].reference
-    Assertions.assertThat(eventRef).isNotNull()
-    Assertions.assertThat(visitNotifications[1].reference).isEqualTo(eventRef)
-    Assertions.assertThat(visitNotifications[2].reference).isEqualTo(eventRef)
-    Assertions.assertThat(visitNotifications[3].reference).isEqualTo(eventRef)
+    Assertions.assertThat(visitNotifications).hasSize(12)
+    Assertions.assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
+    Assertions.assertThat(visitNotifications[2].reference).isEqualTo(visitNotifications[3].reference)
+    Assertions.assertThat(visitNotifications[4].reference).isEqualTo(visitNotifications[5].reference)
+    Assertions.assertThat(visitNotifications[6].reference).isEqualTo(visitNotifications[7].reference)
+    Assertions.assertThat(visitNotifications[8].reference).isEqualTo(visitNotifications[9].reference)
+    Assertions.assertThat(visitNotifications[10].reference).isEqualTo(visitNotifications[11].reference)
   }
 
   @Test

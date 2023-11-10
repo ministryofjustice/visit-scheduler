@@ -12,6 +12,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCountVisitNotification
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
@@ -58,7 +61,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
       visitStatus = BOOKED,
       prisonCode = "TST",
     )
-    eventAuditEntityHelper.create(visitSecondary)
+    eventAuditEntityHelper.create(visitOther)
 
     val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
@@ -71,6 +74,47 @@ class CountVisitNotificationTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
     val notificationCount = this.getNotificationCountDto(responseSpec)
     Assertions.assertThat(notificationCount.count).isEqualTo(2)
+  }
+
+  @Test
+  fun `when no booked visits for notification count is zero for all prisons`() {
+    // Given
+
+    val visitPrimary = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(1),
+      visitStatus = CANCELLED,
+      prisonCode = prisonCode,
+    )
+    eventAuditEntityHelper.create(visitPrimary)
+
+    val visitSecondary = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(2),
+      visitStatus = CHANGING,
+      prisonCode = prisonCode,
+    )
+    eventAuditEntityHelper.create(visitSecondary)
+
+    val visitOther = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(2),
+      visitStatus = RESERVED,
+      prisonCode = "TST",
+    )
+    eventAuditEntityHelper.create(visitOther)
+
+    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitOther.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
+
+    // When
+    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_PATH, roleVisitSchedulerHttpHeaders)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val notificationCount = this.getNotificationCountDto(responseSpec)
+    Assertions.assertThat(notificationCount.count).isEqualTo(0)
   }
 
   @Test
@@ -112,6 +156,47 @@ class CountVisitNotificationTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
     val notificationCount = this.getNotificationCountDto(responseSpec)
     Assertions.assertThat(notificationCount.count).isEqualTo(1)
+  }
+
+  @Test
+  fun `when no booked visits for notification count is zero for a prison`() {
+    // Given
+
+    val visitPrimary = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(1),
+      visitStatus = CANCELLED,
+      prisonCode = prisonCode,
+    )
+    eventAuditEntityHelper.create(visitPrimary)
+
+    val visitSecondary = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(2),
+      visitStatus = CHANGING,
+      prisonCode = prisonCode,
+    )
+    eventAuditEntityHelper.create(visitSecondary)
+
+    val visitOther = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId,
+      visitStart = LocalDateTime.now().plusDays(2),
+      visitStatus = RESERVED,
+      prisonCode = prisonCode,
+    )
+    eventAuditEntityHelper.create(visitSecondary)
+
+    val visitNotification = testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitPrimary.reference, NON_ASSOCIATION_EVENT))
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitSecondary.reference, NON_ASSOCIATION_EVENT, _reference = visitNotification.reference))
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitOther.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
+
+    // When
+    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", prisonCode), roleVisitSchedulerHttpHeaders)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val notificationCount = this.getNotificationCountDto(responseSpec)
+    Assertions.assertThat(notificationCount.count).isEqualTo(0)
   }
 
   @Test

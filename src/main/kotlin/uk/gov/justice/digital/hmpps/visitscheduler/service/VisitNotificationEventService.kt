@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainE
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -91,15 +92,63 @@ class VisitNotificationEventService(
   }
 
   private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType) {
-    var reference: String? = null
-    affectedVisits.forEach {
-      LOG.info("Flagging visit with reference {} for ${type.reviewType}", it.reference)
-      if (!visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type)) {
-        val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
-        val data = telemetryClientService.createFlagEventFromVisitDto(it, bookingEventAudit, type)
-        telemetryClientService.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT, data)
-        reference = saveVisitNotification(it, reference, type)
+    val affectedVisitsNoDuplicate = affectedVisits.filter { !visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type) }
+    flagTrackEvents(affectedVisitsNoDuplicate, type)
+
+    if (isPairGroupRequired(type)) {
+      val affectedPairedVisits = pairWithEachOther(affectedVisits)
+      affectedPairedVisits.forEach {
+        if (!visitNotificationEventRepository.isEventARecentPairedDuplicate(it.first.reference, it.second.reference, type)) {
+          saveGroupedVisitsNotification(it.toList(), type)
+        }
       }
+    } else {
+      saveVisitsNotification(affectedVisitsNoDuplicate, type)
+    }
+  }
+
+  private fun isPairGroupRequired(
+    type: NotificationEventType,
+  ) = NON_ASSOCIATION_EVENT == type
+
+  fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
+    val result: MutableList<Pair<VisitDto, VisitDto>> = mutableListOf()
+    affectedVisits.forEachIndexed { index, visitDto ->
+      for (secondIndex in index + 1..<affectedVisits.size) {
+        result.add(Pair(visitDto, affectedVisits[secondIndex]))
+      }
+    }
+    return result
+  }
+
+  private fun saveGroupedVisitsNotification(
+    affectedVisitsNoDuplicate: List<VisitDto>,
+    type: NotificationEventType,
+  ) {
+    var reference: String? = null
+    affectedVisitsNoDuplicate.forEach {
+      reference = saveVisitNotification(it, reference, type)
+    }
+  }
+
+  private fun saveVisitsNotification(
+    affectedVisitsNoDuplicate: List<VisitDto>,
+    type: NotificationEventType,
+  ) {
+    affectedVisitsNoDuplicate.forEach {
+      saveVisitNotification(it, null, type)
+    }
+  }
+
+  private fun flagTrackEvents(
+    visits: List<VisitDto>,
+    type: NotificationEventType,
+  ) {
+    visits.forEach {
+      LOG.info("Flagging visit with reference {} for ${type.reviewType}", it.reference)
+      val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
+      val data = telemetryClientService.createFlagEventFromVisitDto(it, bookingEventAudit, type)
+      telemetryClientService.trackEvent(FLAGGED_VISIT_EVENT, data)
     }
   }
 
@@ -191,68 +240,41 @@ class VisitNotificationEventService(
   }
 
   fun getNotificationCountForPrison(prisonCode: String): Int {
-    return this.visitNotificationEventRepository.getNotificationGroupsByPrisonCode(prisonCode) ?: 0
+    return this.visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode) ?: 0
   }
 
   fun getNotificationCount(): Int {
-    return this.visitNotificationEventRepository.getNotificationGroups() ?: 0
+    return this.visitNotificationEventRepository.getNotificationGroupsCount() ?: 0
   }
 
-  fun getFutureNotificationVisitGroups(): List<NotificationGroupDto> {
-    val now = LocalDate.now()
-
-    // T ODO dummy code is currently here needs to be replaced with actual code
-    val list = mutableListOf<NotificationGroupDto>()
-    list.add(
-      NotificationGroupDto(
-        "v7*d7*ed*7u",
-        NON_ASSOCIATION_EVENT,
-        listOf(
-          PrisonerVisitsNotificationDto("AF34567G", "John Smith", "Username1", now, "v1-d7-ed-7u"),
-          PrisonerVisitsNotificationDto("BF34567G", "John Smith", "Username1", now.plusDays(1), "v2-d7-ed-7u"),
+  fun getFutureNotificationVisitGroups(prisonCode: String): List<NotificationGroupDto> {
+    val futureNotifications = this.visitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode)
+    val eventGroups = futureNotifications.groupByTo(mutableMapOf()) { it.reference }
+    val notificationGroupDtos = mutableListOf<NotificationGroupDto>()
+    eventGroups.forEach { (reference, events) ->
+      notificationGroupDtos.add(
+        NotificationGroupDto(
+          reference,
+          events.first().type,
+          createPrisonerVisitsNotificationDto(events),
         ),
-      ),
-    )
+      )
+    }
 
-    list.add(
-      NotificationGroupDto(
-        "v8*d7*ed*7u",
-        PRISONER_RELEASED_EVENT,
-        listOf(
-          PrisonerVisitsNotificationDto("C34567G", "Aled Smith", "Username2", now.plusDays(1), "v3-d7-ed-7u"),
-          PrisonerVisitsNotificationDto("CF34567G", "John Smith", "Username4", now.plusDays(2), "v4-d7-ed-7u"),
-          PrisonerVisitsNotificationDto("CF34567G", "Jack Evans", "Username3", now.plusDays(2), "v5-d7-ed-7u"),
-        ),
-      ),
-    )
+    return notificationGroupDtos
+  }
 
-    list.add(
-      NotificationGroupDto(
-        "v9*d7*ed*7u",
-        PRISONER_RESTRICTION_CHANGE_EVENT,
-        listOf(PrisonerVisitsNotificationDto("C34567G", "Ceri Smith", "Username3", now.plusDays(3), "v9-d7-ed-7u")),
-      ),
-    )
+  private fun createPrisonerVisitsNotificationDto(events: MutableList<VisitNotificationEvent>): List<PrisonerVisitsNotificationDto> {
+    return events.map {
+      val visit = this.visitService.getVisitByReference(it.bookingReference)
+      val bookedByUserName = this.visitService.getLastUserNameToUpdateToSlotByReference(it.bookingReference)
 
-    list.add(
-      NotificationGroupDto(
-        "v9*d8*ed*7u",
-        PRISONER_RELEASED_EVENT,
-        listOf(PrisonerVisitsNotificationDto("C34567G", "Aled Smith", "Username2", now.plusDays(1), "v6-d7-ed-7u")),
-      ),
-    )
-
-    list.add(
-      NotificationGroupDto(
-        "v9*d9*ed*7u",
-        NON_ASSOCIATION_EVENT,
-        listOf(
-          PrisonerVisitsNotificationDto("DF34567G", "John Smith", "Username1", now.plusDays(1), "v9-d7-ed-7u"),
-          PrisonerVisitsNotificationDto("FF34567G", "John Smith", "Username1", now.plusDays(2), "v9-d8-ed-7u"),
-        ),
-      ),
-    )
-
-    return list
+      PrisonerVisitsNotificationDto(
+        prisonerNumber = visit.prisonerId,
+        bookedByUserName = bookedByUserName,
+        visitDate = visit.startTimestamp.toLocalDate(),
+        bookingReference = it.bookingReference,
+      )
+    }
   }
 }
