@@ -111,6 +111,11 @@ class VisitNotificationEventService(
     type: NotificationEventType,
   ) = NON_ASSOCIATION_EVENT == type
 
+  /**
+   * Groups List into pairs e.g.
+   *  A,B,C,D
+   *  Becomes : AB, AC, AD, BC, BD, CD
+   */
   fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
     val result: MutableList<Pair<VisitDto, VisitDto>> = mutableListOf()
     affectedVisits.forEachIndexed { index, visitDto ->
