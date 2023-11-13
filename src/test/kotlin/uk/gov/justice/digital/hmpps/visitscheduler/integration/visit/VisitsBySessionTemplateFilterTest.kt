@@ -112,7 +112,6 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
       .jsonPath("$.content[0].visitRestriction").isEqualTo("OPEN")
   }
 
-
   @Test
   fun `get booked visits with restriction type OPEN or CLOSED by session template reference for a date range`() {
     // Given
