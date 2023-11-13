@@ -495,9 +495,9 @@ class VisitController(
     @Schema(name = "toDate", description = "Get visits to date", example = "2023-05-31", required = true)
     @RequestParam
     toDate: LocalDate,
-    @Schema(name = "visitRestriction", description = "Visit Restriction - OPEN / CLOSED / UNKNOWN", example = "OPEN", required = false)
+    @Schema(name = "visitRestrictions", description = "Visit Restriction - OPEN / CLOSED / UNKNOWN", example = "OPEN", required = false)
     @RequestParam
-    visitRestriction: List<VisitRestriction>?,
+    visitRestrictions: List<VisitRestriction>?,
     @RequestParam(value = "visitStatus", required = true)
     @Parameter(
       description = "Filter results by visit status",
@@ -523,7 +523,7 @@ class VisitController(
         fromDate = fromDate,
         toDate = toDate,
         visitStatusList = visitStatusList,
-        visitRestrictions = visitRestriction,
+        visitRestrictions = visitRestrictions,
       ),
       pageablePage = page,
       pageableSize = size,
