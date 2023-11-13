@@ -218,7 +218,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   }
 
   @Test
-  fun `when prisoner with non associations visits has existing notification then they are not flagged or saved`() {
+  fun `when prisoner with non associations visits has duplicate notification then they are not flagged or saved`() {
     // Given
     val today = LocalDateTime.now()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)

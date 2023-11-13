@@ -22,6 +22,12 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
     notificationEvent: NotificationEventType,
   ): Boolean
 
+  /**
+   * The inner query will only return one True or no Result because of the HAVING COUNT(reference)=2 and LIMIT 1 the outer query will then
+   * return true if a result otherwise false. If we did not have the outer query we would get a null pointer.
+   *
+   * This is a very efficient way of doing these calculations using code will be inefficient
+   */
   @Query(
     "SELECT count(*) = 1 from (SELECT COUNT(*) = 2 FROM visit_notification_event vne " +
       " WHERE vne.create_timestamp BETWEEN NOW() - INTERVAL '10 MINUTE' AND NOW() AND " +
