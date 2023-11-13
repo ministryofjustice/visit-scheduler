@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
@@ -494,6 +495,9 @@ class VisitController(
     @Schema(name = "toDate", description = "Get visits to date", example = "2023-05-31", required = true)
     @RequestParam
     toDate: LocalDate,
+    @Schema(name = "visitRestriction", description = "Visit Restriction - OPEN / CLOSED / UNKNOWN", example = "OPEN", required = false)
+    @RequestParam
+    visitRestriction: List<VisitRestriction>?,
     @RequestParam(value = "visitStatus", required = true)
     @Parameter(
       description = "Filter results by visit status",
@@ -519,6 +523,7 @@ class VisitController(
         fromDate = fromDate,
         toDate = toDate,
         visitStatusList = visitStatusList,
+        visitRestrictions = visitRestriction,
       ),
       pageablePage = page,
       pageableSize = size,

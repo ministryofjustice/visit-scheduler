@@ -22,17 +22,22 @@ class VisitsBySessionTemplateSpecification(private val filter: VisitsBySessionTe
         predicates.add(criteriaBuilder.equal(root.get<String>(Visit::sessionTemplateReference.name), sessionTemplateReference))
       }
 
-      fromDate?.run {
+      fromDate.run {
         predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(Visit::visitStart.name), fromDate.atStartOfDay()))
       }
 
-      toDate?.run {
+      toDate.run {
         predicates.add(criteriaBuilder.lessThanOrEqualTo(root.get(Visit::visitStart.name), toDate.atTime(LocalTime.MAX)))
       }
 
       if (visitStatusList.isNotEmpty()) {
         val visitStatusPath = root.get<String>(Visit::visitStatus.name)
         predicates.add(visitStatusPath.`in`(visitStatusList))
+      }
+
+      if (!visitRestrictions.isNullOrEmpty()) {
+        val visitRestrictionPath = root.get<String>(Visit::visitRestriction.name)
+        predicates.add(visitRestrictionPath.`in`(visitRestrictions))
       }
     }
 
