@@ -102,7 +102,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     val toDate = visitTime.toLocalDate().plusDays(1)
 
     // When
-    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED&visitRestriction=OPEN")
+    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED&visitRestrictions=OPEN")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -120,7 +120,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     val toDate = visitTime.toLocalDate().plusDays(1)
 
     // When
-    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED&visitRestriction=OPEN,CLOSED")
+    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED&visitRestrictions=OPEN,CLOSED")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -140,7 +140,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     val toDate = visitTime.toLocalDate().plusDays(1)
 
     // When
-    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED&visitRestriction=CLOSED")
+    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED&visitRestrictions=CLOSED")
 
     // Then
     responseSpec.expectStatus().isOk
