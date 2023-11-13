@@ -8,9 +8,6 @@ class PrisonerVisitsNotificationDto(
   @Schema(description = "Prisoner Number", example = "AF34567G", required = true)
   @field:NotBlank
   val prisonerNumber: String,
-  @Schema(description = "Booked by name", example = "John Smith", required = true)
-  @field:NotBlank
-  val bookedByName: String,
   @Schema(description = "Booked by user name ", example = "SMITH1", required = true)
   @field:NotBlank
   val bookedByUserName: String,

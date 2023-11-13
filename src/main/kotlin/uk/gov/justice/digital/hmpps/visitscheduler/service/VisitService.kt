@@ -441,6 +441,11 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
+  fun getLastUserNameToUpdateToSlotByReference(bookingReference: String): String {
+    return eventAuditRepository.getLastUserToUpdateSlotByReference(bookingReference)
+  }
+
+  @Transactional(readOnly = true)
   fun getLastEventForBooking(bookingReference: String): EventAuditDto {
     return EventAuditDto(eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference))
   }
