@@ -3,6 +3,7 @@ generic-service:
   nameOverride: visit-scheduler
   serviceAccountName: visit-someone-in-prison
   replicaCount: 4
+  productId: "DPS035"
 
   image:
     repository: quay.io/hmpps/visit-scheduler
