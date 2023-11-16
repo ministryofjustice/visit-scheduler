@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDetailsDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateVisitStatsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.UpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.CreateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
@@ -526,6 +527,11 @@ class SessionTemplateService(
     val toSessionTemplateVisitStats = getSessionTemplateVisitStats(toSessionTemplate.reference, RequestSessionTemplateVisitStatsDto(fromDate))
 
     visitMoveValidator.validateMoveSessionTemplateVisits(fromSessionTemplate, fromSessionTemplateVisitStats, toSessionTemplate, toSessionTemplateVisitStats, fromDate)
+  }
+
+  fun getSessionTimeSlotDto(sessionTemplateReference: String?): SessionTimeSlotDto? {
+    return sessionTemplateRepository.getSessionTimeSlot(sessionTemplateReference)
+    // return timeSlotPair?.let { SessionTimeSlotDto(timeSlotPair.first, timeSlotPair.second)}
   }
 }
 

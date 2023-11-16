@@ -98,7 +98,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
         assertThat(legacyData.migrateDateTime).isNotNull()
         assertThat(legacyData.migrateDateTime?.toLocalDate()).isEqualTo(LocalDate.now())
       }
-      assertTelemetryClientEvents(VisitDto(visit), TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
+      assertTelemetryClientEvents(visit, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
       val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
       assertThat(eventAuditList).hasSize(1)
