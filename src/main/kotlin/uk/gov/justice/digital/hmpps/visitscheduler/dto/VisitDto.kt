@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -34,10 +35,10 @@ data class VisitDto(
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   val visitRestriction: VisitRestriction,
   @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
-  @field:NotBlank
+  @field:NotNull
   val startTimestamp: LocalDateTime,
   @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = true)
-  @field:NotBlank
+  @field:NotNull
   val endTimestamp: LocalDateTime,
   @Schema(description = "Visit Notes", required = false)
   val visitNotes: List<VisitNoteDto> = listOf(),
@@ -48,9 +49,9 @@ data class VisitDto(
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: List<VisitorSupportDto> = listOf(),
   @Schema(description = "The visit created date and time", example = "2018-12-01T13:45:00", required = true)
-  @field:NotBlank
+  @field:NotNull
   val createdTimestamp: LocalDateTime,
   @Schema(description = "The visit modified date and time", example = "2018-12-01T13:45:00", required = true)
-  @field:NotBlank
+  @field:NotNull
   val modifiedTimestamp: LocalDateTime,
 )
