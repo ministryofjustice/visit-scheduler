@@ -531,7 +531,6 @@ class SessionTemplateService(
 
   fun getSessionTimeSlotDto(sessionTemplateReference: String?): SessionTimeSlotDto? {
     return sessionTemplateRepository.getSessionTimeSlot(sessionTemplateReference)
-    // return timeSlotPair?.let { SessionTimeSlotDto(timeSlotPair.first, timeSlotPair.second)}
   }
 }
 
