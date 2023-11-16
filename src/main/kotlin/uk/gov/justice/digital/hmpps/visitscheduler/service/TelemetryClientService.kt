@@ -3,9 +3,11 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import com.microsoft.applicationinsights.TelemetryClient
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import java.time.LocalDate
@@ -18,16 +20,20 @@ import java.time.temporal.ChronoUnit
 class TelemetryClientService(
   private val telemetryClient: TelemetryClient,
 ) {
+
+  @Autowired
+  private lateinit var visitDtoBuilder: VisitDtoBuilder
+
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
   fun createVisitTrackEventFromVisitEntity(
-    visit: Visit,
+    visitEntity: Visit,
     actionedBy: String? = null,
     applicationMethodType: ApplicationMethodType? = null,
   ): MutableMap<String, String> {
-    val visitDto = VisitDto(visit)
+    val visitDto = visitDtoBuilder.build(visitEntity)
     return createVisitTrackEventFromVisitDto(visitDto, actionedBy, applicationMethodType)
   }
 

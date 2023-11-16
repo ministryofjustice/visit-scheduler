@@ -68,7 +68,7 @@ class ReserveSlotTest : IntegrationTestBase() {
   @Test
   fun `reserve visit slot`() {
     // Given
-    val sessionTemplate = sessionTemplateEntityHelper.create()
+    val sessionTemplate = sessionTemplateEntityHelper.create(startTime = visitTime.toLocalTime(), endTime = visitTime.plusHours(1).toLocalTime())
     val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplateReference = sessionTemplate.reference)
 
     // When
