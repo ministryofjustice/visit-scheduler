@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import com.microsoft.applicationinsights.TelemetryClient
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -8,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisi
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
@@ -47,6 +49,9 @@ class MigrateVisitService(
   @Value("\${migrate.sessiontemplate.mapping.offset.days:0}")
   private val migrateSessionTemplateMappingOffsetDays: Long,
 ) {
+
+  @Autowired
+  private lateinit var visitDtoBuilder: VisitDtoBuilder
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
     val actionedBy = migrateVisitRequest.actionedBy ?: NOT_KNOWN_NOMIS
@@ -155,7 +160,7 @@ class MigrateVisitService(
       // If already canceled then just return object and do nothing more!
       VisitService.LOG.debug("The visit $reference has already been canceled!")
       val canceledVisit = visitRepository.findByReference(reference)!!
-      return VisitDto(canceledVisit)
+      return visitDtoBuilder.build(canceledVisit)
     }
 
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Canceled migrated visit $reference not found ")
@@ -180,7 +185,7 @@ class MigrateVisitService(
 
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
 
-    val visit = VisitDto(visitRepository.saveAndFlush(visitEntity))
+    val visit = visitDtoBuilder.build(visitEntity)
     snsService.sendVisitCancelledEvent(visit)
     return visit
   }
