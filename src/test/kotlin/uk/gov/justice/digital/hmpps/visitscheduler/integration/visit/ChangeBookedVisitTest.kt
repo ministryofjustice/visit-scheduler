@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -45,6 +46,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   lateinit var bookedVisit: Visit
+  lateinit var sessionTemplate: SessionTemplate
 
   @Autowired
   private lateinit var testVisitRepository: TestVisitRepository
@@ -60,7 +62,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    val sessionTemplate = sessionTemplateEntityHelper.create()
+    sessionTemplate = sessionTemplateEntityHelper.create()
 
     val visit = visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = sessionTemplate.reference)
 
@@ -114,6 +116,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
     assertThat(reservedVisit).isNotNull
     reservedVisit?.let {
+      val visitStartStr = reservedVisit.visitStart.toLocalDate().atTime(sessionTemplate.startTime).format(DateTimeFormatter.ISO_DATE_TIME)
+
       assertThat(reservedVisit.id).isNotEqualTo(bookedVisit.id)
       assertThat(reservedVisit.visitStatus).isEqualTo(VisitStatus.CHANGING)
       verify(telemetryClient).trackEvent(
@@ -127,7 +131,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
           assertThat(it["visitType"]).isEqualTo(reservedVisit.visitType.name)
           assertThat(it["visitRoom"]).isEqualTo(reservedVisit.visitRoom)
           assertThat(it["visitRestriction"]).isEqualTo(reservedVisit.visitRestriction.name)
-          assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
+          assertThat(it["visitStart"]).isEqualTo(visitStartStr)
           assertThat(it["visitStatus"]).isEqualTo(VisitStatus.CHANGING.name)
         },
         isNull(),
@@ -143,7 +147,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
           assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
           assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
           assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-          assertThat(it["visitStart"]).isEqualTo(reservedVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
+          assertThat(it["visitStart"]).isEqualTo(visitStartStr)
           assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
         },
         isNull(),
