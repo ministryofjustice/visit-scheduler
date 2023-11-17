@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetGroupsByPrisonI
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createPermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
@@ -29,8 +28,6 @@ class AdminCreateSessionTemplateLocationGroupTest(
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
-  private var prison: Prison = Prison(code = "MDI", active = true)
-
   private lateinit var sessionTemplateWithGrps: SessionTemplate
 
   private lateinit var sessionGroup1: SessionLocationGroup
@@ -39,7 +36,7 @@ class AdminCreateSessionTemplateLocationGroupTest(
 
   @BeforeEach
   internal fun setUpTests() {
-    prison = prisonEntityHelper.create(prison.code, prison.active)
+    prison = prisonEntityHelper.create()
 
     sessionTemplateWithGrps = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
 

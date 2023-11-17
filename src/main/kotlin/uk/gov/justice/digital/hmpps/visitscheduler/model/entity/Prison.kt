@@ -24,6 +24,13 @@ class Prison(
   @Column(name = "active")
   var active: Boolean,
 
+  @Column(name = "policy_notice_days_min")
+  var policyNoticeDaysMin: Int,
+  @Column(name = "policy_notice_days_max")
+  var policyNoticeDaysMax: Int,
+  @Column(name = "update_policy_notice_days_min")
+  var updatePolicyNoticeDaysMin: Int,
+
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)
   @Column

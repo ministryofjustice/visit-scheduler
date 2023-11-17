@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateCategoryGrou
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.updateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_HIGH
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_PROVISIONAL
@@ -37,8 +36,6 @@ class AdminSessionTemplateCategoryGroupTest(
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
-  private var prison: Prison = Prison(code = "MDI", active = true)
-
   private lateinit var sessionTemplateWithGrps: SessionTemplate
   private lateinit var categoryGroup: SessionCategoryGroup
   private lateinit var categoryGroupWithNoSessionTemplate: SessionCategoryGroup
@@ -47,7 +44,7 @@ class AdminSessionTemplateCategoryGroupTest(
   internal fun setUpTests() {
     sessionTemplateWithGrps = sessionTemplateEntityHelper.create(validFromDate = java.time.LocalDate.now())
 
-    prison = prisonEntityHelper.create(prison.code, prison.active)
+    prison = prisonEntityHelper.create()
 
     categoryGroup = sessionCategoryGroupRepository.saveAndFlush(
       SessionCategoryGroup(

@@ -29,12 +29,15 @@ import java.time.LocalTime
 @DisplayName("Get  $ADMIN_SESSION_TEMPLATES_PATH with temp location")
 class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : IntegrationTestBase() {
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
-  private val prison: Prison = Prison(code = "MDI", active = true)
 
   private val nextAllowedDay = getNextAllowedDay()
 
+  lateinit var prisonOther: Prison
+
   @BeforeEach
-  internal fun createAllSessionTemplates() {
+  internal fun setUpTests() {
+    prisonOther = prisonEntityHelper.create()
+    prison = prisonEntityHelper.create("CR1")
   }
 
   @Test
@@ -125,7 +128,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     // Given
     val prisonCode = "CR1"
     val prisonerId = "A0000001"
-    val transitionalLocations = TransitionalLocationTypes.values().asList()
+    val transitionalLocations = TransitionalLocationTypes.entries
 
     stubLastCellLocation(prisonCode, transitionalLocations, 1)
     setUpStub(prisonerId, prisonCode, transitionalLocations[0])
@@ -143,7 +146,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     // Given
     val prisonCode = "CR1"
     val prisonerId = "A0000001"
-    val transitionalLocations = TransitionalLocationTypes.values().asList()
+    val transitionalLocations = TransitionalLocationTypes.entries
 
     setUpStub(prisonerId, prisonCode, transitionalLocations[0], lastPermanentLevels = null)
     setupSessionTemplate(prisonCode)
@@ -160,11 +163,11 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     // Given
     val prisonCode = "CR1"
     val prisonerId = "A0000001"
-    val transitionalLocations = TransitionalLocationTypes.values().asList()
+    val transitionalLocations = TransitionalLocationTypes.entries
 
     stubLastCellLocation(prisonCode, transitionalLocations, 1)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prison.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prisonOther.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
@@ -178,7 +181,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     // Given
     val prisonCode = "CR1"
     val prisonerId = "A0000001"
-    val transitionalLocations = TransitionalLocationTypes.values().asList()
+    val transitionalLocations = TransitionalLocationTypes.entries
 
     stubLastCellLocation(prisonCode, transitionalLocations, 1)
 
@@ -201,12 +204,12 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     // Given
     val prisonCode = "CR1"
     val prisonerId = "A0000001"
-    val transitionalLocations = TransitionalLocationTypes.values().asList()
+    val transitionalLocations = TransitionalLocationTypes.entries
 
     stubLastCellLocation(prisonCode, transitionalLocations, 1)
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-${RECP.name}")
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prison.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prisonOther.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
@@ -227,7 +230,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
   ) {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonerPrisonCode-${prisonerTransitionalLocation.name}", lastPermanentLevels = lastPermanentLevels)
     prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerPrisonCode)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prison.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prisonOther.code)
   }
 
   private fun stubLastCellLocation(

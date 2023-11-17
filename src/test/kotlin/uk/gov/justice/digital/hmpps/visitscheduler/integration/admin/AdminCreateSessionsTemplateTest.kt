@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateSessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.time.LocalDate
@@ -25,11 +24,9 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
-  private var prison: Prison = Prison(code = "MDI", active = true)
-
   @BeforeEach
   internal fun setUpTests() {
-    prison = prisonEntityHelper.create(prison.code, prison.active)
+    prison = prisonEntityHelper.create()
   }
 
   @Test

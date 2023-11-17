@@ -23,6 +23,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 const val VISIT_SESSION_CONTROLLER_PATH: String = "/visit-sessions"
+const val VISIT_UPDATE_SESSION_CONTROLLER_PATH: String = "/update-visit-sessions"
 const val GET_SESSION_SCHEDULE: String = "$VISIT_SESSION_CONTROLLER_PATH/schedule"
 const val GET_SESSION_CAPACITY: String = "$VISIT_SESSION_CONTROLLER_PATH/capacity"
 
@@ -56,7 +57,7 @@ class VisitSessionController(
       ),
     ],
   )
-  fun getVisitSessions(
+  fun getVisitBookingSessions(
     @RequestParam(value = "prisonId", required = true)
     @Parameter(
       description = "Query by NOMIS Prison Identifier",
@@ -74,15 +75,66 @@ class VisitSessionController(
       description = "Override the default minimum number of days notice from the current date",
       example = "2",
     )
-    min: Long?,
+    min: Int?,
     @RequestParam(value = "max", required = false)
     @Parameter(
       description = "Override the default maximum number of days to book-ahead from the current date",
       example = "28",
     )
-    max: Long?,
+    max: Int?,
   ): List<VisitSessionDto> {
-    return sessionService.getVisitSessions(prisonCode, prisonerId, min, max)
+    return sessionService.getVisitSessions(prisonCode, prisonerId, min, max, update = false)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(VISIT_UPDATE_SESSION_CONTROLLER_PATH)
+  @Operation(
+    summary = "Returns all visit sessions for booking updates which are within the reservable time period - whether or not they are full",
+    description = "Retrieve all visits for booking updates for a specified prisoner",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit session information returned",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to Get visit sessions for  booking updates",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getVisitUpdateSessions(
+    @RequestParam(value = "prisonId", required = true)
+    @Parameter(
+      description = "Query by NOMIS Prison Identifier",
+      example = "MDI",
+    )
+    prisonCode: String,
+    @RequestParam(value = "prisonerId", required = false)
+    @Parameter(
+      description = "Filter results by prisoner id",
+      example = "A12345DC",
+    )
+    prisonerId: String?,
+    @RequestParam(value = "min", required = false)
+    @Parameter(
+      description = "Override the default minimum number of days notice from the current date",
+      example = "2",
+    )
+    min: Int?,
+    @RequestParam(value = "max", required = false)
+    @Parameter(
+      description = "Override the default maximum number of days to book-ahead from the current date",
+      example = "28",
+    )
+    max: Int?,
+  ): List<VisitSessionDto> {
+    return sessionService.getVisitSessions(prisonCode, prisonerId, min, max, update = true)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

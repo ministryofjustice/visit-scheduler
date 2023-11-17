@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
 
 const val ADMIN_PRISONS_PATH: String = "/admin/prisons"
@@ -135,6 +136,46 @@ class PrisonAdminController(
     prisonDto: PrisonDto,
   ): PrisonDto {
     return prisonConfigService.createPrison(prisonDto)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PutMapping(PRISON)
+  @Operation(
+    summary = "Update a prison",
+    description = "Update a prison",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = PrisonDto::class),
+        ),
+      ],
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Prison created",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to create prison",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun updatePrison(
+    @Schema(description = "prison id", example = "BHI", required = true)
+    @PathVariable
+    prisonCode: String,
+    @RequestBody @Valid
+    updatePrisonDto: UpdatePrisonDto,
+  ): PrisonDto {
+    return prisonConfigService.updatePrison(prisonCode, updatePrisonDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")

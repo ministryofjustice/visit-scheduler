@@ -10,6 +10,7 @@ import org.mockito.kotlin.mock
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -30,7 +31,7 @@ class PrisonerSessionValidatorTest {
   @Nested
   @DisplayName("Tests when a prisoner exists in a prison which has 3 levels")
   inner class Level3PrisonTest {
-    val prison: Prison = Prison(code = "BLI", active = true)
+    val prison = PrisonEntityHelper.createPrison()
 
     // prisoner details are as follows
     // level 1 - "C", level 2 - "1", level 3 - "004" and no level 4
@@ -224,7 +225,7 @@ class PrisonerSessionValidatorTest {
   inner class Level4PrisonTest {
     // prisoner details are as follows
     // level 1 - "C", level 2 - "1", level 3 - "004" and level 4 = "10000"
-    val prison: Prison = Prison(code = "BLI", active = true)
+    val prison = PrisonEntityHelper.createPrison()
 
     private val level1 = PrisonerHousingLevelDto(level = 1, code = "C", description = "level 1")
     private val level2 = PrisonerHousingLevelDto(level = 2, code = "1", description = "level 2")

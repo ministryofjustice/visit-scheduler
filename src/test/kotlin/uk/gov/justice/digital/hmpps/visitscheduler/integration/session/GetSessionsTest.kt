@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_UPDATE_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -19,7 +20,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
@@ -35,10 +35,9 @@ class GetSessionsTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
-  private val prison: Prison = Prison(code = "MDI", active = true)
-
   @BeforeEach
   internal fun setUpTests() {
+    prison = prisonEntityHelper.create()
   }
 
   @Test
@@ -64,6 +63,58 @@ class GetSessionsTest : IntegrationTestBase() {
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+  }
+
+  @Test
+  fun `visit sessions are returned using prison booking min and max days`() {
+    // Given
+    val prisonTest = prisonEntityHelper.create(prisonCode = "TST", policyNoticeDaysMin = 2, policyNoticeDaysMax = 7)
+
+    val now = LocalDate.now()
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = now,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = now.dayOfWeek,
+      prisonCode = prisonTest.code,
+    )
+
+    // When
+    val responseSpec = callGetSessions(prisonId = prisonTest.code)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], now.plusWeeks(1), sessionTemplate)
+  }
+
+  @Test
+  fun `visit sessions for update are returned using prison booking min and max days`() {
+    // Given
+    val prisonTest = prisonEntityHelper.create(prisonCode = "TST", policyNoticeDaysMin = 7, policyNoticeDaysMax = 7, updatePolicyNoticeDaysMin = 2)
+
+    val now = LocalDate.now()
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = now,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = now.dayOfWeek,
+      prisonCode = prisonTest.code,
+    )
+
+    // When
+    val responseSpec = callGetSessionsForUpdate(prisonId = prisonTest.code)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], now.plusWeeks(1), sessionTemplate)
   }
 
   @Test
@@ -1612,6 +1663,12 @@ class GetSessionsTest : IntegrationTestBase() {
 
   private fun callGetSessions(prisonId: String? = "MDI"): ResponseSpec {
     return webTestClient.get().uri("/visit-sessions?prisonId=$prisonId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+  }
+
+  private fun callGetSessionsForUpdate(prisonId: String? = "MDI"): ResponseSpec {
+    return webTestClient.get().uri("$VISIT_UPDATE_SESSION_CONTROLLER_PATH?prisonId=$prisonId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }

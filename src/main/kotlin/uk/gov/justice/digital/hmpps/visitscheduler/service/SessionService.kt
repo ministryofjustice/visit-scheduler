@@ -38,10 +38,6 @@ class SessionService(
   private val visitRepository: VisitRepository,
   private val prisonerService: PrisonerService,
   private val visitService: VisitService,
-  @Value("\${policy.session.booking-notice-period.minimum-days:2}")
-  private val policyNoticeDaysMin: Long,
-  @Value("\${policy.session.booking-notice-period.maximum-days:28}")
-  private val policyNoticeDaysMax: Long,
   @Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,
   @Value("\${policy.session.non-association.filter:false}")
@@ -61,19 +57,25 @@ class SessionService(
   fun getVisitSessions(
     prisonCode: String,
     prisonerId: String? = null,
-    noticeDaysMin: Long? = null,
-    noticeDaysMax: Long? = null,
+    minOverride: Int? = null,
+    maxOverride: Int? = null,
+    update: Boolean = false,
   ): List<VisitSessionDto> {
-    LOG.debug("Enter getVisitSessions prisonCode:$prisonCode, prisonerId : $prisonerId noticeDaysMin:$noticeDaysMin noticeDaysMax:$noticeDaysMax")
-
-    val today = LocalDate.now()
-    val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
-    val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
+    LOG.debug("Enter getVisitSessions prisonCode:$prisonCode, prisonerId : $prisonerId ")
 
     // ensure the prisoner - if supplied belongs to the same prison as supplied prisonCode
     prisonerId?.let {
       prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
     }
+
+    val today = LocalDate.now()
+
+    val prison = prisonConfigService.findPrisonByCode(prisonCode)
+    val min = minOverride ?: if (update) prison.updatePolicyNoticeDaysMin else prison.policyNoticeDaysMin
+    val max = maxOverride ?: prison.policyNoticeDaysMax
+
+    val requestedBookableStartDate = today.plusDays(min.toLong())
+    val requestedBookableEndDate = today.plusDays(max.toLong())
 
     val prisoner = prisonerId?.let { prisonerService.getPrisoner(prisonerId) }
 
