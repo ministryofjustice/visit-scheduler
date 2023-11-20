@@ -84,6 +84,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     verify(prisonConfigServiceSpy, times(1)).createPrison(any())
     verify(prisonRepositorySpy, times(0)).save(any())
   }
+
   @Test
   fun `on create when update notice days min is greater than policy notice days min`() {
     // Given
