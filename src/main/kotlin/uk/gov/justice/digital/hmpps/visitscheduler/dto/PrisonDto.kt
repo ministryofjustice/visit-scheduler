@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.Min
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import java.time.LocalDate
 
@@ -14,8 +15,10 @@ data class PrisonDto(
   var active: Boolean = false,
 
   @Schema(description = "minimum number of days notice from the current date to booked a visit", example = "2", required = true)
+  @field:Min(0)
   var policyNoticeDaysMin: Int,
   @Schema(description = "maximum number of days notice from the current date to booked a visit", example = "28", required = true)
+  @field:Min(0)
   var policyNoticeDaysMax: Int,
 
   @Schema(description = "exclude dates", required = false)

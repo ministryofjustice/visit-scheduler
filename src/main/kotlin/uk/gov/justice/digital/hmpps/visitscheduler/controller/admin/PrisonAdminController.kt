@@ -39,7 +39,7 @@ class PrisonAdminController(
   private val prisonConfigService: PrisonConfigService,
 ) {
 
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG')")
   @GetMapping(PRISON)
   @Operation(
     summary = "Gets prison by given prison id/code",
@@ -163,7 +163,7 @@ class PrisonAdminController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to create prison",
+        description = "Incorrect permissions to update prison",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],

@@ -98,6 +98,22 @@ class PrisonConfigTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `on create when notice days min and max is less than zero error is returned`() {
+    // Given
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(policyNoticeDaysMin = -1, policyNoticeDaysMax = -1)
+
+    // When
+    val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
+
+    // Then
+    val errorResponse = getErrorResponse(responseSpec)
+
+    Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
+    Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'prisonDto' on field 'policyNoticeDaysMin': rejected value [-1]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'prisonDto' on field 'policyNoticeDaysMax': rejected value [-1]")
+  }
+
+  @Test
   fun `when update prison called for existing prison then BAD_REQUEST is returned`() {
     // Given
     // prison already exists in DB
@@ -136,6 +152,25 @@ class PrisonConfigTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody()
       .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid MDI, max 29 , min 28")
+  }
+
+  @Test
+  fun `on update when notice days min and max is less than zero error is returned`() {
+    // Given
+    // prison already exists in DB
+    prison = prisonEntityHelper.create(policyNoticeDaysMin = 1, policyNoticeDaysMax = 28)
+
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(policyNoticeDaysMin = -1, policyNoticeDaysMax = -1)
+    prisonEntityHelper.create(prison.code, prison.active)
+    // When
+    val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
+
+    // Then
+    val errorResponse = getErrorResponse(responseSpec)
+
+    Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
+    Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'updatePrisonDto' on field 'policyNoticeDaysMin': rejected value [-1]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'updatePrisonDto' on field 'policyNoticeDaysMax': rejected value [-1]")
   }
 
   @Test
