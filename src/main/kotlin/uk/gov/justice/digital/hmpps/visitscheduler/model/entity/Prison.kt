@@ -28,8 +28,6 @@ class Prison(
   var policyNoticeDaysMin: Int,
   @Column(name = "policy_notice_days_max")
   var policyNoticeDaysMax: Int,
-  @Column(name = "update_policy_notice_days_min")
-  var updatePolicyNoticeDaysMin: Int,
 
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)

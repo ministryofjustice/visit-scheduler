@@ -39,7 +39,7 @@ class PrisonConfigService(
   }
 
   private fun mapEntityToDto(it: Prison): PrisonDto {
-    return PrisonDto(it.code, it.active, it.policyNoticeDaysMin, it.policyNoticeDaysMax, it.updatePolicyNoticeDaysMin, it.excludeDates.map { it.excludeDate }.toSortedSet())
+    return PrisonDto(it.code, it.active, it.policyNoticeDaysMin, it.policyNoticeDaysMax, it.excludeDates.map { it.excludeDate }.toSortedSet())
   }
 
   @Transactional(readOnly = true)
@@ -63,9 +63,9 @@ class PrisonConfigService(
     if (prisonRepository.findByCode(prisonDto.code) != null) {
       throw ValidationException(messageService.getMessage("validation.create.prison.found", prisonDto.code))
     }
-    validatePrisonDetails(prisonDto.updatePolicyNoticeDaysMin, prisonDto.policyNoticeDaysMin, prisonDto.policyNoticeDaysMax, prisonDto.code)
+    validatePrisonDetails(prisonDto.policyNoticeDaysMin, prisonDto.policyNoticeDaysMax, prisonDto.code)
 
-    val newPrison = Prison(prisonDto.code, prisonDto.active, prisonDto.policyNoticeDaysMin, prisonDto.policyNoticeDaysMax, prisonDto.updatePolicyNoticeDaysMin)
+    val newPrison = Prison(prisonDto.code, prisonDto.active, prisonDto.policyNoticeDaysMin, prisonDto.policyNoticeDaysMax)
     val savedPrison = prisonRepository.saveAndFlush(newPrison)
     val excludeDates = prisonDto.excludeDates.map { PrisonExcludeDate(prisonId = savedPrison.id, prison = savedPrison, it) }
     savedPrison.excludeDates.addAll(excludeDates)
@@ -77,14 +77,12 @@ class PrisonConfigService(
     val prison = findPrisonByCode(prisonCode)
 
     val policyNoticeDaysMin = prisonDto.policyNoticeDaysMin ?: prison.policyNoticeDaysMin
-    val updatePolicyNoticeDaysMin = prisonDto.updatePolicyNoticeDaysMin ?: prison.updatePolicyNoticeDaysMin
     val policyNoticeDaysMax = prisonDto.policyNoticeDaysMax ?: prison.policyNoticeDaysMax
 
-    validatePrisonDetails(updatePolicyNoticeDaysMin, policyNoticeDaysMin, policyNoticeDaysMax, prisonCode)
+    validatePrisonDetails(policyNoticeDaysMin, policyNoticeDaysMax, prisonCode)
 
     prison.policyNoticeDaysMin = policyNoticeDaysMin
     prison.policyNoticeDaysMax = policyNoticeDaysMax
-    prison.updatePolicyNoticeDaysMin = updatePolicyNoticeDaysMin
 
     val savedPrison = prisonRepository.saveAndFlush(prison)
     return mapEntityToDto(savedPrison)
@@ -136,21 +134,10 @@ class PrisonConfigService(
   }
 
   private fun validatePrisonDetails(
-    updatePolicyNoticeDaysMin: Int,
     policyNoticeDaysMin: Int,
     policyNoticeDaysMax: Int,
     prisonCode: String,
   ) {
-    if (updatePolicyNoticeDaysMin > policyNoticeDaysMin) {
-      throw ValidationException(
-        messageService.getMessage(
-          "validation.prison.updatepolicynoticedays.invalid",
-          prisonCode,
-          updatePolicyNoticeDaysMin.toString(),
-          policyNoticeDaysMin.toString(),
-        ),
-      )
-    }
     if (policyNoticeDaysMin > policyNoticeDaysMax) {
       throw ValidationException(
         messageService.getMessage(

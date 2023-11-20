@@ -17,8 +17,6 @@ data class PrisonDto(
   var policyNoticeDaysMin: Int,
   @Schema(description = "maximum number of days notice from the current date to booked a visit", example = "28", required = true)
   var policyNoticeDaysMax: Int,
-  @Schema(description = "minimum number of days notice from the current date to update a booked visit", example = "0", required = true)
-  var updatePolicyNoticeDaysMin: Int,
 
   @Schema(description = "exclude dates", required = false)
   var excludeDates: Set<LocalDate> = mutableSetOf(),
@@ -30,6 +28,5 @@ data class PrisonDto(
     excludeDates = prisonEntity.excludeDates.map { it.excludeDate }.toSet(),
     policyNoticeDaysMin = prisonEntity.policyNoticeDaysMin,
     policyNoticeDaysMax = prisonEntity.policyNoticeDaysMax,
-    updatePolicyNoticeDaysMin = prisonEntity.updatePolicyNoticeDaysMin,
   )
 }

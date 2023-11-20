@@ -62,9 +62,8 @@ class PrisonEntityHelper(
       activePrison: Boolean = true,
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
-      updatePolicyNoticeDaysMin: Int = 2,
     ): Prison {
-      return Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, updatePolicyNoticeDaysMin)
+      return Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax)
     }
 
     fun createPrisonDto(
@@ -73,17 +72,15 @@ class PrisonEntityHelper(
       excludeDates: Set<LocalDate> = sortedSetOf(),
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
-      updatePolicyNoticeDaysMin: Int = 2,
     ): PrisonDto {
-      return PrisonDto(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, updatePolicyNoticeDaysMin, excludeDates = excludeDates)
+      return PrisonDto(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, excludeDates = excludeDates)
     }
 
     fun updatePrisonDto(
       policyNoticeDaysMin: Int = 10,
       policyNoticeDaysMax: Int = 20,
-      updatePolicyNoticeDaysMin: Int = 0,
     ): UpdatePrisonDto {
-      return UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, updatePolicyNoticeDaysMin)
+      return UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax)
     }
   }
 
@@ -94,7 +91,6 @@ class PrisonEntityHelper(
     excludeDates: List<LocalDate> = listOf(),
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
-    updatePolicyNoticeDaysMin: Int = 2,
   ): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
     if (prison == null) {
@@ -104,7 +100,6 @@ class PrisonEntityHelper(
           activePrison = activePrison,
           policyNoticeDaysMin = policyNoticeDaysMin,
           policyNoticeDaysMax = policyNoticeDaysMax,
-          updatePolicyNoticeDaysMin = updatePolicyNoticeDaysMin,
         ),
       )
     } else {

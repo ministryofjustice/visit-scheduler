@@ -59,7 +59,6 @@ class SessionService(
     prisonerId: String? = null,
     minOverride: Int? = null,
     maxOverride: Int? = null,
-    update: Boolean = false,
   ): List<VisitSessionDto> {
     LOG.debug("Enter getVisitSessions prisonCode:$prisonCode, prisonerId : $prisonerId ")
 
@@ -71,7 +70,7 @@ class SessionService(
     val today = LocalDate.now()
 
     val prison = prisonConfigService.findPrisonByCode(prisonCode)
-    val min = minOverride ?: if (update) prison.updatePolicyNoticeDaysMin else prison.policyNoticeDaysMin
+    val min = minOverride ?: prison.policyNoticeDaysMin
     val max = maxOverride ?: prison.policyNoticeDaysMax
 
     val requestedBookableStartDate = today.plusDays(min.toLong())

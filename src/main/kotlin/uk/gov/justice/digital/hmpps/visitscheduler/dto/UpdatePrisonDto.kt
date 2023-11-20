@@ -8,6 +8,4 @@ data class UpdatePrisonDto(
   var policyNoticeDaysMin: Int?,
   @Schema(description = "maximum number of days notice from the current date to booked a visit", example = "28", required = false)
   var policyNoticeDaysMax: Int?,
-  @Schema(description = "minimum number of days notice from the current date to update a booked visit", example = "0", required = false)
-  var updatePolicyNoticeDaysMin: Int?,
 )
