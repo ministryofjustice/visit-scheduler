@@ -84,6 +84,31 @@ class PrisonConfigTest : IntegrationTestBase() {
     verify(prisonConfigServiceSpy, times(1)).createPrison(any())
     verify(prisonRepositorySpy, times(0)).save(any())
   }
+  @Test
+  fun `on create when update notice days min is greater than policy notice days min`() {
+    // Given
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(updatePolicyNoticeDaysMin = 10, policyNoticeDaysMin = 2)
+
+    // When
+    val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Update policy notice days invalid MDI, update 10 , min 2")
+  }
+
+  @Test
+  fun `on create when notice days min is greater than policy notice days max`() {
+    // Given
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(policyNoticeDaysMin = 29, policyNoticeDaysMax = 28)
+
+    // When
+    val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid MDI, max 29 , min 28")
+  }
 
   @Test
   fun `when update prison called for existing prison then BAD_REQUEST is returned`() {
@@ -109,6 +134,40 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(result.policyNoticeDaysMin).isEqualTo(updatePrisonRequest.policyNoticeDaysMin)
     Assertions.assertThat(result.policyNoticeDaysMax).isEqualTo(updatePrisonRequest.policyNoticeDaysMax)
     Assertions.assertThat(result.updatePolicyNoticeDaysMin).isEqualTo(updatePrisonRequest.updatePolicyNoticeDaysMin)
+  }
+
+  @Test
+  fun `on update when update notice days min is greater than policy notice days min`() {
+    // Given
+    // prison already exists in DB
+    prison = prisonEntityHelper.create(updatePolicyNoticeDaysMin = 1, policyNoticeDaysMin = 2)
+
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(updatePolicyNoticeDaysMin = 10, policyNoticeDaysMin = 2)
+    prisonEntityHelper.create(prison.code, prison.active)
+
+    // When
+    val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Update policy notice days invalid MDI, update 10 , min 2")
+  }
+
+  @Test
+  fun `on update when notice days min is greater than policy notice days max`() {
+    // Given
+    // prison already exists in DB
+    prison = prisonEntityHelper.create(policyNoticeDaysMin = 1, policyNoticeDaysMax = 28)
+
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(policyNoticeDaysMin = 29, policyNoticeDaysMax = 28)
+    prisonEntityHelper.create(prison.code, prison.active)
+
+    // When
+    val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid MDI, max 29 , min 28")
   }
 
   @Test
