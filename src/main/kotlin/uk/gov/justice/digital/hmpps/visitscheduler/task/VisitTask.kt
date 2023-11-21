@@ -68,11 +68,13 @@ class VisitTask(
     log.debug("Started flagVisits task.")
     prisonConfigService.getSupportedPrisons().forEach { prisonCode ->
       for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
+        val visitDate = LocalDateTime.now().plusDays(i.toLong())
+
         val visitFilter = VisitFilter(
           prisonCode = prisonCode,
           visitStatusList = listOf(VisitStatus.BOOKED),
-          startDateTime = LocalDateTime.now().plusDays(i).with(LocalTime.MIN),
-          endDateTime = LocalDateTime.now().plusDays(i).with(LocalTime.MAX),
+          startDateTime = visitDate.with(LocalTime.MIN),
+          endDateTime = visitDate.with(LocalTime.MAX),
         )
         val visits = visitService.findVisitsByFilterPageableDescending(visitFilter)
         val retryVisits = mutableListOf<VisitDto>()
@@ -94,7 +96,7 @@ class VisitTask(
     log.debug("Finished flagVisits task.")
   }
 
-  private fun flagVisit(visit: VisitDto, noticeDays: Long, isRetry: Boolean = false): Boolean {
+  private fun flagVisit(visit: VisitDto, noticeDays: Int, isRetry: Boolean = false): Boolean {
     var retry = false
 
     with(visit) {

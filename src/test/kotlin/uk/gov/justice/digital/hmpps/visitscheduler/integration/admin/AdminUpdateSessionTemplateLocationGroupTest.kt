@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateLocationSess
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createPermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createUpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 
 @DisplayName("Put update session location groups $LOCATION_GROUP_ADMIN_PATH")
@@ -18,13 +17,11 @@ class AdminUpdateSessionTemplateLocationGroupTest : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
-  private var prison: Prison = Prison(code = "MDI", active = true)
-
   private lateinit var sessionGroup: SessionLocationGroup
 
   @BeforeEach
   internal fun setUpTests() {
-    prison = prisonEntityHelper.create(prison.code, prison.active)
+    prison = prisonEntityHelper.create()
 
     val allowedPermittedLocations = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
     sessionGroup = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)

@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_P
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
@@ -117,7 +118,7 @@ class AdminPrisonsTest : IntegrationTestBase() {
   fun `create prison`() {
     // Given
     val excludeDate = LocalDate.now()
-    val prisonDto = PrisonDto("AWE", true, sortedSetOf(excludeDate))
+    val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, excludeDates = sortedSetOf(excludeDate))
 
     // When
     val responseSpec = webTestClient.post().uri(PRISON_ADMIN_PATH.replace("{prisonCode}", "AWE"))
@@ -147,7 +148,7 @@ class AdminPrisonsTest : IntegrationTestBase() {
     prisonEntityHelper.create(prisonCode = "AWE", activePrison = true)
 
     val excludeDate = LocalDate.now()
-    val prisonDto = PrisonDto("AWE", true, sortedSetOf(excludeDate))
+    val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, excludeDates = sortedSetOf(excludeDate))
 
     // When
     val responseSpec = webTestClient.post().uri(PRISON_ADMIN_PATH.replace("{prisonCode}", "AWE"))

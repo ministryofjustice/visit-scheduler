@@ -9,6 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -26,6 +27,8 @@ import java.time.LocalDateTime
 
 @ExtendWith(MockitoExtension::class)
 class VisitDtoBuilderTest() {
+
+  private var prison: Prison = PrisonEntityHelper.createPrison()
 
   private val sessionTemplateService: SessionTemplateService = mock<SessionTemplateService>()
 
@@ -129,19 +132,15 @@ class VisitDtoBuilderTest() {
   private fun create(
     visitStatus: VisitStatus = RESERVED,
     prisonerId: String = "FF0000AA",
-    prisonCode: String = "MDI",
     visitRoom: String = "A1",
     visitStart: LocalDateTime,
     visitEnd: LocalDateTime,
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     reference: String = "",
-    activePrison: Boolean = true,
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
   ): Visit {
-    val prison = Prison(code = prisonCode, active = activePrison)
-
     val visit = Visit(
       visitStatus = visitStatus,
       prisonerId = prisonerId,
