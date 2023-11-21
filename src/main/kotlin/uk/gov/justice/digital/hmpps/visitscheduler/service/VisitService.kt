@@ -255,7 +255,7 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun findVisitsBySessionTemplateFilterPageableDescending(visitFilter: VisitsBySessionTemplateFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
-    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
     return visitRepository.findAll(VisitsBySessionTemplateSpecification(visitFilter), page).map { visitDtoBuilder.build(it) }
   }
 

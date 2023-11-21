@@ -30,7 +30,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // visit 1 booked for session template reference - session-1
     visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime, prisonerId = "FF0000AA", sessionTemplateReference = "session-1", reference = "visit-booked-1", visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
     // visit 2 reserved for session template reference - session-1
-    visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime.plusMinutes(1), prisonerId = "FF0000AA", sessionTemplateReference = "session-1", reference = "visit-reserved-1", visitStatus = VisitStatus.RESERVED)
+    visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime, prisonerId = "FF0000AA", sessionTemplateReference = "session-1", reference = "visit-reserved-1", visitStatus = VisitStatus.RESERVED)
     // visit 3 booked for session template reference - session-2
     visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime, prisonerId = "FF0000BB", sessionTemplateReference = "session-2", reference = "visit-booked-2", visitStatus = VisitStatus.BOOKED)
     // visit 4 booked for session template reference - session-1 but on next day
