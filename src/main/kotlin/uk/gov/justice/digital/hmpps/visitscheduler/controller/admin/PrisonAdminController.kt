@@ -147,7 +147,7 @@ class PrisonAdminController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = PrisonDto::class),
+          schema = Schema(implementation = UpdatePrisonDto::class),
         ),
       ],
     ),
