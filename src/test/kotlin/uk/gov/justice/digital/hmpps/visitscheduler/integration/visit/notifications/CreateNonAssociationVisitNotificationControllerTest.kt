@@ -15,6 +15,8 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonAssociationHasChanged
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
@@ -75,7 +77,24 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     Assertions.assertThat(visitNotifications).hasSize(2)
     Assertions.assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
 
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("NON_ASSOCIATION_EVENT")).isEqualTo(2)
+    val auditEvents = testEventAuditRepository.getAuditByType("NON_ASSOCIATION_EVENT")
+    Assertions.assertThat(auditEvents).hasSize(2)
+    with(auditEvents[0]) {
+      Assertions.assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      Assertions.assertThat(bookingReference).isEqualTo(primaryVisit.reference)
+      Assertions.assertThat(applicationReference).isEqualTo(primaryVisit.applicationReference)
+      Assertions.assertThat(sessionTemplateReference).isEqualTo(primaryVisit.sessionTemplateReference)
+      Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
+      Assertions.assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+    }
+    with(auditEvents[1]) {
+      Assertions.assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit.reference)
+      Assertions.assertThat(applicationReference).isEqualTo(secondaryVisit.applicationReference)
+      Assertions.assertThat(sessionTemplateReference).isEqualTo(secondaryVisit.sessionTemplateReference)
+      Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
+      Assertions.assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+    }
   }
 
   @Test
