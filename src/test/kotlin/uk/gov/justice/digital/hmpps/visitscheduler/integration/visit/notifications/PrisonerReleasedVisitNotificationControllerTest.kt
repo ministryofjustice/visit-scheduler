@@ -86,6 +86,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     val visitNotifications = testVisitNotificationEventRepository.findAll()
     Assertions.assertThat(visitNotifications).hasSize(1)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RELEASED_EVENT")).isEqualTo(1)
   }
 
   @Test
@@ -134,6 +135,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     Assertions.assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
     Assertions.assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
     Assertions.assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RELEASED_EVENT")).isEqualTo(3)
   }
 
   @Test
@@ -204,5 +206,6 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   private fun assertNotHandled() {
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RELEASED_EVENT")).isEqualTo(0)
   }
 }

@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Notific
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
@@ -42,6 +43,9 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
 
   @Autowired
   lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
+
+  @Autowired
+  lateinit var testEventAuditRepository: TestEventAuditRepository
 
   fun assertBookedEvent(visits: List<Visit>, type: NotificationEventType) {
     visits.forEach { visit ->

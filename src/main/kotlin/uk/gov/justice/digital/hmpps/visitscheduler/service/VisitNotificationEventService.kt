@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -14,7 +15,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
@@ -34,6 +39,9 @@ class VisitNotificationEventService(
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val prisonerService: PrisonerService,
 ) {
+
+  @Autowired
+  private lateinit var eventAuditRepository: EventAuditRepository
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -180,6 +188,18 @@ class VisitNotificationEventService(
         )
       },
     )
+
+    eventAuditRepository.saveAndFlush(
+      EventAudit(
+        actionedBy = "NOT_KNOWN",
+        bookingReference = impactedVisit.reference,
+        applicationReference = impactedVisit.applicationReference,
+        sessionTemplateReference = impactedVisit.sessionTemplateReference,
+        type = EventAuditType.valueOf(type.name),
+        applicationMethodType = NOT_KNOWN,
+      ),
+    )
+
     return savedVisitNotificationEvent.reference
   }
 
