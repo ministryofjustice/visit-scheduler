@@ -74,6 +74,8 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     val visitNotifications = testVisitNotificationEventRepository.findAll()
     Assertions.assertThat(visitNotifications).hasSize(2)
     Assertions.assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
+
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("NON_ASSOCIATION_EVENT")).isEqualTo(2)
   }
 
   @Test
@@ -146,6 +148,8 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     Assertions.assertThat(visitNotifications[6].reference).isEqualTo(visitNotifications[7].reference)
     Assertions.assertThat(visitNotifications[8].reference).isEqualTo(visitNotifications[9].reference)
     Assertions.assertThat(visitNotifications[10].reference).isEqualTo(visitNotifications[11].reference)
+
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("NON_ASSOCIATION_EVENT")).isEqualTo(12)
   }
 
   @Test
@@ -215,6 +219,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit2.reference)
       Assertions.assertThat(reference).isEqualTo(visitNotifications[2].reference)
     }
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("NON_ASSOCIATION_EVENT")).isEqualTo(4)
   }
 
   @Test
@@ -257,8 +262,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertNotHandle()
   }
 
   @Test
@@ -316,8 +320,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertNotHandle()
   }
 
   @Test
@@ -363,8 +366,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertNotHandle()
   }
 
   @Test
@@ -401,8 +403,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertNotHandle()
   }
 
   @Test
@@ -460,8 +461,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertNotHandle()
   }
 
   @Test
@@ -491,8 +491,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertNotHandle()
   }
 
   @Test
@@ -506,7 +505,12 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
 
     responseSpec.expectStatus().isOk
+    assertNotHandle()
+  }
+
+  private fun assertNotHandle() {
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("NON_ASSOCIATION_EVENT")).isEqualTo(0)
   }
 }

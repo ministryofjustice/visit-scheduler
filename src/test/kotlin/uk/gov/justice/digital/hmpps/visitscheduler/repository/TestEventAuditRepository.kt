@@ -18,6 +18,13 @@ interface TestEventAuditRepository : JpaRepository<EventAudit, Long> {
   fun findLastEventByBookingReference(bookingReference: String): EventAudit
 
   @Query(
+    "SELECT count(*) FROM event_audit " +
+      "WHERE type = :type",
+    nativeQuery = true,
+  )
+  fun getAuditCount(type: String): Int
+
+  @Query(
     "SELECT * FROM event_audit " +
       "WHERE booking_reference = :bookingReference AND type = 'BOOKED_VISIT'  " +
       "ORDER BY id DESC LIMIT 1 ",
