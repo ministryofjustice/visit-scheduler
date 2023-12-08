@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  hmpps: ministryofjustice/hmpps@7
+  hmpps: ministryofjustice/hmpps@8
 
 parameters:
   alerts-slack-channel:
@@ -75,7 +75,7 @@ jobs:
   validate:
     executor:
       name: hmpps/java_localstack_postgres
-      jdk_tag: "20.0"
+      jdk_tag: "21.0"
       localstack_tag: "0.14.0"
       services: "sns,sqs"
       postgres_tag: "14"
