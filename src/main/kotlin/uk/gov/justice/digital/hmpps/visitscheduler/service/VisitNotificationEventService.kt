@@ -7,11 +7,14 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
@@ -51,6 +54,30 @@ class VisitNotificationEventService(
         }
       }
     }
+  }
+
+  @Transactional
+  fun handleAddPrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
+    val visitsFilter = VisitFilter(
+      prisonCode = prisonDateBlockedDto.prisonCode,
+      visitStatusList = listOf(VisitStatus.BOOKED),
+      startDateTime = prisonDateBlockedDto.visitDate.atStartOfDay(),
+      endDateTime = prisonDateBlockedDto.visitDate.atTime(23, 59),
+    )
+
+    val affectedVisits = visitService.findVisitsByFilterPageableDescending(visitsFilter).toList()
+    processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+  }
+
+  @Transactional
+  fun handleRemovePrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
+    val affectedNotifications = visitNotificationEventRepository.getEventsByVisitDate(
+      prisonDateBlockedDto.prisonCode,
+      prisonDateBlockedDto.visitDate.atStartOfDay(),
+      prisonDateBlockedDto.visitDate.atTime(23, 59),
+      NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE,
+    )
+    deleteNotificationsThatAreNoLongerValid(affectedNotifications)
   }
 
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {

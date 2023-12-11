@@ -65,7 +65,7 @@ class SessionServiceTest {
   private val visitService = mock<VisitService>()
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
   private val sessionDatesUtil = SessionDatesUtil()
-  private val prisonConfigService = mock<PrisonConfigService>()
+  private val prisonsService = mock<PrisonsService>()
 
   private lateinit var sessionService: SessionService
 
@@ -142,7 +142,7 @@ class SessionServiceTest {
         policyNonAssociationWholeDay = true,
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
-        prisonConfigService = prisonConfigService,
+        prisonsService = prisonsService,
       )
     }
 
@@ -463,7 +463,7 @@ class SessionServiceTest {
         policyNonAssociationWholeDay = true,
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
-        prisonConfigService = prisonConfigService,
+        prisonsService = prisonsService,
       )
     }
 
@@ -695,7 +695,7 @@ class SessionServiceTest {
         policyNonAssociationWholeDay = true,
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
-        prisonConfigService = prisonConfigService,
+        prisonsService = prisonsService,
       )
     }
 

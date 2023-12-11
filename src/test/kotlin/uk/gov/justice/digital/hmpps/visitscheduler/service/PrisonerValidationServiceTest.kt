@@ -21,9 +21,9 @@ class PrisonerValidationServiceTest {
   private val prisonApiClient = mock<PrisonApiClient>()
   private val nonAssociationsApiClient = mock<NonAssociationsApiClient>()
   private val prisonerOffenderSearchClient = mock<PrisonerOffenderSearchClient>()
-  private val prisonConfigService = mock<PrisonConfigService>()
+  private val prisonsService = mock<PrisonsService>()
 
-  private val prisonerService = PrisonerService(prisonApiClient, nonAssociationsApiClient, prisonerOffenderSearchClient, prisonConfigService)
+  private val prisonerService = PrisonerService(prisonApiClient, nonAssociationsApiClient, prisonerOffenderSearchClient, prisonsService)
 
   private val prisonerValidationService = PrisonerValidationService(prisonerService)
 
