@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation.REQUIRED
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
@@ -57,11 +59,52 @@ class PrisonEntityHelper(
   private val prisonRepository: TestPrisonRepository,
 ) {
 
+  companion object {
+    fun createPrison(
+      prisonCode: String = "MDI",
+      activePrison: Boolean = true,
+      policyNoticeDaysMin: Int = 2,
+      policyNoticeDaysMax: Int = 28,
+    ): Prison {
+      return Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax)
+    }
+
+    fun createPrisonDto(
+      prisonCode: String = "MDI",
+      activePrison: Boolean = true,
+      excludeDates: Set<LocalDate> = sortedSetOf(),
+      policyNoticeDaysMin: Int = 2,
+      policyNoticeDaysMax: Int = 28,
+    ): PrisonDto {
+      return PrisonDto(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, excludeDates = excludeDates)
+    }
+
+    fun updatePrisonDto(
+      policyNoticeDaysMin: Int = 10,
+      policyNoticeDaysMax: Int = 20,
+    ): UpdatePrisonDto {
+      return UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax)
+    }
+  }
+
   @Transactional(propagation = REQUIRED)
-  fun create(prisonCode: String = "MDI", activePrison: Boolean = true, excludeDates: List<LocalDate> = listOf()): Prison {
+  fun create(
+    prisonCode: String = "MDI",
+    activePrison: Boolean = true,
+    excludeDates: List<LocalDate> = listOf(),
+    policyNoticeDaysMin: Int = 2,
+    policyNoticeDaysMax: Int = 28,
+  ): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
     if (prison == null) {
-      prison = prisonRepository.saveAndFlush(Prison(code = prisonCode, active = activePrison))
+      prison = prisonRepository.saveAndFlush(
+        createPrison(
+          prisonCode = prisonCode,
+          activePrison = activePrison,
+          policyNoticeDaysMin = policyNoticeDaysMin,
+          policyNoticeDaysMax = policyNoticeDaysMax,
+        ),
+      )
     } else {
       prison.active = activePrison
     }

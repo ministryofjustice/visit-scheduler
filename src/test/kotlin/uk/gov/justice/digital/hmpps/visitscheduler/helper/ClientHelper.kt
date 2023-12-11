@@ -44,6 +44,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
@@ -554,6 +555,20 @@ fun callCreatePrison(
     prisonDto,
     webTestClient,
     getCreatePrisonUrl(),
+    authHttpHeaders,
+  )
+}
+
+fun callUpdatePrison(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+  dto: UpdatePrisonDto? = null,
+): ResponseSpec {
+  return callPut(
+    dto,
+    webTestClient,
+    getGetPrisonUrl(prisonCode),
     authHttpHeaders,
   )
 }

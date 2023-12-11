@@ -2,25 +2,36 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_DELETED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RELEASED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -32,6 +43,9 @@ class VisitNotificationEventService(
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val prisonerService: PrisonerService,
 ) {
+
+  @Autowired
+  private lateinit var eventAuditRepository: EventAuditRepository
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -66,7 +80,7 @@ class VisitNotificationEventService(
     )
 
     val affectedVisits = visitService.findVisitsByFilterPageableDescending(visitsFilter).toList()
-    processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+    processVisitsWithNotifications(affectedVisits, PRISON_VISITS_BLOCKED_FOR_DATE)
   }
 
   @Transactional
@@ -75,7 +89,7 @@ class VisitNotificationEventService(
       prisonDateBlockedDto.prisonCode,
       prisonDateBlockedDto.visitDate.atStartOfDay(),
       prisonDateBlockedDto.visitDate.atTime(23, 59),
-      NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE,
+      PRISON_VISITS_BLOCKED_FOR_DATE,
     )
     deleteNotificationsThatAreNoLongerValid(affectedNotifications)
   }
@@ -83,7 +97,7 @@ class VisitNotificationEventService(
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     if (RELEASED == notificationDto.reasonType) {
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, notificationDto.prisonCode)
-      processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RELEASED_EVENT)
+      processVisitsWithNotifications(affectedVisits, PRISONER_RELEASED_EVENT)
     }
   }
 
@@ -93,7 +107,7 @@ class VisitNotificationEventService(
       val startDateTime = (if (LocalDate.now() > notificationDto.validFromDate) LocalDate.now() else notificationDto.validFromDate).atStartOfDay()
       val endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode, startDateTime, endDateTime)
-      processVisitsWithNotifications(affectedVisits, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+      processVisitsWithNotifications(affectedVisits, PRISONER_RESTRICTION_CHANGE_EVENT)
     }
   }
 
@@ -114,15 +128,68 @@ class VisitNotificationEventService(
   }
 
   private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType) {
-    var reference: String? = null
-    affectedVisits.forEach {
-      LOG.info("Flagging visit with reference {} for ${type.reviewType}", it.reference)
-      if (!visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type)) {
-        val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
-        val data = telemetryClientService.createFlagEventFromVisitDto(it, bookingEventAudit, type)
-        telemetryClientService.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT, data)
-        reference = saveVisitNotification(it, reference, type)
+    val affectedVisitsNoDuplicate = affectedVisits.filter { !visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type) }
+    flagTrackEvents(affectedVisitsNoDuplicate, type)
+
+    if (isPairGroupRequired(type)) {
+      val affectedPairedVisits = pairWithEachOther(affectedVisits)
+      affectedPairedVisits.forEach {
+        if (!visitNotificationEventRepository.isEventARecentPairedDuplicate(it.first.reference, it.second.reference, type)) {
+          saveGroupedVisitsNotification(it.toList(), type)
+        }
       }
+    } else {
+      saveVisitsNotification(affectedVisitsNoDuplicate, type)
+    }
+  }
+
+  private fun isPairGroupRequired(
+    type: NotificationEventType,
+  ) = NON_ASSOCIATION_EVENT == type
+
+  /**
+   * Groups List into pairs e.g.
+   *  A,B,C,D
+   *  Becomes : AB, AC, AD, BC, BD, CD
+   */
+  fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
+    val result: MutableList<Pair<VisitDto, VisitDto>> = mutableListOf()
+    affectedVisits.forEachIndexed { index, visitDto ->
+      for (secondIndex in index + 1..<affectedVisits.size) {
+        result.add(Pair(visitDto, affectedVisits[secondIndex]))
+      }
+    }
+    return result
+  }
+
+  private fun saveGroupedVisitsNotification(
+    affectedVisitsNoDuplicate: List<VisitDto>,
+    type: NotificationEventType,
+  ) {
+    var reference: String? = null
+    affectedVisitsNoDuplicate.forEach {
+      reference = saveVisitNotification(it, reference, type)
+    }
+  }
+
+  private fun saveVisitsNotification(
+    affectedVisitsNoDuplicate: List<VisitDto>,
+    type: NotificationEventType,
+  ) {
+    affectedVisitsNoDuplicate.forEach {
+      saveVisitNotification(it, null, type)
+    }
+  }
+
+  private fun flagTrackEvents(
+    visits: List<VisitDto>,
+    type: NotificationEventType,
+  ) {
+    visits.forEach {
+      LOG.info("Flagging visit with reference {} for ${type.reviewType}", it.reference)
+      val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
+      val data = telemetryClientService.createFlagEventFromVisitDto(it, bookingEventAudit, type)
+      telemetryClientService.trackEvent(FLAGGED_VISIT_EVENT, data)
     }
   }
 
@@ -149,6 +216,18 @@ class VisitNotificationEventService(
         )
       },
     )
+
+    eventAuditRepository.saveAndFlush(
+      EventAudit(
+        actionedBy = "NOT_KNOWN",
+        bookingReference = impactedVisit.reference,
+        applicationReference = impactedVisit.applicationReference,
+        sessionTemplateReference = impactedVisit.sessionTemplateReference,
+        type = EventAuditType.valueOf(type.name),
+        applicationMethodType = NOT_KNOWN,
+      ),
+    )
+
     return savedVisitNotificationEvent.reference
   }
 
@@ -214,10 +293,41 @@ class VisitNotificationEventService(
   }
 
   fun getNotificationCountForPrison(prisonCode: String): Int {
-    return this.visitNotificationEventRepository.getNotificationGroupsByPrisonCode(prisonCode) ?: 0
+    return this.visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode) ?: 0
   }
 
   fun getNotificationCount(): Int {
-    return this.visitNotificationEventRepository.getNotificationGroups() ?: 0
+    return this.visitNotificationEventRepository.getNotificationGroupsCount() ?: 0
+  }
+
+  fun getFutureNotificationVisitGroups(prisonCode: String): List<NotificationGroupDto> {
+    val futureNotifications = this.visitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode)
+    val eventGroups = futureNotifications.groupByTo(mutableMapOf()) { it.reference }
+    val notificationGroupDtos = mutableListOf<NotificationGroupDto>()
+    eventGroups.forEach { (reference, events) ->
+      notificationGroupDtos.add(
+        NotificationGroupDto(
+          reference,
+          events.first().type,
+          createPrisonerVisitsNotificationDto(events),
+        ),
+      )
+    }
+
+    return notificationGroupDtos
+  }
+
+  private fun createPrisonerVisitsNotificationDto(events: MutableList<VisitNotificationEvent>): List<PrisonerVisitsNotificationDto> {
+    return events.map {
+      val visit = this.visitService.getVisitByReference(it.bookingReference)
+      val bookedByUserName = this.visitService.getLastUserNameToUpdateToSlotByReference(it.bookingReference)
+
+      PrisonerVisitsNotificationDto(
+        prisonerNumber = visit.prisonerId,
+        bookedByUserName = bookedByUserName,
+        visitDate = visit.startTimestamp.toLocalDate(),
+        bookingReference = it.bookingReference,
+      )
+    }
   }
 }

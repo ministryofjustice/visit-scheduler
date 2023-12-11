@@ -34,7 +34,7 @@ class PrisonsService(
   }
 
   fun mapEntityToDto(it: Prison): PrisonDto {
-    return PrisonDto(it.code, it.active, it.excludeDates.map { it.excludeDate }.toSortedSet())
+    return PrisonDto(it.code, it.active, it.policyNoticeDaysMin, it.policyNoticeDaysMax, it.excludeDates.map { it.excludeDate }.toSortedSet())
   }
 
   @Transactional(readOnly = true)

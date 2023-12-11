@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCheckingMatchingTemplatesOnCreate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -26,8 +25,6 @@ import java.time.LocalTime
 class AdminCheckMatchingTemplatesOnCreateTest : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
-
-  private var prison: Prison = Prison(code = "MDI", active = true)
 
   private lateinit var sessionTemplateMonday: SessionTemplate
   private lateinit var sessionTemplateMondayPM: SessionTemplate
@@ -59,7 +56,7 @@ class AdminCheckMatchingTemplatesOnCreateTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUpTests() {
-    prison = prisonEntityHelper.create(prison.code, prison.active)
+    prison = prisonEntityHelper.create()
 
     sessionTemplateMonday = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, validToDate = LocalDate.now().plusYears(1))
     sessionTemplateMondayPM = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, startTime = LocalTime.of(15, 0), endTime = LocalTime.of(16, 0))
