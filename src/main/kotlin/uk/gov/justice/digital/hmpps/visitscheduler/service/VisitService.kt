@@ -448,11 +448,9 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun getLastEventForBooking(bookingReference: String): EventAuditDto? {
-    eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
-      return EventAuditDto(it)
+    return eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
+      EventAuditDto(it)
     }
-
-    return null
   }
 
   private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {
