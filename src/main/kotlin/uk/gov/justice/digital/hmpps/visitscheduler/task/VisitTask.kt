@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter
 class VisitTask(
   private val visitService: VisitService,
   private val sessionService: SessionService,
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
   private val telemetryClient: TelemetryClient,
   private val expiredVisitTaskConfiguration: ExpiredVisitTaskConfiguration,
   private val flagVisitTaskConfiguration: FlagVisitTaskConfiguration,
@@ -66,7 +66,7 @@ class VisitTask(
     }
 
     log.debug("Started flagVisits task.")
-    prisonConfigService.getSupportedPrisons().forEach { prisonCode ->
+    prisonsService.getSupportedPrisons().forEach { prisonCode ->
       for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
         val visitDate = LocalDateTime.now().plusDays(i.toLong())
 
@@ -157,7 +157,7 @@ class VisitTask(
   private fun getFlaggedVisitTrackEvent(visit: VisitDto): MutableMap<String, String> {
     val eventAudit = this.visitService.getLastEventForBooking(visit.reference)
 
-    return mutableMapOf(
+    val flagVisitMap = mutableMapOf(
       "reference" to visit.reference,
       "prisonerId" to visit.prisonerId,
       "prisonId" to visit.prisonCode,
@@ -166,7 +166,12 @@ class VisitTask(
       "visitStart" to visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitEnd" to visit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to visit.visitStatus.name,
-      "createdBy" to eventAudit.actionedBy,
     )
+
+    eventAudit?.let {
+      flagVisitMap["createdBy"] = it.actionedBy
+    }
+
+    return flagVisitMap
   }
 }

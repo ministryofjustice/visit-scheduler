@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 
 const val ADMIN_PRISONS_PATH: String = "/admin/prisons"
 const val PRISON_ADMIN_PATH: String = "$ADMIN_PRISONS_PATH/prison"
@@ -37,6 +38,7 @@ const val REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-date/remove"
 @RequestMapping(name = "Prison Configuration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonAdminController(
   private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
 ) {
 
   @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG')")
@@ -66,7 +68,7 @@ class PrisonAdminController(
     @PathVariable
     prisonCode: String,
   ): PrisonDto {
-    return prisonConfigService.getPrison(prisonCode)
+    return prisonsService.getPrison(prisonCode)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
@@ -98,7 +100,7 @@ class PrisonAdminController(
     ],
   )
   fun getPrisons(): List<PrisonDto> {
-    return prisonConfigService.getPrisons()
+    return prisonsService.getPrisons()
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")

@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -41,9 +42,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepo
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VSIPReportingRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -541,6 +544,24 @@ class VsipReportingEntityHelper(
 
   fun get(reportName: VSIPReport): VSIPReporting? {
     return vsipReportingRepository.findById(reportName).getOrNull()
+  }
+}
+
+@Component
+@Transactional
+class VisitNotificationEventHelper(
+  private val visitNotificationEventRepository: TestVisitNotificationEventRepository,
+) {
+  fun create(
+    visitBookingReference: String,
+    notificationEventType: NotificationEventType,
+  ): VisitNotificationEvent {
+    return visitNotificationEventRepository.saveAndFlush(
+      VisitNotificationEvent(
+        bookingReference = visitBookingReference,
+        type = notificationEventType,
+      ),
+    )
   }
 }
 

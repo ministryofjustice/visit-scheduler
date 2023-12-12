@@ -68,7 +68,7 @@ class VisitService(
   private val sessionTemplateService: SessionTemplateService,
   private val eventAuditRepository: EventAuditRepository,
   private val snsService: SnsService,
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
   @Value("\${task.expired-visit.validity-minutes:10}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
@@ -117,7 +117,7 @@ class VisitService(
   private fun createApplication(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
     val sessionTemplate = sessionTemplateService.getSessionTemplates(reserveVisitSlotDto.sessionTemplateReference)
 
-    val prison = prisonConfigService.findPrisonByCode(sessionTemplate.prisonCode)
+    val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
@@ -460,8 +460,10 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun getLastEventForBooking(bookingReference: String): EventAuditDto {
-    return EventAuditDto(eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference))
+  fun getLastEventForBooking(bookingReference: String): EventAuditDto? {
+    return eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
+      EventAuditDto(it)
+    }
   }
 
   private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {

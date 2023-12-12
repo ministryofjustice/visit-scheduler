@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
+import java.time.LocalDateTime
 
 @Repository
 interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEvent, Int> {
@@ -56,6 +57,24 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   fun getEventsBy(
     prisonerNumber: String,
     prisonCode: String,
+    notificationEvent: NotificationEventType,
+  ): List<VisitNotificationEvent>
+
+  @Query(
+    "SELECT vne.* FROM visit_notification_event vne " +
+      " JOIN visit v on v.reference  = vne.booking_reference  " +
+      " JOIN prison p on p.id  = v.prison_id " +
+      " WHERE v.visit_start >= :visitStart " +
+      " AND v.visit_end <= :visitEnd " +
+      " AND p.code = :prisonCode " +
+      " AND vne.type=:#{#notificationEvent.name()}" +
+      " ORDER BY vne.reference, vne.id",
+    nativeQuery = true,
+  )
+  fun getEventsByVisitDate(
+    prisonCode: String,
+    visitStart: LocalDateTime,
+    visitEnd: LocalDateTime,
     notificationEvent: NotificationEventType,
   ): List<VisitNotificationEvent>
 

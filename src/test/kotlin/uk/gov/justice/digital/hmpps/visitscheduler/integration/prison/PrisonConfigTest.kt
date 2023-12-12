@@ -6,23 +6,30 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAddPrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreatePrison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetPrison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callRemovePrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdatePrison
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
@@ -34,10 +41,19 @@ class PrisonConfigTest : IntegrationTestBase() {
   lateinit var prisonConfigServiceSpy: PrisonConfigService
 
   @SpyBean
+  lateinit var visitNotificationEventServiceSpy: VisitNotificationEventService
+
+  @SpyBean
   lateinit var prisonRepositorySpy: PrisonRepository
 
   @SpyBean
   lateinit var prisonExcludeDateRepositorySpy: PrisonExcludeDateRepository
+
+  @Autowired
+  lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
+
+  @Autowired
+  protected lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
 
   @BeforeEach
   internal fun setUp() {
@@ -195,6 +211,49 @@ class PrisonConfigTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when add exclude date called for visit with dates then exclude date is successfully added and visits are marked for review`() {
+    // Given
+    val prison = PrisonEntityHelper.createPrisonDto("XYZ")
+    prisonEntityHelper.create(prison.code, prison.active)
+    val excludeDate = LocalDate.now().plusDays(10)
+
+    // existing visit for excludeDate in same prison
+    val bookedVisitForSamePrison = visitEntityHelper.create(visitStatus = VisitStatus.BOOKED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0), prisonCode = prison.code)
+
+    // existing visit for excludeDate in different prison (MDI)
+    visitEntityHelper.create(visitStatus = VisitStatus.BOOKED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0))
+
+    // reserved visit for excludeDate in same prison
+    visitEntityHelper.create(visitStatus = VisitStatus.RESERVED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0), prisonCode = prison.code)
+
+    // cancelled visit for excludeDate in same prison
+    visitEntityHelper.create(visitStatus = VisitStatus.CANCELLED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0), prisonCode = prison.code)
+
+    // existing visit not for excludeDate in same prison
+    visitEntityHelper.create(visitStatus = VisitStatus.BOOKED, visitStart = excludeDate.plusDays(1).atTime(10, 0), visitEnd = excludeDate.plusDays(1).atTime(11, 0), prisonCode = prison.code)
+
+    // When
+    val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(prisonExcludeDateRepositorySpy, times(1)).saveAndFlush(any())
+    verify(visitNotificationEventServiceSpy, times(1)).handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prison.code, excludeDate))
+
+    val getResponseSpec = callGetPrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
+    val result = getResponseSpec.expectStatus().isOk.expectBody()
+    val updatedPrison = getPrison(result)
+    Assertions.assertThat(updatedPrison.code).isEqualTo(prison.code)
+    Assertions.assertThat(updatedPrison.excludeDates).contains(excludeDate)
+
+    val visitNotifications = testVisitNotificationEventRepository.findAll()
+
+    // only 1 visit for the same date with status of BOOKED will be flagged.
+    Assertions.assertThat(visitNotifications).hasSize(1)
+    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+  }
+
+  @Test
   fun `when add exclude date called with existing date then exclude date is not added and BAD_REQUEST is returned`() {
     // Given
     val existingExcludeDates = setOf(LocalDate.now(), LocalDate.now().plusDays(7))
@@ -228,6 +287,34 @@ class PrisonConfigTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     verify(prisonExcludeDateRepositorySpy, times(1)).deleteByPrisonIdAndExcludeDate(createdPrison.id, excludeDate)
+
+    val getResponseSpec = callGetPrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
+    val result = getResponseSpec.expectStatus().isOk.expectBody()
+    val updatedPrison = getPrison(result)
+    Assertions.assertThat(updatedPrison.code).isEqualTo(prison.code)
+    Assertions.assertThat(updatedPrison.excludeDates).doesNotContain(excludeDate)
+  }
+
+  @Test
+  fun `when remove exclude date called with existing date then exclude date is successfully removed and any notified visits are removed`() {
+    // Given
+    val existingExcludeDates = setOf(LocalDate.now(), LocalDate.now().plusDays(7))
+    val prison = PrisonEntityHelper.createPrisonDto("JML")
+    val createdPrison = prisonEntityHelper.create(prison.code, prison.active, existingExcludeDates.toList())
+    val excludeDate = LocalDate.now().plusDays(7)
+
+    // existing visit for excludeDate in same prison
+    val bookedVisitForSamePrison = visitEntityHelper.create(visitStatus = VisitStatus.BOOKED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0), prisonCode = prison.code)
+
+    visitNotificationEventHelper.create(bookedVisitForSamePrison.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+
+    // When
+    val responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(prisonExcludeDateRepositorySpy, times(1)).deleteByPrisonIdAndExcludeDate(createdPrison.id, excludeDate)
+    verify(visitNotificationEventServiceSpy, times(1)).handleRemovePrisonVisitBlockDate(PrisonDateBlockedDto(createdPrison.code, excludeDate))
 
     val getResponseSpec = callGetPrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
     val result = getResponseSpec.expectStatus().isOk.expectBody()

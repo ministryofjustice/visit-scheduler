@@ -8,13 +8,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import java.time.LocalDate
 
 @Service
 class VisitsReportingService(
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
   private val sessionService: SessionService,
   private val visitRepository: VisitRepository,
 ) {
@@ -62,7 +62,7 @@ class VisitsReportingService(
   }
 
   private fun getAllActivePrisons(): List<PrisonDto> {
-    return prisonConfigService.getPrisons().filter { it.active }
+    return prisonsService.getPrisons().filter { it.active }
   }
 
   private fun getVisitCountsForSession(sessionSchedule: SessionScheduleDto, reportDate: LocalDate): Map<Pair<VisitStatus, VisitRestriction>, Int> {

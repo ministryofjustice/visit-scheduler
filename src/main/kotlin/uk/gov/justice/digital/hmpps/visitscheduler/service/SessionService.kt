@@ -46,7 +46,7 @@ class SessionService(
   private val policyNonAssociationWholeDay: Boolean,
   private val sessionValidator: PrisonerSessionValidator,
   private val prisonerValidationService: PrisonerValidationService,
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
 ) {
 
   companion object {
@@ -69,7 +69,7 @@ class SessionService(
 
     val today = LocalDate.now()
 
-    val prison = prisonConfigService.findPrisonByCode(prisonCode)
+    val prison = prisonsService.findPrisonByCode(prisonCode)
     val min = minOverride ?: prison.policyNoticeDaysMin
     val max = maxOverride ?: prison.policyNoticeDaysMax
 
@@ -384,7 +384,7 @@ class SessionService(
   }
 
   fun getSessionSchedule(prisonCode: String, scheduleDate: LocalDate): List<SessionScheduleDto> {
-    return if (prisonConfigService.isExcludedDate(prisonCode, scheduleDate)) {
+    return if (prisonsService.isExcludedDate(prisonCode, scheduleDate)) {
       listOf()
     } else {
       var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(

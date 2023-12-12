@@ -59,7 +59,7 @@ class SessionTemplateService(
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
   private val visitRepository: VisitRepository,
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
   private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
   private val sessionTemplateComparator: SessionTemplateComparator,
   private val sessionTemplateMapper: SessionTemplateMapper,
@@ -97,7 +97,7 @@ class SessionTemplateService(
   }
 
   fun createSessionLocationGroup(createLocationSessionGroup: CreateLocationGroupDto): SessionLocationGroupDto {
-    val prison = prisonConfigService.findPrisonByCode(createLocationSessionGroup.prisonCode)
+    val prison = prisonsService.findPrisonByCode(createLocationSessionGroup.prisonCode)
     val sessionLocationGroup = sessionLocationGroupRepository.saveAndFlush(
       SessionLocationGroup(
         prison = prison,
@@ -146,7 +146,7 @@ class SessionTemplateService(
   fun createSessionTemplate(createSessionTemplateDto: CreateSessionTemplateDto): SessionTemplateDto {
     log.info("Creating session template for prison")
 
-    val prison = prisonConfigService.findPrisonByCode(createSessionTemplateDto.prisonCode)
+    val prison = prisonsService.findPrisonByCode(createSessionTemplateDto.prisonCode)
 
     val sessionTemplateEntity = SessionTemplate(
       prisonId = prison.id,
@@ -297,7 +297,7 @@ class SessionTemplateService(
   }
 
   fun createSessionCategoryGroup(createCategorySessionGroup: CreateCategoryGroupDto): SessionCategoryGroupDto {
-    val prison = prisonConfigService.findPrisonByCode(createCategorySessionGroup.prisonCode)
+    val prison = prisonsService.findPrisonByCode(createCategorySessionGroup.prisonCode)
     val sessionCategoryGroup = sessionCategoryGroupRepository.saveAndFlush(
       SessionCategoryGroup(
         prison = prison,
@@ -386,7 +386,7 @@ class SessionTemplateService(
   }
 
   fun createSessionIncentiveGroup(createIncentiveSessionGroup: CreateIncentiveGroupDto): SessionIncentiveLevelGroupDto {
-    val prison = prisonConfigService.findPrisonByCode(createIncentiveSessionGroup.prisonCode)
+    val prison = prisonsService.findPrisonByCode(createIncentiveSessionGroup.prisonCode)
     val sessionIncentiveLevelGroup = sessionIncentiveLevelGroupRepository.saveAndFlush(
       SessionIncentiveLevelGroup(
         prison = prison,

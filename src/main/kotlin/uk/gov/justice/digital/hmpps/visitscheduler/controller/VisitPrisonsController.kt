@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 
 const val PRISONS_PATH: String = "/config/prisons/supported"
 
@@ -23,7 +23,7 @@ const val PRISONS_PATH: String = "/config/prisons/supported"
 @Tag(name = "4. Visit prisons rest controller")
 @RequestMapping(name = "Visit Prisons Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitPrisonsController(
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
 ) {
 
   @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG')")
@@ -58,6 +58,6 @@ class VisitPrisonsController(
     ],
   )
   fun getSupportedPrisons(): List<String> {
-    return prisonConfigService.getSupportedPrisons()
+    return prisonsService.getSupportedPrisons()
   }
 }

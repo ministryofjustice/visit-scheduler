@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -17,6 +18,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Release
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
@@ -27,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainE
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -64,6 +68,30 @@ class VisitNotificationEventService(
         }
       }
     }
+  }
+
+  @Transactional
+  fun handleAddPrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
+    val visitsFilter = VisitFilter(
+      prisonCode = prisonDateBlockedDto.prisonCode,
+      visitStatusList = listOf(VisitStatus.BOOKED),
+      startDateTime = prisonDateBlockedDto.visitDate.atStartOfDay(),
+      endDateTime = prisonDateBlockedDto.visitDate.atTime(23, 59),
+    )
+
+    val affectedVisits = visitService.findVisitsByFilterPageableDescending(visitsFilter).toList()
+    processVisitsWithNotifications(affectedVisits, PRISON_VISITS_BLOCKED_FOR_DATE)
+  }
+
+  @Transactional
+  fun handleRemovePrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
+    val affectedNotifications = visitNotificationEventRepository.getEventsByVisitDate(
+      prisonDateBlockedDto.prisonCode,
+      prisonDateBlockedDto.visitDate.atStartOfDay(),
+      prisonDateBlockedDto.visitDate.atTime(23, 59),
+      PRISON_VISITS_BLOCKED_FOR_DATE,
+    )
+    deleteNotificationsThatAreNoLongerValid(affectedNotifications)
   }
 
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
