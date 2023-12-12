@@ -1,7 +1,7 @@
 version: 2.1
 
 orbs:
-  hmpps: ministryofjustice/hmpps@6.2
+  hmpps: ministryofjustice/hmpps@8
 
 parameters:
   alerts-slack-channel:
@@ -23,8 +23,7 @@ jobs:
     steps:
       - run:
           name: Checkout VSIP UI Tests
-          command:
-            git clone https://github.com/ministryofjustice/hmpps-vsip-ui-tests.git
+          command: git clone https://github.com/ministryofjustice/hmpps-vsip-ui-tests.git
       - run:
           name: get git status
           command: |
@@ -54,8 +53,7 @@ jobs:
     steps:
       - run:
           name: Checkout VSIP UI Tests
-          command:
-            git clone https://github.com/ministryofjustice/hmpps-vsip-ui-tests.git
+          command: git clone https://github.com/ministryofjustice/hmpps-vsip-ui-tests.git
       - run:
           name: get git status
           command: |
@@ -74,11 +72,10 @@ jobs:
             cd hmpps-vsip-ui-tests
             mvn test -Dbrowser=remote-chrome -Denvironment="STAGING" -Dtest=suites.RunVSSmokeTest  
 
-
   validate:
     executor:
       name: hmpps/java_localstack_postgres
-      jdk_tag: "20.0"
+      jdk_tag: "21.0"
       localstack_tag: "0.14.0"
       services: "sns,sqs"
       postgres_tag: "14"
