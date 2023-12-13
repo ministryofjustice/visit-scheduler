@@ -42,7 +42,7 @@ class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
   private val eventAuditRepository: EventAuditRepository,
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
   private val snsService: SnsService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
@@ -69,7 +69,7 @@ class MigrateVisitService(
       sessionTemplateReference = sessionTemplate.reference
       visitRoom = sessionTemplate.visitRoom
     } else {
-      prison = prisonConfigService.findPrisonByCode(migrateVisitRequest.prisonCode)
+      prison = prisonsService.findPrisonByCode(migrateVisitRequest.prisonCode)
       visitRoom = migrateVisitRequest.visitRoom
     }
 

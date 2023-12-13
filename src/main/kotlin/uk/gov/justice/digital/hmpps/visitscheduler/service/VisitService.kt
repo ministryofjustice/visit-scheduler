@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -45,6 +46,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitsBySessionTemplateSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -66,7 +68,7 @@ class VisitService(
   private val sessionTemplateService: SessionTemplateService,
   private val eventAuditRepository: EventAuditRepository,
   private val snsService: SnsService,
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
   @Value("\${task.expired-visit.validity-minutes:10}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
@@ -115,7 +117,7 @@ class VisitService(
   private fun createApplication(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
     val sessionTemplate = sessionTemplateService.getSessionTemplates(reserveVisitSlotDto.sessionTemplateReference)
 
-    val prison = prisonConfigService.findPrisonByCode(sessionTemplate.prisonCode)
+    val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
@@ -249,6 +251,12 @@ class VisitService(
 
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
     return visitRepository.findAll(VisitSpecification(visitFilter), page).map { visitDtoBuilder.build(it) }
+  }
+
+  @Transactional(readOnly = true)
+  fun findVisitsBySessionTemplateFilterPageableDescending(visitFilter: VisitsBySessionTemplateFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
+    return visitRepository.findAll(VisitsBySessionTemplateSpecification(visitFilter), page).map { visitDtoBuilder.build(it) }
   }
 
   @Transactional(readOnly = true)
@@ -447,8 +455,15 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun getLastEventForBooking(bookingReference: String): EventAuditDto {
-    return EventAuditDto(eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference))
+  fun getLastUserNameToUpdateToSlotByReference(bookingReference: String): String {
+    return eventAuditRepository.getLastUserToUpdateSlotByReference(bookingReference)
+  }
+
+  @Transactional(readOnly = true)
+  fun getLastEventForBooking(bookingReference: String): EventAuditDto? {
+    return eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
+      EventAuditDto(it)
+    }
   }
 
   private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {

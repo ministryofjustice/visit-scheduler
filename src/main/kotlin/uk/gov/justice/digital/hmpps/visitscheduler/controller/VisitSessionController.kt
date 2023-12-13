@@ -56,7 +56,7 @@ class VisitSessionController(
       ),
     ],
   )
-  fun getVisitSessions(
+  fun getVisitBookingSessions(
     @RequestParam(value = "prisonId", required = true)
     @Parameter(
       description = "Query by NOMIS Prison Identifier",
@@ -74,13 +74,13 @@ class VisitSessionController(
       description = "Override the default minimum number of days notice from the current date",
       example = "2",
     )
-    min: Long?,
+    min: Int?,
     @RequestParam(value = "max", required = false)
     @Parameter(
       description = "Override the default maximum number of days to book-ahead from the current date",
       example = "28",
     )
-    max: Long?,
+    max: Int?,
   ): List<VisitSessionDto> {
     return sessionService.getVisitSessions(prisonCode, prisonerId, min, max)
   }

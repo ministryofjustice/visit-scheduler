@@ -44,9 +44,11 @@ fun sessionTemplate(
   permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
   permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
   weeklyFrequency: Int = 1,
+  policyNoticeDaysMin: Int = 2,
+  policyNoticeDaysMax: Int = 28,
   isActive: Boolean = true,
 ): SessionTemplate {
-  val prison = Prison(code = prisonCode, active = true)
+  val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax)
 
   return SessionTemplate(
     name = name + dayOfWeek,

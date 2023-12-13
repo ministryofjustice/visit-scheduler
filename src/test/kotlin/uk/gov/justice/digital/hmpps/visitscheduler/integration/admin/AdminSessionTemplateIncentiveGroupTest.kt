@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateIncentiveGro
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.updateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel.BASIC
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel.ENHANCED
@@ -37,8 +36,6 @@ class AdminSessionTemplateIncentiveGroupTest(
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
-  private var prison: Prison = Prison(code = "MDI", active = true)
-
   private lateinit var sessionTemplateWithGrps: SessionTemplate
   private lateinit var incentiveGroup: SessionIncentiveLevelGroup
   private lateinit var incentiveGroupWithNoSessionTemplate: SessionIncentiveLevelGroup
@@ -47,7 +44,7 @@ class AdminSessionTemplateIncentiveGroupTest(
   internal fun setUpTests() {
     sessionTemplateWithGrps = sessionTemplateEntityHelper.create(validFromDate = java.time.LocalDate.now())
 
-    prison = prisonEntityHelper.create(prison.code, prison.active)
+    prison = prisonEntityHelper.create()
 
     incentiveGroup = sessionIncentiveGroupRepository.saveAndFlush(
       SessionIncentiveLevelGroup(

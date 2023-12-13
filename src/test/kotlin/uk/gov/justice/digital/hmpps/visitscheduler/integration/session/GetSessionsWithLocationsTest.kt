@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 import java.time.LocalTime
@@ -19,7 +18,6 @@ import java.time.LocalTime
 @DisplayName("Get /visit-sessions")
 class GetSessionsWithLocationsTest : IntegrationTestBase() {
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
-  private val prison: Prison = Prison(code = "MDI", active = true)
 
   private val nextAllowedDay = getNextAllowedDay()
 
@@ -31,6 +29,8 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun createAllSessionTemplates() {
+    prison = prisonEntityHelper.create()
+
     // this session template is available for all prisoners in that prison
     sessionTemplateForAllPrisoners = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
@@ -144,7 +144,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   @Test
   fun `no visit sessions are returned for a different prison`() {
     // Given
-    val otherPrison = Prison(code = "XYZ", active = true)
+    val otherPrison = prisonEntityHelper.create("XYZ")
 
     // When
     val responseSpec = callGetSessions(otherPrison.code)

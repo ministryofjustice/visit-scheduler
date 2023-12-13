@@ -30,8 +30,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
@@ -44,6 +47,7 @@ const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/change"
 const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
+const val GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE: String = "$VISIT_CONTROLLER_PATH/session-template/{sessionTemplateReference}"
 
 @RestController
 @Validated
@@ -452,5 +456,77 @@ class VisitController(
     reference: String,
   ): List<EventAuditDto> {
     return visitService.getHistoryByReference(reference.trim())
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE)
+  @Operation(
+    summary = "Get visits by session template reference for a date or a range of dates",
+    description = "Retrieve visits by session template reference for a date or a range of dates",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Returns visits for a session template",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to get visits by session template",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get visits by session template",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getVisitsBySessionTemplateReference(
+    @Schema(name = "sessionTemplateReference", description = "Session template reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    sessionTemplateReference: String,
+    @Schema(name = "fromDate", description = "Get visits from date", example = "2023-05-31", required = true)
+    @RequestParam
+    fromDate: LocalDate,
+    @Schema(name = "toDate", description = "Get visits to date", example = "2023-05-31", required = true)
+    @RequestParam
+    toDate: LocalDate,
+    @Schema(name = "visitRestrictions", description = "Visit Restriction - OPEN / CLOSED / UNKNOWN", example = "OPEN", required = false)
+    @RequestParam
+    visitRestrictions: List<VisitRestriction>?,
+    @RequestParam(value = "visitStatus", required = true)
+    @Parameter(
+      description = "Filter results by visit status",
+      example = "BOOKED",
+    )
+    visitStatusList: List<VisitStatus>,
+    @RequestParam(value = "page", required = true)
+    @Parameter(
+      description = "Pagination page number, starting at zero",
+      example = "0",
+    )
+    page: Int,
+    @RequestParam(value = "size", required = true)
+    @Parameter(
+      description = "Pagination size per page",
+      example = "50",
+    )
+    size: Int,
+  ): Page<VisitDto> {
+    return visitService.findVisitsBySessionTemplateFilterPageableDescending(
+      VisitsBySessionTemplateFilter(
+        sessionTemplateReference = sessionTemplateReference,
+        fromDate = fromDate,
+        toDate = toDate,
+        visitStatusList = visitStatusList,
+        visitRestrictions = visitRestrictions,
+      ),
+      pageablePage = page,
+      pageableSize = size,
+    )
   }
 }

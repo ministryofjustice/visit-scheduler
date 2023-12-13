@@ -3,6 +3,8 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation.REQUIRED
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
@@ -21,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -39,9 +42,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepo
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VSIPReportingRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -54,11 +59,52 @@ class PrisonEntityHelper(
   private val prisonRepository: TestPrisonRepository,
 ) {
 
+  companion object {
+    fun createPrison(
+      prisonCode: String = "MDI",
+      activePrison: Boolean = true,
+      policyNoticeDaysMin: Int = 2,
+      policyNoticeDaysMax: Int = 28,
+    ): Prison {
+      return Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax)
+    }
+
+    fun createPrisonDto(
+      prisonCode: String = "MDI",
+      activePrison: Boolean = true,
+      excludeDates: Set<LocalDate> = sortedSetOf(),
+      policyNoticeDaysMin: Int = 2,
+      policyNoticeDaysMax: Int = 28,
+    ): PrisonDto {
+      return PrisonDto(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, excludeDates = excludeDates)
+    }
+
+    fun updatePrisonDto(
+      policyNoticeDaysMin: Int = 10,
+      policyNoticeDaysMax: Int = 20,
+    ): UpdatePrisonDto {
+      return UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax)
+    }
+  }
+
   @Transactional(propagation = REQUIRED)
-  fun create(prisonCode: String = "MDI", activePrison: Boolean = true, excludeDates: List<LocalDate> = listOf()): Prison {
+  fun create(
+    prisonCode: String = "MDI",
+    activePrison: Boolean = true,
+    excludeDates: List<LocalDate> = listOf(),
+    policyNoticeDaysMin: Int = 2,
+    policyNoticeDaysMax: Int = 28,
+  ): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
     if (prison == null) {
-      prison = prisonRepository.saveAndFlush(Prison(code = prisonCode, active = activePrison))
+      prison = prisonRepository.saveAndFlush(
+        createPrison(
+          prisonCode = prisonCode,
+          activePrison = activePrison,
+          policyNoticeDaysMin = policyNoticeDaysMin,
+          policyNoticeDaysMax = policyNoticeDaysMax,
+        ),
+      )
     } else {
       prison.active = activePrison
     }
@@ -498,6 +544,24 @@ class VsipReportingEntityHelper(
 
   fun get(reportName: VSIPReport): VSIPReporting? {
     return vsipReportingRepository.findById(reportName).getOrNull()
+  }
+}
+
+@Component
+@Transactional
+class VisitNotificationEventHelper(
+  private val visitNotificationEventRepository: TestVisitNotificationEventRepository,
+) {
+  fun create(
+    visitBookingReference: String,
+    notificationEventType: NotificationEventType,
+  ): VisitNotificationEvent {
+    return visitNotificationEventRepository.saveAndFlush(
+      VisitNotificationEvent(
+        bookingReference = visitBookingReference,
+        type = notificationEventType,
+      ),
+    )
   }
 }
 

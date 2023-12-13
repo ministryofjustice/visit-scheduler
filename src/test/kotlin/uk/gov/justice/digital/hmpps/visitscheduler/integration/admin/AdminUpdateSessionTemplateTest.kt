@@ -22,7 +22,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.createUpdateSessionTem
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -38,7 +37,6 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
-  private var prison: Prison = Prison(code = "MDI", active = true)
   private lateinit var sessionTemplate: SessionTemplate
   private lateinit var sessionTemplateWithValidDates: SessionTemplate
   private lateinit var sessionTemplateWithWeeklyFrequencyOf6: SessionTemplate
@@ -59,7 +57,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUpTests() {
-    prison = prisonEntityHelper.create(prison.code, prison.active)
+    prison = prisonEntityHelper.create()
     sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true)
     sessionTemplateWithValidDates = sessionTemplateEntityHelper.create(
       name = "session-template-for-update",

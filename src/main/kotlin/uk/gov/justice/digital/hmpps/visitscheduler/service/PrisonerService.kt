@@ -25,7 +25,7 @@ class PrisonerService(
   private val prisonApiClient: PrisonApiClient,
   private val nonAssociationsApiClient: NonAssociationsApiClient,
   private val prisonerOffenderSearchClient: PrisonerOffenderSearchClient,
-  private val prisonService: PrisonConfigService,
+  private val prisonService: PrisonsService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)

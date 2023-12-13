@@ -67,23 +67,28 @@ class TelemetryClientService(
 
   fun createFlagEventFromVisitDto(
     visit: VisitDto,
-    bookingEventAudit: EventAuditDto,
+    bookingEventAudit: EventAuditDto?,
     notificationEventType: NotificationEventType,
   ): MutableMap<String, String> {
-    return mutableMapOf(
+    val flagEventDataMap = mutableMapOf(
       "prisonId" to visit.prisonCode,
       "reference" to visit.reference,
       "reviewType" to notificationEventType.reviewType,
-      "visitBooked" to formatDateTimeToString(bookingEventAudit.createTimestamp),
       "visitStatus" to visit.visitStatus.name,
       "applicationReference" to visit.applicationReference,
       "prisonerId" to visit.prisonerId,
-      "actionedBy" to bookingEventAudit.actionedBy,
       "visitRestriction" to visit.visitRestriction.name,
       "visitStart" to formatDateTimeToString(visit.startTimestamp),
       "visitType" to visit.visitType.name,
       "visitRoom" to visit.visitRoom,
     )
+
+    bookingEventAudit?.let {
+      flagEventDataMap["visitBooked"] = formatDateTimeToString(it.createTimestamp)
+      flagEventDataMap["actionedBy"] = it.actionedBy
+    }
+
+    return flagEventDataMap
   }
 
   fun trackEvent(visitEvent: TelemetryVisitEvents, properties: Map<String, String>) {

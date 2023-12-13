@@ -19,7 +19,15 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
       "ORDER BY id DESC LIMIT 1 ",
     nativeQuery = true,
   )
-  fun findLastBookedVisitEventByBookingReference(bookingReference: String): EventAudit
+  fun findLastBookedVisitEventByBookingReference(bookingReference: String): EventAudit?
+
+  @Query(
+    "SELECT actioned_by FROM event_audit " +
+      "WHERE booking_reference = :bookingReference AND type in ('UPDATED_VISIT','BOOKED_VISIT') " +
+      "ORDER BY id DESC LIMIT 1 ",
+    nativeQuery = true,
+  )
+  fun getLastUserToUpdateSlotByReference(bookingReference: String): String
 
   @Transactional
   @Modifying

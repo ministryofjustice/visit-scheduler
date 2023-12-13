@@ -15,12 +15,12 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
@@ -44,8 +44,6 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private val prison: Prison = Prison(code = "MDI", active = true)
-
   private val prisonerAId = "Prisoner-A"
   private val prisonerBId = "Prisoner-B"
   private val prisonerCId = "Prisoner-C"
@@ -56,6 +54,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
+    prison = PrisonEntityHelper.createPrison()
   }
 
   @Test

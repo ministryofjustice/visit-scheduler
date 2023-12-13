@@ -38,10 +38,6 @@ class SessionService(
   private val visitRepository: VisitRepository,
   private val prisonerService: PrisonerService,
   private val visitService: VisitService,
-  @Value("\${policy.session.booking-notice-period.minimum-days:2}")
-  private val policyNoticeDaysMin: Long,
-  @Value("\${policy.session.booking-notice-period.maximum-days:28}")
-  private val policyNoticeDaysMax: Long,
   @Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,
   @Value("\${policy.session.non-association.filter:false}")
@@ -50,7 +46,7 @@ class SessionService(
   private val policyNonAssociationWholeDay: Boolean,
   private val sessionValidator: PrisonerSessionValidator,
   private val prisonerValidationService: PrisonerValidationService,
-  private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
 ) {
 
   companion object {
@@ -61,19 +57,24 @@ class SessionService(
   fun getVisitSessions(
     prisonCode: String,
     prisonerId: String? = null,
-    noticeDaysMin: Long? = null,
-    noticeDaysMax: Long? = null,
+    minOverride: Int? = null,
+    maxOverride: Int? = null,
   ): List<VisitSessionDto> {
-    LOG.debug("Enter getVisitSessions prisonCode:$prisonCode, prisonerId : $prisonerId noticeDaysMin:$noticeDaysMin noticeDaysMax:$noticeDaysMax")
-
-    val today = LocalDate.now()
-    val requestedBookableStartDate = today.plusDays(noticeDaysMin ?: policyNoticeDaysMin)
-    val requestedBookableEndDate = today.plusDays(noticeDaysMax ?: policyNoticeDaysMax)
+    LOG.debug("Enter getVisitSessions prisonCode:$prisonCode, prisonerId : $prisonerId ")
 
     // ensure the prisoner - if supplied belongs to the same prison as supplied prisonCode
     prisonerId?.let {
       prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
     }
+
+    val today = LocalDate.now()
+
+    val prison = prisonsService.findPrisonByCode(prisonCode)
+    val min = minOverride ?: prison.policyNoticeDaysMin
+    val max = maxOverride ?: prison.policyNoticeDaysMax
+
+    val requestedBookableStartDate = today.plusDays(min.toLong())
+    val requestedBookableEndDate = today.plusDays(max.toLong())
 
     val prisoner = prisonerId?.let { prisonerService.getPrisoner(prisonerId) }
 
@@ -383,7 +384,7 @@ class SessionService(
   }
 
   fun getSessionSchedule(prisonCode: String, scheduleDate: LocalDate): List<SessionScheduleDto> {
-    return if (prisonConfigService.isExcludedDate(prisonCode, scheduleDate)) {
+    return if (prisonsService.isExcludedDate(prisonCode, scheduleDate)) {
       listOf()
     } else {
       var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(

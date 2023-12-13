@@ -111,13 +111,27 @@ class VisitSchedulerExceptionHandler(
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
-  @ExceptionHandler(MethodArgumentTypeMismatchException::class, MethodArgumentNotValidException::class)
-  fun handleMethodArgumentException(e: Exception): ResponseEntity<ErrorResponse> {
+  @ExceptionHandler(MethodArgumentTypeMismatchException::class)
+  fun handleMethodArgumentException(e: MethodArgumentTypeMismatchException): ResponseEntity<ErrorResponse> {
     log.debug("Validation exception: {}", e.message)
+
     val error = ErrorResponse(
       status = HttpStatus.BAD_REQUEST,
-      userMessage = "Invalid Argument: ${e.cause?.message}",
-      developerMessage = e.message,
+      userMessage = "Invalid Argument: ${e.propertyName}",
+      developerMessage = e.localizedMessage,
+    )
+    sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
+  }
+
+  @ExceptionHandler(MethodArgumentNotValidException::class)
+  fun handleMethodArgumentException(e: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
+    log.debug("Validation exception: {}", e.message)
+
+    val error = ErrorResponse(
+      status = HttpStatus.BAD_REQUEST,
+      userMessage = if (e.errorCount > 1) "Invalid Arguments" else "Invalid Argument",
+      developerMessage = e.localizedMessage,
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)

@@ -84,6 +84,57 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     val visitNotifications = testVisitNotificationEventRepository.findAll()
     Assertions.assertThat(visitNotifications).hasSize(1)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(1)
+  }
+
+  @Test
+  fun `when prisoner has had a restriction change then only visits are flagged with there own notification references`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
+    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
+
+    val visit1 = visitEntityHelper.create(
+      prisonerId = notificationDto.prisonerNumber,
+      visitStart = LocalDateTime.now().plusDays(1),
+      prisonCode = prisonCode,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = visitEntityHelper.create(
+      prisonerId = notificationDto.prisonerNumber,
+      visitStart = LocalDateTime.now().plusDays(1),
+      prisonCode = prisonCode,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(visit2)
+
+    val visit3 = visitEntityHelper.create(
+      prisonerId = notificationDto.prisonerNumber,
+      visitStart = LocalDateTime.now().plusDays(1),
+      prisonCode = prisonCode,
+      visitStatus = BOOKED,
+    )
+    eventAuditEntityHelper.create(visit3)
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    assertBookedEvent(listOf(visit1, visit2, visit3), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(3)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode)
+    Assertions.assertThat(visitNotifications).hasSize(3)
+    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    Assertions.assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
+    Assertions.assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    Assertions.assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
+    Assertions.assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
+    Assertions.assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(3)
   }
 
   @Test
@@ -105,8 +156,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
 
     // Then
     responseSpec.expectStatus().isOk
-    verifyNoInteractions(telemetryClient)
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertNotHandled()
   }
 
   @Test
@@ -129,8 +179,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
 
     // Then
     responseSpec.expectStatus().isOk
-    verifyNoInteractions(telemetryClient)
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertNotHandled()
   }
 
   @Test
@@ -151,8 +200,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
 
     // Then
     responseSpec.expectStatus().isOk
-    verifyNoInteractions(telemetryClient)
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertNotHandled()
   }
 
   @Test
@@ -189,6 +237,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     Assertions.assertThat(visitNotifications).hasSize(2)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     Assertions.assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(2)
   }
 
   @Test
@@ -227,5 +276,12 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     Assertions.assertThat(visitNotifications).hasSize(2)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     Assertions.assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(2)
+  }
+
+  private fun assertNotHandled() {
+    verifyNoInteractions(telemetryClient)
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(0)
   }
 }

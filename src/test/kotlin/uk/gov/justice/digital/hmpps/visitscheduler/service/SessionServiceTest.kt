@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -35,7 +36,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.UNKNOW
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -47,7 +47,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
 import java.time.DayOfWeek.MONDAY
-import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.WEDNESDAY
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -65,18 +64,20 @@ class SessionServiceTest {
   private val visitService = mock<VisitService>()
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
   private val sessionDatesUtil = SessionDatesUtil()
-  private val prisonConfigService = mock<PrisonConfigService>()
+  private val prisonsService = mock<PrisonsService>()
 
   private lateinit var sessionService: SessionService
 
-  private val date = LocalDate.now()
+  private val currentDate = LocalDate.now()
 
   private val prisonCode = "MDI"
-  private val noticeDaysMin = 1L
-  private val noticeDaysMax = 100L
+  private val noticeDaysMin = 1
+  private val noticeDaysMax = 100
 
   @BeforeEach
   fun beforeEachTestSetup() {
+    whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(PrisonEntityHelper.createPrison(prisonCode, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax))
+
     whenever(prisonerService.getPrisonerHousingLocation(any(), any())).thenReturn(
       PrisonerHousingLocationsDto(
         levels = listOf(),
@@ -95,14 +96,14 @@ class SessionServiceTest {
     whenever(
       sessionTemplateRepository.findSessionTemplateMinCapacityBy(
         prisonCode = prisonCode,
-        rangeStartDate = date.plusDays(noticeDaysMin),
-        rangeEndDate = date.plusDays(noticeDaysMax),
+        rangeStartDate = currentDate.plusDays(noticeDaysMin.toLong()),
+        rangeEndDate = currentDate.plusDays(noticeDaysMax.toLong()),
       ),
     ).thenReturn(response)
   }
 
   private fun mockVisitRepositoryCountResponse(visits: List<Visit>, sessionTemplate: SessionTemplate) {
-    val startDateTime = date.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.startTime)
+    val startDateTime = currentDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.startTime)
 
     whenever(
       visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
@@ -135,14 +136,12 @@ class SessionServiceTest {
         visitRepository,
         prisonerService,
         visitService,
-        policyNoticeDaysMin = noticeDaysMin,
-        policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
         policyNonAssociationWholeDay = true,
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
-        prisonConfigService = prisonConfigService,
+        prisonsService = prisonsService,
       )
     }
 
@@ -150,8 +149,8 @@ class SessionServiceTest {
     fun `a weekly session will return 6 sessions including today and valid to date`() {
       // Given
       val weeklySession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(5),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(5),
         openCapacity = 10,
         closedCapacity = 5,
         startTime = LocalTime.parse("11:30"),
@@ -164,7 +163,7 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonCode)
 
       // Then
-      val fridayAfter = date.with(TemporalAdjusters.next(weeklySession.dayOfWeek)).atTime(weeklySession.startTime)
+      val fridayAfter = currentDate.with(TemporalAdjusters.next(weeklySession.dayOfWeek)).atTime(weeklySession.startTime)
 
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
       assertDate(sessions[0].startTimestamp, fridayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
@@ -178,8 +177,8 @@ class SessionServiceTest {
     fun `sessions are consistently generated, weekly sessions always fall on the same day regardless of date of generation`() {
       // Given
       val weeklySession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(5), // 5 weeks from today
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(5), // 5 weeks from today
         openCapacity = 10,
         closedCapacity = 5,
         startTime = LocalTime.parse("11:30"),
@@ -193,7 +192,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
-      val wednesdayAfter = date.with(TemporalAdjusters.next(weeklySession.dayOfWeek)).atTime(weeklySession.startTime)
+      val wednesdayAfter = currentDate.with(TemporalAdjusters.next(weeklySession.dayOfWeek)).atTime(weeklySession.startTime)
       assertDate(sessions[0].startTimestamp, wednesdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), WEDNESDAY)
       assertDate(sessions[1].startTimestamp, wednesdayAfter.plusWeeks(1).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), WEDNESDAY)
       assertDate(sessions[2].startTimestamp, wednesdayAfter.plusWeeks(2).format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), WEDNESDAY)
@@ -205,8 +204,8 @@ class SessionServiceTest {
     fun `a single session will return 1 session`() {
       // Given
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30"), // future time
@@ -218,7 +217,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      val mondayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
     }
 
@@ -226,8 +225,8 @@ class SessionServiceTest {
     fun `all sessions are on past dates, no sessions are returned`() {
       // Given
       val dailySession = sessionTemplate(
-        validFromDate = date.minusDays(8),
-        validToDate = date.minusDays(1),
+        validFromDate = currentDate.minusDays(8),
+        validToDate = currentDate.minusDays(1),
         dayOfWeek = MONDAY,
       )
       mockSessionTemplateRepositoryResponse(listOf(dailySession))
@@ -243,8 +242,8 @@ class SessionServiceTest {
     fun `Single Session without Visit has zero Open and zero Closed slot count`() {
       // Given
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30"), // future time
@@ -264,23 +263,20 @@ class SessionServiceTest {
     fun `Single Session with BOOKED Visit and OPEN and CLOSED restriction has booked slot count`() {
       // Given
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30"), // future time
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      val prison = Prison(
-        code = "HEI",
-        active = true,
-      )
+      val prison = PrisonEntityHelper.createPrison()
 
       val openVisit1 = Visit(
         prisonerId = "Anythingwilldo",
-        visitStart = date.atTime(11, 30),
-        visitEnd = date.atTime(12, 30),
+        visitStart = currentDate.atTime(11, 30),
+        visitEnd = currentDate.atTime(12, 30),
         visitType = SOCIAL,
         prisonId = prison.id,
         prison = prison,
@@ -291,8 +287,8 @@ class SessionServiceTest {
 
       val openVisit2 = Visit(
         prisonerId = "Anythingwilldo",
-        visitStart = date.atTime(11, 30),
-        visitEnd = date.atTime(12, 30),
+        visitStart = currentDate.atTime(11, 30),
+        visitEnd = currentDate.atTime(12, 30),
         visitType = SOCIAL,
         prisonId = prison.id,
         prison = prison,
@@ -303,8 +299,8 @@ class SessionServiceTest {
 
       val closedVisit = Visit(
         prisonerId = "Anythingwilldo",
-        visitStart = date.atTime(11, 30),
-        visitEnd = date.atTime(12, 30),
+        visitStart = currentDate.atTime(11, 30),
+        visitEnd = currentDate.atTime(12, 30),
         visitType = SOCIAL,
         prisonId = prison.id,
         prison = prison,
@@ -327,23 +323,20 @@ class SessionServiceTest {
     fun `Single Session with RESERVED Visit and OPEN and CLOSED restriction has booked slot count`() {
       // Given
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30"), // future time
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      val prison = Prison(
-        code = "HEI",
-        active = true,
-      )
+      val prison = PrisonEntityHelper.createPrison()
 
       val openVisit = Visit(
         prisonerId = "Anythingwilldo",
-        visitStart = date.atTime(11, 30),
-        visitEnd = date.atTime(12, 30),
+        visitStart = currentDate.atTime(11, 30),
+        visitEnd = currentDate.atTime(12, 30),
         visitType = SOCIAL,
         prisonId = prison.id,
         prison = prison,
@@ -355,8 +348,8 @@ class SessionServiceTest {
 
       val closedVisit = Visit(
         prisonerId = "Anythingwilldo",
-        visitStart = date.atTime(11, 30),
-        visitEnd = date.atTime(12, 30),
+        visitStart = currentDate.atTime(11, 30),
+        visitEnd = currentDate.atTime(12, 30),
         visitType = SOCIAL,
         prisonId = prison.id,
         prison = prison,
@@ -380,22 +373,19 @@ class SessionServiceTest {
     fun `Sessions with UNKNOWN restriction Visits has booked slot counts of ZERO`() {
       // Given
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30"), // future time
       )
 
-      val prison = Prison(
-        code = "HEI",
-        active = true,
-      )
+      val prison = PrisonEntityHelper.createPrison()
 
       val closedVisit = Visit(
         prisonerId = "Anythingwilldo",
-        visitStart = date.atTime(11, 30),
-        visitEnd = date.atTime(12, 30),
+        visitStart = currentDate.atTime(11, 30),
+        visitEnd = currentDate.atTime(12, 30),
         visitType = SOCIAL,
         prisonId = prison.id,
         prison = prison,
@@ -421,8 +411,8 @@ class SessionServiceTest {
     fun `Sessions with no Visits has booked slot counts of ZERO`() {
       // Given
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"), // future time
         endTime = LocalTime.parse("12:30"), // future time
@@ -456,14 +446,12 @@ class SessionServiceTest {
         visitRepository,
         prisonerService,
         visitService,
-        policyNoticeDaysMin = noticeDaysMin,
-        policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
         policyNonAssociationWholeDay = true,
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
-        prisonConfigService = prisonConfigService,
+        prisonsService = prisonsService,
       )
     }
 
@@ -473,8 +461,8 @@ class SessionServiceTest {
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
@@ -489,7 +477,7 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
-      val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      val mondayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
@@ -503,8 +491,8 @@ class SessionServiceTest {
       val associationId = "B1234BB"
 
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = FRIDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
@@ -519,7 +507,7 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
-      val fridayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      val fridayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
 
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, fridayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), FRIDAY)
@@ -532,22 +520,22 @@ class SessionServiceTest {
       // Given
       val prisonerId = "A1234AA"
       val associationId = "B1234BB"
-      val dayOfWeek = date.plusDays(1).dayOfWeek
+      val validFromDate = currentDate.plusDays(noticeDaysMin.toLong())
+      val dayOfWeek = validFromDate.plusDays(1).dayOfWeek
 
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate.plusDays(noticeDaysMin.toLong()),
+        validToDate = validFromDate.plusWeeks(1),
         dayOfWeek = dayOfWeek,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
-
       mockGetPrisonerNoAssociation(prisonerId, associationId)
 
       val expectedAssociations = listOf(associationId)
-      val startDateTimeFilter = date.plusDays(1).with(singleSession.dayOfWeek).atStartOfDay()
-      val endDateTimeFilter = date.plusDays(1).with(singleSession.dayOfWeek).atTime(LocalTime.MAX)
+      val startDateTimeFilter = validFromDate.plusDays(1).with(singleSession.dayOfWeek).atStartOfDay()
+      val endDateTimeFilter = validFromDate.plusDays(1).with(singleSession.dayOfWeek).atTime(LocalTime.MAX)
 
       whenever(visitRepository.hasActiveVisits(expectedAssociations, prisonCode, startDateTimeFilter, endDateTimeFilter))
         .thenReturn(
@@ -560,7 +548,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      val saturdayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
@@ -572,12 +560,15 @@ class SessionServiceTest {
       // Given
       val prisonerId = "A1234AA"
 
+      val validFromDate = currentDate.plusDays(noticeDaysMin.toLong())
+      val dayOfWeek = validFromDate.plusDays(1).dayOfWeek
+
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = validFromDate,
+        validToDate = validFromDate.plusWeeks(1),
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
-        dayOfWeek = SATURDAY,
+        dayOfWeek = dayOfWeek,
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
@@ -591,9 +582,9 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
-      val saturdayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertThat(sessions).size().isEqualTo(1)
-      assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), SATURDAY)
+      assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.DOUBLE_BOOKED)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
@@ -605,8 +596,8 @@ class SessionServiceTest {
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
@@ -621,7 +612,7 @@ class SessionServiceTest {
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
-      val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      val mondayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       assertThat(sessions[0].sessionConflicts).isEmpty()
@@ -634,7 +625,7 @@ class SessionServiceTest {
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
-        validFromDate = date,
+        validFromDate = currentDate,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
       )
@@ -688,14 +679,12 @@ class SessionServiceTest {
         visitRepository,
         prisonerService,
         visitService,
-        policyNoticeDaysMin = noticeDaysMin,
-        policyNoticeDaysMax = noticeDaysMax,
         policyFilterDoubleBooking = true,
         policyFilterNonAssociation = true,
         policyNonAssociationWholeDay = true,
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
-        prisonConfigService = prisonConfigService,
+        prisonsService = prisonsService,
       )
     }
 
@@ -705,8 +694,8 @@ class SessionServiceTest {
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
@@ -720,7 +709,7 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      val mondayAfter = date.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      val mondayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertDate(sessions[0].startTimestamp, mondayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), MONDAY)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
@@ -732,8 +721,8 @@ class SessionServiceTest {
       val associationId = "B1234BB"
 
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
@@ -759,8 +748,8 @@ class SessionServiceTest {
       val associationId = "B1234BB"
 
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
@@ -785,8 +774,8 @@ class SessionServiceTest {
       val prisonerId = "A1234AA"
 
       val singleSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
@@ -811,16 +800,16 @@ class SessionServiceTest {
       val prisonerId = "A1234AA"
 
       val firstSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(1),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
       )
 
       val secondSession = sessionTemplate(
-        validFromDate = date,
-        validToDate = date.plusWeeks(2),
+        validFromDate = currentDate,
+        validToDate = currentDate.plusWeeks(2),
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
