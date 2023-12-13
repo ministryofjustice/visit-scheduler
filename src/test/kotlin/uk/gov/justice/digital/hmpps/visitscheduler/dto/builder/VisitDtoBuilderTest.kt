@@ -29,7 +29,6 @@ import java.time.LocalDateTime
 class VisitDtoBuilderTest() {
 
   private var prison: Prison = PrisonEntityHelper.createPrison()
-
   private val sessionTemplateService: SessionTemplateService = mock<SessionTemplateService>()
 
   @InjectMocks
@@ -141,6 +140,7 @@ class VisitDtoBuilderTest() {
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
   ): Visit {
+
     val visit = Visit(
       visitStatus = visitStatus,
       prisonerId = prisonerId,

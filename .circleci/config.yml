@@ -42,6 +42,7 @@ jobs:
             cd hmpps-vsip-ui-tests
             mvn test -Dbrowser=remote-chrome -Dspring.profiles.active="staging" -Dtest=uk.gov.justice.digital.hmpps.vsip.suites.RunSuite 
 
+
   acceptance_tests_develop:
     docker:
       - image: maven:3.9.5-eclipse-temurin-21
@@ -53,8 +54,7 @@ jobs:
     steps:
       - run:
           name: Checkout VSIP UI Tests
-          command:
-            git clone https://github.com/ministryofjustice/hmpps-vsip-ui-tests.git
+          command: git clone https://github.com/ministryofjustice/hmpps-vsip-ui-tests.git
       - run:
           name: get git status
           command: |
@@ -72,6 +72,7 @@ jobs:
           command: |
             cd hmpps-vsip-ui-tests
             mvn test -Dbrowser=remote-chrome -Dspring.profiles.active="staging" -Dtest=uk.gov.justice.digital.hmpps.vsip.suites.RunSuite
+
 
   validate:
     executor:
