@@ -140,7 +140,6 @@ class VisitDtoBuilderTest() {
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
   ): Visit {
-
     val visit = Visit(
       visitStatus = visitStatus,
       prisonerId = prisonerId,
