@@ -56,81 +56,108 @@ class SessionService(
   @Transactional(readOnly = true)
   fun getVisitSessions(
     prisonCode: String,
-    prisonerId: String? = null,
+    prisonerId: String,
     minOverride: Int? = null,
     maxOverride: Int? = null,
   ): List<VisitSessionDto> {
     LOG.debug("Enter getVisitSessions prisonCode:$prisonCode, prisonerId : $prisonerId ")
 
     // ensure the prisoner - if supplied belongs to the same prison as supplied prisonCode
-    prisonerId?.let {
-      prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, prisonCode)
-    }
-
-    val today = LocalDate.now()
+    val prisoner = prisonerService.getPrisoner(prisonerId).also {
+      prisonerValidationService.validatePrisonerNotNull(prisonerId, it)
+      prisonerValidationService.validatePrisonerIsFromPrison(it!!, prisonCode)
+    }!!
 
     val prison = prisonsService.findPrisonByCode(prisonCode)
-    val min = minOverride ?: prison.policyNoticeDaysMin
-    val max = maxOverride ?: prison.policyNoticeDaysMax
+    val dateRange = getDateRange(prison, minOverride, maxOverride)
 
-    val requestedBookableStartDate = today.plusDays(min.toLong())
-    val requestedBookableEndDate = today.plusDays(max.toLong())
-
-    val prisoner = prisonerId?.let { prisonerService.getPrisoner(prisonerId) }
-
-    var sessionTemplates = sessionTemplateRepository.findSessionTemplateMinCapacityBy(
-      prisonCode = prisonCode,
-      rangeStartDate = requestedBookableStartDate,
-      rangeEndDate = requestedBookableEndDate,
-    )
-    LOG.debug("getVisitSessions sessionTemplates size:${sessionTemplates.size} prisonerId : $prisonerId")
-
-    prisoner?.let {
-      sessionTemplates = filterByCategory(sessionTemplates, prisoner.category)
-      sessionTemplates = filterByIncentiveLevels(sessionTemplates, prisoner.incentiveLevel)
+    var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
+    sessionTemplates = sessionTemplates.filter {
+      filterByLocation(it, sessionTemplates, prisonerId, prisonCode)
+        .and(filterByCategory(it, sessionTemplates, prisoner.category))
+        .and(filterByIncentiveLevels(it, sessionTemplates, prisoner.incentiveLevel))
     }
-
-    sessionTemplates = filterSessionsTemplatesForLocation(sessionTemplates, prisonerId, prisonCode)
 
     var sessions = sessionTemplates.map {
-      buildVisitSessionsUsingTemplate(it, requestedBookableStartDate, requestedBookableEndDate)
+      buildVisitSessionsUsingTemplate(it, dateRange.fromDate, dateRange.toDate)
     }.flatten()
 
-    if (!prisonerId.isNullOrBlank()) {
-      val noAssociationConflictSessions = getNoAssociationConflictSessions(sessions, prisonerId)
-      sessions = filterPrisonerConflict(sessions, prisonerId, noAssociationConflictSessions)
-      populateConflict(sessions, prisonerId, noAssociationConflictSessions)
-    }
-
+    val noAssociationConflictSessions = getNoAssociationConflictSessions(sessions, prisonerId)
+    sessions = filterPrisonerConflict(sessions, prisonerId, noAssociationConflictSessions)
+    populateConflict(sessions, prisonerId, noAssociationConflictSessions)
     populateBookedCount(sessions)
 
     return sessions.sortedWith(compareBy { it.startTimestamp })
   }
 
-  fun filterByCategory(sessionTemplates: List<SessionTemplate>, prisonerCategory: String?): List<SessionTemplate> {
-    val hasSessionsWithCategoryGroups = sessionTemplates.any { it.permittedSessionCategoryGroups.isNotEmpty() }
-    if (hasSessionsWithCategoryGroups) {
-      return sessionTemplates.filter { sessionTemplate ->
-        sessionValidator.isSessionAvailableToPrisonerCategory(prisonerCategory, sessionTemplate)
-      }
-    }
+  private fun getDateRange(
+    prison: Prison,
+    minOverride: Int? = null,
+    maxOverride: Int? = null,
+  ): DateRange {
+    val today = LocalDate.now()
 
-    return sessionTemplates
+    val min = minOverride ?: prison.policyNoticeDaysMin
+    val max = maxOverride ?: prison.policyNoticeDaysMax
+
+    val requestedBookableStartDate = today.plusDays(min.toLong())
+    val requestedBookableEndDate = today.plusDays(max.toLong())
+    return DateRange(requestedBookableStartDate, requestedBookableEndDate)
   }
 
-  fun filterByIncentiveLevels(
+  private fun filterByCategory(
+    sessionTemplate: SessionTemplate,
+    sessionTemplates: List<SessionTemplate>,
+    prisonerCategory: String?,
+  ): Boolean {
+    val hasSessionsWithCategoryGroups = sessionTemplates.any { sessionTemplate.permittedSessionCategoryGroups.isNotEmpty() }
+    return if (hasSessionsWithCategoryGroups) {
+      sessionValidator.isSessionAvailableToPrisonerCategory(prisonerCategory, sessionTemplate)
+    } else {
+      true
+    }
+  }
+
+  private fun filterByIncentiveLevels(
+    sessionTemplate: SessionTemplate,
     sessionTemplates: List<SessionTemplate>,
     prisonerIncentiveLevel: IncentiveLevel?,
-  ): List<SessionTemplate> {
+  ): Boolean {
     val hasSessionsWithIncentiveLevelGroups =
       sessionTemplates.any { it.permittedSessionIncentiveLevelGroups.isNotEmpty() }
-    if (hasSessionsWithIncentiveLevelGroups) {
-      return sessionTemplates.filter { sessionTemplate ->
-        sessionValidator.isSessionAvailableToIncentiveLevel(prisonerIncentiveLevel, sessionTemplate)
-      }
+    return if (hasSessionsWithIncentiveLevelGroups) {
+      sessionValidator.isSessionAvailableToIncentiveLevel(prisonerIncentiveLevel, sessionTemplate)
+    } else {
+      true
     }
+  }
 
-    return sessionTemplates
+  private fun getAllSessionTemplatesForDateRange(prisonCode: String, dateRange: DateRange): List<SessionTemplate> {
+    return sessionTemplateRepository.findSessionTemplateMinCapacityBy(
+      prisonCode = prisonCode,
+      rangeStartDate = dateRange.fromDate,
+      rangeEndDate = dateRange.toDate,
+    )
+  }
+
+  fun filterByLocation(
+    sessionTemplate: SessionTemplate,
+    sessionTemplates: List<SessionTemplate>,
+    prisonerId: String,
+    prisonCode: String,
+  ): Boolean {
+    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
+    return if (hasSessionsWithLocationGroups) {
+      val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
+      prisonerDetailDto?.let {
+        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
+        val keep = sessionValidator.isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)
+        LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference} Keep:$keep")
+        keep
+      } ?: true
+    } else {
+      true
+    }
   }
 
   private fun buildVisitSessionsUsingTemplate(
@@ -206,31 +233,6 @@ class SessionService(
     return validToDate
   }
 
-  fun filterSessionsTemplatesForLocation(
-    sessionTemplates: List<SessionTemplate>,
-    prisonerId: String?,
-    prisonCode: String,
-    mustHaveLocationGroups: Boolean = false,
-  ): List<SessionTemplate> {
-    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
-    if (hasSessionsWithLocationGroups) {
-      prisonerId?.let {
-        val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
-        prisonerDetailDto?.let { prisonerDetail ->
-          val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail)
-          return sessionTemplates.filter { sessionTemplate ->
-            val keep = sessionValidator.isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)
-            LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference} Keep:$keep")
-            keep
-          }
-        }
-        return listOf()
-      }
-    }
-
-    return if (mustHaveLocationGroups) listOf() else sessionTemplates
-  }
-
   private fun filterPrisonerConflict(
     sessions: List<VisitSessionDto>,
     prisonerId: String,
@@ -303,7 +305,7 @@ class SessionService(
         session.endTimestamp
       }
 
-      // Any Non-association withing the session period && Non-association has a RESERVED or BOOKED booking.
+      // Any Non-association within the session period && Non-association has a RESERVED or BOOKED booking.
       // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
       return visitRepository.hasActiveVisits(
         nonAssociationPrisonerIds,
@@ -419,3 +421,5 @@ class SessionService(
     return startDate
   }
 }
+
+data class DateRange(val fromDate: LocalDate, val toDate: LocalDate)

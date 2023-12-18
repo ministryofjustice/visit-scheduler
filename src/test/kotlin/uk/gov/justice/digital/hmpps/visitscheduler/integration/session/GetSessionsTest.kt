@@ -8,7 +8,6 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
@@ -34,15 +33,19 @@ class GetSessionsTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
+  private val prisonerId = "A0000001"
+
+  private val prisonCode = "MDI"
+
   @BeforeEach
   internal fun setUpTests() {
     prison = prisonEntityHelper.create()
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
   }
 
   @Test
   fun `visit sessions are returned for a prison for a single schedule`() {
     // Given
-
     val nextAllowedDay = getNextAllowedDay()
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
@@ -54,7 +57,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -67,7 +70,11 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `visit sessions are returned using prison booking min and max days`() {
     // Given
-    val prisonTest = prisonEntityHelper.create(prisonCode = "TST", policyNoticeDaysMin = 2, policyNoticeDaysMax = 7)
+    val prisonCode = "TST"
+    val policyNoticeDaysMin = 2
+    val policyNoticeDaysMax = 7
+    prisonEntityHelper.create(prisonCode = prisonCode, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     val now = LocalDate.now()
 
@@ -76,11 +83,11 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = now.dayOfWeek,
-      prisonCode = prisonTest.code,
+      prisonCode = prisonCode,
     )
 
     // When
-    val responseSpec = callGetSessions(prisonId = prisonTest.code)
+    val responseSpec = callGetSessions(prisonId = prisonCode, prisonerId)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -96,7 +103,9 @@ class GetSessionsTest : IntegrationTestBase() {
 
     val nextAllowedDay = getNextAllowedDay()
     val nextWeek = nextAllowedDay.plusDays(7)
-    prisonEntityHelper.create(prisonCode = "AWE", excludeDates = listOf(nextWeek))
+    val prisonCode = "AWE"
+    prisonEntityHelper.create(prisonCode = prisonCode, excludeDates = listOf(nextWeek))
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
       prisonCode = "AWE",
@@ -108,7 +117,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(prisonId = "AWE")
+    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -162,7 +171,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -186,7 +195,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     val nextAllowedDay = getNextAllowedDay()
@@ -221,7 +229,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     val nextAllowedDay = getNextAllowedDay()
@@ -256,7 +263,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, null)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     val nextAllowedDay = getNextAllowedDay()
@@ -297,7 +303,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     val nextAllowedDay = getNextAllowedDay()
 
@@ -336,7 +341,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, null)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     val nextAllowedDay = getNextAllowedDay()
 
@@ -376,7 +380,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.A_EXCEPTIONAL.code)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     val categoryInc1 = sessionPrisonerCategoryHelper.create(name = categoryA, prisonerCategories = categoryAList)
@@ -420,7 +423,6 @@ class GetSessionsTest : IntegrationTestBase() {
     // prisoner is in category B while the session only allows category As
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.B.code)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     val categoryInc1 = sessionPrisonerCategoryHelper.create(name = categoryA, prisonerCategories = categoryAList)
 
@@ -454,7 +456,6 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.A_EXCEPTIONAL.code)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     val nextAllowedDay = getNextAllowedDay()
@@ -500,7 +501,6 @@ class GetSessionsTest : IntegrationTestBase() {
     // prisoner is in category A standard - so should be included
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.A_STANDARD.code)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     val categoryIncAHighs = sessionPrisonerCategoryHelper.create(name = categoryAHighs, prisonerCategories = categoryAListHigh)
@@ -550,7 +550,6 @@ class GetSessionsTest : IntegrationTestBase() {
     // prisoner is in category B
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.B.code)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
 
     val categoryIncAHighs = sessionPrisonerCategoryHelper.create(name = categoryAHighs, prisonerCategories = categoryAListHigh)
     val categoryIncNonAHighs = sessionPrisonerCategoryHelper.create(name = categoryANonHighs, prisonerCategories = categoryAListNonHigh)
@@ -602,7 +601,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -623,17 +622,24 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `Weekly schedule - test`() {
     val today = LocalDate.now()
+    val policyNoticeDaysMin = 0
+    val policyNoticeDaysMax = 14
+    val prisonCode = "TST"
+
+    prison = prisonEntityHelper.create(prisonCode = prisonCode, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
 
     // Given
     val startFromWeek1 = getStartOfWeek(today)
     sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
       validFromDate = startFromWeek1,
       dayOfWeek = today.dayOfWeek,
       weeklyFrequency = 1,
     )
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetSessions(policyNoticeDaysMin = 0, policyNoticeDaysMax = 14)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -649,17 +655,23 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `bi weekly schedule - test`() {
     val today = LocalDate.now()
+    val policyNoticeDaysMin = 0
+    val policyNoticeDaysMax = 28
+    val prisonCode = "TST"
 
+    prison = prisonEntityHelper.create(prisonCode = prisonCode, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
     // Given
     val startFromWeek1 = getStartOfWeek(today)
     sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
       validFromDate = startFromWeek1,
       dayOfWeek = today.dayOfWeek,
       weeklyFrequency = 2,
     )
 
     // When
-    val responseSpec = callGetSessions(policyNoticeDaysMin = 0, policyNoticeDaysMax = 28)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    val responseSpec = callGetSessions(prisonCode = prisonCode, prisonerId = prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -675,17 +687,23 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `three weekly schedule - test`() {
     val today = LocalDate.now()
-
+    val policyNoticeDaysMin = 0
+    val policyNoticeDaysMax = 42
+    val prisonCode = "TST"
     // Given
+    prison = prisonEntityHelper.create(prisonCode = prisonCode, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+
     val startFromWeek1 = getStartOfWeek(today)
     sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
       validFromDate = startFromWeek1,
       dayOfWeek = today.dayOfWeek,
       weeklyFrequency = 3,
     )
 
     // When
-    val responseSpec = callGetSessions(policyNoticeDaysMin = 0, policyNoticeDaysMax = 42)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -719,7 +737,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions(0, 28)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, 0, 28)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -752,7 +770,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -780,7 +798,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     assertNoResponse(responseSpec)
@@ -792,12 +810,15 @@ class GetSessionsTest : IntegrationTestBase() {
     val policyNoticeDaysMin = 14
     val policyNoticeDaysMax = 1
 
+    prison = prisonEntityHelper.create(prisonCode = "TST", policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
+    val prisonCode = prison.code
     val nextAllowedDay = getNextAllowedDay()
 
     sessionTemplateEntityHelper.create(validFromDate = nextAllowedDay)
 
     // When
-    val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax)
 
     // Then
     assertNoResponse(responseSpec)
@@ -808,11 +829,14 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     val policyNoticeDaysMin = 0
     val policyNoticeDaysMax = 1
+    prison = prisonEntityHelper.create(prisonCode = "TST", policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
+    val prisonCode = prison.code
 
     sessionTemplateEntityHelper.create(validFromDate = LocalDate.now().plusDays(2))
 
     // When
-    val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax)
 
     // Then
     assertNoResponse(responseSpec)
@@ -829,7 +853,7 @@ class GetSessionsTest : IntegrationTestBase() {
     sessionTemplateEntityHelper.create(validFromDate = nextAllowedDay, validToDate = nextAllowedDay)
 
     // When
-    val responseSpec = callGetSessions(policyNoticeDaysMin, policyNoticeDaysMax)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, policyNoticeDaysMin, policyNoticeDaysMax)
 
     // Then
     assertNoResponse(responseSpec)
@@ -844,7 +868,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     assertNoResponse(responseSpec)
@@ -859,7 +883,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     assertNoResponse(responseSpec)
@@ -918,7 +942,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     assertBookCounts(responseSpec, openCount = 2, closeCount = 0)
@@ -965,7 +989,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     assertBookCounts(responseSpec, openCount = 0, closeCount = 0)
@@ -1023,7 +1047,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     assertBookCounts(responseSpec, openCount = 0, closeCount = 2)
@@ -1106,7 +1130,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetSessions()
+    val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
     assertBookCounts(responseSpec, openCount = 4, closeCount = 0)
@@ -1122,7 +1146,6 @@ class GetSessionsTest : IntegrationTestBase() {
     sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
@@ -1149,7 +1172,6 @@ class GetSessionsTest : IntegrationTestBase() {
       associationId,
     )
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
@@ -1188,7 +1210,6 @@ class GetSessionsTest : IntegrationTestBase() {
       associationId,
     )
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
@@ -1237,7 +1258,6 @@ class GetSessionsTest : IntegrationTestBase() {
       associationId,
     )
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
@@ -1286,7 +1306,6 @@ class GetSessionsTest : IntegrationTestBase() {
       associationId,
     )
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
@@ -1325,7 +1344,6 @@ class GetSessionsTest : IntegrationTestBase() {
       associationPrisonerId,
     )
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
@@ -1365,7 +1383,6 @@ class GetSessionsTest : IntegrationTestBase() {
       associationPrisonerId,
     )
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
@@ -1404,7 +1421,6 @@ class GetSessionsTest : IntegrationTestBase() {
       associationPrisonerId,
     )
 
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
@@ -1443,7 +1459,6 @@ class GetSessionsTest : IntegrationTestBase() {
       prisonerId,
       associationPrisonerId,
     )
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
@@ -1462,7 +1477,7 @@ class GetSessionsTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
 
     // prisoner is in prison with code MDI
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
     // get sessions call is being made with the incorrect prison Code
@@ -1490,8 +1505,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerDetailsDto = null)
-
+    prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, null)
     val nextAllowedDay = getNextAllowedDay()
 
     sessionTemplateEntityHelper.create(
@@ -1510,9 +1524,9 @@ class GetSessionsTest : IntegrationTestBase() {
       .exchange()
 
     // Then
-    val returnResult = responseSpec.expectStatus().isBadRequest.expectBody()
+    val returnResult = responseSpec.expectStatus().isNotFound.expectBody()
     val errorResponse = objectMapper.readValue(returnResult.returnResult().responseBody, ErrorResponse::class.java)
-    assertThat(errorResponse.developerMessage).isEqualTo("Prisoner with ID - $prisonerId cannot be found")
+    assertThat(errorResponse.developerMessage).isEqualTo("Prisoner with prisonNumber - $prisonerId not found on offender search")
   }
 
   @Test
@@ -1528,7 +1542,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerSearchResultDto = null)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerDetailsDto = PrisonerDetailsDto(nomsId = prisonerId, establishmentCode = prisonCode, bookingId = 1))
 
     val nextAllowedDay = getNextAllowedDay()
 
@@ -1550,7 +1563,7 @@ class GetSessionsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isNotFound.expectBody()
     val errorResponse = objectMapper.readValue(returnResult.returnResult().responseBody, ErrorResponse::class.java)
-    assertThat(errorResponse.developerMessage).isEqualTo("Prisoner not found $prisonerId with offender search")
+    assertThat(errorResponse.developerMessage).isEqualTo("Prisoner with prisonNumber - $prisonerId not found on offender search")
   }
 
   @Test
@@ -1566,7 +1579,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerId, null)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerDetailsDto = PrisonerDetailsDto(nomsId = prisonerId, establishmentCode = prisonCode, bookingId = 1))
 
     val nextAllowedDay = getNextAllowedDay()
 
@@ -1602,7 +1614,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerId, status = BAD_REQUEST)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerDetailsDto = PrisonerDetailsDto(nomsId = prisonerId, establishmentCode = prisonCode, bookingId = 1))
 
     val nextAllowedDay = getNextAllowedDay()
 
@@ -1626,16 +1637,18 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   private fun callGetSessions(
+    prisonCode: String? = "MDI",
+    prisonerId: String,
     policyNoticeDaysMin: Int,
     policyNoticeDaysMax: Int,
   ): ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions?prisonId=MDI&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
+    return webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }
 
-  private fun callGetSessions(prisonId: String? = "MDI"): ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions?prisonId=$prisonId")
+  private fun callGetSessions(prisonId: String? = "MDI", prisonerId: String): ResponseSpec {
+    return webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }

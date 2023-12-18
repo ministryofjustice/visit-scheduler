@@ -23,7 +23,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
@@ -159,10 +158,6 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
       category = category,
     )
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerId)
-    prisonApiMockServer.stubGetPrisonerDetails(
-      prisonerId,
-      prisonerDetailsDto = PrisonerDetailsDto(nomsId = prisonerId, establishmentCode = prisonCode, bookingId = 1),
-    )
     housingLocations?.let {
       prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, housingLocations, lastPermanentLevels)
     }
