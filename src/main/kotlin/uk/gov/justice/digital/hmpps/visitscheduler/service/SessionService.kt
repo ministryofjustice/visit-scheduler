@@ -78,16 +78,21 @@ class SessionService(
         .and(filterByIncentiveLevels(it, sessionTemplates, prisoner.incentiveLevel))
     }
 
-    var sessions = sessionTemplates.map {
+    val noAssociationConflictSessions: List<VisitSessionDto>
+
+    return sessionTemplates.map {
       buildVisitSessionsUsingTemplate(it, dateRange.fromDate, dateRange.toDate)
-    }.flatten()
-
-    val noAssociationConflictSessions = getNoAssociationConflictSessions(sessions, prisonerId)
-    sessions = filterPrisonerConflict(sessions, prisonerId, noAssociationConflictSessions)
-    populateConflict(sessions, prisonerId, noAssociationConflictSessions)
-    populateBookedCount(sessions)
-
-    return sessions.sortedWith(compareBy { it.startTimestamp })
+    }.flatten().also {
+      // get the sessions affected by non associations
+      noAssociationConflictSessions = getNoAssociationConflictSessions(it, prisonerId)
+    }.filterNot {
+      // filter out the non association and double booking sessions
+      hasPrisonerConflict(it, prisonerId, noAssociationConflictSessions)
+    }.also {
+      // set conflict flags and booked counts
+      populateConflict(it, prisonerId, noAssociationConflictSessions)
+      populateBookedCount(it)
+    }.sortedWith(compareBy { it.startTimestamp })
   }
 
   private fun getDateRange(
@@ -233,15 +238,15 @@ class SessionService(
     return validToDate
   }
 
-  private fun filterPrisonerConflict(
-    sessions: List<VisitSessionDto>,
+  private fun hasPrisonerConflict(
+    session: VisitSessionDto,
     prisonerId: String,
     noAssociationConflictSessions: List<VisitSessionDto>,
-  ): List<VisitSessionDto> {
-    return sessions.filterNot {
-      (policyFilterNonAssociation && noAssociationConflictSessions.contains(it)) ||
-        (policyFilterDoubleBooking && sessionHasBooking(it, prisonerId))
-    }
+  ): Boolean {
+    return (
+      (policyFilterNonAssociation && noAssociationConflictSessions.contains(session)) ||
+        (policyFilterDoubleBooking && sessionHasBooking(session, prisonerId))
+      )
   }
 
   private fun populateConflict(
