@@ -73,9 +73,9 @@ class SessionService(
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
     sessionTemplates = sessionTemplates.filter {
-      filterByLocation(it, sessionTemplates, prisonerId, prisonCode)
-        .and(filterByCategory(it, sessionTemplates, prisoner.category))
-        .and(filterByIncentiveLevels(it, sessionTemplates, prisoner.incentiveLevel))
+      isAvailableToLocation(it, sessionTemplates, prisonerId, prisonCode)
+        .and(isAvailableToCategory(it, sessionTemplates, prisoner.category))
+        .and(isAvailableToIncentiveLevel(it, sessionTemplates, prisoner.incentiveLevel))
     }
 
     val noAssociationConflictSessions: List<VisitSessionDto>
@@ -110,33 +110,6 @@ class SessionService(
     return DateRange(requestedBookableStartDate, requestedBookableEndDate)
   }
 
-  private fun filterByCategory(
-    sessionTemplate: SessionTemplate,
-    sessionTemplates: List<SessionTemplate>,
-    prisonerCategory: String?,
-  ): Boolean {
-    val hasSessionsWithCategoryGroups = sessionTemplates.any { sessionTemplate.permittedSessionCategoryGroups.isNotEmpty() }
-    return if (hasSessionsWithCategoryGroups) {
-      sessionValidator.isSessionAvailableToPrisonerCategory(prisonerCategory, sessionTemplate)
-    } else {
-      true
-    }
-  }
-
-  private fun filterByIncentiveLevels(
-    sessionTemplate: SessionTemplate,
-    sessionTemplates: List<SessionTemplate>,
-    prisonerIncentiveLevel: IncentiveLevel?,
-  ): Boolean {
-    val hasSessionsWithIncentiveLevelGroups =
-      sessionTemplates.any { it.permittedSessionIncentiveLevelGroups.isNotEmpty() }
-    return if (hasSessionsWithIncentiveLevelGroups) {
-      sessionValidator.isSessionAvailableToIncentiveLevel(prisonerIncentiveLevel, sessionTemplate)
-    } else {
-      true
-    }
-  }
-
   private fun getAllSessionTemplatesForDateRange(prisonCode: String, dateRange: DateRange): List<SessionTemplate> {
     return sessionTemplateRepository.findSessionTemplateMinCapacityBy(
       prisonCode = prisonCode,
@@ -145,7 +118,7 @@ class SessionService(
     )
   }
 
-  fun filterByLocation(
+  fun isAvailableToLocation(
     sessionTemplate: SessionTemplate,
     sessionTemplates: List<SessionTemplate>,
     prisonerId: String,
@@ -160,6 +133,33 @@ class SessionService(
         LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference} Keep:$keep")
         keep
       } ?: true
+    } else {
+      true
+    }
+  }
+
+  private fun isAvailableToCategory(
+    sessionTemplate: SessionTemplate,
+    sessionTemplates: List<SessionTemplate>,
+    prisonerCategory: String?,
+  ): Boolean {
+    val hasSessionsWithCategoryGroups = sessionTemplates.any { sessionTemplate.permittedSessionCategoryGroups.isNotEmpty() }
+    return if (hasSessionsWithCategoryGroups) {
+      sessionValidator.isSessionAvailableToPrisonerCategory(prisonerCategory, sessionTemplate)
+    } else {
+      true
+    }
+  }
+
+  private fun isAvailableToIncentiveLevel(
+    sessionTemplate: SessionTemplate,
+    sessionTemplates: List<SessionTemplate>,
+    prisonerIncentiveLevel: IncentiveLevel?,
+  ): Boolean {
+    val hasSessionsWithIncentiveLevelGroups =
+      sessionTemplates.any { it.permittedSessionIncentiveLevelGroups.isNotEmpty() }
+    return if (hasSessionsWithIncentiveLevelGroups) {
+      sessionValidator.isSessionAvailableToIncentiveLevel(prisonerIncentiveLevel, sessionTemplate)
     } else {
       true
     }
