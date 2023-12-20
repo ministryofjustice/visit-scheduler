@@ -536,6 +536,6 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
-      .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 month's in future, will not be migrated!"))
+      .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))
   }
 }
