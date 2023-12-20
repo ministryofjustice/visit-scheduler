@@ -21,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplat
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitToMigrateException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TemplateNotFoundException
@@ -81,6 +82,18 @@ class VisitSchedulerExceptionHandler(
     val error = ErrorResponse(
       status = HttpStatus.BAD_REQUEST,
       userMessage = "Migration failure: could not find matching session template",
+      developerMessage = e.message,
+    )
+    sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
+  }
+
+  @ExceptionHandler(VisitToMigrateException::class)
+  fun handleVisitToMigrateException(e: Exception): ResponseEntity<ErrorResponse> {
+    log.error("Migration exception: {}", e.message)
+    val error = ErrorResponse(
+      status = HttpStatus.BAD_REQUEST,
+      userMessage = "Migration failure: Could not migrate visit",
       developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)

@@ -47,7 +47,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
-import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -60,7 +59,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
 
   companion object {
     @JvmStatic
-    protected val VISIT_TIME: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
+    protected val VISIT_TIME: LocalDateTime = LocalDateTime.now().plusDays(10)
 
     @JvmStatic
     protected val TEST_END_POINT = "/migrate-visits"
