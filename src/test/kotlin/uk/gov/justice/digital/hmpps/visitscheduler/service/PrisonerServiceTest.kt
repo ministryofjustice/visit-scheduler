@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.NonAssociationsApiClie
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
@@ -323,21 +322,22 @@ class PrisonerServiceTest {
   @Test
   fun `when valid prisoner then prisoner details are returned`() {
     val prisonerId = "AA1234BB"
-    val prisonerDetailsDto = PrisonerDetailsDto(prisonerId, establishmentCode = "MDI", bookingId = 1)
+    val prisonCode = "MDI"
+    val prisonerDetailsDto = PrisonerSearchResultDto(prisonerId, null, prisonCode, null)
 
     whenever(
-      prisonApiClient.getPrisonerDetails(prisonerId),
+      prisonerOffenderSearchClient.getPrisoner(prisonerId),
     ).thenReturn(prisonerDetailsDto)
 
     // When
-    val prisonerDetails = prisonerService.getPrisonerFullStatus(prisonerId)
+    val prisonerDetails = prisonerService.getPrisoner(prisonerId)
 
     // Then
     assertThat(prisonerDetails).isNotNull
-    assertThat(prisonerDetails!!.nomsId).isEqualTo(prisonerId)
-    assertThat(prisonerDetails.establishmentCode).isEqualTo("MDI")
+    assertThat(prisonerDetails!!.prisonerId).isEqualTo(prisonerId)
+    assertThat(prisonerDetails.prisonCode).isEqualTo("MDI")
 
-    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+    Mockito.verify(prisonerOffenderSearchClient, times(1)).getPrisoner(prisonerId)
   }
 
   @Test
@@ -345,15 +345,14 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerDetails(prisonerId),
+      prisonerOffenderSearchClient.getPrisoner(prisonerId),
     ).thenReturn(null)
-
     // When
-    val prisonerDetails = prisonerService.getPrisonerFullStatus(prisonerId)
+    val prisonerDetails = prisonerService.getPrisoner(prisonerId)
 
     // Then
     assertThat(prisonerDetails).isNull()
-    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+    Mockito.verify(prisonerOffenderSearchClient, times(1)).getPrisoner(prisonerId)
   }
 
   @Test
@@ -361,18 +360,18 @@ class PrisonerServiceTest {
     val prisonerId = "AA1234BB"
 
     whenever(
-      prisonApiClient.getPrisonerDetails(prisonerId),
+      prisonerOffenderSearchClient.getPrisoner(prisonerId),
     ).thenThrow(
       WebClientResponseException.create(HttpStatus.BAD_REQUEST.value(), "", HttpHeaders.EMPTY, byteArrayOf(), null),
     )
 
     // When
     assertThrows<WebClientResponseException> {
-      prisonerService.getPrisonerFullStatus(prisonerId)
+      prisonerService.getPrisoner(prisonerId)
     }
 
     // Then
-    Mockito.verify(prisonApiClient, times(1)).getPrisonerDetails(prisonerId)
+    Mockito.verify(prisonerOffenderSearchClient, times(1)).getPrisoner(prisonerId)
   }
 
   @Test

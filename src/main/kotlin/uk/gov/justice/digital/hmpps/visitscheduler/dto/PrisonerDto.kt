@@ -7,10 +7,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentiv
 data class PrisonerDto(
 
   @Schema(description = "Prisoner Category", example = "C")
+  val prisonerId: String,
+
+  @Schema(description = "Prisoner Category", example = "C")
   val category: String? = null,
 
   @Schema(description = "enhanced privilege", example = "true", required = true)
-  val incentiveLevel: IncentiveLevel?,
+  val incentiveLevel: IncentiveLevel? = null,
 
   @Schema(description = "prison code", example = "BHI", required = true)
   var prisonCode: String? = null,

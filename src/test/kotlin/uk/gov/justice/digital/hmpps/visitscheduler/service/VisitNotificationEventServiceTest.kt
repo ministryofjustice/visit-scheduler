@@ -39,7 +39,7 @@ class VisitNotificationEventServiceTest {
 
     whenever(prisonerService.getPrisoner(primaryNonAssociationNumber)).thenReturn(
       PrisonerDto(
-        incentiveLevel = null,
+        prisonerId = primaryNonAssociationNumber,
         prisonCode = prisonCode,
       ),
     )

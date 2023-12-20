@@ -5,7 +5,6 @@ import com.github.tomakehurst.wiremock.client.WireMock.aResponse
 import com.github.tomakehurst.wiremock.client.WireMock.get
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.dto.PrisonerCellHistoryNativeDto
@@ -27,29 +26,6 @@ class PrisonApiMockServer : WireMockServer(8092) {
             .withBody(
               getJsonString(housingLocationsDto),
             ),
-        ),
-    )
-  }
-
-  fun stubGetPrisonerDetails(offenderNo: String, prisonCode: String) {
-    val prisonerDetailsDto = PrisonerDetailsDto(nomsId = offenderNo, establishmentCode = prisonCode, bookingId = 1)
-    stubGetPrisonerDetails(offenderNo, prisonerDetailsDto)
-  }
-
-  fun stubGetPrisonerDetails(offenderNo: String, prisonerDetailsDto: PrisonerDetailsDto?) {
-    stubFor(
-      get("/api/prisoners/$offenderNo/full-status")
-        .willReturn(
-          if (prisonerDetailsDto == null) {
-            aResponse().withStatus(HttpStatus.NOT_FOUND.value())
-          } else {
-            aResponse()
-              .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
-              .withStatus(200)
-              .withBody(
-                getJsonString(prisonerDetailsDto),
-              )
-          },
         ),
     )
   }
