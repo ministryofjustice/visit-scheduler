@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.migration
 
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.tuple
+import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -69,8 +70,8 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       assertThat(visit.prisonerId).isEqualTo("FF0000FF")
       assertThat(visit.visitRoom).isEqualTo("A1")
       assertThat(visit.visitType).isEqualTo(SOCIAL)
-      assertThat(visit.visitStart).isEqualTo(VISIT_TIME.toString())
-      assertThat(visit.visitEnd).isEqualTo(VISIT_TIME.plusHours(1).toString())
+      assertThat(visit.visitStart).isEqualTo(VISIT_TIME)
+      assertThat(visit.visitEnd).isEqualTo(VISIT_TIME.plusHours(1))
       assertThat(visit.visitStatus).isEqualTo(BOOKED)
       assertThat(visit.outcomeStatus).isEqualTo(COMPLETED_NORMALLY)
       assertThat(visit.visitRestriction).isEqualTo(OPEN)
@@ -519,5 +520,22 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
+  }
+
+  @Test
+  fun `When visit is more than the permitted months in the future - a exception is thrown`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(visitStartTimeAndDate = LocalDateTime.now().plusMonths(7))
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
+      .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))
   }
 }

@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitToMigrateException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.MIGRATED_VISIT
@@ -31,7 +32,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplateMatcher
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 const val NOT_KNOWN_NOMIS = "NOT_KNOWN_NOMIS"
@@ -48,12 +51,18 @@ class MigrateVisitService(
   private val telemetryClient: TelemetryClient,
   @Value("\${migrate.sessiontemplate.mapping.offset.days:0}")
   private val migrateSessionTemplateMappingOffsetDays: Long,
+  @Value("\${migrate.max.months.in.future:6}")
+  private val migrateMaxMonthsInFuture: Long,
 ) {
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
+    if (isVisitTooFarInTheFuture(migrateVisitRequest.startTimestamp)) {
+      throw VisitToMigrateException("Visit more than $migrateMaxMonthsInFuture months in future, will not be migrated!")
+    }
+
     val actionedBy = migrateVisitRequest.actionedBy ?: NOT_KNOWN_NOMIS
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
@@ -146,6 +155,10 @@ class MigrateVisitService(
     }
 
     return visitEntity.reference
+  }
+
+  private fun isVisitTooFarInTheFuture(visitDate: LocalDateTime): Boolean {
+    return ChronoUnit.MONTHS.between(LocalDate.now(), visitDate) > migrateMaxMonthsInFuture
   }
 
   private fun shouldMigrateWithSessionMapping(migrateVisitRequest: MigrateVisitRequestDto): Boolean {
