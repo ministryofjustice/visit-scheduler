@@ -157,8 +157,8 @@ class MigrateVisitService(
     return visitEntity.reference
   }
 
-  private fun isVisitTooFarInTheFuture(date: LocalDateTime): Boolean {
-    return ChronoUnit.MONTHS.between(LocalDate.now(), date) > migrateMaxInFutureMonths
+  private fun isVisitTooFarInTheFuture(visitDate: LocalDateTime): Boolean {
+    return ChronoUnit.MONTHS.between(LocalDate.now(), visitDate) > migrateMaxInFutureMonths
   }
 
   private fun shouldMigrateWithSessionMapping(migrateVisitRequest: MigrateVisitRequestDto): Boolean {
