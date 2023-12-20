@@ -51,8 +51,8 @@ class MigrateVisitService(
   private val telemetryClient: TelemetryClient,
   @Value("\${migrate.sessiontemplate.mapping.offset.days:0}")
   private val migrateSessionTemplateMappingOffsetDays: Long,
-  @Value("\${migrate.max.in.future.months:6}")
-  private val migrateMaxInFutureMonths: Long,
+  @Value("\${migrate.max.months.in.future:6}")
+  private val migrateMaxMonthsInFuture: Long,
 ) {
 
   @Autowired
@@ -60,7 +60,7 @@ class MigrateVisitService(
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
     if (isVisitTooFarInTheFuture(migrateVisitRequest.startTimestamp)) {
-      throw VisitToMigrateException("Visit more than $migrateMaxInFutureMonths month's in future, will not be migrated!")
+      throw VisitToMigrateException("Visit more than $migrateMaxMonthsInFuture months in future, will not be migrated!")
     }
 
     val actionedBy = migrateVisitRequest.actionedBy ?: NOT_KNOWN_NOMIS
@@ -158,7 +158,7 @@ class MigrateVisitService(
   }
 
   private fun isVisitTooFarInTheFuture(visitDate: LocalDateTime): Boolean {
-    return ChronoUnit.MONTHS.between(LocalDate.now(), visitDate) > migrateMaxInFutureMonths
+    return ChronoUnit.MONTHS.between(LocalDate.now(), visitDate) > migrateMaxMonthsInFuture
   }
 
   private fun shouldMigrateWithSessionMapping(migrateVisitRequest: MigrateVisitRequestDto): Boolean {
