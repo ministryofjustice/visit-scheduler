@@ -10,7 +10,7 @@ data class SessionTemplateVisitStatsDto(
   @field:NotNull
   val minimumCapacity: SessionCapacityDto,
 
-  @Schema(description = "visit counts", example = "10", required = true)
+  @Schema(description = "booked, reserved or changing visit counts", example = "10", required = true)
   @field:Min(0)
   val visitCount: Int,
 
