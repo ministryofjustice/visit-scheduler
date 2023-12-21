@@ -457,7 +457,10 @@ class SessionTemplateService(
     val visitCountsList = getVisitCountsList(visitCountsByDate)
 
     val visitCount = this.sessionTemplateRepository.getVisitCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
-    return SessionTemplateVisitStatsDto(sessionCapacity, visitCount, visitCountsList)
+
+    val cancelCount = this.sessionTemplateRepository.getVisitCancelCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+
+    return SessionTemplateVisitStatsDto(sessionCapacity, visitCount, cancelCount, visitCountsList)
   }
 
   fun getVisitCountsList(visitCountsByDate: List<VisitCountsByDate>): MutableList<SessionTemplateVisitCountsDto> {
