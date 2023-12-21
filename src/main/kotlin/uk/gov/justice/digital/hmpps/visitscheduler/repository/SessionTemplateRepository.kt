@@ -24,7 +24,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       " COUNT(CASE WHEN v.visit_restriction = 'CLOSED' THEN 1 END) AS closed  FROM visit v " +
       " JOIN session_template st ON st.reference = v.session_template_reference " +
       " WHERE st.reference = :reference" +
-      " AND v.visit_start > :visitsFromDate" +
+      " AND v.visit_start >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
       " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
       " GROUP BY v.visit_start ) AS tmp ",
