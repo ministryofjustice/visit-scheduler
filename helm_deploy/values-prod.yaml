@@ -16,7 +16,7 @@ generic-service:
     FEATURE_EVENTS_SNS_ENABLED: true
 
   postgresDatabaseRestore:
-    enabled: true
+    enabled: false
     namespace_secrets:
       visit-scheduler-rds:
         DB_NAME: "database_name"
