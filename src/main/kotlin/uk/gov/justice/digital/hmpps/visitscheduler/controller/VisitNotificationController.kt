@@ -42,7 +42,7 @@ const val VISIT_NOTIFICATION_VISITOR_RESTRICTION_CHANGE_PATH: String = "$VISIT_N
 const val VISIT_NOTIFICATION_COUNT_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/count"
 const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/count"
 const val FUTURE_NOTIFICATION_VISIT_GROUPS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/groups"
-const val VISIT_NOTIFICATIONS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}"
+const val VISIT_NOTIFICATION_TYPES: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/types"
 
 @RestController
 @Validated
@@ -358,7 +358,7 @@ class VisitNotificationController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(VISIT_NOTIFICATIONS)
+  @GetMapping(VISIT_NOTIFICATION_TYPES)
   @Operation(
     summary = "get visit notification types by booking reference",
     description = "Retrieve visit  notification types by booking reference",
