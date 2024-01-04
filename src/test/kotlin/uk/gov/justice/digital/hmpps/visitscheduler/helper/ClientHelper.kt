@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
@@ -634,6 +635,18 @@ fun callCountVisitNotification(
   return callGet(
     webTestClient,
     url,
+    authHttpHeaders,
+  )
+}
+
+fun callGetVisitNotificationTypes(
+  webTestClient: WebTestClient,
+  bookingReference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    VISIT_NOTIFICATIONS.replace("{reference}", bookingReference),
     authHttpHeaders,
   )
 }
