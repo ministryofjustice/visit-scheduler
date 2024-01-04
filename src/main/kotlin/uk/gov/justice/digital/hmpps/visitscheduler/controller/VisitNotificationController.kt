@@ -379,7 +379,7 @@ class VisitNotificationController(
       ),
     ],
   )
-  fun getNotificationsForBookingReference(
+  fun getNotificationTypesForBookingReference(
     @Schema(description = "bookingReference", example = "v9*d7*ed*7u", required = true)
     @PathVariable
     reference: String,
