@@ -330,4 +330,8 @@ class VisitNotificationEventService(
       )
     }
   }
+
+  fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> {
+    return this.visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
+  }
 }
