@@ -34,7 +34,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplat
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 import java.util.Locale
 
 const val NOT_KNOWN_NOMIS = "NOT_KNOWN_NOMIS"
@@ -158,7 +157,7 @@ class MigrateVisitService(
   }
 
   private fun isVisitTooFarInTheFuture(visitDate: LocalDateTime): Boolean {
-    return ChronoUnit.MONTHS.between(LocalDate.now(), visitDate) > migrateMaxMonthsInFuture
+    return (visitDate.toLocalDate() > LocalDate.now().plusMonths(migrateMaxMonthsInFuture))
   }
 
   private fun shouldMigrateWithSessionMapping(migrateVisitRequest: MigrateVisitRequestDto): Boolean {
