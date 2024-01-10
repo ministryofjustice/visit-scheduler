@@ -145,3 +145,13 @@ cache:
   evict:
     support-types:
       cron: "0 0 */12 * * ?" #every 12 hours
+
+migrate:
+  sessiontemplate:
+    mapping:
+      offset:
+        days: 0
+  max:
+    months:
+      in:
+        future: 6
