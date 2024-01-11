@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_TYPES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
@@ -634,6 +635,18 @@ fun callCountVisitNotification(
   return callGet(
     webTestClient,
     url,
+    authHttpHeaders,
+  )
+}
+
+fun callGetVisitNotificationTypes(
+  webTestClient: WebTestClient,
+  bookingReference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    VISIT_NOTIFICATION_TYPES.replace("{reference}", bookingReference),
     authHttpHeaders,
   )
 }

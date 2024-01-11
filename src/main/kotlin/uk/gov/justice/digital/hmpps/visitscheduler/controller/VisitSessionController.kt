@@ -63,12 +63,12 @@ class VisitSessionController(
       example = "MDI",
     )
     prisonCode: String,
-    @RequestParam(value = "prisonerId", required = false)
+    @RequestParam(value = "prisonerId", required = true)
     @Parameter(
       description = "Filter results by prisoner id",
       example = "A12345DC",
     )
-    prisonerId: String?,
+    prisonerId: String,
     @RequestParam(value = "min", required = false)
     @Parameter(
       description = "Override the default minimum number of days notice from the current date",

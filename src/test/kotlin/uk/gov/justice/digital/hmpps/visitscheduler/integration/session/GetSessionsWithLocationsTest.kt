@@ -125,44 +125,12 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `all visit sessions are returned for prison only search`() {
-    // When
-    val responseSpec = callGetSessions(prison.code)
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk.expectBody()
-    val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
-
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
-    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel2s)
-    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
-    assertSession(visitSessionResults[4], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
-  }
-
-  @Test
-  fun `no visit sessions are returned for a different prison`() {
-    // Given
-    val otherPrison = prisonEntityHelper.create("XYZ")
-
-    // When
-    val responseSpec = callGetSessions(otherPrison.code)
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk.expectBody()
-    val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
-  }
-
-  @Test
   fun `multiple visit sessions are returned for prisoner with location as MDI-A-1-100-1`() {
     // Given
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "MDI-A-1-100-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -191,7 +159,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-A-2-100-3"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -218,7 +185,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-A-2-100-2"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -243,7 +209,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-A-1-100"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -268,7 +233,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-A-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -293,7 +257,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-A"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -316,7 +279,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-B"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -339,7 +301,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-B-1-100-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -369,7 +330,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-B-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -399,7 +359,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-C-100-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -421,7 +380,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val prisonerInternalLocation = "MDI-D-100-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -462,7 +420,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     )
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prison.code)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -473,12 +430,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
 
     // none of the sessions on the day will be available
     Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
-  }
-
-  private fun callGetSessions(prisonId: String): WebTestClient.ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions?prisonId=$prisonId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
   }
 
   private fun callGetSessionsByPrisonerIdAndPrison(prisonId: String, prisonerId: String): WebTestClient.ResponseSpec {

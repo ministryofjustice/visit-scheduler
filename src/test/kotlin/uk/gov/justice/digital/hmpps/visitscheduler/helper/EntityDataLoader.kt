@@ -563,6 +563,10 @@ class VisitNotificationEventHelper(
       ),
     )
   }
+
+  fun getVisitNotifications(
+    visitBookingReference: String,
+  ): List<VisitNotificationEvent> = visitNotificationEventRepository.findByBookingReference(visitBookingReference)
 }
 
 class AllowedSessionLocationHierarchy(

@@ -40,7 +40,6 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
                 getJsonString(prisonerSearchResultDto),
               )
           },
-
         ),
     )
   }

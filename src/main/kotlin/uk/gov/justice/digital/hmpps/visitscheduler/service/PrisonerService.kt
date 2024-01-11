@@ -7,7 +7,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.client.NonAssociationsApiClie
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonApiClient
 import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerOffenderSearchClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_FOUR
@@ -49,10 +48,6 @@ class PrisonerService(
     return false
   }
 
-  fun getPrisonerFullStatus(prisonerId: String): PrisonerDetailsDto? {
-    return prisonApiClient.getPrisonerDetails(prisonerId)
-  }
-
   fun getPrisonerHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? {
     return prisonApiClient.getPrisonerHousingLocation(prisonerId)
   }
@@ -85,16 +80,20 @@ class PrisonerService(
 
   fun getPrisoner(prisonerId: String): PrisonerDto? {
     val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
-    val incentiveLevelCode = prisonerSearchResultDto?.currentIncentive?.level?.code
-    var incentiveLevel: IncentiveLevel? = null
-    incentiveLevelCode?.let {
-      incentiveLevel = IncentiveLevel.getIncentiveLevel(it)
 
-      if (incentiveLevel == null) {
-        LOG.error("Incentive level - $it for prisoner - $prisonerId not available in IncentiveLevel enum.")
+    return prisonerSearchResultDto?.let {
+      val incentiveLevelCode = prisonerSearchResultDto.currentIncentive?.level?.code
+      var incentiveLevel: IncentiveLevel? = null
+      incentiveLevelCode?.let {
+        incentiveLevel = IncentiveLevel.getIncentiveLevel(it)
+
+        if (incentiveLevel == null) {
+          LOG.error("Incentive level - $it for prisoner - $prisonerId not available in IncentiveLevel enum.")
+        }
       }
+
+      PrisonerDto(prisonerId, prisonerSearchResultDto.category, incentiveLevel, prisonCode = prisonerSearchResultDto.prisonId)
     }
-    return PrisonerDto(prisonerSearchResultDto?.category, incentiveLevel, prisonCode = prisonerSearchResultDto?.prisonId)
   }
 
   fun getPrisonerSupportedPrisonCode(prisonerCode: String): String? {

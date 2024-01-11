@@ -84,4 +84,7 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
 
   fun getNotificationCountDto(responseSpec: ResponseSpec): NotificationCountDto =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, NotificationCountDto::class.java)
+
+  fun getNotificationTypes(responseSpec: ResponseSpec): Array<NotificationEventType> =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<NotificationEventType>::class.java)
 }

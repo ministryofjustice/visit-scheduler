@@ -16,4 +16,6 @@ interface TestVisitNotificationEventRepository : JpaRepository<VisitNotification
     nativeQuery = true,
   )
   fun getFutureVisitNotificationEvents(@Param("prisonCode") prisonCode: String): List<VisitNotificationEvent>
+
+  fun findByBookingReference(@Param("bookingReference") bookingReference: String): List<VisitNotificationEvent>
 }
