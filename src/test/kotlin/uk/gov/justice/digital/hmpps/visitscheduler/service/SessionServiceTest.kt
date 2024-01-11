@@ -73,9 +73,11 @@ class SessionServiceTest {
   private val prisonCode = "MDI"
   private val noticeDaysMin = 1
   private val noticeDaysMax = 100
+  private val prisonerId = "AA1234BB"
 
   @BeforeEach
   fun beforeEachTestSetup() {
+    whenever(prisonerService.getPrisoner(any())).thenReturn(PrisonerDto(prisonerId, "C", IncentiveLevel.STANDARD, prisonCode))
     whenever(prisonsService.findPrisonByCode(prisonCode)).thenReturn(PrisonEntityHelper.createPrison(prisonCode, policyNoticeDaysMin = noticeDaysMin, policyNoticeDaysMax = noticeDaysMax))
 
     whenever(prisonerService.getPrisonerHousingLocation(any(), any())).thenReturn(
@@ -91,7 +93,7 @@ class SessionServiceTest {
   private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incentiveLevel: IncentiveLevel? = null, category: String ? = null) {
     whenever(
       prisonerService.getPrisoner(any()),
-    ).thenReturn(PrisonerDto(category = category, incentiveLevel = incentiveLevel))
+    ).thenReturn(PrisonerDto(prisonerId = prisonerId, category = category, incentiveLevel = incentiveLevel))
 
     whenever(
       sessionTemplateRepository.findSessionTemplateMinCapacityBy(
@@ -160,7 +162,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(weeklySession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonCode)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       val fridayAfter = currentDate.with(TemporalAdjusters.next(weeklySession.dayOfWeek)).atTime(weeklySession.startTime)
@@ -188,7 +190,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(weeklySession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonCode)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(5) // expiry date is inclusive
@@ -213,7 +215,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonCode)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -232,7 +234,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(dailySession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonCode)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(0)
@@ -251,7 +253,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonCode)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -311,7 +313,7 @@ class SessionServiceTest {
       mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonCode)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -361,7 +363,7 @@ class SessionServiceTest {
       mockVisitRepositoryCountResponse(listOf(openVisit, closedVisit), singleSession)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonCode)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -399,7 +401,7 @@ class SessionServiceTest {
       mockVisitRepositoryCountResponse(listOf(closedVisit), singleSession)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonCode)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -425,7 +427,7 @@ class SessionServiceTest {
       mockVisitRepositoryCountResponse(noVisitsBookedOrReserved, singleSession)
 
       // When
-      val sessions = sessionService.getVisitSessions(prisonCode)
+      val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
@@ -651,19 +653,24 @@ class SessionServiceTest {
       // Given
       val prisonerId = "A1234AA"
       val incorrectPrisonCode = "ABC"
+      val prisonerDto = PrisonerDto(prisonerId = prisonerId, prisonCode = incorrectPrisonCode)
 
       whenever(
-        prisonerValidationService.validatePrisonerIsFromPrison(prisonerId, incorrectPrisonCode),
-      ).thenThrow(PrisonerNotInSuppliedPrisonException())
+        prisonerService.getPrisoner(prisonerId),
+      ).thenReturn(prisonerDto)
+
+      whenever(
+        prisonerValidationService.validatePrisonerIsFromPrison(prisonerDto, prisonCode),
+      ).thenCallRealMethod()
 
       // When
       // the prison code being passed is not the same as the prisoners details on Prison API
       assertThrows<PrisonerNotInSuppliedPrisonException> {
-        sessionService.getVisitSessions(incorrectPrisonCode, prisonerId)
+        sessionService.getVisitSessions(prisonCode, prisonerId)
       }
 
       // Then
-      Mockito.verify(prisonerValidationService, times(1)).validatePrisonerIsFromPrison(prisonerId, incorrectPrisonCode)
+      Mockito.verify(prisonerValidationService, times(1)).validatePrisonerIsFromPrison(prisonerDto, prisonCode)
     }
   }
 

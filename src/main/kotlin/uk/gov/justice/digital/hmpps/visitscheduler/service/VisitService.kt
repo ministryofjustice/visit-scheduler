@@ -49,6 +49,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitsBySessionTemplateSpecification
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
@@ -63,6 +64,7 @@ import java.time.temporal.ChronoUnit
 @Transactional
 class VisitService(
   private val visitRepository: VisitRepository,
+  private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClientService: TelemetryClientService,
   private val sessionTemplateService: SessionTemplateService,
@@ -331,10 +333,10 @@ class VisitService(
       return visitDtoBuilder.build(canceledVisit)
     }
 
-    validateCancelRequest(reference)
+    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+    validateCancelRequest(visitEntity)
 
     val cancelOutcome = cancelVisitDto.cancelOutcome
-    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
 
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
@@ -346,12 +348,10 @@ class VisitService(
     val visitDto = visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
     processCancelEvents(visitEntity, visitDto, cancelVisitDto)
 
-    saveEventAudit(
-      cancelVisitDto.actionedBy,
-      visitDto,
-      CANCELLED_VISIT,
-      cancelVisitDto.applicationMethodType,
-    )
+    saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
+
+    // delete any visit notifications from the visit notifications table
+    visitNotificationEventRepository.deleteByBookingReference(reference)
 
     return visitDto
   }
@@ -406,9 +406,7 @@ class VisitService(
     }
   }
 
-  private fun validateCancelRequest(reference: String) {
-    val visitEntity =
-      visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+  private fun validateCancelRequest(visitEntity: Visit) {
     validateVisitStartDate(
       visitEntity,
       "cancelled",

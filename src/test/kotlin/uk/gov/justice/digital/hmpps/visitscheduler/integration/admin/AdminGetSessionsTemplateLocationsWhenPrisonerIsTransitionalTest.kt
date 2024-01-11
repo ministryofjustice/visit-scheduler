@@ -166,8 +166,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     val transitionalLocations = TransitionalLocationTypes.entries
 
     stubLastCellLocation(prisonCode, transitionalLocations, 1)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prisonOther.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
@@ -186,7 +185,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     stubLastCellLocation(prisonCode, transitionalLocations, 1)
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-${RECP.name}")
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId = prisonerId, null)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
@@ -195,7 +194,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     assertErrorResult(
       responseSpec,
       HttpStatusCode.valueOf(HttpStatus.SC_NOT_FOUND),
-      "Prisoner not found A0000001 with offender search",
+      "Prisoner with prisonNumber - A0000001 not found on offender search",
     )
   }
 
@@ -209,7 +208,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     stubLastCellLocation(prisonCode, transitionalLocations, 1)
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-${RECP.name}")
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prisonOther.code)
+    prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, null)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
@@ -217,8 +216,8 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     // Then
     assertErrorResult(
       responseSpec,
-      HttpStatusCode.valueOf(HttpStatus.SC_BAD_REQUEST),
-      "Prisoner with ID - A0000001 cannot be found",
+      HttpStatusCode.valueOf(HttpStatus.SC_NOT_FOUND),
+      "Prisoner with prisonNumber - A0000001 not found on offender search",
     )
   }
 
@@ -229,8 +228,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     lastPermanentLevels: String? = "$prisonerPrisonCode-A-1-100-1",
   ) {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonerPrisonCode-${prisonerTransitionalLocation.name}", lastPermanentLevels = lastPermanentLevels)
-    prisonApiMockServer.stubGetPrisonerDetails(prisonerId, prisonerPrisonCode)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prisonOther.code)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prisonerPrisonCode)
   }
 
   private fun stubLastCellLocation(

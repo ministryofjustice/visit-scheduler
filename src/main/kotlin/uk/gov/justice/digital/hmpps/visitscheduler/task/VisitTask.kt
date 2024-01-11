@@ -99,36 +99,34 @@ class VisitTask(
   private fun flagVisit(visit: VisitDto, noticeDays: Int, isRetry: Boolean = false): Boolean {
     var retry = false
 
-    with(visit) {
-      log.debug("Started check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", this.reference, this.prisonerId, this.prisonCode, this.startTimestamp, this.endTimestamp)
-      var sessions = emptyList<VisitSessionDto>()
-      var visitTrackEvent = getFlaggedVisitTrackEvent(visit)
+    log.debug("Started check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
+    var sessions = emptyList<VisitSessionDto>()
+    var visitTrackEvent = getFlaggedVisitTrackEvent(visit)
 
-      try {
-        sessions = sessionService.getVisitSessions(this.prisonCode, this.prisonerId, noticeDays, noticeDays)
-      } catch (e: PrisonerNotInSuppliedPrisonException) {
+    try {
+      sessions = sessionService.getVisitSessions(visit.prisonCode, visit.prisonerId, noticeDays, noticeDays)
+    } catch (e: PrisonerNotInSuppliedPrisonException) {
+      visitTrackEvent = handleException(visit, visitTrackEvent, e)
+    } catch (e: Exception) {
+      // only log this if the visit is being retried
+      if (isRetry) {
         visitTrackEvent = handleException(visit, visitTrackEvent, e)
-      } catch (e: Exception) {
-        // only log this if the visit is being retried
-        if (isRetry) {
-          visitTrackEvent = handleException(visit, visitTrackEvent, e)
-        } else {
-          retry = true
-        }
+      } else {
+        retry = true
       }
+    }
 
-      if (sessions.isEmpty() && !retry) {
-        trackEvent(visitTrackEvent)
-        log.info("Flagged Visit: Visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check.", this.reference, this.prisonerId, this.prisonCode, this.startTimestamp, this.endTimestamp)
-      }
+    if (sessions.isEmpty() && !retry) {
+      trackEvent(visitTrackEvent)
+      log.info("Flagged Visit: Visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check.", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
+    }
 
-      log.debug("Finished check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", this.reference, this.prisonerId, this.prisonCode, this.startTimestamp, this.endTimestamp)
+    log.debug("Finished check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
 
-      try {
-        Thread.sleep(FlagVisitTaskConfiguration.THREAD_SLEEP_TIME_IN_MILLISECONDS)
-      } catch (e: InterruptedException) {
-        log.debug("Flagged Visit: Sleep failed : {}", e.toString())
-      }
+    try {
+      Thread.sleep(FlagVisitTaskConfiguration.THREAD_SLEEP_TIME_IN_MILLISECONDS)
+    } catch (e: InterruptedException) {
+      log.debug("Flagged Visit: Sleep failed : {}", e.toString())
     }
 
     return retry
