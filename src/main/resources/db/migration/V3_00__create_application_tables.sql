@@ -5,7 +5,6 @@ CREATE TABLE tmp_visit (
             session_slot_id int4 NULL,
             reference text NOT NULL,
             application_reference varchar(40) NULL,
-            session_template_reference text NULL,
             visit_type varchar(80) NOT NULL,
             visit_room varchar(255) NOT NULL,
             visit_status varchar(80) NOT NULL,
@@ -42,7 +41,7 @@ CREATE TABLE session_slot
     prison_id                   integer         NOT NULL,
     slot_date              		date            NOT NULL,
     slot_time              		time            NOT NULL,
-    slot_end_time                	time            NOT NULL
+    slot_end_time               time            NOT NULL
 );
 
 CREATE TABLE application_contact (

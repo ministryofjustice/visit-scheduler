@@ -2,10 +2,9 @@ INSERT INTO tmp_visit
     SELECT  id,
             prison_id,
             prisoner_id,
-            session_slot_id,
+            new_session_slot_id,
             reference,
             application_reference,
-            session_template_reference,
             visit_type,
             visit_room,
             visit_status,
@@ -17,7 +16,7 @@ INSERT INTO tmp_visit
             create_timestamp,
             modify_timestamp
     FROM   (
-               SELECT V.*,ss.id AS session_slot_id FROM visit v
+               SELECT V.*,ss.id AS new_session_slot_id FROM visit v
                     JOIN session_slot ss on  (ss.session_template_reference IS NULL AND
                                          ss.prison_id 		= v.prison_id AND
                                          ss.slot_date 		= visit_start::DATE AND
@@ -31,4 +30,6 @@ INSERT INTO tmp_visit
                                            ss.prison_id 		= v.prison_id AND
                                            ss.slot_date 		= visit_start::DATE
                    )) tmp ORDER BY id;
+
+
 

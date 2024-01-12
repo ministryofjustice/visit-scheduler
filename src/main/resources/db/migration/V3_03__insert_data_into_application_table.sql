@@ -14,4 +14,5 @@ INSERT INTO application
     FROM  tmp_visit v order by id;
 
 
+ALTER TABLE tmp_visit DROP application_reference;
 
