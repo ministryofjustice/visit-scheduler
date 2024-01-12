@@ -7,5 +7,3 @@ DELETE FROM visit_support WHERE visit_id IN (SELECT visit_id FROM tmp_delete_app
 DELETE FROM visit_visitor WHERE visit_id IN (SELECT visit_id FROM tmp_delete_applications_from_visits);
 DELETE FROM visit WHERE id IN (SELECT visit_id FROM tmp_delete_applications_from_visits);
 
-
-Need to make reference UNIQUE after this
