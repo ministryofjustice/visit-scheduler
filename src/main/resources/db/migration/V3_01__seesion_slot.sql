@@ -3,7 +3,7 @@ insert into session_slot (session_template_reference,prison_id,slot_date,slot_ti
 select st.reference as session_template_reference,
        v.prison_id,
        v.visit_start::date,
-        st.start_time,
+       st.start_time,
        st.end_time
 from visit v
          join session_template st on st.reference = v.session_template_reference

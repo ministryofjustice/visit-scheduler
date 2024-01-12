@@ -19,3 +19,6 @@ ALTER TABLE visits_to_applications
     ADD CONSTRAINT application_must_exist
         FOREIGN KEY (application_id)
             REFERENCES application(id);
+
+-- now that the link is done we can remove booking reference from application
+ALTER TABLE application DROP booking_reference;

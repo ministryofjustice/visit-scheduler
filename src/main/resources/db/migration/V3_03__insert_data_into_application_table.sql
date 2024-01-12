@@ -14,11 +14,4 @@ SELECT
 FROM  tmp_visit v order by id;
 
 
--- Drop session info
-ALTER TABLE application DROP slot_date;
-ALTER TABLE application DROP slot_time;
-ALTER TABLE application DROP slot_end_time;
-ALTER TABLE application DROP session_template_reference;
-
-
 
