@@ -151,12 +151,16 @@ class VisitNotificationEventService(
    * Groups List into pairs e.g.
    *  A,B,C,D
    *  Becomes : AB, AC, AD, BC, BD, CD
+   *  Ignores : AA, BB ,CC
    */
   fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
     val result: MutableList<Pair<VisitDto, VisitDto>> = mutableListOf()
     affectedVisits.forEachIndexed { index, visitDto ->
       for (secondIndex in index + 1..<affectedVisits.size) {
-        result.add(Pair(visitDto, affectedVisits[secondIndex]))
+        val otherVisit = affectedVisits[secondIndex]
+        if (visitDto.prisonerId != otherVisit.prisonerId) {
+          result.add(Pair(visitDto, otherVisit))
+        }
       }
     }
     return result
