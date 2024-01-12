@@ -98,7 +98,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   }
 
   @Test
-  fun `when one prisoner has two visits the same day that overlap's with another then visit with the same prisoner is not seen as affected`() {
+  fun `when one prisoner has two visits the same day that overlap's with another then visits with same prisoner id are not grouped`() {
     // Given
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
