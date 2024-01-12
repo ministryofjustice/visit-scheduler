@@ -11,7 +11,7 @@ INSERT INTO application
         created_by,
         create_timestamp,
         modify_timestamp
-    FROM  tmp_visit v order by id;
+    FROM  tmp_visit v
 
 
 ALTER TABLE tmp_visit DROP application_reference;
