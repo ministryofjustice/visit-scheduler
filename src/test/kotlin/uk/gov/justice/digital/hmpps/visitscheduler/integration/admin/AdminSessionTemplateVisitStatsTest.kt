@@ -98,8 +98,8 @@ class AdminSessionTemplateVisitStatsTest(
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.closed).isEqualTo(2)
     Assertions.assertThat(sessionTemplateVisitStatsDto.visitsByDate).size().isEqualTo(6)
     val visitsByDate = sessionTemplateVisitStatsDto.visitsByDate
-    Assertions.assertThat(visitsByDate!![0]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(1).toLocalDate(), SessionCapacityDto(open = 1, closed = 2),0))
-    Assertions.assertThat(visitsByDate[1]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(2).toLocalDate(), SessionCapacityDto(open = 1, closed = 0),0))
+    Assertions.assertThat(visitsByDate!![0]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(1).toLocalDate(), SessionCapacityDto(open = 1, closed = 2), 0))
+    Assertions.assertThat(visitsByDate[1]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(2).toLocalDate(), SessionCapacityDto(open = 1, closed = 0), 0))
     Assertions.assertThat(visitsByDate[2]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(3).toLocalDate(), SessionCapacityDto(open = 1, closed = 0), 0))
     Assertions.assertThat(visitsByDate[3]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(4).toLocalDate(), SessionCapacityDto(open = 0, closed = 1), 0))
     Assertions.assertThat(visitsByDate[4]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(policyNoticeDaysMax - 1).toLocalDate(), SessionCapacityDto(open = 0, closed = 1), 0))

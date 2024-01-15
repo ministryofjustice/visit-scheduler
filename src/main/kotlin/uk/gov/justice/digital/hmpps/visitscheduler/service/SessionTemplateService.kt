@@ -461,21 +461,20 @@ class SessionTemplateService(
     return SessionTemplateVisitStatsDto(sessionCapacity, visitCount, cancelCount, visitCountsList)
   }
 
-  fun getVisitCountsList(reference : String, fromDate : LocalDate, toDate : LocalDate?): MutableList<SessionTemplateVisitCountsDto> {
-
+  fun getVisitCountsList(reference: String, fromDate: LocalDate, toDate: LocalDate?): MutableList<SessionTemplateVisitCountsDto> {
     val visitCountsByDate = this.sessionTemplateRepository.getVisitCountsByDate(reference, fromDate, toDate)
 
     val visitCountsList = mutableListOf<SessionTemplateVisitCountsDto>()
     val visitCountsByDateMap = visitCountsByDate.groupBy { it.visitDate }
 
-    visitCountsByDateMap.entries.forEach { dateGroup->
+    visitCountsByDateMap.entries.forEach { dateGroup ->
       var openCount = 0
       var closedCount = 0
-      val cancelCount = sessionTemplateRepository.getCancelledVisitCountForDate(reference,dateGroup.key)
+      val cancelCount = sessionTemplateRepository.getCancelledVisitCountForDate(reference, dateGroup.key)
       dateGroup.value.forEach {
         if (it.visitRestriction == VisitRestriction.OPEN) openCount = it.visitCount else closedCount = it.visitCount
       }
-      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = dateGroup.key, SessionCapacityDto(closed = closedCount, open = openCount),cancelCount))
+      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = dateGroup.key, SessionCapacityDto(closed = closedCount, open = openCount), cancelCount))
     }
 
     return visitCountsList
