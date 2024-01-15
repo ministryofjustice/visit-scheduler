@@ -22,14 +22,15 @@ CREATE TABLE tmp_visit (
 -- Create new application table, this is done because updating the existing tmp table will take much long than creating a new table
 CREATE TABLE application (
             id int4 NOT NULL,
-            prison_id int4 NULL,
-            prisoner_id varchar(80) NULL,
+            prison_id int4 NOT NULL,
+            prisoner_id varchar(80) NOT NULL,
             session_slot_id int4 NULL,
             reserved_slot bool NOT NULL DEFAULT true,
             reference text UNIQUE NULL,
             booking_reference text NULL,
             visit_type varchar(80) NULL,
             restriction varchar(80) NULL,
+            completed bool NOT NULL DEFAULT false,
             created_by varchar(60) NULL,
             create_timestamp timestamp NULL,
             modify_timestamp timestamp NULL
