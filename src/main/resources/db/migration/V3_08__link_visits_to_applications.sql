@@ -1,8 +1,3 @@
-CREATE TABLE visits_to_applications (
-       visit_id integer NOT NULL,
-       application_id integer NOT NULL
-);
-
 insert into visits_to_applications
         SELECT  v.id, a.id FROM tmp_visit v
             JOIN application a on a.booking_reference = v.reference

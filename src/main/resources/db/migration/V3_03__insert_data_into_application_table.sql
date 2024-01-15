@@ -4,6 +4,7 @@ INSERT INTO application
         prison_id,
         prisoner_id,
         session_slot_id,
+        visit_status = 'RESERVED' as reserved_slot,
         application_reference,
         reference,
         visit_type,
@@ -11,7 +12,7 @@ INSERT INTO application
         created_by,
         create_timestamp,
         modify_timestamp
-    FROM  tmp_visit v
+    FROM  tmp_visit v;
 
 
 ALTER TABLE tmp_visit DROP application_reference;

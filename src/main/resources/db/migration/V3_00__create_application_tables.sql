@@ -1,3 +1,5 @@
+-- Before the application migration is run it may be a good idea to run 'VACUUM FULL;' command!
+
 CREATE TABLE tmp_visit (
             id serial4 NOT NULL,
             prison_id int4 NOT NULL,
@@ -23,6 +25,7 @@ CREATE TABLE application (
             prison_id int4 NULL,
             prisoner_id varchar(80) NULL,
             session_slot_id int4 NULL,
+            reserved_slot bool NOT NULL DEFAULT true,
             reference text UNIQUE NULL,
             booking_reference text NULL,
             visit_type varchar(80) NULL,
@@ -69,5 +72,11 @@ CREATE TABLE application_support (
               "text" text NULL,
               CONSTRAINT application_support_pkey PRIMARY KEY (id),
               CONSTRAINT application_support_application_id_type_key UNIQUE (application_id, type)
+);
+
+
+CREATE TABLE visits_to_applications (
+                                        visit_id integer NOT NULL,
+                                        application_id integer NOT NULL
 );
 
