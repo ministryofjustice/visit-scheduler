@@ -22,8 +22,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     "SELECT MAX(open),MAX(closed) FROM" +
       "(SELECT  COUNT(CASE WHEN v.visit_restriction = 'OPEN' THEN 1 END) AS open, " +
       " COUNT(CASE WHEN v.visit_restriction = 'CLOSED' THEN 1 END) AS closed  FROM visit v " +
-      " JOIN session_template st ON st.reference = v.session_template_reference " +
-      " WHERE st.reference = :reference" +
+      " WHERE v.session_template_reference = :reference" +
       " AND v.visit_start >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
       " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
@@ -38,8 +37,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "select count(*) from visit v " +
-      " JOIN session_template st ON st.reference = v.session_template_reference " +
-      " WHERE st.reference = :reference" +
+      " WHERE v.session_template_reference = :reference" +
       " AND v.visit_start >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
       " AND visit_status IN ('BOOKED','RESERVED','CHANGING')",
@@ -53,8 +51,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "select count(*) from visit v " +
-      " JOIN session_template st ON st.reference = v.session_template_reference " +
-      " WHERE st.reference = :reference" +
+      " WHERE v.session_template_reference = :reference" +
       " AND v.visit_start >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
       " AND visit_status = 'CANCELLED' AND (v.outcome_status is null OR v.outcome_status != 'SUPERSEDED_CANCELLATION') ",
@@ -68,8 +65,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "select cast(v.visit_start as date) as visitDate, v.visit_restriction as visitRestriction, count(*) as visitCount from visit v " +
-      " JOIN session_template st ON st.reference = v.session_template_reference " +
-      " WHERE st.reference = :reference" +
+      " WHERE v.session_template_reference = :reference" +
       " AND v.visit_start >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
       " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
@@ -82,6 +78,18 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("visitsFromDate") visitsFromDate: LocalDate,
     @Param("visitsToDate") visitsToDate: LocalDate?,
   ): List<VisitCountsByDate>
+
+  @Query(
+    "select count(*) from visit v " +
+      " WHERE v.session_template_reference = :reference" +
+      "   AND v.visit_start >= :sessionDate AND v.visit_end < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
+      "   AND visit_status IN ('CANCELLED') AND (v.outcome_status is null OR v.outcome_status != 'SUPERSEDED_CANCELLATION')",
+    nativeQuery = true,
+  )
+  fun getCancelledVisitCountForDate(
+    @Param("reference") reference: String,
+    @Param("sessionDate") sessionDate: LocalDate,
+  ): Int
 
   @Query(
     "select u from SessionTemplate u " +
