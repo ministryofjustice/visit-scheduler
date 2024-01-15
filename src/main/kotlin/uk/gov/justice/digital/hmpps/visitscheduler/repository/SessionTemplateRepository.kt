@@ -82,8 +82,8 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   @Query(
     "select count(*) from visit v " +
       " WHERE v.session_template_reference = :reference" +
-      "   AND v.visit_start >= :sessionDate AND v.visit_start <= :sessionDate" +
-      "   AND visit_status IN ('CANCELLED') AND v.outcome_status != 'SUPERSEDED_CANCELLATION'",
+      "   AND v.visit_start >= :sessionDate AND v.visit_end < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
+      "   AND visit_status IN ('CANCELLED') AND (v.outcome_status is null OR v.outcome_status != 'SUPERSEDED_CANCELLATION')",
     nativeQuery = true,
   )
   fun getCancelledVisitCountForDate(
