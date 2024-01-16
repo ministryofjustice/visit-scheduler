@@ -27,6 +27,7 @@ CREATE TABLE application (
             session_slot_id int4 NULL,
             reserved_slot bool NOT NULL DEFAULT true,
             reference text UNIQUE NULL,
+            booking_reference text NULL,
             visit_type varchar(80) NULL,
             restriction varchar(80) NULL,
             completed bool NOT NULL DEFAULT false,
