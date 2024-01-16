@@ -80,6 +80,22 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   ): List<VisitCountsByDate>
 
   @Query(
+    "select cast(v.visit_start as date) as visitDate, v.visit_restriction as visitRestriction, count(*) as visitCount from visit v " +
+      " WHERE v.session_template_reference = :reference" +
+      " AND v.visit_start >= :visitsFromDate" +
+      " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
+      " AND visit_status = 'CANCELLED' AND (v.outcome_status is null OR v.outcome_status != 'SUPERSEDED_CANCELLATION') " +
+      " GROUP BY v.visit_start, v.visit_restriction" +
+      " ORDER BY v.visit_start",
+    nativeQuery = true,
+  )
+  fun getCancelledVisitCountsByDate(
+    @Param("reference") reference: String,
+    @Param("visitsFromDate") visitsFromDate: LocalDate,
+    @Param("visitsToDate") visitsToDate: LocalDate?,
+  ): List<VisitCountsByDate>
+
+  @Query(
     "select count(*) from visit v " +
       " WHERE v.session_template_reference = :reference" +
       "   AND v.visit_start >= :sessionDate AND v.visit_end < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
