@@ -453,12 +453,13 @@ class SessionTemplateService(
     val sessionCapacity = sessionTemplateUtil.getMinimumSessionCapacity(minimumCapacityTuple)
 
     val visitCountsList = getVisitCountsList(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+    val cancelledVisitCountsList = getCancelledVisitCountsList(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
 
     val visitCount = this.sessionTemplateRepository.getVisitCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
 
     val cancelCount = this.sessionTemplateRepository.getVisitCancelCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
 
-    return SessionTemplateVisitStatsDto(sessionCapacity, visitCount, cancelCount, visitCountsList)
+    return SessionTemplateVisitStatsDto(sessionCapacity, visitCount, cancelCount, visitCountsList, cancelledVisitCountsList)
   }
 
   fun getVisitCountsList(reference: String, fromDate: LocalDate, toDate: LocalDate?): MutableList<SessionTemplateVisitCountsDto> {
@@ -470,11 +471,28 @@ class SessionTemplateService(
     visitCountsByDateMap.entries.forEach { dateGroup ->
       var openCount = 0
       var closedCount = 0
-      val cancelCount = sessionTemplateRepository.getCancelledVisitCountForDate(reference, dateGroup.key)
       dateGroup.value.forEach {
         if (it.visitRestriction == VisitRestriction.OPEN) openCount = it.visitCount else closedCount = it.visitCount
       }
-      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = dateGroup.key, SessionCapacityDto(closed = closedCount, open = openCount), cancelCount))
+      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = dateGroup.key, SessionCapacityDto(closed = closedCount, open = openCount)))
+    }
+
+    return visitCountsList
+  }
+
+  fun getCancelledVisitCountsList(reference: String, fromDate: LocalDate, toDate: LocalDate?): MutableList<SessionTemplateVisitCountsDto> {
+    val visitCountsByDate = this.sessionTemplateRepository.getCancelledVisitCountsByDate(reference, fromDate, toDate)
+
+    val visitCountsList = mutableListOf<SessionTemplateVisitCountsDto>()
+    val visitCountsByDateMap = visitCountsByDate.groupBy { it.visitDate }
+
+    visitCountsByDateMap.entries.forEach { dateGroup ->
+      var openCount = 0
+      var closedCount = 0
+      dateGroup.value.forEach {
+        if (it.visitRestriction == VisitRestriction.OPEN) openCount = it.visitCount else closedCount = it.visitCount
+      }
+      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = dateGroup.key, SessionCapacityDto(closed = closedCount, open = openCount)))
     }
 
     return visitCountsList

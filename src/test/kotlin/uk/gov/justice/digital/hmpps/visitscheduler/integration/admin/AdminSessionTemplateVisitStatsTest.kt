@@ -72,6 +72,7 @@ class AdminSessionTemplateVisitStatsTest(
     visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = tomorrow)
     visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = tomorrow)
 
+    visitEntityHelper.create(visitStatus = CANCELLED, outcomeStatus = OutcomeStatus.CANCELLATION, sessionTemplateReference = reference1, visitRestriction = OPEN, visitStart = tomorrow)
     visitEntityHelper.create(visitStatus = CANCELLED, outcomeStatus = OutcomeStatus.CANCELLATION, sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = tomorrow)
     visitEntityHelper.create(visitStatus = CANCELLED, sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = tomorrow)
     visitEntityHelper.create(visitStatus = CHANGING, sessionTemplateReference = reference1, visitRestriction = CLOSED, visitStart = tomorrow)
@@ -93,16 +94,19 @@ class AdminSessionTemplateVisitStatsTest(
     val sessionTemplateVisitStatsDto = getSessionTemplateVisitStatsDto(responseSpec)
 
     Assertions.assertThat(sessionTemplateVisitStatsDto.visitCount).isEqualTo(8)
-    Assertions.assertThat(sessionTemplateVisitStatsDto.cancelCount).isEqualTo(2)
+    Assertions.assertThat(sessionTemplateVisitStatsDto.cancelCount).isEqualTo(3)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.open).isEqualTo(1)
     Assertions.assertThat(sessionTemplateVisitStatsDto.minimumCapacity.closed).isEqualTo(2)
     Assertions.assertThat(sessionTemplateVisitStatsDto.visitsByDate).size().isEqualTo(6)
     val visitsByDate = sessionTemplateVisitStatsDto.visitsByDate
-    Assertions.assertThat(visitsByDate!![0]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(1).toLocalDate(), SessionCapacityDto(open = 1, closed = 2), 2))
-    Assertions.assertThat(visitsByDate[1]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(2).toLocalDate(), SessionCapacityDto(open = 1, closed = 0), 0))
-    Assertions.assertThat(visitsByDate[2]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(3).toLocalDate(), SessionCapacityDto(open = 1, closed = 0), 0))
-    Assertions.assertThat(visitsByDate[3]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(4).toLocalDate(), SessionCapacityDto(open = 0, closed = 1), 0))
-    Assertions.assertThat(visitsByDate[4]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(policyNoticeDaysMax - 1).toLocalDate(), SessionCapacityDto(open = 0, closed = 1), 0))
+    Assertions.assertThat(visitsByDate!![0]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(1).toLocalDate(), SessionCapacityDto(open = 1, closed = 2)))
+    Assertions.assertThat(visitsByDate[1]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(2).toLocalDate(), SessionCapacityDto(open = 1, closed = 0)))
+    Assertions.assertThat(visitsByDate[2]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(3).toLocalDate(), SessionCapacityDto(open = 1, closed = 0)))
+    Assertions.assertThat(visitsByDate[3]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(4).toLocalDate(), SessionCapacityDto(open = 0, closed = 1)))
+    Assertions.assertThat(visitsByDate[4]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(policyNoticeDaysMax - 1).toLocalDate(), SessionCapacityDto(open = 0, closed = 1)))
+    Assertions.assertThat(sessionTemplateVisitStatsDto.cancelVisitsByDate).size().isEqualTo(1)
+    val cancelledVisitsByDate = sessionTemplateVisitStatsDto.cancelVisitsByDate
+    Assertions.assertThat(cancelledVisitsByDate!![0]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDateTime.plusDays(1).toLocalDate(), SessionCapacityDto(open = 1, closed = 2)))
   }
 
   private fun getSessionTemplateVisitStatsDto(responseSpec: ResponseSpec) =
