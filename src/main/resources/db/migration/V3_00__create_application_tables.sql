@@ -40,7 +40,7 @@ CREATE TABLE application (
 CREATE TABLE session_slot
 (
     id                      	serial          NOT NULL PRIMARY KEY,
-    reference               	text            UNIQUE,
+    reference               	text            UNIQUE NOT NULL,
     session_template_reference 	text,
     prison_id                   integer         NOT NULL,
     slot_date              		date            NOT NULL,
