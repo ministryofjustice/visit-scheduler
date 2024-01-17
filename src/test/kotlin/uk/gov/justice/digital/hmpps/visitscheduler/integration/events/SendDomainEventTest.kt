@@ -29,7 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.service.HMPPSDomainEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED_DESC
@@ -62,7 +62,7 @@ class SendDomainEventTest : IntegrationTestBase() {
       testSqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(testQueueUrl).build())
     }
 
-    private fun createVisitAndSave(visitStatus: VisitStatus): Visit {
+    private fun createVisitAndSave(visitStatus: VisitStatus): OldVisit {
       val visit = visitEntityHelper.create(visitStatus = visitStatus)
       return visit
     }

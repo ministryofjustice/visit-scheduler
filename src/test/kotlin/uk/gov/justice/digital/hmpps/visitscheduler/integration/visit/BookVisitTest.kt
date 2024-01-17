@@ -27,7 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -44,7 +44,7 @@ class BookVisitTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private lateinit var reservedVisit: Visit
+  private lateinit var reservedVisit: OldVisit
 
   @BeforeEach
   internal fun setUp() {
@@ -261,7 +261,7 @@ class BookVisitTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
-      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be changed")
+      .jsonPath("$.developerMessage").isEqualTo("OldVisit with booking reference - $reference is in the past, it cannot be changed")
   }
 
   private fun assertBookedEvent(visit: VisitDto, isUpdated: Boolean) {

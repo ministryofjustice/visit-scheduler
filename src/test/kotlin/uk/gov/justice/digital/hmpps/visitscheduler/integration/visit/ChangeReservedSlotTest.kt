@@ -31,7 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -44,8 +44,8 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private lateinit var visitMin: Visit
-  private lateinit var visitFull: Visit
+  private lateinit var visitMin: OldVisit
+  private lateinit var visitFull: OldVisit
 
   companion object {
     val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)

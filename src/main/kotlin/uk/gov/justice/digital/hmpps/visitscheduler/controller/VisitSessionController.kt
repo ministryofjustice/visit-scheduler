@@ -29,7 +29,7 @@ const val GET_SESSION_CAPACITY: String = "$VISIT_SESSION_CONTROLLER_PATH/capacit
 @RestController
 @Validated
 @RequestMapping(name = "Session Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
-@Tag(name = "2. Visit session rest controller")
+@Tag(name = "2. OldVisit session rest controller")
 class VisitSessionController(
   private val sessionService: SessionService,
 ) {
@@ -42,7 +42,7 @@ class VisitSessionController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit session information returned",
+        description = "OldVisit session information returned",
       ),
       ApiResponse(
         responseCode = "401",

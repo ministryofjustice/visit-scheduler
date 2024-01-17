@@ -21,7 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -377,7 +377,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     reference: String,
     sessionTemplateReference: String,
-  ): Visit {
+  ): OldVisit {
     val visit = visitEntityHelper.create(
       visitStatus = visitStatus,
       prisonerId = prisonerId,

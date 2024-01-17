@@ -152,13 +152,13 @@ class VisitSchedulerExceptionHandler(
 
   @ExceptionHandler(VisitNotFoundException::class)
   fun handleVisitNotFoundException(e: VisitNotFoundException): ResponseEntity<ErrorResponse?>? {
-    log.debug("Visit not found exception caught: {}", e.message)
+    log.debug("OldVisit not found exception caught: {}", e.message)
     return ResponseEntity
       .status(HttpStatus.NOT_FOUND)
       .body(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
-          userMessage = "Visit not found: ${e.cause?.message}",
+          userMessage = "OldVisit not found: ${e.cause?.message}",
           developerMessage = e.message,
         ),
       )

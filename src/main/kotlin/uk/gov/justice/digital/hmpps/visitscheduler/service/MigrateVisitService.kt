@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
@@ -59,7 +59,7 @@ class MigrateVisitService(
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
     if (isVisitTooFarInTheFuture(migrateVisitRequest.startTimestamp)) {
-      throw VisitToMigrateException("Visit more than $migrateMaxMonthsInFuture months in future, will not be migrated!")
+      throw VisitToMigrateException("OldVisit more than $migrateMaxMonthsInFuture months in future, will not be migrated!")
     }
 
     val actionedBy = migrateVisitRequest.actionedBy ?: NOT_KNOWN_NOMIS
@@ -82,7 +82,7 @@ class MigrateVisitService(
     }
 
     val visitEntity = visitRepository.saveAndFlush(
-      Visit(
+      OldVisit(
         prisonerId = migrateVisitRequest.prisonerId,
         prison = prison,
         prisonId = prison.id,
@@ -202,7 +202,7 @@ class MigrateVisitService(
     return visit
   }
 
-  private fun sendMigratedTrackEvent(visitEntity: Visit, type: TelemetryVisitEvents) {
+  private fun sendMigratedTrackEvent(visitEntity: OldVisit, type: TelemetryVisitEvents) {
     val eventsMap = createVisitTrackEventFromVisitEntity(visitEntity)
     visitEntity.outcomeStatus?.let {
       eventsMap.put("outcomeStatus", it.name)
@@ -213,7 +213,7 @@ class MigrateVisitService(
     )
   }
 
-  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): MutableMap<String, String> {
+  private fun createVisitTrackEventFromVisitEntity(visitEntity: OldVisit): MutableMap<String, String> {
     return mutableMapOf(
       "reference" to visitEntity.reference,
       "prisonerId" to visitEntity.prisonerId,
@@ -252,7 +252,7 @@ class MigrateVisitService(
       }
     }
 
-  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
+  private fun createVisitNote(visit: OldVisit, type: VisitNoteType, text: String): VisitNote {
     return VisitNote(
       visitId = visit.id,
       type = type,
@@ -261,7 +261,7 @@ class MigrateVisitService(
     )
   }
 
-  private fun saveLegacyData(visit: Visit, migrateVisitRequestDto: MigrateVisitRequestDto) {
+  private fun saveLegacyData(visit: OldVisit, migrateVisitRequestDto: MigrateVisitRequestDto) {
     val legacyData = LegacyData(
       visitId = visit.id,
       leadPersonId = migrateVisitRequestDto.legacyData?.leadVisitorId,
@@ -270,7 +270,7 @@ class MigrateVisitService(
     legacyDataRepository.saveAndFlush(legacyData)
   }
 
-  private fun createVisitContact(visit: Visit, name: String, telephone: String?): VisitContact {
+  private fun createVisitContact(visit: OldVisit, name: String, telephone: String?): VisitContact {
     return VisitContact(
       visitId = visit.id,
       name = name,
@@ -279,7 +279,7 @@ class MigrateVisitService(
     )
   }
 
-  private fun createVisitVisitor(visit: Visit, personId: Long): VisitVisitor {
+  private fun createVisitVisitor(visit: OldVisit, personId: Long): VisitVisitor {
     return VisitVisitor(
       nomisPersonId = personId,
       visitId = visit.id,

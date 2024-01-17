@@ -20,18 +20,18 @@ data class MigrateVisitRequestDto(
   @Schema(description = "Prison Id", example = "MDI", required = true)
   @field:NotBlank
   val prisonCode: String,
-  @Schema(description = "Visit Room", example = "A1", required = true)
+  @Schema(description = "OldVisit Room", example = "A1", required = true)
   @field:NotBlank
   val visitRoom: String,
-  @Schema(description = "Visit Type", example = "SOCIAL", required = true)
+  @Schema(description = "OldVisit Type", example = "SOCIAL", required = true)
   @field:NotNull
   val visitType: VisitType,
-  @Schema(description = "Visit Status", example = "RESERVED", required = true)
+  @Schema(description = "OldVisit Status", example = "RESERVED", required = true)
   @field:NotNull
   val visitStatus: VisitStatus,
   @Schema(description = "Outcome Status", defaultValue = "NOT_RECORDED", required = false)
   val outcomeStatus: OutcomeStatus? = OutcomeStatus.NOT_RECORDED,
-  @Schema(description = "Visit Restriction", example = "OPEN", required = true)
+  @Schema(description = "OldVisit Restriction", example = "OPEN", required = true)
   @field:NotNull
   val visitRestriction: VisitRestriction,
   @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
@@ -51,7 +51,7 @@ data class MigrateVisitRequestDto(
   val visitContact: CreateLegacyContactOnVisitRequestDto? = CreateLegacyContactOnVisitRequestDto.create(),
   @Schema(description = "List of visitors associated with the visit", required = false)
   val visitors: Set<@Valid VisitorDto>? = setOf(),
-  @Schema(description = "Visit notes", required = false)
+  @Schema(description = "OldVisit notes", required = false)
   val visitNotes: Set<@Valid VisitNoteDto>? = setOf(),
   @Schema(description = "Username for user who actioned this request", required = false)
   val actionedBy: String? = null,

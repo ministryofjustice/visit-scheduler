@@ -10,17 +10,17 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
 @Repository
-interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
+interface VisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecutor<OldVisit> {
 
   @Query(
-    "SELECT v.applicationReference FROM Visit v " +
+    "SELECT v.applicationReference FROM OldVisit v " +
       "WHERE (v.visitStatus = 'RESERVED' OR v.visitStatus = 'CHANGING')" +
       " AND v.modifyTimestamp < :expiredDateAndTime ORDER BY v.id",
   )
@@ -35,35 +35,35 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "ORDER BY modify_timestamp DESC LIMIT 1 ",
     nativeQuery = true,
   )
-  fun findByReference(reference: String): Visit?
+  fun findByReference(reference: String): OldVisit?
 
   @Query(
-    "SELECT v FROM Visit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') ",
+    "SELECT v FROM OldVisit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') ",
   )
-  fun findApplication(applicationReference: String): Visit?
+  fun findApplication(applicationReference: String): OldVisit?
 
   @Query(
-    "SELECT v.reference FROM Visit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') ",
+    "SELECT v.reference FROM OldVisit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') ",
   )
   fun getApplicationBookingReference(applicationReference: String): String?
 
   @Query(
-    "SELECT v FROM Visit v WHERE v.applicationReference = :applicationReference AND v.visitStatus = 'BOOKED' ",
+    "SELECT v FROM OldVisit v WHERE v.applicationReference = :applicationReference AND v.visitStatus = 'BOOKED' ",
   )
-  fun findBookedApplication(applicationReference: String): Visit?
+  fun findBookedApplication(applicationReference: String): OldVisit?
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'BOOKED') ",
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'BOOKED') ",
   )
   fun isApplicationBooked(applicationReference: String): Boolean
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference AND (v.visitStatus = 'CANCELLED') AND (v.outcomeStatus <> 'SUPERSEDED_CANCELLATION')",
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v WHERE v.reference = :reference AND (v.visitStatus = 'CANCELLED') AND (v.outcomeStatus <> 'SUPERSEDED_CANCELLATION')",
   )
   fun isBookingCancelled(reference: String): Boolean
 
   @Query(
-    "SELECT count(v) > 0 FROM Visit v " +
+    "SELECT count(v) > 0 FROM OldVisit v " +
       "WHERE v.prisonerId IN (:prisonerIds) AND " +
       "v.prison.code = :prisonCode AND " +
       "v.visitStart >= :startDateTime AND " +
@@ -78,7 +78,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
-    "SELECT count(v) > 0 FROM Visit v " +
+    "SELECT count(v) > 0 FROM OldVisit v " +
       "WHERE v.sessionTemplateReference = :sessionTemplateReference AND " +
       "(cast(:visitsFromDate as date)  is null or cast(v.visitStart as date) >= :visitsFromDate) ",
   )
@@ -88,7 +88,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
-    "SELECT count(v) > 0 FROM Visit v " +
+    "SELECT count(v) > 0 FROM OldVisit v " +
       "WHERE v.sessionTemplateReference = :sessionTemplateReference AND " +
       "(cast(:visitsFromDate as date)  is null or cast(v.visitStart as date) >= :visitsFromDate) AND " +
       "(v.visitStatus IN ('BOOKED','RESERVED','CHANGING'))",
@@ -147,12 +147,12 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
+    "SELECT v FROM OldVisit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
   )
-  fun findBookedVisit(reference: String): Visit?
+  fun findBookedVisit(reference: String): OldVisit?
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
   )
   fun doesBookedVisitExist(reference: String): Boolean
 
@@ -173,7 +173,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun updateCreateTimestamp(createTimestamp: LocalDateTime, id: Long): Int
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v LEFT JOIN v.visitors as vis " +
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v LEFT JOIN v.visitors as vis " +
       "WHERE (v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED')  AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(v.prison.code = :prisonCode) AND " +
@@ -188,7 +188,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
-    "SELECT v  FROM Visit v " +
+    "SELECT v  FROM OldVisit v " +
       "WHERE v.visitStatus = 'BOOKED' AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(:prisonCode is null or v.prison.code = :prisonCode) AND " +
@@ -200,7 +200,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     @Param("prisonCode") prisonCode: String?,
     @Param("startDateTime") startDateTime: LocalDateTime,
     @Param("endDateTime") endDateTime: LocalDateTime? = null,
-  ): List<Visit>
+  ): List<OldVisit>
 
   @Modifying
   @Query(

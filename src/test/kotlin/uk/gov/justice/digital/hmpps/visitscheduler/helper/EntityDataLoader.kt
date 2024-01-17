@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
@@ -135,11 +135,11 @@ class VisitEntityHelper(
     activePrison: Boolean = true,
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
-  ): Visit {
+  ): OldVisit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
     return visitRepository.saveAndFlush(
-      Visit(
+      OldVisit(
         visitStatus = visitStatus,
         prisonerId = prisonerId,
         prisonId = prison.id,
@@ -157,7 +157,7 @@ class VisitEntityHelper(
   }
 
   fun createContact(
-    visit: Visit,
+    visit: OldVisit,
     name: String,
     phone: String,
   ) {
@@ -170,7 +170,7 @@ class VisitEntityHelper(
   }
 
   fun createVisitor(
-    visit: Visit,
+    visit: OldVisit,
     nomisPersonId: Long,
     visitContact: Boolean?,
   ) {
@@ -185,7 +185,7 @@ class VisitEntityHelper(
   }
 
   fun createSupport(
-    visit: Visit,
+    visit: OldVisit,
     name: String,
     details: String?,
   ) {
@@ -200,7 +200,7 @@ class VisitEntityHelper(
   }
 
   fun createNote(
-    visit: Visit,
+    visit: OldVisit,
     text: String,
     type: VisitNoteType,
   ) {
@@ -214,11 +214,11 @@ class VisitEntityHelper(
     )
   }
 
-  fun save(visit: Visit): Visit {
+  fun save(visit: OldVisit): OldVisit {
     return visitRepository.saveAndFlush(visit)
   }
 
-  fun getVisit(applicationReference: String): Visit? {
+  fun getVisit(applicationReference: String): OldVisit? {
     return visitRepository.findApplication(applicationReference)
   }
 }
@@ -230,7 +230,7 @@ class EventAuditEntityHelper(
 ) {
 
   fun create(
-    visit: Visit,
+    visit: OldVisit,
     actionedBy: String = "ACTIONED_BY",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = EventAuditType.BOOKED_VISIT,

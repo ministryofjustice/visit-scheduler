@@ -6,20 +6,20 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 
 @Repository
-interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
+interface TestVisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecutor<OldVisit> {
 
-  fun findAllByReference(reference: String): List<Visit>
+  fun findAllByReference(reference: String): List<OldVisit>
 
-  fun findByApplicationReference(reference: String): Visit?
+  fun findByApplicationReference(reference: String): OldVisit?
 
   @Modifying
   fun deleteByApplicationReference(applicationReference: String): Long
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.id = :visitId ",
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v WHERE v.id = :visitId ",
   )
   fun hasVisit(@Param("visitId") visitId: Long): Boolean
 

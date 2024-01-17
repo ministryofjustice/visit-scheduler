@@ -33,7 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDateTime
@@ -45,7 +45,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
-  lateinit var bookedVisit: Visit
+  lateinit var bookedVisit: OldVisit
   lateinit var sessionTemplate: SessionTemplate
 
   @Autowired
@@ -384,6 +384,6 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
-      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - ${expiredVisit.reference} is in the past, it cannot be changed")
+      .jsonPath("$.developerMessage").isEqualTo("OldVisit with booking reference - ${expiredVisit.reference} is in the past, it cannot be changed")
   }
 }

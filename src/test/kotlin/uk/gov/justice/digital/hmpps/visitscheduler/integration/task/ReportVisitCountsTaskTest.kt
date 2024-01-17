@@ -27,7 +27,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @Transactional(propagation = Propagation.SUPPORTS)
-@DisplayName("Visit Counts Reporting")
+@DisplayName("OldVisit Counts Reporting")
 class ReportVisitCountsTaskTest : IntegrationTestBase() {
   @Autowired
   private lateinit var reportingTask: ReportingTask

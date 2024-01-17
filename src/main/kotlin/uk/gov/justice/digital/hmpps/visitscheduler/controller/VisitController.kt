@@ -51,8 +51,8 @@ const val GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE: String = "$VISIT_CONTROLLER_
 
 @RestController
 @Validated
-@Tag(name = "1. Visit rest controller")
-@RequestMapping(name = "Visit Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "1. OldVisit rest controller")
+@RequestMapping(name = "OldVisit Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitController(
   private val visitService: VisitService,
 ) {
@@ -72,7 +72,7 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "Visit slot reserved",
+        description = "OldVisit slot reserved",
       ),
       ApiResponse(
         responseCode = "400",
@@ -114,7 +114,7 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit slot changed",
+        description = "OldVisit slot changed",
       ),
       ApiResponse(
         responseCode = "400",
@@ -133,7 +133,7 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Visit slot not found",
+        description = "OldVisit slot not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -164,7 +164,7 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "Visit created",
+        description = "OldVisit created",
       ),
       ApiResponse(
         responseCode = "400",
@@ -201,7 +201,7 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit updated",
+        description = "OldVisit updated",
       ),
       ApiResponse(
         responseCode = "400",
@@ -220,7 +220,7 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Visit not found",
+        description = "OldVisit not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -251,7 +251,7 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit cancelled",
+        description = "OldVisit cancelled",
       ),
       ApiResponse(
         responseCode = "400",
@@ -270,7 +270,7 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Visit not found",
+        description = "OldVisit not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -293,7 +293,7 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit Information Returned",
+        description = "OldVisit Information Returned",
       ),
       ApiResponse(
         responseCode = "400",
@@ -386,7 +386,7 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit Information Returned",
+        description = "OldVisit Information Returned",
       ),
       ApiResponse(
         responseCode = "400",
@@ -405,7 +405,7 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Visit not found",
+        description = "OldVisit not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -426,7 +426,7 @@ class VisitController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit History Information Returned",
+        description = "OldVisit History Information Returned",
       ),
       ApiResponse(
         responseCode = "400",
@@ -445,7 +445,7 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Visit not found",
+        description = "OldVisit not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -495,7 +495,7 @@ class VisitController(
     @Schema(name = "toDate", description = "Get visits to date", example = "2023-05-31", required = true)
     @RequestParam
     toDate: LocalDate,
-    @Schema(name = "visitRestrictions", description = "Visit Restriction - OPEN / CLOSED / UNKNOWN", example = "OPEN", required = false)
+    @Schema(name = "visitRestrictions", description = "OldVisit Restriction - OPEN / CLOSED / UNKNOWN", example = "OPEN", required = false)
     @RequestParam
     visitRestrictions: List<VisitRestriction>?,
     @RequestParam(value = "visitStatus", required = true)

@@ -9,7 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -29,7 +29,7 @@ class TelemetryClientService(
   }
 
   fun createVisitTrackEventFromVisitEntity(
-    visitEntity: Visit,
+    visitEntity: OldVisit,
     actionedBy: String? = null,
     applicationMethodType: ApplicationMethodType? = null,
   ): MutableMap<String, String> {

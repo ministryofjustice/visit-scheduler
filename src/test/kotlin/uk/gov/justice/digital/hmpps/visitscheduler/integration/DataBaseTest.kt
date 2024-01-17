@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
@@ -29,7 +29,7 @@ class DataBaseTest(
 ) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
-  private lateinit var reservedVisit: Visit
+  private lateinit var reservedVisit: OldVisit
   private lateinit var sessionTemplate: SessionTemplate
 
   @Transactional(propagation = REQUIRES_NEW)

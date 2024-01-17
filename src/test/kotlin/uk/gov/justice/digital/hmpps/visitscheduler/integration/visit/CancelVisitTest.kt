@@ -290,7 +290,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.ADMINISTRATIVE_CANCELLATION,
-        "Visit does not exist",
+        "OldVisit does not exist",
       ),
       cancelledByByUser,
       applicationMethodType = NOT_KNOWN,
@@ -385,7 +385,7 @@ class CancelVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
-      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be cancelled")
+      .jsonPath("$.developerMessage").isEqualTo("OldVisit with booking reference - $reference is in the past, it cannot be cancelled")
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())

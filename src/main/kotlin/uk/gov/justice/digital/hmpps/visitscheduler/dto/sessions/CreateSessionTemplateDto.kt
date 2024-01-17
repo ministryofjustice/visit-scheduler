@@ -32,7 +32,7 @@ data class CreateSessionTemplateDto(
   @field:SessionDateRangeValidation
   val sessionDateRange: SessionDateRangeDto,
 
-  @Schema(description = "Visit Room", example = "Visits Main Hall", required = true)
+  @Schema(description = "OldVisit Room", example = "Visits Main Hall", required = true)
   @field:NotBlank
   @field:Size(max = 255)
   val visitRoom: String,

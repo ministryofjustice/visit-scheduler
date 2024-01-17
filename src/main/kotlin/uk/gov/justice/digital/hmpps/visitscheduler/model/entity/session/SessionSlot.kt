@@ -14,19 +14,19 @@ import java.time.LocalTime
 class SessionSlot(
 
   @Column(nullable = true)
-  private val sessionTemplateReference: String,
+  val sessionTemplateReference: String,
 
   @Column(nullable = false)
   val prisonId: Long,
 
   @Column(nullable = false)
-  private val slotDate: LocalDate,
+  val slotDate: LocalDate,
 
   @Column(nullable = false)
-  private val slotTime: LocalTime,
+  val slotTime: LocalTime,
 
   @Column(nullable = false)
-  private val slotEndTime: LocalTime,
+  val slotEndTime: LocalTime,
 
 ) : AbstractIdEntity() {
 

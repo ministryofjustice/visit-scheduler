@@ -118,7 +118,7 @@ class VisitTask(
 
     if (sessions.isEmpty() && !retry) {
       trackEvent(visitTrackEvent)
-      log.info("Flagged Visit: Visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check.", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
+      log.info("Flagged OldVisit: OldVisit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check.", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
     }
 
     log.debug("Finished check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
@@ -126,7 +126,7 @@ class VisitTask(
     try {
       Thread.sleep(FlagVisitTaskConfiguration.THREAD_SLEEP_TIME_IN_MILLISECONDS)
     } catch (e: InterruptedException) {
-      log.debug("Flagged Visit: Sleep failed : {}", e.toString())
+      log.debug("Flagged OldVisit: Sleep failed : {}", e.toString())
     }
 
     return retry
@@ -140,7 +140,7 @@ class VisitTask(
     } else {
       visitTrackEvent["additionalInformation"] = e.message ?: "An exception occurred"
     }
-    log.info("Flagged Visit: $e raised for Visit with reference - ${visit.reference} ,prisoner id - ${visit.prisonerId}, prison code - ${visit.prisonCode}, start time - ${visit.startTimestamp}, end time - ${visit.endTimestamp}, error message - ${e.message}")
+    log.info("Flagged OldVisit: $e raised for OldVisit with reference - ${visit.reference} ,prisoner id - ${visit.prisonerId}, prison code - ${visit.prisonCode}, start time - ${visit.startTimestamp}, end time - ${visit.endTimestamp}, error message - ${e.message}")
     return visitTrackEvent
   }
 

@@ -16,7 +16,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
@@ -47,7 +47,7 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
   @Autowired
   lateinit var testEventAuditRepository: TestEventAuditRepository
 
-  fun assertBookedEvent(visits: List<Visit>, type: NotificationEventType) {
+  fun assertBookedEvent(visits: List<OldVisit>, type: NotificationEventType) {
     visits.forEach { visit ->
       run {
         val eventAudit = eventAuditRepository.findLastBookedVisitEventByBookingReference(visit.reference)

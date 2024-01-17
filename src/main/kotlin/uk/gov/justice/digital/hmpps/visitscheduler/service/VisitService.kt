@@ -40,7 +40,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
@@ -82,12 +82,12 @@ class VisitService(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val MAX_RECORDS = 10000
     val EXPIRED_VISIT_STATUSES = listOf(RESERVED, CHANGING)
-    const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
+    const val AMEND_EXPIRED_ERROR_MESSAGE = "OldVisit with booking reference - %s is in the past, it cannot be %s"
   }
 
   fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
     val visit = visitRepository.findBookedVisit(bookingReference)
-      ?: throw VisitNotFoundException("Visit booking reference $bookingReference not found")
+      ?: throw VisitNotFoundException("OldVisit booking reference $bookingReference not found")
 
     // check if the existing visit is in the past
     validateVisitStartDate(visit, "changed")
@@ -122,7 +122,7 @@ class VisitService(
     val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
     val visitEntity = visitRepository.saveAndFlush(
-      Visit(
+      OldVisit(
         prisonerId = reserveVisitSlotDto.prisonerId,
         prison = prison,
         prisonId = prison.id,
@@ -180,7 +180,7 @@ class VisitService(
     return CHANGING
   }
 
-  private fun getUpdatedStatus(visitEntity: Visit, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitStatus {
+  private fun getUpdatedStatus(visitEntity: OldVisit, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitStatus {
     val bookedVisit = this.visitRepository.findBookedVisit(visitEntity.reference)
 
     if (bookedVisit == null ||
@@ -251,13 +251,13 @@ class VisitService(
       throw ValidationException("Must have prisonId or prisonerId")
     }
 
-    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(OldVisit::visitStart.name).descending())
     return visitRepository.findAll(VisitSpecification(visitFilter), page).map { visitDtoBuilder.build(it) }
   }
 
   @Transactional(readOnly = true)
   fun findVisitsBySessionTemplateFilterPageableDescending(visitFilter: VisitsBySessionTemplateFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
-    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(OldVisit::createTimestamp.name).descending())
     return visitRepository.findAll(VisitsBySessionTemplateSpecification(visitFilter), page).map { visitDtoBuilder.build(it) }
   }
 
@@ -333,7 +333,7 @@ class VisitService(
       return visitDtoBuilder.build(canceledVisit)
     }
 
-    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("OldVisit $reference not found")
     validateCancelRequest(visitEntity)
 
     val cancelOutcome = cancelVisitDto.cancelOutcome
@@ -356,7 +356,7 @@ class VisitService(
     return visitDto
   }
 
-  private fun getApplication(applicationReference: String): Visit {
+  private fun getApplication(applicationReference: String): OldVisit {
     val visit = visitRepository.findApplication(applicationReference)
       ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
     return visit
@@ -380,7 +380,7 @@ class VisitService(
     )
   }
 
-  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
+  private fun createVisitNote(visit: OldVisit, type: VisitNoteType, text: String): VisitNote {
     return VisitNote(
       visitId = visit.id,
       type = type,
@@ -390,7 +390,7 @@ class VisitService(
   }
 
   private fun processBookingEvents(
-    bookedVisit: Visit,
+    bookedVisit: OldVisit,
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
     hasExistingBooking: Boolean,
@@ -406,7 +406,7 @@ class VisitService(
     }
   }
 
-  private fun validateCancelRequest(visitEntity: Visit) {
+  private fun validateCancelRequest(visitEntity: OldVisit) {
     validateVisitStartDate(
       visitEntity,
       "cancelled",
@@ -415,7 +415,7 @@ class VisitService(
   }
 
   private fun processCancelEvents(
-    visit: Visit,
+    visit: OldVisit,
     visitDto: VisitDto,
     cancelVisitDto: CancelVisitDto,
   ) {
@@ -443,7 +443,7 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun getVisitByReference(reference: String): VisitDto {
-    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
+    val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("OldVisit reference $reference not found")
     return visitDtoBuilder.build(visitEntity)
   }
 
@@ -464,7 +464,7 @@ class VisitService(
     }
   }
 
-  private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {
+  private fun createVisitContact(visit: OldVisit, name: String, telephone: String): VisitContact {
     return VisitContact(
       visitId = visit.id,
       name = name,
@@ -473,7 +473,7 @@ class VisitService(
     )
   }
 
-  private fun createVisitVisitor(visit: Visit, personId: Long, visitContact: Boolean?): VisitVisitor {
+  private fun createVisitVisitor(visit: OldVisit, personId: Long, visitContact: Boolean?): VisitVisitor {
     return VisitVisitor(
       nomisPersonId = personId,
       visitId = visit.id,
@@ -482,7 +482,7 @@ class VisitService(
     )
   }
 
-  private fun createVisitSupport(visit: Visit, type: String, text: String?): VisitSupport {
+  private fun createVisitSupport(visit: OldVisit, type: String, text: String?): VisitSupport {
     return VisitSupport(
       type = type,
       visitId = visit.id,
@@ -492,7 +492,7 @@ class VisitService(
   }
 
   private fun validateVisitStartDate(
-    visit: Visit,
+    visit: OldVisit,
     action: String,
     allowedVisitStartDate: LocalDateTime = LocalDateTime.now(),
   ) {

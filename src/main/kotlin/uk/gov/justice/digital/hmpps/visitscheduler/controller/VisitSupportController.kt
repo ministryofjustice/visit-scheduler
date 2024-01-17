@@ -20,7 +20,7 @@ const val VISIT_SUPPORT_PATH: String = "/visit-support"
 @RestController
 @Validated
 @RequestMapping(name = "Support Resource", path = [VISIT_SUPPORT_PATH], produces = [MediaType.APPLICATION_JSON_VALUE])
-@Tag(name = "3. Visit support rest controller")
+@Tag(name = "3. OldVisit support rest controller")
 class VisitSupportController(
   private val supportService: SupportService,
 ) {

@@ -8,12 +8,12 @@ import org.springframework.data.jpa.domain.Specification
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 
-class VisitSpecification(private val filter: VisitFilter) : Specification<Visit> {
+class VisitSpecification(private val filter: VisitFilter) : Specification<OldVisit> {
   override fun toPredicate(
-    root: Root<Visit>,
+    root: Root<OldVisit>,
     query: CriteriaQuery<*>,
     criteriaBuilder: CriteriaBuilder,
   ): Predicate? {
@@ -21,39 +21,39 @@ class VisitSpecification(private val filter: VisitFilter) : Specification<Visit>
 
     with(filter) {
       prisonerId?.run {
-        predicates.add(criteriaBuilder.equal(root.get<String>(Visit::prisonerId.name), prisonerId))
+        predicates.add(criteriaBuilder.equal(root.get<String>(OldVisit::prisonerId.name), prisonerId))
       }
 
       prisonCode?.run {
         val innerJoinFromVisitToVisitors =
-          root.join<Visit, MutableList<Prison>>(Visit::prison.name).get<VisitVisitor>(
+          root.join<OldVisit, MutableList<Prison>>(OldVisit::prison.name).get<VisitVisitor>(
             Prison::code.name,
           )
         predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, prisonCode))
       }
 
       startDateTime?.run {
-        predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(Visit::visitStart.name), startDateTime))
+        predicates.add(criteriaBuilder.greaterThanOrEqualTo(root.get(OldVisit::visitStart.name), startDateTime))
       }
 
       endDateTime?.run {
-        predicates.add(criteriaBuilder.lessThan(root.get(Visit::visitStart.name), endDateTime))
+        predicates.add(criteriaBuilder.lessThan(root.get(OldVisit::visitStart.name), endDateTime))
       }
 
       visitorId?.run {
         val innerJoinFromVisitToVisitors =
-          root.join<Visit, MutableList<VisitVisitor>>(Visit::visitors.name).get<VisitVisitor>(
+          root.join<OldVisit, MutableList<VisitVisitor>>(OldVisit::visitors.name).get<VisitVisitor>(
             VisitVisitor::nomisPersonId.name,
           )
         predicates.add(criteriaBuilder.equal(innerJoinFromVisitToVisitors, visitorId))
       }
 
       if (visitStatusList.isNotEmpty()) {
-        val visitStatusPath = root.get<String>(Visit::visitStatus.name)
+        val visitStatusPath = root.get<String>(OldVisit::visitStatus.name)
         predicates.add(visitStatusPath.`in`(visitStatusList))
       }
 
-      val outcomeStatusPath = root.get<String>(Visit::outcomeStatus.name)
+      val outcomeStatusPath = root.get<String>(OldVisit::outcomeStatus.name)
       predicates.add(
         criteriaBuilder.and(
           criteriaBuilder.or(

@@ -17,7 +17,7 @@ data class ReserveVisitSlotDto(
   @Schema(description = "Session template reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank
   val sessionTemplateReference: String,
-  @Schema(description = "Visit Restriction", example = "OPEN", required = true)
+  @Schema(description = "OldVisit Restriction", example = "OPEN", required = true)
   @field:NotNull
   val visitRestriction: VisitRestriction,
   @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)

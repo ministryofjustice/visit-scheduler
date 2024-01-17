@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import java.time.LocalDateTime
@@ -18,10 +19,9 @@ class VisitDtoBuilder {
   private lateinit var sessionTemplateService: SessionTemplateService
 
   fun build(visitEntity: Visit): VisitDto {
-    val timeSlot = sessionTemplateService.getSessionTimeSlotDto(visitEntity.sessionTemplateReference)
 
     return VisitDto(
-      applicationReference = visitEntity.applicationReference,
+      applicationReference = visitEntity.applications.last.reference,
       reference = visitEntity.reference,
       prisonerId = visitEntity.prisonerId,
       prisonCode = visitEntity.prison.code,
@@ -30,15 +30,15 @@ class VisitDtoBuilder {
       outcomeStatus = visitEntity.outcomeStatus,
       visitType = visitEntity.visitType,
       visitRestriction = visitEntity.visitRestriction,
-      startTimestamp = timeSlot?.let { visitEntity.visitStart.toLocalDate().atTime(it.startTime) } ?: visitEntity.visitStart,
-      endTimestamp = timeSlot?.let { visitEntity.visitEnd.toLocalDate().atTime(it.endTime) } ?: visitEntity.visitEnd,
+      startTimestamp = visitEntity.sessionSlot.slotDate.atTime(visitEntity.sessionSlot.slotTime),
+      endTimestamp = visitEntity.sessionSlot.slotDate.atTime(visitEntity.sessionSlot.slotEndTime),
       visitNotes = visitEntity.visitNotes.map { VisitNoteDto(it) },
       visitContact = visitEntity.visitContact?.let { ContactDto(it) },
       visitors = visitEntity.visitors.map { VisitorDto(it) },
       visitorSupport = visitEntity.support.map { VisitorSupportDto(it) },
       createdTimestamp = visitEntity.createTimestamp ?: LocalDateTime.now(),
       modifiedTimestamp = visitEntity.modifyTimestamp ?: LocalDateTime.now(),
-      sessionTemplateReference = visitEntity.sessionTemplateReference,
+      sessionTemplateReference = visitEntity.sessionSlot.reference,
     )
   }
 }
