@@ -14,7 +14,7 @@ import java.time.LocalTime
 class SessionSlot(
 
   @Column(nullable = true)
-  val sessionTemplateReference: String,
+  val sessionTemplateReference: String? = null,
 
   @Column(nullable = false)
   val prisonId: Long,

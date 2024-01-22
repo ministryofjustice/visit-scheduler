@@ -22,4 +22,15 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
     slotTime: LocalTime,
     slotEndTime: LocalTime,
   ): SessionSlot?
+
+  @Query(
+    "SELECT s FROM SessionSlot s " +
+      "WHERE s.prisonId = :prisonId AND s.slotDate = :slotDate AND s.slotTime = :slotTime AND s.slotEndTime = :slotEndTime",
+  )
+  fun findSessionSlotWithOutSessionReference(
+    prisonId: Long,
+    slotDate: LocalDate,
+    slotTime: LocalTime,
+    slotEndTime: LocalTime,
+  ): SessionSlot?
 }

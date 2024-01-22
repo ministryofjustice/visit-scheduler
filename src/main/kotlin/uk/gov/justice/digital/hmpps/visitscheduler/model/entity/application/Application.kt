@@ -59,17 +59,16 @@ class Application(
 
   @Column(nullable = false)
   val createdBy: String,
+) : AbstractIdEntity() {
 
   @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitContact: ApplicationContact? = null,
+  var visitContact: ApplicationContact? = null
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitors: MutableList<ApplicationVisitor> = mutableListOf(),
+  var visitors: MutableList<ApplicationVisitor> = mutableListOf()
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var support: MutableList<ApplicationSupport> = mutableListOf(),
-
-) : AbstractIdEntity() {
+  var support: MutableList<ApplicationSupport> = mutableListOf()
 
   @Column
   lateinit var reference: String

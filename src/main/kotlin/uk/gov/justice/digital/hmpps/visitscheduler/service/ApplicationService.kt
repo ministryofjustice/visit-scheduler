@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
@@ -22,7 +21,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
@@ -31,14 +29,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT
-import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Service
@@ -58,7 +54,7 @@ class ApplicationService(
   private lateinit var applicationDtoBuilder: ApplicationDtoBuilder
 
   @Autowired
-  private lateinit var sessionSlotRepository: SessionSlotRepository
+  private lateinit var sessionSlotService: SessionSlotService
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -99,7 +95,7 @@ class ApplicationService(
     val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
     val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
-    val sessionSlot = getSessionSlot(sessionSlotDto.sessionDate, sessionTemplate, sessionTemplateReference, prison)
+    val sessionSlot = sessionSlotService.getSessionSlot(sessionSlotDto.sessionDate, sessionTemplate, prison)
     val isReservedSlot = visit?.let {
       isReservationRequired(visit, sessionSlot, sessionSlotDto.visitRestriction)
     } ?: true
@@ -151,7 +147,7 @@ class ApplicationService(
       val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
       val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
-      val sessionSlot = getSessionSlot(changeVisitSlotRequestDto.sessionDate, sessionTemplate, sessionTemplateReference, prison)
+      val sessionSlot = sessionSlotService.getSessionSlot(changeVisitSlotRequestDto.sessionDate, sessionTemplate, prison)
       application.sessionSlotId = sessionSlot.id
       application.sessionSlot = sessionSlot
     }
@@ -200,31 +196,6 @@ class ApplicationService(
     )
 
     return applicationDtoBuilder.build(application)
-  }
-
-  private fun getSessionSlot(
-    sessionDate: LocalDate,
-    sessionTemplate: SessionTemplateDto,
-    sessionTemplateReference: String,
-    prison: Prison,
-  ): SessionSlot {
-    val slotDate = sessionDate
-    val slotTime = sessionTemplate.sessionTimeSlot.startTime
-    val slotEndTime = sessionTemplate.sessionTimeSlot.endTime
-
-    val sessionSlot =
-      sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate, slotTime, slotEndTime) ?: run {
-        sessionSlotRepository.saveAndFlush(
-          SessionSlot(
-            sessionTemplateReference,
-            prison.id,
-            slotDate,
-            slotTime,
-            slotEndTime,
-          ),
-        )
-      }
-    return sessionSlot
   }
 
   private fun isReservationRequired(
