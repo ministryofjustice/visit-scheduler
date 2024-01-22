@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -51,8 +51,8 @@ class ReserveSlotTest : IntegrationTestBase() {
     prisonEntityHelper.create("MDI", true)
   }
 
-  private fun createReserveVisitSlotDto(actionedBy: String = actionedByUserName, sessionTemplateReference: String = "sessionTemplateReference"): ReserveVisitSlotDto {
-    return ReserveVisitSlotDto(
+  private fun createReserveVisitSlotDto(actionedBy: String = actionedByUserName, sessionTemplateReference: String = "sessionTemplateReference"): SessionSlotDto {
+    return SessionSlotDto(
       prisonerId = "FF0000FF",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
@@ -137,7 +137,7 @@ class ReserveSlotTest : IntegrationTestBase() {
   @Test
   fun `when reserve visit slot has no visitors then bad request is returned`() {
     // Given
-    val createReservationRequest = ReserveVisitSlotDto(
+    val createReservationRequest = SessionSlotDto(
       prisonerId = "FF0000FF",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
@@ -183,7 +183,7 @@ class ReserveSlotTest : IntegrationTestBase() {
   fun `reserve visit slot - only one visit contact allowed`() {
     // Given
 
-    val createReservationRequest = ReserveVisitSlotDto(
+    val createReservationRequest = SessionSlotDto(
       prisonerId = "FF0000FF",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
@@ -210,7 +210,7 @@ class ReserveSlotTest : IntegrationTestBase() {
   @Test
   fun `reserve visit slot - invalid support`() {
     // Given
-    val reserveVisitSlotDto = ReserveVisitSlotDto(
+    val sessionSlotDto = SessionSlotDto(
       prisonerId = "FF0000FF",
       startTimestamp = visitTime,
       endTimestamp = visitTime.plusHours(1),
@@ -223,7 +223,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, sessionSlotDto)
 
     // Then
     responseSpec.expectStatus().isBadRequest

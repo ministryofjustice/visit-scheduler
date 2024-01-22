@@ -11,8 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfigura
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.service.ApplicationService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
@@ -24,6 +23,7 @@ import java.time.format.DateTimeFormatter
 @Component
 class VisitTask(
   private val visitService: VisitService,
+  private val applicationService: ApplicationService,
   private val sessionService: SessionService,
   private val prisonsService: PrisonsService,
   private val telemetryClient: TelemetryClient,
@@ -47,10 +47,10 @@ class VisitTask(
     }
 
     log.debug("Entered deleteExpiredReservations")
-    val expiredApplicationReferences = visitService.findExpiredApplicationReferences()
+    val expiredApplicationReferences = applicationService.findExpiredApplicationReferences()
     log.debug("Expired visits: ${expiredApplicationReferences.count()}")
     if (expiredApplicationReferences.isNotEmpty()) {
-      visitService.deleteAllExpiredVisitsByApplicationReference(expiredApplicationReferences)
+      applicationService.deleteAllExpiredApplications(expiredApplicationReferences)
     }
   }
 
@@ -70,13 +70,12 @@ class VisitTask(
       for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
         val visitDate = LocalDateTime.now().plusDays(i.toLong())
 
-        val visitFilter = VisitFilter(
+        val visits = visitService.getBookedVisits(
           prisonCode = prisonCode,
-          visitStatusList = listOf(VisitStatus.BOOKED),
           startDateTime = visitDate.with(LocalTime.MIN),
           endDateTime = visitDate.with(LocalTime.MAX),
         )
-        val visits = visitService.findVisitsByFilterPageableDescending(visitFilter)
+
         val retryVisits = mutableListOf<VisitDto>()
 
         visits.forEach {

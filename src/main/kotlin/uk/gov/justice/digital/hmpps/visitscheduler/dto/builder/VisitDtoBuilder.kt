@@ -1,25 +1,18 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.builder
 
-import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import java.time.LocalDateTime
 
 @Component
 class VisitDtoBuilder {
 
-  @Autowired
-  private lateinit var sessionTemplateService: SessionTemplateService
-
   fun build(visitEntity: Visit): VisitDto {
-
     return VisitDto(
       applicationReference = visitEntity.applications.last.reference,
       reference = visitEntity.reference,

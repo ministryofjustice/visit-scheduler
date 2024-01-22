@@ -1,86 +1,71 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
-import jakarta.persistence.LockModeType
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 
 @Repository
-interface VisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecutor<OldVisit> {
-
-  @Query(
-    "SELECT v.applicationReference FROM OldVisit v " +
-      "WHERE (v.visitStatus = 'RESERVED' OR v.visitStatus = 'CHANGING')" +
-      " AND v.modifyTimestamp < :expiredDateAndTime ORDER BY v.id",
-  )
-  fun findExpiredApplicationReferences(expiredDateAndTime: LocalDateTime): List<String>
-
-  @Lock(LockModeType.PESSIMISTIC_WRITE)
-  fun deleteByApplicationReferenceAndVisitStatusIn(applicationReference: String, status: List<VisitStatus>): Int
+interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
 
   @Query(
     "SELECT * FROM visit " +
-      "WHERE reference = :reference AND visit_status IN ('BOOKED','CANCELLED')  " +
-      "ORDER BY modify_timestamp DESC LIMIT 1 ",
+      "WHERE reference = :reference ",
     nativeQuery = true,
   )
-  fun findByReference(reference: String): OldVisit?
+  fun findByReference(reference: String): Visit?
 
   @Query(
-    "SELECT v FROM OldVisit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') ",
-  )
-  fun findApplication(applicationReference: String): OldVisit?
-
-  @Query(
-    "SELECT v.reference FROM OldVisit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'CHANGING' OR v.visitStatus = 'RESERVED') ",
-  )
-  fun getApplicationBookingReference(applicationReference: String): String?
-
-  @Query(
-    "SELECT v FROM OldVisit v WHERE v.applicationReference = :applicationReference AND v.visitStatus = 'BOOKED' ",
-  )
-  fun findBookedApplication(applicationReference: String): OldVisit?
-
-  @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v WHERE v.applicationReference = :applicationReference AND (v.visitStatus = 'BOOKED') ",
-  )
-  fun isApplicationBooked(applicationReference: String): Boolean
-
-  @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v WHERE v.reference = :reference AND (v.visitStatus = 'CANCELLED') AND (v.outcomeStatus <> 'SUPERSEDED_CANCELLATION')",
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'CANCELLED'",
   )
   fun isBookingCancelled(reference: String): Boolean
 
   @Query(
-    "SELECT count(v) > 0 FROM OldVisit v " +
+    "SELECT count(v) > 0 FROM Visit v " +
       "WHERE v.prisonerId IN (:prisonerIds) AND " +
       "v.prison.code = :prisonCode AND " +
-      "v.visitStart >= :startDateTime AND " +
-      "v.visitStart < :endDateTime AND " +
-      "(v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED') ",
+      "v.sessionSlot.slotDate = :slotDate AND " +
+      "v.visitStatus = 'BOOKED'",
   )
   fun hasActiveVisits(
     prisonerIds: List<String>,
     prisonCode: String,
-    startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime,
+    sessionDate: LocalDate,
   ): Boolean
 
   @Query(
-    "SELECT count(v) > 0 FROM OldVisit v " +
-      "WHERE v.sessionTemplateReference = :sessionTemplateReference AND " +
-      "(cast(:visitsFromDate as date)  is null or cast(v.visitStart as date) >= :visitsFromDate) ",
+    "SELECT count(v) > 0 FROM Visit v " +
+      "WHERE v.prisonerId IN (:prisonerIds) AND " +
+      "v.prison.code = :prisonCode AND " +
+      "v.sessionSlot.slotDate = :slotDate AND " +
+      "v.sessionSlot.slotTime >= :slotTime AND " +
+      "v.sessionSlot.slotEndTime <= :slotEndTime AND " +
+      "v.visitStatus = 'BOOKED'",
+  )
+  fun hasActiveVisits(
+    prisonerIds: List<String>,
+    prisonCode: String,
+    slotDate: LocalDate,
+    slotTime: LocalTime,
+    slotEndTime: LocalTime,
+  ): Boolean
+
+  @Query(
+    "SELECT count(v) > 0 FROM Visit v " +
+      "WHERE v.sessionSlot.sessionTemplateReference = :sessionTemplateReference AND " +
+      "(cast(:visitsFromDate as date)  is null OR v.sessionSlot.slotDate >= :visitsFromDate) ",
   )
   fun hasVisitsForSessionTemplate(
     sessionTemplateReference: String,
@@ -88,10 +73,10 @@ interface VisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecu
   ): Boolean
 
   @Query(
-    "SELECT count(v) > 0 FROM OldVisit v " +
-      "WHERE v.sessionTemplateReference = :sessionTemplateReference AND " +
-      "(cast(:visitsFromDate as date)  is null or cast(v.visitStart as date) >= :visitsFromDate) AND " +
-      "(v.visitStatus IN ('BOOKED','RESERVED','CHANGING'))",
+    "SELECT count(v) > 0 FROM Visit v " +
+      "WHERE v.sessionSlot.sessionTemplateReference = :sessionTemplateReference AND " +
+      "(cast(:visitsFromDate as date)  is null OR v.sessionSlot.slotDate >= :visitsFromDate) AND " +
+      "v.visitStatus = 'BOOKED'",
   )
   fun hasBookedVisitsForSessionTemplate(
     sessionTemplateReference: String,
@@ -100,9 +85,9 @@ interface VisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecu
 
   @Query(
     "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
-      "JOIN session_template st ON st.reference = v.session_template_reference " +
-      "WHERE v.session_template_reference = :sessionTemplateReference AND " +
-      "(v.visit_start >= :sessionDate AND v.visit_start < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "JOIN session_slot ss ON ss.id = v.session_slot_id " +
+      "WHERE ss.session_template_reference = :sessionTemplateReference AND " +
+      "(ss.slotDate >= :sessionDate AND ss.slotDate < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
       "v.visit_status = 'BOOKED' " +
       "GROUP BY v.visit_restriction",
@@ -115,29 +100,11 @@ interface VisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecu
 
   @Query(
     "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
-      "JOIN session_template st ON st.reference = v.session_template_reference " +
-      "WHERE (v.visit_start >= :sessionDate AND v.visit_start < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
-      "v.session_template_reference = :sessionTemplateReference AND " +
-      "v.visit_restriction IN ('OPEN','CLOSED') AND " +
-      "v.visit_status = 'RESERVED' AND " +
-      "v.modify_timestamp >= :expiredDateAndTime " +
-      "GROUP BY v.visit_restriction",
-    nativeQuery = true,
-  )
-  fun getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
-    sessionTemplateReference: String,
-    sessionDate: LocalDate,
-    expiredDateAndTime: LocalDateTime,
-  ): List<VisitRestrictionStats>
-
-  @Query(
-    "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
-      "JOIN session_template st ON st.reference = v.session_template_reference " +
-      "WHERE v.session_template_reference = :sessionTemplateReference AND " +
-      "(v.visit_start >= :sessionDate AND v.visit_start < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "JOIN session_slot ss ON ss.id = v.session_slot_id " +
+      "WHERE ss.session_template_reference = :sessionTemplateReference AND " +
+      "(ss.slotDate >= :sessionDate AND ss.slotDate < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
-      "v.visit_status = 'CANCELLED' AND " +
-      "(v.outcome_status != 'SUPERSEDED_CANCELLATION') " +
+      "v.visit_status = 'CANCELLED' " +
       "GROUP BY v.visit_restriction",
     nativeQuery = true,
   )
@@ -147,14 +114,27 @@ interface VisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecu
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT v FROM OldVisit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
+    "SELECT v FROM Visit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
   )
-  fun findBookedVisit(reference: String): OldVisit?
+  fun findBookedVisit(reference: String): Visit?
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v WHERE v.reference = :reference AND v.visitStatus = 'BOOKED' ",
+    "SELECT v.*  FROM visit v" +
+      "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
+      "  JOIN application a on a.id = vta.application_id " +
+      "  WHERE a.reference = :applicationReference",
+    nativeQuery = true,
   )
-  fun doesBookedVisitExist(reference: String): Boolean
+  fun findVisitByApplicationReference(applicationReference: String): Visit?
+
+  @Query(
+    "SELECT COUNT(*) > 0  FROM visit v" +
+      "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
+      "  JOIN application a on a.id = vta.application_id " +
+      "  WHERE a.reference = :applicationReference AND v.visit_status = 'BOOKED'",
+    nativeQuery = true,
+  )
+  fun doesBookedVisitExist(applicationReference: String): Boolean
 
   @Transactional
   @Modifying
@@ -173,35 +153,34 @@ interface VisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecu
   fun updateCreateTimestamp(createTimestamp: LocalDateTime, id: Long): Int
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v LEFT JOIN v.visitors as vis " +
-      "WHERE (v.visitStatus = 'BOOKED' OR v.visitStatus = 'RESERVED')  AND " +
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v " +
+      "WHERE v.visitStatus = 'BOOKED'  AND " +
       "(v.prisonerId = :prisonerId) AND " +
-      "(v.prison.code = :prisonCode) AND " +
-      "(v.visitStart >= :startDateTime) AND " +
-      "(cast(:endDateTime as date) is null OR v.visitStart < :endDateTime) ",
+      "(v.sessionSlot.sessionTemplateReference = :sessionTemplateReference) AND " +
+      "(v.sessionSlot.slotDate >= :slotDate) ",
   )
   fun hasVisits(
     @Param("prisonerId") prisonerId: String,
-    @Param("prisonCode") prisonCode: String,
-    @Param("startDateTime") startDateTime: LocalDateTime,
-    @Param("endDateTime") endDateTime: LocalDateTime? = null,
+    @Param("sessionTemplateReference") sessionTemplateReference: String,
+    @Param("slotDate") slotDate: LocalDate,
   ): Boolean
 
   @Query(
-    "SELECT v  FROM OldVisit v " +
+    "SELECT v  FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED' AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(:prisonCode is null or v.prison.code = :prisonCode) AND " +
-      "(v.visitStart >= :startDateTime) AND " +
-      "(cast(:endDateTime as date) is null OR v.visitStart < :endDateTime) ",
+      "(v.sessionSlot.slotDate >= :#{#startDateTime.toLocalDate()} AND v.sessionSlot.slotTime >= :#{#startDateTime.toLocalTime()}) AND " +
+      "(:#{#endDateTime} is null OR (v.sessionSlot.slotDate <= :#{#endDateTime.toLocalDate()} AND v.sessionSlot.slotEndTime < :#{#endDateTime.toLocalTime()})) ",
   )
   fun getVisits(
     @Param("prisonerId") prisonerId: String,
-    @Param("prisonCode") prisonCode: String?,
+    @Param("prisonCode") prisonCode: String? = null,
     @Param("startDateTime") startDateTime: LocalDateTime,
     @Param("endDateTime") endDateTime: LocalDateTime? = null,
-  ): List<OldVisit>
+  ): List<Visit>
 
+  // TODO needs to change slot id on given references
   @Modifying
   @Query(
     "Update visit set session_template_reference = :newSessionTemplateReference " +
@@ -220,10 +199,11 @@ interface VisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecu
     newEndTime: LocalTime,
   ): Int
 
+  // TODO needs to change slot id on given references
   @Modifying
   @Query(
     "Update visit set session_template_reference = :newSessionTemplateReference " +
-      "WHERE visit_status IN ('BOOKED', 'RESERVED', 'CHANGING')  AND " +
+      "WHERE visit_status = ('BOOKED', 'RESERVED', 'CHANGING')  AND " +
       "(session_template_reference = :existingSessionTemplateReference) AND " +
       "(cast(visit_start as date) >= :fromDate)",
     nativeQuery = true,
@@ -233,4 +213,39 @@ interface VisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecu
     newSessionTemplateReference: String,
     fromDate: LocalDate,
   ): Int
+
+  @Query(
+    "SELECT v FROM Visit v JOIN v.visitors vis WHERE " +
+      "(:#{#filter.prisonerId} is null OR v.prisonerId = :#{#filter.prisonerId})  AND " +
+      "(:#{#filter.prisonCode} is null OR v.prison.code = :#{#filter.prisonCode}) AND " +
+      "(:#{#filter.visitStatusList} is null OR :#{#filter.visitStatusList.size()==0} OR v.visitStatus in :#{#filter.visitStatusList}) AND " +
+      "(:#{#filter.visitorId} is null OR vis.nomisPersonId = :#{#filter.visitorId}) AND " +
+      "(:#{#filter.startDateTime} is null OR (v.sessionSlot.slotDate >= :#{#filter.startDateTime.toLocalDate()} AND v.sessionSlot.slotTime >= :#{#filter.startDateTime.toLocalTime()})) AND " +
+      "(:#{#filter.endDateTime} is null OR (v.sessionSlot.slotDate <= :#{#filter.endDateTime.toLocalDate()} AND v.sessionSlot.slotEndTime < :#{#filter.endDateTime.toLocalTime()})) " +
+      " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
+  )
+  fun findVisitsOrderByDateAndTime(filter: VisitFilter, pageable: Pageable): Page<Visit>
+
+  @Query(
+    "SELECT v FROM Visit v JOIN v.visitors vis WHERE " +
+      "(:#{#filter.prisonerId} is null OR v.prisonerId = :#{#filter.prisonerId})  AND " +
+      "(:#{#filter.prisonCode} is null OR v.prison.code = :#{#filter.prisonCode}) AND " +
+      "(:#{#filter.visitStatusList} is null OR :#{#filter.visitStatusList.size()==0} OR v.visitStatus in :#{#filter.visitStatusList}) AND " +
+      "(:#{#filter.visitorId} is null OR vis.nomisPersonId = :#{#filter.visitorId}) AND " +
+      "(:#{#filter.startDateTime} is null OR (v.sessionSlot.slotDate >= :#{#filter.startDateTime.toLocalDate()} AND v.sessionSlot.slotTime >= :#{#filter.startDateTime.toLocalTime()})) AND " +
+      "(:#{#filter.endDateTime} is null OR (v.sessionSlot.slotDate <= :#{#filter.endDateTime.toLocalDate()} AND v.sessionSlot.slotEndTime < :#{#filter.endDateTime.toLocalTime()})) " +
+      " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
+  )
+  fun findVisits(filter: VisitFilter): List<Visit>
+
+  @Query(
+    "SELECT v FROM Visit v JOIN v.visitors vis WHERE " +
+      " v.sessionSlot.sessionTemplateReference = :#{#filter.sessionTemplateReference}  AND " +
+      "(:#{#filter.visitStatusList.size()==0} OR v.visitStatus in :#{#filter.visitStatusList}) AND " +
+      "(:#{#filter.visitRestrictions} is null OR :#{#filter.visitStatusList.size()==0} OR v.visitRestriction in :#{#filter.visitRestrictions}) AND " +
+      "v.sessionSlot.slotDate >= :#{#filter.startDateTime.toLocalDate()}  AND " +
+      "v.sessionSlot.slotDate <= :#{#filter.endDateTime.toLocalDate()} " +
+      " ORDER BY v.createTimestamp",
+  )
+  fun findVisitsOrderByCreateTimestamp(filter: VisitsBySessionTemplateFilter, pageable: Pageable): Page<Visit>
 }

@@ -514,6 +514,9 @@ class SessionTemplateService(
     // validate move before updating session template reference
     validateMoveSessionTemplateVisits(fromSessionTemplate, toSessionTemplate, fromDate)
 
+    // TODO create new slot
+    // TODO Then use update to change slot id on given visits
+
     return if (fromSessionTemplate.sessionTimeSlot == toSessionTemplate.sessionTimeSlot) {
       visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
     } else {
@@ -535,6 +538,10 @@ class SessionTemplateService(
 
   fun getSessionTimeSlotDto(sessionTemplateReference: String?): SessionTimeSlotDto? {
     return sessionTemplateRepository.getSessionTimeSlot(sessionTemplateReference)
+  }
+
+  fun getVisitRoom(sessionTemplateReference: String): String {
+    return sessionTemplateRepository.getVisitRoom(sessionTemplateReference)
   }
 }
 

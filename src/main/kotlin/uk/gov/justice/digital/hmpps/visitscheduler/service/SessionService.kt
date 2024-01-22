@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
@@ -36,8 +37,10 @@ class SessionService(
   private val sessionDatesUtil: SessionDatesUtil,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
+  private val applicationRepository: ApplicationRepository,
   private val prisonerService: PrisonerService,
   private val visitService: VisitService,
+  private val application: ApplicationService,
   @Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,
   @Value("\${policy.session.non-association.filter:false}")
@@ -295,28 +298,26 @@ class SessionService(
     prisonerNonAssociationList: @NotNull List<PrisonerNonAssociationDetailDto>,
   ): Boolean {
     if (prisonerNonAssociationList.isNotEmpty()) {
-      val nonAssociationPrisonerIds =
-        getNonAssociationPrisonerIds(prisonerNonAssociationList)
-      val startDateTimeFilter = if (policyNonAssociationWholeDay) {
-        session.startTimestamp.toLocalDate()
-          .atStartOfDay()
-      } else {
-        session.startTimestamp
-      }
-      val endDateTimeFilter = if (policyNonAssociationWholeDay) {
-        session.endTimestamp.toLocalDate()
-          .atTime(LocalTime.MAX)
-      } else {
-        session.endTimestamp
+      val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerNonAssociationList)
+      val slotDate = session.startTimestamp.toLocalDate()
+
+      if (policyNonAssociationWholeDay) {
+        return visitRepository.hasActiveVisits(
+          nonAssociationPrisonerIds,
+          session.prisonCode,
+          slotDate,
+        )
       }
 
-      // Any Non-association within the session period && Non-association has a RESERVED or BOOKED booking.
-      // We could also include ATTENDED booking but as prisons have a minimum notice period they can be ignored.
+      val slotTime = session.startTimestamp.toLocalTime()
+      val slotEndTime = session.endTimestamp.toLocalTime()
+
       return visitRepository.hasActiveVisits(
         nonAssociationPrisonerIds,
         session.prisonCode,
-        startDateTimeFilter,
-        endDateTimeFilter,
+        slotDate,
+        slotTime,
+        slotEndTime,
       )
     }
 
@@ -330,11 +331,19 @@ class SessionService(
   }
 
   private fun sessionHasBooking(session: VisitSessionDto, prisonerId: String): Boolean {
-    return visitRepository.hasVisits(
-      prisonCode = session.prisonCode,
+    if (visitRepository.hasVisits(
+        prisonerId = prisonerId,
+        sessionTemplateReference = session.sessionTemplateReference,
+        slotDate = session.startTimestamp.toLocalDate(),
+      )
+    ) {
+      return true
+    }
+
+    return applicationRepository.hasReservations(
       prisonerId = prisonerId,
-      startDateTime = session.startTimestamp,
-      endDateTime = session.endTimestamp,
+      sessionTemplateReference = session.sessionTemplateReference,
+      slotDate = session.startTimestamp.toLocalDate(),
     )
   }
 
@@ -344,10 +353,10 @@ class SessionService(
       sessionDate = session.startTimestamp.toLocalDate(),
     )
 
-    val restrictionReservedStats = visitRepository.getCountOfReservedSessionVisitsForOpenOrClosedRestriction(
+    val restrictionReservedStats = applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
       sessionTemplateReference = session.sessionTemplateReference,
       sessionDate = session.startTimestamp.toLocalDate(),
-      expiredDateAndTime = visitService.getReservedExpiredDateAndTime(),
+      expiredDateAndTime = application.getExpiredApplicationDateAndTime(),
     )
 
     return restrictionReservedStats + restrictionBookedStats

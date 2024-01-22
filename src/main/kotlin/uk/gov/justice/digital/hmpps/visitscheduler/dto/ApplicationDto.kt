@@ -1,0 +1,51 @@
+package uk.gov.justice.digital.hmpps.visitscheduler.dto
+
+import com.fasterxml.jackson.annotation.JsonProperty
+import io.swagger.v3.oas.annotations.media.Schema
+import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import java.time.LocalDateTime
+
+@Schema(description = "OldVisit")
+data class ApplicationDto(
+  @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+  val reference: String,
+  @Schema(description = "session template Reference", example = "dfs-wjs-eqr", required = false)
+  val sessionTemplateReference: String? = null,
+  @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
+  val prisonerId: String,
+  @JsonProperty("prisonId")
+  @Schema(description = "Prison Id", example = "MDI", required = true)
+  val prisonCode: String,
+  @Schema(description = "OldVisit Type", example = "SOCIAL", required = true)
+  val visitType: VisitType,
+  @Schema(description = "OldVisit Restriction", example = "OPEN", required = true)
+  val visitRestriction: VisitRestriction,
+  @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
+  @field:NotNull
+  val startTimestamp: LocalDateTime,
+  @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = true)
+  @field:NotNull
+  val endTimestamp: LocalDateTime,
+  @Schema(description = "OldVisit Notes", required = false)
+  val visitNotes: List<VisitNoteDto> = listOf(),
+  @Schema(description = "Contact associated with the visit", required = false)
+  val visitContact: ContactDto? = null,
+  @Schema(description = "List of visitors associated with the visit", required = false)
+  val visitors: List<VisitorDto> = listOf(),
+  @Schema(description = "List of additional support associated with the visit", required = false)
+  val visitorSupport: List<VisitorSupportDto> = listOf(),
+  @Schema(description = "The visit created date and time", example = "2018-12-01T13:45:00", required = true)
+  @field:NotNull
+  val createdTimestamp: LocalDateTime,
+  @Schema(description = "The visit modified date and time", example = "2018-12-01T13:45:00", required = true)
+  @field:NotNull
+  val modifiedTimestamp: LocalDateTime,
+  @Schema(description = "Is the application reserved", example = "true", required = true)
+  @field:NotNull
+  val reserved: Boolean,
+  @Schema(description = "Is the application complete", example = "true", required = true)
+  @field:NotNull
+  val completed: Boolean,
+)

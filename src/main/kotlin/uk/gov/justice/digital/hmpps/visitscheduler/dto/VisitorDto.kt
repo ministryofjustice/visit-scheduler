@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationVisitor
 
 @Schema(description = "Visitor")
 data class VisitorDto(
@@ -13,8 +14,13 @@ data class VisitorDto(
   val visitContact: Boolean?,
 ) {
 
-  constructor(visitVisitorEntity: VisitVisitor) : this(
-    nomisPersonId = visitVisitorEntity.nomisPersonId,
-    visitContact = visitVisitorEntity.visitContact,
+  constructor(entity: VisitVisitor) : this(
+    nomisPersonId = entity.nomisPersonId,
+    visitContact = entity.visitContact,
+  )
+
+  constructor(entity: ApplicationVisitor) : this(
+    nomisPersonId = entity.nomisPersonId,
+    visitContact = entity.contact,
   )
 }

@@ -37,7 +37,7 @@ class Application(
   var prisonerId: String,
 
   @Column(name = "SESSION_SLOT_ID", nullable = true)
-  val sessionSlotId: Long,
+  var sessionSlotId: Long,
 
   @ManyToOne
   @JoinColumn(name = "SESSION_SLOT_ID", updatable = false, insertable = false)
@@ -55,7 +55,7 @@ class Application(
   var restriction: VisitRestriction,
 
   @Column(nullable = false)
-  val completed: Boolean = false,
+  var completed: Boolean = false,
 
   @Column(nullable = false)
   val createdBy: String,
@@ -84,7 +84,7 @@ class Application(
 
   @PostPersist
   fun createReference() {
-    reference = QuotableEncoder(minLength = 8).encode(id)
+    reference = QuotableEncoder(minLength = 8, chunkSize = 3).encode(id)
   }
 
   override fun toString(): String {

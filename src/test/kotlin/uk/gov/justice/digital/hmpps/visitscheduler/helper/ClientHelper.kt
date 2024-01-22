@@ -44,7 +44,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
@@ -120,7 +120,7 @@ fun getVisitReserveSlotChangeUrl(reference: String): String {
 fun callVisitReserveSlot(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: ReserveVisitSlotDto? = null,
+  dto: SessionSlotDto? = null,
 ): ResponseSpec {
   return callPost(
     dto,
@@ -137,7 +137,7 @@ fun getVisitReserveSlotUrl(): String {
 fun callVisitChange(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: ReserveVisitSlotDto? = null,
+  dto: SessionSlotDto? = null,
   reference: String,
 ): ResponseSpec {
   return callPut(

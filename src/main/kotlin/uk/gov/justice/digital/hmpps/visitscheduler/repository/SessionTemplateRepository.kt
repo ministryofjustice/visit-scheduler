@@ -109,6 +109,14 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   ): List<SessionTemplate>
 
   @Query(
+    "select st.visitRoom from SessionTemplate st " +
+      "where st.reference = :reference ",
+  )
+  fun getVisitRoom(
+    reference: String,
+  ): String
+
+  @Query(
     "select u from SessionTemplate u " +
       "where u.prison.code = :prisonCode order by u.validFromDate,u.validToDate",
   )
