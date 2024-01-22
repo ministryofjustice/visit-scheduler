@@ -69,7 +69,7 @@ class VisitService(
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val MAX_RECORDS = 10000
-    const val AMEND_EXPIRED_ERROR_MESSAGE = "OldVisit with booking reference - %s is in the past, it cannot be %s"
+    const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
   }
 
   fun bookVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
@@ -107,7 +107,7 @@ class VisitService(
       validateVisitStartDate(existingBooking!!, "changed")
     }
 
-    val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference)
+    val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference!!)
 
     val booking = existingBooking?.let {
       // Update existing booking
