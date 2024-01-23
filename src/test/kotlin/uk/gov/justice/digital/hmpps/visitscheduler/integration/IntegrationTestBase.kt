@@ -16,6 +16,8 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
@@ -110,6 +112,12 @@ abstract class IntegrationTestBase {
     deleteEntityHelper.deleteAll()
   }
 
+  fun getApplicationDto(responseSpec: ResponseSpec): ApplicationDto =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationDto::class.java)
+
+  fun getVisitDto(responseSpec: ResponseSpec): VisitDto =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
+
   fun getSessionTemplate(responseSpec: ResponseSpec): SessionTemplateDto =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
 
@@ -134,7 +142,7 @@ abstract class IntegrationTestBase {
   fun getCheckingMatchingTemplatesOnCreate(responseSpec: ResponseSpec): Array<String> =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<String>::class.java)
 
-  fun getErrorResponse(responseSpec: ResponseSpec) =
+  fun getErrorResponse(responseSpec: ResponseSpec) : ErrorResponse =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ErrorResponse::class.java)
 
   internal fun setAuthorisation(
