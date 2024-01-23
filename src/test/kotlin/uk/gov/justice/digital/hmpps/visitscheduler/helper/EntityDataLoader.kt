@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
@@ -120,15 +121,17 @@ class PrisonEntityHelper(
 class VisitEntityHelper(
   private val visitRepository: VisitRepository,
   private val prisonEntityHelper: PrisonEntityHelper,
+  private val sessionSlotEntityHelper: SessionSlotEntityHelper,
 ) {
 
   fun create(
-    visitStatus: VisitStatus = RESERVED,
+    visitStatus: VisitStatus = BOOKED,
     prisonerId: String = "FF0000AA",
     prisonCode: String = "MDI",
     visitRoom: String = "A1",
-    visitStart: LocalDateTime = LocalDateTime.of((LocalDateTime.now().year + 1), 11, 1, 12, 30, 44),
-    visitEnd: LocalDateTime = visitStart.plusHours(1),
+    slotDate: LocalDate = LocalDate.of((LocalDate.now().year + 1), 11, 1),
+    visitStart: LocalTime = LocalTime.of(12, 30, 44),
+    visitEnd: LocalTime = visitStart.plusHours(1),
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     reference: String = "",
@@ -137,23 +140,23 @@ class VisitEntityHelper(
     sessionTemplateReference: String? = "sessionTemplateReference",
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
+    val sessionSlot = sessionSlotEntityHelper.create(sessionTemplateReference, prison.id, slotDate, visitStart, visitEnd)
 
-    return visitRepository.saveAndFlush(
-      Visit(
-        visitStatus = visitStatus,
-        prisonerId = prisonerId,
-        prisonId = prison.id,
-        prison = prison,
-        visitRoom = visitRoom,
-        visitStart = visitStart,
-        visitEnd = visitEnd,
-        visitType = visitType,
-        visitRestriction = visitRestriction,
-        _reference = reference,
-        outcomeStatus = outcomeStatus,
-        sessionTemplateReference = sessionTemplateReference,
-      ),
+    val notSaved = Visit(
+      visitStatus = visitStatus,
+      prisonerId = prisonerId,
+      prisonId = prison.id,
+      prison = prison,
+      visitRoom = visitRoom,
+      sessionSlotId = sessionSlot.id,
+      sessionSlot = sessionSlot,
+      visitType = visitType,
+      visitRestriction = visitRestriction,
     )
+
+    notSaved.outcomeStatus = outcomeStatus
+
+    return visitRepository.saveAndFlush(notSaved)
   }
 
   fun createContact(
@@ -237,8 +240,8 @@ class EventAuditEntityHelper(
   ): EventAudit {
     return create(
       reference = visit.reference,
-      applicationReference = visit.applicationReference,
-      sessionTemplateReference = visit.sessionTemplateReference,
+      applicationReference = visit.applications.last.reference,
+      sessionTemplateReference = visit.sessionSlot.sessionTemplateReference,
       actionedBy = actionedBy,
       type = type,
       applicationMethodType = applicationMethodType,
