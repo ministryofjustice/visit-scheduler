@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.ApplicationEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.EventAuditEntityHelper
@@ -54,6 +55,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var visitEntityHelper: VisitEntityHelper
+
+  @Autowired
+  protected lateinit var applicationEntityHelper: ApplicationEntityHelper
 
   @Autowired
   protected lateinit var eventAuditEntityHelper: EventAuditEntityHelper

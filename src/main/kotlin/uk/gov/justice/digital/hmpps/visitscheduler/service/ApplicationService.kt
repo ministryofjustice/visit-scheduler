@@ -320,7 +320,7 @@ class ApplicationService(
     action: String,
     allowedVisitStartDate: LocalDateTime = LocalDateTime.now(),
   ) {
-    val startSessionSlotDateAndTime = sessionSlotService.getSessionTimeAndDate(visit.sessionSlot.slotDate,visit.sessionSlot.slotTime)
+    val startSessionSlotDateAndTime = sessionSlotService.getSessionTimeAndDate(visit.sessionSlot.slotDate, visit.sessionSlot.slotTime)
     // check if the existing visit is in the past
     if (startSessionSlotDateAndTime.isBefore(allowedVisitStartDate)) {
       throw ExpiredVisitAmendException(

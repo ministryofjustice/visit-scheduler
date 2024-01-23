@@ -48,7 +48,7 @@ class VisitDtoBuilderTest() {
     val visitStart = now.toLocalTime()
     val visitEnd = visitStart.plusHours(2)
 
-    val visit = create(slotDate = slotDate,visitStart = visitStart, visitEnd = visitEnd)
+    val visit = create(slotDate = slotDate, visitStart = visitStart, visitEnd = visitEnd)
     val slot = SessionTimeSlotDto(visitStart, visitEnd)
 
     whenever(sessionTemplateService.getSessionTimeSlotDto(visit.sessionSlot.reference)).thenReturn(slot)
@@ -147,8 +147,7 @@ class VisitDtoBuilderTest() {
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
   ): Visit {
-
-    val sessionSlot = SessionSlot(sessionTemplateReference,prison.id, slotDate, visitStart, visitEnd )
+    val sessionSlot = SessionSlot(sessionTemplateReference, prison.id, slotDate, visitStart, visitEnd)
 
     val visit = Visit(
       visitStatus = visitStatus,

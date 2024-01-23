@@ -98,8 +98,8 @@ class TelemetryClientService(
       "visitType" to application.visitType.name,
       "visitRestriction" to application.visitRestriction.name,
       "visitStart" to formatDateTimeToString(application.startTimestamp),
+      "reserved" to application.reserved.toString(),
     )
-
     actionedBy?.let {
       data.put("actionedBy", it)
     }
