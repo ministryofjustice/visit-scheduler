@@ -35,14 +35,6 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
   fun deleteExpiredApplications(applicationReference: String, expiredPeriodMinutes: Int): Int
 
   @Query(
-    "SELECT * FROM visit " +
-      "WHERE reference = :reference AND visit_status IN ('BOOKED','CANCELLED')  " +
-      "ORDER BY modify_timestamp DESC LIMIT 1 ",
-    nativeQuery = true,
-  )
-  fun findByReference(reference: String): Application?
-
-  @Query(
     "SELECT a FROM Application a WHERE a.reference = :applicationReference",
   )
   fun findApplication(applicationReference: String): Application?
