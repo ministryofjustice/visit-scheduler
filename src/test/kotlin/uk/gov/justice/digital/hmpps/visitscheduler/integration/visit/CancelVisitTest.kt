@@ -96,8 +96,8 @@ class CancelVisitTest : IntegrationTestBase() {
     Assertions.assertThat(eventAudit.actionedBy).isEqualTo(cancelledByByUser)
     Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(PHONE)
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
-    Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionTemplateReference)
-    Assertions.assertThat(eventAudit.applicationReference).isEqualTo(visit.applicationReference)
+    Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
+    Assertions.assertThat(eventAudit.applicationReference).isEqualTo(visit.applications.last())
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
@@ -236,8 +236,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val createApplicationDto = CreateApplicationDto(
       prisonerId = bookedVisit.prisonerId,
       visitRestriction = bookedVisit.visitRestriction,
-      startTimestamp = bookedVisit.visitStart,
-      endTimestamp = bookedVisit.visitEnd,
+      sessionDate = bookedVisit.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "011223344"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       actionedBy = reservedByByUser,
@@ -365,8 +364,10 @@ class CancelVisitTest : IntegrationTestBase() {
 
   @Test
   fun `cancel expired visit returns bad request error`() {
-    val visitStart = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
+    val now  = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
+    val slotDate = now.toLocalDate()
+    val visitStart = now.toLocalTime()
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart)
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
@@ -407,8 +408,11 @@ class CancelVisitTest : IntegrationTestBase() {
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val visitStart = LocalDateTime.now().minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS).withHour(1)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
+    val now  = LocalDateTime.now().minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS).withHour(1)
+    val slotDate = now.toLocalDate()
+    val visitStart = now.toLocalTime()
+
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, cancelVisitDto)
@@ -435,9 +439,10 @@ class CancelVisitTest : IntegrationTestBase() {
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val visitStart = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
-
+    val now  = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
+    val slotDate = now.toLocalDate()
+    val visitStart = now.toLocalTime()
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart)
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
 
@@ -463,8 +468,10 @@ class CancelVisitTest : IntegrationTestBase() {
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val visitStart = LocalDateTime.now().plusDays(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
+    val now  = LocalDateTime.now().plusDays(1)
+    val slotDate = now.toLocalDate()
+    val visitStart = now.toLocalTime()
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
