@@ -48,7 +48,7 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
     "SELECT a.restriction AS visitRestriction, COUNT(v) AS count  FROM application a " +
       "JOIN session_slot ss ON ss.id = a.session_slot_id " +
       "WHERE ss.session_template_reference = :sessionTemplateReference AND " +
-      "(ss.slotDate >= :sessionDate AND ss.slotDate < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "(ss.slotDate >= :slotDate AND ss.slotDate < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
       "a.restriction IN ('OPEN','CLOSED') AND " +
       "a.reserved_slot = true AND a.completed = false AND " +
       "a.modify_timestamp >= :expiredDateAndTime " +
@@ -57,7 +57,7 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
   )
   fun getCountOfReservedSessionForOpenOrClosedRestriction(
     sessionTemplateReference: String,
-    sessionDate: LocalDate,
+    slotDate: LocalDate,
     expiredDateAndTime: LocalDateTime,
   ): List<VisitRestrictionStats>
 
@@ -66,7 +66,7 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
       "WHERE a.completed = false AND a.reservedSlot = true AND " +
       "(a.prisonerId = :prisonerId) AND " +
       "(a.sessionSlot.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "(a.sessionSlot.slotDate >= :startDateTime) ",
+      "(a.sessionSlot.slotDate >= :slotDate) ",
   )
   fun hasReservations(
     @Param("prisonerId") prisonerId: String,
