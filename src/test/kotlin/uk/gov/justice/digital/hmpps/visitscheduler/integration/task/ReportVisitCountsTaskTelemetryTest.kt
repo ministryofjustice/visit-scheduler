@@ -25,7 +25,7 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = Propagation.SUPPORTS)
-@DisplayName("OldVisit Counts Reporting - check events sent")
+@DisplayName("Visit Counts Reporting - check events sent")
 class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
   @Autowired
   private lateinit var reportingTask: ReportingTask

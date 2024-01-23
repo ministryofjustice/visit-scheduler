@@ -73,6 +73,6 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
-      .jsonPath("$.developerMessage").isEqualTo("OldVisit with booking reference - ${expiredVisit.reference} is in the past, it cannot be cancelled")
+      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - ${expiredVisit.reference} is in the past, it cannot be cancelled")
   }
 }

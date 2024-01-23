@@ -9,14 +9,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDateTime
 
-@Schema(description = "OldVisit Session")
+@Schema(description = "Visit Session")
 data class VisitSessionDto(
 
   @Schema(description = "Session Template Reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank
   val sessionTemplateReference: String,
 
-  @Schema(description = "OldVisit Room", example = "Visits Main Hall", required = true)
+  @Schema(description = "Visit Room", example = "Visits Main Hall", required = true)
   @field:NotBlank
   val visitRoom: String,
 

@@ -23,7 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
@@ -38,10 +38,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private lateinit var visitMin: OldVisit
-  private lateinit var visitFullWithNoVisitors: OldVisit
-  private lateinit var visitFullWithOneVisitor: OldVisit
-  private lateinit var visitFullWithMultipleVisitors: OldVisit
+  private lateinit var visitMin: Visit
+  private lateinit var visitFullWithNoVisitors: Visit
+  private lateinit var visitFullWithOneVisitor: Visit
+  private lateinit var visitFullWithMultipleVisitors: Visit
 
   @BeforeEach
   internal fun createVisits() {

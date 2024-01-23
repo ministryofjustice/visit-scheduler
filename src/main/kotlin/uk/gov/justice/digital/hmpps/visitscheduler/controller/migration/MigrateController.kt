@@ -28,8 +28,8 @@ const val MIGRATE_CANCEL: String = "$MIGRATE_VISITS/{reference}/cancel"
 
 @RestController
 @Validated
-@Tag(name = "10. OldVisit migration rest controller")
-@RequestMapping(name = "OldVisit Migration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "10. Visit migration rest controller")
+@RequestMapping(name = "Visit Migration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class MigrateController(
   private val migrateVisitService: MigrateVisitService,
 ) {
@@ -50,7 +50,7 @@ class MigrateController(
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "OldVisit migrated",
+        description = "Visit migrated",
       ),
       ApiResponse(
         responseCode = "400",
@@ -111,7 +111,7 @@ class MigrateController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "OldVisit not found",
+        description = "Visit not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],

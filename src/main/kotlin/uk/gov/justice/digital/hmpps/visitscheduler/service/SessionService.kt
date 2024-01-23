@@ -39,7 +39,6 @@ class SessionService(
   private val visitRepository: VisitRepository,
   private val applicationRepository: ApplicationRepository,
   private val prisonerService: PrisonerService,
-  private val visitService: VisitService,
   private val application: ApplicationService,
   @Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,

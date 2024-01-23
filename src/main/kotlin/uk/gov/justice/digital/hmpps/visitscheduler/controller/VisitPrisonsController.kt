@@ -20,8 +20,8 @@ const val PRISONS_PATH: String = "/config/prisons/supported"
 
 @RestController
 @Validated
-@Tag(name = "4. OldVisit prisons rest controller")
-@RequestMapping(name = "OldVisit Prisons Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "4. Visit prisons rest controller")
+@RequestMapping(name = "Visit Prisons Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitPrisonsController(
   private val prisonsService: PrisonsService,
 ) {

@@ -29,7 +29,7 @@ data class SessionTemplateDto(
   val visitType: VisitType,
   @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
   val weeklyFrequency: Int,
-  @Schema(description = "OldVisit Room", example = "A1 L3", required = true)
+  @Schema(description = "Visit Room", example = "A1 L3", required = true)
   @field:NotBlank
   val visitRoom: String,
   @Schema(description = "session capacity", required = true)

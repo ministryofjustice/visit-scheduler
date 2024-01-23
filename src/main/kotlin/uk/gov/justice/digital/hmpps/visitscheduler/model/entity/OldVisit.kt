@@ -107,6 +107,6 @@ class OldVisit(
   }
 
   override fun toString(): String {
-    return "OldVisit(id=$id,reference='$reference')"
+    return "Visit(id=$id,reference='$reference')"
   }
 }

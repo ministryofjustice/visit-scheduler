@@ -36,7 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.UNKNOW
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
@@ -104,7 +104,7 @@ class SessionServiceTest {
     ).thenReturn(response)
   }
 
-  private fun mockVisitRepositoryCountResponse(visits: List<OldVisit>, sessionTemplate: SessionTemplate) {
+  private fun mockVisitRepositoryCountResponse(visits: List<Visit>, sessionTemplate: SessionTemplate) {
     val startDateTime = currentDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.startTime)
 
     whenever(
@@ -115,11 +115,11 @@ class SessionServiceTest {
     ).thenReturn(getVisitRestrictionStatsList(visits))
   }
 
-  private fun getVisitRestrictionStatsList(visits: List<OldVisit>): List<VisitRestrictionStats> {
+  private fun getVisitRestrictionStatsList(visits: List<Visit>): List<VisitRestrictionStats> {
     return listOf(getVisitRestrictionStats(visits, OPEN), getVisitRestrictionStats(visits, CLOSED))
   }
 
-  private fun getVisitRestrictionStats(visits: List<OldVisit>, visitRestriction: VisitRestriction): VisitRestrictionStats {
+  private fun getVisitRestrictionStats(visits: List<Visit>, visitRestriction: VisitRestriction): VisitRestrictionStats {
     val factory: ProjectionFactory = SpelAwareProxyProjectionFactory()
     val backingMap: MutableMap<String, Any> = HashMap()
     backingMap["visitRestriction"] = visitRestriction
@@ -275,7 +275,7 @@ class SessionServiceTest {
 
       val prison = PrisonEntityHelper.createPrison()
 
-      val openVisit1 = OldVisit(
+      val openVisit1 = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = currentDate.atTime(11, 30),
         visitEnd = currentDate.atTime(12, 30),
@@ -287,7 +287,7 @@ class SessionServiceTest {
         visitRoom = "1",
       )
 
-      val openVisit2 = OldVisit(
+      val openVisit2 = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = currentDate.atTime(11, 30),
         visitEnd = currentDate.atTime(12, 30),
@@ -299,7 +299,7 @@ class SessionServiceTest {
         visitRoom = "1",
       )
 
-      val closedVisit = OldVisit(
+      val closedVisit = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = currentDate.atTime(11, 30),
         visitEnd = currentDate.atTime(12, 30),
@@ -335,7 +335,7 @@ class SessionServiceTest {
 
       val prison = PrisonEntityHelper.createPrison()
 
-      val openVisit = OldVisit(
+      val openVisit = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = currentDate.atTime(11, 30),
         visitEnd = currentDate.atTime(12, 30),
@@ -348,7 +348,7 @@ class SessionServiceTest {
         visitRoom = "1",
       )
 
-      val closedVisit = OldVisit(
+      val closedVisit = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = currentDate.atTime(11, 30),
         visitEnd = currentDate.atTime(12, 30),
@@ -384,7 +384,7 @@ class SessionServiceTest {
 
       val prison = PrisonEntityHelper.createPrison()
 
-      val closedVisit = OldVisit(
+      val closedVisit = Visit(
         prisonerId = "Anythingwilldo",
         visitStart = currentDate.atTime(11, 30),
         visitEnd = currentDate.atTime(12, 30),
@@ -422,7 +422,7 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       // no BOOKED or RESERVED visits
-      val noVisitsBookedOrReserved = emptyList<OldVisit>()
+      val noVisitsBookedOrReserved = emptyList<Visit>()
 
       mockVisitRepositoryCountResponse(noVisitsBookedOrReserved, singleSession)
 

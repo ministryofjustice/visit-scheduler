@@ -20,7 +20,7 @@ data class SessionSlotDto(
   @Schema(description = "The date for the visit", example = "2018-12-01", required = true)
   @field:NotNull
   val sessionDate: LocalDate,
-  @Schema(description = "OldVisit Restriction", example = "OPEN", required = true)
+  @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   @field:NotNull
   val visitRestriction: VisitRestriction,
   @Schema(description = "Contact associated with the visit", required = false)

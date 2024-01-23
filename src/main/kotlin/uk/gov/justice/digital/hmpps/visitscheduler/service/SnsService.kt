@@ -34,11 +34,11 @@ class SnsService(
     const val EVENT_ZONE_ID = "Europe/London"
     const val EVENT_PRISON_VISIT_VERSION = 1
     const val EVENT_PRISON_VISIT_BOOKED = "prison-visit.booked"
-    const val EVENT_PRISON_VISIT_BOOKED_DESC = "Prison OldVisit Booked"
+    const val EVENT_PRISON_VISIT_BOOKED_DESC = "Prison Visit Booked"
     const val EVENT_PRISON_CHANGED_VISIT = "prison-visit.changed"
-    const val EVENT_PRISON_CHANGED_VISIT_DESC = "Prison OldVisit Changed"
+    const val EVENT_PRISON_CHANGED_VISIT_DESC = "Prison Visit Changed"
     const val EVENT_PRISON_VISIT_CANCELLED = "prison-visit.cancelled"
-    const val EVENT_PRISON_VISIT_CANCELLED_DESC = "Prison OldVisit Cancelled"
+    const val EVENT_PRISON_VISIT_CANCELLED_DESC = "Prison Visit Cancelled"
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 

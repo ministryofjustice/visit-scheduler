@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 
-@Schema(description = "OldVisit Outcome")
+@Schema(description = "Visit Outcome")
 class OutcomeDto(
   @Schema(description = "Outcome Status", example = "VISITOR_CANCELLED", required = true)
   @field:NotNull

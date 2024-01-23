@@ -51,7 +51,7 @@ class ApplicationController(
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "OldVisit slot reserved",
+        description = "Visit slot reserved",
       ),
       ApiResponse(
         responseCode = "400",
@@ -93,7 +93,7 @@ class ApplicationController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "OldVisit slot changed",
+        description = "Visit slot changed",
       ),
       ApiResponse(
         responseCode = "400",
@@ -112,7 +112,7 @@ class ApplicationController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "OldVisit slot not found",
+        description = "Visit slot not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -143,7 +143,7 @@ class ApplicationController(
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "OldVisit created",
+        description = "Visit created",
       ),
       ApiResponse(
         responseCode = "400",

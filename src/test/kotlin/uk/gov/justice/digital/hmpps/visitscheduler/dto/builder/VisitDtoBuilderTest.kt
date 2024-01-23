@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -75,7 +75,7 @@ class VisitDtoBuilderTest() {
 
   private fun assertVisitDto(
     visitDto: VisitDto,
-    visit: OldVisit,
+    visit: Visit,
     visitStart: LocalDateTime,
     visitEnd: LocalDateTime,
   ) {
@@ -138,8 +138,8 @@ class VisitDtoBuilderTest() {
     reference: String = "",
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
-  ): OldVisit {
-    val visit = OldVisit(
+  ): Visit {
+    val visit = Visit(
       visitStatus = visitStatus,
       prisonerId = prisonerId,
       prisonId = prison.id,

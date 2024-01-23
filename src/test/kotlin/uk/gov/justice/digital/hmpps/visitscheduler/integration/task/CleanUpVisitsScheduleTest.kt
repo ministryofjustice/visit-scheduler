@@ -21,7 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
@@ -46,13 +46,13 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private lateinit var reservedVisitNotExpired: OldVisit
+  private lateinit var reservedVisitNotExpired: Visit
 
-  private lateinit var reservedVisitNotExpiredChangingStatus: OldVisit
+  private lateinit var reservedVisitNotExpiredChangingStatus: Visit
 
-  private lateinit var reservedVisitExpired: OldVisit
+  private lateinit var reservedVisitExpired: Visit
 
-  private lateinit var reservedVisitExpiredChangingStatus: OldVisit
+  private lateinit var reservedVisitExpiredChangingStatus: Visit
 
   @MockBean
   private lateinit var lockProvider: JdbcTemplateLockProvider
@@ -104,7 +104,7 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
     assertDeleteEvent(reservedVisitExpiredChangingStatus)
   }
 
-  private fun assertDeleteEvent(visit: OldVisit) {
+  private fun assertDeleteEvent(visit: Visit) {
     verify(telemetryClient, times(1)).trackEvent(
       eq(VISIT_SLOT_RELEASED_EVENT.eventName),
       org.mockito.kotlin.check {
@@ -132,7 +132,7 @@ class CleanUpVisitsScheduleTest : IntegrationTestBase() {
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     reference: String = "",
-  ): OldVisit {
+  ): Visit {
     return visitEntityHelper.create(
       visitStatus = visitStatus,
       prisonerId = prisonerId,
