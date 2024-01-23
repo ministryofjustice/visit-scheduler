@@ -156,8 +156,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplate.reference,
-      visitStart = LocalDate.now().atTime(dto.sessionTimeSlot?.startTime),
-      visitEnd = LocalDate.now().atTime(dto.sessionTimeSlot?.endTime),
+      slotDate = LocalDate.now(),
+      visitStart = dto.sessionTimeSlot!!.startTime,
+      visitEnd = dto.sessionTimeSlot!!.endTime,
     )
 
     // When
@@ -182,8 +183,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplate.reference,
-      visitStart = LocalDate.now().atTime(dto.sessionTimeSlot?.startTime),
-      visitEnd = LocalDate.now().atTime(dto.sessionTimeSlot?.endTime),
+      slotDate = LocalDate.now(),
+      visitStart = dto.sessionTimeSlot!!.startTime,
+      visitEnd = dto.sessionTimeSlot!!.endTime,
     )
 
     // When
@@ -471,15 +473,17 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // visit exists 1 day before the new valid to date
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithValidDates.reference,
-      visitStart = newValidToDate.minusDays(1).atTime(10, 0),
-      visitEnd = newValidToDate.minusDays(1).atTime(11, 0),
+      slotDate = newValidToDate.minusDays(1),
+      visitStart = LocalTime.of(10, 0),
+      visitEnd = LocalTime.of(11, 0),
     )
 
     // visit exists same day as new valid to date
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithValidDates.reference,
-      visitStart = newValidToDate.atTime(10, 0),
-      visitEnd = newValidToDate.atTime(11, 0),
+      slotDate = newValidToDate,
+      visitStart = LocalTime.of(10, 0),
+      visitEnd = LocalTime.of(11, 0),
     )
     // When
     val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateWithValidDates.reference, dto, setAuthorisation(roles = adminRole))
@@ -516,8 +520,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val visitDate = newValidToDate.plusDays(1)
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithValidDates.reference,
-      visitStart = visitDate.atTime(10, 0),
-      visitEnd = visitDate.atTime(11, 0),
+      slotDate = visitDate,
+      visitStart = LocalTime.of(10, 0),
+      visitEnd = LocalTime.of(11, 0),
       visitStatus = VisitStatus.CANCELLED,
     )
 
@@ -556,8 +561,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val visitDate = newValidToDate.plusDays(1)
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithValidDates.reference,
-      visitStart = visitDate.atTime(10, 0),
-      visitEnd = visitDate.atTime(11, 0),
+      slotDate = visitDate,
+      visitStart = LocalTime.of(10, 0),
+      visitEnd = LocalTime.of(11, 0),
     )
 
     // When
@@ -803,24 +809,27 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplate.reference,
       visitRestriction = VisitRestriction.OPEN,
-      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
-      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+      slotDate = LocalDate.now().plusDays(1),
+      visitStart = LocalTime.of(11, 0),
+      visitEnd = LocalTime.of(12, 0),
     )
 
     visitEntityHelper.create(
       prisonerId = "AABBCC1",
       sessionTemplateReference = sessionTemplate.reference,
       visitRestriction = VisitRestriction.OPEN,
-      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
-      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+      slotDate = LocalDate.now().plusDays(1),
+      visitStart = LocalTime.of(11, 0),
+      visitEnd = LocalTime.of(12, 0),
     )
 
     // 1 closed visit exists for session template
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplate.reference,
       visitRestriction = VisitRestriction.CLOSED,
-      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
-      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+      slotDate = LocalDate.now().plusDays(1),
+      visitStart = LocalTime.of(11, 0),
+      visitEnd = LocalTime.of(12, 0),
     )
 
     // Then
@@ -848,16 +857,18 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplate.reference,
       visitRestriction = VisitRestriction.CLOSED,
-      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
-      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+      slotDate = LocalDate.now().plusDays(1),
+      visitStart = LocalTime.of(11, 0),
+      visitEnd = LocalTime.of(12, 0),
     )
 
     visitEntityHelper.create(
       prisonerId = "AABBCC1",
       sessionTemplateReference = sessionTemplate.reference,
       visitRestriction = VisitRestriction.CLOSED,
-      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
-      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+      slotDate = LocalDate.now().plusDays(1),
+      visitStart = LocalTime.of(11, 0),
+      visitEnd = LocalTime.of(12, 0),
     )
 
     // When
@@ -885,16 +896,18 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplate.reference,
       visitRestriction = VisitRestriction.OPEN,
-      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
-      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+      slotDate = LocalDate.now().plusDays(1),
+      visitStart = LocalTime.of(11, 0),
+      visitEnd = LocalTime.of(12, 0),
     )
 
     visitEntityHelper.create(
       prisonerId = "AABBCC1",
       sessionTemplateReference = sessionTemplate.reference,
       visitRestriction = VisitRestriction.OPEN,
-      visitStart = LocalDate.now().plusDays(1).atTime(11, 0),
-      visitEnd = LocalDate.now().plusDays(1).atTime(12, 0),
+      slotDate = LocalDate.now().plusDays(1),
+      visitStart = LocalTime.of(11, 0),
+      visitEnd = LocalTime.of(12, 0),
     )
 
     // When
@@ -922,8 +935,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplate.reference,
-      visitStart = LocalDate.now().atTime(dto.sessionTimeSlot?.startTime),
-      visitEnd = LocalDate.now().atTime(dto.sessionTimeSlot?.endTime),
+      slotDate = LocalDate.now(),
+      visitStart = dto.sessionTimeSlot!!.startTime,
+      visitEnd = dto.sessionTimeSlot!!.endTime,
     )
 
     // When
@@ -1064,8 +1078,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithLocations.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1090,8 +1105,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithLocations.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1116,8 +1132,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithLocations.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1142,8 +1159,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithLocations.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1168,8 +1186,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithLocations.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1194,8 +1213,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithLocations.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1220,8 +1240,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithLocations.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1248,8 +1269,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithLocations.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithLocations.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1274,8 +1296,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithCategories.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1300,8 +1323,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithCategories.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1326,8 +1350,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithCategories.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1352,8 +1377,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithCategories.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1380,8 +1406,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithCategories.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithCategories.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1406,8 +1433,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithIncentiveLevels.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentiveLevels.startTime,
+      visitEnd = sessionTemplateWithIncentiveLevels.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1432,8 +1460,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithIncentiveLevels.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentiveLevels.startTime,
+      visitEnd = sessionTemplateWithIncentiveLevels.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1458,8 +1487,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithIncentiveLevels.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentiveLevels.startTime,
+      visitEnd = sessionTemplateWithIncentiveLevels.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1484,8 +1514,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithIncentiveLevels.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentiveLevels.startTime,
+      visitEnd = sessionTemplateWithIncentiveLevels.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1512,8 +1543,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // future dated BOOKED visit exists
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithIncentiveLevels.reference,
-      visitStart = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.startTime),
-      visitEnd = LocalDate.now().plusWeeks(1).atTime(sessionTemplateWithIncentiveLevels.endTime),
+      slotDate = LocalDate.now().plusWeeks(1),
+      visitStart = sessionTemplateWithIncentiveLevels.startTime,
+      visitEnd = sessionTemplateWithIncentiveLevels.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1540,8 +1572,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // all existing visits are past dated
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithLocations.reference,
-      visitStart = LocalDate.now().minusWeeks(1).atTime(sessionTemplateWithLocations.startTime),
-      visitEnd = LocalDate.now().minusWeeks(1).atTime(sessionTemplateWithLocations.endTime),
+      slotDate = LocalDate.now().minusWeeks(1),
+      visitStart = sessionTemplateWithLocations.startTime,
+      visitEnd = sessionTemplateWithLocations.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1566,8 +1599,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // all existing visits are past dated
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithCategories.reference,
-      visitStart = LocalDate.now().minusWeeks(1).atTime(sessionTemplateWithCategories.startTime),
-      visitEnd = LocalDate.now().minusWeeks(1).atTime(sessionTemplateWithCategories.endTime),
+      slotDate = LocalDate.now().minusWeeks(1),
+      visitStart = sessionTemplateWithCategories.startTime,
+      visitEnd = sessionTemplateWithCategories.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 
@@ -1592,8 +1626,9 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // all existing visits are past dated
     visitEntityHelper.create(
       sessionTemplateReference = sessionTemplateWithIncentives.reference,
-      visitStart = LocalDate.now().minusWeeks(1).atTime(sessionTemplateWithIncentives.startTime),
-      visitEnd = LocalDate.now().minusWeeks(1).atTime(sessionTemplateWithIncentives.endTime),
+      slotDate = LocalDate.now().minusWeeks(1),
+      visitStart = sessionTemplateWithIncentives.startTime,
+      visitEnd = sessionTemplateWithIncentives.endTime,
       visitStatus = VisitStatus.BOOKED,
     )
 

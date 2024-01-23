@@ -61,7 +61,8 @@ class DataBaseTest(
   @Test
   fun `When visit deleted - all connected child objects are also removed`() {
     // Given
-    val applicationReference = reservedVisit.applicationReference
+    // TODO - check if we need to pass the first or last applicatio reference
+    val applicationReference = reservedVisit.applications[0].reference
 
     // When
     val didExist = testVisitRepository.hasVisit(reservedVisit.id)
