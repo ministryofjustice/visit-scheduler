@@ -10,7 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -166,8 +166,8 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     cancelResponse.expectStatus().isOk
   }
 
-  private fun reserveVisit(sessionSlotDto: SessionSlotDto): VisitDto {
-    val reservedResponse = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, sessionSlotDto)
+  private fun reserveVisit(createApplicationDto: CreateApplicationDto): VisitDto {
+    val reservedResponse = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationDto)
     reservedResponse.expectStatus().isCreated
     return getVisitFromRestResponse(reservedResponse)
   }
@@ -193,8 +193,8 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
   }
 
-  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.actionedByUserName, sessionTemplateReference: String = "sessionTemplateReference"): SessionSlotDto {
-    return SessionSlotDto(
+  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.actionedByUserName, sessionTemplateReference: String = "sessionTemplateReference"): CreateApplicationDto {
+    return CreateApplicationDto(
       prisonerId = "FF0000FF",
       startTimestamp = ReserveSlotTest.visitTime,
       endTimestamp = ReserveSlotTest.visitTime.plusHours(1),

@@ -40,11 +40,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMP
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
@@ -102,7 +102,7 @@ fun getMigrateCancelVisitUrl(reference: String): String {
 fun callVisitReserveSlotChange(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: ChangeVisitSlotRequestDto? = null,
+  dto: ChangeApplicationDto? = null,
   applicationReference: String,
 ): ResponseSpec {
   return callPut(
@@ -120,7 +120,7 @@ fun getVisitReserveSlotChangeUrl(reference: String): String {
 fun callVisitReserveSlot(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: SessionSlotDto? = null,
+  dto: CreateApplicationDto? = null,
 ): ResponseSpec {
   return callPost(
     dto,
@@ -137,7 +137,7 @@ fun getVisitReserveSlotUrl(): String {
 fun callVisitChange(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: SessionSlotDto? = null,
+  dto: CreateApplicationDto? = null,
   reference: String,
 ): ResponseSpec {
   return callPut(

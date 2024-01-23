@@ -18,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -81,8 +81,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     startTimestamp: LocalDateTime = bookedVisit.visitStart,
     visitRestriction: VisitRestriction = OPEN,
     sessionTemplateReference: String = "sessionTemplateReference",
-  ): SessionSlotDto {
-    return SessionSlotDto(
+  ): CreateApplicationDto {
+    return CreateApplicationDto(
       prisonerId = prisonerId,
       startTimestamp = startTimestamp,
       endTimestamp = bookedVisit.visitEnd,

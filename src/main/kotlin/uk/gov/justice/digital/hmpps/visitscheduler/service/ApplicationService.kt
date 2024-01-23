@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
@@ -61,11 +61,11 @@ class ApplicationService(
     const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with reference - %s is in the past, it cannot be %s"
   }
 
-  fun createInitialApplication(sessionSlotDto: SessionSlotDto): ApplicationDto {
-    val applicationDto = createApplication(sessionSlotDto)
+  fun createInitialApplication(createApplicationDto: CreateApplicationDto): ApplicationDto {
+    val applicationDto = createApplication(createApplicationDto)
 
     saveEventAudit(
-      sessionSlotDto.actionedBy,
+      createApplicationDto.actionedBy,
       applicationDto,
       RESERVED_VISIT,
       NOT_KNOWN,
@@ -74,14 +74,14 @@ class ApplicationService(
     return applicationDto
   }
 
-  fun createApplicationForAnExistingVisit(bookingReference: String, sessionSlotDto: SessionSlotDto): ApplicationDto {
+  fun createApplicationForAnExistingVisit(bookingReference: String, createApplicationDto: CreateApplicationDto): ApplicationDto {
     val visit = visitRepo.findBookedVisit(bookingReference)
-    validateBookingChange(visit, sessionSlotDto, bookingReference)
+    validateBookingChange(visit, createApplicationDto, bookingReference)
 
-    val applicationDto = createApplication(sessionSlotDto, visit)
+    val applicationDto = createApplication(createApplicationDto, visit)
 
     saveEventAudit(
-      sessionSlotDto.actionedBy,
+      createApplicationDto.actionedBy,
       applicationDto,
       if (applicationDto.reserved) RESERVED_VISIT else CHANGING_VISIT,
       NOT_KNOWN,
@@ -90,40 +90,40 @@ class ApplicationService(
     return applicationDto
   }
 
-  private fun createApplication(sessionSlotDto: SessionSlotDto, visit: Visit? = null): ApplicationDto {
-    val sessionTemplateReference = sessionSlotDto.sessionTemplateReference
+  private fun createApplication(createApplicationDto: CreateApplicationDto, visit: Visit? = null): ApplicationDto {
+    val sessionTemplateReference = createApplicationDto.sessionTemplateReference
     val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
     val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
-    val sessionSlot = sessionSlotService.getSessionSlot(sessionSlotDto.sessionDate, sessionTemplate, prison)
+    val sessionSlot = sessionSlotService.getSessionSlot(createApplicationDto.sessionDate, sessionTemplate, prison)
     val isReservedSlot = visit?.let {
-      isReservationRequired(visit, sessionSlot, sessionSlotDto.visitRestriction)
+      isReservationRequired(visit, sessionSlot, createApplicationDto.visitRestriction)
     } ?: true
 
     val applicationEntity = applicationRepo.saveAndFlush(
       Application(
-        prisonerId = sessionSlotDto.prisonerId,
+        prisonerId = createApplicationDto.prisonerId,
         prison = prison,
         prisonId = prison.id,
         sessionSlot = sessionSlot,
         sessionSlotId = sessionSlot.id,
         reservedSlot = isReservedSlot,
         visitType = sessionTemplate.visitType,
-        restriction = sessionSlotDto.visitRestriction,
+        restriction = createApplicationDto.visitRestriction,
         completed = false,
-        createdBy = sessionSlotDto.actionedBy,
+        createdBy = createApplicationDto.actionedBy,
       ),
     )
 
-    sessionSlotDto.visitContact?.let {
+    createApplicationDto.visitContact?.let {
       applicationEntity.visitContact = createApplicationContact(applicationEntity, it.name, it.telephone)
     }
 
-    sessionSlotDto.visitors.forEach {
+    createApplicationDto.visitors.forEach {
       applicationEntity.visitors.add(createApplicationVisitor(applicationEntity, it.nomisPersonId, it.visitContact))
     }
 
-    sessionSlotDto.visitorSupport?.let { supportList ->
+    createApplicationDto.visitorSupport?.let { supportList ->
       supportList.forEach {
         if (!supportTypeRepository.existsByName(it.type)) {
           throw SupportNotFoundException("Invalid support ${it.type} not found")
@@ -139,21 +139,21 @@ class ApplicationService(
     return applicationDto
   }
 
-  fun changeIncompleteApplication(applicationReference: String, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): ApplicationDto {
+  fun changeIncompleteApplication(applicationReference: String, changeApplicationDto: ChangeApplicationDto): ApplicationDto {
     val application = getApplicationEntity(applicationReference)
 
-    changeVisitSlotRequestDto.sessionDate?.let {
-      val sessionTemplateReference = changeVisitSlotRequestDto.sessionTemplateReference
+    changeApplicationDto.sessionDate?.let {
+      val sessionTemplateReference = changeApplicationDto.sessionTemplateReference
       val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
       val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
-      val sessionSlot = sessionSlotService.getSessionSlot(changeVisitSlotRequestDto.sessionDate, sessionTemplate, prison)
+      val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
       application.sessionSlotId = sessionSlot.id
       application.sessionSlot = sessionSlot
     }
 
-    changeVisitSlotRequestDto.visitRestriction?.let { restriction -> application.restriction = restriction }
-    changeVisitSlotRequestDto.visitContact?.let { visitContactUpdate ->
+    changeApplicationDto.visitRestriction?.let { restriction -> application.restriction = restriction }
+    changeApplicationDto.visitContact?.let { visitContactUpdate ->
       application.visitContact?.let { visitContact ->
         visitContact.name = visitContactUpdate.name
         visitContact.telephone = visitContactUpdate.telephone
@@ -162,7 +162,7 @@ class ApplicationService(
       }
     }
 
-    changeVisitSlotRequestDto.visitors?.let { visitorsUpdate ->
+    changeApplicationDto.visitors?.let { visitorsUpdate ->
       application.visitors.clear()
       applicationRepo.saveAndFlush(application)
       visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
@@ -170,7 +170,7 @@ class ApplicationService(
       }
     }
 
-    changeVisitSlotRequestDto.visitorSupport?.let { visitSupportUpdate ->
+    changeApplicationDto.visitorSupport?.let { visitSupportUpdate ->
       application.support.clear()
       applicationRepo.saveAndFlush(application)
       visitSupportUpdate.forEach {
@@ -291,18 +291,18 @@ class ApplicationService(
 
   private fun validateBookingChange(
     visit: Visit?,
-    sessionSlotDto: SessionSlotDto,
+    createApplicationDto: CreateApplicationDto,
     bookingReference: String,
   ) {
     val errors = ArrayList<String>()
     visit?.let {
-      if (visit.prisonerId != sessionSlotDto.prisonerId) {
-        errors.add("Given prisoner ${sessionSlotDto.prisonerId} is different from the original booking ($bookingReference) prisoner ${visit.prisonerId} ")
+      if (visit.prisonerId != createApplicationDto.prisonerId) {
+        errors.add("Given prisoner ${createApplicationDto.prisonerId} is different from the original booking ($bookingReference) prisoner ${visit.prisonerId} ")
       }
 
-      val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionSlotDto.sessionTemplateReference)
+      val sessionTemplate = sessionTemplateService.getSessionTemplates(createApplicationDto.sessionTemplateReference)
       if (sessionTemplate.prisonCode != visit.prison.code) {
-        errors.add("Given session ${sessionSlotDto.sessionTemplateReference} has a different prison from the original booking ($bookingReference) prison ${sessionTemplate.prisonCode} != ${visit.prison.code} ")
+        errors.add("Given session ${createApplicationDto.sessionTemplateReference} has a different prison from the original booking ($bookingReference) prison ${sessionTemplate.prisonCode} != ${visit.prison.code} ")
       }
     } ?: {
       if (visit == null) errors.add("Visit booking reference $bookingReference not found")

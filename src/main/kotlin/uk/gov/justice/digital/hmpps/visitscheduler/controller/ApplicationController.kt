@@ -19,8 +19,8 @@ import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.ApplicationService
 
 const val APPLICATION_CONTROLLER_PATH: String = "/visits/application"
@@ -44,7 +44,7 @@ class ApplicationController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = SessionSlotDto::class),
+          schema = Schema(implementation = CreateApplicationDto::class),
         ),
       ],
     ),
@@ -72,9 +72,9 @@ class ApplicationController(
   )
   fun createInitialApplication(
     @RequestBody @Valid
-    sessionSlotDto: SessionSlotDto,
+    createApplicationDto: CreateApplicationDto,
   ): ApplicationDto {
-    return applicationService.createInitialApplication(sessionSlotDto = sessionSlotDto)
+    return applicationService.createInitialApplication(createApplicationDto = createApplicationDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -86,7 +86,7 @@ class ApplicationController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = ChangeVisitSlotRequestDto::class),
+          schema = Schema(implementation = ChangeApplicationDto::class),
         ),
       ],
     ),
@@ -122,9 +122,9 @@ class ApplicationController(
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    changeVisitSlotRequestDto: ChangeVisitSlotRequestDto,
+    changeApplicationDto: ChangeApplicationDto,
   ): ApplicationDto {
-    return applicationService.changeIncompleteApplication(reference.trim(), changeVisitSlotRequestDto)
+    return applicationService.changeIncompleteApplication(reference.trim(), changeApplicationDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -136,7 +136,7 @@ class ApplicationController(
       content = [
         Content(
           mediaType = "application/json",
-          schema = Schema(implementation = SessionSlotDto::class),
+          schema = Schema(implementation = CreateApplicationDto::class),
         ),
       ],
     ),
@@ -167,8 +167,8 @@ class ApplicationController(
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    sessionSlotDto: SessionSlotDto,
+    createApplicationDto: CreateApplicationDto,
   ): ApplicationDto {
-    return applicationService.createApplicationForAnExistingVisit(reference.trim(), sessionSlotDto)
+    return applicationService.createApplicationForAnExistingVisit(reference.trim(), createApplicationDto)
   }
 }

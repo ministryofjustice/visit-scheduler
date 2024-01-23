@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.SessionSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
@@ -233,7 +233,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     // update the visit
     // first create a reserveVisitSlotDto with same details as the booked visit
-    val sessionSlotDto = SessionSlotDto(
+    val createApplicationDto = CreateApplicationDto(
       prisonerId = bookedVisit.prisonerId,
       visitRestriction = bookedVisit.visitRestriction,
       startTimestamp = bookedVisit.visitStart,
@@ -245,7 +245,7 @@ class CancelVisitTest : IntegrationTestBase() {
     )
 
     // call visit change and then book the visit
-    val responseSpecChange = callVisitChange(webTestClient, roles, sessionSlotDto, bookedVisit.reference)
+    val responseSpecChange = callVisitChange(webTestClient, roles, createApplicationDto, bookedVisit.reference)
     val responseSpecChangeResult = responseSpecChange
       .expectBody()
       .returnResult()
