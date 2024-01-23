@@ -22,10 +22,11 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     "SELECT MAX(open),MAX(closed) FROM" +
       "(SELECT  COUNT(CASE WHEN v.visit_restriction = 'OPEN' THEN 1 END) AS open, " +
       " COUNT(CASE WHEN v.visit_restriction = 'CLOSED' THEN 1 END) AS closed  FROM visit v " +
-      " WHERE v.session_template_reference = :reference" +
-      " AND v.visit_start >= :visitsFromDate" +
-      " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
-      " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
+      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " WHERE sl.session_template_reference = :reference" +
+      " AND sl.slot_date >= :visitsFromDate" +
+      " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
+      " AND visit_status = 'BOOKED'" +
       " GROUP BY v.visit_start ) AS tmp ",
     nativeQuery = true,
   )
@@ -36,11 +37,12 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   ): Tuple
 
   @Query(
-    "select count(*) from visit v " +
-      " WHERE v.session_template_reference = :reference" +
-      " AND v.visit_start >= :visitsFromDate" +
-      " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
-      " AND visit_status IN ('BOOKED','RESERVED','CHANGING')",
+    "SELECT count(*) from visit v " +
+        " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+        " WHERE sl.session_template_reference = :reference" +
+        " AND sl.slot_date >= :visitsFromDate" +
+        " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
+        " AND visit_status = 'BOOKED' ",
     nativeQuery = true,
   )
   fun getVisitCount(
@@ -50,11 +52,12 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   ): Int
 
   @Query(
-    "select count(*) from visit v " +
-      " WHERE v.session_template_reference = :reference" +
-      " AND v.visit_start >= :visitsFromDate" +
-      " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
-      " AND visit_status = 'CANCELLED' AND (v.outcome_status is null OR v.outcome_status != 'SUPERSEDED_CANCELLATION') ",
+    "SELECT count(*) from visit v " +
+      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " WHERE sl.session_template_reference = :reference" +
+      " AND sl.slot_date >= :visitsFromDate" +
+      " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
+      " AND visit_status = 'CANCELLED' ",
     nativeQuery = true,
   )
   fun getVisitCancelCount(
@@ -64,13 +67,14 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   ): Int
 
   @Query(
-    "select cast(v.visit_start as date) as visitDate, v.visit_restriction as visitRestriction, count(*) as visitCount from visit v " +
-      " WHERE v.session_template_reference = :reference" +
-      " AND v.visit_start >= :visitsFromDate" +
-      " AND (cast(:visitsToDate as date) is null OR v.visit_start <= :visitsToDate)" +
-      " AND visit_status IN ('BOOKED','RESERVED','CHANGING')" +
-      " GROUP BY v.visit_start, v.visit_restriction" +
-      " ORDER BY v.visit_start",
+    "select sl.slot_date as visitDate, v.visit_restriction as visitRestriction, count(*) as visitCount from visit v " +
+      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " WHERE sl.session_template_reference = :reference" +
+      " AND sl.slot_date >= :visitsFromDate" +
+      " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
+      " AND visit_status = 'BOOKED' "+
+      " GROUP BY sl.slot_date, v.visit_restriction" +
+      " ORDER BY sl.slot_date",
     nativeQuery = true,
   )
   fun getVisitCountsByDate(
@@ -81,9 +85,11 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "select count(*) from visit v " +
-      " WHERE v.session_template_reference = :reference" +
-      "   AND v.visit_start >= :sessionDate AND v.visit_end < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
-      "   AND visit_status IN ('CANCELLED') AND (v.outcome_status is null OR v.outcome_status != 'SUPERSEDED_CANCELLATION')",
+        " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+        " WHERE sl.session_template_reference = :reference" +
+        " AND sl.slot_date >= :visitsFromDate" +
+        " AND sl.slot_date < :(CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
+      "   AND visit_status = 'CANCELLED'",
     nativeQuery = true,
   )
   fun getCancelledVisitCountForDate(
