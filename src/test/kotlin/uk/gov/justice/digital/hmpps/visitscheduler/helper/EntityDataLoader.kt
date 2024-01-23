@@ -49,7 +49,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 import kotlin.jvm.optionals.getOrNull
 
@@ -222,6 +221,10 @@ class VisitEntityHelper(
 
   fun getVisit(applicationReference: String): Visit? {
     return visitRepository.findVisitByApplicationReference(applicationReference)
+  }
+
+  fun getBookedVisit(reference: String): Visit? {
+    return visitRepository.findBookedVisit(reference)
   }
 }
 
