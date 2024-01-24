@@ -221,6 +221,10 @@ class VisitEntityHelper(
   fun getVisit(applicationReference: String): Visit? {
     return visitRepository.findVisitByApplicationReference(applicationReference)
   }
+
+  fun getBookedVisit(reference: String): Visit? {
+    return visitRepository.findBookedVisit(reference)
+  }
 }
 
 @Component
