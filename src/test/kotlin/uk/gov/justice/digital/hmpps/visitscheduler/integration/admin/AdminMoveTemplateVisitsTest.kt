@@ -354,7 +354,6 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
     Assertions.assertThat(updatedVisit1.sessionSlot.slotEndTime).isEqualTo(toSession.endTime)
     Assertions.assertThat(updatedVisit1.sessionSlot.slotDate).isEqualTo(visit1Date)
 
-
     Assertions.assertThat(updatedVisit2!!.sessionSlot.sessionTemplateReference).isEqualTo(toSession.reference)
     Assertions.assertThat(updatedVisit2.sessionSlot.slotTime).isEqualTo(toSession.startTime)
     Assertions.assertThat(updatedVisit2.sessionSlot.slotEndTime).isEqualTo(toSession.endTime)

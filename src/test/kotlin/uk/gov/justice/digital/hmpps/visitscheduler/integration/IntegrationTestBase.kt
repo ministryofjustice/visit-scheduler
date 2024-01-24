@@ -142,7 +142,7 @@ abstract class IntegrationTestBase {
   fun getCheckingMatchingTemplatesOnCreate(responseSpec: ResponseSpec): Array<String> =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<String>::class.java)
 
-  fun getErrorResponse(responseSpec: ResponseSpec) : ErrorResponse =
+  fun getErrorResponse(responseSpec: ResponseSpec): ErrorResponse =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ErrorResponse::class.java)
 
   internal fun setAuthorisation(

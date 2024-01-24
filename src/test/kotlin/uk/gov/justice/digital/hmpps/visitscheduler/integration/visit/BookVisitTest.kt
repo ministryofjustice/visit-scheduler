@@ -43,7 +43,6 @@ class BookVisitTest : IntegrationTestBase() {
   @Autowired
   private lateinit var testApplicationRepository: TestApplicationRepository
 
-
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
@@ -104,7 +103,7 @@ class BookVisitTest : IntegrationTestBase() {
     Assertions.assertThat(visit1.reference).isEqualTo(visit2.reference)
     Assertions.assertThat(visit1.applicationReference).isEqualTo(visit2.applicationReference)
     Assertions.assertThat(visit1.visitStatus).isEqualTo(visit2.visitStatus)
-    Assertions.assertThat(testVisitRepository.hasOneVisit(visit1.reference)).isTrue();
+    Assertions.assertThat(testVisitRepository.hasOneVisit(visit1.reference)).isTrue()
 
     // just one event thrown
     assertBookedEvent(visit1, false)

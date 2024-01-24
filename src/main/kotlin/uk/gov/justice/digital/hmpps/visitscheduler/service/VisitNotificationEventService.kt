@@ -82,8 +82,7 @@ class VisitNotificationEventService(
   fun handleRemovePrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
     val affectedNotifications = visitNotificationEventRepository.getEventsByVisitDate(
       prisonDateBlockedDto.prisonCode,
-      prisonDateBlockedDto.visitDate.atStartOfDay(),
-      prisonDateBlockedDto.visitDate.atTime(23, 59),
+      prisonDateBlockedDto.visitDate,
       PRISON_VISITS_BLOCKED_FOR_DATE,
     )
     deleteNotificationsThatAreNoLongerValid(affectedNotifications)

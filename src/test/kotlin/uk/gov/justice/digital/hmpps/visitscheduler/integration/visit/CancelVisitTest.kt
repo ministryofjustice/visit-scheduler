@@ -17,8 +17,8 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
@@ -364,7 +364,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
   @Test
   fun `cancel expired visit returns bad request error`() {
-    val now  = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
+    val now = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
     val slotDate = now.toLocalDate()
     val visitStart = now.toLocalTime()
     val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart)
@@ -408,7 +408,7 @@ class CancelVisitTest : IntegrationTestBase() {
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val now  = LocalDateTime.now().minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS).withHour(1)
+    val now = LocalDateTime.now().minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS).withHour(1)
     val slotDate = now.toLocalDate()
     val visitStart = now.toLocalTime()
 
@@ -439,7 +439,7 @@ class CancelVisitTest : IntegrationTestBase() {
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val now  = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
+    val now = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
     val slotDate = now.toLocalDate()
     val visitStart = now.toLocalTime()
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart)
@@ -468,7 +468,7 @@ class CancelVisitTest : IntegrationTestBase() {
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val now  = LocalDateTime.now().plusDays(1)
+    val now = LocalDateTime.now().plusDays(1)
     val slotDate = now.toLocalDate()
     val visitStart = now.toLocalTime()
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart)

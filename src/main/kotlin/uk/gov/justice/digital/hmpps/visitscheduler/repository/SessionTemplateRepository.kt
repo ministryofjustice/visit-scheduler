@@ -38,11 +38,11 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "SELECT count(*) from visit v " +
-        " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
-        " WHERE sl.session_template_reference = :reference" +
-        " AND sl.slot_date >= :visitsFromDate" +
-        " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
-        " AND visit_status = 'BOOKED' ",
+      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " WHERE sl.session_template_reference = :reference" +
+      " AND sl.slot_date >= :visitsFromDate" +
+      " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
+      " AND visit_status = 'BOOKED' ",
     nativeQuery = true,
   )
   fun getVisitCount(
@@ -72,7 +72,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       " WHERE sl.session_template_reference = :reference" +
       " AND sl.slot_date >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
-      " AND visit_status = 'BOOKED' "+
+      " AND visit_status = 'BOOKED' " +
       " GROUP BY sl.slot_date, v.visit_restriction" +
       " ORDER BY sl.slot_date",
     nativeQuery = true,
@@ -85,10 +85,10 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "select count(*) from visit v " +
-        " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
-        " WHERE sl.session_template_reference = :reference" +
-        " AND sl.slot_date >= :visitsFromDate" +
-        " AND sl.slot_date < :(CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
+      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " WHERE sl.session_template_reference = :reference" +
+      " AND sl.slot_date >= :visitsFromDate" +
+      " AND sl.slot_date < :(CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
       "   AND visit_status = 'CANCELLED'",
     nativeQuery = true,
   )

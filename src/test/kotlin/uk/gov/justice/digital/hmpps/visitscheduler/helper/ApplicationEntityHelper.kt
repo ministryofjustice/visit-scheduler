@@ -32,8 +32,8 @@ class ApplicationEntityHelper(
     visitRestriction: VisitRestriction = OPEN,
     activePrison: Boolean = true,
     sessionTemplateReference: String? = "sessionTemplateReference",
-    reservedSlot : Boolean = true,
-    completed : Boolean = true,
+    reservedSlot: Boolean = true,
+    completed: Boolean = true,
   ): Application {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplateReference, prison.id, slotDate, visitStart, visitEnd)

@@ -32,11 +32,10 @@ class CancelZeroDayLimitConfiguredTest : IntegrationTestBase() {
       NOT_KNOWN,
     )
     // Given
-    val now  = LocalDateTime.now().plusDays(1)
+    val now = LocalDateTime.now().plusDays(1)
     val slotDate = now.toLocalDate()
     val visitStart = now.toLocalTime()
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart)
-
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
