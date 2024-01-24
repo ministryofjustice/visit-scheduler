@@ -27,7 +27,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       " AND sl.slot_date >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
       " AND visit_status = 'BOOKED'" +
-      " GROUP BY v.visit_start ) AS tmp ",
+      " GROUP BY sl.slot_date,sl.slotTime ) AS tmp ",
     nativeQuery = true,
   )
   fun findSessionTemplateMinCapacityBy(
