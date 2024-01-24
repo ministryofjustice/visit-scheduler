@@ -130,6 +130,11 @@ class ApplicationService(
       }
     }
 
+    visit?.let {
+      // add even though it's not complete
+      visit.applications.add(applicationEntity)
+    }
+
     val applicationDto = applicationDtoBuilder.build(applicationEntity)
 
     val eventName = if (isReservedSlot) VISIT_SLOT_RESERVED_EVENT else VISIT_CHANGED_EVENT
@@ -244,6 +249,7 @@ class ApplicationService(
     return applicationRepo.findApplication(applicationReference)
       ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
   }
+
 
   private fun saveEventAudit(
     actionedBy: String,

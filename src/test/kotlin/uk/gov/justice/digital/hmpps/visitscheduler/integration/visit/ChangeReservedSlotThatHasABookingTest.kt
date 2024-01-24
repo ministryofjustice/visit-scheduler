@@ -85,7 +85,6 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   fun `change reserved slot by application reference - start date has changed back to match booked slot`() {
     // Given
 
-
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = sessionTemplate.reference,
       sessionDate = oldApplication.sessionSlot.slotDate,

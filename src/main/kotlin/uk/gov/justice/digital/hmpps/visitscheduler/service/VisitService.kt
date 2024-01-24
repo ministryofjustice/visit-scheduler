@@ -133,7 +133,9 @@ class VisitService(
       )
     }
 
-    booking.applications.add(application)
+    if (hasNotBeenAddedToBooking(booking,application)) {
+      booking.applications.add(application)
+    }
 
     with(application.visitContact!!) {
       booking.visitContact = VisitContact(visit = booking, visitId = booking.id, name = name, telephone = telephone)
@@ -160,6 +162,10 @@ class VisitService(
     visitRepository.saveAndFlush(booking)
 
     return booking
+  }
+
+  private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
+    return booking.applications.any { it.id == application.id}
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
