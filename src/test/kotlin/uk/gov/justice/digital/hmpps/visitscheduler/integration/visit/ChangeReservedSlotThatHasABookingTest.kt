@@ -23,6 +23,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -31,6 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRep
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
+import javax.sound.sampled.LineEvent.Type.CLOSE
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_RESERVED_SLOT_CHANGE")
@@ -73,14 +76,15 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     oldBooking = visitEntityHelper.create(sessionTemplateReference = sessionTemplate.reference)
     oldBooking.applications.add(oldApplication)
 
-    newApplication = applicationEntityHelper.create(sessionTemplateReference = sessionTemplate.reference, completed = true)
+    val newRestriction = if (oldBooking.visitRestriction==OPEN) CLOSED else OPEN
+
+    newApplication = applicationEntityHelper.create(sessionTemplateReference = sessionTemplate.reference, completed = true, visitRestriction = newRestriction)
     applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348 811539")
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(newApplication)
 
     oldBooking.applications.add(newApplication)
-
   }
 
   @Test
@@ -88,12 +92,12 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     // Given
 
     val updateRequest = ChangeApplicationDto(
-      sessionTemplateReference = sessionTemplate.reference,
-      sessionDate = oldApplication.sessionSlot.slotDate,
+      sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
+      sessionDate = oldBooking.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
-    val applicationReference = oldApplication.reference
+    val applicationReference = newApplication.reference
 
     // When
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
@@ -112,14 +116,11 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   @Test
   fun `change reserved slot by application reference - start restriction has changed back to match booked slot`() {
     // Given
-    val visitBooked = visitEntityHelper.create(visitStatus = BOOKED)
-    val visitReserved = visitEntityHelper.create(visitStatus = RESERVED, reference = visitBooked.reference)
-
     val updateRequest = ChangeApplicationDto(
-      visitRestriction = visitBooked.visitRestriction,
-      visitContact = ContactDto("John Smith", "01234 567890"),
-      sessionTemplateReference = sessionTemplate.reference,
+      visitRestriction = oldBooking.visitRestriction,
+      sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldApplication.sessionSlot.slotDate,
+      visitContact = ContactDto("John Smith", "01234 567890"),
     )
 
     val applicationReference = oldApplication.reference
