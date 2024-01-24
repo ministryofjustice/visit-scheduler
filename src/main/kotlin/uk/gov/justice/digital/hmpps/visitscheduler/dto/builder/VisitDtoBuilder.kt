@@ -14,7 +14,7 @@ class VisitDtoBuilder {
 
   fun build(visitEntity: Visit): VisitDto {
     return VisitDto(
-      applicationReference = visitEntity.applications.last.reference,
+      applicationReference = visitEntity.applications.last { it.completed }.reference,
       reference = visitEntity.reference,
       prisonerId = visitEntity.prisonerId,
       prisonCode = visitEntity.prison.code,

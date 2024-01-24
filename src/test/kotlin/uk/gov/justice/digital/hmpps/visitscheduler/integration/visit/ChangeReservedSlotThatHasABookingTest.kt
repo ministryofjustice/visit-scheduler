@@ -79,6 +79,8 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(newApplication)
 
+    oldBooking.applications.add(newApplication)
+
   }
 
   @Test
