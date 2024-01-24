@@ -16,7 +16,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationExcep
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -131,6 +130,10 @@ class ApplicationService(
       }
     }
 
+    visit?.let {
+      visit.applications.add(applicationEntity)
+    }
+
     val applicationDto = applicationDtoBuilder.build(applicationEntity)
 
     val eventName = if (isReservedSlot) VISIT_SLOT_RESERVED_EVENT else VISIT_CHANGED_EVENT
@@ -185,13 +188,16 @@ class ApplicationService(
       application.reservedSlot = isReservationRequired(visit, application.sessionSlot, application.restriction)
     }
 
+    val telemetryData = HashMap<String, String>()
+    telemetryData["applicationReference"] = application.reference
+    visit?.let {
+      telemetryData["bookingReference"] = it.reference
+    }
+    telemetryData["reservedSlot"] = application.reservedSlot.toString()
+
     telemetryClientService.trackEvent(
       VISIT_SLOT_CHANGED_EVENT,
-      mapOf(
-        "applicationReference" to application.reference,
-        "bookingReference" to (visit?.reference ?: ""),
-        "reservedSlot" to application.reservedSlot.toString(),
-      ),
+      telemetryData,
     )
 
     return applicationDtoBuilder.build(application)
@@ -246,7 +252,7 @@ class ApplicationService(
   private fun saveEventAudit(
     actionedBy: String,
     application: ApplicationDto,
-    visit: Visit? =null,
+    visit: Visit? = null,
     applicationMethodType: ApplicationMethodType,
   ) {
     eventAuditRepository.saveAndFlush(

@@ -38,7 +38,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -51,9 +50,6 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
   lateinit var bookedVisit: Visit
   lateinit var sessionTemplate: SessionTemplate
-
-  @Autowired
-  private lateinit var testVisitRepository: TestVisitRepository
 
   @Autowired
   private lateinit var testApplicationRepository: TestApplicationRepository
@@ -109,8 +105,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       createApplication(sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!)
 
     // When
-    val responseSpec =
-      callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
+    val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
 
     // Then
     val returnResult = getResult(responseSpec)
@@ -182,7 +177,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `changed booked visit creates new visit when visit restriction has changed`() {
     // Given
     val reference = bookedVisit.reference
-    val newRestriction = if (bookedVisit.visitRestriction == OPEN ) CLOSED else OPEN
+    val newRestriction = if (bookedVisit.visitRestriction == OPEN) CLOSED else OPEN
     val createApplicationRequest = createApplication(visitRestriction = newRestriction)
 
     // When
@@ -195,7 +190,6 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     assertThat(applicationDto.reserved).isTrue()
     assertTelemetryData(applicationDto)
   }
-
 
   @Test
   fun `application to change visit sends correct telemetry data`() {
@@ -212,10 +206,6 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     // And
     val applicationDto = getApplicationDto(returnResult)
     assertTelemetryData(applicationDto)
-  }
-
-  private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto {
-    return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
   }
 
   @Test
@@ -301,14 +291,14 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - ${expiredVisit.reference} is in the past, it cannot be changed")
   }
 
-  private fun assertTelemetryData(applicationDto: ApplicationDto
+  private fun assertTelemetryData(
+    applicationDto: ApplicationDto,
   ) {
     assertThat(applicationDto).isNotNull
 
-    val application = testApplicationRepository.findByReference(applicationDto.reference)
+    val application = getApplication(applicationDto)
     assertThat(application).isNotNull
     application?.let {
-
       val visitStartStr = application.sessionSlot.slotDate.atTime(application.sessionSlot.slotTime)
         .format(DateTimeFormatter.ISO_DATE_TIME)
       verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
@@ -329,11 +319,17 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     }
   }
 
+  private fun getApplication(dto: ApplicationDto): Application? {
+    return testApplicationRepository.findByReference(dto.reference)
+  }
+
   private fun getResult(responseSpec: ResponseSpec): EntityExchangeResult<ByteArray> {
     return responseSpec.expectStatus().isCreated
       .expectBody()
       .returnResult()
   }
+
+  private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto {
+    return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
+  }
 }
-
-

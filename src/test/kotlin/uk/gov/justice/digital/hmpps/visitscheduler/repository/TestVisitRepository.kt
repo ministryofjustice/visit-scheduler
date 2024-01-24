@@ -13,10 +13,14 @@ interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExec
 
   fun findByReference(reference: String): Visit
 
-  fun findByApplicationReference(reference: String): Visit?
-
-  @Modifying
-  fun deleteByApplicationReference(applicationReference: String): Long
+  @Query(
+    "SELECT v.*  FROM visit v" +
+        "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
+        "  JOIN application a on a.id = vta.application_id " +
+        "  WHERE a.reference = :applicationReference",
+    nativeQuery = true,
+  )
+  fun findByApplicationReference(applicationReference: String): Visit?
 
   @Query(
     "SELECT CASE WHEN (COUNT(v) == 1) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference ",

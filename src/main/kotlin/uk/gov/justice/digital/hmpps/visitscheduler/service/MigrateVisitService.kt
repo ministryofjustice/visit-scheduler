@@ -107,6 +107,7 @@ class MigrateVisitService(
 
     val applicationEntity: Application = createApplication(migrateVisitRequest, prison, sessionSlot, actionedBy)
     val visitEntity = createVisit(migrateVisitRequest, prison, visitRoom, sessionSlot, outcomeStatus, actionedBy)
+    visitEntity.applications.add(applicationEntity)
 
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
