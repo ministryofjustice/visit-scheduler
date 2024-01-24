@@ -130,10 +130,6 @@ class ApplicationService(
       }
     }
 
-    visit?.let {
-      visit.applications.add(applicationEntity)
-    }
-
     val applicationDto = applicationDtoBuilder.build(applicationEntity)
 
     val eventName = if (isReservedSlot) VISIT_SLOT_RESERVED_EVENT else VISIT_CHANGED_EVENT
