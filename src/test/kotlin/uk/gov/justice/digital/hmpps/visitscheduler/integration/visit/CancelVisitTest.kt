@@ -24,7 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
@@ -244,7 +244,7 @@ class CancelVisitTest : IntegrationTestBase() {
     )
 
     // call visit change and then book the visit
-    val responseSpecChange = callVisitChange(webTestClient, roles, createApplicationDto, bookedVisit.reference)
+    val responseSpecChange = callApplicationForVisitChange(webTestClient, roles, createApplicationDto, bookedVisit.reference)
     val responseSpecChangeResult = responseSpecChange
       .expectBody()
       .returnResult()

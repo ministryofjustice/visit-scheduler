@@ -67,8 +67,7 @@ class ApplicationService(
     saveEventAudit(
       createApplicationDto.actionedBy,
       applicationDto,
-      RESERVED_VISIT,
-      NOT_KNOWN,
+      applicationMethodType = NOT_KNOWN,
     )
 
     return applicationDto
@@ -83,7 +82,7 @@ class ApplicationService(
     saveEventAudit(
       createApplicationDto.actionedBy,
       applicationDto,
-      if (applicationDto.reserved) RESERVED_VISIT else CHANGING_VISIT,
+      visit = visit,
       NOT_KNOWN,
     )
 
@@ -135,7 +134,7 @@ class ApplicationService(
     val applicationDto = applicationDtoBuilder.build(applicationEntity)
 
     val eventName = if (isReservedSlot) VISIT_SLOT_RESERVED_EVENT else VISIT_CHANGED_EVENT
-    telemetryClientService.trackEvent(eventName, telemetryClientService.createApplicationVisitTrackEventFromVisitEntity(applicationDto))
+    telemetryClientService.trackEvent(eventName, telemetryClientService.createApplicationVisitTrackEventFromVisitEntity(applicationDto, visit))
     return applicationDto
   }
 
@@ -247,16 +246,16 @@ class ApplicationService(
   private fun saveEventAudit(
     actionedBy: String,
     application: ApplicationDto,
-    type: EventAuditType,
+    visit: Visit? =null,
     applicationMethodType: ApplicationMethodType,
   ) {
     eventAuditRepository.saveAndFlush(
       EventAudit(
         actionedBy = actionedBy,
-        bookingReference = application.reference,
+        bookingReference = visit?.let { visit.reference } ?: "",
         applicationReference = application.reference,
         sessionTemplateReference = application.sessionTemplateReference,
-        type = type,
+        type = if (application.reserved) RESERVED_VISIT else CHANGING_VISIT,
         applicationMethodType = applicationMethodType,
       ),
     )

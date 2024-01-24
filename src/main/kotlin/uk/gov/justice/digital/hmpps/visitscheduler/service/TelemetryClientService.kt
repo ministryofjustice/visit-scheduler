@@ -49,14 +49,15 @@ class TelemetryClientService(
     applicationMethodType: ApplicationMethodType? = null,
   ): MutableMap<String, String> {
     val applicationDto = applicationDtoBuilder.build(application)
-    return createApplicationTrackEventFromVisitDto(applicationDto, actionedBy)
+    return createApplicationTrackEventFromVisitDto(applicationDto, actionedBy = actionedBy)
   }
 
   fun createApplicationVisitTrackEventFromVisitEntity(
     applicationDto: ApplicationDto,
+    visit : Visit ?= null,
     actionedBy: String? = null,
   ): MutableMap<String, String> {
-    return createApplicationTrackEventFromVisitDto(applicationDto, actionedBy)
+    return createApplicationTrackEventFromVisitDto(applicationDto, visit, actionedBy)
   }
 
   fun createVisitTrackEventFromVisitDto(
@@ -89,9 +90,11 @@ class TelemetryClientService(
 
   fun createApplicationTrackEventFromVisitDto(
     application: ApplicationDto,
+    visitEntity: Visit?=null,
     actionedBy: String? = null,
   ): MutableMap<String, String> {
     val data = mutableMapOf(
+      "reference" to (visitEntity?.let { visitEntity.reference } ?: ""),
       "applicationReference" to application.reference,
       "prisonerId" to application.prisonerId,
       "prisonId" to application.prisonCode,

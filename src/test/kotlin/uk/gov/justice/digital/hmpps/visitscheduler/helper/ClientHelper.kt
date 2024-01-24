@@ -134,7 +134,7 @@ fun getVisitReserveSlotUrl(): String {
   return VISIT_RESERVE_SLOT
 }
 
-fun callVisitChange(
+fun callApplicationForVisitChange(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   dto: CreateApplicationDto? = null,

@@ -17,7 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitHistoryByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -184,7 +184,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
   ): VisitDto {
     val changeVisitRequest = createReserveVisitSlotDto(actionedBy = "updated_by", sessionTemplateReference = sessionTemplate.reference)
     val changedBookingResponse =
-      callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, changeVisitRequest, bookingReference)
+      callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, changeVisitRequest, bookingReference)
     changedBookingResponse.expectStatus().isCreated
     return getVisitFromRestResponse(changedBookingResponse)
   }
