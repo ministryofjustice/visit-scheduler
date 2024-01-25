@@ -305,6 +305,8 @@ class VisitService(
       existingBooking.visitStatus = CANCELLED
       existingBooking.outcomeStatus = SUPERSEDED_CANCELLATION
       visitRepository.saveAndFlush(existingBooking)
+    }?.also { existingBooking ->
+      handleVisitUpdateEvents(existingBooking, visitToBook)
     }
 
     visitToBook.visitStatus = BOOKED
@@ -501,6 +503,12 @@ class VisitService(
         AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
         ExpiredVisitAmendException("trying to change / cancel an expired visit"),
       )
+    }
+  }
+
+  private fun handleVisitUpdateEvents(existingBooking: Visit, updatedVisit: Visit) {
+    if (existingBooking.visitStart.toLocalDate() != updatedVisit.visitStart.toLocalDate()) {
+      visitNotificationEventRepository.deleteByBookingReferenceAndType(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
     }
   }
 
