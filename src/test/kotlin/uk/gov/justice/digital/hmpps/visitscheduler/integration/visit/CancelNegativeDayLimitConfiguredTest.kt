@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Value
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDateTime
 
 @DisplayName("Cancellation days have been set as zero")
@@ -20,6 +22,11 @@ import java.time.LocalDateTime
 class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
   @Value("\${visit.cancel.day-limit}")
   var visitCancellationDayLimit: Long = -7
+
+  @BeforeEach
+  internal fun setUp() {
+    sessionTemplate = sessionTemplateEntityHelper.create()
+  }
 
   @Test
   fun `when cancel day limit configured as a negative value cancel future visit does not return error`() {
@@ -33,7 +40,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
     )
     // Given
     val visitStart = LocalDateTime.now().plusDays(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), visitStart = visitStart.toLocalTime())
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
@@ -64,7 +71,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
     // visit has expired based on current date
     // as the configured limit is 0 - any cancellations before current time should be allowed
     val visitStart = LocalDateTime.now().minusMinutes(10)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), visitStart = visitStart.toLocalTime())
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), sessionTemplate = sessionTemplate)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, cancelVisitDto)

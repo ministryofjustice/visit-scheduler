@@ -44,7 +44,6 @@ class ReserveSlotTest : IntegrationTestBase() {
     const val actionedByUserName = "user-1"
   }
 
-  private lateinit var sessionTemplate: SessionTemplate
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @SpyBean

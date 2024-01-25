@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import java.time.LocalDate
 import java.time.LocalTime
@@ -31,12 +32,12 @@ class ApplicationEntityHelper(
     visitType: VisitType = SOCIAL,
     visitRestriction: VisitRestriction = OPEN,
     activePrison: Boolean = true,
-    sessionTemplateReference: String? = "sessionTemplateReference",
+    sessionTemplate: SessionTemplate,
     reservedSlot: Boolean = true,
     completed: Boolean = true,
   ): Application {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
-    val sessionSlot = sessionSlotEntityHelper.create(sessionTemplateReference, prison.id, slotDate, visitStart, visitEnd)
+    val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
 
     return applicationRepo.saveAndFlush(
       Application(

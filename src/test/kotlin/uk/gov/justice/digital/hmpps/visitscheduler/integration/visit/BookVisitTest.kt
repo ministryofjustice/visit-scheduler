@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
@@ -52,7 +53,7 @@ class BookVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedApplication = applicationEntityHelper.create()
+    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate)
     applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedApplication, name = "OTHER", details = "Some Text")
@@ -143,13 +144,13 @@ class BookVisitTest : IntegrationTestBase() {
   @Test
   fun `Amend and book expired visit - returns bad request error `() {
     val slotDateInThePast = LocalDate.of((LocalDateTime.now().year - 1), 11, 1)
-    val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast)
+    val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
     applicationEntityHelper.createContact(application = expiredApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = expiredApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(reservedApplication)
 
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
     expiredVisit.applications.add(expiredApplication)
 
     // Given

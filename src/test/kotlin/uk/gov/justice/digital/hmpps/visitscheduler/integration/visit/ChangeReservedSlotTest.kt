@@ -40,7 +40,6 @@ import java.time.LocalDateTime
 @DisplayName("PUT $VISIT_RESERVED_SLOT_CHANGE")
 class ChangeReservedSlotTest : IntegrationTestBase() {
 
-  private lateinit var sessionTemplate: SessionTemplate
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
@@ -62,8 +61,8 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     sessionTemplate = sessionTemplateEntityHelper.create()
 
-    applicationMin = applicationEntityHelper.create(sessionTemplateReference = sessionTemplate.reference, reservedSlot = true)
-    applicationFull = applicationEntityHelper.create(sessionTemplateReference = sessionTemplate.reference, reservedSlot = true)
+    applicationMin = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true)
+    applicationFull = applicationEntityHelper.create(slotDate = startDate,sessionTemplate = sessionTemplate, reservedSlot = true)
 
     applicationEntityHelper.createContact(application = applicationFull, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationFull, nomisPersonId = 321L, visitContact = true)

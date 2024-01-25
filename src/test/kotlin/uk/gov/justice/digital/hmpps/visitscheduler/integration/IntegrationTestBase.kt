@@ -41,8 +41,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociati
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
+import java.time.LocalDate
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -104,11 +106,15 @@ abstract class IntegrationTestBase {
   }
 
   lateinit var prison: Prison
+  lateinit var sessionTemplate: SessionTemplate
+  lateinit var startDate: LocalDate
 
   @BeforeEach
   fun resetStubs() {
     prisonApiMockServer.resetAll()
     prisonOffenderSearchMockServer.resetAll()
+    sessionTemplate = sessionTemplateEntityHelper.create()
+    startDate = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate)
   }
 
   @AfterEach

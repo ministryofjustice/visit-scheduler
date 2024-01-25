@@ -49,7 +49,6 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   lateinit var bookedVisit: Visit
-  lateinit var sessionTemplate: SessionTemplate
 
   @Autowired
   private lateinit var testApplicationRepository: TestApplicationRepository
@@ -65,9 +64,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    sessionTemplate = sessionTemplateEntityHelper.create()
-
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = sessionTemplate.reference)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
@@ -278,7 +275,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `change visit that has already expired returns bad request`() {
     // Given
     val visitStart = LocalDateTime.of((LocalDateTime.now().year - 1), 11, 1, 12, 30, 44)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), visitStart = visitStart.toLocalTime(), sessionTemplateReference = sessionTemplate.reference)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), visitStart = visitStart.toLocalTime(), sessionTemplate = sessionTemplate)
     val createApplicationRequest = createApplication(sessionTemplateReference = sessionTemplate.reference)
 
     // When

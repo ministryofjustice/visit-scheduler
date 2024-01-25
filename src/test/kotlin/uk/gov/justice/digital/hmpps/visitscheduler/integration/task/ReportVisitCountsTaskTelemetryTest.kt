@@ -61,10 +61,10 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
     // Given
     val prison1 = prisonEntityHelper.create("ABC", activePrison = true, excludeDates = emptyList())
     val session = sessionTemplateEntityHelper.create(prison = prison1, validFromDate = reportDate.minusMonths(3), weeklyFrequency = 1, dayOfWeek = reportDate.dayOfWeek, startTime = LocalTime.of(11, 0), endTime = LocalTime.of(13, 0), openCapacity = 100, closedCapacity = 35)
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN, sessionTemplateReference = session.reference, visitStart = reportDate.atTime(session.startTime), visitEnd = reportDate.atTime(session.endTime))
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.OPEN, sessionTemplateReference = session.reference, visitStart = reportDate.atTime(session.startTime), visitEnd = reportDate.atTime(session.endTime), outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.CLOSED, sessionTemplateReference = session.reference, visitStart = reportDate.atTime(session.startTime), visitEnd = reportDate.atTime(session.endTime))
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.CLOSED, sessionTemplateReference = session.reference, visitStart = reportDate.atTime(session.startTime), visitEnd = reportDate.atTime(session.endTime), outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN, sessionTemplate = sessionTemplate)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.OPEN, sessionTemplate = sessionTemplate, outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.CLOSED, sessionTemplate = sessionTemplate,)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.CLOSED, sessionTemplate = sessionTemplate, outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
 
     val sessionsReport = reportingTask.getVisitCountsReportByDay()[reportDate]!!
     Assertions.assertThat(sessionsReport.size).isEqualTo(1)

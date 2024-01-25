@@ -127,17 +127,17 @@ class VisitEntityHelper(
     prisonerId: String = "FF0000AA",
     prisonCode: String = "MDI",
     visitRoom: String = "A1",
-    slotDate: LocalDate = LocalDate.of((LocalDate.now().year + 1), 11, 1),
-    visitStart: LocalTime = LocalTime.of(12, 30, 44),
-    visitEnd: LocalTime = visitStart.plusHours(1),
+    sessionTemplate: SessionTemplate,
+    slotDate: LocalDate = sessionTemplate.validFromDate,
+    visitStart: LocalTime = sessionTemplate.startTime,
+    visitEnd: LocalTime = sessionTemplate.endTime,
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     activePrison: Boolean = true,
     outcomeStatus: OutcomeStatus? = null,
-    sessionTemplateReference: String? = "sessionTemplateReference",
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
-    val sessionSlot = sessionSlotEntityHelper.create(sessionTemplateReference, prison.id, slotDate, visitStart, visitEnd)
+    val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
 
     val notSaved = Visit(
       visitStatus = visitStatus,

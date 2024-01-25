@@ -37,7 +37,6 @@ import java.time.LocalDateTime
 @DisplayName("PUT $VISIT_RESERVED_SLOT_CHANGE")
 class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
-  private lateinit var sessionTemplate: SessionTemplate
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @SpyBean
@@ -62,21 +61,19 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    sessionTemplate = sessionTemplateEntityHelper.create()
-
-    oldApplication = applicationEntityHelper.create(sessionTemplateReference = sessionTemplate.reference, completed = true)
+    oldApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = true)
     applicationEntityHelper.createContact(application = oldApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = oldApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = oldApplication, name = "OTHER", details = "Some Text")
 
     applicationEntityHelper.save(oldApplication)
 
-    oldBooking = visitEntityHelper.create(sessionTemplateReference = sessionTemplate.reference)
+    oldBooking = visitEntityHelper.create(sessionTemplate = sessionTemplate)
     oldBooking.applications.add(oldApplication)
 
     val newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN
 
-    newApplication = applicationEntityHelper.create(sessionTemplateReference = sessionTemplate.reference, completed = true, visitRestriction = newRestriction)
+    newApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = true, visitRestriction = newRestriction)
     applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348 811539")
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some Text")

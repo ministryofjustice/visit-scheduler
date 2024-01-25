@@ -50,7 +50,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplateEntityHelper.create()
     val reserveVisitSlotDto = createReserveVisitSlotDto(
       actionedBy = "reserve_guy",
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     val reservedDto = reserveVisit(reserveVisitSlotDto)
@@ -121,7 +121,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
 
     val reserveVisitSlotDto = createReserveVisitSlotDto(
       actionedBy = "reserve_guy",
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     val reservedDto = reserveVisit(reserveVisitSlotDto)
@@ -182,7 +182,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     sessionTemplate: SessionTemplate,
     bookingReference: String,
   ): VisitDto {
-    val changeVisitRequest = createReserveVisitSlotDto(actionedBy = "updated_by", sessionTemplateReference = sessionTemplate.reference)
+    val changeVisitRequest = createReserveVisitSlotDto(actionedBy = "updated_by", sessionTemplate)
     val changedBookingResponse =
       callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, changeVisitRequest, bookingReference)
     changedBookingResponse.expectStatus().isCreated
@@ -193,17 +193,16 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
   }
 
-  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.actionedByUserName, sessionTemplateReference: String = "sessionTemplateReference"): CreateApplicationDto {
+  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.actionedByUserName, sessionTemplate: SessionTemplate): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = "FF0000FF",
-      startTimestamp = ReserveSlotTest.visitTime,
-      endTimestamp = ReserveSlotTest.visitTime.plusHours(1),
+      sessionDate = startDate,
+      sessionTemplateReference =sessionTemplate.reference,
       visitRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
-      actionedBy = actionedBy,
-      sessionTemplateReference = sessionTemplateReference,
+      actionedBy = actionedBy
     )
   }
 }
