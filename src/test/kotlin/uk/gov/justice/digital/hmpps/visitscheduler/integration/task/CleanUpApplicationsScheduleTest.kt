@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
@@ -52,15 +53,15 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    reservedVisitNotExpired = createApplication(prisonerId = "NOT_EXPIRED")
+    reservedVisitNotExpired = createApplication(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplate)
     testApplicationRepository.saveAndFlush(reservedVisitNotExpired)
 
-    reservedVisitNotExpiredChangingStatus = createApplication(prisonerId = "NOT_EXPIRED")
+    reservedVisitNotExpiredChangingStatus = createApplication(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplate)
 
-    reservedVisitExpired = createApplication(prisonerId = "EXPIRED")
+    reservedVisitExpired = createApplication(prisonerId = "EXPIRED", sessionTemplate = sessionTemplate)
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
 
-    reservedVisitExpiredChangingStatus = testApplicationRepository.saveAndFlush(createApplication(prisonerId = "EXPIRED"))
+    reservedVisitExpiredChangingStatus = testApplicationRepository.saveAndFlush(createApplication(prisonerId = "EXPIRED", sessionTemplate = sessionTemplate))
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
   }
 
@@ -119,6 +120,7 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
     visitEnd: LocalDateTime = visitStart.plusHours(1),
     visitType: VisitType = VisitType.SOCIAL,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    sessionTemplate: SessionTemplate,
   ): Application {
     return applicationEntityHelper.create(
       prisonerId = prisonerId,
@@ -128,6 +130,7 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
       visitEnd = visitEnd.toLocalTime(),
       visitType = visitType,
       visitRestriction = visitRestriction,
+      sessionTemplate = sessionTemplate,
     )
   }
 }

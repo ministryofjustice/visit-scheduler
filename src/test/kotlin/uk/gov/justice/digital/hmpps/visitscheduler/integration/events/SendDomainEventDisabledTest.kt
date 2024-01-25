@@ -45,7 +45,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
   @Test
   fun `booked visit no event sent`() {
     // Given
-    val applicationEntity = applicationEntityHelper.create()
+    val applicationEntity = applicationEntityHelper.create(sessionTemplate = sessionTemplate)
     val applicationReference = applicationEntity.reference
     val authHeader = setAuthorisation(roles = ROLES)
 
@@ -64,7 +64,7 @@ class SendDomainEventDisabledTest : IntegrationTestBase() {
   @Test
   fun `cancelled visit no event sent`() {
     // Given
-    val visitEntity = visitEntityHelper.create(visitStatus = VisitStatus.BOOKED)
+    val visitEntity = visitEntityHelper.create(visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate)
     val reference = visitEntity.reference
     val authHeader = setAuthorisation(roles = ROLES)
     val cancelVisitDto = CancelVisitDto(

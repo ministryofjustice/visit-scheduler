@@ -57,7 +57,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
     val fromSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY)
     val toSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY)
     val visitDate = LocalDate.now().plusDays(1)
-    val visit = visitEntityHelper.create(sessionTemplateReference = fromSession.reference, visitStart = fromSession.startTime, visitEnd = fromSession.endTime, slotDate = visitDate)
+    val visit = visitEntityHelper.create(sessionTemplate = fromSession, visitStart = fromSession.startTime, visitEnd = fromSession.endTime, slotDate = visitDate)
     val moveRequest = MoveVisitsDto(fromSession.reference, toSession.reference, LocalDate.now())
 
     // When
@@ -195,7 +195,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
     val toSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, startTime = fromSession.startTime.minusMinutes(59), endTime = fromSession.endTime)
     val visitDate = LocalDate.now().plusDays(1)
     val visit = visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -226,7 +226,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
     val toSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, startTime = fromSession.startTime.plusMinutes(59), endTime = fromSession.endTime)
     val visitDate = LocalDate.now().plusDays(1)
     val visit = visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -288,7 +288,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusDays(1)
     val visit = visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -322,7 +322,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
     // visit date falls after 3 weeks
     val visit1Date = today.plusWeeks(3)
     val visit1 = visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       slotDate = visit1Date,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
@@ -330,7 +330,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visit2Date = today.plusWeeks(6)
     val visit2 = visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       slotDate = visit1Date,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
@@ -369,7 +369,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusDays(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -393,7 +393,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(2)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -417,7 +417,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -441,7 +441,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -465,7 +465,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -489,7 +489,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -513,7 +513,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -537,7 +537,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -561,7 +561,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -585,7 +585,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -609,7 +609,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -633,7 +633,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -657,7 +657,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -681,7 +681,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -705,7 +705,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -729,7 +729,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -753,7 +753,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -777,7 +777,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -801,7 +801,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     val visitDate = LocalDate.now().plusWeeks(1)
     visitEntityHelper.create(
-      sessionTemplateReference = fromSession.reference,
+      sessionTemplate = fromSession,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
       slotDate = visitDate,
@@ -823,9 +823,9 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
     val fromSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY)
     val toSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, startTime = fromSession.startTime.minusMinutes(30), endTime = fromSession.endTime.minusMinutes(30))
     val futureVisitDate = LocalDate.now().plusDays(1)
-    val futureVisit = visitEntityHelper.create(sessionTemplateReference = fromSession.reference, visitStart = fromSession.startTime, visitEnd = fromSession.endTime)
+    val futureVisit = visitEntityHelper.create(sessionTemplate = fromSession, visitStart = fromSession.startTime, visitEnd = fromSession.endTime)
     val pastVisitDate = LocalDate.now().minusDays(1)
-    val pastVisit = visitEntityHelper.create(sessionTemplateReference = fromSession.reference, visitStart = fromSession.startTime, visitEnd = fromSession.endTime)
+    val pastVisit = visitEntityHelper.create(sessionTemplate = fromSession, visitStart = fromSession.startTime, visitEnd = fromSession.endTime)
     val moveRequest = MoveVisitsDto(fromSession.reference, toSession.reference, LocalDate.now())
 
     // When

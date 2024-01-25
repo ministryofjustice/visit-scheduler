@@ -407,11 +407,13 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       prisonerId = associationId,
       prisonCode = prison.code,
       visitRoom = sessionTemplateForAllPrisoners.visitRoom,
-      visitStart = nextAllowedDay.atTime(sessionTemplateForAllPrisoners.startTime),
-      visitEnd = nextAllowedDay.atTime(sessionTemplateForAllPrisoners.endTime),
+      slotDate = nextAllowedDay,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
       visitType = VisitType.SOCIAL,
       visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.OPEN,
+      sessionTemplate = sessionTemplateForAllPrisoners,
     )
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(

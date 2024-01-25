@@ -41,10 +41,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociati
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -203,5 +207,25 @@ abstract class IntegrationTestBase {
         registry.add("hmpps.sqs.region") { lsContainer.region }
       }
     }
+  }
+
+  fun formatDateTimeToString(dateTime: LocalDateTime): String {
+    return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
+  }
+
+  fun formatStartSlotDateTimeToString(sessionSlot: SessionSlot): String {
+    return sessionSlot.slotDate.atTime(sessionSlot.slotTime).truncatedTo(ChronoUnit.SECONDS).format(
+      DateTimeFormatter.ISO_DATE_TIME,
+    )
+  }
+
+  fun formatSlotEndDateTimeToString(sessionSlot: SessionSlot): String {
+    return sessionSlot.slotDate.atTime(sessionSlot.slotEndTime).truncatedTo(ChronoUnit.SECONDS).format(
+      DateTimeFormatter.ISO_DATE_TIME,
+    )
+  }
+
+  fun formatDateTimeToString(sessionSlot: SessionSlot): String {
+    return sessionSlot.slotDate.format(DateTimeFormatter.ISO_DATE_TIME)
   }
 }

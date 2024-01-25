@@ -15,22 +15,17 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_SEARCH_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import java.time.LocalDateTime
 
 @DisplayName("GET /visits")
 class VisitsByFilterTest : IntegrationTestBase() {
-
-  private val visitTime: LocalDateTime = LocalDateTime.of(2021, 11, 1, 12, 30, 44)
 
   @Autowired
   private lateinit var visitRepository: VisitRepository
@@ -45,9 +40,9 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun createVisits() {
-    visitMin = visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime, prisonerId = "FF0000AA")
+    visitMin = visitEntityHelper.create(prisonCode = "MDI", slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate)
 
-    visitFullWithNoVisitors = visitEntityHelper.create(prisonCode = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000BB")
+    visitFullWithNoVisitors = visitEntityHelper.create(prisonCode = "LEI", slotDate = startDate.plusDays(1), prisonerId = "FF0000BB", sessionTemplate = sessionTemplate)
 
     visitEntityHelper.createNote(visit = visitFullWithNoVisitors, text = "A visit concern", type = VISITOR_CONCERN)
     visitEntityHelper.createNote(visit = visitFullWithNoVisitors, text = "A visit outcome", type = VISIT_OUTCOMES)
@@ -58,8 +53,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
     visitFullWithOneVisitor = visitEntityHelper.create(
       prisonCode = "LEI",
       prisonerId = "FF0000CC",
-      visitStart = visitTime.plusDays(2),
-      visitEnd = visitTime.plusDays(2).plusHours(1),
+      slotDate = startDate.plusDays(2),
+      sessionTemplate = sessionTemplate,
     )
     visitEntityHelper.createContact(visit = visitFullWithOneVisitor, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createNote(visit = visitFullWithOneVisitor, text = "A visit concern", type = VISITOR_CONCERN)
@@ -67,7 +62,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     visitEntityHelper.createSupport(visit = visitFullWithOneVisitor, name = "OTHER", details = "Some Text")
     visitRepository.saveAndFlush(visitFullWithOneVisitor)
 
-    visitFullWithMultipleVisitors = visitEntityHelper.create(prisonCode = "LEI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000DD")
+    visitFullWithMultipleVisitors = visitEntityHelper.create(prisonCode = "LEI", slotDate = startDate.plusDays(1), prisonerId = "FF0000DD", sessionTemplate = sessionTemplate)
     visitEntityHelper.createNote(visit = visitFullWithMultipleVisitors, text = "A visit concern", type = VISITOR_CONCERN)
     visitEntityHelper.createContact(visit = visitFullWithMultipleVisitors, name = "Jane D", phone = "01111 111111")
     visitEntityHelper.createVisitor(visit = visitFullWithMultipleVisitors, nomisPersonId = 222L, visitContact = true)
@@ -76,12 +71,10 @@ class VisitsByFilterTest : IntegrationTestBase() {
     visitEntityHelper.createSupport(visit = visitFullWithMultipleVisitors, name = "OTHER", details = "Some Text")
     visitRepository.saveAndFlush(visitFullWithMultipleVisitors)
 
-    visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusHours(1), visitStatus = RESERVED)
-    visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusDays(1).plusHours(1), visitStatus = BOOKED)
-    visitEntityHelper.create(prisonerId = "GG0000BB", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = CANCELLED)
+    visitEntityHelper.create(prisonerId = "GG0000BB", slotDate = startDate.plusDays(1), visitStatus = BOOKED, sessionTemplate = sessionTemplate)
+    visitEntityHelper.create(prisonerId = "GG0000BB", slotDate = startDate.plusDays(2), visitStatus = CANCELLED, sessionTemplate = sessionTemplate)
 
-    visitEntityHelper.create(prisonCode = "AWE", prisonerId = "GG0000BAA", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = BOOKED)
-    visitEntityHelper.create(prisonCode = "AWE", prisonerId = "GG0000BAA", visitStart = visitTime.plusDays(2).plusHours(1), visitStatus = CANCELLED, outcomeStatus = SUPERSEDED_CANCELLATION)
+    visitEntityHelper.create(prisonCode = "AWE", prisonerId = "GG0000BAA", slotDate = startDate.plusDays(2), visitStatus = BOOKED, sessionTemplate = sessionTemplate)
   }
 
   @Test
@@ -98,7 +91,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.content.length()").isEqualTo(1)
       .jsonPath("$.content[0].prisonerId").isEqualTo("FF0000BB")
-      .jsonPath("$.content[0].startTimestamp").isEqualTo(visitFullWithNoVisitors.visitStart.toString())
+      .jsonPath("$.content[0].startTimestamp").isEqualTo(formatStartSlotDateTimeToString(visitFullWithNoVisitors.sessionSlot))
       .jsonPath("$.content[0].reference").exists()
       .jsonPath("$.content[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
       .jsonPath("$.content[0].visitNotes[?(@.type=='VISIT_COMMENT')].text").isEqualTo("A visit comment")
@@ -136,7 +129,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.content.length()").isEqualTo(1)
       .jsonPath("$.content[0].prisonerId").isEqualTo("FF0000CC")
-      .jsonPath("$.content[0].startTimestamp").isEqualTo(visitFullWithOneVisitor.visitStart.toString())
+      .jsonPath("$.content[0].startTimestamp").isEqualTo(formatStartSlotDateTimeToString(visitFullWithOneVisitor.sessionSlot))
       .jsonPath("$.content[0].reference").exists()
       .jsonPath("$.content[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
       .jsonPath("$.content[0].visitors.length()").isEqualTo(1)
@@ -159,7 +152,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.content.length()").isEqualTo(1)
       .jsonPath("$.content[0].prisonerId").isEqualTo("FF0000DD")
-      .jsonPath("$.content[0].startTimestamp").isEqualTo(visitFullWithMultipleVisitors.visitStart.toString())
+      .jsonPath("$.content[0].startTimestamp").isEqualTo(formatStartSlotDateTimeToString(visitFullWithMultipleVisitors.sessionSlot))
       .jsonPath("$.content[0].reference").exists()
       .jsonPath("$.content[0].visitNotes[?(@.type=='VISITOR_CONCERN')].text").isEqualTo("A visit concern")
       .jsonPath("$.content[0].visitors.length()").isEqualTo(3)
@@ -224,7 +217,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.content.length()").isEqualTo(1)
-      .jsonPath("$.content[0].startTimestamp").isEqualTo(visitTime.plusDays(2).toString())
+      .jsonPath("$.content[0].startTimestamp").isEqualTo(formatStartSlotDateTimeToString(visitFullWithNoVisitors.sessionSlot))
   }
 
   @Test
@@ -343,8 +336,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val prisonId = "MDI"
 
     // When
-    val responseSpecFirst = callSearchVisitEndPoint("prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED&page=0&size=$size")
-    val responseSpecLast = callSearchVisitEndPoint("prisonId=$prisonId&visitStatus=BOOKED,CANCELLED,RESERVED&page=1&size=$size")
+    val responseSpecFirst = callSearchVisitEndPoint("prisonId=$prisonId&visitStatus=BOOKED,CANCELLED&page=0&size=$size")
+    val responseSpecLast = callSearchVisitEndPoint("prisonId=$prisonId&visitStatus=BOOKED,CANCELLED&page=1&size=$size")
 
     // Then - Page 0
     responseSpecFirst.expectStatus().isOk
@@ -354,15 +347,11 @@ class VisitsByFilterTest : IntegrationTestBase() {
       .jsonPath("$.content[0].visitStatus").isEqualTo(CANCELLED.name)
       .jsonPath("$.content[1].startTimestamp").isEqualTo("2021-11-02T13:30:44")
       .jsonPath("$.content[1].visitStatus").isEqualTo(BOOKED.name)
-      .jsonPath("$.content[2].startTimestamp").isEqualTo("2021-11-01T13:30:44")
-      .jsonPath("$.content[2].visitStatus").isEqualTo(RESERVED.name)
 
     // And - Page 1
     responseSpecLast.expectStatus().isOk
       .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(1)
-      .jsonPath("$.content[0].startTimestamp").isEqualTo("2021-11-01T12:30:44")
-      .jsonPath("$.content[0].visitStatus").isEqualTo(RESERVED.name)
+      .jsonPath("$.content.length()").isEqualTo(0)
   }
 
   @Test

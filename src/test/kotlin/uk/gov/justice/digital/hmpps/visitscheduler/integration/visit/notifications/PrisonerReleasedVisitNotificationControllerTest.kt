@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH")
@@ -47,31 +47,35 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
 
     val visit1 = visitEntityHelper.create(
       prisonerId = notificationDto.prisonerNumber,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visit1)
 
     visitEntityHelper.create(
       prisonerId = notificationDto.prisonerNumber,
-      visitStart = LocalDateTime.now().minusDays(1),
+      slotDate = LocalDate.now().minusDays(1),
       prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
     )
 
     visitEntityHelper.create(
       prisonerId = notificationDto.prisonerNumber,
-      visitStart = LocalDateTime.now().minusDays(1),
+      slotDate = LocalDate.now().minusDays(1),
       prisonCode = notificationDto.prisonCode,
       visitStatus = CANCELLED,
+      sessionTemplate = sessionTemplate,
     )
 
     visitEntityHelper.create(
       prisonerId = "ANOTHERPRISONER",
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
     )
 
     // When
@@ -96,25 +100,28 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
 
     val visit1 = visitEntityHelper.create(
       prisonerId = notificationDto.prisonerNumber,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visit1)
 
     val visit2 = visitEntityHelper.create(
       prisonerId = notificationDto.prisonerNumber,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visit2)
 
     val visit3 = visitEntityHelper.create(
       prisonerId = notificationDto.prisonerNumber,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visit3)
 

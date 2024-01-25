@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.Vis
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_DELETED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH NON_ASSOCIATION_DELETED")
@@ -60,17 +60,19 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -95,17 +97,19 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPastPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().minusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPastPrimary)
 
     val visitPastSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().minusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPastSecondary)
 
@@ -140,17 +144,19 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -175,17 +181,19 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -213,17 +221,19 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 

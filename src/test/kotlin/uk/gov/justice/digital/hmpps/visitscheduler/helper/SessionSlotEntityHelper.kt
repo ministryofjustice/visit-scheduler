@@ -13,6 +13,25 @@ class SessionSlotEntityHelper(
   private val sessionSlotRepository: TestSessionSlotRepository,
 ) {
 
+  companion object {
+
+    fun createSessionSlot(
+      sessionTemplateReference: String ? = "sessionTemplateReference",
+      prisonId: Long,
+      slotDate: LocalDate = LocalDate.now().plusDays(2),
+      slotTime: LocalTime = LocalTime.now().plusHours(4),
+      slotEndTime: LocalTime = slotTime.plusHours(2),
+    ): SessionSlot {
+      return SessionSlot(
+        sessionTemplateReference = sessionTemplateReference,
+        prisonId = prisonId,
+        slotDate = slotDate,
+        slotTime = slotTime,
+        slotEndTime = slotEndTime,
+      )
+    }
+  }
+
   fun create(
     sessionTemplateReference: String ? = "sessionTemplateReference",
     prisonId: Long,

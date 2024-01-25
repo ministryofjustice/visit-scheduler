@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
@@ -120,21 +121,23 @@ class VisitEntityHelper(
   private val visitRepository: VisitRepository,
   private val prisonEntityHelper: PrisonEntityHelper,
   private val sessionSlotEntityHelper: SessionSlotEntityHelper,
+  private val applicationEntityHelper: ApplicationEntityHelper,
 ) {
 
   fun create(
     visitStatus: VisitStatus = BOOKED,
-    prisonerId: String = "FF0000AA",
-    prisonCode: String = "MDI",
-    visitRoom: String = "A1",
     sessionTemplate: SessionTemplate,
+    prisonerId: String = "FF0000AA",
+    prisonCode: String = sessionTemplate.prison.code,
+    visitRoom: String = sessionTemplate.visitRoom,
     slotDate: LocalDate = sessionTemplate.validFromDate,
     visitStart: LocalTime = sessionTemplate.startTime,
     visitEnd: LocalTime = sessionTemplate.endTime,
-    visitType: VisitType = VisitType.SOCIAL,
+    visitType: VisitType = sessionTemplate.visitType,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    activePrison: Boolean = true,
+    activePrison: Boolean = sessionTemplate.prison.active,
     outcomeStatus: OutcomeStatus? = null,
+    createApplication: Boolean = false,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
@@ -152,8 +155,13 @@ class VisitEntityHelper(
     )
 
     notSaved.outcomeStatus = outcomeStatus
-
-    return visitRepository.saveAndFlush(notSaved)
+    if (createApplication) {
+      val savedVisit = visitRepository.saveAndFlush(notSaved)
+      savedVisit.applications.add(applicationEntityHelper.create(notSaved))
+      return visitRepository.saveAndFlush(savedVisit)
+    } else {
+      return visitRepository.saveAndFlush(notSaved)
+    }
   }
 
   fun createContact(
@@ -250,6 +258,21 @@ class EventAuditEntityHelper(
   }
 
   fun create(
+    application: Application,
+    actionedBy: String = "ACTIONED_BY",
+    applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
+    type: EventAuditType = EventAuditType.BOOKED_VISIT,
+  ): EventAudit {
+    return create(
+      applicationReference = application.reference,
+      sessionTemplateReference = application.sessionSlot.sessionTemplateReference,
+      actionedBy = actionedBy,
+      type = type,
+      applicationMethodType = applicationMethodType,
+    )
+  }
+
+  fun create(
     reference: String = "",
     applicationReference: String = "",
     actionedBy: String = "ACTIONED_BY",
@@ -334,7 +357,7 @@ class SessionTemplateEntityHelper(
 
   fun create(
     name: String = "sessionTemplate_",
-    validFromDate: LocalDate = LocalDate.of(2021, 10, 23),
+    validFromDate: LocalDate = LocalDate.now(),
     validToDate: LocalDate? = null,
     closedCapacity: Int = 5,
     openCapacity: Int = 10,

@@ -85,7 +85,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val returnResult = getResult(responseSpec)
     val applicationDto = getApplicationDto(returnResult)
     val application = this.getApplication(applicationDto)!!
-    assertApplicationDetails(application, applicationDto, reserveVisitSlotDto, sessionTemplate);
+    assertApplicationDetails(application, applicationDto, reserveVisitSlotDto, sessionTemplate)
 
     // And
     assertTelemetry(applicationDto)

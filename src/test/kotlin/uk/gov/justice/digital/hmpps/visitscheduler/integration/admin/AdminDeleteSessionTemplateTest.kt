@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteSessionTemplateByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
@@ -24,14 +23,11 @@ class AdminDeleteSessionTemplateTest(
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
-  private lateinit var sessionTemplate: SessionTemplate
   private lateinit var sessionGroup1: SessionLocationGroup
   private lateinit var sessionGroup2: SessionLocationGroup
 
   @BeforeEach
   internal fun setUp() {
-    sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), isActive = false)
-
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
     sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, prisonHierarchies = allowedPermittedLocations1)
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))
@@ -68,7 +64,7 @@ class AdminDeleteSessionTemplateTest(
   @Test
   fun `cannot delete session template by reference with existing visits test`() {
     // Given
-    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = sessionTemplate.reference)
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate)
 
     val reference = sessionTemplate.reference
     sessionTemplate.permittedSessionLocationGroups[0].id

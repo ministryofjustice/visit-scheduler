@@ -67,23 +67,23 @@ class AdminSessionTemplateVisitStatsTest(
     val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDate, null)
     val tomorrow = visitsFromDate.plusDays(1)
 
-    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = OPEN, slotDate = tomorrow)
-    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = CLOSED, slotDate = tomorrow)
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = tomorrow)
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
 
-    visitEntityHelper.create(visitStatus = CANCELLED, outcomeStatus = OutcomeStatus.CANCELLATION, sessionTemplateReference = reference1, visitRestriction = CLOSED, slotDate = tomorrow)
-    visitEntityHelper.create(visitStatus = CANCELLED, sessionTemplateReference = reference1, visitRestriction = CLOSED, slotDate = tomorrow)
+    visitEntityHelper.create(visitStatus = CANCELLED, outcomeStatus = OutcomeStatus.CANCELLATION, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
+    visitEntityHelper.create(visitStatus = CANCELLED, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
 
     // TODO - create applications
-    // visitEntityHelper.create(visitStatus = CHANGING, sessionTemplateReference = reference1, visitRestriction = CLOSED, slotDate = tomorrow)
-    visitEntityHelper.create(visitStatus = CANCELLED, outcomeStatus = OutcomeStatus.SUPERSEDED_CANCELLATION, sessionTemplateReference = reference1, visitRestriction = CLOSED, slotDate = tomorrow)
+    // visitEntityHelper.create(visitStatus = CHANGING, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
+    visitEntityHelper.create(visitStatus = CANCELLED, outcomeStatus = OutcomeStatus.SUPERSEDED_CANCELLATION, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = tomorrow)
 
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(2))
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(3))
-    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = CLOSED, slotDate = visitsFromDate.plusDays(4))
-    visitEntityHelper.create(sessionTemplateReference = reference2, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(3))
-    visitEntityHelper.create(sessionTemplateReference = reference2, visitRestriction = CLOSED, slotDate = visitsFromDate.plusDays(3))
-    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplateReference = reference1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(policyNoticeDaysMax))
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = CLOSED, slotDate = visitsFromDate.plusDays(policyNoticeDaysMax - 1))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(2))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(3))
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = visitsFromDate.plusDays(4))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate2, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(3))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate2, visitRestriction = CLOSED, slotDate = visitsFromDate.plusDays(3))
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(policyNoticeDaysMax))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = CLOSED, slotDate = visitsFromDate.plusDays(policyNoticeDaysMax - 1))
 
     // When
     val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
@@ -138,8 +138,8 @@ class AdminSessionTemplateVisitStatsTest(
     val visitsFromDate = LocalDate.now()
     val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDate, null)
 
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, slotDate = visitsFromDate.minusDays(1))
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, slotDate = visitsFromDate.minusDays(1))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.minusDays(1))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.minusDays(1))
 
     // When
     val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
@@ -163,7 +163,7 @@ class AdminSessionTemplateVisitStatsTest(
     val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDate, visitsToDate)
 
     // visit falls after to date
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(policyNoticeDaysMax))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusDays(policyNoticeDaysMax))
 
     // When
     val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
@@ -189,7 +189,7 @@ class AdminSessionTemplateVisitStatsTest(
     val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDate, visitsToDate)
 
     // visit date is before visits to Date
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, slotDate = visitsFromDate.plusMonths(5))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusMonths(5))
 
     // When
     val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))
@@ -215,7 +215,7 @@ class AdminSessionTemplateVisitStatsTest(
     val requestSessionTemplateVisitStatsDto = RequestSessionTemplateVisitStatsDto(visitsFromDate, visitsToDate)
 
     // visit date is after visits to Date
-    visitEntityHelper.create(sessionTemplateReference = reference1, visitRestriction = OPEN, slotDate = visitsFromDate.plusMonths(7))
+    visitEntityHelper.create(sessionTemplate = sessionTemplate1, visitRestriction = OPEN, slotDate = visitsFromDate.plusMonths(7))
 
     // When
     val responseSpec = callGetVisitStats(webTestClient, reference1, requestSessionTemplateVisitStatsDto, setAuthorisation(roles = adminRole))

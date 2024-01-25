@@ -496,7 +496,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   @Test
   fun `cancel visit migrated by reference -  with outcome and outcome text`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate)
 
     val cancelVisitDto = MigratedCancelVisitDto(
       OutcomeDto(

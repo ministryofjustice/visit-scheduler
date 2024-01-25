@@ -20,18 +20,19 @@ import java.time.LocalDate
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH NON_ASSOCIATION_CLOSED")
 class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase() {
+  private lateinit var prisonCode: String
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   private val nonAssociationDomainEventType = NON_ASSOCIATION_CLOSED
 
   val primaryPrisonerId = "AA11BCC"
   val secondaryPrisonerId = "XX11YZZ"
-  val prisonCode = "ABC"
 
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
     prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, prisonCode, IncentiveLevel.ENHANCED)
+    prisonCode = sessionTemplate.prison.code
   }
 
   fun stubGetPrisonerNonAssociationForPrisonApi(
@@ -63,6 +64,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -71,6 +73,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -98,6 +101,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().minusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPastPrimary)
 
@@ -106,6 +110,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().minusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPastSecondary)
 
@@ -143,6 +148,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -151,6 +157,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -178,6 +185,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -186,6 +194,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -214,6 +223,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -222,6 +232,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 

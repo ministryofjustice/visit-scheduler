@@ -197,12 +197,12 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     return CreateApplicationDto(
       prisonerId = "FF0000FF",
       sessionDate = startDate,
-      sessionTemplateReference =sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplate.reference,
       visitRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
-      actionedBy = actionedBy
+      actionedBy = actionedBy,
     )
   }
 }

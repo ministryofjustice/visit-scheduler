@@ -6,6 +6,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationSupport
@@ -22,6 +23,23 @@ class ApplicationEntityHelper(
   private val prisonEntityHelper: PrisonEntityHelper,
   private val sessionSlotEntityHelper: SessionSlotEntityHelper,
 ) {
+
+  fun create(visit: Visit): Application {
+    return applicationRepo.saveAndFlush(
+      Application(
+        prisonerId = visit.prisonerId,
+        prisonId = visit.prisonId,
+        prison = visit.prison,
+        sessionSlotId = visit.sessionSlot.id,
+        sessionSlot = visit.sessionSlot,
+        visitType = visit.visitType,
+        restriction = visit.visitRestriction,
+        createdBy = "",
+        reservedSlot = true,
+        completed = true,
+      ),
+    )
+  }
 
   fun create(
     prisonerId: String = "FF0000AA",

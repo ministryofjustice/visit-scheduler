@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("GET $VISIT_NOTIFICATION_TYPES")
@@ -36,17 +36,19 @@ class GetVisitNotificationsTest : NotificationTestBase() {
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 

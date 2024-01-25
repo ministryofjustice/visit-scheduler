@@ -527,7 +527,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `when cancel visit by reference then any associated notifications are also deleted`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED,  slotDate = startDate, sessionTemplate = sessionTemplate)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)

@@ -91,18 +91,16 @@ class VisitsReportingService(
       VisitStatus.BOOKED -> {
         return visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
           sessionTemplateReference = sessionTemplateReference,
-          sessionDate = visitDate,
+          slotDate = visitDate,
         )
       }
 
       VisitStatus.CANCELLED -> {
         return visitRepository.getCountOfCancelledSessionVisitsForOpenOrClosedRestriction(
           sessionTemplateReference = sessionTemplateReference,
-          sessionDate = visitDate,
+          slotDate = visitDate,
         )
       }
-
-      VisitStatus.RESERVED, VisitStatus.CHANGING -> emptyList()
     }
   }
 

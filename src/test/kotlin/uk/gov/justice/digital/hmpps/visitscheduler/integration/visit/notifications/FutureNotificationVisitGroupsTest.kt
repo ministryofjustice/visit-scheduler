@@ -15,7 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 @DisplayName("GET /visits/notification/{prisonCode}/groups")
 class FutureNotificationVisitGroupsTest : NotificationTestBase() {
@@ -35,9 +35,10 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
     // Given
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitPrimary, type = BOOKED_VISIT)
     eventAuditEntityHelper.create(visitPrimary, type = UPDATED_VISIT, actionedBy = "IUpdatedIT")
@@ -45,17 +46,19 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = visitPrimary.visitStart,
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
     val visitOther = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visitOther)
 
@@ -76,7 +79,7 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
       Assertions.assertThat(affectedVisits).hasSize(2)
       with(affectedVisits[0]) {
         Assertions.assertThat(prisonerNumber).isEqualTo(visitPrimary.prisonerId)
-        Assertions.assertThat(visitDate).isEqualTo(visitPrimary.visitStart.toLocalDate())
+        Assertions.assertThat(visitDate).isEqualTo(visitPrimary.sessionSlot.slotDate.atTime(visitPrimary.sessionSlot.slotTime))
         Assertions.assertThat(bookingReference).isEqualTo(visitPrimary.reference)
         Assertions.assertThat(this.bookedByUserName).isEqualTo("IUpdatedIT")
       }

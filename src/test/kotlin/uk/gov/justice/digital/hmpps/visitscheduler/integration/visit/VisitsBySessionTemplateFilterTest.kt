@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISITS_BY_SESS
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDateTime
 
 @DisplayName("GET /visits/{sessionTemplateReference}")
@@ -25,16 +26,20 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
+  lateinit var sessionTemplate2: SessionTemplate
+
   @BeforeEach
   internal fun createVisits() {
+    sessionTemplate2 = sessionTemplateEntityHelper.create()
+
     // visit 1 booked for session template reference - session-1
-    visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime, prisonerId = "FF0000AA", sessionTemplateReference = "session-1", reference = "visit-booked-1", visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
+    visitEntityHelper.create(prisonCode = "MDI", slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
     // visit 2 reserved for session template reference - session-1
-    visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime, prisonerId = "FF0000AA", sessionTemplateReference = "session-1", reference = "visit-reserved-1", visitStatus = VisitStatus.RESERVED)
+    visitEntityHelper.create(prisonCode = "MDI", slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.CANCELLED)
     // visit 3 booked for session template reference - session-2
-    visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime, prisonerId = "FF0000BB", sessionTemplateReference = "session-2", reference = "visit-booked-2", visitStatus = VisitStatus.BOOKED)
+    visitEntityHelper.create(prisonCode = "MDI", slotDate = startDate, prisonerId = "FF0000BB", sessionTemplate = sessionTemplate2, visitStatus = VisitStatus.BOOKED)
     // visit 4 booked for session template reference - session-1 but on next day
-    visitEntityHelper.create(prisonCode = "MDI", visitStart = visitTime.plusDays(1), prisonerId = "FF0000BB", sessionTemplateReference = "session-1", reference = "visit-booked-3", visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.CLOSED)
+    visitEntityHelper.create(prisonCode = "MDI", slotDate = startDate.plusDays(1), prisonerId = "FF0000BB", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.CLOSED)
   }
 
   @Test
