@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
@@ -15,9 +14,9 @@ interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExec
 
   @Query(
     "SELECT v.*  FROM visit v" +
-        "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
-        "  JOIN application a on a.id = vta.application_id " +
-        "  WHERE a.reference = :applicationReference",
+      "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
+      "  JOIN application a on a.id = vta.application_id " +
+      "  WHERE a.reference = :applicationReference",
     nativeQuery = true,
   )
   fun findByApplicationReference(applicationReference: String): Visit?

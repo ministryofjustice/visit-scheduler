@@ -72,14 +72,14 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `change reserved slot by application reference - add final details`() {
+  fun `change application - change all details on original max application`() {
     // Given
     val newSessionTemplate = sessionTemplateEntityHelper.create()
 
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = newSessionTemplate.reference,
-      sessionDate = applicationFull.sessionSlot.slotDate,
-      visitRestriction = VisitRestriction.CLOSED,
+      sessionDate = applicationFull.sessionSlot.slotDate.plusWeeks(1),
+      visitRestriction = swapRestriction(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
@@ -92,43 +92,43 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     // Then
     val returnResult = getResult(responseSpec)
-
     val applicationDto = getApplicationDto(returnResult)
-
-    Assertions.assertThat(applicationDto.reference).isEqualTo(applicationFull.reference)
-    Assertions.assertThat(applicationDto.prisonerId).isEqualTo(applicationFull.prisonerId)
-    Assertions.assertThat(applicationDto.prisonCode).isEqualTo(applicationFull.prison.code)
-    Assertions.assertThat(applicationDto.startTimestamp.toLocalDate()).isEqualTo(updateRequest.sessionDate)
-    Assertions.assertThat(applicationDto.startTimestamp.toLocalTime()).isEqualTo(newSessionTemplate.startTime)
-    Assertions.assertThat(applicationDto.endTimestamp.toLocalTime()).isEqualTo(newSessionTemplate.endTime)
-    Assertions.assertThat(applicationDto.visitType).isEqualTo(applicationFull.visitType)
-    Assertions.assertThat(applicationDto.reserved).isTrue()
-    Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(updateRequest.visitRestriction)
-    Assertions.assertThat(applicationDto.sessionTemplateReference).isEqualTo(updateRequest.sessionTemplateReference)
-
-    Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(updateRequest.visitContact!!.name)
-    Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(updateRequest.visitContact!!.telephone)
-
-    Assertions.assertThat(applicationDto.visitors.size).isEqualTo(updateRequest.visitors!!.size)
-    applicationDto.visitors.forEachIndexed { index, visitorDto ->
-      Assertions.assertThat(visitorDto.nomisPersonId).isEqualTo(updateRequest.visitors!!.toList()[index].nomisPersonId)
-      Assertions.assertThat(visitorDto.visitContact).isEqualTo(updateRequest.visitors!!.toList()[index].visitContact)
-    }
-
-    Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(updateRequest.visitorSupport!!.size)
-    applicationDto.visitorSupport.forEachIndexed { index, supportDto ->
-      Assertions.assertThat(supportDto.type).isEqualTo(updateRequest.visitorSupport!!.toList()[index].type)
-      Assertions.assertThat(supportDto.text).isEqualTo(updateRequest.visitorSupport!!.toList()[index].text)
-    }
-
-    Assertions.assertThat(applicationDto.createdTimestamp).isNotNull()
+    assertApplicationDetails(applicationFull, applicationDto, updateRequest, newSessionTemplate)
 
     // And
     assertTelemetry(applicationDto)
   }
 
   @Test
-  fun `change reserved slot by application reference - add min details`() {
+  fun `change application - change all details on original min application`() {
+    // Given
+    val newSessionTemplate = sessionTemplateEntityHelper.create()
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = newSessionTemplate.reference,
+      sessionDate = applicationFull.sessionSlot.slotDate.plusWeeks(1),
+      visitRestriction = swapRestriction(applicationFull.restriction),
+      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
+      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+    )
+
+    val applicationReference = applicationMin.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+    val applicationDto = getApplicationDto(returnResult)
+    assertApplicationDetails(applicationMin, applicationDto, updateRequest, newSessionTemplate)
+
+    // And
+    assertTelemetry(applicationDto)
+  }
+
+  @Test
+  fun `change application - add min details`() {
     // Given
     val newSessionTemplate = sessionTemplateEntityHelper.create()
 
@@ -164,7 +164,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `change reserved slot by application reference - start restriction -- start date has not changed`() {
+  fun `change application - start restriction -- start date has not changed`() {
     // Given
     val updateRequest = ChangeApplicationDto(
       visitRestriction = applicationFull.restriction,
@@ -217,7 +217,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `change reserved slot by application reference - start restriction has changed`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      visitRestriction = if (applicationFull.restriction == OPEN) CLOSED else OPEN,
+      visitRestriction = swapRestriction(applicationFull.restriction),
       sessionTemplateReference = sessionTemplate.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "01234 567890"),
@@ -496,4 +496,64 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   private fun getApplication(dto: ApplicationDto): Application? {
     return testApplicationRepository.findByReference(dto.reference)
   }
+
+  private fun assertApplicationDetails(
+    originalApplication: Application,
+    applicationDto: ApplicationDto,
+    updateRequest: ChangeApplicationDto,
+    sessionTemplate: SessionTemplate,
+  ) {
+    Assertions.assertThat(applicationDto.reference).isEqualTo(originalApplication.reference)
+    Assertions.assertThat(applicationDto.prisonerId).isEqualTo(originalApplication.prisonerId)
+    Assertions.assertThat(applicationDto.prisonCode).isEqualTo(originalApplication.prison.code)
+    Assertions.assertThat(applicationDto.startTimestamp.toLocalDate()).isEqualTo(updateRequest.sessionDate)
+    Assertions.assertThat(applicationDto.startTimestamp.toLocalTime()).isEqualTo(sessionTemplate.startTime)
+    Assertions.assertThat(applicationDto.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
+    Assertions.assertThat(applicationDto.visitType).isEqualTo(originalApplication.visitType)
+    Assertions.assertThat(applicationDto.reserved).isTrue()
+    Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(updateRequest.visitRestriction)
+    Assertions.assertThat(applicationDto.sessionTemplateReference).isEqualTo(updateRequest.sessionTemplateReference)
+
+    updateRequest.visitContact?.let {
+      Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(it.name)
+      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(it.telephone)
+    } ?: run {
+      Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(originalApplication.visitContact?.name)
+      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(originalApplication.visitContact?.telephone)
+    }
+
+    val visitorsDtoList = applicationDto.visitors.toList()
+    updateRequest.visitors?.let {
+      Assertions.assertThat(applicationDto.visitors.size).isEqualTo(it.size)
+      it.forEachIndexed { index, visitorDto ->
+        Assertions.assertThat(visitorsDtoList[index].nomisPersonId).isEqualTo(visitorDto.nomisPersonId)
+        Assertions.assertThat(visitorsDtoList[index].visitContact).isEqualTo(visitorDto.visitContact)
+      }
+    } ?: run {
+      Assertions.assertThat(applicationDto.visitors.size).isEqualTo(originalApplication.visitors.size)
+      originalApplication.visitors.forEachIndexed { index, visitor ->
+        Assertions.assertThat(visitorsDtoList[index].nomisPersonId).isEqualTo(visitor.nomisPersonId)
+        Assertions.assertThat(visitorsDtoList[index].visitContact).isEqualTo(visitor.contact)
+      }
+    }
+
+    val supportDtoList = applicationDto.visitorSupport.toList()
+    updateRequest.visitorSupport?.let {
+      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(it.size)
+      it.forEachIndexed { index, supportDto ->
+        Assertions.assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
+        Assertions.assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
+      }
+    } ?: run {
+      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(originalApplication.support.size)
+      originalApplication.support.forEachIndexed { index, support ->
+        Assertions.assertThat(supportDtoList[index].type).isEqualTo(support.type)
+        Assertions.assertThat(supportDtoList[index].text).isEqualTo(support.text)
+      }
+    }
+
+    Assertions.assertThat(applicationDto.createdTimestamp).isNotNull()
+  }
+
+  private fun swapRestriction(restriction: VisitRestriction) = if (OPEN == restriction) CLOSED else OPEN
 }

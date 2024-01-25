@@ -133,7 +133,7 @@ class VisitService(
       )
     }
 
-    if (hasNotBeenAddedToBooking(booking,application)) {
+    if (hasNotBeenAddedToBooking(booking, application)) {
       booking.applications.add(application)
     }
 
@@ -165,7 +165,7 @@ class VisitService(
   }
 
   private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
-    return booking.applications.any { it.id == application.id}
+    return booking.applications.any { it.id == application.id }
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {

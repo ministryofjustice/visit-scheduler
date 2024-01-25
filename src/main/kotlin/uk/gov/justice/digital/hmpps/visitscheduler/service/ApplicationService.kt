@@ -250,7 +250,6 @@ class ApplicationService(
       ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
   }
 
-
   private fun saveEventAudit(
     actionedBy: String,
     application: ApplicationDto,

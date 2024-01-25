@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotCh
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -33,7 +32,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRep
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
-import javax.sound.sampled.LineEvent.Type.CLOSE
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_RESERVED_SLOT_CHANGE")
@@ -76,7 +74,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     oldBooking = visitEntityHelper.create(sessionTemplateReference = sessionTemplate.reference)
     oldBooking.applications.add(oldApplication)
 
-    val newRestriction = if (oldBooking.visitRestriction==OPEN) CLOSED else OPEN
+    val newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN
 
     newApplication = applicationEntityHelper.create(sessionTemplateReference = sessionTemplate.reference, completed = true, visitRestriction = newRestriction)
     applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348 811539")
@@ -105,12 +103,12 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     // Then
     val returnResult = getResult(responseSpec)
     val applicationDto = getApplicationDto(returnResult)
-    val visit = getVisit(applicationDto)!!;
+    val visit = getVisit(applicationDto)!!
 
     Assertions.assertThat(applicationDto.reserved).isFalse()
 
     // And
-    assertTelemetry(applicationDto,visit)
+    assertTelemetry(applicationDto, visit)
   }
 
   @Test
@@ -131,15 +129,17 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     // Then
     val returnResult = getResult(responseSpec)
     val applicationDto = getApplicationDto(returnResult)
-    val visit = getVisit(applicationDto)!!;
+    val visit = getVisit(applicationDto)!!
 
     Assertions.assertThat(applicationDto.reserved).isFalse()
     // And
-    assertTelemetry(applicationDto,visit)
+    assertTelemetry(applicationDto, visit)
   }
 
+  // TODDO create tests similar to ChangeReservedSlot
+  // TODO check to see if Application is added to visit and check to see that it is not complete
 
-  private fun assertTelemetry(applicationDto: ApplicationDto, visit : Visit) {
+  private fun assertTelemetry(applicationDto: ApplicationDto, visit: Visit) {
     verify(telemetryClient).trackEvent(
       eq("visit-slot-changed"),
       org.mockito.kotlin.check {

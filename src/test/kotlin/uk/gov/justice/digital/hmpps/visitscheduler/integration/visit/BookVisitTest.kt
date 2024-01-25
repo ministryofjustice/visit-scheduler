@@ -59,6 +59,8 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.save(reservedApplication)
   }
 
+  // TODO Must create a test class for the case were the booking is allready booked.
+
   @Test
   fun `Book visit visit by application Reference`() {
     // Given
