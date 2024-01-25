@@ -197,6 +197,9 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     visit: Visit,
     type: TelemetryVisitEvents,
   ) {
+
+    val visitStart = visit.sessionSlot.slotDate.atTime(visit.sessionSlot.slotTime).format(DateTimeFormatter.ISO_DATE_TIME)
+
     verify(telemetryClient).trackEvent(
       eq(type.eventName),
       org.mockito.kotlin.check {
@@ -205,11 +208,11 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
         Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
         Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
-        Assertions.assertThat(it["sessionTemplateReference"]).isEqualTo(visit.sessionTemplateReference)
+        Assertions.assertThat(it["sessionTemplateReference"]).isEqualTo(visit.sessionSlot.sessionTemplateReference)
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(visit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        Assertions.assertThat(it["visitStart"]).isEqualTo(visitStart)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applications.last().reference)
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(visit.outcomeStatus!!.name)
       },
       isNull(),
@@ -217,14 +220,14 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
 
     val eventsMap = mutableMapOf(
       "reference" to visit.reference,
-      "applicationReference" to visit.applicationReference,
+      "applicationReference" to visit.applications.last().reference,
       "prisonerId" to visit.prisonerId,
       "prisonId" to visit.prison.code,
       "visitType" to visit.visitType.name,
       "visitRoom" to visit.visitRoom,
-      "sessionTemplateReference" to visit.sessionTemplateReference,
+      "sessionTemplateReference" to visit.sessionSlot.sessionTemplateReference,
       "visitRestriction" to visit.visitRestriction.name,
-      "visitStart" to visit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStart" to visitStart,
       "visitStatus" to visit.visitStatus.name,
       "outcomeStatus" to visit.outcomeStatus!!.name,
     )

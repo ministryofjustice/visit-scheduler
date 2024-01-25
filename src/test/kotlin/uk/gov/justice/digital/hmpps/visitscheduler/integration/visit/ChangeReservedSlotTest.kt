@@ -511,6 +511,8 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     Assertions.assertThat(applicationDto.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
     Assertions.assertThat(applicationDto.visitType).isEqualTo(originalApplication.visitType)
     Assertions.assertThat(applicationDto.reserved).isTrue()
+    Assertions.assertThat(applicationDto.completed).isFalse()
+
     Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(updateRequest.visitRestriction)
     Assertions.assertThat(applicationDto.sessionTemplateReference).isEqualTo(updateRequest.sessionTemplateReference)
 

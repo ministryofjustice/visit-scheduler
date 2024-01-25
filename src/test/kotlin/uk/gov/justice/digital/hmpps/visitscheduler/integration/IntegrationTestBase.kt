@@ -42,6 +42,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMoc
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 
 @Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
@@ -54,6 +55,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var objectMapper: ObjectMapper
+
+  @Autowired
+  protected lateinit var sessionDatesUtil: SessionDatesUtil
 
   @Autowired
   protected lateinit var visitEntityHelper: VisitEntityHelper

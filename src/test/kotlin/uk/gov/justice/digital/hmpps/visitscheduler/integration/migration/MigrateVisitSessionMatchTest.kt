@@ -77,15 +77,15 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
 
       val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
       assertThat(eventAudit.type).isEqualTo(EventAuditType.MIGRATED_VISIT)
       assertThat(eventAudit.actionedBy).isEqualTo("Aled Evans")
       assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
-      assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionTemplateReference)
-      assertThat(eventAudit.applicationReference).isEqualTo(visit.applicationReference)
+      assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
+      assertThat(eventAudit.applicationReference).isEqualTo(visit.applications.last())
     }
   }
 
@@ -141,7 +141,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -196,7 +196,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -250,7 +250,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -319,7 +319,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -374,7 +374,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -509,7 +509,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -580,7 +580,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -604,7 +604,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isNull()
+      assertThat(visit.sessionSlot.sessionTemplateReference).isNull()
     }
   }
 
@@ -794,7 +794,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -872,7 +872,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -926,7 +926,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     assertThat(visit).isNotNull
     visit?.let {
       assertThat(visit.visitRoom).isEqualTo(sessionTemplate.visitRoom)
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -980,7 +980,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     assertThat(visit).isNotNull
     visit?.let {
       assertThat(visit.visitRoom).isEqualTo(sessionTemplate.visitRoom)
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 
@@ -1034,7 +1034,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
     assertThat(visit).isNotNull
     visit?.let {
       assertThat(visit.visitRoom).isEqualTo(sessionTemplate.visitRoom)
-      assertThat(visit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     }
   }
 }
