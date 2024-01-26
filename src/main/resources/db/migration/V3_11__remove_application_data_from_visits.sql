@@ -1,3 +1,7 @@
+
+-- Create
+CREATE TEMP TABLE tmp_delete_applications_from_visits(visit_id int not null);
+
 INSERT INTO tmp_delete_applications_from_visits(visit_id)
     SELECT v.id FROM visit v  WHERE v.visit_status  in  ('CHANGING','RESERVED') or (v.visit_status  = 'CANCELLED' and v.outcome_status = 'SUPERSEDED_CANCELLATION');
 
