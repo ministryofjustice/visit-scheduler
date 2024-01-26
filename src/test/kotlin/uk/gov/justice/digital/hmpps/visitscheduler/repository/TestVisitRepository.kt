@@ -22,6 +22,27 @@ interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExec
   )
   fun findByApplicationReference(applicationReference: String): Visit?
 
+  @Modifying
+  @Query(
+    "DELETE FROM visit WHERE id IN (SELECT v.id  FROM visit v" +
+      "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
+      "  JOIN application a on a.id = vta.application_id " +
+      "  WHERE a.reference = :applicationReference)",
+    nativeQuery = true,
+  )
+  fun deleteByApplicationReferenceNative(applicationReference: String): Int
+
+  @Modifying
+  fun deleteByReference(reference: String): Long
+
+  @Modifying
+  @Query(
+    "DELETE FROM visit v " +
+        "  WHERE v.reference = :reference",
+    nativeQuery = true,
+  )
+  fun deleteByReferenceNative(reference: String): Int
+
   @Query(
     "SELECT CASE WHEN (COUNT(v) = 1) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference ",
   )

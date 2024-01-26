@@ -39,9 +39,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VSIPReportingRepository
@@ -452,9 +454,13 @@ class DeleteEntityHelper(
   private val eventAuditRepository: TestEventAuditRepository,
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val vsipReportingRepository: VSIPReportingRepository,
-) {
+  private val testApplicationRepository: TestApplicationRepository,
+  private val testSessionSlotRepository: TestSessionSlotRepository,
+
+  ) {
 
   fun deleteAll() {
+    System.out.println("Delete all")
     sessionRepository.deleteAll()
     sessionRepository.flush()
     sessionLocationGroupRepository.deleteAll()
@@ -477,6 +483,11 @@ class DeleteEntityHelper(
     visitNotificationEventRepository.flush()
     vsipReportingRepository.deleteAll()
     vsipReportingRepository.flush()
+    testApplicationRepository.deleteAll()
+    testApplicationRepository.flush()
+    testSessionSlotRepository.deleteAll()
+    testSessionSlotRepository.flush()
+    System.out.println("Delete all end")
   }
 }
 
