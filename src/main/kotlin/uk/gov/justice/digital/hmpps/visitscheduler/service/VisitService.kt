@@ -206,7 +206,32 @@ class VisitService(
     }
 
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS)
-    return visitRepository.findVisitsOrderByDateAndTime(visitFilter, page).map { visitDtoBuilder.build(it) }
+    return findVisitsOrderByDateAndTime(visitFilter, pageable =  page).map { visitDtoBuilder.build(it) }
+  }
+
+  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable) : Page<Visit> {
+    return visitRepository.findVisitsOrderByDateAndTime(
+        prisonerId  = visitFilter.prisonerId,
+        prisonCode = visitFilter.prisonCode,
+        visitStatusList = if (visitFilter.visitStatusList.isNotEmpty())  visitFilter.visitStatusList else null,
+        visitorId = visitFilter.visitorId,
+        slotStartDate = visitFilter.startDateTime?.let { it.toLocalDate() },
+        slotStartTime= visitFilter.startDateTime?.let { it.toLocalTime() },
+        slotEndDate = visitFilter.endDateTime?.let { it.toLocalDate() },
+        slotEndTime= visitFilter.endDateTime?.let { it.toLocalTime() },
+        pageable =  pageable)
+  }
+
+  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter) : List<Visit> {
+    return visitRepository.findVisits(
+      prisonerId  = visitFilter.prisonerId,
+      prisonCode = visitFilter.prisonCode,
+      visitStatusList = if (visitFilter.visitStatusList.isNotEmpty())  visitFilter.visitStatusList else null,
+      visitorId = visitFilter.visitorId,
+      slotStartDate = visitFilter.startDateTime?.let { it.toLocalDate() },
+      slotStartTime= visitFilter.startDateTime?.let { it.toLocalTime() },
+      slotEndDate = visitFilter.endDateTime?.let { it.toLocalDate() },
+      slotEndTime= visitFilter.endDateTime?.let { it.toLocalTime() })
   }
 
   @Transactional(readOnly = true)
@@ -312,7 +337,7 @@ class VisitService(
       startDateTime = startDateTime,
       endDateTime = endDateTime,
     )
-    return visitRepository.findVisits(visitFilter).map { visitDtoBuilder.build(it) }
+    return findVisitsOrderByDateAndTime(visitFilter).map { visitDtoBuilder.build(it) }
   }
 
   @Transactional(readOnly = true)
