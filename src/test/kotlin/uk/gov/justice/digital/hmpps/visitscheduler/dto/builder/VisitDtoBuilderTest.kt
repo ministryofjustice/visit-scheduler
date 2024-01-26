@@ -11,6 +11,7 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.ApplicationEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
@@ -24,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionTemplateService
 import java.time.LocalDate
@@ -44,32 +46,13 @@ class VisitDtoBuilderTest() {
     // Given
     val now = LocalDateTime.now()
     val slotDate = now.toLocalDate()
-
     val visitStart = now.toLocalTime()
     val visitEnd = visitStart.plusHours(2)
 
-    val visit = create(slotDate = slotDate, visitStart = visitStart, visitEnd = visitEnd)
+    val visit = create(slotDate = slotDate, visitStart = visitStart, visitEnd = visitEnd, reference = "test")
     val slot = SessionTimeSlotDto(visitStart, visitEnd)
 
     whenever(sessionTemplateService.getSessionTimeSlotDto(visit.sessionSlot.reference)).thenReturn(slot)
-
-    // When
-
-    val result = toTest.build(visit)
-
-    // Then
-    assertVisitDto(result, visit, slotDate, visitStart, visitEnd)
-  }
-
-  @Test
-  fun `Visit Dto is built correctly from given entities 2`() {
-    // Given
-    val now = LocalDateTime.now()
-    val slotDate = now.toLocalDate()
-    val visitStart = now.toLocalTime()
-    val visitEnd = visitStart.plusHours(2)
-
-    val visit = create(slotDate = slotDate, visitStart = visitStart, visitEnd = visitEnd)
 
     // When
 
@@ -171,6 +154,8 @@ class VisitDtoBuilderTest() {
 
     doReturn(reference).`when`(spyVisit).reference
 
-    return visit
+    visit.applications.add(ApplicationEntityHelper.createApplication(spyVisit))
+
+    return spyVisit
   }
 }

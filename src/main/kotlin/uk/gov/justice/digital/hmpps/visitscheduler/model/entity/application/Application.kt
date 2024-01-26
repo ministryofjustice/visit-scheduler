@@ -70,9 +70,6 @@ class Application(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "application", orphanRemoval = true)
   var support: MutableList<ApplicationSupport> = mutableListOf()
 
-  @Column
-  lateinit var reference: String
-
   @CreationTimestamp
   @Column
   val createTimestamp: LocalDateTime? = null
@@ -81,9 +78,15 @@ class Application(
   @Column
   val modifyTimestamp: LocalDateTime? = null
 
+  @Column
+  var reference: String = ""
+    private set
+
   @PostPersist
   fun createReference() {
-    reference = QuotableEncoder(minLength = 8, chunkSize = 3).encode(id)
+    if (reference.isNullOrBlank()) {
+      reference = QuotableEncoder(minLength = 8, chunkSize = 3).encode(id)
+    }
   }
 
   override fun toString(): String {

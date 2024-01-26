@@ -31,11 +31,14 @@ class SessionSlot(
 ) : AbstractIdEntity() {
 
   @Column
-  lateinit var reference: String
+  var reference: String = ""
+    private set
 
   @PostPersist
   fun createReference() {
-    reference = QuotableEncoder(minLength = 8).encode(id)
+    if (reference.isNullOrBlank()) {
+      reference = QuotableEncoder(minLength = 8).encode(id)
+    }
   }
 
   override fun toString(): String {

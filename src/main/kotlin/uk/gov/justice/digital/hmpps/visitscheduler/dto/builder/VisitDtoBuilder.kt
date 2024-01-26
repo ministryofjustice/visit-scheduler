@@ -26,12 +26,12 @@ class VisitDtoBuilder {
       startTimestamp = visitEntity.sessionSlot.slotDate.atTime(visitEntity.sessionSlot.slotTime),
       endTimestamp = visitEntity.sessionSlot.slotDate.atTime(visitEntity.sessionSlot.slotEndTime),
       visitNotes = visitEntity.visitNotes.map { VisitNoteDto(it) },
-      visitContact = visitEntity.visitContact?.let { ContactDto(it) },
+      visitContact = ContactDto(visitEntity.visitContact),
       visitors = visitEntity.visitors.map { VisitorDto(it) },
       visitorSupport = visitEntity.support.map { VisitorSupportDto(it) },
       createdTimestamp = visitEntity.createTimestamp ?: LocalDateTime.now(),
       modifiedTimestamp = visitEntity.modifyTimestamp ?: LocalDateTime.now(),
-      sessionTemplateReference = visitEntity.sessionSlot.reference,
+      sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
     )
   }
 }
