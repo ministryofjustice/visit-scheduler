@@ -300,7 +300,7 @@ class MigrateVisitService(
       "prisonId" to visitEntity.prison.code,
       "visitType" to visitEntity.visitType.name,
       "visitRoom" to visitEntity.visitRoom,
-      "sessionTemplateReference" to (visitEntity.sessionSlot.reference ?: ""),
+      "sessionTemplateReference" to (visitEntity.sessionSlot.sessionTemplateReference ?: ""),
       "visitRestriction" to visitEntity.visitRestriction.name,
       "visitStart" to sessionSlotService.getSessionTimeAndDateString(visitEntity.sessionSlot.slotDate, visitEntity.sessionSlot.slotTime),
       "visitStatus" to visitEntity.visitStatus.name,

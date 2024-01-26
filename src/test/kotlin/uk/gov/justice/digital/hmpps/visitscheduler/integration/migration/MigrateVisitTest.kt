@@ -51,7 +51,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   }
 
   @Test
-  fun `Migrate visit`() {
+  fun `migrate visit`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
@@ -496,7 +496,9 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   @Test
   fun `cancel visit migrated by reference -  with outcome and outcome text`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate)
+
+    val application = createApplicationAndSave(completed = true)
+    val visit = createVisitAndSave(visitStatus = BOOKED, application)
 
     val cancelVisitDto = MigratedCancelVisitDto(
       OutcomeDto(

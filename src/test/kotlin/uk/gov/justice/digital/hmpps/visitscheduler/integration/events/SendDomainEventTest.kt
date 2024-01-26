@@ -30,8 +30,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.N
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.service.HMPPSDomainEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED_DESC
@@ -62,19 +60,6 @@ class SendDomainEventTest : IntegrationTestBase() {
     @BeforeEach
     fun `clear queues`() {
       testSqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(testQueueUrl).build())
-    }
-
-    private fun createApplicationAndSave(completed : Boolean): Application {
-      val applicationEntity = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = completed)
-      applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
-      applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
-      applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
-      applicationEntityHelper.save(applicationEntity)
-      return applicationEntity
-    }
-
-    private fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application): Visit {
-      return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplate,application = applicationEntity)
     }
 
     @Test

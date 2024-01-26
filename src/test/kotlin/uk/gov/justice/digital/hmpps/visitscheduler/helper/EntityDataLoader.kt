@@ -126,24 +126,23 @@ class VisitEntityHelper(
   private val applicationEntityHelper: ApplicationEntityHelper,
 ) {
 
-
   fun createFromApplication(
     application: Application,
     visitStatus: VisitStatus = BOOKED,
-    sessionTemplate : SessionTemplate,
+    sessionTemplate: SessionTemplate,
     outcomeStatus: OutcomeStatus? = null,
   ): Visit {
-    val visit =  create(
-            visitStatus = visitStatus,
-            sessionTemplate = sessionTemplate,
-            prisonerId = application.prisonerId,
-            slotDate = application.sessionSlot.slotDate,
-            visitStart = application.sessionSlot.slotTime,
-            visitEnd = application.sessionSlot.slotEndTime,
-            visitType = application.visitType,
-            visitRestriction = application.restriction,
-            outcomeStatus = outcomeStatus,
-            createApplication = false
+    val visit = create(
+      visitStatus = visitStatus,
+      sessionTemplate = sessionTemplate,
+      prisonerId = application.prisonerId,
+      slotDate = application.sessionSlot.slotDate,
+      visitStart = application.sessionSlot.slotTime,
+      visitEnd = application.sessionSlot.slotEndTime,
+      visitType = application.visitType,
+      visitRestriction = application.restriction,
+      outcomeStatus = outcomeStatus,
+      createApplication = false,
     )
 
     visit.applications.add(application)

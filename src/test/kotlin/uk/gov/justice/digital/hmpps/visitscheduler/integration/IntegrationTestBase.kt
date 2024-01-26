@@ -40,7 +40,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExt
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociationsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
@@ -227,5 +230,18 @@ abstract class IntegrationTestBase {
 
   fun formatDateTimeToString(sessionSlot: SessionSlot): String {
     return sessionSlot.slotDate.format(DateTimeFormatter.ISO_DATE_TIME)
+  }
+
+  fun createApplicationAndSave(completed: Boolean): Application {
+    val applicationEntity = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = completed)
+    applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.save(applicationEntity)
+    return applicationEntity
+  }
+
+  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application): Visit {
+    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplate, application = applicationEntity)
   }
 }
