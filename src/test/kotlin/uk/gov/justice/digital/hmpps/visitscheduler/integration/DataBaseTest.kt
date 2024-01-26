@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_C
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
@@ -25,6 +26,7 @@ class DataBaseTest(
   @Autowired val testVisitRepository: TestVisitRepository,
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
   @Autowired val testTemplateRepository: TestSessionTemplateRepository,
+  @Autowired val testApplicationRepository: TestApplicationRepository,
 ) : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -35,7 +37,7 @@ class DataBaseTest(
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedVisit = visitEntityHelper.create(sessionTemplate = sessionTemplate)
+    reservedVisit = visitEntityHelper.create(sessionTemplate = sessionTemplate, createApplication = true)
 
     visitEntityHelper.createNote(visit = reservedVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = reservedVisit, text = "Some text concerns", type = VISITOR_CONCERN)
@@ -58,21 +60,20 @@ class DataBaseTest(
   @Transactional(propagation = REQUIRES_NEW)
   @Test
   fun `When visit deleted - all connected child objects are also removed`() {
-    // Given
-    // TODO - check if we need to pass the first or last applicatio reference
-    val applicationReference = reservedVisit.applications[0].reference
 
     // When
     val didExist = testVisitRepository.hasVisit(reservedVisit.id)
-    val result = testVisitRepository.deleteByApplicationReference(applicationReference)
+
+    testVisitRepository.delete(reservedVisit)
 
     // Then
     Assertions.assertThat(didExist).isTrue
-    Assertions.assertThat(result).isEqualTo(1)
+    Assertions.assertThat(testVisitRepository.hasVisit(reservedVisit.id)).isFalse()
     Assertions.assertThat(testVisitRepository.hasContact(reservedVisit.id)).isFalse
     Assertions.assertThat(testVisitRepository.hasNotes(reservedVisit.id)).isFalse
     Assertions.assertThat(testVisitRepository.hasVisitors(reservedVisit.id)).isFalse
     Assertions.assertThat(testVisitRepository.hasSupport(reservedVisit.id)).isFalse
+    Assertions.assertThat(testApplicationRepository.findByReference(reservedVisit.applications.last.reference)).isNull()
   }
 
   @Transactional(propagation = REQUIRES_NEW)

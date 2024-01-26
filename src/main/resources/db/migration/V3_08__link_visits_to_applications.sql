@@ -5,10 +5,7 @@ insert into visits_to_applications
 
 ALTER TABLE visits_to_applications ADD CONSTRAINT visits_to_applications_pl PRIMARY KEY (visit_id, application_id);
 
-ALTER TABLE visits_to_applications
-    ADD CONSTRAINT visit_must_exist
-        FOREIGN KEY (visit_id)
-            REFERENCES visit(id);
+
 
 ALTER TABLE visits_to_applications
     ADD CONSTRAINT application_must_exist

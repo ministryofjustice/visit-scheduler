@@ -78,7 +78,7 @@ class Visit(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   val visitNotes: MutableList<VisitNote> = mutableListOf()
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
   @JoinTable(
     name = "VISITS_TO_APPLICATIONS",
     joinColumns = [JoinColumn(name = "visit_id")],

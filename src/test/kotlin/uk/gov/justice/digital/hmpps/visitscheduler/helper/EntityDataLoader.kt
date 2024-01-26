@@ -157,7 +157,7 @@ class VisitEntityHelper(
     notSaved.outcomeStatus = outcomeStatus
     if (createApplication) {
       val savedVisit = visitRepository.saveAndFlush(notSaved)
-      savedVisit.applications.add(applicationEntityHelper.create(notSaved))
+      savedVisit.applications.add(applicationEntityHelper.create(savedVisit))
       return visitRepository.saveAndFlush(savedVisit)
     } else {
       return visitRepository.saveAndFlush(notSaved)
