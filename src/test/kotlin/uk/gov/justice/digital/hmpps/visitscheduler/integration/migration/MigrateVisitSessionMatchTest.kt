@@ -85,7 +85,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
       assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
-      assertThat(eventAudit.applicationReference).isEqualTo(visit.applications.last())
+      assertThat(eventAudit.applicationReference).isEqualTo(visit.applications.last().reference)
     }
   }
 

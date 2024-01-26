@@ -116,7 +116,7 @@ class MigrateVisitService(
         actionedBy = actionedBy,
         bookingReference = visitEntity.reference,
         applicationReference = applicationEntity.reference,
-        sessionTemplateReference = visitEntity.sessionSlot.reference,
+        sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
         type = MIGRATED_VISIT,
         applicationMethodType = NOT_KNOWN,
       ),
