@@ -29,7 +29,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -206,32 +205,34 @@ class VisitService(
     }
 
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS)
-    return findVisitsOrderByDateAndTime(visitFilter, pageable =  page).map { visitDtoBuilder.build(it) }
+    return findVisitsOrderByDateAndTime(visitFilter, pageable = page).map { visitDtoBuilder.build(it) }
   }
 
-  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable) : Page<Visit> {
+  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable): Page<Visit> {
     return visitRepository.findVisitsOrderByDateAndTime(
-        prisonerId  = visitFilter.prisonerId,
-        prisonCode = visitFilter.prisonCode,
-        visitStatusList = if (visitFilter.visitStatusList.isNotEmpty())  visitFilter.visitStatusList else null,
-        visitorId = visitFilter.visitorId,
-        slotStartDate = visitFilter.startDateTime?.let { it.toLocalDate() },
-        slotStartTime= visitFilter.startDateTime?.let { it.toLocalTime() },
-        slotEndDate = visitFilter.endDateTime?.let { it.toLocalDate() },
-        slotEndTime= visitFilter.endDateTime?.let { it.toLocalTime() },
-        pageable =  pageable)
-  }
-
-  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter) : List<Visit> {
-    return visitRepository.findVisits(
-      prisonerId  = visitFilter.prisonerId,
+      prisonerId = visitFilter.prisonerId,
       prisonCode = visitFilter.prisonCode,
-      visitStatusList = if (visitFilter.visitStatusList.isNotEmpty())  visitFilter.visitStatusList else null,
+      visitStatusList = if (visitFilter.visitStatusList.isNotEmpty()) visitFilter.visitStatusList else null,
       visitorId = visitFilter.visitorId,
       slotStartDate = visitFilter.startDateTime?.let { it.toLocalDate() },
-      slotStartTime= visitFilter.startDateTime?.let { it.toLocalTime() },
+      slotStartTime = visitFilter.startDateTime?.let { it.toLocalTime() },
       slotEndDate = visitFilter.endDateTime?.let { it.toLocalDate() },
-      slotEndTime= visitFilter.endDateTime?.let { it.toLocalTime() })
+      slotEndTime = visitFilter.endDateTime?.let { it.toLocalTime() },
+      pageable = pageable,
+    )
+  }
+
+  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter): List<Visit> {
+    return visitRepository.findVisits(
+      prisonerId = visitFilter.prisonerId,
+      prisonCode = visitFilter.prisonCode,
+      visitStatusList = if (visitFilter.visitStatusList.isNotEmpty()) visitFilter.visitStatusList else null,
+      visitorId = visitFilter.visitorId,
+      slotStartDate = visitFilter.startDateTime?.let { it.toLocalDate() },
+      slotStartTime = visitFilter.startDateTime?.let { it.toLocalTime() },
+      slotEndDate = visitFilter.endDateTime?.let { it.toLocalDate() },
+      slotEndTime = visitFilter.endDateTime?.let { it.toLocalTime() },
+    )
   }
 
   @Transactional(readOnly = true)
@@ -246,14 +247,14 @@ class VisitService(
   ): Page<VisitDto> {
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
 
-    val filter = VisitsBySessionTemplateFilter(
+    return visitRepository.findVisitsOrderByCreateTimestamp(
       sessionTemplateReference = sessionTemplateReference,
       fromDate = fromDate,
       toDate = toDate,
-      visitStatusList = visitStatusList,
+      visitStatusList = if (visitStatusList.isNotEmpty()) visitStatusList else null,
       visitRestrictions = visitRestrictions,
-    )
-    return visitRepository.findVisitsOrderByCreateTimestamp(filter, page).map { visitDtoBuilder.build(it) }
+      page,
+    ).map { visitDtoBuilder.build(it) }
   }
 
   private fun saveEventAudit(

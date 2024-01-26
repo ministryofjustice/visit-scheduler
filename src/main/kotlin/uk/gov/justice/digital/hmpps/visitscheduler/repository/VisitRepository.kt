@@ -9,9 +9,8 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
@@ -225,43 +224,54 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(:#{#slotEndDate} is null OR :#{#slotEndTime} is null  OR (v.sessionSlot.slotDate <= :slotEndDate AND v.sessionSlot.slotEndTime < :slotEndTime )) " +
       " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
   )
-  fun findVisitsOrderByDateAndTime(prisonerId : String?,
-                                   prisonCode : String?,
-                                   visitStatusList : List<VisitStatus>?,
-                                   visitorId : Long?,
-                                   slotStartDate: LocalDate?,
-                                   slotStartTime: LocalTime?,
-                                   slotEndDate: LocalDate?,
-                                   slotEndTime: LocalTime?,
-                                   pageable: Pageable): Page<Visit>
+  fun findVisitsOrderByDateAndTime(
+    prisonerId: String?,
+    prisonCode: String?,
+    visitStatusList: List<VisitStatus>?,
+    visitorId: Long?,
+    slotStartDate: LocalDate?,
+    slotStartTime: LocalTime?,
+    slotEndDate: LocalDate?,
+    slotEndTime: LocalTime?,
+    pageable: Pageable,
+  ): Page<Visit>
 
   @Query(
     "SELECT v FROM Visit v JOIN v.visitors vis WHERE " +
-        "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
-        "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
-        "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
-        "(:#{#visitorId} is null OR vis.nomisPersonId = :#{#filter.visitorId}) AND " +
-        "(:#{#slotStartDate} is null OR :#{#slotStartTime} is null OR (v.sessionSlot.slotDate >= :slotStartDate AND v.sessionSlot.slotTime >= :slotStartTime )) AND " +
-        "(:#{#slotEndDate} is null OR :#{#slotEndTime} is null  OR (v.sessionSlot.slotDate <= :slotEndDate AND v.sessionSlot.slotEndTime < :slotEndTime )) " +
-        " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
+      "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
+      "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
+      "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
+      "(:#{#visitorId} is null OR vis.nomisPersonId = :#{#filter.visitorId}) AND " +
+      "(:#{#slotStartDate} is null OR :#{#slotStartTime} is null OR (v.sessionSlot.slotDate >= :slotStartDate AND v.sessionSlot.slotTime >= :slotStartTime )) AND " +
+      "(:#{#slotEndDate} is null OR :#{#slotEndTime} is null  OR (v.sessionSlot.slotDate <= :slotEndDate AND v.sessionSlot.slotEndTime < :slotEndTime )) " +
+      " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
   )
-  fun findVisits(prisonerId : String?,
-                 prisonCode : String?,
-                 visitStatusList : List<VisitStatus>?,
-                 visitorId : Long?,
-                 slotStartDate: LocalDate?,
-                 slotStartTime: LocalTime?,
-                 slotEndDate: LocalDate?,
-                 slotEndTime: LocalTime?): List<Visit>
+  fun findVisits(
+    prisonerId: String?,
+    prisonCode: String?,
+    visitStatusList: List<VisitStatus>?,
+    visitorId: Long?,
+    slotStartDate: LocalDate?,
+    slotStartTime: LocalTime?,
+    slotEndDate: LocalDate?,
+    slotEndTime: LocalTime?,
+  ): List<Visit>
 
   @Query(
     "SELECT v FROM Visit v JOIN v.visitors vis WHERE " +
-      " v.sessionSlot.sessionTemplateReference = :#{#filter.sessionTemplateReference}  AND " +
-      "(:#{#filter.visitStatusList.size()==0} OR v.visitStatus in :#{#filter.visitStatusList}) AND " +
-      "(:#{#filter.visitRestrictions} is null OR :#{#filter.visitStatusList.size()==0} OR v.visitRestriction in :#{#filter.visitRestrictions}) AND " +
-      "v.sessionSlot.slotDate >= :#{#filter.startDateTime.toLocalDate()}  AND " +
-      "v.sessionSlot.slotDate <= :#{#filter.endDateTime.toLocalDate()} " +
+      " v.sessionSlot.sessionTemplateReference = :sessionTemplateReference  AND " +
+      "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
+      "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
+      "v.sessionSlot.slotDate >= :fromDate  AND " +
+      "v.sessionSlot.slotDate <= :toDate " +
       " ORDER BY v.createTimestamp",
   )
-  fun findVisitsOrderByCreateTimestamp(filter: VisitsBySessionTemplateFilter, pageable: Pageable): Page<Visit>
+  fun findVisitsOrderByCreateTimestamp(
+    sessionTemplateReference: String,
+    fromDate: LocalDate,
+    toDate: LocalDate,
+    visitStatusList: List<VisitStatus>?,
+    visitRestrictions: List<VisitRestriction>?,
+    pageable: Pageable,
+  ): Page<Visit>
 }
