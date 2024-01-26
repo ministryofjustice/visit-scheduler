@@ -75,7 +75,7 @@ class Application(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "application", orphanRemoval = true)
   var support: MutableList<ApplicationSupport> = mutableListOf()
 
-  @ManyToOne(fetch = FetchType.LAZY , cascade = [CascadeType.REFRESH])
+  @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
   @OnDelete(action = OnDeleteAction.RESTRICT)
   @JoinTable(
     name = "VISITS_TO_APPLICATIONS",

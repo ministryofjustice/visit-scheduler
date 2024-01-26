@@ -123,7 +123,7 @@ abstract class IntegrationTestBase {
 
   @AfterEach
   internal fun deleteAll() {
-      deleteEntityHelper.deleteAll()
+    deleteEntityHelper.deleteAll()
   }
 
   fun getApplicationDto(responseSpec: ResponseSpec): ApplicationDto =

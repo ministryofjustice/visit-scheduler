@@ -164,7 +164,7 @@ class VisitService(
   }
 
   private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
-    return booking.applications.any { it.id == application.id }
+    return if (booking.applications.isEmpty()) true else booking.applications.any { it.id == application.id }
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {

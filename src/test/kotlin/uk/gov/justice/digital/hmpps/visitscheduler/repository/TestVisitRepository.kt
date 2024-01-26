@@ -38,7 +38,7 @@ interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExec
   @Modifying
   @Query(
     "DELETE FROM visit v " +
-        "  WHERE v.reference = :reference",
+      "  WHERE v.reference = :reference",
     nativeQuery = true,
   )
   fun deleteByReferenceNative(reference: String): Int

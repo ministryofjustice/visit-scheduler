@@ -6,7 +6,6 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
-import org.springframework.transaction.annotation.Propagation.NOT_SUPPORTED
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
@@ -20,7 +19,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocatio
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
-import kotlin.jvm.optionals.getOrNull
 
 @DisplayName("Data base test")
 class DataBaseTest(
@@ -57,7 +55,6 @@ class DataBaseTest(
     sessionTemplate.permittedSessionLocationGroups.add(sessionGroup2)
     sessionTemplate = testTemplateRepository.saveAndFlush(sessionTemplate)
 
-
     application = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true)
     applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
@@ -92,7 +89,6 @@ class DataBaseTest(
 
   @Test
   fun `When application deleted - all connected child objects are also removed but not connected visit`() {
-
     val didVisitExist = testVisitRepository.hasVisit(visit.id)
     val didApplicationExist = testApplicationRepository.hasApplication(application.id)
     val applicationId = application.id

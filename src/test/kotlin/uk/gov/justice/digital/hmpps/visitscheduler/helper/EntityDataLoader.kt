@@ -457,7 +457,7 @@ class DeleteEntityHelper(
   private val testApplicationRepository: TestApplicationRepository,
   private val testSessionSlotRepository: TestSessionSlotRepository,
 
-  ) {
+) {
 
   fun deleteAll() {
     System.out.println("Delete all")

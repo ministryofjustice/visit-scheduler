@@ -32,7 +32,6 @@ interface TestApplicationRepository : JpaRepository<Application, Long>, JpaSpeci
   )
   fun updateModifyTimestamp(modifyTimestamp: LocalDateTime, id: Long): Int
 
-
   @Query(
     "SELECT CASE WHEN (COUNT(av) > 0) THEN TRUE ELSE FALSE END FROM ApplicationVisitor av WHERE av.applicationId = :id ",
   )
@@ -42,7 +41,6 @@ interface TestApplicationRepository : JpaRepository<Application, Long>, JpaSpeci
     "SELECT CASE WHEN (COUNT(asu) > 0) THEN TRUE ELSE FALSE END FROM ApplicationSupport asu WHERE asu.applicationId = :id ",
   )
   fun hasSupport(@Param("id") id: Long): Boolean
-
 
   @Query(
     "SELECT CASE WHEN (COUNT(ac) > 0) THEN TRUE ELSE FALSE END FROM ApplicationContact ac WHERE ac.applicationId = :id ",

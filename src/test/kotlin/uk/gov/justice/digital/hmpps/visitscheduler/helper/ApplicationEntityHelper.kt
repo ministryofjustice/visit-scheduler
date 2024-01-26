@@ -11,7 +11,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import java.time.LocalDate
@@ -29,17 +28,17 @@ class ApplicationEntityHelper(
 
     fun createApplication(visit: Visit): Application {
       return Application(
-          prisonerId = visit.prisonerId,
-          prisonId = visit.prisonId,
-          prison = visit.prison,
-          sessionSlotId = visit.sessionSlot.id,
-          sessionSlot = visit.sessionSlot,
-          visitType = visit.visitType,
-          restriction = visit.visitRestriction,
-          createdBy = "",
-          reservedSlot = true,
-          completed = true,
-        )
+        prisonerId = visit.prisonerId,
+        prisonId = visit.prisonId,
+        prison = visit.prison,
+        sessionSlotId = visit.sessionSlot.id,
+        sessionSlot = visit.sessionSlot,
+        visitType = visit.visitType,
+        restriction = visit.visitRestriction,
+        createdBy = "",
+        reservedSlot = true,
+        completed = true,
+      )
     }
   }
 
