@@ -42,7 +42,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun hasActiveVisits(
     prisonerIds: List<String>,
     prisonCode: String,
-    sessionDate: LocalDate,
+    slotDate: LocalDate,
   ): Boolean
 
   @Query(
