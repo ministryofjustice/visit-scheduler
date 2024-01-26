@@ -139,7 +139,7 @@ class VisitEntityHelper(
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     activePrison: Boolean = sessionTemplate.prison.active,
     outcomeStatus: OutcomeStatus? = null,
-    createApplication: Boolean = false,
+    createApplication: Boolean = true,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
