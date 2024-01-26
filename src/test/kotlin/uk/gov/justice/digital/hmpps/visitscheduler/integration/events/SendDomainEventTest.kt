@@ -64,20 +64,23 @@ class SendDomainEventTest : IntegrationTestBase() {
       testSqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(testQueueUrl).build())
     }
 
-    private fun createApplicationAndSave(): Application {
-      return applicationEntityHelper.create(sessionTemplate = sessionTemplate)
+    private fun createApplicationAndSave(completed : Boolean): Application {
+      val applicationEntity = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = completed)
+      applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
+      applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
+      applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
+      applicationEntityHelper.save(applicationEntity)
+      return applicationEntity
     }
 
     private fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application): Visit {
-      val visit = visitEntityHelper.create(visitStatus = visitStatus, sessionTemplate = sessionTemplate)
-      visit.applications.add(applicationEntity)
-      return visitEntityHelper.save(visit)
+      return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplate,application = applicationEntity)
     }
 
     @Test
     fun `send visit booked event on update`() {
       // Given
-      val applicationEntity = createApplicationAndSave()
+      val applicationEntity = createApplicationAndSave(completed = false)
       eventAuditEntityHelper.create(applicationEntity)
 
       val applicationReference = applicationEntity.reference
@@ -133,7 +136,7 @@ class SendDomainEventTest : IntegrationTestBase() {
     @Test
     fun `send visit cancelled event`() {
       // Given
-      val applicationEntity = createApplicationAndSave()
+      val applicationEntity = createApplicationAndSave(completed = true)
       val visitEntity = createVisitAndSave(BOOKED, applicationEntity)
       val reference = visitEntity.reference
       val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))

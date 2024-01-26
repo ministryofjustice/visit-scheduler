@@ -108,7 +108,7 @@ class VisitService(
 
     val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference!!)
 
-    val booking = existingBooking?.let {
+    val notSavedBooking = existingBooking?.let {
       // Update existing booking
       existingBooking.sessionSlotId = application.sessionSlotId
       existingBooking.sessionSlot = application.sessionSlot
@@ -132,6 +132,8 @@ class VisitService(
       )
     }
 
+    val booking = visitRepository.saveAndFlush(notSavedBooking)
+
     if (hasNotBeenAddedToBooking(booking, application)) {
       booking.applications.add(application)
     }
@@ -140,7 +142,7 @@ class VisitService(
       booking.visitContact = VisitContact(visit = booking, visitId = booking.id, name = name, telephone = telephone)
     }
 
-    application.support?.let {
+    application.support.let {
       booking.support.clear()
       application.support.map { applicationSupport ->
         with(applicationSupport) {
@@ -149,8 +151,8 @@ class VisitService(
       }
     }
 
-    application.visitors!!.let {
-      it.clear()
+    application.visitors.let {
+      booking.visitors.clear()
       it.map { applicationVisitor ->
         with(applicationVisitor) {
           booking.visitors.add(VisitVisitor(visit = booking, visitId = booking.id, nomisPersonId = nomisPersonId, visitContact = contact))
@@ -158,9 +160,7 @@ class VisitService(
       }
     }
 
-    visitRepository.saveAndFlush(booking)
-
-    return booking
+    return visitRepository.saveAndFlush(booking)
   }
 
   private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
