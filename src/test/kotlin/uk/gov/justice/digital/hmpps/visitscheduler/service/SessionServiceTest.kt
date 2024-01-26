@@ -62,7 +62,6 @@ class SessionServiceTest {
   private val visitRepository = mock<VisitRepository>()
   private val prisonerService = mock<PrisonerService>()
   private val prisonerValidationService = mock<PrisonerValidationService>()
-  private val visitService = mock<VisitService>()
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
   private val sessionDatesUtil = SessionDatesUtil()
   private val prisonsService = mock<PrisonsService>()
@@ -472,7 +471,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      mockGetPrisonerNoAssociation(prisonerId, associationId)
+      mockGetPrisonerNonAssociation(prisonerId, associationId)
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
@@ -504,15 +503,13 @@ class SessionServiceTest {
         endTime = LocalTime.parse("12:30"),
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
-      mockGetPrisonerNoAssociation(prisonerId, associationId)
+      mockGetPrisonerNonAssociation(prisonerId, associationId)
 
       val expectedAssociations = listOf(associationId)
 
       val slotDate = validFromDate.plusDays(1)
-      val startDateTimeFilter = LocalTime.MIN
-      val endDateTimeFilter = LocalTime.MAX
 
-      whenever(visitRepository.hasActiveVisits(expectedAssociations, prisonCode, slotDate, startDateTimeFilter, endDateTimeFilter))
+      whenever(visitRepository.hasActiveVisits(expectedAssociations, prisonCode, slotDate))
         .thenReturn(
           true,
           false,
@@ -660,8 +657,8 @@ class SessionServiceTest {
         applicationRepository,
         prisonerService,
         applicationService,
-        policyFilterDoubleBooking = false,
-        policyFilterNonAssociation = false,
+        policyFilterDoubleBooking = true,
+        policyFilterNonAssociation = true,
         policyNonAssociationWholeDay = true,
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
@@ -683,7 +680,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      mockGetPrisonerNoAssociation(prisonerId, "associationID")
+      mockGetPrisonerNonAssociation(prisonerId, "associationID")
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -710,7 +707,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      mockGetPrisonerNoAssociation(prisonerId, associationId)
+      mockGetPrisonerNonAssociation(prisonerId, associationId)
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
@@ -737,9 +734,9 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      mockGetPrisonerNoAssociation(prisonerId, associationId)
+      mockGetPrisonerNonAssociation(prisonerId, associationId)
 
-      whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasActiveVisits(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -763,7 +760,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      mockGetPrisonerNoAssociation(prisonerId, "associationID")
+      mockGetPrisonerNonAssociation(prisonerId, "associationID")
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
@@ -797,7 +794,7 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(firstSession, secondSession))
 
-      mockGetPrisonerNoAssociation(prisonerId, "associationID")
+      mockGetPrisonerNonAssociation(prisonerId, "associationID")
 
       whenever(visitRepository.hasVisits(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
@@ -815,7 +812,7 @@ class SessionServiceTest {
     assertThat(localDateTime.dayOfWeek).isEqualTo(dayOfWeek)
   }
 
-  private fun mockGetPrisonerNoAssociation(prisonerId: String, associationId: String) {
+  private fun mockGetPrisonerNonAssociation(prisonerId: String, associationId: String) {
     whenever(
       prisonerService.getPrisonerNonAssociationList(prisonerId),
     ).thenReturn(
