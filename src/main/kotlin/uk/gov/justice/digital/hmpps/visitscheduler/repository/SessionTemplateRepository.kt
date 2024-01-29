@@ -22,12 +22,12 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     "SELECT MAX(open),MAX(closed) FROM" +
       "(SELECT  COUNT(CASE WHEN v.visit_restriction = 'OPEN' THEN 1 END) AS open, " +
       " COUNT(CASE WHEN v.visit_restriction = 'CLOSED' THEN 1 END) AS closed  FROM visit v " +
-      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " JOIN session_slot sl on sl.id = v.session_slot_id " +
       " WHERE sl.session_template_reference = :reference" +
       " AND sl.slot_date >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
       " AND visit_status = 'BOOKED'" +
-      " GROUP BY sl.slot_date,sl.slotTime ) AS tmp ",
+      " GROUP BY sl.slot_date,sl.slot_time ) AS tmp ",
     nativeQuery = true,
   )
   fun findSessionTemplateMinCapacityBy(
@@ -38,7 +38,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "SELECT count(*) from visit v " +
-      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " JOIN session_slot sl on sl.id = v.session_slot_id " +
       " WHERE sl.session_template_reference = :reference" +
       " AND sl.slot_date >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
@@ -50,14 +50,14 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("visitsFromDate") visitsFromDate: LocalDate,
     @Param("visitsToDate") visitsToDate: LocalDate?,
   ): Int
-
+  
   @Query(
     "SELECT count(*) from visit v " +
-      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " JOIN session_slot sl on sl.id = v.session_slot_id " +
       " WHERE sl.session_template_reference = :reference" +
       " AND sl.slot_date >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
-      " AND visit_status = 'CANCELLED' ",
+      " AND visit_status = 'CANCELLED'",
     nativeQuery = true,
   )
   fun getVisitCancelCount(
@@ -68,7 +68,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "select sl.slot_date as visitDate, v.visit_restriction as visitRestriction, count(*) as visitCount from visit v " +
-      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " JOIN session_slot sl on sl.id = v.session_slot_id " +
       " WHERE sl.session_template_reference = :reference" +
       " AND sl.slot_date >= :visitsFromDate" +
       " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
@@ -85,11 +85,11 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
 
   @Query(
     "select count(*) from visit v " +
-      " JOIN seesion_slot sl on sl.id = v.session_slot_id " +
+      " JOIN session_slot sl on sl.id = v.session_slot_id " +
       " WHERE sl.session_template_reference = :reference" +
-      " AND sl.slot_date >= :visitsFromDate" +
-      " AND sl.slot_date < :(CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
-      "   AND visit_status = 'CANCELLED'",
+      " AND sl.slot_date >= :sessionDate" +
+      " AND sl.slot_date < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
+      " AND visit_status = 'CANCELLED'",
     nativeQuery = true,
   )
   fun getCancelledVisitCountForDate(
