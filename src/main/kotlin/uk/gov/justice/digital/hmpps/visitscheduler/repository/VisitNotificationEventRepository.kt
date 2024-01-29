@@ -66,8 +66,8 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN visit v on v.reference  = vne.booking_reference  " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
-      " WHERE sl.slot_date >= :slotDate" +
-      " AND sl.slot_date < :(CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))" +
+      " WHERE ss.slot_date >= :slotDate" +
+      " AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))" +
       " AND p.code = :prisonCode " +
       " AND vne.type=:#{#notificationEvent.name()}" +
       " ORDER BY vne.reference, vne.id",

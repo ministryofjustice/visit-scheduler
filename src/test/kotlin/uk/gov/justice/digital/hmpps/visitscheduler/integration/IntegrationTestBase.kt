@@ -232,8 +232,19 @@ abstract class IntegrationTestBase {
     return sessionSlot.slotDate.format(DateTimeFormatter.ISO_DATE_TIME)
   }
 
-  fun createApplicationAndSave(completed: Boolean): Application {
-    val applicationEntity = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = completed)
+  fun createApplicationAndVisit(sessionTemplate: SessionTemplate, visitStatus: VisitStatus, slotDate: LocalDate): Visit {
+    val application = createApplicationAndSave(sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true)
+    return createVisitAndSave(visitStatus = visitStatus, applicationEntity = application)
+  }
+
+  fun createApplicationAndSave(
+    sessionTemplateLocal: SessionTemplate? = null,
+    prisonCode: String? = null,
+    slotDate: LocalDate? = null,
+    completed: Boolean,
+  ): Application {
+    val applicationEntity = applicationEntityHelper.create(sessionTemplate = sessionTemplateLocal ?: sessionTemplate, completed = completed, prisonCode = prisonCode, slotDate = slotDate
+      ?: sessionTemplate.validFromDate)
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
@@ -241,7 +252,7 @@ abstract class IntegrationTestBase {
     return applicationEntity
   }
 
-  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application): Visit {
-    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplate, application = applicationEntity)
+  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit {
+    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplate, application = applicationEntity)
   }
 }

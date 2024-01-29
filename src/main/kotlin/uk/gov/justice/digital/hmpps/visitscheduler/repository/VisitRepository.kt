@@ -219,9 +219,11 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
-      "(:#{#visitorId} is null OR vis.nomisPersonId = :#{#filter.visitorId}) AND " +
-      "(:#{#slotStartDate} is null OR :#{#slotStartTime} is null OR (v.sessionSlot.slotDate >= :slotStartDate AND v.sessionSlot.slotTime >= :slotStartTime )) AND " +
-      "(:#{#slotEndDate} is null OR :#{#slotEndTime} is null  OR (v.sessionSlot.slotDate <= :slotEndDate AND v.sessionSlot.slotEndTime < :slotEndTime )) " +
+      "(:#{#visitorId} is null OR vis.nomisPersonId = :visitorId) AND " +
+      "(CAST(:slotStartDate AS DATE) is null OR v.sessionSlot.slotDate >= :slotStartDate) AND " +
+      "(CAST(:slotStartTime AS TIME) is null OR v.sessionSlot.slotTime >= :slotStartTime) AND " +
+      "(CAST(:slotEndDate AS DATE) is null OR v.sessionSlot.slotDate <= :slotEndDate) AND " +
+      "(CAST(:slotEndTime AS TIME) is null OR v.sessionSlot.slotEndTime <= :slotEndTime) " +
       " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
   )
   fun findVisitsOrderByDateAndTime(
@@ -237,20 +239,20 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Page<Visit>
 
   @Query(
-    "SELECT v FROM Visit v JOIN v.visitors vis WHERE " +
+    "SELECT v FROM Visit v WHERE " +
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
-      "(:#{#visitorId} is null OR vis.nomisPersonId = :#{#filter.visitorId}) AND " +
-      "(:#{#slotStartDate} is null OR :#{#slotStartTime} is null OR (v.sessionSlot.slotDate >= :slotStartDate AND v.sessionSlot.slotTime >= :slotStartTime )) AND " +
-      "(:#{#slotEndDate} is null OR :#{#slotEndTime} is null  OR (v.sessionSlot.slotDate <= :slotEndDate AND v.sessionSlot.slotEndTime < :slotEndTime )) " +
+      "(CAST(:slotStartDate AS DATE) is null OR v.sessionSlot.slotDate >= :slotStartDate) AND " +
+      "(CAST(:slotStartTime AS TIME) is null OR v.sessionSlot.slotTime >= :slotStartTime) AND " +
+      "(CAST(:slotEndDate AS DATE) is null OR v.sessionSlot.slotDate <= :slotEndDate) AND " +
+      "(CAST(:slotEndTime AS TIME) is null OR v.sessionSlot.slotEndTime <= :slotEndTime) " +
       " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
   )
   fun findVisits(
     prisonerId: String?,
     prisonCode: String?,
     visitStatusList: List<VisitStatus>?,
-    visitorId: Long?,
     slotStartDate: LocalDate?,
     slotStartTime: LocalTime?,
     slotEndDate: LocalDate?,
@@ -258,7 +260,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<Visit>
 
   @Query(
-    "SELECT v FROM Visit v JOIN v.visitors vis WHERE " +
+    "SELECT v FROM Visit v WHERE " +
       " v.sessionSlot.sessionTemplateReference = :sessionTemplateReference  AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
@@ -274,4 +276,13 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     visitRestrictions: List<VisitRestriction>?,
     pageable: Pageable,
   ): Page<Visit>
+
+  @Query(
+    "SELECT v FROM Visit v WHERE " +
+      " v.visitStatus = 'BOOKED'  AND " +
+      "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
+      "(CAST(:date AS DATE) is null OR v.sessionSlot.slotDate = :date) " +
+      " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
+  )
+  fun findBookedVisitsForDate(prisonCode: String, date: LocalDate): List<Visit>
 }

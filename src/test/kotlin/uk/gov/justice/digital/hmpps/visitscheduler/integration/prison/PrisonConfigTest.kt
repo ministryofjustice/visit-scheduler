@@ -110,7 +110,7 @@ class PrisonConfigTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid MDI, max 29 , min 28")
+      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid AWE, max 29 , min 28")
   }
 
   @Test
@@ -213,24 +213,24 @@ class PrisonConfigTest : IntegrationTestBase() {
   @Test
   fun `when add exclude date called for visit with dates then exclude date is successfully added and visits are marked for review`() {
     // Given
+    val excludeDate = LocalDate.now().plusDays(10)
 
     val prison = prisonEntityHelper.create("XYZ")
     val sessionTemplateXYZ = sessionTemplateEntityHelper.create(prison = prison)
 
     prisonEntityHelper.create(prison.code, prison.active)
-    val excludeDate = LocalDate.now().plusDays(10)
 
     // existing visit for excludeDate in same prison
-    val bookedVisitForSamePrison = visitEntityHelper.create(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, prisonCode = prison.code)
+    val bookedVisitForSamePrison = createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
     // existing visit for excludeDate in different prison (MDI)
-    visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED)
+    createApplicationAndVisit(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
     // cancelled visit for excludeDate in same prison
-    visitEntityHelper.create(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.CANCELLED, prisonCode = prison.code)
+    createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.CANCELLED, slotDate = excludeDate)
 
-    // existing visit not for excludeDate in same prison
-    visitEntityHelper.create(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, prisonCode = prison.code)
+    // existing visit different excludeDate in same prison
+    createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate.plusDays(1))
 
     // When
     val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)

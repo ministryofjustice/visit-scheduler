@@ -212,12 +212,12 @@ class VisitService(
     return visitRepository.findVisitsOrderByDateAndTime(
       prisonerId = visitFilter.prisonerId,
       prisonCode = visitFilter.prisonCode,
-      visitStatusList = if (visitFilter.visitStatusList.isNotEmpty()) visitFilter.visitStatusList else null,
+      visitStatusList = visitFilter.visitStatusList.ifEmpty { null },
       visitorId = visitFilter.visitorId,
-      slotStartDate = visitFilter.startDateTime?.let { it.toLocalDate() },
-      slotStartTime = visitFilter.startDateTime?.let { it.toLocalTime() },
-      slotEndDate = visitFilter.endDateTime?.let { it.toLocalDate() },
-      slotEndTime = visitFilter.endDateTime?.let { it.toLocalTime() },
+      slotStartDate = visitFilter.startDateTime?.toLocalDate(),
+      slotStartTime = visitFilter.startDateTime?.toLocalTime(),
+      slotEndDate = visitFilter.endDateTime?.toLocalDate(),
+      slotEndTime = visitFilter.endDateTime?.toLocalTime(),
       pageable = pageable,
     )
   }
@@ -226,12 +226,11 @@ class VisitService(
     return visitRepository.findVisits(
       prisonerId = visitFilter.prisonerId,
       prisonCode = visitFilter.prisonCode,
-      visitStatusList = if (visitFilter.visitStatusList.isNotEmpty()) visitFilter.visitStatusList else null,
-      visitorId = visitFilter.visitorId,
-      slotStartDate = visitFilter.startDateTime?.let { it.toLocalDate() },
-      slotStartTime = visitFilter.startDateTime?.let { it.toLocalTime() },
-      slotEndDate = visitFilter.endDateTime?.let { it.toLocalDate() },
-      slotEndTime = visitFilter.endDateTime?.let { it.toLocalTime() },
+      visitStatusList = visitFilter.visitStatusList.ifEmpty { null },
+      slotStartDate = visitFilter.startDateTime?.toLocalDate(),
+      slotStartTime = visitFilter.startDateTime?.toLocalTime(),
+      slotEndDate = visitFilter.endDateTime?.toLocalDate(),
+      slotEndTime = visitFilter.endDateTime?.toLocalTime(),
     )
   }
 
@@ -323,6 +322,10 @@ class VisitService(
       eventsMap,
     )
     snsService.sendVisitCancelledEvent(visitDto)
+  }
+
+  fun getBookedVisitsForDate(prisonCode: String, date: LocalDate): List<VisitDto> {
+    return visitRepository.findBookedVisitsForDate(prisonCode, date).map { visitDtoBuilder.build(it) }
   }
 
   fun getBookedVisits(

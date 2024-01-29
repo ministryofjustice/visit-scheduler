@@ -16,8 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
-import java.time.LocalDateTime
-import java.time.LocalTime
+import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 
 @Component
@@ -68,12 +67,11 @@ class VisitTask(
     log.debug("Started flagVisits task.")
     prisonsService.getSupportedPrisons().forEach { prisonCode ->
       for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
-        val visitDate = LocalDateTime.now().plusDays(i.toLong())
+        val visitDate = LocalDate.now().plusDays(i.toLong())
 
-        val visits = visitService.getBookedVisits(
+        val visits = visitService.getBookedVisitsForDate(
           prisonCode = prisonCode,
-          startDateTime = visitDate.with(LocalTime.MIN),
-          endDateTime = visitDate.with(LocalTime.MAX),
+          visitDate,
         )
 
         val retryVisits = mutableListOf<VisitDto>()

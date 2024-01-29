@@ -70,10 +70,9 @@ class VisitNotificationEventService(
 
   @Transactional
   fun handleAddPrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
-    val affectedVisits = visitService.getBookedVisits(
+    val affectedVisits = visitService.getBookedVisitsForDate(
       prisonCode = prisonDateBlockedDto.prisonCode,
-      startDateTime = prisonDateBlockedDto.visitDate.atStartOfDay(),
-      endDateTime = prisonDateBlockedDto.visitDate.atTime(23, 59),
+      date = prisonDateBlockedDto.visitDate,
     )
     processVisitsWithNotifications(affectedVisits, PRISON_VISITS_BLOCKED_FOR_DATE)
   }

@@ -72,7 +72,7 @@ class PrisonEntityHelper(
     }
 
     fun createPrisonDto(
-      prisonCode: String = "MDI",
+      prisonCode: String = "AWE",
       activePrison: Boolean = true,
       excludeDates: Set<LocalDate> = sortedSetOf(),
       policyNoticeDaysMin: Int = 2,
@@ -143,6 +143,7 @@ class VisitEntityHelper(
       visitRestriction = application.restriction,
       outcomeStatus = outcomeStatus,
       createApplication = false,
+      prisonCode = application.prison.code,
     )
 
     visit.applications.add(application)
