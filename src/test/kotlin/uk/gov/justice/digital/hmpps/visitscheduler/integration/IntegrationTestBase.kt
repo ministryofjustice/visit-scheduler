@@ -243,8 +243,13 @@ abstract class IntegrationTestBase {
     slotDate: LocalDate? = null,
     completed: Boolean,
   ): Application {
-    val applicationEntity = applicationEntityHelper.create(sessionTemplate = sessionTemplateLocal ?: sessionTemplate, completed = completed, prisonCode = prisonCode, slotDate = slotDate
-      ?: sessionTemplate.validFromDate)
+    val applicationEntity = applicationEntityHelper.create(
+      sessionTemplate = sessionTemplateLocal ?: sessionTemplate,
+      completed = completed,
+      prisonCode = prisonCode,
+      slotDate = slotDate
+        ?: sessionTemplate.validFromDate,
+    )
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")

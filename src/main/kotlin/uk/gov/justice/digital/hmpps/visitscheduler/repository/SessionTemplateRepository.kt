@@ -50,7 +50,7 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("visitsFromDate") visitsFromDate: LocalDate,
     @Param("visitsToDate") visitsToDate: LocalDate?,
   ): Int
-  
+
   @Query(
     "SELECT count(*) from visit v " +
       " JOIN session_slot sl on sl.id = v.session_slot_id " +

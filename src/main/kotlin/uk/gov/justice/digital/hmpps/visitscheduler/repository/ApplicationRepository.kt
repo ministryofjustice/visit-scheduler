@@ -48,30 +48,41 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
     "SELECT a.restriction AS visitRestriction, COUNT(*) AS count  FROM application a " +
       "JOIN session_slot ss ON ss.id = a.session_slot_id " +
       "WHERE ss.session_template_reference = :sessionTemplateReference AND " +
-      "(ss.slot_date >= :slotDate AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "ss.slot_date = :slotDate AND " +
       "a.restriction IN ('OPEN','CLOSED') AND " +
-      "a.reserved_slot = true AND a.completed = false AND " +
-      "a.modify_timestamp >= :expiredDateAndTime " +
+      "a.reserved_slot = true AND a.completed = false " +
       "GROUP BY a.restriction",
     nativeQuery = true,
   )
   fun getCountOfReservedSessionForOpenOrClosedRestriction(
     sessionTemplateReference: String,
     slotDate: LocalDate,
-    expiredDateAndTime: LocalDateTime,
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT CASE WHEN (COUNT(a) > 0) THEN TRUE ELSE FALSE END FROM Application a " +
+    "SELECT COUNT(a) > 0 FROM Application a " +
       "WHERE a.completed = false AND a.reservedSlot = true AND " +
       "(a.prisonerId = :prisonerId) AND " +
       "(a.sessionSlot.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "(a.sessionSlot.slotDate >= :slotDate) ",
+      "(a.sessionSlot.slotDate = :slotDate) ",
   )
   fun hasReservations(
     @Param("prisonerId") prisonerId: String,
     @Param("sessionTemplateReference") sessionTemplateReference: String,
     @Param("slotDate") slotDate: LocalDate,
+  ): Boolean
+
+  @Query(
+    "SELECT count(a) > 0 FROM Application a " +
+      "WHERE a.prisonerId IN (:prisonerIds) AND " +
+      "a.prison.code = :prisonCode AND " +
+      "a.sessionSlot.slotDate = :slotDate AND " +
+      "a.completed = false AND  a.reservedSlot = true",
+  )
+  fun hasActiveApplicationsForDate(
+    prisonerIds: List<String>,
+    prisonCode: String,
+    slotDate: LocalDate,
   ): Boolean
 
   @Transactional

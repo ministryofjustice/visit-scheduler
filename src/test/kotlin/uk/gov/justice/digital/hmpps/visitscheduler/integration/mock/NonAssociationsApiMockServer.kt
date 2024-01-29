@@ -13,9 +13,9 @@ class NonAssociationsApiMockServer : WireMockServer(8094) {
 
   fun stubGetPrisonerNonAssociation(
     prisonerNumber: String,
-    nonAssociationId: String,
+    nonAssociationPrisonerId: String,
   ) {
-    val otherPrisonerDetails = OtherPrisonerDetails(prisonerNumber = nonAssociationId)
+    val otherPrisonerDetails = OtherPrisonerDetails(prisonerNumber = nonAssociationPrisonerId)
     val details = mutableListOf<PrisonerNonAssociationDetailDto>()
 
     details.add(PrisonerNonAssociationDetailDto(otherPrisonerDetails))

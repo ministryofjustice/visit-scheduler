@@ -39,13 +39,11 @@ class SessionService(
   private val visitRepository: VisitRepository,
   private val applicationRepository: ApplicationRepository,
   private val prisonerService: PrisonerService,
-  private val application: ApplicationService,
+
   @Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,
   @Value("\${policy.session.non-association.filter:false}")
   private val policyFilterNonAssociation: Boolean,
-  @Value("\${policy.session.non-association.whole-day:true}")
-  private val policyNonAssociationWholeDay: Boolean,
   private val sessionValidator: PrisonerSessionValidator,
   private val prisonerValidationService: PrisonerValidationService,
   private val prisonsService: PrisonsService,
@@ -245,10 +243,8 @@ class SessionService(
     prisonerId: String,
     noAssociationConflictSessions: List<VisitSessionDto>,
   ): Boolean {
-    return (
-      (policyFilterNonAssociation && noAssociationConflictSessions.contains(session)) ||
-        (policyFilterDoubleBooking && sessionHasBooking(session, prisonerId))
-      )
+    return (policyFilterNonAssociation && noAssociationConflictSessions.contains(session)) ||
+      (policyFilterDoubleBooking && sessionHasBooking(session, prisonerId))
   }
 
   private fun populateConflict(
@@ -300,23 +296,19 @@ class SessionService(
       val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerNonAssociationList)
       val slotDate = session.startTimestamp.toLocalDate()
 
-      if (policyNonAssociationWholeDay) {
-        return visitRepository.hasActiveVisits(
+      if (visitRepository.hasActiveVisitsForDate(
           nonAssociationPrisonerIds,
           session.prisonCode,
           slotDate,
         )
+      ) {
+        return true
       }
 
-      val slotTime = session.startTimestamp.toLocalTime()
-      val slotEndTime = session.endTimestamp.toLocalTime()
-
-      return visitRepository.hasActiveVisits(
+      return applicationRepository.hasActiveApplicationsForDate(
         nonAssociationPrisonerIds,
         session.prisonCode,
         slotDate,
-        slotTime,
-        slotEndTime,
       )
     }
 
@@ -330,10 +322,12 @@ class SessionService(
   }
 
   private fun sessionHasBooking(session: VisitSessionDto, prisonerId: String): Boolean {
-    if (visitRepository.hasVisits(
+    val slotDate = session.startTimestamp.toLocalDate()
+
+    if (visitRepository.hasActiveVisitForDate(
         prisonerId = prisonerId,
         sessionTemplateReference = session.sessionTemplateReference,
-        slotDate = session.startTimestamp.toLocalDate(),
+        slotDate = slotDate,
       )
     ) {
       return true
@@ -342,23 +336,24 @@ class SessionService(
     return applicationRepository.hasReservations(
       prisonerId = prisonerId,
       sessionTemplateReference = session.sessionTemplateReference,
-      slotDate = session.startTimestamp.toLocalDate(),
+      slotDate = slotDate,
     )
   }
 
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
+    val slotDate = session.startTimestamp.toLocalDate()
+
     val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
       sessionTemplateReference = session.sessionTemplateReference,
-      slotDate = session.startTimestamp.toLocalDate(),
+      slotDate = slotDate,
     )
 
-    val restrictionReservedStats = applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
+    val restrictionReservedApplicationStats = applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
       sessionTemplateReference = session.sessionTemplateReference,
-      slotDate = session.startTimestamp.toLocalDate(),
-      expiredDateAndTime = application.getExpiredApplicationDateAndTime(),
+      slotDate = slotDate,
     )
 
-    return restrictionReservedStats + restrictionBookedStats
+    return restrictionBookedStats + restrictionReservedApplicationStats
   }
 
   fun getSessionCapacity(

@@ -39,27 +39,10 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "v.sessionSlot.slotDate = :slotDate AND " +
       "v.visitStatus = 'BOOKED'",
   )
-  fun hasActiveVisits(
+  fun hasActiveVisitsForDate(
     prisonerIds: List<String>,
     prisonCode: String,
     slotDate: LocalDate,
-  ): Boolean
-
-  @Query(
-    "SELECT count(v) > 0 FROM Visit v " +
-      "WHERE v.prisonerId IN (:prisonerIds) AND " +
-      "v.prison.code = :prisonCode AND " +
-      "v.sessionSlot.slotDate = :slotDate AND " +
-      "v.sessionSlot.slotTime >= :slotTime AND " +
-      "v.sessionSlot.slotEndTime <= :slotEndTime AND " +
-      "v.visitStatus = 'BOOKED'",
-  )
-  fun hasActiveVisits(
-    prisonerIds: List<String>,
-    prisonCode: String,
-    slotDate: LocalDate,
-    slotTime: LocalTime,
-    slotEndTime: LocalTime,
   ): Boolean
 
   @Query(
@@ -87,7 +70,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT v.visit_restriction AS visitRestriction, COUNT(*) AS count  FROM visit v " +
       "JOIN session_slot ss ON ss.id = v.session_slot_id " +
       "WHERE ss.session_template_reference = :sessionTemplateReference AND " +
-      "(ss.slot_date >= :slotDate AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "ss.slot_date = :slotDate AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
       "v.visit_status = 'BOOKED' " +
       "GROUP BY v.visit_restriction",
@@ -157,9 +140,9 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "WHERE v.visitStatus = 'BOOKED'  AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(v.sessionSlot.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "(v.sessionSlot.slotDate >= :slotDate) ",
+      "v.sessionSlot.slotDate = :slotDate ",
   )
-  fun hasVisits(
+  fun hasActiveVisitForDate(
     @Param("prisonerId") prisonerId: String,
     @Param("sessionTemplateReference") sessionTemplateReference: String,
     @Param("slotDate") slotDate: LocalDate,

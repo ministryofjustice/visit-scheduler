@@ -29,7 +29,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun createAllSessionTemplates() {
-    prison = prisonEntityHelper.create()
+    prison = prisonEntityHelper.create("SWL")
 
     // this session template is available for all prisoners in that prison
     sessionTemplateForAllPrisoners = sessionTemplateEntityHelper.create(
@@ -125,10 +125,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-A-1-100-1`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-A-1-100-1`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-A-1-100-1"
+    val prisonerInternalLocation = "SWL-A-1-100-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -153,10 +153,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-A-2-100-3`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-A-2-100-3`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-A-2-100-3"
+    val prisonerInternalLocation = "SWL-A-2-100-3"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -179,10 +179,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-A-2-100-2`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-A-2-100-2`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-A-2-100-2"
+    val prisonerInternalLocation = "SWL-A-2-100-2"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -203,10 +203,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-A-1-100`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-A-1-100`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-A-1-100"
+    val prisonerInternalLocation = "SWL-A-1-100"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -227,10 +227,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-A-1`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-A-1`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-A-1"
+    val prisonerInternalLocation = "SWL-A-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -251,10 +251,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-A`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-A`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-A"
+    val prisonerInternalLocation = "SWL-A"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -273,10 +273,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-B`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-B`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-B"
+    val prisonerInternalLocation = "SWL-B"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -295,10 +295,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-B-1-100-1`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-B-1-100-1`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-B-1-100-1"
+    val prisonerInternalLocation = "SWL-B-1-100-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -324,10 +324,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-B-1`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-B-1`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-B-1"
+    val prisonerInternalLocation = "SWL-B-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -356,7 +356,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   fun `single visit sessions are returned for prisoner in C Level`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-C-100-1"
+    val prisonerInternalLocation = "SWL-C-100-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -374,10 +374,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as MDI-D-100-1`() {
+  fun `multiple visit sessions are returned for prisoner with location as SWL-D-100-1`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-D-100-1"
+    val prisonerInternalLocation = "SWL-D-100-1"
 
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
 
@@ -400,7 +400,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   fun `one session unavailable when non association has a visit for one of the sessions`() {
     // Given
     val prisonerId = "A0000001"
-    val prisonerInternalLocation = "MDI-A-1-100-1"
+    val prisonerInternalLocation = "SWL-A-1-100-1"
     val associationId = "B1234BB"
 
     this.visitEntityHelper.create(
