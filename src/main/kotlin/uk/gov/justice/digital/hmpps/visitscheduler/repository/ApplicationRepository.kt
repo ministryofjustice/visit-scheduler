@@ -45,10 +45,10 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
   fun isApplicationCompleted(applicationReference: String): Boolean
 
   @Query(
-    "SELECT a.restriction AS visitRestriction, COUNT(v) AS count  FROM application a " +
+    "SELECT a.restriction AS visitRestriction, COUNT(*) AS count  FROM application a " +
       "JOIN session_slot ss ON ss.id = a.session_slot_id " +
       "WHERE ss.session_template_reference = :sessionTemplateReference AND " +
-      "(ss.slotDate >= :slotDate AND ss.slotDate < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "(ss.slot_date >= :slotDate AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
       "a.restriction IN ('OPEN','CLOSED') AND " +
       "a.reserved_slot = true AND a.completed = false AND " +
       "a.modify_timestamp >= :expiredDateAndTime " +

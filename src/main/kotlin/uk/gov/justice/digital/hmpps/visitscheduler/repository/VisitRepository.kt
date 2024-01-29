@@ -84,10 +84,10 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): Boolean
 
   @Query(
-    "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
+    "SELECT v.visit_restriction AS visitRestriction, COUNT(*) AS count  FROM visit v " +
       "JOIN session_slot ss ON ss.id = v.session_slot_id " +
       "WHERE ss.session_template_reference = :sessionTemplateReference AND " +
-      "(ss.slotDate >= :slotDate AND ss.slotDate < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "(ss.slot_date >= :slotDate AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
       "v.visit_status = 'BOOKED' " +
       "GROUP BY v.visit_restriction",
@@ -99,10 +99,10 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<VisitRestrictionStats>
 
   @Query(
-    "SELECT v.visit_restriction AS visitRestriction, COUNT(v) AS count  FROM visit v " +
+    "SELECT v.visit_restriction AS visitRestriction, COUNT(*) AS count  FROM visit v " +
       "JOIN session_slot ss ON ss.id = v.session_slot_id " +
       "WHERE ss.session_template_reference = :sessionTemplateReference AND " +
-      "(ss.slotDate >= :slotDate AND ss.slotDate < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
+      "(ss.slot_date >= :slotDate AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))) AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
       "v.visit_status = 'CANCELLED' " +
       "GROUP BY v.visit_restriction",
