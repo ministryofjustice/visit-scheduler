@@ -1,9 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
-import jakarta.persistence.LockModeType
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Lock
 import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
@@ -18,21 +16,20 @@ import java.time.LocalDateTime
 interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecificationExecutor<Application> {
 
   @Query(
-    "Select * FROM application " +
-      "WHERE completed = false AND modifyTimestamp < now()-make_interval(minute => :expiredPeriodMinutes) ",
-    nativeQuery = true,
+    "SELECT a.reference FROM Application a " +
+      "WHERE a.completed = false" +
+      " AND a.modifyTimestamp < :expiredDateAndTime ORDER BY a.id",
   )
-  fun findExpiredApplicationReferences(expiredPeriodMinutes: Int): List<String>
+  fun findExpiredApplicationReferences(expiredDateAndTime: LocalDateTime): List<String>
 
-  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Modifying
   @Query(
     "Delete FROM application " +
-      "WHERE completed = false AND " +
-      " modifyTimestamp < now()-make_interval(minute => :expiredPeriodMinutes) AND " +
-      " reference = :applicationReference ",
+      "WHERE completed = false" +
+      " AND modify_timestamp < :expiredDateAndTime AND reference = :applicationReference ",
     nativeQuery = true,
   )
-  fun deleteExpiredApplications(applicationReference: String, expiredPeriodMinutes: Int): Int
+  fun deleteExpiredApplications(expiredDateAndTime: LocalDateTime, applicationReference: String): Int
 
   @Query(
     "SELECT a FROM Application a WHERE a.reference = :applicationReference",

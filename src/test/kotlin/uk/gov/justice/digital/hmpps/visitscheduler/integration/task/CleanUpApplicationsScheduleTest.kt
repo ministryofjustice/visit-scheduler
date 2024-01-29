@@ -16,10 +16,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
@@ -53,15 +50,15 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    reservedVisitNotExpired = createApplication(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplate)
+    reservedVisitNotExpired = applicationEntityHelper.create(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplate, completed = false, reservedSlot = true)
     testApplicationRepository.saveAndFlush(reservedVisitNotExpired)
 
-    reservedVisitNotExpiredChangingStatus = createApplication(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplate)
+    reservedVisitNotExpiredChangingStatus = applicationEntityHelper.create(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplate, completed = false, reservedSlot = false)
 
-    reservedVisitExpired = createApplication(prisonerId = "EXPIRED", sessionTemplate = sessionTemplate)
+    reservedVisitExpired = applicationEntityHelper.create(prisonerId = "EXPIRED", sessionTemplate = sessionTemplate, completed = false, reservedSlot = true)
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
 
-    reservedVisitExpiredChangingStatus = testApplicationRepository.saveAndFlush(createApplication(prisonerId = "EXPIRED", sessionTemplate = sessionTemplate))
+    reservedVisitExpiredChangingStatus = testApplicationRepository.saveAndFlush(applicationEntityHelper.create(prisonerId = "EXPIRED", sessionTemplate = sessionTemplate, completed = false, reservedSlot = false))
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
   }
 
@@ -110,27 +107,6 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
         assertThat(it["reserved"]).isEqualTo(application.reservedSlot.toString())
       },
       isNull(),
-    )
-  }
-
-  private fun createApplication(
-    prisonerId: String = "FF0000AA",
-    prisonCode: String = "MDI",
-    visitStart: LocalDateTime = LocalDateTime.now().minusDays(3),
-    visitEnd: LocalDateTime = visitStart.plusHours(1),
-    visitType: VisitType = VisitType.SOCIAL,
-    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    sessionTemplate: SessionTemplate,
-  ): Application {
-    return applicationEntityHelper.create(
-      prisonerId = prisonerId,
-      prisonCode = prisonCode,
-      slotDate = visitStart.toLocalDate(),
-      visitStart = visitStart.toLocalTime(),
-      visitEnd = visitEnd.toLocalTime(),
-      visitType = visitType,
-      visitRestriction = visitRestriction,
-      sessionTemplate = sessionTemplate,
     )
   }
 }

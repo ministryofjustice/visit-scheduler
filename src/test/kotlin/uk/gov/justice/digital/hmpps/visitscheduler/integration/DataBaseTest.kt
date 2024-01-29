@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
@@ -28,6 +29,7 @@ class DataBaseTest(
   @Autowired val testApplicationRepository: TestApplicationRepository,
 ) : IntegrationTestBase() {
 
+  private lateinit var inCompleteApplication: Application
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
   private lateinit var visit: Visit
   private lateinit var application: Application
@@ -63,6 +65,12 @@ class DataBaseTest(
 
     visit.applications.add(application)
     visitEntityHelper.save(visit)
+
+    inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = false)
+    applicationEntityHelper.createContact(application = inCompleteApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = inCompleteApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = inCompleteApplication, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.save(inCompleteApplication)
   }
 
   @Transactional(propagation = REQUIRES_NEW)
@@ -88,24 +96,34 @@ class DataBaseTest(
   }
 
   @Test
-  fun `When application deleted - all connected child objects are also removed but not connected visit`() {
-    val didVisitExist = testVisitRepository.hasVisit(visit.id)
-    val didApplicationExist = testApplicationRepository.hasApplication(application.id)
-    val applicationId = application.id
-    val applicationRef = application.reference
+  fun `When in complete application is deleted - all connected child objects are also removed but not connected visit`() {
+    val didApplicationExist = testApplicationRepository.hasApplication(inCompleteApplication.id)
+    val applicationId = inCompleteApplication.id
+    val applicationRef = inCompleteApplication.reference
 
     // When
     val results = testApplicationRepository.deleteByReference(applicationRef)
 
     // Then
     Assertions.assertThat(results).isEqualTo(1)
-    Assertions.assertThat(didVisitExist).isTrue
     Assertions.assertThat(didApplicationExist).isTrue
     Assertions.assertThat(testApplicationRepository.hasApplication(applicationId)).isFalse
     Assertions.assertThat(testApplicationRepository.hasContact(applicationId)).isFalse
     Assertions.assertThat(testApplicationRepository.hasVisitors(applicationId)).isFalse
     Assertions.assertThat(testApplicationRepository.hasSupport(applicationId)).isFalse
     Assertions.assertThat(testVisitRepository.findById(visit.id).isPresent).isTrue()
+  }
+
+  @Test()
+  fun `When application deleted with visit - an exception is thrown`() {
+    val applicationRef = application.reference
+
+    // When Then
+    val exception = assertThrows<Throwable> {
+      testApplicationRepository.deleteByReference(applicationRef)
+    }
+
+    Assertions.assertThat(exception.message).contains("violates foreign key constraint \"application_must_exist\"")
   }
 
   @Transactional(propagation = REQUIRES_NEW)

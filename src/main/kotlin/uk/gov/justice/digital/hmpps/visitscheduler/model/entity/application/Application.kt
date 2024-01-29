@@ -8,20 +8,16 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
 import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
-import org.hibernate.annotations.OnDelete
-import org.hibernate.annotations.OnDeleteAction
 import org.hibernate.annotations.UpdateTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
@@ -74,15 +70,6 @@ class Application(
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "application", orphanRemoval = true)
   var support: MutableList<ApplicationSupport> = mutableListOf()
-
-  @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
-  @OnDelete(action = OnDeleteAction.RESTRICT)
-  @JoinTable(
-    name = "VISITS_TO_APPLICATIONS",
-    joinColumns = [JoinColumn(name = "application_id")],
-    inverseJoinColumns = [JoinColumn(name = "visit_id")],
-  )
-  var visit: Visit? = null
 
   @CreationTimestamp
   @Column

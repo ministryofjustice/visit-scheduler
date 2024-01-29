@@ -219,7 +219,7 @@ class ApplicationService(
   @Transactional(readOnly = true)
   fun findExpiredApplicationReferences(): List<String> {
     LOG.debug("Entered findExpiredApplicationReferences : ${getExpiredApplicationDateAndTime()}")
-    return applicationRepo.findExpiredApplicationReferences(expiredPeriodMinutes)
+    return applicationRepo.findExpiredApplicationReferences(getExpiredApplicationDateAndTime())
   }
 
   fun getExpiredApplicationDateAndTime(): LocalDateTime {
@@ -229,7 +229,7 @@ class ApplicationService(
   fun deleteAllExpiredApplications(applicationReferences: List<String>) {
     applicationReferences.forEach {
       val applicationToBeDeleted = getApplicationEntity(it)
-      val deleted = applicationRepo.deleteExpiredApplications(it, expiredPeriodMinutes)
+      val deleted = applicationRepo.deleteExpiredApplications(getExpiredApplicationDateAndTime(), it)
       if (deleted > 0) {
         val bookEvent = telemetryClientService.createApplicationTrackEventFromVisitEntity(applicationToBeDeleted)
         telemetryClientService.trackEvent(VISIT_SLOT_RELEASED_EVENT, bookEvent)

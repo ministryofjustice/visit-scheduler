@@ -27,7 +27,7 @@ class ApplicationEntityHelper(
   companion object {
 
     fun createApplication(visit: Visit): Application {
-      return Application(
+      val application = Application(
         prisonerId = visit.prisonerId,
         prisonId = visit.prisonId,
         prison = visit.prison,
@@ -39,6 +39,7 @@ class ApplicationEntityHelper(
         reservedSlot = true,
         completed = true,
       )
+      return application
     }
   }
 

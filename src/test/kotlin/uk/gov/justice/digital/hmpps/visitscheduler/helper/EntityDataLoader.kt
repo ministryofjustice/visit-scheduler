@@ -171,6 +171,7 @@ class VisitEntityHelper(
     return save(visit)
   }
 
+  @Transactional
   fun create(
     visitStatus: VisitStatus = BOOKED,
     sessionTemplate: SessionTemplate,
@@ -205,7 +206,7 @@ class VisitEntityHelper(
     if (createApplication) {
       val savedVisit = visitRepository.saveAndFlush(notSaved)
       savedVisit.applications.add(applicationEntityHelper.create(savedVisit))
-      return visitRepository.saveAndFlush(savedVisit)
+      return savedVisit
     } else {
       return visitRepository.saveAndFlush(notSaved)
     }
