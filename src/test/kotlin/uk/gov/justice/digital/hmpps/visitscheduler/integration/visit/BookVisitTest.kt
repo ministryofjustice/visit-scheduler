@@ -27,7 +27,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
@@ -48,14 +47,12 @@ class BookVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate)
+    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = false)
     applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(reservedApplication)
   }
-
-  // TODO Must create a test class for the case were the booking is allready booked.
 
   @Test
   fun `Book visit visit by application Reference`() {
@@ -75,7 +72,7 @@ class BookVisitTest : IntegrationTestBase() {
 
     val visitEntity = testVisitRepository.findByReference(visitDto.reference)
     Assertions.assertThat(visitEntity.getApplications().size).isEqualTo(1)
-    Assertions.assertThat(visitEntity.getApplications()[0]).isEqualTo(applicationReference)
+    Assertions.assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
 
     // And
     assertBookedEvent(visitDto, false)
@@ -136,9 +133,81 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `Amend and book visit`() {
+    // Given
+    val slotDateInThePast = LocalDate.now().plusDays(1)
+    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplate, completed = false)
+    applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = completedApplication, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.save(reservedApplication)
+
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
+    visit.addApplication(completedApplication)
+
+    visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = visit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = visit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.save(visit)
+
+    val applicationReference = completedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody().returnResult().responseBody
+    val visitDto = objectMapper.readValue(returnResult, VisitDto::class.java)
+
+    assertVisitMatchesApplication(visitDto, completedApplication)
+
+    // And
+    assertBookedEvent(visitDto, true)
+  }
+
+  @Test
+  fun `Already completed application returns existing visit and no other action is performed`() {
+    // Given
+    val slotDateInThePast = LocalDate.now().plusDays(1)
+    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplate, completed = true)
+    applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = completedApplication, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.save(reservedApplication)
+
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
+    visit.addApplication(completedApplication)
+
+    visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = visit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = visit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.save(visit)
+
+    val applicationReference = completedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody().returnResult().responseBody
+    val visitDto = objectMapper.readValue(returnResult, VisitDto::class.java)
+
+    assertVisitMatchesApplication(visitDto, completedApplication)
+
+    verify(telemetryClient, times(0)).trackEvent(eq("visit-booked"), any(), isNull())
+  }
+
+  @Test
   fun `Amend and book expired visit - returns bad request error `() {
-    val slotDateInThePast = LocalDate.of((LocalDateTime.now().year - 1), 11, 1)
-    val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
+    // Given
+    val slotDateInThePast = LocalDate.now().minusYears(1)
+    val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplate, completed = false)
     applicationEntityHelper.createContact(application = expiredApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = expiredApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredApplication, name = "OTHER", details = "Some Text")
@@ -147,7 +216,6 @@ class BookVisitTest : IntegrationTestBase() {
     val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
     expiredVisit.addApplication(expiredApplication)
 
-    // Given
     visitEntityHelper.createNote(visit = expiredVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = expiredVisit, text = "Some text concerns", type = VISITOR_CONCERN)
     visitEntityHelper.createNote(visit = expiredVisit, text = "Some text comment", type = VISIT_COMMENT)
@@ -174,8 +242,8 @@ class BookVisitTest : IntegrationTestBase() {
     Assertions.assertThat(visitDto.reference).isNotEmpty()
     Assertions.assertThat(visitDto.applicationReference).isEqualTo(application.reference)
     Assertions.assertThat(visitDto.prisonerId).isEqualTo(application.prisonerId)
-    Assertions.assertThat(visitDto.prisonCode).isEqualTo(application.prison.code)
-    Assertions.assertThat(visitDto.visitRoom).isEqualTo("you tell me")
+    Assertions.assertThat(visitDto.prisonCode).isEqualTo(sessionTemplate.prison.code)
+    Assertions.assertThat(visitDto.visitRoom).isEqualTo(sessionTemplate.visitRoom)
     Assertions.assertThat(visitDto.startTimestamp)
       .isEqualTo(application.sessionSlot.slotDate.atTime(application.sessionSlot.slotTime))
     Assertions.assertThat(visitDto.endTimestamp)

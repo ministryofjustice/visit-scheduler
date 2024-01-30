@@ -103,8 +103,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT v.*  FROM visit v" +
-      "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
-      "  JOIN application a on a.id = vta.application_id " +
+      "  JOIN application a on a.visit_id = v.id " +
       "  WHERE a.reference = :applicationReference",
     nativeQuery = true,
   )
