@@ -8,6 +8,7 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
+import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
@@ -18,6 +19,7 @@ import org.hibernate.annotations.UpdateTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
@@ -60,6 +62,15 @@ class Application(
 
   @Column(nullable = false)
   val createdBy: String,
+
+  @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH, CascadeType.PERSIST, CascadeType.MERGE])
+  @JoinTable(
+    name = "VISITS_TO_APPLICATIONS",
+    joinColumns = [JoinColumn(name = "application_id")],
+    inverseJoinColumns = [JoinColumn(name = "visit_id")],
+  )
+  var visit: Visit? = null,
+
 ) : AbstractIdEntity() {
 
   @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "application", orphanRemoval = true)

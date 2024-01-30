@@ -7,7 +7,6 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
@@ -78,12 +77,7 @@ class Visit(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   val visitNotes: MutableList<VisitNote> = mutableListOf()
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL])
-  @JoinTable(
-    name = "VISITS_TO_APPLICATIONS",
-    joinColumns = [JoinColumn(name = "visit_id")],
-    inverseJoinColumns = [JoinColumn(name = "application_id")],
-  )
+  @OneToMany(mappedBy = "visit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
   val applications: MutableList<Application> = mutableListOf()
 
   @CreationTimestamp

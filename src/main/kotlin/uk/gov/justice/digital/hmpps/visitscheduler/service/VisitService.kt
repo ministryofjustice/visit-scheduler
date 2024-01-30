@@ -136,6 +136,7 @@ class VisitService(
 
     if (hasNotBeenAddedToBooking(booking, application)) {
       booking.applications.add(application)
+      application.visit = booking
     }
 
     with(application.visitContact!!) {

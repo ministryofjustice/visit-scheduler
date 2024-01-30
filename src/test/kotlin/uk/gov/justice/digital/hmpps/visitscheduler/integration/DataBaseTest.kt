@@ -4,7 +4,6 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
@@ -31,22 +30,31 @@ class DataBaseTest(
 
   private lateinit var inCompleteApplication: Application
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
-  private lateinit var visit: Visit
-  private lateinit var application: Application
+  private lateinit var visitWithApplication: Visit
+  private lateinit var applicationWithVisit: Application
 
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    visit = visitEntityHelper.create(sessionTemplate = sessionTemplate)
+    visitWithApplication = visitEntityHelper.create(sessionTemplate = sessionTemplate)
 
-    visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitEntityHelper.createNote(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitEntityHelper.createNote(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
-    visitEntityHelper.createContact(visit = visit, name = "Jane Doe", phone = "01234 098765")
-    visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 321L, visitContact = true)
-    visitEntityHelper.createSupport(visit = visit, name = "OTHER", details = "Some Text")
-    visitEntityHelper.save(visit)
+    visitEntityHelper.createNote(visit = visitWithApplication, text = "Some text outcomes", type = VISIT_OUTCOMES)
+    visitEntityHelper.createNote(visit = visitWithApplication, text = "Some text concerns", type = VISITOR_CONCERN)
+    visitEntityHelper.createNote(visit = visitWithApplication, text = "Some text comment", type = VISIT_COMMENT)
+    visitEntityHelper.createContact(visit = visitWithApplication, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(visit = visitWithApplication, nomisPersonId = 321L, visitContact = true)
+    visitEntityHelper.createSupport(visit = visitWithApplication, name = "OTHER", details = "Some Text")
+    visitEntityHelper.save(visitWithApplication)
+
+    applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = true)
+    applicationEntityHelper.createContact(application = applicationWithVisit, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = applicationWithVisit, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = applicationWithVisit, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.save(applicationWithVisit)
+
+    visitWithApplication.applications.add(applicationWithVisit)
+    visitEntityHelper.save(visitWithApplication)
 
     sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
@@ -56,15 +64,6 @@ class DataBaseTest(
     sessionTemplate.permittedSessionLocationGroups.add(sessionGroup1)
     sessionTemplate.permittedSessionLocationGroups.add(sessionGroup2)
     sessionTemplate = testTemplateRepository.saveAndFlush(sessionTemplate)
-
-    application = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true)
-    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765")
-    applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = application, name = "OTHER", details = "Some Text")
-    applicationEntityHelper.save(application)
-
-    visit.applications.add(application)
-    visitEntityHelper.save(visit)
 
     inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = false)
     applicationEntityHelper.createContact(application = inCompleteApplication, name = "Jane Doe", phone = "01234 098765")
@@ -76,27 +75,27 @@ class DataBaseTest(
   @Transactional(propagation = REQUIRES_NEW)
   @Test
   fun `When visit deleted - all connected child objects are also removed`() {
-    val didExist = testVisitRepository.hasVisit(visit.id)
-    val didApplicationExist = testApplicationRepository.hasApplication(application.id)
+    val didExist = testVisitRepository.hasVisit(visitWithApplication.id)
+    val didApplicationExist = testApplicationRepository.hasApplication(applicationWithVisit.id)
 
     // When
 
-    val results = testVisitRepository.deleteByReference(visit.reference)
+    val results = testVisitRepository.deleteByReference(visitWithApplication.reference)
 
     // Then
     Assertions.assertThat(results).isEqualTo(1)
     Assertions.assertThat(didExist).isTrue
     Assertions.assertThat(didApplicationExist).isTrue
-    Assertions.assertThat(testVisitRepository.hasVisit(visit.id)).isFalse()
-    Assertions.assertThat(testVisitRepository.hasContact(visit.id)).isFalse
-    Assertions.assertThat(testVisitRepository.hasNotes(visit.id)).isFalse
-    Assertions.assertThat(testVisitRepository.hasVisitors(visit.id)).isFalse
-    Assertions.assertThat(testVisitRepository.hasSupport(visit.id)).isFalse
-    Assertions.assertThat(testApplicationRepository.findByReference(visit.applications.last.reference)).isNull()
+    Assertions.assertThat(testVisitRepository.hasVisit(visitWithApplication.id)).isFalse()
+    Assertions.assertThat(testVisitRepository.hasContact(visitWithApplication.id)).isFalse
+    Assertions.assertThat(testVisitRepository.hasNotes(visitWithApplication.id)).isFalse
+    Assertions.assertThat(testVisitRepository.hasVisitors(visitWithApplication.id)).isFalse
+    Assertions.assertThat(testVisitRepository.hasSupport(visitWithApplication.id)).isFalse
+    Assertions.assertThat(testApplicationRepository.hasApplication(visitWithApplication.applications.last.id)).isFalse
   }
 
   @Test
-  fun `When in complete application is deleted - all connected child objects are also removed but not connected visit`() {
+  fun `When in complete application is deleted - all connected child objects are also removed`() {
     val didApplicationExist = testApplicationRepository.hasApplication(inCompleteApplication.id)
     val applicationId = inCompleteApplication.id
     val applicationRef = inCompleteApplication.reference
@@ -111,19 +110,21 @@ class DataBaseTest(
     Assertions.assertThat(testApplicationRepository.hasContact(applicationId)).isFalse
     Assertions.assertThat(testApplicationRepository.hasVisitors(applicationId)).isFalse
     Assertions.assertThat(testApplicationRepository.hasSupport(applicationId)).isFalse
-    Assertions.assertThat(testVisitRepository.findById(visit.id).isPresent).isTrue()
   }
 
   @Test()
-  fun `When application deleted with visit - an exception is thrown`() {
-    val applicationRef = application.reference
+  fun `When a complete application is deleted the visit is not`() {
+    val didApplicationExist = testApplicationRepository.hasApplication(applicationWithVisit.id)
+    val applicationId = applicationWithVisit.id
+    val applicationRef = applicationWithVisit.reference
 
-    // When Then
-    val exception = assertThrows<Throwable> {
-      testApplicationRepository.deleteByReference(applicationRef)
-    }
+    // When
+    val results = testApplicationRepository.deleteByReference(applicationRef)
 
-    Assertions.assertThat(exception.message).contains("violates foreign key constraint \"application_must_exist\"")
+    // Then
+    Assertions.assertThat(results).isEqualTo(1)
+    Assertions.assertThat(testApplicationRepository.hasApplication(applicationId)).isFalse
+    Assertions.assertThat(testVisitRepository.findById(visitWithApplication.id).isPresent).isTrue()
   }
 
   @Transactional(propagation = REQUIRES_NEW)
