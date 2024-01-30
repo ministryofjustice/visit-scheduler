@@ -146,8 +146,7 @@ class VisitEntityHelper(
       prisonCode = application.prison.code,
     )
 
-    visit.applications.add(application)
-    application.visit = visit
+    visit.addApplication(application)
 
     with(application.visitContact!!) {
       visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
@@ -206,7 +205,7 @@ class VisitEntityHelper(
     notSaved.outcomeStatus = outcomeStatus
     return if (createApplication) {
       val savedVisit = visitRepository.saveAndFlush(notSaved)
-      savedVisit.applications.add(applicationEntityHelper.create(savedVisit))
+      savedVisit.addApplication(applicationEntityHelper.create(savedVisit))
       savedVisit
     } else {
       visitRepository.saveAndFlush(notSaved)
@@ -294,7 +293,7 @@ class EventAuditEntityHelper(
   ): EventAudit {
     return create(
       reference = visit.reference,
-      applicationReference = visit.applications.last.reference,
+      applicationReference = visit.getLastApplication()?.reference ?: "",
       sessionTemplateReference = visit.sessionSlot.sessionTemplateReference,
       actionedBy = actionedBy,
       type = type,

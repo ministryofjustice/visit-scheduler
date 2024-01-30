@@ -135,8 +135,7 @@ class VisitService(
     val booking = visitRepository.saveAndFlush(notSavedBooking)
 
     if (hasNotBeenAddedToBooking(booking, application)) {
-      booking.applications.add(application)
-      application.visit = booking
+      booking.addApplication(application)
     }
 
     with(application.visitContact!!) {
@@ -165,7 +164,7 @@ class VisitService(
   }
 
   private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
-    return if (booking.applications.isEmpty()) true else booking.applications.any { it.id == application.id }
+    return if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {

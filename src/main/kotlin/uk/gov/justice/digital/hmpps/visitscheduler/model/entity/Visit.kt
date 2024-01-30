@@ -77,8 +77,8 @@ class Visit(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   val visitNotes: MutableList<VisitNote> = mutableListOf()
 
-  @OneToMany(mappedBy = "visit", fetch = FetchType.LAZY, cascade = [CascadeType.ALL], orphanRemoval = true)
-  val applications: MutableList<Application> = mutableListOf()
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  private val applications: MutableList<Application> = mutableListOf()
 
   @CreationTimestamp
   @Column
@@ -94,12 +94,30 @@ class Visit(
 
   @PostPersist
   fun createReference() {
-    if (reference.isNullOrBlank()) {
+    if (reference.isBlank()) {
       reference = QuotableEncoder(minLength = 8).encode(id)
     }
   }
 
   override fun toString(): String {
     return "Visit(id=$id,reference='$reference')"
+  }
+
+  fun getApplications(): List<Application> {
+    return this.applications
+  }
+
+  fun getLastApplication(): Application? {
+    return this.applications.lastOrNull()
+  }
+
+  fun getLastCompletedApplication(): Application? {
+    return this.applications.lastOrNull { it.completed }
+  }
+
+  fun addApplication(application: Application) {
+    application.visitId = this.id
+    application.visit = this
+    applications.add(application)
   }
 }

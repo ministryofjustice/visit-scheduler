@@ -97,7 +97,7 @@ class CancelVisitTest : IntegrationTestBase() {
     Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(PHONE)
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
     Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
-    Assertions.assertThat(eventAudit.applicationReference).isEqualTo(visit.applications.last())
+    Assertions.assertThat(eventAudit.applicationReference).isEqualTo(visit.getLastApplication()?.reference)
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)

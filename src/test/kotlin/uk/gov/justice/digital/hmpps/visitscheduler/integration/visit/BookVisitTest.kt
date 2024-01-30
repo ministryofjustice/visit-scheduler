@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -39,9 +38,6 @@ class BookVisitTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var testVisitRepository: TestVisitRepository
-
-  @Autowired
-  private lateinit var testApplicationRepository: TestApplicationRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -70,8 +66,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    val returnResult = responseSpec
-      .expectStatus().isOk
+    responseSpec.expectStatus().isOk
 
     val visitDto = getVisitDto(responseSpec)
 
@@ -79,8 +74,8 @@ class BookVisitTest : IntegrationTestBase() {
     assertVisitMatchesApplication(visitDto, reservedApplication)
 
     val visitEntity = testVisitRepository.findByReference(visitDto.reference)
-    Assertions.assertThat(visitEntity.applications.size).isEqualTo(1)
-    Assertions.assertThat(visitEntity.applications[0]).isEqualTo(applicationReference)
+    Assertions.assertThat(visitEntity.getApplications().size).isEqualTo(1)
+    Assertions.assertThat(visitEntity.getApplications()[0]).isEqualTo(applicationReference)
 
     // And
     assertBookedEvent(visitDto, false)
@@ -150,7 +145,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.save(reservedApplication)
 
     val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
-    expiredVisit.applications.add(expiredApplication)
+    expiredVisit.addApplication(expiredApplication)
 
     // Given
     visitEntityHelper.createNote(visit = expiredVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)

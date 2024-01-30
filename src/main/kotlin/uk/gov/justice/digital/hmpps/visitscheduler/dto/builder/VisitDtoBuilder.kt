@@ -13,7 +13,7 @@ import java.time.LocalDateTime
 class VisitDtoBuilder {
 
   fun build(visitEntity: Visit): VisitDto {
-    val applicationReference = visitEntity.applications.lastOrNull { it.completed }?.let { it.reference } ?: throw IllegalStateException("Visit must have a completed application")
+    val applicationReference = visitEntity.getLastCompletedApplication()?.reference ?: throw IllegalStateException("Visit must have a completed application")
 
     return VisitDto(
       applicationReference = applicationReference,

@@ -1,14 +1,16 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application
 
-import jakarta.persistence.CascadeType
 import jakarta.persistence.CascadeType.ALL
+import jakarta.persistence.CascadeType.DETACH
+import jakarta.persistence.CascadeType.MERGE
+import jakarta.persistence.CascadeType.PERSIST
+import jakarta.persistence.CascadeType.REFRESH
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
@@ -32,7 +34,7 @@ class Application(
   @Column(name = "PRISON_ID", nullable = false)
   val prisonId: Long,
 
-  @ManyToOne(cascade = [CascadeType.DETACH])
+  @ManyToOne(cascade = [DETACH])
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison,
 
@@ -63,23 +65,22 @@ class Application(
   @Column(nullable = false)
   val createdBy: String,
 
-  @ManyToOne(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH, CascadeType.PERSIST, CascadeType.MERGE])
-  @JoinTable(
-    name = "VISITS_TO_APPLICATIONS",
-    joinColumns = [JoinColumn(name = "application_id")],
-    inverseJoinColumns = [JoinColumn(name = "visit_id")],
-  )
-  var visit: Visit? = null,
-
 ) : AbstractIdEntity() {
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "application", orphanRemoval = true)
+  @Column(name = "VISIT_ID", nullable = true)
+  var visitId: Long? = null
+
+  @ManyToOne(fetch = FetchType.LAZY, cascade = [REFRESH, PERSIST, MERGE])
+  @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
+  var visit: Visit? = null
+
+  @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "application", orphanRemoval = true)
   var visitContact: ApplicationContact? = null
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "application", orphanRemoval = true)
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "application", orphanRemoval = true)
   var visitors: MutableList<ApplicationVisitor> = mutableListOf()
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "application", orphanRemoval = true)
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "application", orphanRemoval = true)
   var support: MutableList<ApplicationSupport> = mutableListOf()
 
   @CreationTimestamp

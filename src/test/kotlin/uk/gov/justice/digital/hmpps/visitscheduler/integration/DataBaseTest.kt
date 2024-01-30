@@ -53,7 +53,7 @@ class DataBaseTest(
     applicationEntityHelper.createSupport(application = applicationWithVisit, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(applicationWithVisit)
 
-    visitWithApplication.applications.add(applicationWithVisit)
+    visitWithApplication.addApplication(applicationWithVisit)
     visitEntityHelper.save(visitWithApplication)
 
     sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
@@ -91,7 +91,7 @@ class DataBaseTest(
     Assertions.assertThat(testVisitRepository.hasNotes(visitWithApplication.id)).isFalse
     Assertions.assertThat(testVisitRepository.hasVisitors(visitWithApplication.id)).isFalse
     Assertions.assertThat(testVisitRepository.hasSupport(visitWithApplication.id)).isFalse
-    Assertions.assertThat(testApplicationRepository.hasApplication(visitWithApplication.applications.last.id)).isFalse
+    Assertions.assertThat(testApplicationRepository.hasApplication(visitWithApplication.getLastApplication()!!.id)).isFalse
   }
 
   @Test
@@ -114,7 +114,6 @@ class DataBaseTest(
 
   @Test()
   fun `When a complete application is deleted the visit is not`() {
-    val didApplicationExist = testApplicationRepository.hasApplication(applicationWithVisit.id)
     val applicationId = applicationWithVisit.id
     val applicationRef = applicationWithVisit.reference
 

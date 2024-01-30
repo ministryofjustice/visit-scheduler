@@ -23,7 +23,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentiv
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 
 @Transactional(propagation = SUPPORTS)
@@ -88,7 +87,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     with(auditEvents[0]) {
       Assertions.assertThat(actionedBy).isEqualTo("NOT_KNOWN")
       Assertions.assertThat(bookingReference).isEqualTo(primaryVisit.reference)
-      Assertions.assertThat(applicationReference).isEqualTo(primaryVisit.applications.first())
+      Assertions.assertThat(applicationReference).isEqualTo(primaryVisit.getLastApplication()?.reference)
       Assertions.assertThat(sessionTemplateReference).isEqualTo(primaryVisit.sessionSlot.sessionTemplateReference)
       Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
       Assertions.assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
@@ -96,7 +95,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     with(auditEvents[1]) {
       Assertions.assertThat(actionedBy).isEqualTo("NOT_KNOWN")
       Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit.reference)
-      Assertions.assertThat(applicationReference).isEqualTo(secondaryVisit.applications.last)
+      Assertions.assertThat(applicationReference).isEqualTo(secondaryVisit.getLastApplication()?.reference)
       Assertions.assertThat(sessionTemplateReference).isEqualTo(secondaryVisit.sessionSlot.sessionTemplateReference)
       Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
       Assertions.assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
@@ -319,7 +318,6 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   @Test
   fun `when prisoner with non associations visits has duplicate notification then they are not flagged or saved`() {
     // Given
-    val today = LocalDateTime.now()
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
 
     val primaryVisit = visitEntityHelper.create(
@@ -429,8 +427,6 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   fun `when primary prisoner has no future visits then no visits are flagged or saved`() {
     // Given
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
-
-    val visitStart = LocalDate.now()
 
     // no visits overlap
     // visits for primary prisoners are for today + 1, +2 & +3

@@ -112,8 +112,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT COUNT(*) > 0  FROM visit v" +
-      "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
-      "  JOIN application a on a.id = vta.application_id " +
+      "  JOIN application a on a.visit_id = v.id " +
       "  WHERE a.reference = :applicationReference AND v.visit_status = 'BOOKED'",
     nativeQuery = true,
   )
