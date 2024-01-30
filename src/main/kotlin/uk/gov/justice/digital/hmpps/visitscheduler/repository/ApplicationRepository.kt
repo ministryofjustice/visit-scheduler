@@ -19,7 +19,7 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
 
   @Query(
     "Select * FROM application " +
-      "WHERE completed = false AND modifyTimestamp < now()-make_interval(minute => :expiredPeriodMinutes) ",
+      "WHERE completed = false AND modify_timestamp < now()-make_interval(minute => :expiredPeriodMinutes) ",
     nativeQuery = true,
   )
   fun findExpiredApplicationReferences(expiredPeriodMinutes: Int): List<String>

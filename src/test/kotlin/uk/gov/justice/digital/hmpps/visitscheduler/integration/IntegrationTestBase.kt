@@ -120,7 +120,7 @@ abstract class IntegrationTestBase {
   fun resetStubs() {
     prisonApiMockServer.resetAll()
     prisonOffenderSearchMockServer.resetAll()
-    sessionTemplate = sessionTemplateEntityHelper.create()
+    sessionTemplate = sessionTemplateEntityHelper.create(isActive = false)
     startDate = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate)
   }
 

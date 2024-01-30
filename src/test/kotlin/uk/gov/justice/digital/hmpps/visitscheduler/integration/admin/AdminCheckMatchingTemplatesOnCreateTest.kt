@@ -56,6 +56,7 @@ class AdminCheckMatchingTemplatesOnCreateTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUpTests() {
+    deleteEntityHelper.deleteAll()
     prison = prisonEntityHelper.create()
 
     sessionTemplateMonday = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, validToDate = LocalDate.now().plusYears(1))
