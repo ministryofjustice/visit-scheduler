@@ -53,7 +53,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-@Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @ExtendWith(HmppsAuthExtension::class)
@@ -232,18 +231,20 @@ abstract class IntegrationTestBase {
     return sessionSlot.slotDate.format(DateTimeFormatter.ISO_DATE_TIME)
   }
 
-  fun createApplicationAndVisit(sessionTemplate: SessionTemplate, visitStatus: VisitStatus, slotDate: LocalDate): Visit {
-    val application = createApplicationAndSave(sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true)
-    return createVisitAndSave(visitStatus = visitStatus, applicationEntity = application)
+  fun createApplicationAndVisit(prisonerId: String? = null, sessionTemplate: SessionTemplate, visitStatus: VisitStatus ? = VisitStatus.BOOKED, slotDate: LocalDate? = null): Visit {
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true)
+    return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
   fun createApplicationAndSave(
+    prisonerId: String? = "testPrisonerId",
     sessionTemplateLocal: SessionTemplate? = null,
     prisonCode: String? = null,
     slotDate: LocalDate? = null,
     completed: Boolean,
   ): Application {
     val applicationEntity = applicationEntityHelper.create(
+      prisonerId = prisonerId!!,
       sessionTemplate = sessionTemplateLocal ?: sessionTemplate,
       completed = completed,
       prisonCode = prisonCode,

@@ -14,10 +14,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppli
 import uk.gov.justice.digital.hmpps.visitscheduler.service.ApplicationService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 
 @Component
 class VisitTask(
@@ -28,6 +28,7 @@ class VisitTask(
   private val telemetryClient: TelemetryClient,
   private val expiredVisitTaskConfiguration: ExpiredVisitTaskConfiguration,
   private val flagVisitTaskConfiguration: FlagVisitTaskConfiguration,
+  private val telemetryClientService: TelemetryClientService,
 ) {
 
   companion object {
@@ -158,8 +159,8 @@ class VisitTask(
       "prisonId" to visit.prisonCode,
       "visitType" to visit.visitType.name,
       "visitRestriction" to visit.visitRestriction.name,
-      "visitStart" to visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
-      "visitEnd" to visit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStart" to telemetryClientService.formatDateTimeToString(visit.startTimestamp),
+      "visitEnd" to telemetryClientService.formatDateTimeToString(visit.endTimestamp),
       "visitStatus" to visit.visitStatus.name,
     )
 

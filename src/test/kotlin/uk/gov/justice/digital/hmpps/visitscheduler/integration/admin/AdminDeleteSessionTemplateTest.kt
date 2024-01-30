@@ -26,7 +26,7 @@ class AdminDeleteSessionTemplateTest(
 
   private lateinit var sessionGroup1: SessionLocationGroup
   private lateinit var sessionGroup2: SessionLocationGroup
-  private lateinit var sessionTemplate1 : SessionTemplate
+  private lateinit var sessionTemplate1: SessionTemplate
 
   @BeforeEach
   internal fun setUp() {

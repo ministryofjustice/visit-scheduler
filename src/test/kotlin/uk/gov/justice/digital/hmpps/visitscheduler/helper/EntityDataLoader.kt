@@ -147,6 +147,7 @@ class VisitEntityHelper(
     )
 
     visit.applications.add(application)
+    application.visit = visit
 
     with(application.visitContact!!) {
       visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
@@ -203,12 +204,12 @@ class VisitEntityHelper(
     )
 
     notSaved.outcomeStatus = outcomeStatus
-    if (createApplication) {
+    return if (createApplication) {
       val savedVisit = visitRepository.saveAndFlush(notSaved)
       savedVisit.applications.add(applicationEntityHelper.create(savedVisit))
-      return savedVisit
+      savedVisit
     } else {
-      return visitRepository.saveAndFlush(notSaved)
+      visitRepository.saveAndFlush(notSaved)
     }
   }
 
@@ -272,10 +273,6 @@ class VisitEntityHelper(
 
   fun save(visit: Visit): Visit {
     return visitRepository.saveAndFlush(visit)
-  }
-
-  fun getVisit(applicationReference: String): Visit? {
-    return visitRepository.findVisitByApplicationReference(applicationReference)
   }
 
   fun getBookedVisit(reference: String): Visit? {
