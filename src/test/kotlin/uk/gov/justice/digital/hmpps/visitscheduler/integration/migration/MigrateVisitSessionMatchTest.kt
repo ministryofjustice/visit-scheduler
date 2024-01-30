@@ -6,6 +6,7 @@ import org.hamcrest.Matchers.startsWith
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
@@ -17,6 +18,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_PROVISIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.FEMALE_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.DEFAULT_MAX_PROX_MINUTES
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -25,6 +28,13 @@ import java.time.temporal.ChronoUnit
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Migrate POST /visits")
 class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
+
+  @Autowired
+  private lateinit var sessionRepository: TestSessionTemplateRepository
+
+  @Autowired
+  private lateinit var prisonRepository: PrisonRepository
+
   val enhancedIncentiveLevelGroupName = "ENH Incentive Level Group"
   val incentiveLevelList = listOf(
     IncentiveLevel.ENHANCED,
@@ -682,7 +692,6 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   @Test
   fun `Migrated session match - can not find sessionTemplate exception is thrown`() {
     // Given
-
     val migrateVisitRequestDto = createMigrateVisitRequestDto(visitRoom = "theGreatHall")
 
     // When
@@ -826,6 +835,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom,
       startTime = startTime,
       endTime = endTime,
+      prisonCode = PRISON_CODE,
     )
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
@@ -834,6 +844,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom,
       startTime = startTime,
       endTime = endTime,
+      prisonCode = PRISON_CODE,
     )
 
     sessionTemplateEntityHelper.create(
@@ -842,6 +853,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom,
       startTime = startTime,
       endTime = endTime,
+      prisonCode = PRISON_CODE,
     )
 
     sessionTemplateEntityHelper.create(
@@ -850,6 +862,7 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
       visitRoom = migrateVisitRequestDto.visitRoom,
       startTime = startTime,
       endTime = endTime,
+      prisonCode = PRISON_CODE,
     )
 
     sessionTemplateEntityHelper.create(

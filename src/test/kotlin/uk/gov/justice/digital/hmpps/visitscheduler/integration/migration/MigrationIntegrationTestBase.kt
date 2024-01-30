@@ -64,7 +64,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     protected val TEST_END_POINT = "/migrate-visits"
 
     @JvmStatic
-    protected val PRISON_CODE = "MDI"
+    protected val PRISON_CODE = "MGV"
 
     @JvmStatic
     protected val CANCELLED_BY_BY_USER = "user-2"
