@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteSessionTemplateByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
@@ -25,26 +26,28 @@ class AdminDeleteSessionTemplateTest(
 
   private lateinit var sessionGroup1: SessionLocationGroup
   private lateinit var sessionGroup2: SessionLocationGroup
+  private lateinit var sessionTemplate1 : SessionTemplate
 
   @BeforeEach
   internal fun setUp() {
+    sessionTemplate1 = sessionTemplateEntityHelper.create(isActive = false)
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
-    sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, prisonHierarchies = allowedPermittedLocations1)
+    sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate1.prison.code, prisonHierarchies = allowedPermittedLocations1)
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))
-    sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
+    sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate1.prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
 
-    sessionTemplate.permittedSessionLocationGroups.add(sessionGroup1)
-    sessionTemplate.permittedSessionLocationGroups.add(sessionGroup2)
+    sessionTemplate1.permittedSessionLocationGroups.add(sessionGroup1)
+    sessionTemplate1.permittedSessionLocationGroups.add(sessionGroup2)
 
-    testTemplateRepository.saveAndFlush(sessionTemplate)
+    testTemplateRepository.saveAndFlush(sessionTemplate1)
   }
 
   @Test
   fun `delete session template by reference test successfully`() {
     // Given
-    val reference = sessionTemplate.reference
-    val grp1Id = sessionTemplate.permittedSessionLocationGroups[0].id
-    val grp2Id = sessionTemplate.permittedSessionLocationGroups[1].id
+    val reference = sessionTemplate1.reference
+    val grp1Id = sessionTemplate1.permittedSessionLocationGroups[0].id
+    val grp2Id = sessionTemplate1.permittedSessionLocationGroups[1].id
 
     // When
     val responseSpec = callDeleteSessionTemplateByReference(webTestClient, reference, setAuthorisation(roles = adminRole))
@@ -54,21 +57,21 @@ class AdminDeleteSessionTemplateTest(
     responseSpec.expectBody()
       .jsonPath("$").isEqualTo("Session Template Deleted $reference!")
 
-    Assertions.assertThat(testTemplateRepository.hasSessionTemplate(sessionTemplate.id)).isFalse
+    Assertions.assertThat(testTemplateRepository.hasSessionTemplate(sessionTemplate1.id)).isFalse
     Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp1Id)).isTrue
     Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp2Id)).isTrue
-    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionTemplate.id, sessionGroup1.id)).isFalse
-    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionTemplate.id, sessionGroup2.id)).isFalse
+    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionTemplate1.id, sessionGroup1.id)).isFalse
+    Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionTemplate1.id, sessionGroup2.id)).isFalse
   }
 
   @Test
   fun `cannot delete session template by reference with existing visits test`() {
     // Given
-    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate)
+    visitEntityHelper.create(visitStatus = BOOKED, sessionTemplate = sessionTemplate1)
 
-    val reference = sessionTemplate.reference
-    sessionTemplate.permittedSessionLocationGroups[0].id
-    sessionTemplate.permittedSessionLocationGroups[1].id
+    val reference = sessionTemplate1.reference
+    sessionTemplate1.permittedSessionLocationGroups[0].id
+    sessionTemplate1.permittedSessionLocationGroups[1].id
 
     // When
     val responseSpec = callDeleteSessionTemplateByReference(webTestClient, reference, setAuthorisation(roles = adminRole))

@@ -163,40 +163,6 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     @Param("endDateTime") endDateTime: LocalDateTime? = null,
   ): List<Visit>
 
-  // TODO needs to change slot id on given references
-  @Modifying
-  @Query(
-    "Update visit set session_template_reference = :newSessionTemplateReference " +
-      ",visit_start =  (cast(visit_start as date) + cast(:newStartTime as time)) " +
-      ",visit_end =  (cast(visit_end as date) + cast(:newEndTime as time)) " +
-      "WHERE visit_status IN ('BOOKED', 'RESERVED', 'CHANGING')  AND " +
-      "(session_template_reference = :existingSessionTemplateReference) AND " +
-      "(cast(visit_start as date) >= :fromDate)",
-    nativeQuery = true,
-  )
-  fun updateVisitSessionTemplateReference(
-    existingSessionTemplateReference: String,
-    newSessionTemplateReference: String,
-    fromDate: LocalDate,
-    newStartTime: LocalTime,
-    newEndTime: LocalTime,
-  ): Int
-
-  // TODO needs to change slot id on given references
-  @Modifying
-  @Query(
-    "Update visit set session_template_reference = :newSessionTemplateReference " +
-      "WHERE visit_status = ('BOOKED', 'RESERVED', 'CHANGING')  AND " +
-      "(session_template_reference = :existingSessionTemplateReference) AND " +
-      "(cast(visit_start as date) >= :fromDate)",
-    nativeQuery = true,
-  )
-  fun updateVisitSessionTemplateReference(
-    existingSessionTemplateReference: String,
-    newSessionTemplateReference: String,
-    fromDate: LocalDate,
-  ): Int
-
   @Query(
     "SELECT v FROM Visit v JOIN v.visitors vis WHERE " +
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +

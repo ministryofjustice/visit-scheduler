@@ -204,7 +204,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     // When
     val responseSpec = callMoveVisits(webTestClient, moveRequest, setAuthorisation(roles = adminRole))
-    val updatedVisit = visitEntityHelper.getVisit(visit.reference)
+    val updatedVisit = visitEntityHelper.getBookedVisit(visit.reference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -331,7 +331,7 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
     val visit2Date = today.plusWeeks(6)
     val visit2 = visitEntityHelper.create(
       sessionTemplate = fromSession,
-      slotDate = visit1Date,
+      slotDate = visit2Date,
       visitStart = fromSession.startTime,
       visitEnd = fromSession.endTime,
     )
@@ -823,15 +823,15 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
     val fromSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY)
     val toSession = sessionTemplateEntityHelper.create(dayOfWeek = DayOfWeek.MONDAY, startTime = fromSession.startTime.minusMinutes(30), endTime = fromSession.endTime.minusMinutes(30))
     val futureVisitDate = LocalDate.now().plusDays(1)
-    val futureVisit = visitEntityHelper.create(sessionTemplate = fromSession, visitStart = fromSession.startTime, visitEnd = fromSession.endTime)
+    val futureVisit = visitEntityHelper.create(sessionTemplate = fromSession, slotDate = futureVisitDate, visitStart = fromSession.startTime, visitEnd = fromSession.endTime)
     val pastVisitDate = LocalDate.now().minusDays(1)
-    val pastVisit = visitEntityHelper.create(sessionTemplate = fromSession, visitStart = fromSession.startTime, visitEnd = fromSession.endTime)
+    val pastVisit = visitEntityHelper.create(sessionTemplate = fromSession, slotDate = pastVisitDate, visitStart = fromSession.startTime, visitEnd = fromSession.endTime)
     val moveRequest = MoveVisitsDto(fromSession.reference, toSession.reference, LocalDate.now())
 
     // When
     val responseSpec = callMoveVisits(webTestClient, moveRequest, setAuthorisation(roles = adminRole))
     val updatedFutureVisit = visitEntityHelper.getBookedVisit(futureVisit.reference)
-    val pastVisitPostMove = visitEntityHelper.getVisit(pastVisit.reference)
+    val pastVisitPostMove = visitEntityHelper.getBookedVisit(pastVisit.reference)
 
     // Then
     responseSpec.expectStatus().isOk

@@ -40,6 +40,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateComparator
@@ -57,6 +58,7 @@ class SessionTemplateService(
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
+  private val sessionSlotRepository: SessionSlotRepository,
   private val visitRepository: VisitRepository,
   private val prisonsService: PrisonsService,
   private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
@@ -514,13 +516,10 @@ class SessionTemplateService(
     // validate move before updating session template reference
     validateMoveSessionTemplateVisits(fromSessionTemplate, toSessionTemplate, fromDate)
 
-    // TODO create new slot
-    // TODO Then use update to change slot id on given visits
-
     return if (fromSessionTemplate.sessionTimeSlot == toSessionTemplate.sessionTimeSlot) {
-      visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
+      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
     } else {
-      visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, toSessionTemplate.sessionTimeSlot.startTime, toSessionTemplate.sessionTimeSlot.endTime)
+      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, toSessionTemplate.sessionTimeSlot.startTime, toSessionTemplate.sessionTimeSlot.endTime)
     }
   }
 

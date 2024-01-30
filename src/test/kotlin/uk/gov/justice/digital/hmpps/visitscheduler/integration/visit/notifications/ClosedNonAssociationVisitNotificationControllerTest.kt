@@ -31,8 +31,8 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, prisonCode, IncentiveLevel.ENHANCED)
     prisonCode = sessionTemplate.prison.code
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, prisonCode, IncentiveLevel.ENHANCED)
   }
 
   fun stubGetPrisonerNonAssociationForPrisonApi(
