@@ -232,8 +232,8 @@ abstract class IntegrationTestBase {
     return sessionSlot.slotDate.format(DateTimeFormatter.ISO_DATE_TIME)
   }
 
-  fun createApplicationAndVisit(sessionTemplate: SessionTemplate, visitStatus: VisitStatus, slotDate: LocalDate): Visit {
-    val application = createApplicationAndSave(sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true)
+  fun createApplicationAndVisit(sessionTemplate: SessionTemplate, visitStatus: VisitStatus, slotDate: LocalDate, prisonerId: String? = null): Visit {
+    val application = createApplicationAndSave(sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, prisonerId = prisonerId)
     return createVisitAndSave(visitStatus = visitStatus, applicationEntity = application)
   }
 
@@ -242,13 +242,14 @@ abstract class IntegrationTestBase {
     prisonCode: String? = null,
     slotDate: LocalDate? = null,
     completed: Boolean,
+    prisonerId: String? = null,
   ): Application {
     val applicationEntity = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateLocal ?: sessionTemplate,
       completed = completed,
       prisonCode = prisonCode,
-      slotDate = slotDate
-        ?: sessionTemplate.validFromDate,
+      slotDate = slotDate ?: sessionTemplate.validFromDate,
+      prisonerId = prisonerId
     )
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)

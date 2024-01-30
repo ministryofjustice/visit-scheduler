@@ -50,7 +50,7 @@ class ApplicationEntityHelper(
   }
 
   fun create(
-    prisonerId: String = "FF0000AA",
+    prisonerId: String? = "FF0000AA",
     prisonCode: String? = "MDI",
     slotDate: LocalDate = LocalDate.of((LocalDate.now().year + 1), 11, 1),
     visitStart: LocalTime = LocalTime.now(),
@@ -62,12 +62,12 @@ class ApplicationEntityHelper(
     reservedSlot: Boolean = true,
     completed: Boolean = true,
   ): Application {
-    val prison = prisonEntityHelper.create(prisonCode?.let { it } ?: "MDI", activePrison)
+    val prison = prisonEntityHelper.create(prisonCode?: "MDI", activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
 
     return applicationRepo.saveAndFlush(
       Application(
-        prisonerId = prisonerId,
+        prisonerId = prisonerId?: "FF0000AA",
         prisonId = prison.id,
         prison = prison,
         sessionSlotId = sessionSlot.id,

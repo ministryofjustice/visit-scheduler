@@ -18,7 +18,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonA
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
@@ -38,8 +40,13 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   val secondaryPrisonerId = "XX11YZZ"
   val prisonCode = "ABC"
 
+  lateinit var prison1: Prison
+  lateinit var sessionTemplate1: SessionTemplate
+
   @BeforeEach
   internal fun setUp() {
+    prison1 = prisonEntityHelper.create(prisonCode = prisonCode)
+    sessionTemplate1 = sessionTemplateEntityHelper.create(prison = prison1)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
     prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, prisonCode, IncentiveLevel.ENHANCED)
   }
@@ -54,7 +61,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(1),
       prisonCode = prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
       createApplication = true,
     )
 
@@ -65,7 +72,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(1),
       prisonCode = primaryVisit.prison.code,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
       createApplication = true,
     )
     eventAuditEntityHelper.create(secondaryVisit)
@@ -252,40 +259,35 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId2, prisonCode, IncentiveLevel.ENHANCED)
     val nonAssociationChangedNotification2 = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId2, secondaryPrisonerId2)
-
-    val primaryVisit1 = visitEntityHelper.create(
+    val primaryVisit1 = createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(primaryVisit1)
 
-    val primaryVisit2 = visitEntityHelper.create(
+    val primaryVisit2 = createApplicationAndVisit(
       prisonerId = primaryPrisonerId2,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(primaryVisit2)
 
-    val secondaryVisit1 = visitEntityHelper.create(
+    val secondaryVisit1 = createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
-      prisonCode = primaryVisit1.prison.code,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(secondaryVisit1)
 
-    val secondaryVisit2 = visitEntityHelper.create(
+    val secondaryVisit2 = createApplicationAndVisit(
       prisonerId = secondaryPrisonerId2,
-      prisonCode = primaryVisit2.prison.code,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(secondaryVisit2)
 
