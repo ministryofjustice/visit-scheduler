@@ -186,6 +186,7 @@ class VisitEntityHelper(
     activePrison: Boolean = sessionTemplate.prison.active,
     outcomeStatus: OutcomeStatus? = null,
     createApplication: Boolean = true,
+    createContact: Boolean = false,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
@@ -203,19 +204,25 @@ class VisitEntityHelper(
     )
 
     notSaved.outcomeStatus = outcomeStatus
+
+    val savedVisit = visitRepository.saveAndFlush(notSaved)
+
+    if (createContact) {
+      createContact(visit = savedVisit)
+    }
+
     return if (createApplication) {
-      val savedVisit = visitRepository.saveAndFlush(notSaved)
       savedVisit.addApplication(applicationEntityHelper.create(savedVisit))
       savedVisit
     } else {
-      visitRepository.saveAndFlush(notSaved)
+      savedVisit
     }
   }
 
   fun createContact(
     visit: Visit,
-    name: String,
-    phone: String,
+    name: String = "bob",
+    phone: String = "0123456789",
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,
