@@ -26,7 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.ApplicationService
 const val APPLICATION_CONTROLLER_PATH: String = "/visits/application"
 const val APPLICATION_RESERVE_SLOT: String = "$APPLICATION_CONTROLLER_PATH/slot/reserve"
 const val APPLICATION_RESERVED_SLOT_CHANGE: String = "$APPLICATION_CONTROLLER_PATH/{reference}/slot/change"
-const val APPLICATION_CHANGE: String = "$APPLICATION_CONTROLLER_PATH/{reference}/change"
+const val APPLICATION_CHANGE: String = "$APPLICATION_CONTROLLER_PATH/{bookingReference}/change"
 
 @RestController
 @Validated
@@ -163,12 +163,12 @@ class ApplicationController(
     ],
   )
   fun createApplicationForAnExistingVisit(
-    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @Schema(description = "bookingReference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
-    reference: String,
+    bookingReference: String,
     @RequestBody @Valid
     createApplicationDto: CreateApplicationDto,
   ): ApplicationDto {
-    return applicationService.createApplicationForAnExistingVisit(reference.trim(), createApplicationDto)
+    return applicationService.createApplicationForAnExistingVisit(bookingReference.trim(), createApplicationDto)
   }
 }

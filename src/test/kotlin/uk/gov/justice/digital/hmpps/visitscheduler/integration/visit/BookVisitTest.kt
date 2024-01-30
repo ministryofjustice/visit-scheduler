@@ -13,6 +13,7 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
@@ -88,11 +89,8 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec2 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    val returnResult1 = responseSpec1.expectStatus().isOk.expectBody().returnResult().responseBody
-    val returnResult2 = responseSpec2.expectStatus().isOk.expectBody().returnResult().responseBody
-
-    val visit1 = objectMapper.readValue(returnResult1, VisitDto::class.java)
-    val visit2 = objectMapper.readValue(returnResult2, VisitDto::class.java)
+    val visit1 = createVisitDtoFromResponse(responseSpec1)
+    val visit2 = createVisitDtoFromResponse(responseSpec2)
 
     Assertions.assertThat(visit1.reference).isEqualTo(visit2.reference)
     Assertions.assertThat(visit1.applicationReference).isEqualTo(visit2.applicationReference)
@@ -159,13 +157,17 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    val returnResult = responseSpec.expectStatus().isOk.expectBody().returnResult().responseBody
-    val visitDto = objectMapper.readValue(returnResult, VisitDto::class.java)
+    val visitDto = createVisitDtoFromResponse(responseSpec)
 
     assertVisitMatchesApplication(visitDto, completedApplication)
 
     // And
     assertBookedEvent(visitDto, true)
+  }
+
+  private fun createVisitDtoFromResponse(responseSpec: ResponseSpec): VisitDto {
+    val returnResult = responseSpec.expectStatus().isOk.expectBody().returnResult().responseBody
+    return objectMapper.readValue(returnResult, VisitDto::class.java)
   }
 
   @Test

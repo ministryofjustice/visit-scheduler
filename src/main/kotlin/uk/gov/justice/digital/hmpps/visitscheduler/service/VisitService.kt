@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
@@ -41,6 +42,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationE
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
+import java.lang.reflect.InvocationTargetException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -86,7 +88,13 @@ class VisitService(
 
     val bookedVisitDto = visitDtoBuilder.build(booking)
 
-    eventAuditRepository.updateVisitApplication(application.reference, bookingRequestDto.applicationMethodType)
+    try {
+      eventAuditRepository.updateVisitApplication(application.reference, bookingRequestDto.applicationMethodType)
+    } catch (e: InvocationTargetException) {
+      val message = "Audit log does not exists for $application.reference"
+      LOG.error(message)
+      throw ItemNotFoundException(message, e)
+    }
 
     saveEventAudit(
       bookingRequestDto.actionedBy,

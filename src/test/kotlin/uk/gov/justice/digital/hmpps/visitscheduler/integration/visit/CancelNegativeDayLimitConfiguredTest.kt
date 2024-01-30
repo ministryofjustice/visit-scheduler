@@ -34,7 +34,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
         OutcomeStatus.CANCELLATION,
         "No longer joining.",
       ),
-      CancelVisitTest.cancelledByByUser,
+      CancelVisitTest.CANCELLED_BY_USER,
       NOT_KNOWN,
     )
     // Given
@@ -62,7 +62,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
         OutcomeStatus.CANCELLATION,
         "No longer joining.",
       ),
-      CancelVisitTest.cancelledByByUser,
+      CancelVisitTest.CANCELLED_BY_USER,
       NOT_KNOWN,
     )
     // Given
