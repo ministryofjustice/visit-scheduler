@@ -53,7 +53,6 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-@Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @ExtendWith(HmppsAuthExtension::class)
@@ -232,24 +231,25 @@ abstract class IntegrationTestBase {
     return sessionSlot.slotDate.format(DateTimeFormatter.ISO_DATE_TIME)
   }
 
-  fun createApplicationAndVisit(sessionTemplate: SessionTemplate, visitStatus: VisitStatus, slotDate: LocalDate, prisonerId: String? = null): Visit {
-    val application = createApplicationAndSave(sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, prisonerId = prisonerId)
-    return createVisitAndSave(visitStatus = visitStatus, applicationEntity = application)
+  fun createApplicationAndVisit(prisonerId: String? = null, sessionTemplate: SessionTemplate, visitStatus: VisitStatus ? = VisitStatus.BOOKED, slotDate: LocalDate? = null): Visit {
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true)
+    return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
   fun createApplicationAndSave(
+    prisonerId: String? = "testPrisonerId",
     sessionTemplateLocal: SessionTemplate? = null,
     prisonCode: String? = null,
     slotDate: LocalDate? = null,
     completed: Boolean,
-    prisonerId: String? = null,
   ): Application {
     val applicationEntity = applicationEntityHelper.create(
+      prisonerId = prisonerId!!,
       sessionTemplate = sessionTemplateLocal ?: sessionTemplate,
       completed = completed,
       prisonCode = prisonCode,
-      slotDate = slotDate ?: sessionTemplate.validFromDate,
-      prisonerId = prisonerId
+      slotDate = slotDate
+        ?: sessionTemplate.validFromDate,
     )
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
