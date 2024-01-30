@@ -503,7 +503,7 @@ class DeleteEntityHelper(
 ) {
 
   fun deleteAll() {
-    System.out.println("Delete all")
+    println("Delete all")
     sessionRepository.deleteAll()
     sessionRepository.flush()
     sessionLocationGroupRepository.deleteAll()
@@ -530,7 +530,7 @@ class DeleteEntityHelper(
     testApplicationRepository.flush()
     testSessionSlotRepository.deleteAll()
     testSessionSlotRepository.flush()
-    System.out.println("Delete all end")
+    println("Delete all end")
   }
 }
 
