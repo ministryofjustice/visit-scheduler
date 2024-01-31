@@ -151,17 +151,17 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "WHERE v.visitStatus = 'BOOKED' AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(:prisonCode is null or v.prison.code = :prisonCode) AND " +
-      "(v.sessionSlot.slotDate >= :fromDate) AND " +
-      "(CAST(:fromTime AS TIME) is null OR v.sessionSlot.slotTime >= :fromTime) AND " +
+      "(CAST(:fromDate AS DATE) is null OR (v.sessionSlot.slotDate >= :fromDate)) AND " +
+      "(CAST(:fromTime AS TIME) is null OR (:fromDate = CURRENT_DATE AND v.sessionSlot.slotTime >= :fromTime)) AND " +
       "(CAST(:toDate AS DATE) is null OR v.sessionSlot.slotDate <= :toDate) AND " +
-      "(CAST(:toTime AS TIME) is null OR v.sessionSlot.slotEndTime <= :toTime) " +
+      "(CAST(:toTime AS TIME) is null OR (:toDate = CURRENT_DATE AND v.sessionSlot.slotEndTime <= :toTime)) " +
       "ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime"
   )
   fun findBookedVisits(
     @Param("prisonerId") prisonerId: String,
     @Param("prisonCode") prisonCode: String? = null,
     fromDate: LocalDate,
-    fromTime: LocalTime?,
+    fromTime: LocalTime,
     toDate: LocalDate?,
     toTime: LocalTime?,
   ): List<Visit>
@@ -173,9 +173,9 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(:#{#visitorId} is null OR vis.nomisPersonId = :visitorId) AND " +
       "(CAST(:slotStartDate AS DATE) is null OR v.sessionSlot.slotDate >= :slotStartDate) AND " +
-      "(CAST(:slotStartTime AS TIME) is null OR v.sessionSlot.slotTime >= :slotStartTime) AND " +
+      "(CAST(:slotStartTime AS TIME) is null OR (:slotStartDate = CURRENT_DATE AND v.sessionSlot.slotTime >= :slotStartTime)) AND " +
       "(CAST(:slotEndDate AS DATE) is null OR v.sessionSlot.slotDate <= :slotEndDate) AND " +
-      "(CAST(:slotEndTime AS TIME) is null OR v.sessionSlot.slotEndTime <= :slotEndTime) " +
+      "(CAST(:slotEndTime AS TIME) is null OR (:slotEndDate = CURRENT_DATE AND v.sessionSlot.slotEndTime <= :slotEndTime)) " +
       " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
   )
   fun findVisitsOrderByDateAndTime(
@@ -196,9 +196,9 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(CAST(:slotStartDate AS DATE) is null OR v.sessionSlot.slotDate >= :slotStartDate) AND " +
-      "(CAST(:slotStartTime AS TIME) is null OR v.sessionSlot.slotTime >= :slotStartTime) AND " +
+      "(CAST(:slotStartTime AS TIME) is null OR (:slotStartDate = CURRENT_DATE AND v.sessionSlot.slotTime >= :slotStartTime)) AND " +
       "(CAST(:slotEndDate AS DATE) is null OR v.sessionSlot.slotDate <= :slotEndDate) AND " +
-      "(CAST(:slotEndTime AS TIME) is null OR v.sessionSlot.slotEndTime <= :slotEndTime) " +
+      "(CAST(:slotEndTime AS TIME) is null OR (:slotEndDate = CURRENT_DATE AND v.sessionSlot.slotEndTime <= :slotEndTime)) " +
       " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
   )
   fun findVisits(

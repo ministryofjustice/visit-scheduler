@@ -236,21 +236,9 @@ class VisitService(
       prisonCode = visitFilter.prisonCode,
       visitStatusList = visitFilter.visitStatusList.ifEmpty { null },
       slotStartDate = visitFilter.startDateTime?.toLocalDate(),
-      slotStartTime = visitFilter.startDateTime?.let {
-          if (visitFilter.startDateTime.toLocalDate() > LocalDate.now()) {
-            visitFilter.startDateTime.toLocalTime()
-          } else {
-            null
-          }
-      },
+      slotStartTime = visitFilter.startDateTime?.toLocalTime(),
       slotEndDate = visitFilter.endDateTime?.toLocalDate(),
-      slotEndTime = visitFilter.endDateTime?.let {
-        if (visitFilter.endDateTime.toLocalDate() > LocalDate.now()) {
-          visitFilter.endDateTime.toLocalTime()
-        } else {
-          null
-        }
-      },
+      slotEndTime = visitFilter.endDateTime?.toLocalTime(),
     )
   }
 
@@ -411,16 +399,6 @@ class VisitService(
   }
 
   fun getFutureVisitsBy(prisonerNumber: String, prisonCode: String?, startDateTime: LocalDateTime = LocalDateTime.now(), endDateTime: LocalDateTime ? = null): List<VisitDto> {
-    val startTime = if (startDateTime.toLocalDate() > LocalDate.now()) {
-      startDateTime.toLocalTime()
-    } else null
-
-    val endTime = endDateTime?.let {
-      if (endDateTime.toLocalDate() > LocalDate.now()) {
-        endDateTime.toLocalTime()
-      } else null
-    }
-
-    return this.visitRepository.findBookedVisits(prisonerNumber, prisonCode, startDateTime.toLocalDate(), startTime, endDateTime?.toLocalDate(), endTime).map { visitDtoBuilder.build(it) }
+    return this.visitRepository.findBookedVisits(prisonerNumber, prisonCode, startDateTime.toLocalDate(), startDateTime.toLocalTime(), endDateTime?.toLocalDate(), endDateTime?.toLocalTime()).map { visitDtoBuilder.build(it) }
   }
 }
