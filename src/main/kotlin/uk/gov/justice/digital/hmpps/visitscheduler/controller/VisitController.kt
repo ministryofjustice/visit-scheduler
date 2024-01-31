@@ -37,10 +37,7 @@ import java.time.LocalDateTime
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
 const val GET_VISIT_HISTORY_CONTROLLER_PATH: String = "$VISIT_CONTROLLER_PATH/{reference}/history"
-
 const val VISIT_CONTROLLER_SEARCH_PATH: String = "$VISIT_CONTROLLER_PATH/search"
-const val VISIT_RESERVE_SLOT: String = "$VISIT_CONTROLLER_PATH/slot/reserve"
-const val VISIT_RESERVED_SLOT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/slot/change"
 const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"

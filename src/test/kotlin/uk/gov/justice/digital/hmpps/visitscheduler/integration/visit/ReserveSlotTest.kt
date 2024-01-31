@@ -18,7 +18,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
@@ -36,7 +36,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST $VISIT_RESERVE_SLOT")
+@DisplayName("POST $APPLICATION_RESERVE_SLOT")
 class ReserveSlotTest : IntegrationTestBase() {
 
   companion object {

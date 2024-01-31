@@ -17,7 +17,7 @@ import org.springframework.test.web.reactive.server.EntityExchangeResult
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
@@ -31,7 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRep
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("PUT $VISIT_RESERVED_SLOT_CHANGE")
+@DisplayName("PUT $APPLICATION_RESERVED_SLOT_CHANGE")
 class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -41,9 +41,6 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var testVisitRepository: TestVisitRepository
-
-  @Autowired
-  private lateinit var testApplicationRepository: TestApplicationRepository
 
   private lateinit var oldBooking: Visit
   private lateinit var oldApplication: Application

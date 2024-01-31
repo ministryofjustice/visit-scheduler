@@ -25,7 +25,7 @@ class ApplicationDtoBuilder {
       visitorSupport = applicationEntity.support.map { VisitorSupportDto(it) },
       createdTimestamp = applicationEntity.createTimestamp ?: LocalDateTime.now(),
       modifiedTimestamp = applicationEntity.modifyTimestamp ?: LocalDateTime.now(),
-      sessionTemplateReference = applicationEntity.sessionSlot.reference,
+      sessionTemplateReference = applicationEntity.sessionSlot.sessionTemplateReference,
       reserved = applicationEntity.reservedSlot,
       completed = applicationEntity.completed,
     )
