@@ -18,7 +18,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
@@ -37,7 +37,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("PUT $VISIT_RESERVED_SLOT_CHANGE")
+@DisplayName("PUT $APPLICATION_RESERVED_SLOT_CHANGE")
 class ChangeReservedSlotTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -51,18 +51,14 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   private lateinit var applicationMin: Application
   private lateinit var applicationFull: Application
 
-  companion object {
-    val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
-  }
-
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     sessionTemplate = sessionTemplateEntityHelper.create()
 
-    applicationMin = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true)
-    applicationFull = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true)
+    applicationMin = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = false)
+    applicationFull = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = false)
 
     applicationEntityHelper.createContact(application = applicationFull, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationFull, nomisPersonId = 321L, visitContact = true)
@@ -134,6 +130,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = newSessionTemplate.reference,
       sessionDate = applicationMin.sessionSlot.slotDate,
+      visitRestriction = swapRestriction(applicationMin.restriction),
     )
 
     val applicationReference = applicationMin.reference
@@ -325,7 +322,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     val updateRequest = ChangeApplicationDto(
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = newSessionTemplate.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
     )
 
@@ -475,7 +472,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       eq("visit-slot-changed"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(applicationDto.reference)
-        Assertions.assertThat(it["reservedSlot"]).isEqualTo(applicationDto.reserved)
+        Assertions.assertThat(it["reservedSlot"]).isEqualTo(applicationDto.reserved.toString())
       },
       isNull(),
     )

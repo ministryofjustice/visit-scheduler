@@ -73,7 +73,7 @@ class ApplicationService(
   }
 
   fun createApplicationForAnExistingVisit(bookingReference: String, createApplicationDto: CreateApplicationDto): ApplicationDto {
-    val visit = visitRepo.findBookedVisit(bookingReference)
+    val visit = visitRepo.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
     validateBookingChange(visit, createApplicationDto, bookingReference)
 
     val applicationDto = createApplication(createApplicationDto, visit)
@@ -288,29 +288,26 @@ class ApplicationService(
   }
 
   private fun validateBookingChange(
-    visit: Visit?,
+    visit: Visit,
     createApplicationDto: CreateApplicationDto,
     bookingReference: String,
   ) {
     val errors = ArrayList<String>()
-    visit?.let {
-      if (visit.prisonerId != createApplicationDto.prisonerId) {
-        errors.add("Given prisoner ${createApplicationDto.prisonerId} is different from the original booking ($bookingReference) prisoner ${visit.prisonerId} ")
-      }
 
-      val sessionTemplate = sessionTemplateService.getSessionTemplates(createApplicationDto.sessionTemplateReference)
-      if (sessionTemplate.prisonCode != visit.prison.code) {
-        errors.add("Given session ${createApplicationDto.sessionTemplateReference} has a different prison from the original booking ($bookingReference) prison ${sessionTemplate.prisonCode} != ${visit.prison.code} ")
-      }
-    } ?: {
-      errors.add("Visit booking reference $bookingReference not found")
+    if (visit.prisonerId != createApplicationDto.prisonerId) {
+      errors.add("Given prisoner ${createApplicationDto.prisonerId} is different from the original booking ($bookingReference) prisoner ${visit.prisonerId} ")
+    }
+
+    val sessionTemplate = sessionTemplateService.getSessionTemplates(createApplicationDto.sessionTemplateReference)
+    if (sessionTemplate.prisonCode != visit.prison.code) {
+      errors.add("Given session ${createApplicationDto.sessionTemplateReference} has a different prison from the original booking ($bookingReference) prison ${sessionTemplate.prisonCode} != ${visit.prison.code} ")
     }
 
     if (errors.isNotEmpty()) {
       throw VSiPValidationException(errors.toTypedArray())
     }
 
-    validateSessionSlotDateAndTime(visit!!, "changed")
+    validateSessionSlotDateAndTime(visit, "changed")
   }
 
   private fun validateSessionSlotDateAndTime(

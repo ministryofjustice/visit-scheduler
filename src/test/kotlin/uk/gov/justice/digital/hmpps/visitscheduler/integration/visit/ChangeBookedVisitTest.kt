@@ -18,14 +18,14 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitChangeUrl
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.getApplicationChangeVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
@@ -39,10 +39,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("PUT $VISIT_CHANGE")
+@DisplayName("PUT $APPLICATION_CHANGE")
 class ChangeBookedVisitTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -63,7 +62,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createApplication = true)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
@@ -75,7 +74,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     bookedVisit = visitEntityHelper.save(visit)
   }
 
-  private fun createApplication(
+  private fun createApplicationRequest(
     prisonerId: String = "FF0000AA",
     slotDate: LocalDate = bookedVisit.sessionSlot.slotDate,
     visitRestriction: VisitRestriction = OPEN,
@@ -98,7 +97,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     // Given
     val reference = bookedVisit.reference
     val createApplicationRequest =
-      createApplication(sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!)
+      createApplicationRequest(sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!)
 
     // When
     val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
@@ -117,7 +116,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `application to change visit but no slot change is not reserved`() {
     // Given
     val reference = bookedVisit.reference
-    val createApplicationRequest = createApplication(sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!)
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!)
 
     // When
     val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
@@ -138,7 +137,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val reference = bookedVisit.reference
 
     val newSlotDate = this.bookedVisit.sessionSlot.slotDate.plusWeeks(1)
-    val createApplicationRequest = createApplication(sessionTemplateReference = sessionTemplate.reference, slotDate = newSlotDate)
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference, slotDate = newSlotDate)
 
     // When
     val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
@@ -148,15 +147,15 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
     val applicationDto = getApplicationDto(returnResult)
     assertThat(applicationDto.reserved).isTrue()
-    assertTelemetryData(applicationDto)
+    assertTelemetryData(applicationDto, "visit-slot-reserved")
   }
 
   @Test
   fun `application to change visit with new session is reserved`() {
     // Given
     val reference = bookedVisit.reference
-    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "NEW")
-    val createApplicationRequest = createApplication(sessionTemplateReference = sessionTemplate.reference)
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "DFT")
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference)
 
     // When
     val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
@@ -166,15 +165,15 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
     val applicationDto = getApplicationDto(returnResult)
     assertThat(applicationDto.reserved).isTrue()
-    assertTelemetryData(applicationDto)
+    assertTelemetryData(applicationDto, eventType = "visit-slot-reserved")
   }
 
   @Test
-  fun `changed booked visit creates new visit when visit restriction has changed`() {
+  fun `changed booked visit creates new application and updates visit restriction has changed`() {
     // Given
     val reference = bookedVisit.reference
     val newRestriction = if (bookedVisit.visitRestriction == OPEN) CLOSED else OPEN
-    val createApplicationRequest = createApplication(visitRestriction = newRestriction)
+    val createApplicationRequest = createApplicationRequest(visitRestriction = newRestriction)
 
     // When
     val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
@@ -184,17 +183,17 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
     val applicationDto = getApplicationDto(returnResult)
     assertThat(applicationDto.reserved).isTrue()
-    assertTelemetryData(applicationDto)
+    assertTelemetryData(applicationDto, eventType = "visit-slot-reserved")
   }
 
   @Test
   fun `application to change visit sends correct telemetry data`() {
     // Given
-    val reference = bookedVisit.reference
-    val createApplicationRequest = createApplication(sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!)
+    val bookingReference = bookedVisit.reference
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!)
 
     // When
-    val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
+    val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, bookingReference)
 
     // Then
     val returnResult = getResult(responseSpec)
@@ -225,7 +224,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     // Given
     val incorrectAuthHeaders = setAuthorisation(roles = listOf())
     val sessionTemplate = sessionTemplateEntityHelper.create()
-    val createApplicationRequest = createApplication(sessionTemplateReference = sessionTemplate.reference)
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference)
     val reference = bookedVisit.reference
 
     // When
@@ -242,13 +241,13 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `change visit - unauthorised when no token`() {
     // Given
     val sessionTemplate = sessionTemplateEntityHelper.create()
-    val createApplicationRequest = createApplication(sessionTemplateReference = sessionTemplate.reference)
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference)
 
     val jsonBody = BodyInserters.fromValue(createApplicationRequest)
     val reference = bookedVisit.reference
 
     // When
-    val responseSpec = webTestClient.put().uri(getVisitChangeUrl(reference))
+    val responseSpec = webTestClient.put().uri(getApplicationChangeVisitUrl(reference))
       .body(jsonBody)
       .exchange()
 
@@ -260,7 +259,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `change visit - not found`() {
     // Given
     val sessionTemplate = sessionTemplateEntityHelper.create()
-    val createApplicationRequest = createApplication(sessionTemplateReference = sessionTemplate.reference)
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference)
     val applicationReference = "IM NOT HERE"
 
     // When
@@ -275,7 +274,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     // Given
     val visitStart = LocalDateTime.of((LocalDateTime.now().year - 1), 11, 1, 12, 30, 44)
     val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), visitStart = visitStart.toLocalTime(), sessionTemplate = sessionTemplate)
-    val createApplicationRequest = createApplication(sessionTemplateReference = sessionTemplate.reference)
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference)
 
     // When
     val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, expiredVisit.reference)
@@ -283,26 +282,28 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
-      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - ${expiredVisit.reference} is in the past, it cannot be changed")
+      .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change an expired visit")
+      .jsonPath("$.developerMessage").isEqualTo("Visit with reference - ${expiredVisit.reference} is in the past, it cannot be changed")
   }
 
   private fun assertTelemetryData(
     applicationDto: ApplicationDto,
+    eventType: String = "visit-changed",
   ) {
+    verify(telemetryClient, times(1)).trackEvent(eq(eventType), any(), isNull())
+
     assertThat(applicationDto).isNotNull
 
     val application = getApplication(applicationDto)
     assertThat(application).isNotNull
     application?.let {
-      val visitStartStr = application.sessionSlot.slotDate.atTime(application.sessionSlot.slotTime)
-        .format(DateTimeFormatter.ISO_DATE_TIME)
-      verify(telemetryClient, times(1)).trackEvent(eq("visit-changed"), any(), isNull())
+      val visitStartStr = formatStartSlotDateTimeToString(application.sessionSlot)
       verify(telemetryClient).trackEvent(
-        eq("visit-changed"),
+        eq(eventType),
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(bookedVisit.reference)
-          assertThat(it["applicationReference"]).isNotEqualTo(applicationDto.reference)
+          assertThat(it["applicationReference"]).isNotEqualTo(bookedVisit.getLastApplication()?.reference)
+          assertThat(it["applicationReference"]).isEqualTo(applicationDto.reference)
           assertThat(it["prisonerId"]).isEqualTo(applicationDto.prisonerId)
           assertThat(it["prisonId"]).isEqualTo(applicationDto.prisonCode)
           assertThat(it["visitType"]).isEqualTo(applicationDto.visitType.name)

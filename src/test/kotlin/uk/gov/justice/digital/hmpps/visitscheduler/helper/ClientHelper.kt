@@ -6,6 +6,8 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
@@ -14,8 +16,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_TYPES
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
@@ -114,7 +114,7 @@ fun callVisitReserveSlotChange(
 }
 
 fun getVisitReserveSlotChangeUrl(reference: String): String {
-  return VISIT_RESERVED_SLOT_CHANGE.replace("{applicationReference}", reference)
+  return APPLICATION_RESERVED_SLOT_CHANGE.replace("{reference}", reference)
 }
 
 fun callVisitReserveSlot(
@@ -131,7 +131,7 @@ fun callVisitReserveSlot(
 }
 
 fun getVisitReserveSlotUrl(): String {
-  return VISIT_RESERVE_SLOT
+  return APPLICATION_RESERVE_SLOT
 }
 
 fun callApplicationForVisitChange(

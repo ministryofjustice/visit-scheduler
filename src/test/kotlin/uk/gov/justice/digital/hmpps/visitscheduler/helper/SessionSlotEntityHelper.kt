@@ -33,21 +33,23 @@ class SessionSlotEntityHelper(
   }
 
   fun create(
-    sessionTemplateReference: String ? = "sessionTemplateReference",
+    sessionTemplateReference: String = "sessionTemplateReference",
     prisonId: Long,
     slotDate: LocalDate = LocalDate.now().plusDays(2),
     slotTime: LocalTime = LocalTime.now().plusHours(4),
     slotEndTime: LocalTime = slotTime.plusHours(2),
   ): SessionSlot {
-    return save(
-      SessionSlot(
-        sessionTemplateReference = sessionTemplateReference,
-        prisonId = prisonId,
-        slotDate = slotDate,
-        slotTime = slotTime,
-        slotEndTime = slotEndTime,
-      ),
-    )
+    return sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate, slotTime, slotEndTime) ?: run {
+      save(
+        SessionSlot(
+          sessionTemplateReference,
+          prisonId,
+          slotDate,
+          slotTime,
+          slotEndTime,
+        ),
+      )
+    }
   }
 
   fun save(slot: SessionSlot): SessionSlot {
