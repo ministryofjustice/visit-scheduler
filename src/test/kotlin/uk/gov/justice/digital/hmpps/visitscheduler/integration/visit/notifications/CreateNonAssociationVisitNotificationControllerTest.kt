@@ -138,8 +138,8 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     responseSpec.expectStatus().isOk
-    //assertBookedEvent(listOf(primaryVisit, secondaryVisit), NotificationEventType.NON_ASSOCIATION_EVENT)
-    //verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    // assertBookedEvent(listOf(primaryVisit, secondaryVisit), NotificationEventType.NON_ASSOCIATION_EVENT)
+    // verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(4)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAll()

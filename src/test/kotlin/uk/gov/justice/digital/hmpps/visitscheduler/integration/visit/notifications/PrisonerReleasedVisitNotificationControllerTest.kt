@@ -38,6 +38,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   val prisonCode = "ABC"
   lateinit var prison1: Prison
   lateinit var sessionTemplate1: SessionTemplate
+
   @BeforeEach
   internal fun setUp() {
     prison1 = prisonEntityHelper.create(prisonCode = prisonCode)

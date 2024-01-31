@@ -155,7 +155,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(CAST(:fromTime AS TIME) is null OR (:fromDate = CURRENT_DATE AND v.sessionSlot.slotTime >= :fromTime)) AND " +
       "(CAST(:toDate AS DATE) is null OR v.sessionSlot.slotDate <= :toDate) AND " +
       "(CAST(:toTime AS TIME) is null OR (:toDate = CURRENT_DATE AND v.sessionSlot.slotEndTime <= :toTime)) " +
-      "ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime"
+      "ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
   )
   fun findBookedVisits(
     @Param("prisonerId") prisonerId: String,

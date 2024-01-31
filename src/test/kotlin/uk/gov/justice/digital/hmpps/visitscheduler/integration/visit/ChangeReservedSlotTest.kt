@@ -34,7 +34,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $APPLICATION_RESERVED_SLOT_CHANGE")
