@@ -5,11 +5,11 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
@@ -143,13 +143,13 @@ fun callApplicationForVisitChange(
   return callPut(
     dto,
     webTestClient,
-    getVisitChangeUrl(reference),
+    getApplicationChangeVisitUrl(reference),
     authHttpHeaders,
   )
 }
 
-fun getVisitChangeUrl(reference: String): String {
-  return VISIT_CHANGE.replace("{reference}", reference)
+fun getApplicationChangeVisitUrl(reference: String): String {
+  return APPLICATION_CHANGE.replace("{bookingReference}", reference)
 }
 
 fun callVisitBook(

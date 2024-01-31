@@ -23,7 +23,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationE
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
 
-@Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @ExtendWith(HmppsAuthExtension::class)
@@ -57,7 +56,7 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
             Assertions.assertThat(it["reviewType"]).isEqualTo(type.reviewType)
             Assertions.assertThat(it["visitBooked"]).isEqualTo(formatDateTimeToString(eventAudit.createTimestamp))
             Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-            Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applications.last)
+            Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.getLastApplication()?.reference)
             Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
             Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
             Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)

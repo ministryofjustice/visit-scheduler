@@ -17,7 +17,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerRestrictionHasChanged
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonPrisonCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
@@ -30,9 +32,13 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
 
   val prisonerId = "AA11BCC"
   val prisonCode = "ABC"
+  lateinit var prison1: Prison
+  lateinit var sessionTemplate1: SessionTemplate
 
   @BeforeEach
   internal fun setUp() {
+    prison1 = prisonEntityHelper.create(prisonCode = prisonCode)
+    sessionTemplate1 = sessionTemplateEntityHelper.create(prison = prison1)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
 
@@ -42,37 +48,33 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
     val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
 
-    val visit1 = visitEntityHelper.create(
+    val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit1)
 
-    visitEntityHelper.create(
+    createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
+      slotDate = LocalDate.now().minusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
 
-    visitEntityHelper.create(
+    createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
+      slotDate = LocalDate.now().minusDays(1),
       visitStatus = CANCELLED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
 
-    visitEntityHelper.create(
+    createApplicationAndVisit(
       prisonerId = "ANOTHERPRISONER",
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
 
     // When
@@ -96,30 +98,27 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
     val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
 
-    val visit1 = visitEntityHelper.create(
+    val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit1)
 
-    val visit2 = visitEntityHelper.create(
+    val visit2 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit2)
 
-    val visit3 = visitEntityHelper.create(
+    val visit3 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
+      slotDate = LocalDate.now().plusDays(3),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit3)
 
@@ -149,10 +148,9 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
     val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now().plusDays(2))
 
-    val visit1 = visitEntityHelper.create(
+    val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate,
     )
@@ -173,10 +171,9 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now().minusDays(2))
 
     eventAuditEntityHelper.create(
-      visitEntityHelper.create(
+      createApplicationAndVisit(
         prisonerId = notificationDto.prisonerNumber,
         slotDate = LocalDate.now().plusDays(1),
-        prisonCode = prisonCode,
         visitStatus = BOOKED,
         sessionTemplate = sessionTemplate,
       ),
@@ -195,10 +192,9 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
     val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now(), LocalDate.now().plusDays(2))
-    val visit1 = visitEntityHelper.create(
+    val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(4),
-      prisonCode = prisonCode,
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate,
     )
@@ -217,19 +213,17 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     // Given
     val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
 
-    val visit1 = visitEntityHelper.create(
+    val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = prisonCode,
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visit1)
 
-    val visit2 = visitEntityHelper.create(
+    val visit2 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = "AWE",
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate,
     )
@@ -258,19 +252,17 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, nonPrisonCode, IncentiveLevel.ENHANCED)
 
-    val visit1 = visitEntityHelper.create(
+    val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = "BLI",
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate,
     )
     eventAuditEntityHelper.create(visit1)
 
-    val visit2 = visitEntityHelper.create(
+    val visit2 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = "CFI",
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate,
     )

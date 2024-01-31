@@ -23,7 +23,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Release
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerHadBeenReleased
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.LocalDate
 
@@ -34,9 +36,12 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
 
   val prisonerId = "AA11BCC"
   val prisonCode = "ABC"
-
+  lateinit var prison1: Prison
+  lateinit var sessionTemplate1: SessionTemplate
   @BeforeEach
   internal fun setUp() {
+    prison1 = prisonEntityHelper.create(prisonCode = prisonCode)
+    sessionTemplate1 = sessionTemplateEntityHelper.create(prison = prison1)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
 
@@ -45,37 +50,33 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, RELEASED)
 
-    val visit1 = visitEntityHelper.create(
+    val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit1)
 
-    visitEntityHelper.create(
+    createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().minusDays(1),
-      prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
 
-    visitEntityHelper.create(
+    createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().minusDays(1),
-      prisonCode = notificationDto.prisonCode,
       visitStatus = CANCELLED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
 
-    visitEntityHelper.create(
+    createApplicationAndVisit(
       prisonerId = "ANOTHERPRISONER",
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
 
     // When
@@ -98,30 +99,27 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, RELEASED)
 
-    val visit1 = visitEntityHelper.create(
+    val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
-      prisonCode = notificationDto.prisonCode,
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit1)
 
-    val visit2 = visitEntityHelper.create(
+    val visit2 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      prisonCode = notificationDto.prisonCode,
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit2)
 
-    val visit3 = visitEntityHelper.create(
+    val visit3 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      prisonCode = notificationDto.prisonCode,
+      slotDate = LocalDate.now().plusDays(3),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit3)
 

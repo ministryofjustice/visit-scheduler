@@ -103,8 +103,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT v.*  FROM visit v" +
-      "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
-      "  JOIN application a on a.id = vta.application_id " +
+      "  JOIN application a on a.visit_id = v.id " +
       "  WHERE a.reference = :applicationReference",
     nativeQuery = true,
   )
@@ -112,8 +111,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT COUNT(*) > 0  FROM visit v" +
-      "  JOIN visits_to_applications vta ON vta.visit_id = v.id " +
-      "  JOIN application a on a.id = vta.application_id " +
+      "  JOIN application a on a.visit_id = v.id " +
       "  WHERE a.reference = :applicationReference AND v.visit_status = 'BOOKED'",
     nativeQuery = true,
   )
@@ -153,14 +151,19 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "WHERE v.visitStatus = 'BOOKED' AND " +
       "(v.prisonerId = :prisonerId) AND " +
       "(:prisonCode is null or v.prison.code = :prisonCode) AND " +
-      "(v.sessionSlot.slotDate >= :#{#startDateTime.toLocalDate()} AND v.sessionSlot.slotTime >= :#{#startDateTime.toLocalTime()}) AND " +
-      "(:#{#endDateTime} is null OR (v.sessionSlot.slotDate <= :#{#endDateTime.toLocalDate()} AND v.sessionSlot.slotEndTime < :#{#endDateTime.toLocalTime()})) ",
+      "(v.sessionSlot.slotDate >= :fromDate) AND " +
+      "(CAST(:fromTime AS TIME) is null OR v.sessionSlot.slotTime >= :fromTime) AND " +
+      "(CAST(:toDate AS DATE) is null OR v.sessionSlot.slotDate <= :toDate) AND " +
+      "(CAST(:toTime AS TIME) is null OR v.sessionSlot.slotEndTime <= :toTime) " +
+      "ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime"
   )
-  fun getVisits(
+  fun findBookedVisits(
     @Param("prisonerId") prisonerId: String,
     @Param("prisonCode") prisonCode: String? = null,
-    @Param("startDateTime") startDateTime: LocalDateTime,
-    @Param("endDateTime") endDateTime: LocalDateTime? = null,
+    fromDate: LocalDate,
+    fromTime: LocalTime?,
+    toDate: LocalDate?,
+    toTime: LocalTime?,
   ): List<Visit>
 
   @Query(

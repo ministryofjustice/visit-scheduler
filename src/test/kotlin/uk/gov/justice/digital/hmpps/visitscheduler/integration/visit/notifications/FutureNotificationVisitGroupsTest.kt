@@ -12,7 +12,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.BOOKED_V
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import java.time.LocalDate
@@ -24,41 +26,42 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
   val primaryPrisonerId = "AA11BCC"
   val secondaryPrisonerId = "XX11YZZ"
   val prisonCode = "ABC"
+  lateinit var prison1: Prison
+  lateinit var sessionTemplate1: SessionTemplate
 
   @BeforeEach
   internal fun setUp() {
+    prison1 = prisonEntityHelper.create(prisonCode = prisonCode)
+    sessionTemplate1 = sessionTemplateEntityHelper.create(prison = prison1)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
 
   @Test
   fun `when notification groups is requested for given prisons`() {
     // Given
-    val visitPrimary = visitEntityHelper.create(
+    val visitPrimary = createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
-      prisonCode = prisonCode,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visitPrimary, type = BOOKED_VISIT)
     eventAuditEntityHelper.create(visitPrimary, type = UPDATED_VISIT, actionedBy = "IUpdatedIT")
     eventAuditEntityHelper.create(visitPrimary, type = CHANGING_VISIT, actionedBy = "IChangeSomething")
 
-    val visitSecondary = visitEntityHelper.create(
+    val visitSecondary = createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
-      slotDate = LocalDate.now().plusDays(2),
+      slotDate = visitPrimary.sessionSlot.slotDate,
       visitStatus = BOOKED,
-      prisonCode = prisonCode,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    val visitOther = visitEntityHelper.create(
+    val visitOther = createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
-      slotDate = LocalDate.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(4),
       visitStatus = BOOKED,
-      prisonCode = prisonCode,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visitOther)
 
@@ -79,7 +82,7 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
       Assertions.assertThat(affectedVisits).hasSize(2)
       with(affectedVisits[0]) {
         Assertions.assertThat(prisonerNumber).isEqualTo(visitPrimary.prisonerId)
-        Assertions.assertThat(visitDate).isEqualTo(visitPrimary.sessionSlot.slotDate.atTime(visitPrimary.sessionSlot.slotTime))
+        Assertions.assertThat(visitDate).isEqualTo(visitPrimary.sessionSlot.slotDate)
         Assertions.assertThat(bookingReference).isEqualTo(visitPrimary.reference)
         Assertions.assertThat(this.bookedByUserName).isEqualTo("IUpdatedIT")
       }

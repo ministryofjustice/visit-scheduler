@@ -132,7 +132,7 @@ class ApplicationService(
 
     visit?.let {
       // add even though it's not complete
-      visit.applications.add(applicationEntity)
+      visit.addApplication(applicationEntity)
     }
 
     val applicationDto = applicationDtoBuilder.build(applicationEntity)
@@ -145,7 +145,7 @@ class ApplicationService(
   fun changeIncompleteApplication(applicationReference: String, changeApplicationDto: ChangeApplicationDto): ApplicationDto {
     val application = getApplicationEntity(applicationReference)
 
-    changeApplicationDto.sessionDate?.let {
+    changeApplicationDto.sessionDate.let {
       val sessionTemplateReference = changeApplicationDto.sessionTemplateReference
       val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
       val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
@@ -209,11 +209,7 @@ class ApplicationService(
     newSessionSlot: SessionSlot,
     newRestriction: VisitRestriction,
   ): Boolean {
-    return visit == null ||
-      (
-        visit.visitRestriction != newRestriction ||
-          visit.sessionSlotId != newSessionSlot.id
-        )
+    return visit.visitRestriction != newRestriction || visit.sessionSlotId != newSessionSlot.id
   }
 
   @Transactional(readOnly = true)
@@ -239,10 +235,6 @@ class ApplicationService(
 
   fun isApplicationCompleted(reference: String): Boolean {
     return applicationRepo.isApplicationCompleted(reference)
-  }
-
-  fun getApplication(reference: String): ApplicationDto {
-    return applicationDtoBuilder.build(getApplicationEntity(reference))
   }
 
   fun getApplicationEntity(applicationReference: String): Application {
@@ -311,7 +303,7 @@ class ApplicationService(
         errors.add("Given session ${createApplicationDto.sessionTemplateReference} has a different prison from the original booking ($bookingReference) prison ${sessionTemplate.prisonCode} != ${visit.prison.code} ")
       }
     } ?: {
-      if (visit == null) errors.add("Visit booking reference $bookingReference not found")
+      errors.add("Visit booking reference $bookingReference not found")
     }
 
     if (errors.isNotEmpty()) {

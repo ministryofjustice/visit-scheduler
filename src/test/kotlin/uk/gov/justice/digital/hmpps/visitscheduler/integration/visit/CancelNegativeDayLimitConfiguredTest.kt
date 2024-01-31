@@ -34,12 +34,11 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
         OutcomeStatus.CANCELLATION,
         "No longer joining.",
       ),
-      CancelVisitTest.cancelledByByUser,
+      CancelVisitTest.CANCELLED_BY_USER,
       NOT_KNOWN,
     )
     // Given
-    val visitStart = LocalDateTime.now().plusDays(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createContact = true)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
@@ -63,7 +62,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
         OutcomeStatus.CANCELLATION,
         "No longer joining.",
       ),
-      CancelVisitTest.cancelledByByUser,
+      CancelVisitTest.CANCELLED_BY_USER,
       NOT_KNOWN,
     )
     // Given

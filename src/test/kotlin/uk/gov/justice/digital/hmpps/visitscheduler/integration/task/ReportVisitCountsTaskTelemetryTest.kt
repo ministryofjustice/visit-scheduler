@@ -33,11 +33,10 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
   private lateinit var reportingTask: ReportingTask
 
   @Autowired
-  private  lateinit var sessionRepository: TestSessionTemplateRepository
+  private lateinit var sessionRepository: TestSessionTemplateRepository
 
   @Autowired
-  private  lateinit var prisonRepository: PrisonRepository
-
+  private lateinit var prisonRepository: PrisonRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -54,7 +53,7 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
     // Given
     prisonEntityHelper.create(sessionTemplate.prison.code, activePrison = true, excludeDates = emptyList())
 
-    //When
+    // When
     val sessionsReport = reportingTask.getVisitCountsReportByDay()[reportDate]!!
 
     // Then
@@ -73,7 +72,7 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
   fun `when active prisons with sessions report date and prison and session details with visit counts are sent`() {
     // Given
 
-    //Default session template and prison must be removed
+    // Default session template and prison must be removed
     sessionRepository.deleteAll()
     prisonRepository.deleteAll()
 
@@ -87,7 +86,7 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
     // When
     val sessionsReport = reportingTask.getVisitCountsReportByDay()[reportDate]!!
 
-    //Then
+    // Then
     Assertions.assertThat(sessionsReport.size).isEqualTo(1)
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-counts-report"), any(), isNull())

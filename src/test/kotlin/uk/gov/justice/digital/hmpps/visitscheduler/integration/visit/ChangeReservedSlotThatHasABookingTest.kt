@@ -29,8 +29,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
-import java.time.LocalDate
-import java.time.LocalDateTime
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $VISIT_RESERVED_SLOT_CHANGE")
@@ -52,10 +50,6 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
   private lateinit var newApplication: Application
 
-  companion object {
-    val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
-  }
-
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
@@ -68,7 +62,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     applicationEntityHelper.save(oldApplication)
 
     oldBooking = visitEntityHelper.create(sessionTemplate = sessionTemplate)
-    oldBooking.applications.add(oldApplication)
+    oldBooking.addApplication(oldApplication)
 
     val newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN
 
@@ -78,7 +72,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(newApplication)
 
-    oldBooking.applications.add(newApplication)
+    oldBooking.addApplication(newApplication)
   }
 
   @Test
@@ -156,10 +150,6 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
   private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto {
     return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
-  }
-
-  private fun getApplication(dto: ApplicationDto): Application? {
-    return testApplicationRepository.findByReference(dto.reference)
   }
 
   private fun getVisit(dto: ApplicationDto): Visit? {

@@ -74,7 +74,7 @@ class VisitDtoBuilderTest() {
     Assertions.assertThat(visitDto.visitRestriction).isEqualTo(visit.visitRestriction)
     Assertions.assertThat(visitDto.visitStatus).isEqualTo(visit.visitStatus)
     Assertions.assertThat(visitDto.visitRoom).isEqualTo(visit.visitRoom)
-    Assertions.assertThat(visitDto.applicationReference).isEqualTo(visit.applications.last.reference)
+    Assertions.assertThat(visitDto.applicationReference).isEqualTo(visit.getLastApplication()?.reference)
     Assertions.assertThat(visitDto.outcomeStatus).isEqualTo(visit.outcomeStatus)
     Assertions.assertThat(visitDto.prisonCode).isEqualTo(visit.prison.code)
     Assertions.assertThat(visitDto.prisonerId).isEqualTo(visit.prisonerId)
@@ -86,7 +86,7 @@ class VisitDtoBuilderTest() {
     Assertions.assertThat(visitDto.createdTimestamp).isNotNull()
     Assertions.assertThat(visitDto.modifiedTimestamp).isNotNull()
 
-    visit.visitContact?.let {
+    visit.visitContact.let {
       Assertions.assertThat(visitDto.visitContact?.name).isEqualTo(it.name)
       Assertions.assertThat(visitDto.visitContact?.telephone).isEqualTo(it.telephone)
     }
@@ -153,7 +153,7 @@ class VisitDtoBuilderTest() {
 
     doReturn(reference).`when`(spyVisit).reference
 
-    visit.applications.add(ApplicationEntityHelper.createApplication(spyVisit))
+    visit.addApplication(ApplicationEntityHelper.createApplication(spyVisit))
 
     return spyVisit
   }

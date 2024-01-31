@@ -51,7 +51,6 @@ import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
-@Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @ExtendWith(HmppsAuthExtension::class)
@@ -65,7 +64,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     protected val TEST_END_POINT = "/migrate-visits"
 
     @JvmStatic
-    protected val PRISON_CODE = "MDI"
+    protected val PRISON_CODE = "MGV"
 
     @JvmStatic
     protected val CANCELLED_BY_BY_USER = "user-2"
@@ -211,7 +210,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         Assertions.assertThat(it["visitStart"]).isEqualTo(visitStart)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applications.last().reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.getLastApplication()?.reference)
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(visit.outcomeStatus!!.name)
       },
       isNull(),
@@ -219,7 +218,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
 
     val eventsMap = mutableMapOf(
       "reference" to visit.reference,
-      "applicationReference" to visit.applications.last().reference,
+      "applicationReference" to visit.getLastApplication()?.reference,
       "prisonerId" to visit.prisonerId,
       "prisonId" to visit.prison.code,
       "visitType" to visit.visitType.name,

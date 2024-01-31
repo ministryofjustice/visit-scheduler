@@ -79,7 +79,7 @@ class MigrateVisitService(
     val shouldMigrateWithSessionTemplate = shouldMigrateWithSessionMapping(migrateVisitRequest)
     val prison: Prison
     val visitRoom: String
-    var sessionSlot: SessionSlot ? = null
+    val sessionSlot: SessionSlot
 
     if (shouldMigrateWithSessionTemplate) {
       val sessionTemplate = migrationSessionTemplateMatcher.getMatchingSessionTemplate(migrateVisitRequest)
@@ -107,7 +107,7 @@ class MigrateVisitService(
 
     val applicationEntity: Application = createApplication(migrateVisitRequest, prison, sessionSlot, actionedBy)
     val visitEntity = createVisit(migrateVisitRequest, prison, visitRoom, sessionSlot, outcomeStatus, actionedBy)
-    visitEntity.applications.add(applicationEntity)
+    visitEntity.addApplication(applicationEntity)
 
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
@@ -264,7 +264,7 @@ class MigrateVisitService(
       EventAudit(
         actionedBy = cancelVisitDto.actionedBy,
         bookingReference = visitEntity.reference,
-        applicationReference = visitEntity.applications.last.reference,
+        applicationReference = visitEntity.getLastCompletedApplication()?.reference,
         sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
         type = CANCELLED_VISIT,
         applicationMethodType = NOT_KNOWN,
@@ -304,7 +304,7 @@ class MigrateVisitService(
       "visitRestriction" to visitEntity.visitRestriction.name,
       "visitStart" to sessionSlotService.getSessionTimeAndDateString(visitEntity.sessionSlot.slotDate, visitEntity.sessionSlot.slotTime),
       "visitStatus" to visitEntity.visitStatus.name,
-      "applicationReference" to visitEntity.applications.last.reference,
+      "applicationReference" to (visitEntity.getLastCompletedApplication()?.reference ?: ""),
     )
   }
 

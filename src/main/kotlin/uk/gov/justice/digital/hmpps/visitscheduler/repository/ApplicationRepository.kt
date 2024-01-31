@@ -37,7 +37,7 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
   fun findApplication(applicationReference: String): Application?
 
   @Query(
-    "SELECT a.completed FROM Application a WHERE a.reference = :applicationReference",
+    "SELECT count(a)>0 FROM Application a WHERE a.completed = true AND a.reference = :applicationReference",
   )
   fun isApplicationCompleted(applicationReference: String): Boolean
 

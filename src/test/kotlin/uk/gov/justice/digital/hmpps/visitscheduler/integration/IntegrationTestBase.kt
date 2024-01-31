@@ -119,7 +119,7 @@ abstract class IntegrationTestBase {
   fun resetStubs() {
     prisonApiMockServer.resetAll()
     prisonOffenderSearchMockServer.resetAll()
-    sessionTemplate = sessionTemplateEntityHelper.create()
+    sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "DFT")
     startDate = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate)
   }
 
@@ -231,7 +231,7 @@ abstract class IntegrationTestBase {
     return sessionSlot.slotDate.format(DateTimeFormatter.ISO_DATE_TIME)
   }
 
-  fun createApplicationAndVisit(prisonerId: String? = null, sessionTemplate: SessionTemplate, visitStatus: VisitStatus ? = VisitStatus.BOOKED, slotDate: LocalDate? = null): Visit {
+  fun createApplicationAndVisit(prisonerId: String? = "testPrisonerId", sessionTemplate: SessionTemplate, visitStatus: VisitStatus ? = VisitStatus.BOOKED, slotDate: LocalDate? = null): Visit {
     val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }

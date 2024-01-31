@@ -5,7 +5,6 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
@@ -50,24 +49,24 @@ class ApplicationEntityHelper(
   }
 
   fun create(
-    prisonerId: String? = "FF0000AA",
-    prisonCode: String? = "MDI",
+    prisonerId: String = "FF0000AA",
     slotDate: LocalDate = LocalDate.of((LocalDate.now().year + 1), 11, 1),
-    visitStart: LocalTime = LocalTime.now(),
-    visitEnd: LocalTime = visitStart.plusHours(1),
-    visitType: VisitType = SOCIAL,
+    sessionTemplate: SessionTemplate,
+    visitStart: LocalTime = sessionTemplate.startTime,
+    visitEnd: LocalTime = sessionTemplate.endTime,
     visitRestriction: VisitRestriction = OPEN,
     activePrison: Boolean = true,
-    sessionTemplate: SessionTemplate,
+    prisonCode: String? = sessionTemplate.prison.code,
+    visitType: VisitType = sessionTemplate.visitType,
     reservedSlot: Boolean = true,
     completed: Boolean = true,
   ): Application {
-    val prison = prisonEntityHelper.create(prisonCode?: "MDI", activePrison)
+    val prison = prisonEntityHelper.create(prisonCode ?: "MDI", activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
 
     return applicationRepo.saveAndFlush(
       Application(
-        prisonerId = prisonerId?: "FF0000AA",
+        prisonerId = prisonerId,
         prisonId = prison.id,
         prison = prison,
         sessionSlotId = sessionSlot.id,

@@ -223,7 +223,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     // existing visit for excludeDate in same prison
     val bookedVisitForSamePrison = createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
-    // existing visit for excludeDate in different prison (MDI)
+    // existing visit for excludeDate in different prison
     createApplicationAndVisit(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
     // cancelled visit for excludeDate in same prison

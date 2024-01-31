@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
@@ -41,6 +42,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationE
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
+import java.lang.reflect.InvocationTargetException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -86,7 +88,13 @@ class VisitService(
 
     val bookedVisitDto = visitDtoBuilder.build(booking)
 
-    eventAuditRepository.updateVisitApplication(application.reference, bookingRequestDto.applicationMethodType)
+    try {
+      eventAuditRepository.updateVisitApplication(application.reference, bookingRequestDto.applicationMethodType)
+    } catch (e: InvocationTargetException) {
+      val message = "Audit log does not exists for $application.reference"
+      LOG.error(message)
+      throw ItemNotFoundException(message, e)
+    }
 
     saveEventAudit(
       bookingRequestDto.actionedBy,
@@ -135,8 +143,7 @@ class VisitService(
     val booking = visitRepository.saveAndFlush(notSavedBooking)
 
     if (hasNotBeenAddedToBooking(booking, application)) {
-      booking.applications.add(application)
-      application.visit = booking
+      booking.addApplication(application)
     }
 
     with(application.visitContact!!) {
@@ -165,7 +172,7 @@ class VisitService(
   }
 
   private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
-    return if (booking.applications.isEmpty()) true else booking.applications.any { it.id == application.id }
+    return if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
@@ -229,9 +236,21 @@ class VisitService(
       prisonCode = visitFilter.prisonCode,
       visitStatusList = visitFilter.visitStatusList.ifEmpty { null },
       slotStartDate = visitFilter.startDateTime?.toLocalDate(),
-      slotStartTime = visitFilter.startDateTime?.toLocalTime(),
+      slotStartTime = visitFilter.startDateTime?.let {
+          if (visitFilter.startDateTime.toLocalDate() > LocalDate.now()) {
+            visitFilter.startDateTime.toLocalTime()
+          } else {
+            null
+          }
+      },
       slotEndDate = visitFilter.endDateTime?.toLocalDate(),
-      slotEndTime = visitFilter.endDateTime?.toLocalTime(),
+      slotEndTime = visitFilter.endDateTime?.let {
+        if (visitFilter.endDateTime.toLocalDate() > LocalDate.now()) {
+          visitFilter.endDateTime.toLocalTime()
+        } else {
+          null
+        }
+      },
     )
   }
 
@@ -392,6 +411,16 @@ class VisitService(
   }
 
   fun getFutureVisitsBy(prisonerNumber: String, prisonCode: String?, startDateTime: LocalDateTime = LocalDateTime.now(), endDateTime: LocalDateTime ? = null): List<VisitDto> {
-    return this.visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
+    val startTime = if (startDateTime.toLocalDate() > LocalDate.now()) {
+      startDateTime.toLocalTime()
+    } else null
+
+    val endTime = endDateTime?.let {
+      if (endDateTime.toLocalDate() > LocalDate.now()) {
+        endDateTime.toLocalTime()
+      } else null
+    }
+
+    return this.visitRepository.findBookedVisits(prisonerNumber, prisonCode, startDateTime.toLocalDate(), startTime, endDateTime?.toLocalDate(), endTime).map { visitDtoBuilder.build(it) }
   }
 }

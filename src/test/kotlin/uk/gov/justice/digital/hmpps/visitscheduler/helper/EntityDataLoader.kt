@@ -146,8 +146,7 @@ class VisitEntityHelper(
       prisonCode = application.prison.code,
     )
 
-    visit.applications.add(application)
-    application.visit = visit
+    visit.addApplication(application)
 
     with(application.visitContact!!) {
       visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
@@ -187,6 +186,7 @@ class VisitEntityHelper(
     activePrison: Boolean = sessionTemplate.prison.active,
     outcomeStatus: OutcomeStatus? = null,
     createApplication: Boolean = true,
+    createContact: Boolean = false,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
@@ -204,19 +204,25 @@ class VisitEntityHelper(
     )
 
     notSaved.outcomeStatus = outcomeStatus
+
+    val savedVisit = visitRepository.saveAndFlush(notSaved)
+
+    if (createContact) {
+      createContact(visit = savedVisit)
+    }
+
     return if (createApplication) {
-      val savedVisit = visitRepository.saveAndFlush(notSaved)
-      savedVisit.applications.add(applicationEntityHelper.create(savedVisit))
+      savedVisit.addApplication(applicationEntityHelper.create(savedVisit))
       savedVisit
     } else {
-      visitRepository.saveAndFlush(notSaved)
+      savedVisit
     }
   }
 
   fun createContact(
     visit: Visit,
-    name: String,
-    phone: String,
+    name: String = "bob",
+    phone: String = "0123456789",
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,
@@ -294,7 +300,7 @@ class EventAuditEntityHelper(
   ): EventAudit {
     return create(
       reference = visit.reference,
-      applicationReference = visit.applications.last.reference,
+      applicationReference = visit.getLastApplication()?.reference ?: "",
       sessionTemplateReference = visit.sessionSlot.sessionTemplateReference,
       actionedBy = actionedBy,
       type = type,
