@@ -54,7 +54,7 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
             Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
             Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
             Assertions.assertThat(it["reviewType"]).isEqualTo(type.reviewType)
-            Assertions.assertThat(it["visitBooked"]).isEqualTo(formatDateTimeToString(eventAudit.createTimestamp))
+            Assertions.assertThat(it["visitBooked"]).isEqualTo(formatDateToString(eventAudit.createTimestamp))
             Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
             Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.getLastApplication()?.reference)
             Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)

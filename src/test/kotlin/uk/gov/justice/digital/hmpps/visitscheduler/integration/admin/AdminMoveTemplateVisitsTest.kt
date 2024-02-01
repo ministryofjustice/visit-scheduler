@@ -72,8 +72,8 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     Assertions.assertThat(updateCount).isEqualTo(1)
     Assertions.assertThat(updatedVisit!!.sessionSlot.sessionTemplateReference).isEqualTo(toSession.reference)
-    Assertions.assertThat(updatedVisit.sessionSlot.slotTime).isEqualTo(toSession.startTime)
-    Assertions.assertThat(updatedVisit.sessionSlot.slotEndTime).isEqualTo(toSession.endTime)
+    Assertions.assertThat(updatedVisit.sessionSlot.slotStart.toLocalTime()).isEqualTo(toSession.startTime)
+    Assertions.assertThat(updatedVisit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(toSession.endTime)
     Assertions.assertThat(updatedVisit.sessionSlot.slotDate).isEqualTo(visitDate)
   }
 
@@ -214,8 +214,8 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     Assertions.assertThat(updateCount).isEqualTo(1)
     Assertions.assertThat(updatedVisit!!.sessionSlot.sessionTemplateReference).isEqualTo(toSession.reference)
-    Assertions.assertThat(updatedVisit.sessionSlot.slotTime).isEqualTo(toSession.startTime)
-    Assertions.assertThat(updatedVisit.sessionSlot.slotEndTime).isEqualTo(toSession.endTime)
+    Assertions.assertThat(updatedVisit.sessionSlot.slotStart.toLocalTime()).isEqualTo(toSession.startTime)
+    Assertions.assertThat(updatedVisit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(toSession.endTime)
     Assertions.assertThat(updatedVisit.sessionSlot.slotDate).isEqualTo(visitDate)
   }
 
@@ -245,8 +245,8 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     Assertions.assertThat(updateCount).isEqualTo(1)
     Assertions.assertThat(updatedVisit!!.sessionSlot.sessionTemplateReference).isEqualTo(toSession.reference)
-    Assertions.assertThat(updatedVisit.sessionSlot.slotTime).isEqualTo(toSession.startTime)
-    Assertions.assertThat(updatedVisit.sessionSlot.slotEndTime).isEqualTo(toSession.endTime)
+    Assertions.assertThat(updatedVisit.sessionSlot.slotStart.toLocalTime()).isEqualTo(toSession.startTime)
+    Assertions.assertThat(updatedVisit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(toSession.endTime)
     Assertions.assertThat(updatedVisit.sessionSlot.slotDate).isEqualTo(visitDate)
   }
 
@@ -307,8 +307,8 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     Assertions.assertThat(updateCount).isEqualTo(1)
     Assertions.assertThat(updatedVisit!!.sessionSlot.sessionTemplateReference).isEqualTo(toSession.reference)
-    Assertions.assertThat(updatedVisit.sessionSlot.slotTime).isEqualTo(toSession.startTime)
-    Assertions.assertThat(updatedVisit.sessionSlot.slotEndTime).isEqualTo(toSession.endTime)
+    Assertions.assertThat(updatedVisit.sessionSlot.slotStart.toLocalTime()).isEqualTo(toSession.startTime)
+    Assertions.assertThat(updatedVisit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(toSession.endTime)
     Assertions.assertThat(updatedVisit.sessionSlot.slotDate).isEqualTo(visitDate)
   }
 
@@ -350,13 +350,13 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     Assertions.assertThat(updateCount).isEqualTo(2)
     Assertions.assertThat(updatedVisit1!!.sessionSlot.sessionTemplateReference).isEqualTo(toSession.reference)
-    Assertions.assertThat(updatedVisit1.sessionSlot.slotTime).isEqualTo(toSession.startTime)
-    Assertions.assertThat(updatedVisit1.sessionSlot.slotEndTime).isEqualTo(toSession.endTime)
+    Assertions.assertThat(updatedVisit1.sessionSlot.slotStart.toLocalTime()).isEqualTo(toSession.startTime)
+    Assertions.assertThat(updatedVisit1.sessionSlot.slotEnd.toLocalTime()).isEqualTo(toSession.endTime)
     Assertions.assertThat(updatedVisit1.sessionSlot.slotDate).isEqualTo(visit1Date)
 
     Assertions.assertThat(updatedVisit2!!.sessionSlot.sessionTemplateReference).isEqualTo(toSession.reference)
-    Assertions.assertThat(updatedVisit2.sessionSlot.slotTime).isEqualTo(toSession.startTime)
-    Assertions.assertThat(updatedVisit2.sessionSlot.slotEndTime).isEqualTo(toSession.endTime)
+    Assertions.assertThat(updatedVisit2.sessionSlot.slotStart.toLocalTime()).isEqualTo(toSession.startTime)
+    Assertions.assertThat(updatedVisit2.sessionSlot.slotEnd.toLocalTime()).isEqualTo(toSession.endTime)
     Assertions.assertThat(updatedVisit2.sessionSlot.slotDate).isEqualTo(visit2Date)
   }
 
@@ -841,14 +841,14 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
 
     Assertions.assertThat(updateCount).isEqualTo(1)
     Assertions.assertThat(updatedFutureVisit!!.sessionSlot.sessionTemplateReference).isEqualTo(toSession.reference)
-    Assertions.assertThat(updatedFutureVisit.sessionSlot.slotTime).isEqualTo(toSession.startTime)
-    Assertions.assertThat(updatedFutureVisit.sessionSlot.slotEndTime).isEqualTo(toSession.endTime)
+    Assertions.assertThat(updatedFutureVisit.sessionSlot.slotStart.toLocalTime()).isEqualTo(toSession.startTime)
+    Assertions.assertThat(updatedFutureVisit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(toSession.endTime)
     Assertions.assertThat(updatedFutureVisit.sessionSlot.slotDate).isEqualTo(futureVisitDate)
 
     // past visit should not be updated
     Assertions.assertThat(pastVisitPostMove!!.sessionSlot.sessionTemplateReference).isEqualTo(fromSession.reference)
-    Assertions.assertThat(pastVisitPostMove.sessionSlot.slotTime).isEqualTo(fromSession.startTime)
-    Assertions.assertThat(pastVisitPostMove.sessionSlot.slotEndTime).isEqualTo(fromSession.endTime)
+    Assertions.assertThat(pastVisitPostMove.sessionSlot.slotStart.toLocalTime()).isEqualTo(fromSession.startTime)
+    Assertions.assertThat(pastVisitPostMove.sessionSlot.slotEnd.toLocalTime()).isEqualTo(fromSession.endTime)
     Assertions.assertThat(pastVisitPostMove.sessionSlot.slotDate).isEqualTo(pastVisitDate)
   }
 }

@@ -33,7 +33,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
-import java.time.LocalDateTime
 
 const val VISIT_CONTROLLER_PATH: String = "/visits"
 const val GET_VISIT_HISTORY_CONTROLLER_PATH: String = "$VISIT_CONTROLLER_PATH/{reference}/history"
@@ -263,26 +262,20 @@ class VisitController(
       example = "MDI",
     )
     prisonCode: String?,
-    @RequestParam(value = "startDateTime", required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    @RequestParam(value = "visitStartDate", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @Parameter(
       description = "Filter results by visits that start on or after the given timestamp",
-      example = "2021-11-03T09:00:00",
+      example = "2021-11-03",
     )
-    startDateTime: LocalDateTime?,
-    @RequestParam(value = "endDateTime", required = false)
-    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+    visitStartDate: LocalDate?,
+    @RequestParam(value = "visitEndDate", required = false)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     @Parameter(
-      description = "Filter results by visits that start on or before the given timestamp",
-      example = "2021-11-03T09:00:00",
+      description = "Filter results by visits that end on or before the given timestamp",
+      example = "2021-11-03",
     )
-    endDateTime: LocalDateTime?,
-    @RequestParam(value = "visitorId", required = false)
-    @Parameter(
-      description = "Filter results by visitor (contact id)",
-      example = "12322",
-    )
-    visitorId: Long?,
+    visitEndDate: LocalDate?,
     @RequestParam(value = "visitStatus", required = true)
     @Parameter(
       description = "Filter results by visit status",
@@ -306,9 +299,8 @@ class VisitController(
       VisitFilter(
         prisonerId = prisonerId?.trim(),
         prisonCode = prisonCode?.trim(),
-        startDateTime = startDateTime,
-        endDateTime = endDateTime,
-        visitorId = visitorId,
+        visitStartDate = visitStartDate,
+        visitEndDate = visitEndDate,
         visitStatusList = visitStatusList,
       ),
       page,

@@ -20,14 +20,17 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
+import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $APPLICATION_RESERVED_SLOT_CHANGE")
@@ -41,44 +44,41 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   @Autowired
   private lateinit var testVisitRepository: TestVisitRepository
 
+  @Autowired
+  private lateinit var testApplicationRepository: TestApplicationRepository
+
   private lateinit var oldBooking: Visit
   private lateinit var oldApplication: Application
 
   private lateinit var newApplication: Application
+  private lateinit var newRestriction: VisitRestriction
 
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    oldApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = true)
-    applicationEntityHelper.createContact(application = oldApplication, name = "Jane Doe", phone = "01234 098765")
-    applicationEntityHelper.createVisitor(application = oldApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = oldApplication, name = "OTHER", details = "Some Text")
+    oldBooking = createApplicationAndVisit("test", sessionTemplate, BOOKED, LocalDate.now())
+    oldApplication = oldBooking.getLastApplication()!!
 
-    applicationEntityHelper.save(oldApplication)
-
-    oldBooking = visitEntityHelper.create(sessionTemplate = sessionTemplate)
-    oldBooking.addApplication(oldApplication)
-
-    val newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN
-
-    newApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = true, visitRestriction = newRestriction)
-    applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348 811539")
+    newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN
+    newApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = false, reservedSlot = true, visitRestriction = newRestriction)
+    applicationEntityHelper.createContact(application = newApplication, name = "Aled Wyn Evans", phone = "01348 811539")
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some Text")
-    applicationEntityHelper.save(newApplication)
+    newApplication = applicationEntityHelper.save(newApplication)
 
     oldBooking.addApplication(newApplication)
+    visitEntityHelper.save(oldBooking)
   }
 
   @Test
-  fun `change reserved slot by application reference - start date has changed back to match booked slot`() {
+  fun `change reserved slot by application reference - visit restriction has now changed back to original booking and application is not Reserved`() {
     // Given
 
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldBooking.sessionSlot.slotDate,
-      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitRestriction = oldBooking.visitRestriction,
     )
 
     val applicationReference = newApplication.reference
@@ -89,25 +89,26 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     // Then
     val returnResult = getResult(responseSpec)
     val applicationDto = getApplicationDto(returnResult)
-    val visit = getVisit(applicationDto)!!
+    val visit = getVisit(applicationDto.reference)
 
+    Assertions.assertThat(visit).isNotNull
     Assertions.assertThat(applicationDto.reserved).isFalse()
 
     // And
-    assertTelemetry(applicationDto, visit)
+    assertTelemetry(applicationDto, visit!!)
   }
 
   @Test
-  fun `change reserved slot by application reference - start restriction has changed back to match booked slot`() {
+  fun `change reserved slot by application reference - visit restriction has still changed from original booking and application is Reserved`() {
     // Given
+
     val updateRequest = ChangeApplicationDto(
-      visitRestriction = oldBooking.visitRestriction,
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
-      sessionDate = oldApplication.sessionSlot.slotDate,
-      visitContact = ContactDto("John Smith", "01234 567890"),
+      sessionDate = oldBooking.sessionSlot.slotDate,
+      visitRestriction = newApplication.restriction,
     )
 
-    val applicationReference = oldApplication.reference
+    val applicationReference = newApplication.reference
 
     // When
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
@@ -115,11 +116,62 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     // Then
     val returnResult = getResult(responseSpec)
     val applicationDto = getApplicationDto(returnResult)
-    val visit = getVisit(applicationDto)!!
+    val visit = getVisit(applicationDto.reference)
+
+    Assertions.assertThat(visit).isNotNull
+    Assertions.assertThat(applicationDto.reserved).isTrue()
+
+    // And
+    assertTelemetry(applicationDto, visit!!)
+  }
+
+  @Test
+  fun `change reserved slot by application reference - session slot has now change back to original booking and application is not Reserved`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
+      sessionDate = oldApplication.sessionSlot.slotDate,
+      visitRestriction = oldBooking.visitRestriction,
+    )
+
+    val applicationReference = newApplication.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+    val applicationDto = getApplicationDto(returnResult)
+    val visit = getVisit(applicationDto.reference)
+    Assertions.assertThat(visit).isNotNull
 
     Assertions.assertThat(applicationDto.reserved).isFalse()
     // And
-    assertTelemetry(applicationDto, visit)
+    assertTelemetry(applicationDto, visit!!)
+  }
+
+  @Test
+  fun `change reserved slot by application reference - session slot has still changed from original booking and application is Reserved`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = newApplication.sessionSlot.sessionTemplateReference!!,
+      sessionDate = newApplication.sessionSlot.slotDate,
+    )
+
+    val applicationReference = newApplication.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+    val applicationDto = getApplicationDto(returnResult)
+    val visit = getVisit(applicationDto.reference)
+    Assertions.assertThat(visit).isNotNull
+
+    Assertions.assertThat(applicationDto.reserved).isTrue()
+    // And
+    assertTelemetry(applicationDto, visit!!)
   }
 
   // TODDO create tests similar to ChangeReservedSlot
@@ -131,7 +183,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
       org.mockito.kotlin.check {
         Assertions.assertThat(it["bookingReference"]).isEqualTo(visit.reference)
         Assertions.assertThat(it["applicationReference"]).isEqualTo(applicationDto.reference)
-        Assertions.assertThat(it["reservedSlot"]).isEqualTo(applicationDto.reserved)
+        Assertions.assertThat(it["reservedSlot"]).isEqualTo(applicationDto.reserved.toString())
       },
       isNull(),
     )
@@ -148,7 +200,11 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
   }
 
-  private fun getVisit(dto: ApplicationDto): Visit? {
-    return testVisitRepository.findByApplicationReference(dto.reference)
+  private fun getVisit(bookingReference: String): Visit? {
+    return testVisitRepository.findByApplicationReference(bookingReference)
+  }
+
+  private fun getApplication(dto: ApplicationDto): Application? {
+    return testApplicationRepository.findByReference(dto.reference)
   }
 }

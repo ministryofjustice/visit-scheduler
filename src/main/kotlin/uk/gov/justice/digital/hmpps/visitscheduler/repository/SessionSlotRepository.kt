@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import java.time.LocalDate
-import java.time.LocalTime
+import java.time.LocalDateTime
 
 @Repository
 interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecificationExecutor<SessionSlot> {
@@ -15,24 +15,24 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
   @Query(
     "SELECT s FROM SessionSlot s " +
       "WHERE s.sessionTemplateReference = :sessionTemplateReference" +
-      " AND s.slotDate = :slotDate AND s.slotTime = :slotTime AND s.slotEndTime = :slotEndTime",
+      " AND s.slotDate = :slotDate ",
   )
   fun findSessionSlot(
     sessionTemplateReference: String,
     slotDate: LocalDate,
-    slotTime: LocalTime,
-    slotEndTime: LocalTime,
   ): SessionSlot?
 
   @Query(
     "SELECT s FROM SessionSlot s " +
-      "WHERE s.prisonId = :prisonId AND s.slotDate = :slotDate AND s.slotTime = :slotTime AND s.slotEndTime = :slotEndTime",
+      "WHERE s.prisonId = :prisonId AND " +
+      "s.slotStart = :slotStart AND " +
+      "s.slotEnd = :slotEnd AND " +
+      "s.sessionTemplateReference is null",
   )
   fun findSessionSlotWithOutSessionReference(
     prisonId: Long,
-    slotDate: LocalDate,
-    slotTime: LocalTime,
-    slotEndTime: LocalTime,
+    slotStart: LocalDateTime,
+    slotEnd: LocalDateTime,
   ): SessionSlot?
 
   @Modifying
@@ -51,8 +51,8 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
   @Query(
     "Update SessionSlot set " +
       "sessionTemplateReference = :newSessionTemplateReference, " +
-      "slotTime = :newStartTime, " +
-      "slotEndTime = :newEndTime " +
+      "slotStart = :newStartTime, " +
+      "slotEnd = :newEndTime " +
       "WHERE sessionTemplateReference = :existingSessionTemplateReference AND " +
       "slotDate >= :fromDate ",
   )
@@ -60,7 +60,7 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
     existingSessionTemplateReference: String,
     newSessionTemplateReference: String,
     fromDate: LocalDate,
-    newStartTime: LocalTime,
-    newEndTime: LocalTime,
+    newStartTime: LocalDateTime,
+    newEndTime: LocalDateTime,
   ): Int
 }

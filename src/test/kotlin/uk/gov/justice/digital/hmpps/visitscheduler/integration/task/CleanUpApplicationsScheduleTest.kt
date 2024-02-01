@@ -103,7 +103,7 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
         assertThat(it["prisonId"]).isEqualTo(application.prison.code)
         assertThat(it["visitType"]).isEqualTo(application.visitType.name)
         assertThat(it["visitRestriction"]).isEqualTo(application.restriction.name)
-        assertThat(it["visitStart"]).isEqualTo(application.sessionSlot.slotDate.atTime(application.sessionSlot.slotTime).truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["visitStart"]).isEqualTo(application.sessionSlot.slotStart.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["reserved"]).isEqualTo(application.reservedSlot.toString())
       },
       isNull(),

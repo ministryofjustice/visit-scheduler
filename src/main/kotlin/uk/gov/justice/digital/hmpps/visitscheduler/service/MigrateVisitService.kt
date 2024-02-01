@@ -302,7 +302,7 @@ class MigrateVisitService(
       "visitRoom" to visitEntity.visitRoom,
       "sessionTemplateReference" to (visitEntity.sessionSlot.sessionTemplateReference ?: ""),
       "visitRestriction" to visitEntity.visitRestriction.name,
-      "visitStart" to sessionSlotService.getSessionTimeAndDateString(visitEntity.sessionSlot.slotDate, visitEntity.sessionSlot.slotTime),
+      "visitStart" to sessionSlotService.getSessionTimeAndDateString(visitEntity.sessionSlot.slotStart),
       "visitStatus" to visitEntity.visitStatus.name,
       "applicationReference" to (visitEntity.getLastCompletedApplication()?.reference ?: ""),
     )

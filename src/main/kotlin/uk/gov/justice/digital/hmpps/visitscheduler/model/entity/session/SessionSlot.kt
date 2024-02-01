@@ -7,7 +7,7 @@ import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDate
-import java.time.LocalTime
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "session_slot")
@@ -23,10 +23,10 @@ class SessionSlot(
   val slotDate: LocalDate,
 
   @Column(nullable = false)
-  val slotTime: LocalTime,
+  val slotStart: LocalDateTime,
 
   @Column(nullable = false)
-  val slotEndTime: LocalTime,
+  val slotEnd: LocalDateTime,
 
 ) : AbstractIdEntity() {
 

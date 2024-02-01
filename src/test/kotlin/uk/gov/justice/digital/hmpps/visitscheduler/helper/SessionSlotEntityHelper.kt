@@ -26,8 +26,8 @@ class SessionSlotEntityHelper(
         sessionTemplateReference = sessionTemplateReference,
         prisonId = prisonId,
         slotDate = slotDate,
-        slotTime = slotTime,
-        slotEndTime = slotEndTime,
+        slotStart = slotDate.atTime(slotTime),
+        slotEnd = slotDate.atTime(slotEndTime),
       )
     }
   }
@@ -39,14 +39,14 @@ class SessionSlotEntityHelper(
     slotTime: LocalTime = LocalTime.now().plusHours(4),
     slotEndTime: LocalTime = slotTime.plusHours(2),
   ): SessionSlot {
-    return sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate, slotTime, slotEndTime) ?: run {
+    return sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate) ?: run {
       save(
         SessionSlot(
           sessionTemplateReference,
           prisonId,
           slotDate,
-          slotTime,
-          slotEndTime,
+          slotStart = slotDate.atTime(slotTime),
+          slotEnd = slotDate.atTime(slotEndTime),
         ),
       )
     }

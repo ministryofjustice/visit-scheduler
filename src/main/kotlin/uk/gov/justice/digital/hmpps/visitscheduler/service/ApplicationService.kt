@@ -144,16 +144,13 @@ class ApplicationService(
 
   fun changeIncompleteApplication(applicationReference: String, changeApplicationDto: ChangeApplicationDto): ApplicationDto {
     val application = getApplicationEntity(applicationReference)
+    val sessionTemplateReference = changeApplicationDto.sessionTemplateReference
+    val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
+    val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
-    changeApplicationDto.sessionDate.let {
-      val sessionTemplateReference = changeApplicationDto.sessionTemplateReference
-      val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
-      val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
-
-      val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
-      application.sessionSlotId = sessionSlot.id
-      application.sessionSlot = sessionSlot
-    }
+    val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
+    application.sessionSlotId = sessionSlot.id
+    application.sessionSlot = sessionSlot
 
     changeApplicationDto.visitRestriction?.let { restriction -> application.restriction = restriction }
     changeApplicationDto.visitContact?.let { visitContactUpdate ->
@@ -315,7 +312,7 @@ class ApplicationService(
     action: String,
     allowedVisitStartDate: LocalDateTime = LocalDateTime.now(),
   ) {
-    val startSessionSlotDateAndTime = sessionSlotService.getSessionTimeAndDate(visit.sessionSlot.slotDate, visit.sessionSlot.slotTime)
+    val startSessionSlotDateAndTime = visit.sessionSlot.slotStart
     // check if the existing visit is in the past
     if (startSessionSlotDateAndTime.isBefore(allowedVisitStartDate)) {
       throw ExpiredVisitAmendException(

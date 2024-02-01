@@ -117,7 +117,7 @@ fun getVisitReserveSlotChangeUrl(reference: String): String {
   return APPLICATION_RESERVED_SLOT_CHANGE.replace("{reference}", reference)
 }
 
-fun callVisitReserveSlot(
+fun submitApplication(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
   dto: CreateApplicationDto? = null,
@@ -125,12 +125,12 @@ fun callVisitReserveSlot(
   return callPost(
     dto,
     webTestClient,
-    getVisitReserveSlotUrl(),
+    getSubmitApplicationUrl(),
     authHttpHeaders,
   )
 }
 
-fun getVisitReserveSlotUrl(): String {
+fun getSubmitApplicationUrl(): String {
   return APPLICATION_RESERVE_SLOT
 }
 

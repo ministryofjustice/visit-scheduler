@@ -196,7 +196,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     visit: Visit,
     type: TelemetryVisitEvents,
   ) {
-    val visitStart = visit.sessionSlot.slotDate.atTime(visit.sessionSlot.slotTime).format(DateTimeFormatter.ISO_DATE_TIME)
+    val visitStart = visit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME)
 
     verify(telemetryClient).trackEvent(
       eq(type.eventName),

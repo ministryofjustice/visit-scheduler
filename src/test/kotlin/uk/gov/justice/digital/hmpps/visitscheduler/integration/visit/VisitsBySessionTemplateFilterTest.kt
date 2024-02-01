@@ -67,7 +67,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // When
     val responseSpec = callVisitsBySessionEndPoint(
       sessionTemplateReference,
-      "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED,RESERVED",
+      "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED",
     )
 
     // Then
@@ -163,7 +163,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     val toDate = visitTime.toLocalDate().plusDays(1)
 
     // When
-    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED,RESERVED")
+    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -181,7 +181,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     val sessionDate = visitTime.toLocalDate().plusDays(1)
 
     // When
-    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED,RESERVED")
+    val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED")
 
     // Then
     responseSpec.expectStatus().isOk

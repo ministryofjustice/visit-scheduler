@@ -24,8 +24,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlot
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitReserveSlotUrl
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.getSubmitApplicationUrl
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -78,7 +78,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate)
 
     // When
-    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
 
@@ -105,7 +105,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, createReservationRequest)
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, createReservationRequest)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -122,7 +122,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate)
 
     // When
-    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
     responseSpec.expectStatus().isNotFound
@@ -145,7 +145,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
     // Then
     responseSpec.expectStatus().isBadRequest
   }
@@ -171,7 +171,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, createReservationRequest)
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, createReservationRequest)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -192,7 +192,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationDto)
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationDto)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -207,7 +207,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     // Given
 
     // When
-    val responseSpec = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders)
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -225,7 +225,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate)
 
     // When
-    val responseSpec = callVisitReserveSlot(webTestClient, authHttpHeaders, reserveVisitSlotDto)
+    val responseSpec = submitApplication(webTestClient, authHttpHeaders, reserveVisitSlotDto)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -243,7 +243,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val jsonBody = BodyInserters.fromValue(reserveVisitSlotDto)
 
     // When
-    val responseSpec = webTestClient.post().uri(getVisitReserveSlotUrl())
+    val responseSpec = webTestClient.post().uri(getSubmitApplicationUrl())
       .body(jsonBody)
       .exchange()
 

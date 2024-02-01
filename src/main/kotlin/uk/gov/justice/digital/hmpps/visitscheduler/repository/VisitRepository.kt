@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 
 @Repository
 interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
@@ -149,66 +148,48 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Query(
     "SELECT v  FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED' AND " +
-      "(v.prisonerId = :prisonerId) AND " +
-      "(:prisonCode is null or v.prison.code = :prisonCode) AND " +
-      "(CAST(:fromDate AS DATE) is null OR (v.sessionSlot.slotDate >= :fromDate)) AND " +
-      "(CAST(:fromTime AS TIME) is null OR (:fromDate = CURRENT_DATE AND v.sessionSlot.slotTime >= :fromTime)) AND " +
-      "(CAST(:toDate AS DATE) is null OR v.sessionSlot.slotDate <= :toDate) AND " +
-      "(CAST(:toTime AS TIME) is null OR (:toDate = CURRENT_DATE AND v.sessionSlot.slotEndTime <= :toTime)) " +
-      "ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
+      "v.prisonerId = :prisonerId AND " +
+      "v.prison.code = :prisonCode AND " +
+      "v.sessionSlot.slotDate >= :visitDate " +
+      "ORDER BY v.sessionSlot.slotDate",
   )
   fun findBookedVisits(
     @Param("prisonerId") prisonerId: String,
-    @Param("prisonCode") prisonCode: String? = null,
-    fromDate: LocalDate,
-    fromTime: LocalTime,
-    toDate: LocalDate?,
-    toTime: LocalTime?,
+    @Param("prisonCode") prisonCode: String,
+    @Param("visitDate") visitDate: LocalDate,
   ): List<Visit>
-
-  @Query(
-    "SELECT v FROM Visit v JOIN v.visitors vis WHERE " +
-      "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
-      "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
-      "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
-      "(:#{#visitorId} is null OR vis.nomisPersonId = :visitorId) AND " +
-      "(CAST(:slotStartDate AS DATE) is null OR v.sessionSlot.slotDate >= :slotStartDate) AND " +
-      "(CAST(:slotStartTime AS TIME) is null OR (:slotStartDate = CURRENT_DATE AND v.sessionSlot.slotTime >= :slotStartTime)) AND " +
-      "(CAST(:slotEndDate AS DATE) is null OR v.sessionSlot.slotDate <= :slotEndDate) AND " +
-      "(CAST(:slotEndTime AS TIME) is null OR (:slotEndDate = CURRENT_DATE AND v.sessionSlot.slotEndTime <= :slotEndTime)) " +
-      " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
-  )
-  fun findVisitsOrderByDateAndTime(
-    prisonerId: String?,
-    prisonCode: String?,
-    visitStatusList: List<VisitStatus>?,
-    visitorId: Long?,
-    slotStartDate: LocalDate?,
-    slotStartTime: LocalTime?,
-    slotEndDate: LocalDate?,
-    slotEndTime: LocalTime?,
-    pageable: Pageable,
-  ): Page<Visit>
 
   @Query(
     "SELECT v FROM Visit v WHERE " +
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId)  AND  " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
-      "(CAST(:slotStartDate AS DATE) is null OR v.sessionSlot.slotDate >= :slotStartDate) AND " +
-      "(CAST(:slotStartTime AS TIME) is null OR (:slotStartDate = CURRENT_DATE AND v.sessionSlot.slotTime >= :slotStartTime)) AND " +
-      "(CAST(:slotEndDate AS DATE) is null OR v.sessionSlot.slotDate <= :slotEndDate) AND " +
-      "(CAST(:slotEndTime AS TIME) is null OR (:slotEndDate = CURRENT_DATE AND v.sessionSlot.slotEndTime <= :slotEndTime)) " +
-      " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
+      "(CAST(:visitStartDate AS DATE) is null OR v.sessionSlot.slotDate >= :visitStartDate) AND " +
+      "(CAST(:visitEndDate AS DATE) is null OR v.sessionSlot.slotDate <= :visitEndDate) " +
+      " ORDER BY v.sessionSlot.slotDate",
   )
-  fun findVisits(
+  fun findVisitsOrderByDateAndTime(
     prisonerId: String?,
     prisonCode: String?,
     visitStatusList: List<VisitStatus>?,
-    slotStartDate: LocalDate?,
-    slotStartTime: LocalTime?,
-    slotEndDate: LocalDate?,
-    slotEndTime: LocalTime?,
+    visitStartDate: LocalDate?,
+    visitEndDate: LocalDate?,
+    pageable: Pageable,
+  ): Page<Visit>
+
+  @Query(
+    "SELECT v  FROM Visit v " +
+      "WHERE v.visitStatus = 'BOOKED' AND " +
+      "(:#{#prisonCode} is null OR v.prisonerId = :prisonerId) AND " +
+      "v.prison.code = :prisonCode AND " +
+      "v.sessionSlot.slotStart >= :startDateTime AND " +
+      "(cast(:endDateTime as date) is null OR v.sessionSlot.slotEnd < :endDateTime) ",
+  )
+  fun getVisits(
+    @Param("prisonerId") prisonerId: String,
+    @Param("prisonCode") prisonCode: String?,
+    @Param("startDateTime") startDateTime: LocalDateTime,
+    @Param("endDateTime") endDateTime: LocalDateTime? = null,
   ): List<Visit>
 
   @Query(
@@ -234,7 +215,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       " v.visitStatus = 'BOOKED'  AND " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
       "(CAST(:date AS DATE) is null OR v.sessionSlot.slotDate = :date) " +
-      " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotTime",
+      " ORDER BY v.sessionSlot.slotDate,v.sessionSlot.slotStart",
   )
   fun findBookedVisitsForDate(prisonCode: String, date: LocalDate): List<Visit>
 }

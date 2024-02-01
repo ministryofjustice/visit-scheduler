@@ -129,7 +129,7 @@ class VisitDtoBuilderTest() {
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
   ): Visit {
-    val sessionSlot = SessionSlot(sessionTemplateReference, prison.id, slotDate, visitStart, visitEnd)
+    val sessionSlot = SessionSlot(sessionTemplateReference, prison.id, slotDate, slotDate.atTime(visitStart), slotDate.atTime(visitEnd))
 
     val visit = Visit(
       visitStatus = visitStatus,

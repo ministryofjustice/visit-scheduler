@@ -7,11 +7,18 @@ import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import java.time.LocalDateTime
 
 @Repository
 interface TestApplicationRepository : JpaRepository<Application, Long>, JpaSpecificationExecutor<Application> {
+
+  @Query(
+    "SELECT a.visit  FROM Application a" +
+      "  WHERE a.reference = :applicationReference",
+  )
+  fun findVisitByApplicationReference(applicationReference: String): Visit?
 
   fun findByReference(reference: String): Application?
 

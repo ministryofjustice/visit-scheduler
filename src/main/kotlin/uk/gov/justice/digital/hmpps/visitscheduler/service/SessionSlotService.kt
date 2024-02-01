@@ -45,8 +45,8 @@ class SessionSlotService {
     return date.atTime(time)
   }
 
-  fun getSessionTimeAndDateString(date: LocalDate, time: LocalTime): String {
-    return getSessionTimeAndDate(date, time).format(DateTimeFormatter.ISO_DATE_TIME)
+  fun getSessionTimeAndDateString(slotDateTime: LocalDateTime): String {
+    return slotDateTime.format(DateTimeFormatter.ISO_DATE_TIME)
   }
 
   fun getSessionSlot(
@@ -67,26 +67,29 @@ class SessionSlotService {
     slotEndTime: LocalTime,
     prison: Prison,
   ): SessionSlot {
+    val slotStart = slotDate.atTime(slotTime)
+    val slotEnd = slotDate.atTime(slotEndTime)
+
     sessionTemplateReference?.let {
-      return sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate, slotTime, slotEndTime) ?: run {
+      return sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate) ?: run {
         sessionSlotRepository.saveAndFlush(
           SessionSlot(
             sessionTemplateReference,
             prison.id,
             slotDate,
-            slotTime,
-            slotEndTime,
+            slotStart = slotStart,
+            slotEnd = slotEnd,
           ),
         )
       }
     } ?: run {
-      return sessionSlotRepository.findSessionSlotWithOutSessionReference(prison.id, slotDate, slotTime, slotEndTime) ?: run {
+      return sessionSlotRepository.findSessionSlotWithOutSessionReference(prison.id, slotStart, slotEnd) ?: run {
         sessionSlotRepository.saveAndFlush(
           SessionSlot(
             prisonId = prison.id,
             slotDate = slotDate,
-            slotTime = slotTime,
-            slotEndTime = slotEndTime,
+            slotStart = slotStart,
+            slotEnd = slotEnd,
           ),
         )
       }

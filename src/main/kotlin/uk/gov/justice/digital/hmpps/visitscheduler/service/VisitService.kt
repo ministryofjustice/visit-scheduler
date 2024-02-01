@@ -213,7 +213,8 @@ class VisitService(
     }
 
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS)
-    return findVisitsOrderByDateAndTime(visitFilter, pageable = page).map { visitDtoBuilder.build(it) }
+    val results = findVisitsOrderByDateAndTime(visitFilter, pageable = page).map { visitDtoBuilder.build(it) }
+    return results
   }
 
   private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable): Page<Visit> {
@@ -221,24 +222,9 @@ class VisitService(
       prisonerId = visitFilter.prisonerId,
       prisonCode = visitFilter.prisonCode,
       visitStatusList = visitFilter.visitStatusList.ifEmpty { null },
-      visitorId = visitFilter.visitorId,
-      slotStartDate = visitFilter.startDateTime?.toLocalDate(),
-      slotStartTime = visitFilter.startDateTime?.toLocalTime(),
-      slotEndDate = visitFilter.endDateTime?.toLocalDate(),
-      slotEndTime = visitFilter.endDateTime?.toLocalTime(),
+      visitStartDate = visitFilter.visitStartDate,
+      visitEndDate = visitFilter.visitEndDate,
       pageable = pageable,
-    )
-  }
-
-  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter): List<Visit> {
-    return visitRepository.findVisits(
-      prisonerId = visitFilter.prisonerId,
-      prisonCode = visitFilter.prisonCode,
-      visitStatusList = visitFilter.visitStatusList.ifEmpty { null },
-      slotStartDate = visitFilter.startDateTime?.toLocalDate(),
-      slotStartTime = visitFilter.startDateTime?.toLocalTime(),
-      slotEndDate = visitFilter.endDateTime?.toLocalDate(),
-      slotEndTime = visitFilter.endDateTime?.toLocalTime(),
     )
   }
 
@@ -337,19 +323,15 @@ class VisitService(
   }
 
   fun getBookedVisits(
-    prisonerNumber: String? = null,
-    prisonCode: String? = null,
-    startDateTime: LocalDateTime,
-    endDateTime: LocalDateTime? = null,
+    prisonerNumber: String,
+    prisonCode: String,
+    visitDate: LocalDate,
   ): List<VisitDto> {
-    val visitFilter = VisitFilter(
+    return visitRepository.findBookedVisits(
       prisonerId = prisonerNumber,
       prisonCode = prisonCode,
-      visitStatusList = listOf(BOOKED),
-      startDateTime = startDateTime,
-      endDateTime = endDateTime,
-    )
-    return findVisitsOrderByDateAndTime(visitFilter).map { visitDtoBuilder.build(it) }
+      visitDate = visitDate,
+    ).map { visitDtoBuilder.build(it) }
   }
 
   @Transactional(readOnly = true)
@@ -380,7 +362,7 @@ class VisitService(
     action: String,
     allowedVisitStartDate: LocalDateTime = LocalDateTime.now(),
   ) {
-    if (visit.sessionSlot.slotDate.atTime(visit.sessionSlot.slotTime).isBefore(allowedVisitStartDate)) {
+    if (visit.sessionSlot.slotStart.isBefore(allowedVisitStartDate)) {
       throw ExpiredVisitAmendException(
         AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
         ExpiredVisitAmendException("trying to change / cancel an expired visit"),
@@ -398,7 +380,12 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
-  fun getFutureVisitsBy(prisonerNumber: String, prisonCode: String?, startDateTime: LocalDateTime = LocalDateTime.now(), endDateTime: LocalDateTime ? = null): List<VisitDto> {
-    return this.visitRepository.findBookedVisits(prisonerNumber, prisonCode, startDateTime.toLocalDate(), startDateTime.toLocalTime(), endDateTime?.toLocalDate(), endDateTime?.toLocalTime()).map { visitDtoBuilder.build(it) }
+  fun getFutureVisitsBy(
+    prisonerNumber: String,
+    prisonCode: String ? = null,
+    startDateTime: LocalDateTime = LocalDateTime.now(),
+    endDateTime: LocalDateTime ? = null,
+  ): List<VisitDto> {
+    return this.visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 }

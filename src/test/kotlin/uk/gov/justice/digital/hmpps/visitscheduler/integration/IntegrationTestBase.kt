@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
@@ -211,24 +212,28 @@ abstract class IntegrationTestBase {
     }
   }
 
-  fun formatDateTimeToString(dateTime: LocalDateTime): String {
+  fun formatDateToString(dateTime: LocalDateTime): String {
     return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
   }
 
   fun formatStartSlotDateTimeToString(sessionSlot: SessionSlot): String {
-    return sessionSlot.slotDate.atTime(sessionSlot.slotTime).truncatedTo(ChronoUnit.SECONDS).format(
+    return sessionSlot.slotStart.truncatedTo(ChronoUnit.SECONDS).format(
       DateTimeFormatter.ISO_DATE_TIME,
     )
   }
 
   fun formatSlotEndDateTimeToString(sessionSlot: SessionSlot): String {
-    return sessionSlot.slotDate.atTime(sessionSlot.slotEndTime).truncatedTo(ChronoUnit.SECONDS).format(
+    return sessionSlot.slotEnd.truncatedTo(ChronoUnit.SECONDS).format(
       DateTimeFormatter.ISO_DATE_TIME,
     )
   }
 
-  fun formatDateTimeToString(sessionSlot: SessionSlot): String {
-    return sessionSlot.slotDate.format(DateTimeFormatter.ISO_DATE_TIME)
+  fun formatDateToString(sessionSlot: SessionSlot): String {
+    return formatDateToString(sessionSlot.slotDate)
+  }
+
+  fun formatDateToString(localDate: LocalDate): String {
+    return localDate.format(DateTimeFormatter.ISO_DATE)
   }
 
   fun createApplicationAndVisit(prisonerId: String? = "testPrisonerId", sessionTemplate: SessionTemplate, visitStatus: VisitStatus ? = VisitStatus.BOOKED, slotDate: LocalDate? = null): Visit {
@@ -253,12 +258,24 @@ abstract class IntegrationTestBase {
     )
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
     applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER HELP", details = "Some More Text")
     applicationEntityHelper.save(applicationEntity)
     return applicationEntity
   }
 
   fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit {
     return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplate, application = applicationEntity)
+  }
+
+  fun parseVisitsResponse(responseSpec: ResponseSpec): List<VisitDto> {
+    class Page() {
+      @JsonProperty("content")
+      lateinit var content: List<VisitDto>
+    }
+
+    val content = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Page::class.java)
+    return content.content
   }
 }

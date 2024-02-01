@@ -24,10 +24,10 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
       " COUNT(CASE WHEN v.visit_restriction = 'CLOSED' THEN 1 END) AS closed  FROM visit v " +
       " JOIN session_slot sl on sl.id = v.session_slot_id " +
       " WHERE sl.session_template_reference = :reference" +
-      " AND sl.slot_date >= :visitsFromDate" +
-      " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
+      " AND sl.slot_start >= :visitsFromDate" +
+      " AND (cast(:visitsToDate as date) is null OR sl.slot_end <= :visitsToDate)" +
       " AND visit_status = 'BOOKED'" +
-      " GROUP BY sl.slot_date,sl.slot_time ) AS tmp ",
+      " GROUP BY sl.slot_date,sl.slot_start ) AS tmp ",
     nativeQuery = true,
   )
   fun findSessionTemplateMinCapacityBy(

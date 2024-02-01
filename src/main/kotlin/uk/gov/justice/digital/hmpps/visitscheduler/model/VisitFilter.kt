@@ -1,12 +1,11 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model
 
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 data class VisitFilter(
   val prisonerId: String? = null,
   val prisonCode: String? = null,
-  val startDateTime: LocalDateTime? = null,
-  val endDateTime: LocalDateTime? = null,
-  val visitorId: Long? = null,
+  val visitStartDate: LocalDate? = null,
+  val visitEndDate: LocalDate? = null,
   val visitStatusList: List<VisitStatus>,
 )

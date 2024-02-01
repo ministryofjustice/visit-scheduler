@@ -519,7 +519,10 @@ class SessionTemplateService(
     return if (fromSessionTemplate.sessionTimeSlot == toSessionTemplate.sessionTimeSlot) {
       sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
     } else {
-      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, toSessionTemplate.sessionTimeSlot.startTime, toSessionTemplate.sessionTimeSlot.endTime)
+      val startSlot = fromDate.atTime(toSessionTemplate.sessionTimeSlot.startTime)
+      val endSlot = fromDate.atTime(toSessionTemplate.sessionTimeSlot.endTime)
+
+      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, startSlot, endSlot)
     }
   }
 

@@ -44,8 +44,8 @@ CREATE TABLE session_slot
     session_template_reference 	text,
     prison_id                   integer         NOT NULL,
     slot_date              		date            NOT NULL,
-    slot_time              		time            NOT NULL,
-    slot_end_time               time            NOT NULL
+    slot_start            		timestamp       with time zone NOT NULL,
+    slot_end                    timestamp       with time zone NOT NULL
 );
 
 CREATE TABLE application_contact (
