@@ -1,6 +1,10 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application
 
-import jakarta.persistence.CascadeType
+import jakarta.persistence.CascadeType.ALL
+import jakarta.persistence.CascadeType.DETACH
+import jakarta.persistence.CascadeType.MERGE
+import jakarta.persistence.CascadeType.PERSIST
+import jakarta.persistence.CascadeType.REFRESH
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -17,6 +21,7 @@ import org.hibernate.annotations.UpdateTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
@@ -29,7 +34,7 @@ class Application(
   @Column(name = "PRISON_ID", nullable = false)
   val prisonId: Long,
 
-  @ManyToOne(cascade = [CascadeType.DETACH])
+  @ManyToOne(cascade = [DETACH])
   @JoinColumn(name = "PRISON_ID", updatable = false, insertable = false)
   val prison: Prison,
 
@@ -37,7 +42,7 @@ class Application(
   var prisonerId: String,
 
   @Column(name = "SESSION_SLOT_ID", nullable = true)
-  val sessionSlotId: Long,
+  var sessionSlotId: Long,
 
   @ManyToOne
   @JoinColumn(name = "SESSION_SLOT_ID", updatable = false, insertable = false)
@@ -55,24 +60,28 @@ class Application(
   var restriction: VisitRestriction,
 
   @Column(nullable = false)
-  val completed: Boolean = false,
+  var completed: Boolean = false,
 
   @Column(nullable = false)
   val createdBy: String,
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitContact: ApplicationContact? = null,
-
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitors: MutableList<ApplicationVisitor> = mutableListOf(),
-
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var support: MutableList<ApplicationSupport> = mutableListOf(),
-
 ) : AbstractIdEntity() {
 
-  @Column
-  lateinit var reference: String
+  @Column(name = "VISIT_ID", nullable = true)
+  var visitId: Long? = null
+
+  @ManyToOne(fetch = FetchType.LAZY, cascade = [REFRESH, PERSIST, MERGE])
+  @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
+  var visit: Visit? = null
+
+  @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "application", orphanRemoval = true)
+  var visitContact: ApplicationContact? = null
+
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "application", orphanRemoval = true)
+  var visitors: MutableList<ApplicationVisitor> = mutableListOf()
+
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "application", orphanRemoval = true)
+  var support: MutableList<ApplicationSupport> = mutableListOf()
 
   @CreationTimestamp
   @Column
@@ -82,9 +91,15 @@ class Application(
   @Column
   val modifyTimestamp: LocalDateTime? = null
 
+  @Column
+  var reference: String = ""
+    private set
+
   @PostPersist
   fun createReference() {
-    reference = QuotableEncoder(minLength = 8).encode(id)
+    if (reference.isNullOrBlank()) {
+      reference = QuotableEncoder(minLength = 8, chunkSize = 3).encode(id)
+    }
   }
 
   override fun toString(): String {

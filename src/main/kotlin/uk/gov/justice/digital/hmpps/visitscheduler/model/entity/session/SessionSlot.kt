@@ -7,14 +7,14 @@ import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDate
-import java.time.LocalTime
+import java.time.LocalDateTime
 
 @Entity
 @Table(name = "session_slot")
 class SessionSlot(
 
   @Column(nullable = true)
-  val sessionTemplateReference: String,
+  val sessionTemplateReference: String? = null,
 
   @Column(nullable = false)
   val prisonId: Long,
@@ -23,19 +23,22 @@ class SessionSlot(
   val slotDate: LocalDate,
 
   @Column(nullable = false)
-  val slotTime: LocalTime,
+  val slotStart: LocalDateTime,
 
   @Column(nullable = false)
-  val slotEndTime: LocalTime,
+  val slotEnd: LocalDateTime,
 
 ) : AbstractIdEntity() {
 
   @Column
-  lateinit var reference: String
+  var reference: String = ""
+    private set
 
   @PostPersist
   fun createReference() {
-    reference = QuotableEncoder(minLength = 8).encode(id)
+    if (reference.isNullOrBlank()) {
+      reference = QuotableEncoder(minLength = 8).encode(id)
+    }
   }
 
   override fun toString(): String {

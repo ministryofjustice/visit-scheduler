@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.times
@@ -27,6 +28,11 @@ class AdminPrisonsTest : IntegrationTestBase() {
   private lateinit var prisonRepository: PrisonRepository
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
+
+  @BeforeEach
+  internal fun setUpTests() {
+    deleteEntityHelper.deleteAll()
+  }
 
   @Test
   fun `get all prisons are returned in correct order`() {

@@ -8,24 +8,21 @@ import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import java.time.LocalDateTime
+import java.time.LocalDate
 
-data class ReserveVisitSlotDto(
+data class CreateApplicationDto(
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   @field:NotBlank
   val prisonerId: String,
   @Schema(description = "Session template reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank
   val sessionTemplateReference: String,
-  @Schema(description = "OldVisit Restriction", example = "OPEN", required = true)
+  @Schema(description = "The date for the visit", example = "2018-12-01", required = true)
+  @field:NotNull
+  val sessionDate: LocalDate,
+  @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   @field:NotNull
   val visitRestriction: VisitRestriction,
-  @Schema(description = "The date and time of the visit", example = "2018-12-01T13:45:00", required = true)
-  @field:NotNull
-  val startTimestamp: LocalDateTime,
-  @Schema(description = "The finishing date and time of the visit", example = "2018-12-01T13:45:00", required = true)
-  @field:NotNull
-  val endTimestamp: LocalDateTime,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
   val visitContact: ContactDto?,

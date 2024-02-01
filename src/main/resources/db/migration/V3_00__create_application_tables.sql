@@ -30,6 +30,7 @@ CREATE TABLE application (
                              visit_type varchar(80) NULL,
                              restriction varchar(80) NULL,
                              completed bool NOT NULL DEFAULT false,
+                             visit_id integer NULL,
                              created_by varchar(60) NULL,
                              create_timestamp timestamp NULL,
                              modify_timestamp timestamp NULL
@@ -43,8 +44,8 @@ CREATE TABLE session_slot
     session_template_reference 	text,
     prison_id                   integer         NOT NULL,
     slot_date              		date            NOT NULL,
-    slot_time              		time            NOT NULL,
-    slot_end_time               time            NOT NULL
+    slot_start            		timestamp       with time zone NOT NULL,
+    slot_end                    timestamp       with time zone NOT NULL
 );
 
 CREATE TABLE application_contact (
@@ -71,9 +72,4 @@ CREATE TABLE application_support (
                                      CONSTRAINT application_support_application_id_type_key UNIQUE (application_id, type)
 );
 
-
-CREATE TABLE visits_to_applications (
-                                        visit_id integer NOT NULL,
-                                        application_id integer NOT NULL
-);
 

@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 @Repository
 interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEvent, Int> {
@@ -46,8 +46,9 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
       " JOIN visit v on v.reference  = vne.booking_reference  " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
-      " WHERE v.visit_start >= NOW() " +
+      " WHERE ss.slot_date >= NOW() " +
       " AND v.prisoner_id = :prisonerNumber " +
       " AND p.code = :prisonCode " +
       " AND vne.type=:#{#notificationEvent.name()}" +
@@ -63,9 +64,10 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
       " JOIN visit v on v.reference  = vne.booking_reference  " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
-      " WHERE v.visit_start >= :visitStart " +
-      " AND v.visit_end <= :visitEnd " +
+      " WHERE ss.slot_date >= :slotDate" +
+      " AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))" +
       " AND p.code = :prisonCode " +
       " AND vne.type=:#{#notificationEvent.name()}" +
       " ORDER BY vne.reference, vne.id",
@@ -73,16 +75,17 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   )
   fun getEventsByVisitDate(
     prisonCode: String,
-    visitStart: LocalDateTime,
-    visitEnd: LocalDateTime,
+    slotDate: LocalDate,
     notificationEvent: NotificationEventType,
   ): List<VisitNotificationEvent>
 
   @Query(
     "SELECT sum(ng) FROM (   " +
       "SELECT count(distinct vne.reference) as ng FROM visit_notification_event vne " +
-      " JOIN visit v ON v.reference  = vne.booking_reference AND v.visit_status = 'BOOKED' AND v.visit_start >= NOW()  " +
+      " JOIN visit v ON v.reference  = vne.booking_reference " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id AND p.code = :prisonCode " +
+      " WHERE  v.visit_status = 'BOOKED' AND ss.slot_date >= NOW()   " +
       " GROUP BY vne.reference) sq ",
     nativeQuery = true,
   )
@@ -91,23 +94,27 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   @Query(
     "SELECT sum(ng) FROM (   " +
       "SELECT count(distinct vne.reference) as ng FROM visit_notification_event vne " +
-      "   JOIN visit v ON v.reference  = vne.booking_reference AND v.visit_status = 'BOOKED' AND v.visit_start >= NOW() " +
-      "   GROUP BY vne.reference) sq ",
+      " JOIN visit v ON v.reference  = vne.booking_reference " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
+      " WHERE v.visit_status = 'BOOKED' AND ss.slot_date >= NOW()  " +
+      " GROUP BY vne.reference) sq ",
     nativeQuery = true,
   )
   fun getNotificationGroupsCount(): Int?
 
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
-      " JOIN visit v ON v.reference  = vne.booking_reference AND v.visit_status = 'BOOKED' AND v.visit_start >= NOW() " +
+      " JOIN visit v ON v.reference  = vne.booking_reference " +
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
-      " ORDER BY v.visit_start,vne.reference",
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
+      " WHERE v.visit_status = 'BOOKED' AND ss.slot_date >= NOW()  " +
+      " ORDER BY ss.slot_date, vne.reference",
     nativeQuery = true,
   )
   fun getFutureVisitNotificationEvents(@Param("prisonCode") prisonCode: String): List<VisitNotificationEvent>
 
   @Query(
-    "SELECT vne.type FROM visit_notification_event vne WHERE vne.booking_reference=:bookingReference GROUP by type",
+    "SELECT vne.type FROM visit_notification_event vne WHERE vne.booking_reference=:bookingReference GROUP by id",
     nativeQuery = true,
   )
   fun getNotificationsTypesForBookingReference(@Param("bookingReference") bookingReference: String): List<NotificationEventType>

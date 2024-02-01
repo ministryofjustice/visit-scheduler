@@ -27,7 +27,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 @Transactional(propagation = Propagation.SUPPORTS)
-@DisplayName("OldVisit Counts Reporting")
+@DisplayName("Visit Counts Reporting")
 class ReportVisitCountsTaskTest : IntegrationTestBase() {
   @Autowired
   private lateinit var reportingTask: ReportingTask
@@ -52,6 +52,8 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
 
   @BeforeEach
   fun setupData() {
+    deleteEntityHelper.deleteAll()
+
     vsipReportingEntityHelper.create(VSIPReport.VISIT_COUNTS_BY_DAY, reportDate.minusDays(1))
     // active prison with multiple sessions
     prison1 = prisonEntityHelper.create("ABC", activePrison = true, excludeDates = emptyList())
@@ -79,26 +81,26 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     prison4 = prisonEntityHelper.create("JKL", activePrison = false, excludeDates = emptyList())
 
     // visit 1 against sessionTemplate6Prison1, OPEN and BOOKED - included in openBookedCount
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplateReference = sessionTemplate6Prison1.reference, visitStart = reportDate.atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime))
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate)
     // visit 2 against sessionTemplate6Prison1, OPEN and BOOKED - included in openBookedCount
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplateReference = sessionTemplate6Prison1.reference, visitStart = reportDate.atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime))
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate)
     // visit 3 against sessionTemplate6Prison1, OPEN and BOOKED - included in openBookedCount
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplateReference = sessionTemplate6Prison1.reference, visitStart = reportDate.atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime))
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate)
     // visit 4 against sessionTemplate6Prison1, CLOSED and BOOKED - included in closedBookedCount
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplateReference = sessionTemplate6Prison1.reference, visitStart = reportDate.atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime), visitRestriction = VisitRestriction.CLOSED)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, visitRestriction = VisitRestriction.CLOSED)
     // visit 5 against sessionTemplate6Prison1, OPEN and RESERVED - not included in counts
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.RESERVED, sessionTemplateReference = sessionTemplate6Prison1.reference, visitStart = reportDate.atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime))
+    applicationEntityHelper.create(prisonCode = prison1.code, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate)
     // visit 6 against sessionTemplate6Prison1, OPEN and CANCELLED - included in openCancelledCount
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, sessionTemplateReference = sessionTemplate6Prison1.reference, visitStart = reportDate.atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime), outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
-    // visit 7 against sessionTemplate6Prison1, OPEN and CANCELLED but SUPERSEDED_CANCELLATION - not included in closedBookedCount
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, sessionTemplateReference = sessionTemplate6Prison1.reference, visitStart = reportDate.atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime), outcomeStatus = OutcomeStatus.SUPERSEDED_CANCELLATION)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
+    // visit 7 against sessionTemplate6Prison1, OPEN and CANCELLED but SUPERSEDED_CANCELLATION - included in closedBookedCount as outcomeStatus does not matter anymore
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplate6Prison1, slotDate = reportDate, outcomeStatus = OutcomeStatus.SUPERSEDED_CANCELLATION)
 
     // visit 1 against sessionTemplate7Prison1, OPEN and BOOKED
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplateReference = sessionTemplate7Prison1.reference, visitStart = reportDate.atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime))
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate7Prison1, slotDate = reportDate)
     // visit 2 against sessionTemplate7Prison1 - but previous week - not included in count
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplateReference = sessionTemplate7Prison1.reference, visitStart = reportDate.minusWeeks(1).atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime))
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate7Prison1, slotDate = reportDate.minusWeeks(1))
     // visit 3 against sessionTemplate7Prison1 - but previous week - not included in count
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplateReference = sessionTemplate7Prison1.reference, visitStart = reportDate.plusWeeks(1).atTime(sessionTemplate6Prison1.startTime), visitEnd = reportDate.atTime(sessionTemplate6Prison1.endTime))
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate7Prison1, slotDate = reportDate.plusWeeks(1))
   }
 
   @Test
@@ -111,7 +113,7 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     assertSessionVisitCounts(session3Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate3Prison1, 0, 0, 0, 0)
 
     val session6Prison1 = getSessionReport(sessionsReport, prison1.code, sessionTemplate6Prison1.reference)!!
-    assertSessionVisitCounts(session6Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate6Prison1, 3, 1, 1, 0)
+    assertSessionVisitCounts(session6Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate6Prison1, 3, 1, 2, 0)
 
     val session7Prison1 = getSessionReport(sessionsReport, prison1.code, sessionTemplate7Prison1.reference)!!
     assertSessionVisitCounts(session7Prison1, reportDate, prison1, isBlockedDate = false, hasSessionsOnDate = true, sessionTemplate7Prison1, 1, 0, 0, 0)

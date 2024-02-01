@@ -6,20 +6,48 @@ import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 
 @Repository
-interface TestVisitRepository : JpaRepository<OldVisit, Long>, JpaSpecificationExecutor<OldVisit> {
+interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
 
-  fun findAllByReference(reference: String): List<OldVisit>
-
-  fun findByApplicationReference(reference: String): OldVisit?
-
-  @Modifying
-  fun deleteByApplicationReference(applicationReference: String): Long
+  fun findByReference(reference: String): Visit
 
   @Query(
-    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM OldVisit v WHERE v.id = :visitId ",
+    "SELECT v.*  FROM visit v" +
+      "  JOIN application a on a.visit_id = v.id" +
+      "  WHERE a.reference = :applicationReference",
+    nativeQuery = true,
+  )
+  fun findByApplicationReference(applicationReference: String): Visit?
+
+  @Modifying
+  @Query(
+    "DELETE FROM visit WHERE id IN (SELECT v.id  FROM visit v" +
+      "  JOIN application a on a.visit_id = v.id" +
+      "  WHERE a.reference = :applicationReference)",
+    nativeQuery = true,
+  )
+  fun deleteByApplicationReferenceNative(applicationReference: String): Int
+
+  @Modifying
+  fun deleteByReference(reference: String): Long
+
+  @Modifying
+  @Query(
+    "DELETE FROM visit v " +
+      "  WHERE v.reference = :reference",
+    nativeQuery = true,
+  )
+  fun deleteByReferenceNative(reference: String): Int
+
+  @Query(
+    "SELECT CASE WHEN (COUNT(v) = 1) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference ",
+  )
+  fun hasOneVisit(@Param("reference") reference: String): Boolean
+
+  @Query(
+    "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.id = :visitId ",
   )
   fun hasVisit(@Param("visitId") visitId: Long): Boolean
 

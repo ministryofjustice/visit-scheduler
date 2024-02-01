@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Value
@@ -21,6 +22,11 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
   @Value("\${visit.cancel.day-limit}")
   var visitCancellationDayLimit: Long = -7
 
+  @BeforeEach
+  internal fun setUp() {
+    sessionTemplateDefault = sessionTemplateEntityHelper.create()
+  }
+
   @Test
   fun `when cancel day limit configured as a negative value cancel future visit does not return error`() {
     val cancelVisitDto = CancelVisitDto(
@@ -28,12 +34,11 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
         OutcomeStatus.CANCELLATION,
         "No longer joining.",
       ),
-      CancelVisitTest.cancelledByByUser,
+      CancelVisitTest.CANCELLED_BY_USER,
       NOT_KNOWN,
     )
     // Given
-    val visitStart = LocalDateTime.now().plusDays(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
@@ -57,14 +62,14 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
         OutcomeStatus.CANCELLATION,
         "No longer joining.",
       ),
-      CancelVisitTest.cancelledByByUser,
+      CancelVisitTest.CANCELLED_BY_USER,
       NOT_KNOWN,
     )
     // Given
     // visit has expired based on current date
     // as the configured limit is 0 - any cancellations before current time should be allowed
     val visitStart = LocalDateTime.now().minusMinutes(10)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), sessionTemplate = sessionTemplateDefault)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, cancelVisitDto)
@@ -73,6 +78,6 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
-      .jsonPath("$.developerMessage").isEqualTo("OldVisit with booking reference - ${expiredVisit.reference} is in the past, it cannot be cancelled")
+      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - ${expiredVisit.reference} is in the past, it cannot be cancelled")
   }
 }

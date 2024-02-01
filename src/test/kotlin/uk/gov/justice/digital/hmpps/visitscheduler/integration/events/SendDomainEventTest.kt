@@ -29,7 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.OldVisit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.HMPPSDomainEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED_DESC
@@ -62,18 +62,13 @@ class SendDomainEventTest : IntegrationTestBase() {
       testSqsClient.purgeQueue(PurgeQueueRequest.builder().queueUrl(testQueueUrl).build())
     }
 
-    private fun createVisitAndSave(visitStatus: VisitStatus): OldVisit {
-      val visit = visitEntityHelper.create(visitStatus = visitStatus)
-      return visit
-    }
-
     @Test
     fun `send visit booked event on update`() {
       // Given
-      val visitEntity = createVisitAndSave(VisitStatus.RESERVED)
-      eventAuditEntityHelper.create(visitEntity)
+      val applicationEntity = createApplicationAndSave(completed = false)
+      eventAuditEntityHelper.create(applicationEntity)
 
-      val applicationReference = visitEntity.applicationReference
+      val applicationReference = applicationEntity.reference
       val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
       // When
@@ -126,7 +121,8 @@ class SendDomainEventTest : IntegrationTestBase() {
     @Test
     fun `send visit cancelled event`() {
       // Given
-      val visitEntity = createVisitAndSave(VisitStatus.BOOKED)
+      val applicationEntity = createApplicationAndSave(completed = true)
+      val visitEntity = createVisitAndSave(BOOKED, applicationEntity)
       val reference = visitEntity.reference
       val authHeader = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
       val cancelVisitDto = CancelVisitDto(

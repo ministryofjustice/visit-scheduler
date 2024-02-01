@@ -51,7 +51,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   }
 
   @Test
-  fun `Migrate visit`() {
+  fun `migrate visit`() {
     // Given
 
     val migrateVisitRequestDto = createMigrateVisitRequestDto(modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
@@ -72,8 +72,9 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       assertThat(visit.prisonerId).isEqualTo("FF0000FF")
       assertThat(visit.visitRoom).isEqualTo("A1")
       assertThat(visit.visitType).isEqualTo(SOCIAL)
-      assertThat(visit.visitStart).isEqualTo(VISIT_TIME)
-      assertThat(visit.visitEnd).isEqualTo(VISIT_TIME.plusHours(1))
+      assertThat(visit.sessionSlot.slotDate).isEqualTo(VISIT_TIME.toLocalDate())
+      assertThat(visit.sessionSlot.slotStart).isEqualTo(VISIT_TIME)
+      assertThat(visit.sessionSlot.slotEnd).isEqualTo(VISIT_TIME.plusHours(1))
       assertThat(visit.visitStatus).isEqualTo(BOOKED)
       assertThat(visit.outcomeStatus).isEqualTo(COMPLETED_NORMALLY)
       assertThat(visit.visitRestriction).isEqualTo(OPEN)
@@ -495,7 +496,9 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   @Test
   fun `cancel visit migrated by reference -  with outcome and outcome text`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+
+    val application = createApplicationAndSave(completed = true)
+    val visit = createVisitAndSave(visitStatus = BOOKED, application)
 
     val cancelVisitDto = MigratedCancelVisitDto(
       OutcomeDto(
@@ -538,7 +541,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
-      .jsonPath("$.developerMessage").value(Matchers.startsWith("OldVisit more than 6 months in future, will not be migrated!"))
+      .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))
   }
 
   @Test
@@ -554,7 +557,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       .expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
-      .jsonPath("$.developerMessage").value(Matchers.startsWith("OldVisit more than 6 months in future, will not be migrated!"))
+      .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))
   }
 
   @Test

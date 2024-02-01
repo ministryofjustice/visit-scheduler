@@ -46,8 +46,8 @@ const val VISIT_NOTIFICATION_TYPES: String = "$VISIT_NOTIFICATION_CONTROLLER_PAT
 
 @RestController
 @Validated
-@Tag(name = "OldVisit notification controller $VISIT_NOTIFICATION_CONTROLLER_PATH")
-@RequestMapping(name = "OldVisit notification Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = "Visit notification controller $VISIT_NOTIFICATION_CONTROLLER_PATH")
+@RequestMapping(name = "Visit notification Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class VisitNotificationController(
   private val visitNotificationEventService: VisitNotificationEventService,
 ) {

@@ -19,16 +19,24 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.task.ReportingTask
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = Propagation.SUPPORTS)
-@DisplayName("OldVisit Counts Reporting - check events sent")
+@DisplayName("Visit Counts Reporting - check events sent")
 class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
   @Autowired
   private lateinit var reportingTask: ReportingTask
+
+  @Autowired
+  private lateinit var sessionRepository: TestSessionTemplateRepository
+
+  @Autowired
+  private lateinit var prisonRepository: PrisonRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -43,14 +51,18 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
   @Test
   fun `when active prisons with no sessions report date and prison details are sent`() {
     // Given
-    prisonEntityHelper.create("ABC", activePrison = true, excludeDates = emptyList())
+    prisonEntityHelper.create(sessionTemplateDefault.prison.code, activePrison = true, excludeDates = emptyList())
+
+    // When
     val sessionsReport = reportingTask.getVisitCountsReportByDay()[reportDate]!!
+
+    // Then
     Assertions.assertThat(sessionsReport.size).isEqualTo(1)
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-counts-report"), any(), isNull())
     assertReportingEvent(
       reportDate = reportDate.format(DateTimeFormatter.ISO_DATE),
-      prisonCode = "ABC",
+      prisonCode = sessionTemplateDefault.prison.code,
       isBlockedDate = "false",
       hasSessionsOnDate = "false",
     )
@@ -59,20 +71,28 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
   @Test
   fun `when active prisons with sessions report date and prison and session details with visit counts are sent`() {
     // Given
-    val prison1 = prisonEntityHelper.create("ABC", activePrison = true, excludeDates = emptyList())
-    val session = sessionTemplateEntityHelper.create(prison = prison1, validFromDate = reportDate.minusMonths(3), weeklyFrequency = 1, dayOfWeek = reportDate.dayOfWeek, startTime = LocalTime.of(11, 0), endTime = LocalTime.of(13, 0), openCapacity = 100, closedCapacity = 35)
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN, sessionTemplateReference = session.reference, visitStart = reportDate.atTime(session.startTime), visitEnd = reportDate.atTime(session.endTime))
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.OPEN, sessionTemplateReference = session.reference, visitStart = reportDate.atTime(session.startTime), visitEnd = reportDate.atTime(session.endTime), outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.CLOSED, sessionTemplateReference = session.reference, visitStart = reportDate.atTime(session.startTime), visitEnd = reportDate.atTime(session.endTime))
-    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.CLOSED, sessionTemplateReference = session.reference, visitStart = reportDate.atTime(session.startTime), visitEnd = reportDate.atTime(session.endTime), outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION)
 
+    // Default session template and prison must be removed
+    sessionRepository.deleteAll()
+    prisonRepository.deleteAll()
+
+    val prison1 = prisonEntityHelper.create("ABC", activePrison = true, excludeDates = emptyList())
+    val sessionTemplate = sessionTemplateEntityHelper.create(prison = prison1, validFromDate = reportDate.minusMonths(3), weeklyFrequency = 1, dayOfWeek = reportDate.dayOfWeek, startTime = LocalTime.of(11, 0), endTime = LocalTime.of(13, 0), openCapacity = 100, closedCapacity = 35)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN, sessionTemplate = sessionTemplate, slotDate = reportDate)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.OPEN, sessionTemplate = sessionTemplate, outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION, slotDate = reportDate)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.CLOSED, sessionTemplate = sessionTemplate, slotDate = reportDate)
+    visitEntityHelper.create(prisonCode = prison1.code, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.CLOSED, sessionTemplate = sessionTemplate, outcomeStatus = OutcomeStatus.ADMINISTRATIVE_CANCELLATION, slotDate = reportDate)
+
+    // When
     val sessionsReport = reportingTask.getVisitCountsReportByDay()[reportDate]!!
+
+    // Then
     Assertions.assertThat(sessionsReport.size).isEqualTo(1)
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-counts-report"), any(), isNull())
     assertReportingEvent(
       reportDate = reportDate.format(DateTimeFormatter.ISO_DATE),
-      prisonCode = "ABC",
+      prisonCode = sessionTemplate.prison.code,
       isBlockedDate = "false",
       hasSessionsOnDate = "true",
       sessionStart = "11:00:00",

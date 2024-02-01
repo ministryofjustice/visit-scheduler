@@ -23,7 +23,7 @@ data class UpdateSessionTemplateDto(
   @field:SessionDateRangeValidation
   val sessionDateRange: SessionDateRangeDto?,
 
-  @Schema(description = "OldVisit Room", example = "Visits Main Hall", required = false)
+  @Schema(description = "Visit Room", example = "Visits Main Hall", required = false)
   @field:Size(max = 255)
   val visitRoom: String?,
 

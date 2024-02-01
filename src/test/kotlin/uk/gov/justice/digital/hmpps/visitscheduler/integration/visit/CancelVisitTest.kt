@@ -12,19 +12,21 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.http.HttpHeaders
 import org.springframework.test.context.TestPropertySource
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
@@ -32,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.P
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
@@ -47,8 +50,8 @@ class CancelVisitTest : IntegrationTestBase() {
   protected lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
 
   companion object {
-    const val reservedByByUser = "reserved_by"
-    const val cancelledByByUser = "canceled_by"
+    const val RESERVED_BY_USER = "reserved_by"
+    const val CANCELLED_BY_USER = "canceled_by"
   }
 
   @Value("\${visit.cancel.day-limit:14}")
@@ -63,14 +66,14 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit by reference -  with outcome and outcome text`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.PRISONER_CANCELLED,
         "Prisoner got covid",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       PHONE,
     )
     val reference = visit.reference
@@ -93,11 +96,11 @@ class CancelVisitTest : IntegrationTestBase() {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitCancelled.reference)
 
     Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
-    Assertions.assertThat(eventAudit.actionedBy).isEqualTo(cancelledByByUser)
+    Assertions.assertThat(eventAudit.actionedBy).isEqualTo(CANCELLED_BY_USER)
     Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(PHONE)
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
-    Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionTemplateReference)
-    Assertions.assertThat(eventAudit.applicationReference).isEqualTo(visit.applicationReference)
+    Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
+    Assertions.assertThat(eventAudit.applicationReference).isEqualTo(visit.getLastApplication()?.reference)
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
@@ -107,13 +110,13 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit by reference -  with outcome and without outcome text`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         outcomeStatus = OutcomeStatus.VISITOR_CANCELLED,
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       NOT_KNOWN,
     )
     val reference = visit.reference
@@ -139,13 +142,13 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit twice by reference - just send one event`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
     val reference = visit.reference
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         outcomeStatus = OutcomeStatus.VISITOR_CANCELLED,
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       NOT_KNOWN,
     )
 
@@ -174,7 +177,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit by reference - without outcome`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
     val reference = visit.reference
     val eventsMap = mutableMapOf(
       "reference" to reference,
@@ -193,64 +196,27 @@ class CancelVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `cancel visit by reference - with outcome status of superseded`() {
-    // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
-
-    val cancelVisitDto = CancelVisitDto(
-      OutcomeDto(
-        OutcomeStatus.SUPERSEDED_CANCELLATION,
-        "Prisoner has updated the existing booking",
-      ),
-      cancelledByByUser,
-      NOT_KNOWN,
-    )
-    val reference = visit.reference
-
-    // When
-    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, cancelVisitDto)
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-      .returnResult()
-
-    // And
-    val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.SUPERSEDED_CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
-    Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
-    Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner has updated the existing booking")
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
-  }
-
-  @Test
   fun `cancel an updated visit by reference`() {
     // Given
-    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED)
+    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
     val roles = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
-
-    val sessionTemplate = sessionTemplateEntityHelper.create()
 
     // update the visit
     // first create a reserveVisitSlotDto with same details as the booked visit
-    val reserveVisitSlotDto = ReserveVisitSlotDto(
+    val createApplicationDto = CreateApplicationDto(
       prisonerId = bookedVisit.prisonerId,
       visitRestriction = bookedVisit.visitRestriction,
-      startTimestamp = bookedVisit.visitStart,
-      endTimestamp = bookedVisit.visitEnd,
+      sessionDate = bookedVisit.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "011223344"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      actionedBy = reservedByByUser,
-      sessionTemplateReference = sessionTemplate.reference,
+      actionedBy = RESERVED_BY_USER,
+      sessionTemplateReference = sessionTemplateDefault.reference,
     )
 
     // call visit change and then book the visit
-    val responseSpecChange = callVisitChange(webTestClient, roles, reserveVisitSlotDto, bookedVisit.reference)
-    val responseSpecChangeResult = responseSpecChange
-      .expectBody()
-      .returnResult()
-    val visit = objectMapper.readValue(responseSpecChangeResult.responseBody, VisitDto::class.java)
-    callVisitBook(webTestClient, roles, visit.applicationReference)
+    val applicationDto = sendApplicationToUpdateExistingBooking(roles, createApplicationDto, bookedVisit)
+    val responseForBookingResponse = callVisitBook(webTestClient, roles, applicationDto.reference)
+    val visit = getVisitDto(responseForBookingResponse)
 
     // finally cancel the updated visit
     val cancelVisitDto = CancelVisitDto(
@@ -258,21 +224,19 @@ class CancelVisitTest : IntegrationTestBase() {
         OutcomeStatus.PRISONER_CANCELLED,
         "Prisoner got covid",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       applicationMethodType = NOT_KNOWN,
     )
-    val reference = bookedVisit.reference
+    val reference = visit.reference
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), reference, cancelVisitDto)
 
     // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-      .returnResult()
+    responseSpec.expectStatus().isOk
 
     // And
-    val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    val visitCancelled = getVisitDto(responseSpec)
     assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.PRISONER_CANCELLED, cancelVisitDto.actionedBy, NOT_KNOWN)
     Assertions.assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
     Assertions.assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
@@ -280,6 +244,20 @@ class CancelVisitTest : IntegrationTestBase() {
     assertCancelledDomainEvent(visitCancelled)
 
     verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+  }
+
+  private fun sendApplicationToUpdateExistingBooking(
+    roles: (HttpHeaders) -> Unit,
+    createApplicationDto: CreateApplicationDto,
+    bookedVisit: Visit,
+  ): ApplicationDto {
+    val responseSpecChange =
+      callApplicationForVisitChange(webTestClient, roles, createApplicationDto, bookedVisit.reference)
+    val responseSpecChangeResult = responseSpecChange.expectStatus().isCreated
+      .expectBody()
+      .returnResult()
+
+    return objectMapper.readValue(responseSpecChangeResult.responseBody, ApplicationDto::class.java)
   }
 
   @Test
@@ -290,9 +268,9 @@ class CancelVisitTest : IntegrationTestBase() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.ADMINISTRATIVE_CANCELLATION,
-        "OldVisit does not exist",
+        "Visit does not exist",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       applicationMethodType = NOT_KNOWN,
     )
 
@@ -317,7 +295,7 @@ class CancelVisitTest : IntegrationTestBase() {
         OutcomeStatus.ESTABLISHMENT_CANCELLED,
         "Prisoner got covid",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       applicationMethodType = NOT_KNOWN,
     )
 
@@ -346,7 +324,7 @@ class CancelVisitTest : IntegrationTestBase() {
         OutcomeStatus.PRISONER_CANCELLED,
         "Prisoner got covid",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       applicationMethodType = NOT_KNOWN,
     )
 
@@ -365,15 +343,15 @@ class CancelVisitTest : IntegrationTestBase() {
 
   @Test
   fun `cancel expired visit returns bad request error`() {
-    val visitStart = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
+    val yesterday = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = yesterday.toLocalDate(), sessionTemplate = sessionTemplateDefault, createContact = true)
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.PRISONER_CANCELLED,
         "Prisoner got covid",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       applicationMethodType = NOT_KNOWN,
     )
     val reference = expiredVisit.reference
@@ -385,7 +363,7 @@ class CancelVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
-      .jsonPath("$.developerMessage").isEqualTo("OldVisit with booking reference - $reference is in the past, it cannot be cancelled")
+      .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be cancelled")
 
     // And
     verify(telemetryClient, times(1)).trackEvent(eq("visit-bad-request-error"), any(), isNull())
@@ -403,12 +381,15 @@ class CancelVisitTest : IntegrationTestBase() {
         OutcomeStatus.CANCELLATION,
         "No longer joining.",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val visitStart = LocalDateTime.now().minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS).withHour(1)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
+    val now = LocalDateTime.now().minusDays(visitCancellationDayLimit).truncatedTo(ChronoUnit.DAYS).withHour(1)
+    val slotDate = now.toLocalDate()
+    val visitStart = now.toLocalTime()
+
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, cancelVisitDto)
@@ -431,13 +412,14 @@ class CancelVisitTest : IntegrationTestBase() {
         OutcomeStatus.CANCELLATION,
         "No longer joining.",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val visitStart = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
-
+    val oneAm = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
+    val slotDate = oneAm.toLocalDate()
+    val visitStart = oneAm.toLocalTime()
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, createContact = true)
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
 
@@ -459,12 +441,11 @@ class CancelVisitTest : IntegrationTestBase() {
         OutcomeStatus.CANCELLATION,
         "No longer joining.",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val visitStart = LocalDateTime.now().plusDays(1)
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, visitStart = visitStart)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
@@ -525,7 +506,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `when cancel visit by reference then any associated notifications are also deleted`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)
@@ -538,7 +519,7 @@ class CancelVisitTest : IntegrationTestBase() {
         OutcomeStatus.PRISONER_CANCELLED,
         "Prisoner got covid",
       ),
-      cancelledByByUser,
+      CANCELLED_BY_USER,
       PHONE,
     )
     val reference = visit.reference

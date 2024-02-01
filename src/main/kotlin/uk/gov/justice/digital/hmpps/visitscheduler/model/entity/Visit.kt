@@ -7,7 +7,6 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.FetchType
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
@@ -37,10 +36,10 @@ class Visit(
   val prison: Prison,
 
   @Column(nullable = false)
-  var prisonerId: String,
+  val prisonerId: String,
 
   @Column(name = "SESSION_SLOT_ID", nullable = true)
-  val sessionSlotId: Long,
+  var sessionSlotId: Long,
 
   @ManyToOne
   @JoinColumn(name = "SESSION_SLOT_ID", updatable = false, insertable = false)
@@ -51,7 +50,7 @@ class Visit(
   var visitType: VisitType,
 
   @Column(nullable = false)
-  val visitRoom: String,
+  var visitRoom: String,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
@@ -60,34 +59,26 @@ class Visit(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   var visitRestriction: VisitRestriction,
+) : AbstractIdEntity() {
 
   @Column(nullable = true)
   @Enumerated(EnumType.STRING)
-  var outcomeStatus: OutcomeStatus? = null,
+  var outcomeStatus: OutcomeStatus? = null
 
   @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitContact: VisitContact? = null,
+  lateinit var visitContact: VisitContact
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitors: MutableList<VisitVisitor> = mutableListOf(),
+  val visitors: MutableList<VisitVisitor> = mutableListOf()
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var support: MutableList<VisitSupport> = mutableListOf(),
+  val support: MutableList<VisitSupport> = mutableListOf()
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitNotes: MutableList<VisitNote> = mutableListOf(),
+  val visitNotes: MutableList<VisitNote> = mutableListOf()
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
-  @JoinTable(
-    name = "VISITS_TO_APPLICATIONS",
-    joinColumns = [JoinColumn(name = "visit_id")],
-    inverseJoinColumns = [JoinColumn(name = "application_id")],
-  )
-  var applications: MutableList<Application> = mutableListOf(),
-
-  @Transient
-  private val _reference: String = "",
-) : AbstractIdEntity() {
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  private val applications: MutableList<Application> = mutableListOf()
 
   @CreationTimestamp
   @Column
@@ -98,16 +89,35 @@ class Visit(
   val modifyTimestamp: LocalDateTime? = null
 
   @Column
-  var reference = _reference
+  var reference: String = ""
+    private set
 
   @PostPersist
   fun createReference() {
-    if (_reference.isBlank()) {
+    if (reference.isBlank()) {
       reference = QuotableEncoder(minLength = 8).encode(id)
     }
   }
 
   override fun toString(): String {
-    return "OldVisit(id=$id,reference='$reference')"
+    return "Visit(id=$id,reference='$reference')"
+  }
+
+  fun getApplications(): List<Application> {
+    return this.applications
+  }
+
+  fun getLastApplication(): Application? {
+    return this.applications.lastOrNull()
+  }
+
+  fun getLastCompletedApplication(): Application? {
+    return this.applications.lastOrNull { it.completed }
+  }
+
+  fun addApplication(application: Application) {
+    application.visitId = this.id
+    application.visit = this
+    applications.add(application)
   }
 }

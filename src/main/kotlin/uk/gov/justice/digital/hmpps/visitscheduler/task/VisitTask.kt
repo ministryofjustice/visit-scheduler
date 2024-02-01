@@ -11,24 +11,24 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfigura
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.service.ApplicationService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 
 @Component
 class VisitTask(
   private val visitService: VisitService,
+  private val applicationService: ApplicationService,
   private val sessionService: SessionService,
   private val prisonsService: PrisonsService,
   private val telemetryClient: TelemetryClient,
   private val expiredVisitTaskConfiguration: ExpiredVisitTaskConfiguration,
   private val flagVisitTaskConfiguration: FlagVisitTaskConfiguration,
+  private val telemetryClientService: TelemetryClientService,
 ) {
 
   companion object {
@@ -47,10 +47,10 @@ class VisitTask(
     }
 
     log.debug("Entered deleteExpiredReservations")
-    val expiredApplicationReferences = visitService.findExpiredApplicationReferences()
+    val expiredApplicationReferences = applicationService.findExpiredApplicationReferences()
     log.debug("Expired visits: ${expiredApplicationReferences.count()}")
     if (expiredApplicationReferences.isNotEmpty()) {
-      visitService.deleteAllExpiredVisitsByApplicationReference(expiredApplicationReferences)
+      applicationService.deleteAllExpiredApplications(expiredApplicationReferences)
     }
   }
 
@@ -68,15 +68,13 @@ class VisitTask(
     log.debug("Started flagVisits task.")
     prisonsService.getSupportedPrisons().forEach { prisonCode ->
       for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
-        val visitDate = LocalDateTime.now().plusDays(i.toLong())
+        val visitDate = LocalDate.now().plusDays(i.toLong())
 
-        val visitFilter = VisitFilter(
+        val visits = visitService.getBookedVisitsForDate(
           prisonCode = prisonCode,
-          visitStatusList = listOf(VisitStatus.BOOKED),
-          startDateTime = visitDate.with(LocalTime.MIN),
-          endDateTime = visitDate.with(LocalTime.MAX),
+          visitDate,
         )
-        val visits = visitService.findVisitsByFilterPageableDescending(visitFilter)
+
         val retryVisits = mutableListOf<VisitDto>()
 
         visits.forEach {
@@ -118,7 +116,7 @@ class VisitTask(
 
     if (sessions.isEmpty() && !retry) {
       trackEvent(visitTrackEvent)
-      log.info("Flagged OldVisit: OldVisit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check.", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
+      log.info("Flagged Visit: Visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check.", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
     }
 
     log.debug("Finished check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
@@ -126,7 +124,7 @@ class VisitTask(
     try {
       Thread.sleep(FlagVisitTaskConfiguration.THREAD_SLEEP_TIME_IN_MILLISECONDS)
     } catch (e: InterruptedException) {
-      log.debug("Flagged OldVisit: Sleep failed : {}", e.toString())
+      log.debug("Flagged Visit: Sleep failed : {}", e.toString())
     }
 
     return retry
@@ -140,7 +138,7 @@ class VisitTask(
     } else {
       visitTrackEvent["additionalInformation"] = e.message ?: "An exception occurred"
     }
-    log.info("Flagged OldVisit: $e raised for OldVisit with reference - ${visit.reference} ,prisoner id - ${visit.prisonerId}, prison code - ${visit.prisonCode}, start time - ${visit.startTimestamp}, end time - ${visit.endTimestamp}, error message - ${e.message}")
+    log.info("Flagged Visit: $e raised for Visit with reference - ${visit.reference} ,prisoner id - ${visit.prisonerId}, prison code - ${visit.prisonCode}, start time - ${visit.startTimestamp}, end time - ${visit.endTimestamp}, error message - ${e.message}")
     return visitTrackEvent
   }
 
@@ -161,8 +159,8 @@ class VisitTask(
       "prisonId" to visit.prisonCode,
       "visitType" to visit.visitType.name,
       "visitRestriction" to visit.visitRestriction.name,
-      "visitStart" to visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
-      "visitEnd" to visit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStart" to telemetryClientService.formatDateTimeToString(visit.startTimestamp),
+      "visitEnd" to telemetryClientService.formatDateTimeToString(visit.endTimestamp),
       "visitStatus" to visit.visitStatus.name,
     )
 
