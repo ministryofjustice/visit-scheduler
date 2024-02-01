@@ -40,8 +40,8 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = primaryPrisonerId,
       slotDate = startDate.plusDays(1),
       visitStatus = BOOKED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -49,12 +49,12 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = secondaryPrisonerId,
       slotDate = startDate.plusDays(2),
       visitStatus = BOOKED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    var sessionTemplateTst = sessionTemplateEntityHelper.create(prisonCode = "TST")
+    val sessionTemplateTst = sessionTemplateEntityHelper.create(prisonCode = "TST")
 
     val visitOther = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
@@ -86,8 +86,8 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = CANCELLED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -95,12 +95,12 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    var sessionTemplateTst = sessionTemplateEntityHelper.create(prisonCode = "TST")
+    val sessionTemplateTst = sessionTemplateEntityHelper.create(prisonCode = "TST")
 
     val visitOther = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
@@ -132,8 +132,8 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -141,12 +141,12 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
-    var sessionTemplateTst = sessionTemplateEntityHelper.create(prisonCode = "TST")
+    val sessionTemplateTst = sessionTemplateEntityHelper.create(prisonCode = "TST")
 
     val visitOther = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
@@ -162,7 +162,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitOther.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
 
     // When
-    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", sessionTemplate.prison.code), roleVisitSchedulerHttpHeaders)
+    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", sessionTemplateDefault.prison.code), roleVisitSchedulerHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -178,8 +178,8 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = CANCELLED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -187,8 +187,8 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -196,8 +196,8 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = CANCELLED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -206,7 +206,7 @@ class CountVisitNotificationTest : NotificationTestBase() {
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visitOther.reference, PRISONER_RESTRICTION_CHANGE_EVENT))
 
     // When
-    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", sessionTemplate.prison.code), roleVisitSchedulerHttpHeaders)
+    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", sessionTemplateDefault.prison.code), roleVisitSchedulerHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -222,13 +222,13 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visit)
 
     // When
-    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", sessionTemplate.prison.code), roleVisitSchedulerHttpHeaders)
+    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", sessionTemplateDefault.prison.code), roleVisitSchedulerHttpHeaders)
 
     // Then count returned is 0
     responseSpec.expectStatus().isOk
@@ -243,8 +243,8 @@ class CountVisitNotificationTest : NotificationTestBase() {
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      prisonCode = sessionTemplate.prison.code,
-      sessionTemplate = sessionTemplate,
+      prisonCode = sessionTemplateDefault.prison.code,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visit)
 

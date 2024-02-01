@@ -50,15 +50,15 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    reservedVisitNotExpired = applicationEntityHelper.create(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplate, completed = false, reservedSlot = true)
+    reservedVisitNotExpired = applicationEntityHelper.create(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true)
     testApplicationRepository.saveAndFlush(reservedVisitNotExpired)
 
-    reservedVisitNotExpiredChangingStatus = applicationEntityHelper.create(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplate, completed = false, reservedSlot = false)
+    reservedVisitNotExpiredChangingStatus = applicationEntityHelper.create(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false)
 
-    reservedVisitExpired = applicationEntityHelper.create(prisonerId = "EXPIRED", sessionTemplate = sessionTemplate, completed = false, reservedSlot = true)
+    reservedVisitExpired = applicationEntityHelper.create(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true)
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
 
-    reservedVisitExpiredChangingStatus = testApplicationRepository.saveAndFlush(applicationEntityHelper.create(prisonerId = "EXPIRED", sessionTemplate = sessionTemplate, completed = false, reservedSlot = false))
+    reservedVisitExpiredChangingStatus = testApplicationRepository.saveAndFlush(applicationEntityHelper.create(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false))
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
   }
 

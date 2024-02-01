@@ -66,7 +66,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit by reference -  with outcome and outcome text`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
@@ -110,7 +110,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit by reference -  with outcome and without outcome text`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
@@ -142,7 +142,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit twice by reference - just send one event`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
     val reference = visit.reference
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
@@ -177,7 +177,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit by reference - without outcome`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
     val reference = visit.reference
     val eventsMap = mutableMapOf(
       "reference" to reference,
@@ -198,7 +198,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel an updated visit by reference`() {
     // Given
-    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createContact = true)
+    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
     val roles = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     // update the visit
@@ -210,7 +210,7 @@ class CancelVisitTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "011223344"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       actionedBy = RESERVED_BY_USER,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
     )
 
     // call visit change and then book the visit
@@ -344,7 +344,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel expired visit returns bad request error`() {
     val yesterday = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = yesterday.toLocalDate(), sessionTemplate = sessionTemplate, createContact = true)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = yesterday.toLocalDate(), sessionTemplate = sessionTemplateDefault, createContact = true)
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
@@ -389,7 +389,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val slotDate = now.toLocalDate()
     val visitStart = now.toLocalTime()
 
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplate, createContact = true)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, cancelVisitDto)
@@ -419,7 +419,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val oneAm = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
     val slotDate = oneAm.toLocalDate()
     val visitStart = oneAm.toLocalTime()
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplate, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, createContact = true)
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
 
@@ -445,7 +445,7 @@ class CancelVisitTest : IntegrationTestBase() {
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
@@ -506,7 +506,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `when cancel visit by reference then any associated notifications are also deleted`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)

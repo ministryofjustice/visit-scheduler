@@ -22,15 +22,15 @@ class VisitByReferenceTest() : IntegrationTestBase() {
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
-    sessionTemplate = sessionTemplateEntityHelper.create(startTime = visitTime.toLocalTime(), endTime = visitTime.plusHours(1).toLocalTime())
+    sessionTemplateDefault = sessionTemplateEntityHelper.create(startTime = visitTime.toLocalTime(), endTime = visitTime.plusHours(1).toLocalTime())
   }
 
   @Test
   fun `Booked visit by reference`() {
     // Given
 
-    val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplate, createContact = true)
+    val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     val reference = createdVisit.reference
 
@@ -46,8 +46,8 @@ class VisitByReferenceTest() : IntegrationTestBase() {
   @Test
   fun `Canceled visit by reference`() {
     // Given
-    val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplate, createContact = true)
+    val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     val reference = createdVisit.reference
 

@@ -312,14 +312,14 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     val secondaryVisit = createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     val firstVisit = testVisitNotificationEventRepository.saveAndFlush(
@@ -356,21 +356,21 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(3),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     // visits for secondary prisoners are for today + 4, +5 & +6
@@ -378,21 +378,21 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(4),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(5),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(6),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     // When
@@ -414,7 +414,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().minusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     // visits for secondary prisoners are for today + 4, +5 & +6
@@ -422,21 +422,21 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now(),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now(),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(6),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     // When
@@ -458,21 +458,21 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(3),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     // no visits for secondary prisoners
@@ -496,42 +496,42 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = primaryPrisonerId,
       slotDate = visitStart.minusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = visitStart.minusDays(2),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = primaryPrisonerId,
       slotDate = visitStart.minusDays(3),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
       slotDate = visitStart.minusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
       slotDate = visitStart.minusDays(2),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,
       slotDate = visitStart.minusDays(3),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     // When
@@ -553,7 +553,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = primaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     // visits for secondary prisoner is for tomorrow at DEF prison
@@ -561,7 +561,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
       prisonerId = secondaryPrisonerId,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     // When

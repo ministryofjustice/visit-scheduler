@@ -14,11 +14,10 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 
@@ -40,21 +39,21 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   internal fun createVisits() {
     sessionTemplate2 = sessionTemplateEntityHelper.create()
 
-    vist1 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
+    vist1 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplateDefault, visitStatus = BOOKED, visitRestriction = OPEN)
     // visit 1 booked for session template reference - session-1
-    vist2 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
+    vist2 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplateDefault, visitStatus = BOOKED, visitRestriction = OPEN)
     // visit 2 reserved for session template reference - session-1
-    vist3 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.OPEN)
+    vist3 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplateDefault, visitStatus = CANCELLED, visitRestriction = OPEN)
     // visit 3 booked for session template reference - session-2
-    vist4 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000BB", sessionTemplate = sessionTemplate2, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
+    vist4 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000BB", sessionTemplate = sessionTemplate2, visitStatus = BOOKED, visitRestriction = OPEN)
     // visit 4 booked for session template reference - session-1 but on next day
-    vist5 = createApplicationAndVisit(slotDate = startDate.plusDays(1), prisonerId = "FF0000BB", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.CLOSED)
+    vist5 = createApplicationAndVisit(slotDate = startDate.plusDays(1), prisonerId = "FF0000BB", sessionTemplate = sessionTemplateDefault, visitStatus = BOOKED, visitRestriction = CLOSED)
   }
 
   @Test
   fun `get booked visits by session template reference for a single session date`() {
     // Given
-    val sessionTemplateReference = sessionTemplate.reference
+    val sessionTemplateReference = sessionTemplateDefault.reference
     val sessionDate = startDate.plusDays(1)
 
     // When
@@ -62,7 +61,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsResponse(responseSpec)
+    val visits = parseVisitsPageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(1)
     Assertions.assertThat(visits[0].reference).isEqualTo(vist5.reference)
   }
@@ -70,7 +69,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   @Test
   fun `get cancelled visits by session template reference for a single session date`() {
     // Given
-    val sessionTemplateReference = sessionTemplate.reference
+    val sessionTemplateReference = sessionTemplateDefault.reference
     val sessionDate = startDate
 
     // When
@@ -81,7 +80,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsResponse(responseSpec)
+    val visits = parseVisitsPageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(1)
     Assertions.assertThat(visits[0].reference).isEqualTo(vist3.reference)
   }
@@ -89,7 +88,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   @Test
   fun `get booked visits by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = sessionTemplate.reference
+    val sessionTemplateReference = sessionTemplateDefault.reference
     val fromDate = startDate
     val toDate = fromDate.plusDays(1)
 
@@ -98,7 +97,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsResponse(responseSpec)
+    val visits = parseVisitsPageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(4)
     Assertions.assertThat(visits[0].visitStatus).isEqualTo(BOOKED)
     Assertions.assertThat(visits[1].visitStatus).isEqualTo(BOOKED)
@@ -109,7 +108,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   @Test
   fun `get booked visits with restriction type OPEN by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = sessionTemplate.reference
+    val sessionTemplateReference = sessionTemplateDefault.reference
     val fromDate = startDate
     val toDate = fromDate.plusDays(1)
 
@@ -118,7 +117,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsResponse(responseSpec)
+    val visits = parseVisitsPageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(3)
     Assertions.assertThat(visits[0].visitRestriction).isEqualTo(OPEN)
     Assertions.assertThat(visits[1].visitRestriction).isEqualTo(OPEN)
@@ -128,7 +127,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   @Test
   fun `get booked visits with restriction type OPEN or CLOSED by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = sessionTemplate.reference
+    val sessionTemplateReference = sessionTemplateDefault.reference
     val fromDate = startDate
     val toDate = fromDate.plusDays(1)
 
@@ -137,7 +136,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsResponse(responseSpec)
+    val visits = parseVisitsPageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(4)
     Assertions.assertThat(visits[0].visitStatus).isEqualTo(BOOKED)
     Assertions.assertThat(visits[1].visitStatus).isEqualTo(BOOKED)
@@ -148,7 +147,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   @Test
   fun `get booked visits with restriction type CLOSED by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = sessionTemplate.reference
+    val sessionTemplateReference = sessionTemplateDefault.reference
     val fromDate = startDate
     val toDate = fromDate.plusDays(1)
 
@@ -157,7 +156,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsResponse(responseSpec)
+    val visits = parseVisitsPageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(1)
     Assertions.assertThat(visits[0].reference).isEqualTo(vist5.reference)
     Assertions.assertThat(visits[0].visitRestriction).isEqualTo(CLOSED)
@@ -166,7 +165,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   @Test
   fun `get booked and reserved visits by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = sessionTemplate.reference
+    val sessionTemplateReference = sessionTemplateDefault.reference
     val fromDate = startDate
     val toDate = fromDate.plusDays(1)
 
@@ -175,7 +174,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    val visits = parseVisitsResponse(responseSpec)
+    val visits = parseVisitsPageResponse(responseSpec)
     Assertions.assertThat(visits.size).isEqualTo(4)
   }
 
@@ -196,7 +195,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
   @Test
   fun `access forbidden when no role`() {
-    val sessionTemplateReference = sessionTemplate.reference
+    val sessionTemplateReference = sessionTemplateDefault.reference
     val sessionDate = startDate
 
     // When

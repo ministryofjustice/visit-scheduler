@@ -57,7 +57,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   @BeforeEach
   internal fun setUpTests() {
     prison = prisonEntityHelper.create()
-    sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true)
+    sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true)
     sessionTemplateWithValidDates = sessionTemplateEntityHelper.create(
       name = "session-template-for-update",
       prisonCode = prison.code,
@@ -93,29 +93,29 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionIncentiveGroup = sessionPrisonerIncentiveLevelHelper.create(name = "Non Enhanced Incentives", prisonCode = prison.code, incentiveLevelList = nonEnhancedIncentives)
 
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       sessionDateRange = SessionDateRangeDto(
-        validFromDate = sessionTemplate.validFromDate.plusDays(1),
-        validToDate = sessionTemplate.validToDate?.plusDays(10),
+        validFromDate = sessionTemplateDefault.validFromDate.plusDays(1),
+        validToDate = sessionTemplateDefault.validToDate?.plusDays(10),
       ),
       sessionCapacity = SessionCapacityDto(
-        closed = sessionTemplate.closedCapacity + 1,
-        open = sessionTemplate.openCapacity + 1,
+        closed = sessionTemplateDefault.closedCapacity + 1,
+        open = sessionTemplateDefault.openCapacity + 1,
       ),
       sessionTimeSlot = SessionTimeSlotDto(
-        startTime = sessionTemplate.startTime.plusHours(1),
-        endTime = sessionTemplate.endTime.plusHours(2),
+        startTime = sessionTemplateDefault.startTime.plusHours(1),
+        endTime = sessionTemplateDefault.endTime.plusHours(2),
       ),
       visitRoom = "new room name",
-      dayOfWeek = sessionTemplate.dayOfWeek.minus(1),
+      dayOfWeek = sessionTemplateDefault.dayOfWeek.minus(1),
       locationGroupReferences = mutableListOf(sessionGroup.reference, sessionGroup.reference),
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
       incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
-      weeklyFrequency = sessionTemplate.weeklyFrequency + 1,
+      weeklyFrequency = sessionTemplateDefault.weeklyFrequency + 1,
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -145,55 +145,55 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   fun `when session template updated with new time slot and visits exist for session template update should fail`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       sessionDateRange = null,
       sessionTimeSlot = SessionTimeSlotDto(
-        startTime = sessionTemplate.startTime.plusHours(1),
-        endTime = sessionTemplate.endTime.plusHours(2),
+        startTime = sessionTemplateDefault.startTime.plusHours(1),
+        endTime = sessionTemplateDefault.endTime.plusHours(2),
       ),
     )
 
     visitEntityHelper.create(
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       slotDate = LocalDate.now(),
       visitStart = dto.sessionTimeSlot!!.startTime,
       visitEnd = dto.sessionTimeSlot!!.endTime,
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
   }
 
   @Test
   fun `when session template updated with new from date and visits exist for session template update should fail`() {
     // Given
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       sessionDateRange = SessionDateRangeDto(
         // valid from date updated
-        validFromDate = sessionTemplate.validFromDate.plusDays(2),
+        validFromDate = sessionTemplateDefault.validFromDate.plusDays(2),
       ),
     )
 
     visitEntityHelper.create(
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       slotDate = LocalDate.now(),
       visitStart = dto.sessionTimeSlot!!.startTime,
       visitEnd = dto.sessionTimeSlot!!.endTime,
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
   }
 
   @Test
@@ -220,7 +220,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -234,7 +234,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -251,7 +251,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -270,7 +270,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -286,7 +286,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -303,7 +303,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -320,7 +320,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -339,7 +339,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -356,7 +356,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -370,7 +370,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -579,15 +579,15 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   @Test
   fun `when session template updated with higher weekly frequency but visits do not exist for session template update session template should be successful`() {
     // Given
-    val newWeeklyFrequency = sessionTemplate.weeklyFrequency + 2
+    val newWeeklyFrequency = sessionTemplateDefault.weeklyFrequency + 2
 
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       weeklyFrequency = newWeeklyFrequency,
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -645,25 +645,25 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   @Test
   fun `when session template updated with higher weekly frequency but visits exist for session template update session template should fail`() {
     // Given
-    val newWeeklyFrequency = sessionTemplate.weeklyFrequency + 2
+    val newWeeklyFrequency = sessionTemplateDefault.weeklyFrequency + 2
 
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       weeklyFrequency = newWeeklyFrequency,
       sessionDateRange = null,
     )
 
     // visit exists for session template
     visitEntityHelper.create(
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplate.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplate.reference} as existing visits for ${sessionTemplate.reference} might be affected!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template weekly frequency from ${sessionTemplateDefault.weeklyFrequency} to $newWeeklyFrequency for ${sessionTemplateDefault.reference} as existing visits for ${sessionTemplateDefault.reference} might be affected!"))
   }
 
   @Test
@@ -723,17 +723,17 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   @Test
   fun `when session template capacity upped update session template should be successful`() {
     // Given
-    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity + 1, open = sessionTemplate.openCapacity + 1)
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplateDefault.closedCapacity + 1, open = sessionTemplateDefault.openCapacity + 1)
 
     // updating session template capacity
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       sessionCapacity = newSessionCapacity,
       sessionDateRange = null,
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -747,16 +747,16 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   @Test
   fun `when session template capacity same as existing update session template should be successful`() {
     // Given
-    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity, open = sessionTemplate.openCapacity)
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplateDefault.closedCapacity, open = sessionTemplateDefault.openCapacity)
 
     // updating session template capacity
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       sessionCapacity = newSessionCapacity,
       sessionDateRange = null,
     )
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -770,16 +770,16 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   @Test
   fun `when session template open capacity lowered and no visits exist update session template should be successful`() {
     // Given
-    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity - 1, open = sessionTemplate.openCapacity - 1)
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplateDefault.closedCapacity - 1, open = sessionTemplateDefault.openCapacity - 1)
 
     // updating session template capacity
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       sessionCapacity = newSessionCapacity,
       sessionDateRange = null,
     )
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -787,7 +787,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplateDefault.reference, null)
   }
 
   @Test
@@ -797,16 +797,16 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     // updating session template capacity
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       sessionCapacity = newSessionCapacity,
       sessionDateRange = null,
     )
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // 2 open visit exists for session template
     visitEntityHelper.create(
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       visitRestriction = VisitRestriction.OPEN,
       slotDate = LocalDate.now().plusDays(1),
       visitStart = LocalTime.of(11, 0),
@@ -815,7 +815,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     visitEntityHelper.create(
       prisonerId = "AABBCC1",
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       visitRestriction = VisitRestriction.OPEN,
       slotDate = LocalDate.now().plusDays(1),
       visitStart = LocalTime.of(11, 0),
@@ -824,7 +824,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     // 1 closed visit exists for session template
     visitEntityHelper.create(
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       visitRestriction = VisitRestriction.CLOSED,
       slotDate = LocalDate.now().plusDays(1),
       visitStart = LocalTime.of(11, 0),
@@ -837,24 +837,24 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.sessionCapacity).isEqualTo(newSessionCapacity)
-    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplate.reference, null)
+    verify(visitRepository, times(1)).hasVisitsForSessionTemplate(sessionTemplateDefault.reference, null)
   }
 
   @Test
   fun `when session template closed capacity lowered below minimum allowed capacity update session template should fail`() {
     // Given
-    val newSessionCapacity = SessionCapacityDto(closed = 1, open = sessionTemplate.openCapacity)
+    val newSessionCapacity = SessionCapacityDto(closed = 1, open = sessionTemplateDefault.openCapacity)
 
     // updating session template capacity
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       sessionCapacity = newSessionCapacity,
       sessionDateRange = null,
     )
 
     // 2 open visit exists for session template
     visitEntityHelper.create(
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       visitRestriction = VisitRestriction.CLOSED,
       slotDate = LocalDate.now().plusDays(1),
       visitStart = LocalTime.of(11, 0),
@@ -863,7 +863,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     visitEntityHelper.create(
       prisonerId = "AABBCC1",
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       visitRestriction = VisitRestriction.CLOSED,
       slotDate = LocalDate.now().plusDays(1),
       visitStart = LocalTime.of(11, 0),
@@ -871,29 +871,29 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template closed capacity from ${sessionTemplate.closedCapacity} to ${newSessionCapacity.closed} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template closed capacity from ${sessionTemplateDefault.closedCapacity} to ${newSessionCapacity.closed} for ${sessionTemplateDefault.reference} as its lower than minimum capacity of 2!"))
   }
 
   @Test
   fun `when session template open capacity lowered below minimum allowed capacity update session template should fail`() {
     // Given
-    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplate.closedCapacity, open = 1)
+    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplateDefault.closedCapacity, open = 1)
 
     // updating session template capacity
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
+      name = sessionTemplateDefault.name + " Updated",
       sessionCapacity = newSessionCapacity,
       sessionDateRange = null,
     )
 
     // 2 open visit exists for session template
     visitEntityHelper.create(
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       visitRestriction = VisitRestriction.OPEN,
       slotDate = LocalDate.now().plusDays(1),
       visitStart = LocalTime.of(11, 0),
@@ -902,7 +902,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     visitEntityHelper.create(
       prisonerId = "AABBCC1",
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       visitRestriction = VisitRestriction.OPEN,
       slotDate = LocalDate.now().plusDays(1),
       visitStart = LocalTime.of(11, 0),
@@ -910,12 +910,12 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to ${newSessionCapacity.open} for ${sessionTemplate.reference} as its lower than minimum capacity of 2!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template open capacity from ${sessionTemplateDefault.openCapacity} to ${newSessionCapacity.open} for ${sessionTemplateDefault.reference} as its lower than minimum capacity of 2!"))
   }
 
   @Test
@@ -923,31 +923,31 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     // Given
     // update fails for multiple reasons
     val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplate.name + " Updated",
-      sessionDateRange = SessionDateRangeDto(sessionTemplate.validFromDate.minusDays(1)),
+      name = sessionTemplateDefault.name + " Updated",
+      sessionDateRange = SessionDateRangeDto(sessionTemplateDefault.validFromDate.minusDays(1)),
       sessionTimeSlot = SessionTimeSlotDto(
-        startTime = sessionTemplate.startTime.plusHours(1),
-        endTime = sessionTemplate.endTime.plusHours(2),
+        startTime = sessionTemplateDefault.startTime.plusHours(1),
+        endTime = sessionTemplateDefault.endTime.plusHours(2),
       ),
       sessionCapacity = SessionCapacityDto(closed = 1, open = 0),
     )
 
     visitEntityHelper.create(
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
       slotDate = LocalDate.now(),
       visitStart = dto.sessionTimeSlot!!.startTime,
       visitEnd = dto.sessionTimeSlot!!.endTime,
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
-      .jsonPath("$.validationMessages[1]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplate.reference} as there are existing visits associated with this session template!"))
-      .jsonPath("$.validationMessages[2]").value(Matchers.equalTo("Cannot update session template open capacity from ${sessionTemplate.openCapacity} to 0 for ${sessionTemplate.reference} as its lower than minimum capacity of 1!"))
+      .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[1]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
+      .jsonPath("$.validationMessages[2]").value(Matchers.equalTo("Cannot update session template open capacity from ${sessionTemplateDefault.openCapacity} to 0 for ${sessionTemplateDefault.reference} as its lower than minimum capacity of 1!"))
   }
 
   @Test
@@ -961,7 +961,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -980,7 +980,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -997,7 +997,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1014,7 +1014,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1031,7 +1031,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1045,7 +1045,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1059,7 +1059,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
 
     // Then
     responseSpec.expectStatus().isOk

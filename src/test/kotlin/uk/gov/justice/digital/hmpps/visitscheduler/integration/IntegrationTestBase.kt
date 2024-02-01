@@ -114,15 +114,15 @@ abstract class IntegrationTestBase {
   }
 
   lateinit var prison: Prison
-  lateinit var sessionTemplate: SessionTemplate
+  lateinit var sessionTemplateDefault: SessionTemplate
   lateinit var startDate: LocalDate
 
   @BeforeEach
   fun resetStubs() {
     prisonApiMockServer.resetAll()
     prisonOffenderSearchMockServer.resetAll()
-    sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "DFT")
-    startDate = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate)
+    sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT")
+    startDate = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
   }
 
   @AfterEach
@@ -250,7 +250,7 @@ abstract class IntegrationTestBase {
 
   fun createApplicationAndSave(
     prisonerId: String? = "testPrisonerId",
-    sessionTemplateLocal: SessionTemplate? = null,
+    sessionTemplate: SessionTemplate? = null,
     prisonCode: String? = null,
     slotDate: LocalDate? = null,
     completed: Boolean,
@@ -258,11 +258,10 @@ abstract class IntegrationTestBase {
   ): Application {
     val applicationEntity = applicationEntityHelper.create(
       prisonerId = prisonerId!!,
-      sessionTemplate = sessionTemplateLocal ?: sessionTemplate,
+      sessionTemplate = sessionTemplate ?: sessionTemplateDefault,
       completed = completed,
       prisonCode = prisonCode,
-      slotDate = slotDate
-        ?: sessionTemplate.validFromDate,
+      slotDate = slotDate ?: sessionTemplate?.validFromDate ?: sessionTemplateDefault.validFromDate,
       visitRestriction = visitRestriction,
     )
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
@@ -275,10 +274,10 @@ abstract class IntegrationTestBase {
   }
 
   fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit {
-    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplate, application = applicationEntity)
+    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplateDefault, application = applicationEntity)
   }
 
-  fun parseVisitsResponse(responseSpec: ResponseSpec): List<VisitDto> {
+  fun parseVisitsPageResponse(responseSpec: ResponseSpec): List<VisitDto> {
     class Page() {
       @JsonProperty("content")
       lateinit var content: List<VisitDto>
@@ -286,5 +285,9 @@ abstract class IntegrationTestBase {
 
     val content = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Page::class.java)
     return content.content
+  }
+
+  fun parseVisitsResponse(responseSpec: ResponseSpec): List<VisitDto> {
+    return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitDto>::class.java).toList()
   }
 }

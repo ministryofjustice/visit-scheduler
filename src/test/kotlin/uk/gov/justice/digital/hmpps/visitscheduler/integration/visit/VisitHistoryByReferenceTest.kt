@@ -118,11 +118,11 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
   @Test
   fun `visit history in sequence for session template change`() {
     // Given
-    val sessionTemplateToChangeTo = sessionTemplateEntityHelper.create(prisonCode = sessionTemplate.prison.code, dayOfWeek = SATURDAY)
+    val sessionTemplateToChangeTo = sessionTemplateEntityHelper.create(prisonCode = sessionTemplateDefault.prison.code, dayOfWeek = SATURDAY)
 
     val reserveVisitSlotDto = createReserveVisitSlotDto(
       actionedBy = "reserve_guy",
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
 
     val applicationDto = submitApplication(reserveVisitSlotDto)
@@ -139,9 +139,9 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList.size).isEqualTo(4)
     Assertions.assertThat(eventAuditList[0].type).isEqualTo(RESERVED_VISIT)
-    Assertions.assertThat(eventAuditList[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    Assertions.assertThat(eventAuditList[0].sessionTemplateReference).isEqualTo(sessionTemplateDefault.reference)
     Assertions.assertThat(eventAuditList[1].type).isEqualTo(BOOKED_VISIT)
-    Assertions.assertThat(eventAuditList[1].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    Assertions.assertThat(eventAuditList[1].sessionTemplateReference).isEqualTo(sessionTemplateDefault.reference)
     Assertions.assertThat(eventAuditList[2].type).isEqualTo(RESERVED_VISIT)
     Assertions.assertThat(eventAuditList[2].sessionTemplateReference).isEqualTo(sessionTemplateToChangeTo.reference)
     Assertions.assertThat(eventAuditList[3].type).isEqualTo(UPDATED_VISIT)

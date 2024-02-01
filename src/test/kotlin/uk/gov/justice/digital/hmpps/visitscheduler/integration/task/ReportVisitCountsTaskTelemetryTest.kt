@@ -51,7 +51,7 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
   @Test
   fun `when active prisons with no sessions report date and prison details are sent`() {
     // Given
-    prisonEntityHelper.create(sessionTemplate.prison.code, activePrison = true, excludeDates = emptyList())
+    prisonEntityHelper.create(sessionTemplateDefault.prison.code, activePrison = true, excludeDates = emptyList())
 
     // When
     val sessionsReport = reportingTask.getVisitCountsReportByDay()[reportDate]!!
@@ -62,7 +62,7 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
     verify(telemetryClient, times(1)).trackEvent(eq("visit-counts-report"), any(), isNull())
     assertReportingEvent(
       reportDate = reportDate.format(DateTimeFormatter.ISO_DATE),
-      prisonCode = sessionTemplate.prison.code,
+      prisonCode = sessionTemplateDefault.prison.code,
       isBlockedDate = "false",
       hasSessionsOnDate = "false",
     )

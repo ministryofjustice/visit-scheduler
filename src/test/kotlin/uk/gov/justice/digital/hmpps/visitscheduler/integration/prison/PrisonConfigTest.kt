@@ -224,7 +224,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     val bookedVisitForSamePrison = createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
     // existing visit for excludeDate in different prison
-    createApplicationAndVisit(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
+    createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
     // cancelled visit for excludeDate in same prison
     createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.CANCELLED, slotDate = excludeDate)
@@ -299,12 +299,12 @@ class PrisonConfigTest : IntegrationTestBase() {
   fun `when remove exclude date called with existing date then exclude date is successfully removed and any notified visits are removed`() {
     // Given
     val existingExcludeDates = setOf(LocalDate.now(), LocalDate.now().plusDays(7))
-    val prison = sessionTemplate.prison
+    val prison = sessionTemplateDefault.prison
     val createdPrison = prisonEntityHelper.create(prison.code, prison.active, existingExcludeDates.toList())
     val excludeDate = LocalDate.now().plusDays(7)
 
     // existing visit for excludeDate in same prison
-    val bookedVisitForSamePrison = visitEntityHelper.create(sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, prisonCode = prison.code)
+    val bookedVisitForSamePrison = visitEntityHelper.create(sessionTemplate = sessionTemplateDefault, visitStatus = VisitStatus.BOOKED, prisonCode = prison.code)
 
     visitNotificationEventHelper.create(bookedVisitForSamePrison.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
 

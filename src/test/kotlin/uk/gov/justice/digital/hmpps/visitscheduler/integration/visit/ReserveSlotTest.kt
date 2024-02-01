@@ -96,8 +96,8 @@ class ReserveSlotTest : IntegrationTestBase() {
     // Given
     val createReservationRequest = CreateApplicationDto(
       prisonerId = "FF0000FF",
-      sessionTemplateReference = sessionTemplate.reference,
-      sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate),
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
       visitRestriction = OPEN,
       visitors = setOf(),
       visitContact = ContactDto("John Smith", "01234 567890"),
@@ -156,8 +156,8 @@ class ReserveSlotTest : IntegrationTestBase() {
 
     val createReservationRequest = CreateApplicationDto(
       prisonerId = "FF0000FF",
-      sessionTemplateReference = sessionTemplate.reference,
-      sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate),
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
       visitRestriction = OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
@@ -182,8 +182,8 @@ class ReserveSlotTest : IntegrationTestBase() {
     // Given
     val createApplicationDto = CreateApplicationDto(
       prisonerId = "FF0000FF",
-      sessionTemplateReference = sessionTemplate.reference,
-      sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate),
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
       visitRestriction = OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),

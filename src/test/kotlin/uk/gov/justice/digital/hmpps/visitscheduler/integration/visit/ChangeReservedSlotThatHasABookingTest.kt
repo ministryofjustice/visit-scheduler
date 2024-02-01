@@ -28,7 +28,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
 
@@ -44,9 +43,6 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   @Autowired
   private lateinit var testVisitRepository: TestVisitRepository
 
-  @Autowired
-  private lateinit var testApplicationRepository: TestApplicationRepository
-
   private lateinit var oldBooking: Visit
   private lateinit var oldApplication: Application
 
@@ -57,11 +53,11 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    oldBooking = createApplicationAndVisit("test", sessionTemplate, BOOKED, LocalDate.now())
+    oldBooking = createApplicationAndVisit("test", sessionTemplateDefault, BOOKED, LocalDate.now())
     oldApplication = oldBooking.getLastApplication()!!
 
     newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN
-    newApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = false, reservedSlot = true, visitRestriction = newRestriction)
+    newApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = newRestriction)
     applicationEntityHelper.createContact(application = newApplication, name = "Aled Wyn Evans", phone = "01348 811539")
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some Text")
@@ -202,9 +198,5 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
   private fun getVisit(bookingReference: String): Visit? {
     return testVisitRepository.findByApplicationReference(bookingReference)
-  }
-
-  private fun getApplication(dto: ApplicationDto): Application? {
-    return testApplicationRepository.findByReference(dto.reference)
   }
 }

@@ -24,7 +24,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    sessionTemplate = sessionTemplateEntityHelper.create()
+    sessionTemplateDefault = sessionTemplateEntityHelper.create()
   }
 
   @Test
@@ -38,7 +38,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
       NOT_KNOWN,
     )
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
@@ -69,7 +69,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
     // visit has expired based on current date
     // as the configured limit is 0 - any cancellations before current time should be allowed
     val visitStart = LocalDateTime.now().minusMinutes(10)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), sessionTemplate = sessionTemplate)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), sessionTemplate = sessionTemplateDefault)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, cancelVisitDto)

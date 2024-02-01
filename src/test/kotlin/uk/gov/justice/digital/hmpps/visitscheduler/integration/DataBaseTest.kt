@@ -37,7 +37,7 @@ class DataBaseTest(
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    visitWithApplication = visitEntityHelper.create(sessionTemplate = sessionTemplate)
+    visitWithApplication = visitEntityHelper.create(sessionTemplate = sessionTemplateDefault)
 
     visitEntityHelper.createNote(visit = visitWithApplication, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = visitWithApplication, text = "Some text concerns", type = VISITOR_CONCERN)
@@ -47,7 +47,7 @@ class DataBaseTest(
     visitEntityHelper.createSupport(visit = visitWithApplication, name = "OTHER", details = "Some Text")
     visitEntityHelper.save(visitWithApplication)
 
-    applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = true)
+    applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = true)
     applicationEntityHelper.createContact(application = applicationWithVisit, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationWithVisit, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = applicationWithVisit, name = "OTHER", details = "Some Text")
@@ -56,16 +56,16 @@ class DataBaseTest(
     visitWithApplication.addApplication(applicationWithVisit)
     visitEntityHelper.save(visitWithApplication)
 
-    sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
+    sessionTemplateDefault = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
-    val sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, prisonHierarchies = allowedPermittedLocations1)
+    val sessionGroup1 = sessionLocationGroupHelper.create(prisonCode = sessionTemplateDefault.prison.code, prisonHierarchies = allowedPermittedLocations1)
     val allowedPermittedLocations2 = listOf(AllowedSessionLocationHierarchy("B"))
-    val sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = sessionTemplate.prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
-    sessionTemplate.permittedSessionLocationGroups.add(sessionGroup1)
-    sessionTemplate.permittedSessionLocationGroups.add(sessionGroup2)
-    sessionTemplate = testTemplateRepository.saveAndFlush(sessionTemplate)
+    val sessionGroup2 = sessionLocationGroupHelper.create(prisonCode = sessionTemplateDefault.prison.code, name = "get 2", prisonHierarchies = allowedPermittedLocations2)
+    sessionTemplateDefault.permittedSessionLocationGroups.add(sessionGroup1)
+    sessionTemplateDefault.permittedSessionLocationGroups.add(sessionGroup2)
+    sessionTemplateDefault = testTemplateRepository.saveAndFlush(sessionTemplateDefault)
 
-    inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = false)
+    inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false)
     applicationEntityHelper.createContact(application = inCompleteApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = inCompleteApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = inCompleteApplication, name = "OTHER", details = "Some Text")
@@ -130,10 +130,10 @@ class DataBaseTest(
   @Test
   fun `When sessionTemplate deleted - location groups are not deleted but join is`() {
     // Given
-    val reference = sessionTemplate.reference
-    val sessionId = sessionTemplate.id
-    val grp1Id = sessionTemplate.permittedSessionLocationGroups[0].id
-    val grp2Id = sessionTemplate.permittedSessionLocationGroups[1].id
+    val reference = sessionTemplateDefault.reference
+    val sessionId = sessionTemplateDefault.id
+    val grp1Id = sessionTemplateDefault.permittedSessionLocationGroups[0].id
+    val grp2Id = sessionTemplateDefault.permittedSessionLocationGroups[1].id
 
     // When
     val result = testTemplateRepository.deleteByReference(reference)

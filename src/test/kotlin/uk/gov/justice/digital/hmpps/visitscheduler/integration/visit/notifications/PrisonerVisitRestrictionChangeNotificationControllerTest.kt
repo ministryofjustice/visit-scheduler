@@ -152,7 +152,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visit1)
 
@@ -175,7 +175,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
         prisonerId = notificationDto.prisonerNumber,
         slotDate = LocalDate.now().plusDays(1),
         visitStatus = BOOKED,
-        sessionTemplate = sessionTemplate,
+        sessionTemplate = sessionTemplateDefault,
       ),
     )
 
@@ -196,7 +196,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(4),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visit1)
 
@@ -217,7 +217,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visit1)
 
@@ -225,7 +225,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visit2)
 
@@ -256,7 +256,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visit1)
 
@@ -264,7 +264,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visit2)
 

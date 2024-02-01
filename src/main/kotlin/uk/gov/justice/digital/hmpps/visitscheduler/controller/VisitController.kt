@@ -7,11 +7,10 @@ import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.tags.Tag
 import jakarta.validation.Valid
-import jakarta.validation.constraints.Max
-import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import jakarta.validation.constraints.Pattern
+import org.hibernate.validator.constraints.Length
 import org.springframework.data.domain.Page
 import org.springframework.format.annotation.DateTimeFormat
 import org.springframework.http.HttpStatus
@@ -40,7 +39,7 @@ import java.time.LocalDate
 const val VISIT_CONTROLLER_PATH: String = "/visits"
 const val GET_VISIT_HISTORY_CONTROLLER_PATH: String = "$VISIT_CONTROLLER_PATH/{reference}/history"
 const val VISIT_CONTROLLER_SEARCH_PATH: String = "$VISIT_CONTROLLER_PATH/search"
-const val VISIT_CONTROLLER_SEARCH_FUTURE_VISITS_PATH: String = "$VISIT_CONTROLLER_PATH/search/future/{prisoner-number}"
+const val VISIT_CONTROLLER_SEARCH_FUTURE_VISITS_PATH: String = "$VISIT_CONTROLLER_PATH/search/future/{prisonerNumber}"
 const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
@@ -414,10 +413,9 @@ class VisitController(
     ],
   )
   fun getFutureVisitsBySessionPrisoner(
-    @PathVariable(value = "prisoner-number", required = false)
+    @PathVariable(value = "prisonerNumber", required = false)
     @NotBlank
-    @Min(3)
-    @Max(50)
+    @Length(min = 3, max = 50)
     @Pattern(regexp = "^[A-Za-z0-9]+$")
     prisonerNumber: String,
   ): List<VisitDto> {

@@ -39,7 +39,7 @@ class GetVisitNotificationsTest : NotificationTestBase() {
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -48,7 +48,7 @@ class GetVisitNotificationsTest : NotificationTestBase() {
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 

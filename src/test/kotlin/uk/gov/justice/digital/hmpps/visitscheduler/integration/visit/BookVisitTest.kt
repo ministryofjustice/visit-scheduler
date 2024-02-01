@@ -48,7 +48,7 @@ class BookVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplate, completed = false)
+    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
     applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedApplication, name = "OTHER", details = "Some Text")
@@ -134,13 +134,13 @@ class BookVisitTest : IntegrationTestBase() {
   fun `Amend and book visit`() {
     // Given
     val slotDateInThePast = LocalDate.now().plusDays(1)
-    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplate, completed = false)
+    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = false)
     applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = completedApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(reservedApplication)
 
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
     visit.addApplication(completedApplication)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
@@ -174,13 +174,13 @@ class BookVisitTest : IntegrationTestBase() {
   fun `Already completed application returns existing visit and no other action is performed`() {
     // Given
     val slotDateInThePast = LocalDate.now().plusDays(1)
-    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplate, completed = true)
+    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = true)
     applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = completedApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(reservedApplication)
 
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
     visit.addApplication(completedApplication)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
@@ -209,13 +209,13 @@ class BookVisitTest : IntegrationTestBase() {
   fun `Amend and book expired visit - returns bad request error `() {
     // Given
     val slotDateInThePast = LocalDate.now().minusYears(1)
-    val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplate, completed = false)
+    val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = false)
     applicationEntityHelper.createContact(application = expiredApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = expiredApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(reservedApplication)
 
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplate)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
     expiredVisit.addApplication(expiredApplication)
 
     visitEntityHelper.createNote(visit = expiredVisit, text = "Some text outcomes", type = VISIT_OUTCOMES)
@@ -244,8 +244,8 @@ class BookVisitTest : IntegrationTestBase() {
     Assertions.assertThat(visitDto.reference).isNotEmpty()
     Assertions.assertThat(visitDto.applicationReference).isEqualTo(application.reference)
     Assertions.assertThat(visitDto.prisonerId).isEqualTo(application.prisonerId)
-    Assertions.assertThat(visitDto.prisonCode).isEqualTo(sessionTemplate.prison.code)
-    Assertions.assertThat(visitDto.visitRoom).isEqualTo(sessionTemplate.visitRoom)
+    Assertions.assertThat(visitDto.prisonCode).isEqualTo(sessionTemplateDefault.prison.code)
+    Assertions.assertThat(visitDto.visitRoom).isEqualTo(sessionTemplateDefault.visitRoom)
     Assertions.assertThat(visitDto.startTimestamp)
       .isEqualTo(application.sessionSlot.slotStart)
     Assertions.assertThat(visitDto.endTimestamp)
@@ -254,8 +254,8 @@ class BookVisitTest : IntegrationTestBase() {
     Assertions.assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
     Assertions.assertThat(visitDto.visitRestriction).isEqualTo(application.restriction)
     Assertions.assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    Assertions.assertThat(visitDto.visitContact!!.name).isEqualTo(application.visitContact!!.name)
-    Assertions.assertThat(visitDto.visitContact!!.telephone).isEqualTo(application.visitContact!!.telephone)
+    Assertions.assertThat(visitDto.visitContact.name).isEqualTo(application.visitContact!!.name)
+    Assertions.assertThat(visitDto.visitContact.telephone).isEqualTo(application.visitContact!!.telephone)
     Assertions.assertThat(visitDto.visitors.size).isEqualTo(application.visitors.size)
     Assertions.assertThat(visitDto.visitors[0].nomisPersonId).isEqualTo(application.visitors[0].nomisPersonId)
     Assertions.assertThat(visitDto.visitors[0].visitContact).isEqualTo(application.visitors[0].contact!!)

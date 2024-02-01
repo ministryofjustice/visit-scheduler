@@ -54,10 +54,10 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    sessionTemplate = sessionTemplateEntityHelper.create()
+    sessionTemplateDefault = sessionTemplateEntityHelper.create()
 
-    applicationMin = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = false)
-    applicationFull = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplate, reservedSlot = true, completed = false)
+    applicationMin = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false)
+    applicationFull = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false)
 
     applicationEntityHelper.createContact(application = applicationFull, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationFull, nomisPersonId = 321L, visitContact = true)
@@ -163,7 +163,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Given
     val updateRequest = ChangeApplicationDto(
       visitRestriction = applicationFull.restriction,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
@@ -188,7 +188,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Given
     val updateRequest = ChangeApplicationDto(
       visitRestriction = applicationFull.restriction,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate.plusWeeks(1),
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
@@ -213,7 +213,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Given
     val updateRequest = ChangeApplicationDto(
       visitRestriction = swapRestriction(applicationFull.restriction),
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "01234 567890"),
     )
@@ -238,7 +238,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Given
     val updateRequest = ChangeApplicationDto(
       visitContact = ContactDto("John Smith", "01234 567890"),
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
     )
 
@@ -263,7 +263,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Given
     val updateRequest = ChangeApplicationDto(
       visitors = setOf(VisitorDto(123L, visitContact = true)),
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
     )
 
@@ -291,7 +291,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Given
     val updateRequest = ChangeApplicationDto(
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
     )
 
@@ -346,7 +346,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `change reserved slot by application reference - only one visit contact allowed`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
       visitRestriction = applicationFull.restriction,
       visitContact = ContactDto("John Smith", "01234 567890"),
@@ -365,7 +365,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `when change reserved slot has no visitors then bad request is returned`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
       visitRestriction = applicationFull.restriction,
       visitContact = ContactDto("John Smith", "01234 567890"),
@@ -385,7 +385,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `when change reserved slot has more than 10 visitors then bad request is returned`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
       visitRestriction = applicationFull.restriction,
       visitContact = ContactDto("John Smith", "01234 567890"),

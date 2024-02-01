@@ -44,7 +44,7 @@ class UpsertNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
@@ -53,7 +53,7 @@ class UpsertNonAssociationVisitNotificationControllerTest : NotificationTestBase
       slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
-      sessionTemplate = sessionTemplate,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 

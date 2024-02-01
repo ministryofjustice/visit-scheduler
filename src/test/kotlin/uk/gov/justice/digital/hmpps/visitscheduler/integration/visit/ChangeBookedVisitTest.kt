@@ -62,7 +62,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplate, createApplication = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createApplication = true)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
     visitEntityHelper.createNote(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
@@ -137,7 +137,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val reference = bookedVisit.reference
 
     val newSlotDate = this.bookedVisit.sessionSlot.slotDate.plusWeeks(1)
-    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference, slotDate = newSlotDate)
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplateDefault.reference, slotDate = newSlotDate)
 
     // When
     val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
@@ -273,8 +273,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `change visit that has already expired returns bad request`() {
     // Given
     val visitStart = LocalDateTime.of((LocalDateTime.now().year - 1), 11, 1, 12, 30, 44)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), visitStart = visitStart.toLocalTime(), sessionTemplate = sessionTemplate)
-    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), visitStart = visitStart.toLocalTime(), sessionTemplate = sessionTemplateDefault)
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplateDefault.reference)
 
     // When
     val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, expiredVisit.reference)
