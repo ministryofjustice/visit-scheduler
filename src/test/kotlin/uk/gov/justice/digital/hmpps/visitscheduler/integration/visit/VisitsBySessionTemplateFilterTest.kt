@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
+import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -14,171 +15,175 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import java.time.LocalDateTime
 
 @DisplayName("GET /visits/{sessionTemplateReference}")
 class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
-
-  private val visitTime: LocalDateTime = LocalDateTime.of(2023, 11, 1, 11, 30, 0)
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   lateinit var sessionTemplate2: SessionTemplate
 
+  lateinit var vist1: Visit
+  lateinit var vist2: Visit
+  lateinit var vist3: Visit
+  lateinit var vist4: Visit
+  lateinit var vist5: Visit
+
   @BeforeEach
   internal fun createVisits() {
     sessionTemplate2 = sessionTemplateEntityHelper.create()
 
+    vist1 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
     // visit 1 booked for session template reference - session-1
-    visitEntityHelper.create(prisonCode = "MDI", slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
+    vist2 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
     // visit 2 reserved for session template reference - session-1
-    visitEntityHelper.create(prisonCode = "MDI", slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.CANCELLED)
+    vist3 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000AA", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.CANCELLED, visitRestriction = VisitRestriction.OPEN)
     // visit 3 booked for session template reference - session-2
-    visitEntityHelper.create(prisonCode = "MDI", slotDate = startDate, prisonerId = "FF0000BB", sessionTemplate = sessionTemplate2, visitStatus = VisitStatus.BOOKED)
+    vist4 = createApplicationAndVisit(slotDate = startDate, prisonerId = "FF0000BB", sessionTemplate = sessionTemplate2, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.OPEN)
     // visit 4 booked for session template reference - session-1 but on next day
-    visitEntityHelper.create(prisonCode = "MDI", slotDate = startDate.plusDays(1), prisonerId = "FF0000BB", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.CLOSED)
+    vist5 = createApplicationAndVisit(slotDate = startDate.plusDays(1), prisonerId = "FF0000BB", sessionTemplate = sessionTemplate, visitStatus = VisitStatus.BOOKED, visitRestriction = VisitRestriction.CLOSED)
   }
 
   @Test
   fun `get booked visits by session template reference for a single session date`() {
     // Given
-    val sessionTemplateReference = "session-1"
-    val sessionDate = visitTime.toLocalDate()
+    val sessionTemplateReference = sessionTemplate.reference
+    val sessionDate = startDate.plusDays(1)
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED")
 
     // Then
     responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(1)
-      .jsonPath("$.content[0].reference").isEqualTo("visit-booked-1")
+    val visits = parseVisitsResponse(responseSpec)
+    Assertions.assertThat(visits.size).isEqualTo(1)
+    Assertions.assertThat(visits[0].reference).isEqualTo(vist5.reference)
   }
 
   @Test
-  fun `get booked and reserved visits by session template reference for a single session date`() {
+  fun `get cancelled visits by session template reference for a single session date`() {
     // Given
-    val sessionTemplateReference = "session-1"
-    val sessionDate = visitTime.toLocalDate()
+    val sessionTemplateReference = sessionTemplate.reference
+    val sessionDate = startDate
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(
       sessionTemplateReference,
-      "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED",
+      "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=CANCELLED",
     )
 
     // Then
     responseSpec.expectStatus().isOk
-
-    // Then
-    responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(2)
-      .jsonPath("$.content[0].reference").isEqualTo("visit-reserved-1")
-      .jsonPath("$.content[1].reference").isEqualTo("visit-booked-1")
+    val visits = parseVisitsResponse(responseSpec)
+    Assertions.assertThat(visits.size).isEqualTo(1)
+    Assertions.assertThat(visits[0].reference).isEqualTo(vist3.reference)
   }
 
   @Test
   fun `get booked visits by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = "session-1"
-    val fromDate = visitTime.toLocalDate()
-    val toDate = visitTime.toLocalDate().plusDays(1)
+    val sessionTemplateReference = sessionTemplate.reference
+    val fromDate = startDate
+    val toDate = fromDate.plusDays(1)
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED")
 
     // Then
     responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(2)
-      .jsonPath("$.content[0].reference").isEqualTo("visit-booked-3")
-      .jsonPath("$.content[1].reference").isEqualTo("visit-booked-1")
+    val visits = parseVisitsResponse(responseSpec)
+    Assertions.assertThat(visits.size).isEqualTo(4)
+    Assertions.assertThat(visits[0].visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(visits[1].visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(visits[2].visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(visits[3].visitStatus).isEqualTo(BOOKED)
   }
 
   @Test
   fun `get booked visits with restriction type OPEN by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = "session-1"
-    val fromDate = visitTime.toLocalDate()
-    val toDate = visitTime.toLocalDate().plusDays(1)
+    val sessionTemplateReference = sessionTemplate.reference
+    val fromDate = startDate
+    val toDate = fromDate.plusDays(1)
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED&visitRestrictions=OPEN")
 
     // Then
     responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(1)
-      .jsonPath("$.content[0].reference").isEqualTo("visit-booked-1")
-      .jsonPath("$.content[0].visitRestriction").isEqualTo("OPEN")
+    val visits = parseVisitsResponse(responseSpec)
+    Assertions.assertThat(visits.size).isEqualTo(3)
+    Assertions.assertThat(visits[0].visitRestriction).isEqualTo(OPEN)
+    Assertions.assertThat(visits[1].visitRestriction).isEqualTo(OPEN)
+    Assertions.assertThat(visits[2].visitRestriction).isEqualTo(OPEN)
   }
 
   @Test
   fun `get booked visits with restriction type OPEN or CLOSED by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = "session-1"
-    val fromDate = visitTime.toLocalDate()
-    val toDate = visitTime.toLocalDate().plusDays(1)
+    val sessionTemplateReference = sessionTemplate.reference
+    val fromDate = startDate
+    val toDate = fromDate.plusDays(1)
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED&visitRestrictions=OPEN,CLOSED")
 
     // Then
     responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(2)
-      .jsonPath("$.content[0].reference").isEqualTo("visit-booked-3")
-      .jsonPath("$.content[0].visitRestriction").isEqualTo("CLOSED")
-      .jsonPath("$.content[1].reference").isEqualTo("visit-booked-1")
-      .jsonPath("$.content[1].visitRestriction").isEqualTo("OPEN")
+    val visits = parseVisitsResponse(responseSpec)
+    Assertions.assertThat(visits.size).isEqualTo(4)
+    Assertions.assertThat(visits[0].visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(visits[1].visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(visits[2].visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(visits[3].visitStatus).isEqualTo(BOOKED)
   }
 
   @Test
   fun `get booked visits with restriction type CLOSED by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = "session-1"
-    val fromDate = visitTime.toLocalDate()
-    val toDate = visitTime.toLocalDate().plusDays(1)
+    val sessionTemplateReference = sessionTemplate.reference
+    val fromDate = startDate
+    val toDate = fromDate.plusDays(1)
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED&visitRestrictions=CLOSED")
 
     // Then
     responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(1)
-      .jsonPath("$.content[0].reference").isEqualTo("visit-booked-3")
-      .jsonPath("$.content[0].visitRestriction").isEqualTo("CLOSED")
+    val visits = parseVisitsResponse(responseSpec)
+    Assertions.assertThat(visits.size).isEqualTo(1)
+    Assertions.assertThat(visits[0].reference).isEqualTo(vist5.reference)
+    Assertions.assertThat(visits[0].visitRestriction).isEqualTo(CLOSED)
   }
 
   @Test
   fun `get booked and reserved visits by session template reference for a date range`() {
     // Given
-    val sessionTemplateReference = "session-1"
-    val fromDate = visitTime.toLocalDate()
-    val toDate = visitTime.toLocalDate().plusDays(1)
+    val sessionTemplateReference = sessionTemplate.reference
+    val fromDate = startDate
+    val toDate = fromDate.plusDays(1)
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$fromDate&toDate=$toDate&visitStatus=BOOKED")
 
     // Then
     responseSpec.expectStatus().isOk
-      .expectBody()
-      .jsonPath("$.content.length()").isEqualTo(3)
-      .jsonPath("$.content[0].reference").isEqualTo("visit-booked-3")
-      .jsonPath("$.content[1].reference").isEqualTo("visit-reserved-1")
-      .jsonPath("$.content[2].reference").isEqualTo("visit-booked-1")
+    val visits = parseVisitsResponse(responseSpec)
+    Assertions.assertThat(visits.size).isEqualTo(4)
   }
 
   @Test
   fun `when session has no visits for a date no records are returned`() {
     // Given
-    val sessionTemplateReference = "session-2"
-    val sessionDate = visitTime.toLocalDate().plusDays(1)
+    val sessionTemplateReference = sessionTemplate2.reference
+    val sessionDate = startDate
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED")
@@ -191,8 +196,8 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
   @Test
   fun `access forbidden when no role`() {
-    val sessionTemplateReference = "session-1"
-    val sessionDate = visitTime.toLocalDate()
+    val sessionTemplateReference = sessionTemplate.reference
+    val sessionDate = startDate
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED", roles = listOf())

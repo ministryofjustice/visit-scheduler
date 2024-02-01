@@ -41,6 +41,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExt
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociationsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -236,8 +237,14 @@ abstract class IntegrationTestBase {
     return localDate.format(DateTimeFormatter.ISO_DATE)
   }
 
-  fun createApplicationAndVisit(prisonerId: String? = "testPrisonerId", sessionTemplate: SessionTemplate, visitStatus: VisitStatus ? = VisitStatus.BOOKED, slotDate: LocalDate? = null): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true)
+  fun createApplicationAndVisit(
+    prisonerId: String? = "testPrisonerId",
+    sessionTemplate: SessionTemplate,
+    visitStatus: VisitStatus ? = VisitStatus.BOOKED,
+    slotDate: LocalDate? = null,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  ): Visit {
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
@@ -247,6 +254,7 @@ abstract class IntegrationTestBase {
     prisonCode: String? = null,
     slotDate: LocalDate? = null,
     completed: Boolean,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
   ): Application {
     val applicationEntity = applicationEntityHelper.create(
       prisonerId = prisonerId!!,
@@ -255,6 +263,7 @@ abstract class IntegrationTestBase {
       prisonCode = prisonCode,
       slotDate = slotDate
         ?: sessionTemplate.validFromDate,
+      visitRestriction = visitRestriction,
     )
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
