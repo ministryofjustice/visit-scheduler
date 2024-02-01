@@ -138,8 +138,9 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     val eventAuditList = getEventAuditList(responseSpec)
 
     Assertions.assertThat(eventAuditList.size).isEqualTo(4)
+    Assertions.assertThat(eventAuditList[0].type).isEqualTo(RESERVED_VISIT)
     Assertions.assertThat(eventAuditList[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(eventAuditList[0].type).isEqualTo(BOOKED_VISIT)
+    Assertions.assertThat(eventAuditList[1].type).isEqualTo(BOOKED_VISIT)
     Assertions.assertThat(eventAuditList[1].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(eventAuditList[2].type).isEqualTo(RESERVED_VISIT)
     Assertions.assertThat(eventAuditList[2].sessionTemplateReference).isEqualTo(sessionTemplateToChangeTo.reference)

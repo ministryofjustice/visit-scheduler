@@ -114,7 +114,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   fun getFutureVisitNotificationEvents(@Param("prisonCode") prisonCode: String): List<VisitNotificationEvent>
 
   @Query(
-    "SELECT vne.type FROM visit_notification_event vne WHERE vne.booking_reference=:bookingReference GROUP by type",
+    "SELECT vne.type FROM visit_notification_event vne WHERE vne.booking_reference=:bookingReference GROUP by id",
     nativeQuery = true,
   )
   fun getNotificationsTypesForBookingReference(@Param("bookingReference") bookingReference: String): List<NotificationEventType>

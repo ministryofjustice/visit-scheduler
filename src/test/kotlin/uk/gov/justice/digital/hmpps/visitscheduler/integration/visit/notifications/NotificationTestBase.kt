@@ -43,11 +43,10 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
   @Autowired
   lateinit var testEventAuditRepository: TestEventAuditRepository
 
-  fun assertBookedEvent(visits: List<Visit>, type: NotificationEventType) {
+  fun assertFlaggedVisitEvent(visits: List<Visit>, type: NotificationEventType) {
     visits.forEach { visit ->
       run {
         val eventAudit = eventAuditRepository.findLastBookedVisitEventByBookingReference(visit.reference)
-
         verify(telemetryClient).trackEvent(
           eq("flagged-visit-event"),
           org.mockito.kotlin.check {

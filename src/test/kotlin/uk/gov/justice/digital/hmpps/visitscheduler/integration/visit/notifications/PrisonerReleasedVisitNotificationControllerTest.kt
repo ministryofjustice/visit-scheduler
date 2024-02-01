@@ -85,7 +85,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(visit1), NotificationEventType.PRISONER_RELEASED_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_RELEASED_EVENT)
     verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -129,7 +129,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(visit1, visit2, visit3), NotificationEventType.PRISONER_RELEASED_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1, visit2, visit3), NotificationEventType.PRISONER_RELEASED_EVENT)
     verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(3)).saveAndFlush(any<VisitNotificationEvent>())
 

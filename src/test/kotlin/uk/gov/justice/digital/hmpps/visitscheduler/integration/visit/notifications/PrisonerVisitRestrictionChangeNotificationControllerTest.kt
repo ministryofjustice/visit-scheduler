@@ -82,7 +82,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(visit1), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -127,7 +127,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(visit1, visit2, visit3), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1, visit2, visit3), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(3)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -234,7 +234,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(visit1), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -273,7 +273,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(visit1), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 

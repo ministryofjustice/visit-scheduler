@@ -89,7 +89,7 @@ class VisitService(
     val bookedVisitDto = visitDtoBuilder.build(booking)
 
     try {
-      eventAuditRepository.updateVisitApplication(application.reference, bookingRequestDto.applicationMethodType)
+      eventAuditRepository.updateVisitApplication(application.reference, booking.reference, bookingRequestDto.applicationMethodType)
     } catch (e: InvocationTargetException) {
       val message = "Audit log does not exists for $application.reference"
       LOG.error(message)

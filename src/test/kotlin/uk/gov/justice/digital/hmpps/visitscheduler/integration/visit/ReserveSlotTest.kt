@@ -58,11 +58,11 @@ class ReserveSlotTest : IntegrationTestBase() {
     prisonEntityHelper.create("MDI", true)
   }
 
-  private fun createReserveVisitSlotDto(actionedBy: String = actionedByUserName, sessionTemplate: SessionTemplate): CreateApplicationDto {
+  private fun createReserveVisitSlotDto(actionedBy: String = actionedByUserName, sessionTemplate: SessionTemplate? = null): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = "FF0000FF",
-      sessionTemplateReference = sessionTemplate.reference,
-      sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate),
+      sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
+      sessionDate = sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
       visitRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
@@ -119,7 +119,7 @@ class ReserveSlotTest : IntegrationTestBase() {
   fun `error message when reserve visit has no session template`() {
     // Given
 
-    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate)
+    val reserveVisitSlotDto = createReserveVisitSlotDto()
 
     // When
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
@@ -127,7 +127,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isNotFound
       .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("Template reference:sessionTemplateReference not found")
+      .jsonPath("$.developerMessage").isEqualTo("Template reference:IDontExistSessionTemplate not found")
   }
 
   @Test
@@ -329,7 +329,7 @@ class ReserveSlotTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(applicationDto.visitRestriction.name)
         Assertions.assertThat(it["visitStart"])
           .isEqualTo(applicationDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["reserved"]).isEqualTo(applicationDto.reserved)
+        Assertions.assertThat(it["reserved"]).isEqualTo(applicationDto.reserved.toString())
       },
       isNull(),
     )

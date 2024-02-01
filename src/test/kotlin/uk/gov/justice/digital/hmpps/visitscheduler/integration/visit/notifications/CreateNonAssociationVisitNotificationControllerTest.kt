@@ -76,7 +76,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(primaryVisit, secondaryVisit), NotificationEventType.NON_ASSOCIATION_EVENT)
+    assertFlaggedVisitEvent(listOf(primaryVisit, secondaryVisit), NotificationEventType.NON_ASSOCIATION_EVENT)
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -220,7 +220,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     responseSpec.expectStatus().isOk
-    assertBookedEvent(listOf(primaryVisit1, primaryVisit2, secondaryVisit1, secondaryVisit2), NotificationEventType.NON_ASSOCIATION_EVENT)
+    assertFlaggedVisitEvent(listOf(primaryVisit1, primaryVisit2, secondaryVisit1, secondaryVisit2), NotificationEventType.NON_ASSOCIATION_EVENT)
     verify(telemetryClient, times(4)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(8)).saveAndFlush(any<VisitNotificationEvent>())
 
