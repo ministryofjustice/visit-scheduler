@@ -25,7 +25,7 @@ import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("Clean K")
+@DisplayName("Clean up applications")
 class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
 
   @Autowired
