@@ -19,4 +19,7 @@ interface TestVisitNotificationEventRepository : JpaRepository<VisitNotification
   fun getFutureVisitNotificationEvents(@Param("prisonCode") prisonCode: String): List<VisitNotificationEvent>
 
   fun findByBookingReference(@Param("bookingReference") bookingReference: String): List<VisitNotificationEvent>
+
+  @Query("SELECT vne FROM VisitNotificationEvent vne  ORDER BY vne.id")
+  fun findAllOrderById(): List<VisitNotificationEvent>
 }

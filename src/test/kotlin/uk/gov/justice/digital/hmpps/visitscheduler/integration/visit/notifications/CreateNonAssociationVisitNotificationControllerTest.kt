@@ -80,7 +80,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
     Assertions.assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
 
@@ -142,7 +142,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(4)).saveAndFlush(any<VisitNotificationEvent>())
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(4)
     with(visitNotifications[0]) {
       Assertions.assertThat(bookingReference).isEqualTo(primaryVisit.reference)
@@ -224,7 +224,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     verify(telemetryClient, times(4)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(8)).saveAndFlush(any<VisitNotificationEvent>())
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(8)
     Assertions.assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
     Assertions.assertThat(visitNotifications[2].reference).isEqualTo(visitNotifications[3].reference)
@@ -281,7 +281,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification2)
 
     // Then
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(4)
 
     with(visitNotifications[0]) {

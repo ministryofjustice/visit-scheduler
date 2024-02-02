@@ -86,7 +86,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(1)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(1)
@@ -238,7 +238,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     Assertions.assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
@@ -277,7 +277,7 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     Assertions.assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)

@@ -86,7 +86,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(0)
   }
 
@@ -123,7 +123,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
     with(visitNotifications[0]) {
       Assertions.assertThat(reference).isNotNull()
@@ -170,7 +170,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
   }
 
@@ -207,7 +207,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
   }
 
@@ -245,7 +245,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
   }
 }

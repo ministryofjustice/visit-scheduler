@@ -66,7 +66,7 @@ class UpsertNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
 
     verifyNoInteractions(prisonerService)

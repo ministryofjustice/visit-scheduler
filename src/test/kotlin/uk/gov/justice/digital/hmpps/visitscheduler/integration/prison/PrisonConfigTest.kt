@@ -246,7 +246,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(updatedPrison.code).isEqualTo(prison.code)
     Assertions.assertThat(updatedPrison.excludeDates).contains(excludeDate)
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
 
     // only 1 visit for the same date with status of BOOKED will be flagged.
     Assertions.assertThat(visitNotifications).hasSize(1)

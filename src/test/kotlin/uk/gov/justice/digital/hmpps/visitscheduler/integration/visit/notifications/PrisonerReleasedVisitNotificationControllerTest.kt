@@ -89,7 +89,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(1)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RELEASED_EVENT")).isEqualTo(1)
