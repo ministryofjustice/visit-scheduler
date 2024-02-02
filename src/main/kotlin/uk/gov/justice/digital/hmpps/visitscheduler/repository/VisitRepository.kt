@@ -183,7 +183,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "v.sessionSlot.slotStart >= :startDateTime AND " +
       "v.prisonerId = :prisonerId AND " +
       "(:#{#prisonCode} is null OR v.prison.code = :prisonCode) AND " +
-      "(cast(:endDateTime as date) is null OR v.sessionSlot.slotEnd < :endDateTime) ",
+      "(cast(:endDateTime as date) is null OR v.sessionSlot.slotEnd < :endDateTime) ORDER BY v.sessionSlot.slotStart",
   )
   fun getVisits(
     @Param("prisonerId") prisonerId: String,
