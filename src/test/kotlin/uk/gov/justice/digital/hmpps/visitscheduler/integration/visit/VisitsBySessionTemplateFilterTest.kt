@@ -11,7 +11,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISITS_BY
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
@@ -264,7 +264,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     pageSize: Int = 100,
     roles: List<String> = listOf("ROLE_VISIT_SCHEDULER"),
   ): ResponseSpec {
-    val uri = "$GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE?$params"
+    val uri = "$GET_VISITS_BY?$params"
     return webTestClient.get().uri(uri)
       .headers(setAuthorisation(roles = roles))
       .exchange()
