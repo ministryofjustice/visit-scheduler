@@ -15,6 +15,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.EntityExchangeResult
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
@@ -332,17 +333,17 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
   }
 
-  private fun assertApplicationDetails(
+  @Transactional(propagation = REQUIRES_NEW)
+  fun assertApplicationDetails(
     lastBooking: Visit,
     returnedApplication: ApplicationDto,
     createApplicationRequest: CreateApplicationDto,
     reserved: Boolean,
   ) {
     val sessionTemplate = testSessionTemplateRepository.findByReference(createApplicationRequest.sessionTemplateReference)
+
     val visitConnectedToApplication = testApplicationRepository.findVisitByApplicationReference(returnedApplication.reference)
-
     assertThat(visitConnectedToApplication?.getApplications()?.size).isEqualTo(2)
-
     assertThat(visitConnectedToApplication).isNotNull
     assertThat(visitConnectedToApplication?.reference).isEqualTo(lastBooking.reference)
     assertThat(returnedApplication.reference).isEqualTo(visitConnectedToApplication?.getLastApplication()?.reference)
