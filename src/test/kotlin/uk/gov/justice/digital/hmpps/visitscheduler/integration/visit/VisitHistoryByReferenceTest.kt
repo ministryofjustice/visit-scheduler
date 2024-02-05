@@ -22,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitHistoryByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application.ReserveSlotTest
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.EMAIL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.PHONE

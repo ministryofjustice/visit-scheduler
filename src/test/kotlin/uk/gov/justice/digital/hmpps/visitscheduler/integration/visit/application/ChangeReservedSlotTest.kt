@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
@@ -31,8 +31,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
@@ -43,6 +43,9 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var testApplicationRepository: TestApplicationRepository
+
+  @Autowired
+  private lateinit var testSessionTemplateRepository: TestSessionTemplateRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -87,7 +90,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Then
     val returnResult = getResult(responseSpec)
     val applicationDto = getApplicationDto(returnResult)
-    assertApplicationDetails(applicationFull, applicationDto, updateRequest, newSessionTemplate)
+    assertApplicationDetails(applicationFull, applicationDto, updateRequest)
 
     // And
     assertTelemetry(applicationDto)
@@ -115,7 +118,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     // Then
     val returnResult = getResult(responseSpec)
     val applicationDto = getApplicationDto(returnResult)
-    assertApplicationDetails(applicationMin, applicationDto, updateRequest, newSessionTemplate)
+    assertApplicationDetails(applicationMin, applicationDto, updateRequest)
 
     // And
     assertTelemetry(applicationDto)
@@ -496,11 +499,12 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     originalApplication: Application,
     applicationDto: ApplicationDto,
     updateRequest: ChangeApplicationDto,
-    sessionTemplate: SessionTemplate,
   ) {
+    val sessionTemplate = testSessionTemplateRepository.findByReference(updateRequest.sessionTemplateReference)
+
     Assertions.assertThat(applicationDto.reference).isEqualTo(originalApplication.reference)
     Assertions.assertThat(applicationDto.prisonerId).isEqualTo(originalApplication.prisonerId)
-    Assertions.assertThat(applicationDto.prisonCode).isEqualTo(originalApplication.prison.code)
+    Assertions.assertThat(applicationDto.prisonCode).isEqualTo(sessionTemplate.prison.code)
     Assertions.assertThat(applicationDto.startTimestamp.toLocalDate()).isEqualTo(updateRequest.sessionDate)
     Assertions.assertThat(applicationDto.startTimestamp.toLocalTime()).isEqualTo(sessionTemplate.startTime)
     Assertions.assertThat(applicationDto.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
