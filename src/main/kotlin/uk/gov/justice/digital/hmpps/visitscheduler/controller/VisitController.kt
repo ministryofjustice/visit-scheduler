@@ -47,7 +47,7 @@ const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/change"
 const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
-const val GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE: String = "$VISIT_CONTROLLER_PATH/session-template"
+const val GET_VISITS_BY: String = "$VISIT_CONTROLLER_PATH/session-template"
 
 @RestController
 @Validated
@@ -459,14 +459,14 @@ class VisitController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE)
+  @GetMapping(GET_VISITS_BY)
   @Operation(
-    summary = "Get visits by session template reference for a date or a range of dates",
-    description = "Retrieve visits by session template reference for a date or a range of dates",
+    summary = "Get visits for a date or a range of dates with / without a session template reference",
+    description = "Get visits for a date or a range of dates with a session template reference or visits without a session template reference when session template reference is not passed",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Returns visits for a session template",
+        description = "Returns visits for a session template or visits where session template reference is null if no session template reference parameter passed",
       ),
       ApiResponse(
         responseCode = "400",
@@ -485,8 +485,8 @@ class VisitController(
       ),
     ],
   )
-  fun getVisitsBySessionTemplateReference(
-    @Schema(name = "sessionTemplateReference", description = "Session template reference", example = "v9-d7-ed-7u", required = true)
+  fun getVisitsBy(
+    @Schema(name = "sessionTemplateReference", description = "Session template reference", example = "v9-d7-ed-7u", required = false)
     @RequestParam
     sessionTemplateReference: String?,
     @Schema(name = "fromDate", description = "Get visits from date", example = "2023-05-31", required = true)
