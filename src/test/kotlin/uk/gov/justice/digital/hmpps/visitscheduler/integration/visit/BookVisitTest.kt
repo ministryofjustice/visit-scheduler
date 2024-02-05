@@ -140,7 +140,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createSupport(application = completedApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(reservedApplication)
 
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
     visit.addApplication(completedApplication)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
@@ -180,7 +180,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createSupport(application = completedApplication, name = "OTHER", details = "Some Text")
     applicationEntityHelper.save(reservedApplication)
 
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
     visit.addApplication(completedApplication)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
