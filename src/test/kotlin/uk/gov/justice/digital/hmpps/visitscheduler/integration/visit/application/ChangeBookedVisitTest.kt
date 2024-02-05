@@ -64,6 +64,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   }
 
   @BeforeEach
+  @Transactional(propagation = REQUIRES_NEW)
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
@@ -333,8 +334,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
   }
 
-  @Transactional(propagation = REQUIRES_NEW)
-  fun assertApplicationDetails(
+  private fun assertApplicationDetails(
     lastBooking: Visit,
     returnedApplication: ApplicationDto,
     createApplicationRequest: CreateApplicationDto,
