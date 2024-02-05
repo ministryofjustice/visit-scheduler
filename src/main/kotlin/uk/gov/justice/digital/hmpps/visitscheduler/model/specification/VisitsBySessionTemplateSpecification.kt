@@ -18,8 +18,10 @@ class VisitsBySessionTemplateSpecification(private val filter: VisitsBySessionTe
     val predicates = mutableListOf<Predicate>()
 
     with(filter) {
-      sessionTemplateReference.run {
+      if (!sessionTemplateReference.isNullOrEmpty()) {
         predicates.add(criteriaBuilder.equal(root.get<String>(Visit::sessionTemplateReference.name), sessionTemplateReference))
+      } else {
+        predicates.add(criteriaBuilder.isNull(root.get<String>(Visit::sessionTemplateReference.name)))
       }
 
       fromDate.run {

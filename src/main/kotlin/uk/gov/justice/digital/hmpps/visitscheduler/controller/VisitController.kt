@@ -47,7 +47,7 @@ const val VISIT_CHANGE: String = "$VISIT_CONTROLLER_PATH/{reference}/change"
 const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
-const val GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE: String = "$VISIT_CONTROLLER_PATH/session-template/{sessionTemplateReference}"
+const val GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE: String = "$VISIT_CONTROLLER_PATH/session-template"
 
 @RestController
 @Validated
@@ -487,8 +487,8 @@ class VisitController(
   )
   fun getVisitsBySessionTemplateReference(
     @Schema(name = "sessionTemplateReference", description = "Session template reference", example = "v9-d7-ed-7u", required = true)
-    @PathVariable
-    sessionTemplateReference: String,
+    @RequestParam
+    sessionTemplateReference: String?,
     @Schema(name = "fromDate", description = "Get visits from date", example = "2023-05-31", required = true)
     @RequestParam
     fromDate: LocalDate,
