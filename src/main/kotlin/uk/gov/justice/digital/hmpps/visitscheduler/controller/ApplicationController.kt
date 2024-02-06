@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.ApplicationService
 
 const val APPLICATION_CONTROLLER_PATH: String = "/visits/application"

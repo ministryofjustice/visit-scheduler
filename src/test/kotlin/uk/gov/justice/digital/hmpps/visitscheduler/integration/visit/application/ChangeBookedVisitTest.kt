@@ -20,19 +20,18 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_CHANGE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getApplicationChangeVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -158,7 +157,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `changed booked visit creates new application and updates visit restriction has changed`() {
     // Given
     val reference = bookedVisit.reference
-    val newRestriction = if (bookedVisit.visitRestriction == OPEN) CLOSED else OPEN
+    val newRestriction = if (bookedVisit.visitRestriction == OPEN) CreateApplicationRestriction.CLOSED else CreateApplicationRestriction.OPEN
     val createApplicationRequest = createApplicationRequest(visitRestriction = newRestriction)
 
     // When
@@ -305,13 +304,13 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   private fun createApplicationRequest(
     prisonerId: String = "FF0000AA",
     slotDate: LocalDate = bookedVisit.sessionSlot.slotDate,
-    visitRestriction: VisitRestriction = OPEN,
+    visitRestriction: CreateApplicationRestriction = CreateApplicationRestriction.OPEN,
     sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
   ): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = prisonerId,
       sessionDate = slotDate,
-      visitRestriction = visitRestriction,
+      applicationRestriction = visitRestriction,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
@@ -355,7 +354,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     assertThat(returnedApplication.visitType).isEqualTo(lastBooking.visitType)
     assertThat(returnedApplication.reserved).isEqualTo(reserved)
     assertThat(returnedApplication.completed).isFalse()
-    assertThat(returnedApplication.visitRestriction).isEqualTo(createApplicationRequest.visitRestriction)
+    assertThat(returnedApplication.visitRestriction.name).isEqualTo(createApplicationRequest.applicationRestriction.name)
     assertThat(returnedApplication.sessionTemplateReference).isEqualTo(createApplicationRequest.sessionTemplateReference)
 
     createApplicationRequest.visitContact?.let {

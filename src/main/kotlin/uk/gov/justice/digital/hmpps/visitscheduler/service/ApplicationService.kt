@@ -6,9 +6,10 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
@@ -95,7 +96,7 @@ class ApplicationService(
 
     val sessionSlot = sessionSlotService.getSessionSlot(createApplicationDto.sessionDate, sessionTemplate, prison)
     val isReservedSlot = visit?.let {
-      isReservationRequired(visit, sessionSlot, createApplicationDto.visitRestriction)
+      isReservationRequired(visit, sessionSlot, createApplicationDto.applicationRestriction)
     } ?: true
 
     val applicationEntity = applicationRepo.saveAndFlush(
@@ -107,7 +108,7 @@ class ApplicationService(
         sessionSlotId = sessionSlot.id,
         reservedSlot = isReservedSlot,
         visitType = sessionTemplate.visitType,
-        restriction = createApplicationDto.visitRestriction,
+        restriction = createApplicationDto.applicationRestriction.getVisitRestriction(),
         completed = false,
         createdBy = createApplicationDto.actionedBy,
       ),
@@ -152,7 +153,7 @@ class ApplicationService(
     application.sessionSlotId = sessionSlot.id
     application.sessionSlot = sessionSlot
 
-    changeApplicationDto.visitRestriction?.let { restriction -> application.restriction = restriction }
+    changeApplicationDto.applicationRestriction?.let { restriction -> application.restriction = restriction.getVisitRestriction() }
     changeApplicationDto.visitContact?.let { visitContactUpdate ->
       application.visitContact?.let { visitContact ->
         visitContact.name = visitContactUpdate.name
@@ -207,6 +208,14 @@ class ApplicationService(
     newRestriction: VisitRestriction,
   ): Boolean {
     return visit.visitRestriction != newRestriction || visit.sessionSlotId != newSessionSlot.id
+  }
+
+  private fun isReservationRequired(
+    visit: Visit,
+    newSessionSlot: SessionSlot,
+    newRestriction: CreateApplicationRestriction,
+  ): Boolean {
+    return !newRestriction.isSame(visit.visitRestriction) || visit.sessionSlotId != newSessionSlot.id
   }
 
   @Transactional(readOnly = true)

@@ -16,13 +16,14 @@ import org.springframework.http.HttpHeaders
 import org.springframework.test.context.TestPropertySource
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
@@ -205,7 +206,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // first create a reserveVisitSlotDto with same details as the booked visit
     val createApplicationDto = CreateApplicationDto(
       prisonerId = bookedVisit.prisonerId,
-      visitRestriction = bookedVisit.visitRestriction,
+      applicationRestriction = CreateApplicationRestriction.get(bookedVisit.visitRestriction),
       sessionDate = bookedVisit.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "011223344"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),

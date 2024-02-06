@@ -18,8 +18,9 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -78,7 +79,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldBooking.sessionSlot.slotDate,
-      visitRestriction = oldBooking.visitRestriction,
+      applicationRestriction = CreateApplicationRestriction.get(oldBooking.visitRestriction),
     )
 
     val applicationReference = initialChangeApplication.reference
@@ -105,7 +106,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldBooking.sessionSlot.slotDate,
-      visitRestriction = initialChangeApplication.restriction,
+      applicationRestriction = CreateApplicationRestriction.get(initialChangeApplication.restriction),
     )
 
     val applicationReference = initialChangeApplication.reference
@@ -131,7 +132,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldApplication.sessionSlot.slotDate,
-      visitRestriction = oldBooking.visitRestriction,
+      applicationRestriction = CreateApplicationRestriction.get(oldBooking.visitRestriction),
     )
 
     val applicationReference = initialChangeApplication.reference
@@ -194,10 +195,10 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     Assertions.assertThat(applicationDto.visitType).isEqualTo(initialApplication.visitType)
     Assertions.assertThat(applicationDto.reserved).isEqualTo(reserved)
     Assertions.assertThat(applicationDto.completed).isFalse()
-    changeApplicationRequest.visitRestriction?.let {
-      Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(it)
+    changeApplicationRequest.applicationRestriction?.let {
+      Assertions.assertThat(applicationDto.visitRestriction.name).isEqualTo(it.name)
     } ?: run {
-      Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(initialApplication.restriction)
+      Assertions.assertThat(applicationDto.visitRestriction.name).isEqualTo(initialApplication.restriction.name)
     }
 
     Assertions.assertThat(applicationDto.sessionTemplateReference).isEqualTo(changeApplicationRequest.sessionTemplateReference)

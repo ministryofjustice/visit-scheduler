@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.dto
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.application
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
@@ -7,7 +7,9 @@ import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import java.time.LocalDate
 
 data class CreateApplicationDto(
@@ -22,7 +24,7 @@ data class CreateApplicationDto(
   val sessionDate: LocalDate,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   @field:NotNull
-  val visitRestriction: VisitRestriction,
+  val applicationRestriction: CreateApplicationRestriction,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
   val visitContact: ContactDto?,
