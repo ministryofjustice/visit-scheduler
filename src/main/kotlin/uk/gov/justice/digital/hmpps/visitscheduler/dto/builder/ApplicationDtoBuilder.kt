@@ -1,10 +1,10 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.builder
 
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import java.time.LocalDateTime
 

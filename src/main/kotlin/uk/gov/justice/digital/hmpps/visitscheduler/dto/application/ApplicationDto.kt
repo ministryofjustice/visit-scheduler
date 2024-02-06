@@ -1,8 +1,12 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.dto
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.application
 
 import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDateTime

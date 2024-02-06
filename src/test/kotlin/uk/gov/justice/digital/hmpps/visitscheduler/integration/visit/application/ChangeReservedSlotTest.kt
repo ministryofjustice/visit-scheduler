@@ -19,16 +19,16 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitReserveSlotChangeUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
@@ -76,7 +76,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = newSessionTemplate.reference,
       sessionDate = applicationFull.sessionSlot.slotDate.plusWeeks(1),
-      visitRestriction = swapRestriction(applicationFull.restriction),
+      applicationRestriction = swapRestriction(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
@@ -104,7 +104,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = newSessionTemplate.reference,
       sessionDate = applicationFull.sessionSlot.slotDate.plusWeeks(1),
-      visitRestriction = swapRestriction(applicationFull.restriction),
+      applicationRestriction = swapRestriction(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
@@ -132,7 +132,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = newSessionTemplate.reference,
       sessionDate = applicationMin.sessionSlot.slotDate,
-      visitRestriction = swapRestriction(applicationMin.restriction),
+      applicationRestriction = swapRestriction(applicationMin.restriction),
     )
 
     val applicationReference = applicationMin.reference
@@ -153,7 +153,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     Assertions.assertThat(applicationDto.endTimestamp.toLocalTime()).isEqualTo(newSessionTemplate.endTime)
     Assertions.assertThat(applicationDto.visitType).isEqualTo(applicationMin.visitType)
     Assertions.assertThat(applicationDto.reserved).isTrue()
-    Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(updateRequest.visitRestriction)
+    Assertions.assertThat(applicationDto.visitRestriction.name).isEqualTo(updateRequest.applicationRestriction?.name)
     Assertions.assertThat(applicationDto.sessionTemplateReference).isEqualTo(updateRequest.sessionTemplateReference)
     Assertions.assertThat(applicationDto.createdTimestamp).isNotNull()
 
@@ -165,7 +165,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `change application - start restriction -- start date has not changed`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      visitRestriction = applicationFull.restriction,
+      applicationRestriction = CreateApplicationRestriction.get(applicationFull.restriction),
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "01234 567890"),
@@ -190,7 +190,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `change reserved slot by application reference - slot date has changed`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      visitRestriction = applicationFull.restriction,
+      applicationRestriction = CreateApplicationRestriction.get(applicationFull.restriction),
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate.plusWeeks(1),
       visitContact = ContactDto("John Smith", "01234 567890"),
@@ -215,7 +215,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `change reserved slot by application reference - start restriction has changed`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      visitRestriction = swapRestriction(applicationFull.restriction),
+      applicationRestriction = swapRestriction(applicationFull.restriction),
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "01234 567890"),
@@ -351,7 +351,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
-      visitRestriction = applicationFull.restriction,
+      applicationRestriction = CreateApplicationRestriction.get(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = true)),
     )
@@ -370,7 +370,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
-      visitRestriction = applicationFull.restriction,
+      applicationRestriction = CreateApplicationRestriction.get(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = emptySet(),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
@@ -390,7 +390,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
-      visitRestriction = applicationFull.restriction,
+      applicationRestriction = CreateApplicationRestriction.get(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
         VisitorDto(1, true), VisitorDto(2, false),
@@ -512,7 +512,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     Assertions.assertThat(applicationDto.reserved).isTrue()
     Assertions.assertThat(applicationDto.completed).isFalse()
 
-    Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(updateRequest.visitRestriction)
+    Assertions.assertThat(applicationDto.visitRestriction.name).isEqualTo(updateRequest.applicationRestriction?.name)
     Assertions.assertThat(applicationDto.sessionTemplateReference).isEqualTo(updateRequest.sessionTemplateReference)
 
     updateRequest.visitContact?.let {
@@ -556,5 +556,5 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     Assertions.assertThat(applicationDto.createdTimestamp).isNotNull()
   }
 
-  private fun swapRestriction(restriction: VisitRestriction) = if (OPEN == restriction) CLOSED else OPEN
+  private fun swapRestriction(restriction: VisitRestriction) = if (OPEN == restriction) CreateApplicationRestriction.CLOSED else CreateApplicationRestriction.OPEN
 }

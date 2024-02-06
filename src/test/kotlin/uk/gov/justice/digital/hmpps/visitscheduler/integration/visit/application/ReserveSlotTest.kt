@@ -19,15 +19,15 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getSubmitApplicationUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
@@ -67,7 +67,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       prisonerId = "FF0000FF",
       sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
       sessionDate = sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
-      visitRestriction = OPEN,
+      applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
@@ -102,7 +102,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       prisonerId = "FF0000FF",
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
-      visitRestriction = OPEN,
+      applicationRestriction = OPEN,
       visitors = setOf(),
       visitContact = ContactDto("John Smith", "01234 567890"),
       actionedBy = actionedByUserName,
@@ -162,7 +162,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       prisonerId = "FF0000FF",
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
-      visitRestriction = OPEN,
+      applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 123, visitContact = true),
@@ -188,7 +188,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       prisonerId = "FF0000FF",
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
-      visitRestriction = OPEN,
+      applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
       visitorSupport = setOf(VisitorSupportDto("ANYTHINGWILLDO")),
@@ -285,7 +285,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     assertThat(returnedApplication.visitType).isEqualTo(persistedApplication.visitType)
     assertThat(returnedApplication.reserved).isTrue()
     assertThat(returnedApplication.completed).isFalse()
-    assertThat(returnedApplication.visitRestriction).isEqualTo(createApplicationRequest.visitRestriction)
+    assertThat(returnedApplication.visitRestriction.name).isEqualTo(createApplicationRequest.applicationRestriction.name)
     assertThat(returnedApplication.sessionTemplateReference).isEqualTo(createApplicationRequest.sessionTemplateReference)
 
     createApplicationRequest.visitContact?.let {
