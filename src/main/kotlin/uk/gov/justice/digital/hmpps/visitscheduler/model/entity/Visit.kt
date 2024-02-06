@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
 import jakarta.persistence.OneToMany
 import jakarta.persistence.OneToOne
+import jakarta.persistence.OrderBy
 import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
@@ -77,6 +78,7 @@ class Visit(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   val visitNotes: MutableList<VisitNote> = mutableListOf()
 
+  @OrderBy("id")
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   private val applications: MutableList<Application> = mutableListOf()
 
@@ -116,8 +118,8 @@ class Visit(
   }
 
   fun addApplication(application: Application) {
+    applications.add(application)
     application.visitId = this.id
     application.visit = this
-    applications.add(application)
   }
 }
