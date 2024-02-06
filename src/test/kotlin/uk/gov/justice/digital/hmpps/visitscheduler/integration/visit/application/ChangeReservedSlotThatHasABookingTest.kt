@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
 
@@ -43,10 +44,13 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   @Autowired
   private lateinit var testVisitRepository: TestVisitRepository
 
+  @Autowired
+  private lateinit var testSessionTemplateRepository: TestSessionTemplateRepository
+
   private lateinit var oldBooking: Visit
   private lateinit var oldApplication: Application
 
-  private lateinit var newApplication: Application
+  private lateinit var initialChangeApplication: Application
   private lateinit var newRestriction: VisitRestriction
 
   @BeforeEach
@@ -57,13 +61,13 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     oldApplication = oldBooking.getLastApplication()!!
 
     newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN
-    newApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = newRestriction)
-    applicationEntityHelper.createContact(application = newApplication, name = "Aled Wyn Evans", phone = "01348 811539")
-    applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some Text")
-    newApplication = applicationEntityHelper.save(newApplication)
+    initialChangeApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = newRestriction)
+    applicationEntityHelper.createContact(application = initialChangeApplication, name = "Aled Wyn Evans", phone = "01348 811539")
+    applicationEntityHelper.createVisitor(application = initialChangeApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = initialChangeApplication, name = "OTHER", details = "Some Text")
+    initialChangeApplication = applicationEntityHelper.save(initialChangeApplication)
 
-    oldBooking.addApplication(newApplication)
+    oldBooking.addApplication(initialChangeApplication)
     visitEntityHelper.save(oldBooking)
   }
 
@@ -77,7 +81,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
       visitRestriction = oldBooking.visitRestriction,
     )
 
-    val applicationReference = newApplication.reference
+    val applicationReference = initialChangeApplication.reference
 
     // When
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
@@ -88,7 +92,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
 
     Assertions.assertThat(visit).isNotNull
-    Assertions.assertThat(applicationDto.reserved).isFalse()
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false)
 
     // And
     assertTelemetry(applicationDto, visit!!)
@@ -101,10 +105,10 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldBooking.sessionSlot.slotDate,
-      visitRestriction = newApplication.restriction,
+      visitRestriction = initialChangeApplication.restriction,
     )
 
-    val applicationReference = newApplication.reference
+    val applicationReference = initialChangeApplication.reference
 
     // When
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
@@ -115,7 +119,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
 
     Assertions.assertThat(visit).isNotNull
-    Assertions.assertThat(applicationDto.reserved).isTrue()
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true)
 
     // And
     assertTelemetry(applicationDto, visit!!)
@@ -130,7 +134,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
       visitRestriction = oldBooking.visitRestriction,
     )
 
-    val applicationReference = newApplication.reference
+    val applicationReference = initialChangeApplication.reference
 
     // When
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
@@ -141,7 +145,8 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
     Assertions.assertThat(visit).isNotNull
 
-    Assertions.assertThat(applicationDto.reserved).isFalse()
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false)
+
     // And
     assertTelemetry(applicationDto, visit!!)
   }
@@ -150,11 +155,11 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   fun `change reserved slot by application reference - session slot has still changed from original booking and application is Reserved`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      sessionTemplateReference = newApplication.sessionSlot.sessionTemplateReference!!,
-      sessionDate = newApplication.sessionSlot.slotDate,
+      sessionTemplateReference = initialChangeApplication.sessionSlot.sessionTemplateReference!!,
+      sessionDate = initialChangeApplication.sessionSlot.slotDate,
     )
 
-    val applicationReference = newApplication.reference
+    val applicationReference = initialChangeApplication.reference
 
     // When
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
@@ -165,13 +170,78 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
     Assertions.assertThat(visit).isNotNull
 
-    Assertions.assertThat(applicationDto.reserved).isTrue()
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true)
+
     // And
     assertTelemetry(applicationDto, visit!!)
   }
 
-  // TODDO create tests similar to ChangeReservedSlot
-  // TODO check to see if Application is added to visit and check to see that it is not complete
+  private fun assertChangedApplicationDetails(
+    initialApplication: Application,
+    applicationDto: ApplicationDto,
+    changeApplicationRequest: ChangeApplicationDto,
+    reserved: Boolean,
+  ) {
+    val sessionTemplate = testSessionTemplateRepository.findByReference(changeApplicationRequest.sessionTemplateReference)
+
+    Assertions.assertThat(applicationDto.reference).isEqualTo(initialApplication.reference)
+    Assertions.assertThat(applicationDto.prisonerId).isEqualTo(initialApplication.prisonerId)
+    Assertions.assertThat(applicationDto.prisonCode).isEqualTo(sessionTemplate.prison.code)
+    Assertions.assertThat(applicationDto.startTimestamp.toLocalTime()).isEqualTo(sessionTemplate.startTime)
+    Assertions.assertThat(applicationDto.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
+    Assertions.assertThat(applicationDto.startTimestamp.toLocalDate()).isEqualTo(changeApplicationRequest.sessionDate)
+
+    Assertions.assertThat(applicationDto.visitType).isEqualTo(initialApplication.visitType)
+    Assertions.assertThat(applicationDto.reserved).isEqualTo(reserved)
+    Assertions.assertThat(applicationDto.completed).isFalse()
+    changeApplicationRequest.visitRestriction?.let {
+      Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(it)
+    } ?: run {
+      Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(initialApplication.restriction)
+    }
+
+    Assertions.assertThat(applicationDto.sessionTemplateReference).isEqualTo(changeApplicationRequest.sessionTemplateReference)
+
+    changeApplicationRequest.visitContact?.let {
+      Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(it.name)
+      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(it.telephone)
+    } ?: run {
+      Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(initialApplication.visitContact?.name)
+      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(initialApplication.visitContact?.telephone)
+    }
+
+    val visitorsDtoList = applicationDto.visitors.toList()
+    changeApplicationRequest.visitors?.let {
+      Assertions.assertThat(applicationDto.visitors.size).isEqualTo(it.size)
+      it.forEachIndexed { index, visitorDto ->
+        Assertions.assertThat(visitorsDtoList[index].nomisPersonId).isEqualTo(visitorDto.nomisPersonId)
+        Assertions.assertThat(visitorsDtoList[index].visitContact).isEqualTo(visitorDto.visitContact)
+      }
+    } ?: run {
+      Assertions.assertThat(applicationDto.visitors.size).isEqualTo(initialApplication.visitors.size)
+      initialApplication.visitors.forEachIndexed { index, visitor ->
+        Assertions.assertThat(visitorsDtoList[index].nomisPersonId).isEqualTo(visitor.nomisPersonId)
+        Assertions.assertThat(visitorsDtoList[index].visitContact).isEqualTo(visitor.contact)
+      }
+    }
+
+    val supportDtoList = applicationDto.visitorSupport.toList()
+    changeApplicationRequest.visitorSupport?.let {
+      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(it.size)
+      it.forEachIndexed { index, supportDto ->
+        Assertions.assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
+        Assertions.assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
+      }
+    } ?: run {
+      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(initialApplication.support.size)
+      initialApplication.support.forEachIndexed { index, support ->
+        Assertions.assertThat(supportDtoList[index].type).isEqualTo(support.type)
+        Assertions.assertThat(supportDtoList[index].text).isEqualTo(support.text)
+      }
+    }
+
+    Assertions.assertThat(applicationDto.createdTimestamp).isNotNull()
+  }
 
   private fun assertTelemetry(applicationDto: ApplicationDto, visit: Visit) {
     verify(telemetryClient).trackEvent(

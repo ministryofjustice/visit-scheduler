@@ -14,7 +14,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import java.time.LocalDateTime
+import java.time.LocalDate
+import java.time.LocalTime
 
 @DisplayName("Cancellation days have been set as zero")
 @TestPropertySource(properties = ["visit.cancel.day-limit=-2"])
@@ -68,8 +69,10 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
     // Given
     // visit has expired based on current date
     // as the configured limit is 0 - any cancellations before current time should be allowed
-    val visitStart = LocalDateTime.now().minusMinutes(10)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = visitStart.toLocalDate(), sessionTemplate = sessionTemplateDefault)
+    val slotDate = LocalDate.now()
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "CFI", startTime = LocalTime.now().minusMinutes(1))
+
+    val expiredVisit = createApplicationAndVisit(visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplate)
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, cancelVisitDto)

@@ -131,7 +131,7 @@ class ApplicationService(
     }
 
     visit?.let {
-      // add even though it's not complete
+      // add even though it's not complete, because an existing booking is present
       visit.addApplication(applicationEntity)
     }
 

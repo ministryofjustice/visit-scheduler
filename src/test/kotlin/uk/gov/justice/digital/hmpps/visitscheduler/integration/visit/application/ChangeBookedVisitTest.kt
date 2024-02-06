@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
@@ -15,6 +15,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.EntityExchangeResult
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
@@ -37,6 +38,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -51,6 +53,9 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   @Autowired
   private lateinit var testApplicationRepository: TestApplicationRepository
 
+  @Autowired
+  private lateinit var testSessionTemplateRepository: TestSessionTemplateRepository
+
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
@@ -59,6 +64,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   }
 
   @BeforeEach
+  @Transactional(propagation = REQUIRES_NEW)
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
@@ -74,24 +80,6 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     bookedVisit = visitEntityHelper.save(visit)
   }
 
-  private fun createApplicationRequest(
-    prisonerId: String = "FF0000AA",
-    slotDate: LocalDate = bookedVisit.sessionSlot.slotDate,
-    visitRestriction: VisitRestriction = OPEN,
-    sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
-  ): CreateApplicationDto {
-    return CreateApplicationDto(
-      prisonerId = prisonerId,
-      sessionDate = slotDate,
-      visitRestriction = visitRestriction,
-      visitContact = ContactDto("John Smith", "013448811538"),
-      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
-      actionedBy = actionedByUserName,
-      sessionTemplateReference = sessionTemplateReference,
-    )
-  }
-
   @Test
   fun `application to change visit is added but not completed`() {
     // Given
@@ -105,10 +93,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     // Then
     val returnResult = getResult(responseSpec)
 
-    // And
-
     val applicationDto = getApplicationDto(returnResult)
-    assertThat(applicationDto.completed).isFalse()
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false)
     assertTelemetryData(applicationDto)
   }
 
@@ -127,7 +113,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     // And
 
     val applicationDto = getApplicationDto(returnResult)
-    assertThat(applicationDto.reserved).isFalse()
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false)
     assertTelemetryData(applicationDto)
   }
 
@@ -146,7 +132,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val returnResult = getResult(responseSpec)
 
     val applicationDto = getApplicationDto(returnResult)
-    assertThat(applicationDto.reserved).isTrue()
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, true)
     assertTelemetryData(applicationDto, "visit-slot-reserved")
   }
 
@@ -164,7 +150,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val returnResult = getResult(responseSpec)
 
     val applicationDto = getApplicationDto(returnResult)
-    assertThat(applicationDto.reserved).isTrue()
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, true)
     assertTelemetryData(applicationDto, eventType = "visit-slot-reserved")
   }
 
@@ -182,7 +168,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val returnResult = getResult(responseSpec)
 
     val applicationDto = getApplicationDto(returnResult)
-    assertThat(applicationDto.reserved).isTrue()
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, true)
     assertTelemetryData(applicationDto, eventType = "visit-slot-reserved")
   }
 
@@ -316,6 +302,24 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     }
   }
 
+  private fun createApplicationRequest(
+    prisonerId: String = "FF0000AA",
+    slotDate: LocalDate = bookedVisit.sessionSlot.slotDate,
+    visitRestriction: VisitRestriction = OPEN,
+    sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
+  ): CreateApplicationDto {
+    return CreateApplicationDto(
+      prisonerId = prisonerId,
+      sessionDate = slotDate,
+      visitRestriction = visitRestriction,
+      visitContact = ContactDto("John Smith", "013448811538"),
+      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
+      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      actionedBy = actionedByUserName,
+      sessionTemplateReference = sessionTemplateReference,
+    )
+  }
+
   private fun getApplication(dto: ApplicationDto): Application? {
     return testApplicationRepository.findByReference(dto.reference)
   }
@@ -328,5 +332,64 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
   private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto {
     return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
+  }
+
+  private fun assertApplicationDetails(
+    lastBooking: Visit,
+    returnedApplication: ApplicationDto,
+    createApplicationRequest: CreateApplicationDto,
+    reserved: Boolean,
+  ) {
+    val sessionTemplate = testSessionTemplateRepository.findByReference(createApplicationRequest.sessionTemplateReference)
+
+    val visitConnectedToApplication = testApplicationRepository.findVisitByApplicationReference(returnedApplication.reference)
+    assertThat(visitConnectedToApplication?.getApplications()?.size).isEqualTo(2)
+    assertThat(visitConnectedToApplication).isNotNull
+    assertThat(visitConnectedToApplication?.reference).isEqualTo(lastBooking.reference)
+    assertThat(returnedApplication.reference).isEqualTo(visitConnectedToApplication?.getLastApplication()?.reference)
+    assertThat(returnedApplication.prisonerId).isEqualTo(lastBooking.prisonerId)
+    assertThat(returnedApplication.prisonCode).isEqualTo(sessionTemplate.prison.code)
+    assertThat(returnedApplication.startTimestamp.toLocalDate()).isEqualTo(createApplicationRequest.sessionDate)
+    assertThat(returnedApplication.startTimestamp.toLocalTime()).isEqualTo(sessionTemplate.startTime)
+    assertThat(returnedApplication.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
+    assertThat(returnedApplication.visitType).isEqualTo(lastBooking.visitType)
+    assertThat(returnedApplication.reserved).isEqualTo(reserved)
+    assertThat(returnedApplication.completed).isFalse()
+    assertThat(returnedApplication.visitRestriction).isEqualTo(createApplicationRequest.visitRestriction)
+    assertThat(returnedApplication.sessionTemplateReference).isEqualTo(createApplicationRequest.sessionTemplateReference)
+
+    createApplicationRequest.visitContact?.let {
+      assertThat(returnedApplication.visitContact!!.name).isEqualTo(it.name)
+      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(it.telephone)
+    } ?: run {
+      assertThat(returnedApplication.visitContact!!.name).isEqualTo(lastBooking.visitContact.name)
+      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(lastBooking.visitContact.telephone)
+    }
+
+    val visitorsDtoList = returnedApplication.visitors.toList()
+    createApplicationRequest.visitors.let {
+      assertThat(returnedApplication.visitors.size).isEqualTo(it.size)
+      it.forEachIndexed { index, visitorDto ->
+        assertThat(visitorsDtoList[index].nomisPersonId).isEqualTo(visitorDto.nomisPersonId)
+        assertThat(visitorsDtoList[index].visitContact).isEqualTo(visitorDto.visitContact)
+      }
+    }
+
+    val supportDtoList = returnedApplication.visitorSupport.toList()
+    createApplicationRequest.visitorSupport?.let {
+      assertThat(returnedApplication.visitorSupport.size).isEqualTo(it.size)
+      it.forEachIndexed { index, supportDto ->
+        assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
+        assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
+      }
+    } ?: run {
+      assertThat(returnedApplication.visitorSupport.size).isEqualTo(lastBooking.support.size)
+      lastBooking.support.forEachIndexed { index, support ->
+        assertThat(supportDtoList[index].type).isEqualTo(support.type)
+        assertThat(supportDtoList[index].text).isEqualTo(support.text)
+      }
+    }
+
+    assertThat(returnedApplication.createdTimestamp).isNotNull()
   }
 }

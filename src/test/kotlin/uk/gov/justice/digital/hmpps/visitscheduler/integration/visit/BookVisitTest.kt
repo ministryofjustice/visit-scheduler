@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -72,8 +72,9 @@ class BookVisitTest : IntegrationTestBase() {
     assertVisitMatchesApplication(visitDto, reservedApplication)
 
     val visitEntity = testVisitRepository.findByReference(visitDto.reference)
-    Assertions.assertThat(visitEntity.getApplications().size).isEqualTo(1)
-    Assertions.assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
+    assertThat(visitEntity.getApplications().size).isEqualTo(1)
+    assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
+    assertThat(visitEntity.getLastApplication()?.completed).isTrue()
 
     // And
     assertBookedEvent(visitDto, false)
@@ -92,10 +93,10 @@ class BookVisitTest : IntegrationTestBase() {
     val visit1 = createVisitDtoFromResponse(responseSpec1)
     val visit2 = createVisitDtoFromResponse(responseSpec2)
 
-    Assertions.assertThat(visit1.reference).isEqualTo(visit2.reference)
-    Assertions.assertThat(visit1.applicationReference).isEqualTo(visit2.applicationReference)
-    Assertions.assertThat(visit1.visitStatus).isEqualTo(visit2.visitStatus)
-    Assertions.assertThat(testVisitRepository.hasOneVisit(visit1.reference)).isTrue()
+    assertThat(visit1.reference).isEqualTo(visit2.reference)
+    assertThat(visit1.applicationReference).isEqualTo(visit2.applicationReference)
+    assertThat(visit1.visitStatus).isEqualTo(visit2.visitStatus)
+    assertThat(testVisitRepository.hasOneVisit(visit1.reference)).isTrue()
 
     // just one event thrown
     assertBookedEvent(visit1, false)
@@ -151,6 +152,8 @@ class BookVisitTest : IntegrationTestBase() {
     visitEntityHelper.createSupport(visit = visit, name = "OTHER", details = "Some Text")
     visitEntityHelper.save(visit)
 
+    val orginalBookingRefernce = visit.reference
+
     val applicationReference = completedApplication.reference
 
     // When
@@ -159,6 +162,7 @@ class BookVisitTest : IntegrationTestBase() {
     // Then
     val visitDto = createVisitDtoFromResponse(responseSpec)
 
+    assertThat(visitDto.reference).isEqualTo(orginalBookingRefernce)
     assertVisitMatchesApplication(visitDto, completedApplication)
 
     // And
@@ -241,28 +245,28 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   private fun assertVisitMatchesApplication(visitDto: VisitDto, application: Application) {
-    Assertions.assertThat(visitDto.reference).isNotEmpty()
-    Assertions.assertThat(visitDto.applicationReference).isEqualTo(application.reference)
-    Assertions.assertThat(visitDto.prisonerId).isEqualTo(application.prisonerId)
-    Assertions.assertThat(visitDto.prisonCode).isEqualTo(sessionTemplateDefault.prison.code)
-    Assertions.assertThat(visitDto.visitRoom).isEqualTo(sessionTemplateDefault.visitRoom)
-    Assertions.assertThat(visitDto.startTimestamp)
+    assertThat(visitDto.reference).isNotEmpty()
+    assertThat(visitDto.applicationReference).isEqualTo(application.reference)
+    assertThat(visitDto.prisonerId).isEqualTo(application.prisonerId)
+    assertThat(visitDto.prisonCode).isEqualTo(sessionTemplateDefault.prison.code)
+    assertThat(visitDto.visitRoom).isEqualTo(sessionTemplateDefault.visitRoom)
+    assertThat(visitDto.startTimestamp)
       .isEqualTo(application.sessionSlot.slotStart)
-    Assertions.assertThat(visitDto.endTimestamp)
+    assertThat(visitDto.endTimestamp)
       .isEqualTo(application.sessionSlot.slotEnd)
-    Assertions.assertThat(visitDto.visitType).isEqualTo(application.visitType)
-    Assertions.assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    Assertions.assertThat(visitDto.visitRestriction).isEqualTo(application.restriction)
-    Assertions.assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    Assertions.assertThat(visitDto.visitContact.name).isEqualTo(application.visitContact!!.name)
-    Assertions.assertThat(visitDto.visitContact.telephone).isEqualTo(application.visitContact!!.telephone)
-    Assertions.assertThat(visitDto.visitors.size).isEqualTo(application.visitors.size)
-    Assertions.assertThat(visitDto.visitors[0].nomisPersonId).isEqualTo(application.visitors[0].nomisPersonId)
-    Assertions.assertThat(visitDto.visitors[0].visitContact).isEqualTo(application.visitors[0].contact!!)
-    Assertions.assertThat(visitDto.visitorSupport.size).isEqualTo(application.support.size)
-    Assertions.assertThat(visitDto.visitorSupport[0].type).isEqualTo(application.support[0].type)
-    Assertions.assertThat(visitDto.visitorSupport[0].text).isEqualTo(application.support[0].text!!)
-    Assertions.assertThat(visitDto.createdTimestamp).isNotNull()
+    assertThat(visitDto.visitType).isEqualTo(application.visitType)
+    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
+    assertThat(visitDto.visitRestriction).isEqualTo(application.restriction)
+    assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
+    assertThat(visitDto.visitContact.name).isEqualTo(application.visitContact!!.name)
+    assertThat(visitDto.visitContact.telephone).isEqualTo(application.visitContact!!.telephone)
+    assertThat(visitDto.visitors.size).isEqualTo(application.visitors.size)
+    assertThat(visitDto.visitors[0].nomisPersonId).isEqualTo(application.visitors[0].nomisPersonId)
+    assertThat(visitDto.visitors[0].visitContact).isEqualTo(application.visitors[0].contact!!)
+    assertThat(visitDto.visitorSupport.size).isEqualTo(application.support.size)
+    assertThat(visitDto.visitorSupport[0].type).isEqualTo(application.support[0].type)
+    assertThat(visitDto.visitorSupport[0].text).isEqualTo(application.support[0].text!!)
+    assertThat(visitDto.createdTimestamp).isNotNull()
   }
 
   private fun assertBookedEvent(visit: VisitDto, isUpdated: Boolean) {
@@ -271,18 +275,18 @@ class BookVisitTest : IntegrationTestBase() {
     verify(telemetryClient).trackEvent(
       eq("visit-booked"),
       org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
-        Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-        Assertions.assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
-        Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
-        Assertions.assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
+        assertThat(it["reference"]).isEqualTo(visit.reference)
+        assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+        assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+        assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
+        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+        assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
+        assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
+        assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
+        assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
       },
       isNull(),
     )

@@ -1,7 +1,7 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application
 
 import com.microsoft.applicationinsights.TelemetryClient
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -51,6 +52,9 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var testApplicationRepository: TestApplicationRepository
+
+  @Autowired
+  private lateinit var testSessionTemplateRepository: TestSessionTemplateRepository
 
   @BeforeEach
   internal fun setUp() {
@@ -85,7 +89,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val returnResult = getResult(responseSpec)
     val applicationDto = getApplicationDto(returnResult)
     val application = this.getApplication(applicationDto)!!
-    assertApplicationDetails(application, applicationDto, reserveVisitSlotDto, sessionTemplate)
+    assertApplicationDetails(application, applicationDto, reserveVisitSlotDto)
 
     // And
     assertTelemetry(applicationDto)
@@ -266,70 +270,71 @@ class ReserveSlotTest : IntegrationTestBase() {
   }
 
   private fun assertApplicationDetails(
-    application: Application,
-    applicationDto: ApplicationDto,
+    persistedApplication: Application,
+    returnedApplication: ApplicationDto,
     createApplicationRequest: CreateApplicationDto,
-    sessionTemplate: SessionTemplate,
   ) {
-    Assertions.assertThat(applicationDto.reference).isEqualTo(application.reference)
-    Assertions.assertThat(applicationDto.prisonerId).isEqualTo(application.prisonerId)
-    Assertions.assertThat(applicationDto.prisonCode).isEqualTo(application.prison.code)
-    Assertions.assertThat(applicationDto.startTimestamp.toLocalDate()).isEqualTo(createApplicationRequest.sessionDate)
-    Assertions.assertThat(applicationDto.startTimestamp.toLocalTime()).isEqualTo(sessionTemplate.startTime)
-    Assertions.assertThat(applicationDto.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
-    Assertions.assertThat(applicationDto.visitType).isEqualTo(application.visitType)
-    Assertions.assertThat(applicationDto.reserved).isTrue()
-    Assertions.assertThat(applicationDto.completed).isFalse()
-    Assertions.assertThat(applicationDto.visitRestriction).isEqualTo(createApplicationRequest.visitRestriction)
-    Assertions.assertThat(applicationDto.sessionTemplateReference).isEqualTo(createApplicationRequest.sessionTemplateReference)
+    val sessionTemplate = testSessionTemplateRepository.findByReference(createApplicationRequest.sessionTemplateReference)
+
+    assertThat(returnedApplication.reference).isEqualTo(persistedApplication.reference)
+    assertThat(returnedApplication.prisonerId).isEqualTo(persistedApplication.prisonerId)
+    assertThat(returnedApplication.prisonCode).isEqualTo(sessionTemplate.prison.code)
+    assertThat(returnedApplication.startTimestamp.toLocalDate()).isEqualTo(createApplicationRequest.sessionDate)
+    assertThat(returnedApplication.startTimestamp.toLocalTime()).isEqualTo(sessionTemplate.startTime)
+    assertThat(returnedApplication.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
+    assertThat(returnedApplication.visitType).isEqualTo(persistedApplication.visitType)
+    assertThat(returnedApplication.reserved).isTrue()
+    assertThat(returnedApplication.completed).isFalse()
+    assertThat(returnedApplication.visitRestriction).isEqualTo(createApplicationRequest.visitRestriction)
+    assertThat(returnedApplication.sessionTemplateReference).isEqualTo(createApplicationRequest.sessionTemplateReference)
 
     createApplicationRequest.visitContact?.let {
-      Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(it.name)
-      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(it.telephone)
+      assertThat(returnedApplication.visitContact!!.name).isEqualTo(it.name)
+      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(it.telephone)
     } ?: run {
-      Assertions.assertThat(applicationDto.visitContact!!.name).isEqualTo(application.visitContact?.name)
-      Assertions.assertThat(applicationDto.visitContact!!.telephone).isEqualTo(application.visitContact?.telephone)
+      assertThat(returnedApplication.visitContact!!.name).isEqualTo(persistedApplication.visitContact?.name)
+      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(persistedApplication.visitContact?.telephone)
     }
 
-    val visitorsDtoList = applicationDto.visitors.toList()
+    val visitorsDtoList = returnedApplication.visitors.toList()
     createApplicationRequest.visitors.let {
-      Assertions.assertThat(applicationDto.visitors.size).isEqualTo(it.size)
+      assertThat(returnedApplication.visitors.size).isEqualTo(it.size)
       it.forEachIndexed { index, visitorDto ->
-        Assertions.assertThat(visitorsDtoList[index].nomisPersonId).isEqualTo(visitorDto.nomisPersonId)
-        Assertions.assertThat(visitorsDtoList[index].visitContact).isEqualTo(visitorDto.visitContact)
+        assertThat(visitorsDtoList[index].nomisPersonId).isEqualTo(visitorDto.nomisPersonId)
+        assertThat(visitorsDtoList[index].visitContact).isEqualTo(visitorDto.visitContact)
       }
     }
 
-    val supportDtoList = applicationDto.visitorSupport.toList()
+    val supportDtoList = returnedApplication.visitorSupport.toList()
     createApplicationRequest.visitorSupport?.let {
-      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(it.size)
+      assertThat(returnedApplication.visitorSupport.size).isEqualTo(it.size)
       it.forEachIndexed { index, supportDto ->
-        Assertions.assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
-        Assertions.assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
+        assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
+        assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
       }
     } ?: run {
-      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(application.support.size)
-      application.support.forEachIndexed { index, support ->
-        Assertions.assertThat(supportDtoList[index].type).isEqualTo(support.type)
-        Assertions.assertThat(supportDtoList[index].text).isEqualTo(support.text)
+      assertThat(returnedApplication.visitorSupport.size).isEqualTo(persistedApplication.support.size)
+      persistedApplication.support.forEachIndexed { index, support ->
+        assertThat(supportDtoList[index].type).isEqualTo(support.type)
+        assertThat(supportDtoList[index].text).isEqualTo(support.text)
       }
     }
 
-    Assertions.assertThat(applicationDto.createdTimestamp).isNotNull()
+    assertThat(returnedApplication.createdTimestamp).isNotNull()
   }
 
   private fun assertTelemetry(applicationDto: ApplicationDto) {
     verify(telemetryClient).trackEvent(
       eq("visit-slot-reserved"),
       org.mockito.kotlin.check {
-        Assertions.assertThat(it["applicationReference"]).isEqualTo(applicationDto.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(applicationDto.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(applicationDto.prisonCode)
-        Assertions.assertThat(it["visitType"]).isEqualTo(applicationDto.visitType.name)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(applicationDto.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"])
+        assertThat(it["applicationReference"]).isEqualTo(applicationDto.reference)
+        assertThat(it["prisonerId"]).isEqualTo(applicationDto.prisonerId)
+        assertThat(it["prisonId"]).isEqualTo(applicationDto.prisonCode)
+        assertThat(it["visitType"]).isEqualTo(applicationDto.visitType.name)
+        assertThat(it["visitRestriction"]).isEqualTo(applicationDto.visitRestriction.name)
+        assertThat(it["visitStart"])
           .isEqualTo(applicationDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["reserved"]).isEqualTo(applicationDto.reserved.toString())
+        assertThat(it["reserved"]).isEqualTo(applicationDto.reserved.toString())
       },
       isNull(),
     )
