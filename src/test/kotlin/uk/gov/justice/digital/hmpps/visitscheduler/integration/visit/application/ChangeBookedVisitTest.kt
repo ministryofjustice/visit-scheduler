@@ -302,7 +302,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   }
 
   private fun createApplicationRequest(
-    prisonerId: String = "FF0000AA",
+    prisonerId: String = "testPrisonerId",
     slotDate: LocalDate = bookedVisit.sessionSlot.slotDate,
     visitRestriction: CreateApplicationRestriction = CreateApplicationRestriction.OPEN,
     sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
@@ -361,8 +361,8 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       assertThat(returnedApplication.visitContact!!.name).isEqualTo(it.name)
       assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(it.telephone)
     } ?: run {
-      assertThat(returnedApplication.visitContact!!.name).isEqualTo(lastBooking.visitContact.name)
-      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(lastBooking.visitContact.telephone)
+      assertThat(returnedApplication.visitContact!!.name).isEqualTo(lastBooking.visitContact!!.name)
+      assertThat(returnedApplication.visitContact!!.telephone).isEqualTo(lastBooking.visitContact!!.telephone)
     }
 
     val visitorsDtoList = returnedApplication.visitors.toList()

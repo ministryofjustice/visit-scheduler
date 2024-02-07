@@ -49,7 +49,7 @@ class ApplicationEntityHelper(
   }
 
   fun create(
-    prisonerId: String = "FF0000AA",
+    prisonerId: String = "testPrisonerId",
     slotDate: LocalDate = LocalDate.of((LocalDate.now().year + 1), 11, 1),
     sessionTemplate: SessionTemplate,
     visitStart: LocalTime = sessionTemplate.startTime,
@@ -125,9 +125,5 @@ class ApplicationEntityHelper(
 
   fun save(application: Application): Application {
     return applicationRepo.saveAndFlush(application)
-  }
-
-  fun getApplication(applicationReference: String): Application? {
-    return applicationRepo.findApplication(applicationReference)
   }
 }

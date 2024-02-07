@@ -86,9 +86,9 @@ class VisitDtoBuilderTest() {
     Assertions.assertThat(visitDto.createdTimestamp).isNotNull()
     Assertions.assertThat(visitDto.modifiedTimestamp).isNotNull()
 
-    visit.visitContact.let {
-      Assertions.assertThat(visitDto.visitContact?.name).isEqualTo(it.name)
-      Assertions.assertThat(visitDto.visitContact?.telephone).isEqualTo(it.telephone)
+    visit.visitContact?.let {
+      Assertions.assertThat(visitDto.visitContact.name).isEqualTo(it.name)
+      Assertions.assertThat(visitDto.visitContact.telephone).isEqualTo(it.telephone)
     }
 
     visit.visitNotes.let { notes ->

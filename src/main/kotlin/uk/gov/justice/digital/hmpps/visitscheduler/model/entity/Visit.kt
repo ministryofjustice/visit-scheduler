@@ -67,7 +67,7 @@ class Visit(
   var outcomeStatus: OutcomeStatus? = null
 
   @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  lateinit var visitContact: VisitContact
+  var visitContact: VisitContact? = null
 
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
   val visitors: MutableList<VisitVisitor> = mutableListOf()
