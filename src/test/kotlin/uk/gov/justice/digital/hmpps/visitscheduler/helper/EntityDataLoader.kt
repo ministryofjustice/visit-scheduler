@@ -175,7 +175,7 @@ class VisitEntityHelper(
   fun create(
     visitStatus: VisitStatus = BOOKED,
     sessionTemplate: SessionTemplate,
-    prisonerId: String = "FF0000AA",
+    prisonerId: String = "testPrisonerId",
     prisonCode: String = sessionTemplate.prison.code,
     visitRoom: String = sessionTemplate.visitRoom,
     slotDate: LocalDate = sessionTemplate.validFromDate,

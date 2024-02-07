@@ -24,8 +24,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -38,6 +41,9 @@ class BookVisitTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var testVisitRepository: TestVisitRepository
+
+  @Autowired
+  private lateinit var testApplicationRepository: TestApplicationRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -134,36 +140,38 @@ class BookVisitTest : IntegrationTestBase() {
   @Test
   fun `Amend and book visit`() {
     // Given
+
+    // Original application and visit
     val slotDateInThePast = LocalDate.now().plusDays(1)
-    val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = false)
-    applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765")
-    applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = completedApplication, name = "OTHER", details = "Some Text")
-    applicationEntityHelper.save(reservedApplication)
+    val originalVisit = createApplicationAndVisit(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
 
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
-    visit.addApplication(completedApplication)
+    val newApplication = applicationEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = if (originalVisit.visitRestriction == OPEN) CLOSED else OPEN,
+    )
 
-    visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
-    visitEntityHelper.createNote(visit = visit, text = "Some text concerns", type = VISITOR_CONCERN)
-    visitEntityHelper.createNote(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
-    visitEntityHelper.createContact(visit = visit, name = "Jane Doe", phone = "01234 098765")
-    visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 321L, visitContact = true)
-    visitEntityHelper.createSupport(visit = visit, name = "OTHER", details = "Some Text")
-    visitEntityHelper.save(visit)
+    applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348811539")
+    applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
+    applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.save(newApplication)
 
-    val orginalBookingRefernce = visit.reference
+    originalVisit.addApplication(newApplication)
 
-    val applicationReference = completedApplication.reference
+    visitEntityHelper.save(originalVisit)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, newApplication.reference)
 
     // Then
     val visitDto = createVisitDtoFromResponse(responseSpec)
+    assertThat(visitDto.reference).isEqualTo(originalVisit.reference)
+    assertVisitMatchesApplication(visitDto, newApplication)
 
-    assertThat(visitDto.reference).isEqualTo(orginalBookingRefernce)
-    assertVisitMatchesApplication(visitDto, completedApplication)
+    val application = testApplicationRepository.findByReference(visitDto.applicationReference)
+    assertThat(application!!.completed).isTrue()
 
     // And
     assertBookedEvent(visitDto, true)

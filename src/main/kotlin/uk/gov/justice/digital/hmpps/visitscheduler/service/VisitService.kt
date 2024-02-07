@@ -108,7 +108,7 @@ class VisitService(
     return bookedVisitDto
   }
 
-  private fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
+  fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
     val existingBooking = if (hasExistingBooking) visitRepository.findVisitByApplicationReference(application.reference) else null
     if (hasExistingBooking) {
       validateVisitStartDate(existingBooking!!, "changed")
@@ -124,7 +124,7 @@ class VisitService(
       existingBooking.visitRestriction = application.restriction
       existingBooking.visitRoom = visitRoom
       existingBooking.visitStatus = BOOKED
-      return existingBooking
+      existingBooking
     } ?: run {
       // Create new booking
       Visit(
@@ -146,12 +146,23 @@ class VisitService(
       booking.addApplication(application)
     }
 
-    with(application.visitContact!!) {
-      booking.visitContact = VisitContact(visit = booking, visitId = booking.id, name = name, telephone = telephone)
+    application.visitContact?.let {
+      booking.visitContact?.let { visitContact ->
+        visitContact.name = it.name
+        visitContact.telephone = it.telephone
+      } ?: run {
+        booking.visitContact = VisitContact(
+          visit = booking,
+          visitId = booking.id,
+          name = it.name,
+          telephone = it.telephone,
+        )
+      }
     }
 
     application.support.let {
       booking.support.clear()
+      visitRepository.saveAndFlush(booking)
       application.support.map { applicationSupport ->
         with(applicationSupport) {
           booking.support.add(VisitSupport(visit = booking, visitId = booking.id, type = type, text = text))
@@ -161,6 +172,7 @@ class VisitService(
 
     application.visitors.let {
       booking.visitors.clear()
+      visitRepository.saveAndFlush(booking)
       it.map { applicationVisitor ->
         with(applicationVisitor) {
           booking.visitors.add(VisitVisitor(visit = booking, visitId = booking.id, nomisPersonId = nomisPersonId, visitContact = contact))
