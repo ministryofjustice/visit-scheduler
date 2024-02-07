@@ -257,7 +257,7 @@ class ApplicationService(
     eventAuditRepository.saveAndFlush(
       EventAudit(
         actionedBy = actionedBy,
-        bookingReference = visit?.let { visit.reference } ?: "",
+        bookingReference = visit?.reference,
         applicationReference = application.reference,
         sessionTemplateReference = application.sessionTemplateReference,
         type = if (application.reserved) RESERVED_VISIT else CHANGING_VISIT,
