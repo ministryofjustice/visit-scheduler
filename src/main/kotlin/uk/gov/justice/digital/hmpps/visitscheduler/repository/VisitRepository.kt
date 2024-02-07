@@ -166,7 +166,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(CAST(:visitStartDate AS DATE) is null OR v.sessionSlot.slotDate >= :visitStartDate) AND " +
       "(CAST(:visitEndDate AS DATE) is null OR v.sessionSlot.slotDate <= :visitEndDate) " +
-      " ORDER BY v.sessionSlot.slotStart,v.id",
+      " ORDER BY v.sessionSlot.slotDate desc, v.sessionSlot.slotStart desc,v.id desc",
   )
   fun findVisitsOrderByDateAndTime(
     prisonerId: String?,

@@ -72,8 +72,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     Assertions.assertThat(visit.prisonerId).isEqualTo(visit.prisonerId)
     Assertions.assertThat(visitList.size).isEqualTo(2)
-    assertVisitDto(visitList[0], visit)
-    assertVisitDto(visitList[1], visitCancelled)
+    assertVisitDto(visitList[0], visitCancelled)
+    assertVisitDto(visitList[1], visit)
   }
 
   @Test
@@ -140,8 +140,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val visitList = parseVisitsPageResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(2)
-    assertVisitDto(visitList[0], visit)
-    assertVisitDto(visitList[1], visitCancelled)
+    assertVisitDto(visitList[0], visitCancelled)
+    assertVisitDto(visitList[1], visit)
   }
 
   @Test
@@ -159,8 +159,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val visitList = parseVisitsPageResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(2)
-    assertVisitDto(visitList[0], visit)
-    assertVisitDto(visitList[1], visitCancelled)
+    assertVisitDto(visitList[0], visitCancelled)
+    assertVisitDto(visitList[1], visit)
   }
 
   @Test
@@ -210,13 +210,13 @@ class VisitsByFilterTest : IntegrationTestBase() {
     responsePageOne.expectStatus().isOk
     val visitListPageOne = parseVisitsPageResponse(responsePageOne)
     Assertions.assertThat(visitListPageOne.size).isEqualTo(1)
-    assertVisitDto(visitListPageOne[0], visit)
+    assertVisitDto(visitListPageOne[0], visitCancelled)
 
     // And - Page 1
     responsePageTwo.expectStatus().isOk
     val visitListPageTwo = parseVisitsPageResponse(responsePageTwo)
     Assertions.assertThat(visitListPageTwo.size).isEqualTo(1)
-    assertVisitDto(visitListPageTwo[0], visitCancelled)
+    assertVisitDto(visitListPageTwo[0], visit)
   }
 
   @Test
