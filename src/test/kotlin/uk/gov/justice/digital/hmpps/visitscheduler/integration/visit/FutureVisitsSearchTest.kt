@@ -53,7 +53,7 @@ class FutureVisitsSearchTest : IntegrationTestBase() {
     // booked visit is returned
     Assertions.assertThat(visits[0].reference).isEqualTo(vist1.reference)
 
-    //cancelled visit is also returned
+    // cancelled visit is also returned
     Assertions.assertThat(visits[1].reference).isEqualTo(vist2.reference)
   }
 
