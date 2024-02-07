@@ -38,7 +38,7 @@ class FutureVisitsSearchTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Search for future booked visits by prisoner number`() {
+  fun `Search for future visits by prisoner number`() {
     // Given
     val prisonerNumber = vist1.prisonerId
 
@@ -48,8 +48,13 @@ class FutureVisitsSearchTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     val visits = parseVisitsResponse(responseSpec)
-    Assertions.assertThat(visits.size).isEqualTo(1)
+    Assertions.assertThat(visits.size).isEqualTo(2)
+
+    // booked visit is returned
     Assertions.assertThat(visits[0].reference).isEqualTo(vist1.reference)
+
+    // cancelled visit is also returned
+    Assertions.assertThat(visits[1].reference).isEqualTo(vist2.reference)
   }
 
   fun callSearchForFutureVisits(
