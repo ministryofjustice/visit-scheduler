@@ -26,6 +26,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -33,7 +38,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companio
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplateMatcher
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 const val NOT_KNOWN_NOMIS = "NOT_KNOWN_NOMIS"
@@ -57,6 +61,12 @@ class MigrateVisitService(
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
 
+  @Autowired
+  private lateinit var sessionSlotService: SessionSlotService
+
+  @Autowired
+  private lateinit var applicationRepository: ApplicationRepository
+
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
     if (isVisitTooFarInTheFuture(migrateVisitRequest.startTimestamp)) {
       throw VisitToMigrateException("Visit more than $migrateMaxMonthsInFuture months in future, will not be migrated!")
@@ -66,47 +76,135 @@ class MigrateVisitService(
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
+    val shouldMigrateWithSessionTemplate = shouldMigrateWithSessionMapping(migrateVisitRequest)
     val prison: Prison
-    var sessionTemplateReference: String ? = null
     val visitRoom: String
+    val sessionSlot: SessionSlot
 
-    if (shouldMigrateWithSessionMapping(migrateVisitRequest)) {
+    if (shouldMigrateWithSessionTemplate) {
       val sessionTemplate = migrationSessionTemplateMatcher.getMatchingSessionTemplate(migrateVisitRequest)
 
       prison = sessionTemplate.prison
-      sessionTemplateReference = sessionTemplate.reference
+      val sessionTemplateReference = sessionTemplate.reference
       visitRoom = sessionTemplate.visitRoom
+
+      sessionSlot = sessionSlotService.getSessionSlot(
+        startTimeDate = migrateVisitRequest.startTimestamp,
+        endTimeAndDate = migrateVisitRequest.endTimestamp,
+        sessionTemplateReference,
+        prison,
+      )
     } else {
       prison = prisonsService.findPrisonByCode(migrateVisitRequest.prisonCode)
       visitRoom = migrateVisitRequest.visitRoom
+
+      sessionSlot = sessionSlotService.getSessionSlot(
+        startTimeDate = migrateVisitRequest.startTimestamp,
+        endTimeAndDate = migrateVisitRequest.endTimestamp,
+        prison,
+      )
     }
 
+    val applicationEntity: Application = createApplication(migrateVisitRequest, prison, sessionSlot, actionedBy)
+    val visitEntity = createVisit(migrateVisitRequest, prison, visitRoom, sessionSlot, outcomeStatus, actionedBy)
+    visitEntity.addApplication(applicationEntity)
+
+    sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
+
+    val eventAudit = eventAuditRepository.saveAndFlush(
+      EventAudit(
+        actionedBy = actionedBy,
+        bookingReference = visitEntity.reference,
+        applicationReference = applicationEntity.reference,
+        sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
+        type = MIGRATED_VISIT,
+        applicationMethodType = NOT_KNOWN,
+      ),
+    )
+
+    migrateVisitRequest.createDateTime?.let {
+      visitRepository.updateCreateTimestamp(it, visitEntity.id)
+      if (migrateVisitRequest.visitStatus == BOOKED) {
+        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
+      }
+    }
+
+    // Do this at end of this method, otherwise modify date would be overridden
+    migrateVisitRequest.modifyDateTime?.let {
+      visitRepository.updateModifyTimestamp(it, visitEntity.id)
+      if (migrateVisitRequest.visitStatus == CANCELLED) {
+        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
+      }
+    }
+
+    return visitEntity.reference
+  }
+
+  private fun createApplication(
+    migrateVisitRequest: MigrateVisitRequestDto,
+    prison: Prison,
+    sessionSlot: SessionSlot,
+    actionedBy: String,
+  ): Application {
+    val applicationEntity = applicationRepository.saveAndFlush(
+      Application(
+        prisonerId = migrateVisitRequest.prisonerId,
+        prison = prison,
+        prisonId = prison.id,
+        sessionSlot = sessionSlot,
+        sessionSlotId = sessionSlot.id,
+        visitType = migrateVisitRequest.visitType,
+        restriction = migrateVisitRequest.visitRestriction,
+        reservedSlot = false,
+        completed = true,
+        createdBy = actionedBy,
+      ),
+    )
+
+    migrateVisitRequest.visitContact?.let { contact ->
+      applicationEntity.visitContact = createApplicationContact(
+        applicationEntity,
+        if (UNKNOWN_TOKEN == contact.name || contact.name.partition { it.isLowerCase() }.first.isNotEmpty()) {
+          contact.name
+        } else {
+          capitalise(contact.name)
+        },
+        contact.telephone,
+      )
+    }
+
+    migrateVisitRequest.visitors?.let { contactList ->
+      contactList.forEach {
+        applicationEntity.visitors.add(createApplicationVisitor(applicationEntity, it.nomisPersonId))
+      }
+    }
+
+    return applicationRepository.saveAndFlush(applicationEntity)
+  }
+
+  private fun createVisit(
+    migrateVisitRequest: MigrateVisitRequestDto,
+    prison: Prison,
+    visitRoom: String,
+    sessionSlot: SessionSlot,
+    outcomeStatus: OutcomeStatus,
+    actionedBy: String,
+  ): Visit {
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
         prisonerId = migrateVisitRequest.prisonerId,
         prison = prison,
         prisonId = prison.id,
         visitRoom = visitRoom,
-        sessionTemplateReference = sessionTemplateReference,
+        sessionSlot = sessionSlot,
+        sessionSlotId = sessionSlot.id,
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
-        outcomeStatus = outcomeStatus,
         visitRestriction = migrateVisitRequest.visitRestriction,
-        visitStart = migrateVisitRequest.startTimestamp,
-        visitEnd = migrateVisitRequest.endTimestamp,
       ),
     )
 
-    val eventAudit = eventAuditRepository.saveAndFlush(
-      EventAudit(
-        actionedBy = actionedBy,
-        bookingReference = visitEntity.reference,
-        applicationReference = visitEntity.applicationReference,
-        sessionTemplateReference = visitEntity.sessionTemplateReference,
-        type = MIGRATED_VISIT,
-        applicationMethodType = NOT_KNOWN,
-      ),
-    )
+    visitEntity.outcomeStatus = outcomeStatus
 
     migrateVisitRequest.visitContact?.let { contact ->
       visitEntity.visitContact = createVisitContact(
@@ -134,26 +232,8 @@ class MigrateVisitService(
 
     saveLegacyData(visitEntity, migrateVisitRequest)
 
-    sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
-
     visitRepository.saveAndFlush(visitEntity)
-
-    migrateVisitRequest.createDateTime?.let {
-      visitRepository.updateCreateTimestamp(it, visitEntity.id)
-      if (migrateVisitRequest.visitStatus == BOOKED) {
-        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
-      }
-    }
-
-    // Do this at end of this method, otherwise modify date would be overridden
-    migrateVisitRequest.modifyDateTime?.let {
-      visitRepository.updateModifyTimestamp(it, visitEntity.id)
-      if (migrateVisitRequest.visitStatus == CANCELLED) {
-        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
-      }
-    }
-
-    return visitEntity.reference
+    return visitEntity
   }
 
   private fun isVisitTooFarInTheFuture(visitDate: LocalDateTime): Boolean {
@@ -184,8 +264,8 @@ class MigrateVisitService(
       EventAudit(
         actionedBy = cancelVisitDto.actionedBy,
         bookingReference = visitEntity.reference,
-        applicationReference = visitEntity.applicationReference,
-        sessionTemplateReference = visitEntity.sessionTemplateReference,
+        applicationReference = visitEntity.getLastCompletedApplication()?.reference,
+        sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
         type = CANCELLED_VISIT,
         applicationMethodType = NOT_KNOWN,
       ),
@@ -220,11 +300,11 @@ class MigrateVisitService(
       "prisonId" to visitEntity.prison.code,
       "visitType" to visitEntity.visitType.name,
       "visitRoom" to visitEntity.visitRoom,
-      "sessionTemplateReference" to (visitEntity.sessionTemplateReference ?: ""),
+      "sessionTemplateReference" to (visitEntity.sessionSlot.sessionTemplateReference ?: ""),
       "visitRestriction" to visitEntity.visitRestriction.name,
-      "visitStart" to visitEntity.visitStart.format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStart" to sessionSlotService.getSessionTimeAndDateString(visitEntity.sessionSlot.slotStart),
       "visitStatus" to visitEntity.visitStatus.name,
-      "applicationReference" to visitEntity.applicationReference,
+      "applicationReference" to (visitEntity.getLastCompletedApplication()?.reference ?: ""),
     )
   }
 
@@ -285,6 +365,24 @@ class MigrateVisitService(
       visitId = visit.id,
       visit = visit,
       visitContact = null,
+    )
+  }
+
+  private fun createApplicationVisitor(application: Application, personId: Long): ApplicationVisitor {
+    return ApplicationVisitor(
+      nomisPersonId = personId,
+      applicationId = application.id,
+      application = application,
+      contact = null,
+    )
+  }
+
+  private fun createApplicationContact(application: Application, name: String, telephone: String?): ApplicationContact {
+    return ApplicationContact(
+      applicationId = application.id,
+      application = application,
+      name = name,
+      telephone = telephone ?: "",
     )
   }
 }

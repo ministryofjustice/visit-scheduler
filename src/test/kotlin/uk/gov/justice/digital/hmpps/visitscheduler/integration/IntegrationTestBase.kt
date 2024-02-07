@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration
 
+import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.ObjectMapper
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.AfterEach
@@ -16,10 +17,13 @@ import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.ApplicationEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.DeleteEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.EventAuditEntityHelper
@@ -37,10 +41,20 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExt
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociationsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
 
-@Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @ExtendWith(HmppsAuthExtension::class)
@@ -53,7 +67,13 @@ abstract class IntegrationTestBase {
   protected lateinit var objectMapper: ObjectMapper
 
   @Autowired
+  protected lateinit var sessionDatesUtil: SessionDatesUtil
+
+  @Autowired
   protected lateinit var visitEntityHelper: VisitEntityHelper
+
+  @Autowired
+  protected lateinit var applicationEntityHelper: ApplicationEntityHelper
 
   @Autowired
   protected lateinit var eventAuditEntityHelper: EventAuditEntityHelper
@@ -94,17 +114,27 @@ abstract class IntegrationTestBase {
   }
 
   lateinit var prison: Prison
+  lateinit var sessionTemplateDefault: SessionTemplate
+  lateinit var startDate: LocalDate
 
   @BeforeEach
   fun resetStubs() {
     prisonApiMockServer.resetAll()
     prisonOffenderSearchMockServer.resetAll()
+    sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT")
+    startDate = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
   }
 
   @AfterEach
   internal fun deleteAll() {
     deleteEntityHelper.deleteAll()
   }
+
+  fun getApplicationDto(responseSpec: ResponseSpec): ApplicationDto =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationDto::class.java)
+
+  fun getVisitDto(responseSpec: ResponseSpec): VisitDto =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
 
   fun getSessionTemplate(responseSpec: ResponseSpec): SessionTemplateDto =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
@@ -130,7 +160,7 @@ abstract class IntegrationTestBase {
   fun getCheckingMatchingTemplatesOnCreate(responseSpec: ResponseSpec): Array<String> =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<String>::class.java)
 
-  fun getErrorResponse(responseSpec: ResponseSpec) =
+  fun getErrorResponse(responseSpec: ResponseSpec): ErrorResponse =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ErrorResponse::class.java)
 
   internal fun setAuthorisation(
@@ -181,5 +211,83 @@ abstract class IntegrationTestBase {
         registry.add("hmpps.sqs.region") { lsContainer.region }
       }
     }
+  }
+
+  fun formatDateToString(dateTime: LocalDateTime): String {
+    return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
+  }
+
+  fun formatStartSlotDateTimeToString(sessionSlot: SessionSlot): String {
+    return sessionSlot.slotStart.truncatedTo(ChronoUnit.SECONDS).format(
+      DateTimeFormatter.ISO_DATE_TIME,
+    )
+  }
+
+  fun formatSlotEndDateTimeToString(sessionSlot: SessionSlot): String {
+    return sessionSlot.slotEnd.truncatedTo(ChronoUnit.SECONDS).format(
+      DateTimeFormatter.ISO_DATE_TIME,
+    )
+  }
+
+  fun formatDateToString(sessionSlot: SessionSlot): String {
+    return formatDateToString(sessionSlot.slotDate)
+  }
+
+  fun formatDateToString(localDate: LocalDate): String {
+    return localDate.format(DateTimeFormatter.ISO_DATE)
+  }
+
+  fun createApplicationAndVisit(
+    prisonerId: String? = "testPrisonerId",
+    sessionTemplate: SessionTemplate,
+    visitStatus: VisitStatus ? = VisitStatus.BOOKED,
+    slotDate: LocalDate? = null,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  ): Visit {
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction)
+    return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
+  }
+
+  fun createApplicationAndSave(
+    prisonerId: String? = "testPrisonerId",
+    sessionTemplate: SessionTemplate? = null,
+    prisonCode: String? = null,
+    slotDate: LocalDate? = null,
+    completed: Boolean,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  ): Application {
+    val applicationEntity = applicationEntityHelper.create(
+      prisonerId = prisonerId!!,
+      sessionTemplate = sessionTemplate ?: sessionTemplateDefault,
+      completed = completed,
+      prisonCode = prisonCode,
+      slotDate = slotDate ?: sessionTemplate?.validFromDate ?: sessionTemplateDefault.validFromDate,
+      visitRestriction = visitRestriction,
+    )
+    applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
+    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER HELP", details = "Some More Text")
+    applicationEntityHelper.save(applicationEntity)
+    return applicationEntity
+  }
+
+  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit {
+    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplateDefault, application = applicationEntity)
+  }
+
+  fun parseVisitsPageResponse(responseSpec: ResponseSpec): List<VisitDto> {
+    class Page() {
+      @JsonProperty("content")
+      lateinit var content: List<VisitDto>
+    }
+
+    val content = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Page::class.java)
+    return content.content
+  }
+
+  fun parseVisitsResponse(responseSpec: ResponseSpec): List<VisitDto> {
+    return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitDto>::class.java).toList()
   }
 }

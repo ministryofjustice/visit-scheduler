@@ -30,7 +30,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitCountsByDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
@@ -41,6 +40,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateComparator
@@ -58,6 +58,7 @@ class SessionTemplateService(
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
+  private val sessionSlotRepository: SessionSlotRepository,
   private val visitRepository: VisitRepository,
   private val prisonsService: PrisonsService,
   private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
@@ -453,8 +454,7 @@ class SessionTemplateService(
     val minimumCapacityTuple = this.sessionTemplateRepository.findSessionTemplateMinCapacityBy(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
     val sessionCapacity = sessionTemplateUtil.getMinimumSessionCapacity(minimumCapacityTuple)
 
-    val visitCountsByDate = this.sessionTemplateRepository.getVisitCountsByDate(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
-    val visitCountsList = getVisitCountsList(visitCountsByDate)
+    val visitCountsList = getVisitCountsList(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
 
     val visitCount = this.sessionTemplateRepository.getVisitCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
 
@@ -463,17 +463,20 @@ class SessionTemplateService(
     return SessionTemplateVisitStatsDto(sessionCapacity, visitCount, cancelCount, visitCountsList)
   }
 
-  fun getVisitCountsList(visitCountsByDate: List<VisitCountsByDate>): MutableList<SessionTemplateVisitCountsDto> {
+  fun getVisitCountsList(reference: String, fromDate: LocalDate, toDate: LocalDate?): MutableList<SessionTemplateVisitCountsDto> {
+    val visitCountsByDate = this.sessionTemplateRepository.getVisitCountsByDate(reference, fromDate, toDate)
+
     val visitCountsList = mutableListOf<SessionTemplateVisitCountsDto>()
     val visitCountsByDateMap = visitCountsByDate.groupBy { it.visitDate }
-    visitCountsByDateMap.entries.forEach { entry ->
+
+    visitCountsByDateMap.entries.forEach { dateGroup ->
       var openCount = 0
       var closedCount = 0
-      entry.value.forEach {
+      val cancelCount = sessionTemplateRepository.getCancelledVisitCountForDate(reference, dateGroup.key)
+      dateGroup.value.forEach {
         if (it.visitRestriction == VisitRestriction.OPEN) openCount = it.visitCount else closedCount = it.visitCount
       }
-
-      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = entry.key, SessionCapacityDto(closed = closedCount, open = openCount)))
+      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = dateGroup.key, SessionCapacityDto(closed = closedCount, open = openCount), cancelCount))
     }
 
     return visitCountsList
@@ -514,9 +517,12 @@ class SessionTemplateService(
     validateMoveSessionTemplateVisits(fromSessionTemplate, toSessionTemplate, fromDate)
 
     return if (fromSessionTemplate.sessionTimeSlot == toSessionTemplate.sessionTimeSlot) {
-      visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
+      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
     } else {
-      visitRepository.updateVisitSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, toSessionTemplate.sessionTimeSlot.startTime, toSessionTemplate.sessionTimeSlot.endTime)
+      val startSlot = fromDate.atTime(toSessionTemplate.sessionTimeSlot.startTime)
+      val endSlot = fromDate.atTime(toSessionTemplate.sessionTimeSlot.endTime)
+
+      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, startSlot, endSlot)
     }
   }
 
@@ -534,6 +540,10 @@ class SessionTemplateService(
 
   fun getSessionTimeSlotDto(sessionTemplateReference: String?): SessionTimeSlotDto? {
     return sessionTemplateRepository.getSessionTimeSlot(sessionTemplateReference)
+  }
+
+  fun getVisitRoom(sessionTemplateReference: String): String {
+    return sessionTemplateRepository.getVisitRoom(sessionTemplateReference)
   }
 }
 

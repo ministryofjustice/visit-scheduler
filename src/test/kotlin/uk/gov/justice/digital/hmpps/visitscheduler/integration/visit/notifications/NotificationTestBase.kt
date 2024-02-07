@@ -22,11 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificat
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 
-@Suppress("SpringJavaInjectionPointsAutowiringInspection")
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @ExtendWith(HmppsAuthExtension::class)
@@ -47,24 +43,23 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
   @Autowired
   lateinit var testEventAuditRepository: TestEventAuditRepository
 
-  fun assertBookedEvent(visits: List<Visit>, type: NotificationEventType) {
+  fun assertFlaggedVisitEvent(visits: List<Visit>, type: NotificationEventType) {
     visits.forEach { visit ->
       run {
         val eventAudit = eventAuditRepository.findLastBookedVisitEventByBookingReference(visit.reference)
-
         verify(telemetryClient).trackEvent(
           eq("flagged-visit-event"),
           org.mockito.kotlin.check {
             Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
             Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
             Assertions.assertThat(it["reviewType"]).isEqualTo(type.reviewType)
-            Assertions.assertThat(it["visitBooked"]).isEqualTo(formatDateTimeToString(eventAudit.createTimestamp))
+            Assertions.assertThat(it["visitBooked"]).isEqualTo(formatDateToString(eventAudit.createTimestamp))
             Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-            Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
+            Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.getLastApplication()?.reference)
             Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
             Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
             Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-            Assertions.assertThat(it["visitStart"]).isEqualTo(formatDateTimeToString(visit.visitStart))
+            Assertions.assertThat(it["visitStart"]).isEqualTo(formatStartSlotDateTimeToString(visit.sessionSlot))
             Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
             Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
           },
@@ -72,10 +67,6 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
         )
       }
     }
-  }
-
-  private fun formatDateTimeToString(dateTime: LocalDateTime): String {
-    return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
   }
 
   fun verifyNoInteractions(vararg mocks: Any) {

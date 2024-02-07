@@ -52,4 +52,8 @@ class PrisonsService(
   fun getSupportedPrison(prisonCode: String): String? {
     return prisonRepository.getSupportedPrison(prisonCode)
   }
+
+  fun getPrisonId(prisonCode: String): Long {
+    return prisonRepository.getPrisonId(prisonCode) ?: throw ValidationException(messageService.getMessage("validation.prison.notfound", prisonCode))
+  }
 }

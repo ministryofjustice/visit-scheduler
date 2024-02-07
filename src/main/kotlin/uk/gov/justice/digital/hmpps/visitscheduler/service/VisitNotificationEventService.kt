@@ -18,8 +18,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Release
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
@@ -72,14 +70,10 @@ class VisitNotificationEventService(
 
   @Transactional
   fun handleAddPrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
-    val visitsFilter = VisitFilter(
+    val affectedVisits = visitService.getBookedVisitsForDate(
       prisonCode = prisonDateBlockedDto.prisonCode,
-      visitStatusList = listOf(VisitStatus.BOOKED),
-      startDateTime = prisonDateBlockedDto.visitDate.atStartOfDay(),
-      endDateTime = prisonDateBlockedDto.visitDate.atTime(23, 59),
+      date = prisonDateBlockedDto.visitDate,
     )
-
-    val affectedVisits = visitService.findVisitsByFilterPageableDescending(visitsFilter).toList()
     processVisitsWithNotifications(affectedVisits, PRISON_VISITS_BLOCKED_FOR_DATE)
   }
 
@@ -87,8 +81,7 @@ class VisitNotificationEventService(
   fun handleRemovePrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
     val affectedNotifications = visitNotificationEventRepository.getEventsByVisitDate(
       prisonDateBlockedDto.prisonCode,
-      prisonDateBlockedDto.visitDate.atStartOfDay(),
-      prisonDateBlockedDto.visitDate.atTime(23, 59),
+      prisonDateBlockedDto.visitDate,
       PRISON_VISITS_BLOCKED_FOR_DATE,
     )
     deleteNotificationsThatAreNoLongerValid(affectedNotifications)
@@ -104,6 +97,7 @@ class VisitNotificationEventService(
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
       val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
+
       val startDateTime = (if (LocalDate.now() > notificationDto.validFromDate) LocalDate.now() else notificationDto.validFromDate).atStartOfDay()
       val endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode, startDateTime, endDateTime)
@@ -151,12 +145,16 @@ class VisitNotificationEventService(
    * Groups List into pairs e.g.
    *  A,B,C,D
    *  Becomes : AB, AC, AD, BC, BD, CD
+   *  Ignores : AA, BB ,CC
    */
   fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
     val result: MutableList<Pair<VisitDto, VisitDto>> = mutableListOf()
     affectedVisits.forEachIndexed { index, visitDto ->
       for (secondIndex in index + 1..<affectedVisits.size) {
-        result.add(Pair(visitDto, affectedVisits[secondIndex]))
+        val otherVisit = affectedVisits[secondIndex]
+        if (visitDto.prisonerId != otherVisit.prisonerId) {
+          result.add(Pair(visitDto, otherVisit))
+        }
       }
     }
     return result
@@ -232,7 +230,7 @@ class VisitNotificationEventService(
   }
 
   private fun getOverLappingVisits(notificationDto: NonAssociationChangedNotificationDto, prisonCode: String): List<VisitDto> {
-    val fromDate = LocalDate.now().atStartOfDay()
+    val fromDate = LocalDate.now()
 
     val primaryPrisonerVisits = visitService.getBookedVisits(notificationDto.prisonerNumber, prisonCode, fromDate)
     val nonAssociationPrisonerVisits = visitService.getBookedVisits(notificationDto.nonAssociationPrisonerNumber, prisonCode, fromDate)

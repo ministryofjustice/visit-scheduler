@@ -15,22 +15,23 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.Vis
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.NON_ASSOCIATION_EVENT
-import java.time.LocalDateTime
+import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH NON_ASSOCIATION_CLOSED")
 class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase() {
+  private lateinit var prisonCode: String
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   private val nonAssociationDomainEventType = NON_ASSOCIATION_CLOSED
 
   val primaryPrisonerId = "AA11BCC"
   val secondaryPrisonerId = "XX11YZZ"
-  val prisonCode = "ABC"
 
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+    prisonCode = sessionTemplateDefault.prison.code
     prisonOffenderSearchMockServer.stubGetPrisonerByString(primaryPrisonerId, prisonCode, IncentiveLevel.ENHANCED)
   }
 
@@ -60,17 +61,19 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -83,7 +86,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(0)
   }
 
@@ -95,17 +98,19 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPastPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().minusDays(1),
+      slotDate = LocalDate.now().minusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPastPrimary)
 
     val visitPastSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().minusDays(2),
+      slotDate = LocalDate.now().minusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPastSecondary)
 
@@ -118,7 +123,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
     with(visitNotifications[0]) {
       Assertions.assertThat(reference).isNotNull()
@@ -140,17 +145,19 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -163,7 +170,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
   }
 
@@ -175,17 +182,19 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -198,7 +207,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
   }
 
@@ -211,17 +220,19 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitPrimary = visitEntityHelper.create(
       prisonerId = primaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(1),
+      slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitPrimary)
 
     val visitSecondary = visitEntityHelper.create(
       prisonerId = secondaryPrisonerId,
-      visitStart = LocalDateTime.now().plusDays(2),
+      slotDate = LocalDate.now().plusDays(2),
       visitStatus = BOOKED,
       prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visitSecondary)
 
@@ -234,7 +245,7 @@ class ClosedNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
   }
 }

@@ -13,50 +13,37 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.UPDATED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.SUPERSEDED_CANCELLATION
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitsBySessionTemplateFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
-import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitSpecification
-import uk.gov.justice.digital.hmpps.visitscheduler.model.specification.VisitsBySessionTemplateSpecification
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CHANGED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT
+import java.lang.reflect.InvocationTargetException
+import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
@@ -65,253 +52,49 @@ import java.time.temporal.ChronoUnit
 class VisitService(
   private val visitRepository: VisitRepository,
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
-  private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClientService: TelemetryClientService,
-  private val sessionTemplateService: SessionTemplateService,
   private val eventAuditRepository: EventAuditRepository,
   private val snsService: SnsService,
-  private val prisonsService: PrisonsService,
-  @Value("\${task.expired-visit.validity-minutes:10}") private val expiredPeriodMinutes: Int,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
 
+  @Autowired
+  private lateinit var applicationService: ApplicationService
+
+  @Autowired
+  private lateinit var sessionTemplateService: SessionTemplateService
+
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val MAX_RECORDS = 10000
-    val EXPIRED_VISIT_STATUSES = listOf(RESERVED, CHANGING)
     const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
   }
 
-  fun changeBookedVisit(bookingReference: String, reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
-    val visit = visitRepository.findBookedVisit(bookingReference)
-      ?: throw VisitNotFoundException("Visit booking reference $bookingReference not found")
-
-    // check if the existing visit is in the past
-    validateVisitStartDate(visit, "changed")
-    val visitDto = createApplication(bookingReference, reserveVisitSlotDto)
-
-    saveEventAudit(
-      reserveVisitSlotDto.actionedBy,
-      visitDto,
-      if (visitDto.visitStatus == RESERVED) RESERVED_VISIT else CHANGING_VISIT,
-      NOT_KNOWN,
-    )
-
-    return visitDto
-  }
-
-  fun reserveVisitSlot(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
-    val visitDto = createApplication(bookingReference, reserveVisitSlotDto)
-
-    saveEventAudit(
-      reserveVisitSlotDto.actionedBy,
-      visitDto,
-      RESERVED_VISIT,
-      NOT_KNOWN,
-    )
-
-    return visitDto
-  }
-
-  private fun createApplication(bookingReference: String = "", reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
-    val sessionTemplate = sessionTemplateService.getSessionTemplates(reserveVisitSlotDto.sessionTemplateReference)
-
-    val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
-
-    val visitEntity = visitRepository.saveAndFlush(
-      Visit(
-        prisonerId = reserveVisitSlotDto.prisonerId,
-        prison = prison,
-        prisonId = prison.id,
-        visitRoom = sessionTemplate.visitRoom,
-        sessionTemplateReference = reserveVisitSlotDto.sessionTemplateReference,
-        visitType = sessionTemplate.visitType,
-        visitStatus = getStartingStatus(bookingReference, reserveVisitSlotDto, sessionTemplate),
-        visitRestriction = reserveVisitSlotDto.visitRestriction,
-        visitStart = reserveVisitSlotDto.startTimestamp,
-        visitEnd = reserveVisitSlotDto.endTimestamp,
-        _reference = bookingReference,
-      ),
-    )
-
-    reserveVisitSlotDto.visitContact?.let {
-      visitEntity.visitContact = createVisitContact(visitEntity, it.name, it.telephone)
-    }
-
-    reserveVisitSlotDto.visitors.forEach {
-      visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
-    }
-
-    reserveVisitSlotDto.visitorSupport?.let { supportList ->
-      supportList.forEach {
-        if (!supportTypeRepository.existsByName(it.type)) {
-          throw SupportNotFoundException("Invalid support ${it.type} not found")
-        }
-        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
-      }
-    }
-
-    val visitDto = visitDtoBuilder.build(visitEntity)
-
-    val eventName = if (bookingReference.isBlank()) VISIT_SLOT_RESERVED_EVENT else VISIT_CHANGED_EVENT
-    telemetryClientService.trackEvent(eventName, telemetryClientService.createVisitTrackEventFromVisitEntity(visitEntity, reserveVisitSlotDto.actionedBy))
-    return visitDto
-  }
-
-  private fun getStartingStatus(
-    bookingReference: String,
-    reserveVisitSlotDto: ReserveVisitSlotDto,
-    sessionTemplate: SessionTemplateDto,
-  ): VisitStatus {
-    val bookedVisit = this.visitRepository.findBookedVisit(bookingReference)
-
-    if (bookedVisit == null ||
-      bookedVisit.prison.code != sessionTemplate.prisonCode ||
-      bookedVisit.prisonerId != reserveVisitSlotDto.prisonerId ||
-      bookedVisit.visitRestriction != reserveVisitSlotDto.visitRestriction ||
-      bookedVisit.visitStart.compareTo(reserveVisitSlotDto.startTimestamp) != 0 ||
-      !bookedVisit.sessionTemplateReference.equals(reserveVisitSlotDto.sessionTemplateReference)
-    ) {
-      return RESERVED
-    }
-    return CHANGING
-  }
-
-  private fun getUpdatedStatus(visitEntity: Visit, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitStatus {
-    val bookedVisit = this.visitRepository.findBookedVisit(visitEntity.reference)
-
-    if (bookedVisit == null ||
-      (changeVisitSlotRequestDto.visitRestriction != null && bookedVisit.visitRestriction != changeVisitSlotRequestDto.visitRestriction) ||
-      (changeVisitSlotRequestDto.startTimestamp != null && bookedVisit.visitStart.compareTo(changeVisitSlotRequestDto.startTimestamp) != 0)
-    ) {
-      return RESERVED
-    }
-    return CHANGING
-  }
-
-  fun changeVisitSlot(applicationReference: String, changeVisitSlotRequestDto: ChangeVisitSlotRequestDto): VisitDto {
-    val visitEntity = getApplication(applicationReference)
-
-    changeVisitSlotRequestDto.visitRestriction?.let { visitRestriction -> visitEntity.visitRestriction = visitRestriction }
-    changeVisitSlotRequestDto.startTimestamp?.let {
-      visitEntity.visitStart = it
-    }
-    visitEntity.visitStatus = getUpdatedStatus(visitEntity, changeVisitSlotRequestDto)
-
-    changeVisitSlotRequestDto.endTimestamp?.let { visitEnd -> visitEntity.visitEnd = visitEnd }
-
-    changeVisitSlotRequestDto.visitContact?.let { visitContactUpdate ->
-      visitEntity.visitContact?.let { visitContact ->
-        visitContact.name = visitContactUpdate.name
-        visitContact.telephone = visitContactUpdate.telephone
-      } ?: run {
-        visitEntity.visitContact = createVisitContact(visitEntity, visitContactUpdate.name, visitContactUpdate.telephone)
-      }
-    }
-
-    changeVisitSlotRequestDto.visitors?.let { visitorsUpdate ->
-      visitEntity.visitors.clear()
-      visitRepository.saveAndFlush(visitEntity)
-      visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
-        visitEntity.visitors.add(createVisitVisitor(visitEntity, it.nomisPersonId, it.visitContact))
-      }
-    }
-
-    changeVisitSlotRequestDto.visitorSupport?.let { visitSupportUpdate ->
-      visitEntity.support.clear()
-      visitRepository.saveAndFlush(visitEntity)
-      visitSupportUpdate.forEach {
-        if (!supportTypeRepository.existsByName(it.type)) {
-          throw SupportNotFoundException("Invalid support ${it.type} not found")
-        }
-        visitEntity.support.add(createVisitSupport(visitEntity, it.type, it.text))
-      }
-    }
-
-    visitEntity.sessionTemplateReference = changeVisitSlotRequestDto.sessionTemplateReference
-
-    telemetryClientService.trackEvent(
-      VISIT_SLOT_CHANGED_EVENT,
-      mapOf(
-        "applicationReference" to visitEntity.applicationReference,
-        "reference" to visitEntity.reference,
-        "visitStatus" to visitEntity.visitStatus.name,
-      ),
-    )
-
-    return visitDtoBuilder.build(visitEntity)
-  }
-
-  @Transactional(readOnly = true)
-  fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
-    if (visitFilter.prisonCode == null && visitFilter.prisonerId == null) {
-      throw ValidationException("Must have prisonId or prisonerId")
-    }
-
-    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::visitStart.name).descending())
-    return visitRepository.findAll(VisitSpecification(visitFilter), page).map { visitDtoBuilder.build(it) }
-  }
-
-  @Transactional(readOnly = true)
-  fun findVisitsBySessionTemplateFilterPageableDescending(visitFilter: VisitsBySessionTemplateFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
-    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
-    return visitRepository.findAll(VisitsBySessionTemplateSpecification(visitFilter), page).map { visitDtoBuilder.build(it) }
-  }
-
-  @Transactional(readOnly = true)
-  fun findExpiredApplicationReferences(): List<String> {
-    val localDateTime = getReservedExpiredDateAndTime()
-    LOG.debug("Entered findExpiredApplicationReferences : $localDateTime")
-    return visitRepository.findExpiredApplicationReferences(localDateTime)
-  }
-
-  fun getReservedExpiredDateAndTime(): LocalDateTime {
-    return LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
-  }
-
-  fun deleteAllExpiredVisitsByApplicationReference(applicationReferences: List<String>) {
-    applicationReferences.forEach {
-      val applicationToBeDeleted = getApplication(it)
-      val deleted = visitRepository.deleteByApplicationReferenceAndVisitStatusIn(it, EXPIRED_VISIT_STATUSES)
-      if (deleted > 0) {
-        val bookEvent = telemetryClientService.createVisitTrackEventFromVisitEntity(applicationToBeDeleted)
-        telemetryClientService.trackEvent(VISIT_SLOT_RELEASED_EVENT, bookEvent)
-      }
-    }
-  }
-
   fun bookVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
-    if (visitRepository.isApplicationBooked(applicationReference)) {
+    if (applicationService.isApplicationCompleted(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
       // If already booked then just return object and do nothing more!
-      val bookedApplication = visitRepository.findBookedApplication(applicationReference)!!
-      return visitDtoBuilder.build(bookedApplication)
+      val visit = visitRepository.findVisitByApplicationReference(applicationReference)!!
+      return visitDtoBuilder.build(visit)
     }
 
-    val bookingReferenceFromApplication = visitRepository.getApplicationBookingReference(applicationReference)
-      ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
-    val hasExistingBooking = visitRepository.doesBookedVisitExist(bookingReferenceFromApplication)
-    if (hasExistingBooking) {
-      // check if the existing visit is in the past
-      validateVisitStartDate(visitRepository.findBookedVisit(bookingReferenceFromApplication)!!, "changed")
+    val hasExistingBooking = visitRepository.doesBookedVisitExist(applicationReference)
+    val application = applicationService.getApplicationEntity(applicationReference)
+    val booking = createBooking(application, hasExistingBooking)
+    application.completed = true
+
+    val bookedVisitDto = visitDtoBuilder.build(booking)
+
+    try {
+      eventAuditRepository.updateVisitApplication(application.reference, booking.reference, bookingRequestDto.applicationMethodType)
+    } catch (e: InvocationTargetException) {
+      val message = "Audit log does not exists for $application.reference"
+      LOG.error(message)
+      throw ItemNotFoundException(message, e)
     }
-
-    val visitToBook = getApplication(applicationReference)
-
-    visitRepository.findBookedVisit(visitToBook.reference)?.let { existingBooking ->
-      existingBooking.visitStatus = CANCELLED
-      existingBooking.outcomeStatus = SUPERSEDED_CANCELLATION
-      visitRepository.saveAndFlush(existingBooking)
-    }
-
-    visitToBook.visitStatus = BOOKED
-
-    val bookedVisitDto = visitDtoBuilder.build(visitToBook)
-
-    eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookingRequestDto.applicationMethodType)
 
     saveEventAudit(
       bookingRequestDto.actionedBy,
@@ -320,9 +103,88 @@ class VisitService(
       bookingRequestDto.applicationMethodType,
     )
 
-    processBookingEvents(visitToBook, bookedVisitDto, bookingRequestDto, hasExistingBooking)
+    processBookingEvents(booking, bookedVisitDto, bookingRequestDto, hasExistingBooking)
 
     return bookedVisitDto
+  }
+
+  fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
+    val existingBooking = if (hasExistingBooking) visitRepository.findVisitByApplicationReference(application.reference) else null
+    if (hasExistingBooking) {
+      validateVisitStartDate(existingBooking!!, "changed")
+    }
+
+    val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference!!)
+
+    val notSavedBooking = existingBooking?.let {
+      // Update existing booking
+      existingBooking.sessionSlotId = application.sessionSlotId
+      existingBooking.sessionSlot = application.sessionSlot
+      existingBooking.visitType = application.visitType
+      existingBooking.visitRestriction = application.restriction
+      existingBooking.visitRoom = visitRoom
+      existingBooking.visitStatus = BOOKED
+      existingBooking
+    } ?: run {
+      // Create new booking
+      Visit(
+        prisonId = application.prisonId,
+        prison = application.prison,
+        prisonerId = application.prisonerId,
+        sessionSlotId = application.sessionSlotId,
+        sessionSlot = application.sessionSlot,
+        visitType = application.visitType,
+        visitRestriction = application.restriction,
+        visitRoom = visitRoom,
+        visitStatus = BOOKED,
+      )
+    }
+
+    val booking = visitRepository.saveAndFlush(notSavedBooking)
+
+    if (hasNotBeenAddedToBooking(booking, application)) {
+      booking.addApplication(application)
+    }
+
+    application.visitContact?.let {
+      booking.visitContact?.let { visitContact ->
+        visitContact.name = it.name
+        visitContact.telephone = it.telephone
+      } ?: run {
+        booking.visitContact = VisitContact(
+          visit = booking,
+          visitId = booking.id,
+          name = it.name,
+          telephone = it.telephone,
+        )
+      }
+    }
+
+    application.support.let {
+      booking.support.clear()
+      visitRepository.saveAndFlush(booking)
+      application.support.map { applicationSupport ->
+        with(applicationSupport) {
+          booking.support.add(VisitSupport(visit = booking, visitId = booking.id, type = type, text = text))
+        }
+      }
+    }
+
+    application.visitors.let {
+      booking.visitors.clear()
+      visitRepository.saveAndFlush(booking)
+      it.map { applicationVisitor ->
+        with(applicationVisitor) {
+          booking.visitors.add(VisitVisitor(visit = booking, visitId = booking.id, nomisPersonId = nomisPersonId, visitContact = contact))
+        }
+      }
+    }
+
+    return visitRepository.saveAndFlush(booking)
+  }
+
+  private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
+    return if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
@@ -356,10 +218,48 @@ class VisitService(
     return visitDto
   }
 
-  private fun getApplication(applicationReference: String): Visit {
-    val visit = visitRepository.findApplication(applicationReference)
-      ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
-    return visit
+  @Transactional(readOnly = true)
+  fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
+    if (visitFilter.prisonCode == null && visitFilter.prisonerId == null) {
+      throw ValidationException("Must have prisonId or prisonerId")
+    }
+
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS)
+    val results = findVisitsOrderByDateAndTime(visitFilter, pageable = page).map { visitDtoBuilder.build(it) }
+    return results
+  }
+
+  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable): Page<Visit> {
+    return visitRepository.findVisitsOrderByDateAndTime(
+      prisonerId = visitFilter.prisonerId,
+      prisonCode = visitFilter.prisonCode,
+      visitStatusList = visitFilter.visitStatusList.ifEmpty { null },
+      visitStartDate = visitFilter.visitStartDate,
+      visitEndDate = visitFilter.visitEndDate,
+      pageable = pageable,
+    )
+  }
+
+  @Transactional(readOnly = true)
+  fun findVisitsBySessionTemplateFilterPageableDescending(
+    sessionTemplateReference: String,
+    fromDate: LocalDate,
+    toDate: LocalDate,
+    visitStatusList: List<VisitStatus>,
+    visitRestrictions: List<VisitRestriction>?,
+    pageablePage: Int? = null,
+    pageableSize: Int? = null,
+  ): Page<VisitDto> {
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
+
+    return visitRepository.findVisitsOrderByCreateTimestamp(
+      sessionTemplateReference = sessionTemplateReference,
+      fromDate = fromDate,
+      toDate = toDate,
+      visitStatusList = if (visitStatusList.isNotEmpty()) visitStatusList else null,
+      visitRestrictions = visitRestrictions,
+      page,
+    ).map { visitDtoBuilder.build(it) }
   }
 
   private fun saveEventAudit(
@@ -430,15 +330,20 @@ class VisitService(
     snsService.sendVisitCancelledEvent(visitDto)
   }
 
-  fun getBookedVisits(prisonerNumber: String, prisonCode: String?, startDateTime: LocalDateTime, endDateTime: LocalDateTime? = null): List<VisitDto> {
-    val visitFilter = VisitFilter(
+  fun getBookedVisitsForDate(prisonCode: String, date: LocalDate): List<VisitDto> {
+    return visitRepository.findBookedVisitsForDate(prisonCode, date).map { visitDtoBuilder.build(it) }
+  }
+
+  fun getBookedVisits(
+    prisonerNumber: String,
+    prisonCode: String,
+    visitDate: LocalDate,
+  ): List<VisitDto> {
+    return visitRepository.findBookedVisits(
       prisonerId = prisonerNumber,
       prisonCode = prisonCode,
-      startDateTime = startDateTime,
-      endDateTime = endDateTime,
-      visitStatusList = listOf(BOOKED),
-    )
-    return visitRepository.findAll(VisitSpecification(visitFilter)).map { visitDtoBuilder.build(it) }
+      visitDate = visitDate,
+    ).map { visitDtoBuilder.build(it) }
   }
 
   @Transactional(readOnly = true)
@@ -464,39 +369,12 @@ class VisitService(
     }
   }
 
-  private fun createVisitContact(visit: Visit, name: String, telephone: String): VisitContact {
-    return VisitContact(
-      visitId = visit.id,
-      name = name,
-      telephone = telephone,
-      visit = visit,
-    )
-  }
-
-  private fun createVisitVisitor(visit: Visit, personId: Long, visitContact: Boolean?): VisitVisitor {
-    return VisitVisitor(
-      nomisPersonId = personId,
-      visitId = visit.id,
-      visit = visit,
-      visitContact = visitContact,
-    )
-  }
-
-  private fun createVisitSupport(visit: Visit, type: String, text: String?): VisitSupport {
-    return VisitSupport(
-      type = type,
-      visitId = visit.id,
-      text = text,
-      visit = visit,
-    )
-  }
-
   private fun validateVisitStartDate(
     visit: Visit,
     action: String,
     allowedVisitStartDate: LocalDateTime = LocalDateTime.now(),
   ) {
-    if (visit.visitStart.isBefore(allowedVisitStartDate)) {
+    if (visit.sessionSlot.slotStart.isBefore(allowedVisitStartDate)) {
       throw ExpiredVisitAmendException(
         AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
         ExpiredVisitAmendException("trying to change / cancel an expired visit"),
@@ -514,7 +392,16 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
-  fun getFutureVisitsBy(prisonerNumber: String, prisonCode: String?, startDateTime: LocalDateTime = LocalDateTime.now(), endDateTime: LocalDateTime ? = null): List<VisitDto> {
+  fun getFutureVisitsBy(
+    prisonerNumber: String,
+    prisonCode: String ? = null,
+    startDateTime: LocalDateTime = LocalDateTime.now(),
+    endDateTime: LocalDateTime ? = null,
+  ): List<VisitDto> {
     return this.visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
+  }
+
+  fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
+    return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 }

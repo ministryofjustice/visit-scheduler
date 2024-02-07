@@ -13,6 +13,8 @@ interface TestSessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   @Modifying
   fun deleteByReference(reference: String): Int
 
+  fun findByReference(reference: String): SessionTemplate
+
   @Query(
     "SELECT CASE WHEN (COUNT(st) > 0) THEN TRUE ELSE FALSE END FROM SessionTemplate st WHERE st.id = :id ",
   )

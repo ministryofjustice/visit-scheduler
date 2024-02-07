@@ -15,8 +15,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CHANGING
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
@@ -35,11 +33,11 @@ class GetSessionsTest : IntegrationTestBase() {
 
   private val prisonerId = "A0000001"
 
-  private val prisonCode = "MDI"
+  private val prisonCode = "STC"
 
   @BeforeEach
   internal fun setUpTests() {
-    prison = prisonEntityHelper.create()
+    prison = prisonEntityHelper.create(prisonCode = prisonCode)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
   }
 
@@ -54,6 +52,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
     )
 
     // When
@@ -140,6 +139,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
     )
 
     // active session 2
@@ -149,6 +149,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("11:00"),
       endTime = LocalTime.parse("12:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
     )
 
     // active session 3
@@ -158,6 +159,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("12:00"),
       endTime = LocalTime.parse("13:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
     )
 
     // inactive session
@@ -168,6 +170,7 @@ class GetSessionsTest : IntegrationTestBase() {
       endTime = LocalTime.parse("14:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       isActive = false,
+      prisonCode = prisonCode,
     )
 
     // When
@@ -185,7 +188,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `visit sessions are returned for enhanced prisoner when prison has enhanced schedule`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
@@ -224,7 +226,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `non enhanced visit sessions are returned for a prisoner with any incentive level`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD)
@@ -258,7 +259,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `non enhanced visit sessions are returned for a prisoner with null incentive level`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, null)
@@ -292,7 +292,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `no visit sessions are returned for a standard incentive level prisoner for a schedule that is enhanced`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
 
@@ -330,7 +329,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `no visit sessions are returned for a null incentive level prisoner for a schedule that is enhanced`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
 
@@ -368,7 +366,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `when a session template is allowed for a category group then session template is returned for prisoner category in same group`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val categoryA = "Category A"
     val categoryAList = listOf(
@@ -410,7 +407,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `when a session template is allowed for a category group then session template is not returned for prisoner category not in same category group`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val categoryA = "Category A"
     val categoryAList = listOf(
@@ -452,7 +448,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `when a session template does not have a category group then session template is returned for all prisoners`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD, category = PrisonerCategoryType.A_EXCEPTIONAL.code)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
@@ -483,7 +478,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `when a session template is allowed for multiple category groups then session template is returned for prisoner category in any group`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val categoryAHighs = "Category A Highs"
     val categoryANonHighs = "Category A Non Highs"
@@ -532,7 +526,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `when a session template is allowed for multiple category groups then session template is not returned if prisoner category is not in any group`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val categoryAHighs = "Category A Highs"
     val categoryANonHighs = "Category A Non Highs"
@@ -589,6 +582,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitRoom = "Alternate 1",
       dayOfWeek = SUNDAY,
       weeklyFrequency = 2,
+      prisonCode = prisonCode,
     )
 
     val startFromWeek2 = LocalDate.now().with(TemporalAdjusters.next(MONDAY)).minusWeeks(2)
@@ -598,6 +592,7 @@ class GetSessionsTest : IntegrationTestBase() {
       visitRoom = "Alternate 2",
       dayOfWeek = SUNDAY,
       weeklyFrequency = 2,
+      prisonCode = prisonCode,
     )
 
     // When
@@ -727,6 +722,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
     )
 
     val dayAfterNextSessionTemplate = sessionTemplateEntityHelper.create(
@@ -734,6 +730,7 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = LocalTime.parse("10:30"),
       endTime = LocalTime.parse("11:30"),
       dayOfWeek = dayAfterNextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
     )
 
     // When
@@ -767,6 +764,7 @@ class GetSessionsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
+      prisonCode = prisonCode,
     )
 
     // When
@@ -890,7 +888,7 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions include reserved and booked open visit count`() {
+  fun `visit sessions include reserved applications and booked open visit count`() {
     // Given
     val nextAllowedDay = this.getNextAllowedDay()
     val dateTime = nextAllowedDay.atTime(9, 0)
@@ -903,42 +901,60 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = startTime,
       endTime = endTime.toLocalTime(),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
     )
 
-    this.visitEntityHelper.create(
+    this.applicationEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = endTime,
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
-      visitStatus = RESERVED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
+      completed = false,
+      reservedSlot = true,
+    )
+
+    // This should not be included since this application is not reserved
+    this.applicationEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
+      visitType = SOCIAL,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate,
+      completed = false,
+      reservedSlot = false,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = endTime,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = endTime,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     // When
@@ -949,7 +965,7 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions exclude visits with changing status in visit count`() {
+  fun `visit sessions exclude applications that are changing in visit count`() {
     // Given
     val nextAllowedDay = this.getNextAllowedDay()
     val dateTime = nextAllowedDay.atTime(9, 0)
@@ -962,30 +978,31 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = startTime,
       endTime = endTime.toLocalTime(),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
     )
 
-    this.visitEntityHelper.create(
+    this.applicationEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = endTime,
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
-      visitStatus = CHANGING,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
+      reservedSlot = false,
     )
 
-    this.visitEntityHelper.create(
+    this.applicationEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime.plusWeeks(1),
-      visitEnd = endTime,
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
-      visitStatus = CHANGING,
       visitRestriction = CLOSED,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
+      reservedSlot = false,
     )
 
     // When
@@ -996,7 +1013,7 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions include reserved and booked closed visit count`() {
+  fun `visit sessions include closed reserved application and closed booked visits count`() {
     // Given
     val nextAllowedDay = this.getNextAllowedDay()
     val dateTime = nextAllowedDay.atTime(9, 0)
@@ -1009,41 +1026,75 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = startTime,
       endTime = endTime.toLocalTime(),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+    )
+
+    // not included ot not reserved
+    this.applicationEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
+      visitType = SOCIAL,
+      visitRestriction = CLOSED,
+      sessionTemplate = sessionTemplate,
+      completed = true,
+      reservedSlot = false,
+    )
+
+    // not included it is complete therefore a visit exists
+    this.applicationEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
+      visitType = SOCIAL,
+      visitRestriction = CLOSED,
+      sessionTemplate = sessionTemplate,
+      completed = true,
+      reservedSlot = true,
+    )
+
+    this.applicationEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
+      visitType = SOCIAL,
+      visitRestriction = CLOSED,
+      sessionTemplate = sessionTemplate,
+      completed = false,
+      reservedSlot = true,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = endTime,
-      visitType = SOCIAL,
-      visitStatus = RESERVED,
-      visitRestriction = CLOSED,
-      sessionTemplateReference = sessionTemplate.reference,
-    )
-    this.visitEntityHelper.create(
-      prisonerId = "AF12345G",
-      prisonCode = "MDI",
-      visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = endTime,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = CLOSED,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
+    // not included as it's a canceled visit
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = endTime,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
       visitRestriction = CLOSED,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     // When
@@ -1067,83 +1118,140 @@ class GetSessionsTest : IntegrationTestBase() {
       startTime = startTime,
       endTime = endTime.toLocalTime(),
       dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime.minusHours(1),
-      visitEnd = endTime,
+      slotDate = dateTime.toLocalDate().minusDays(1),
+      visitStart = dateTime.toLocalTime().minusHours(1),
+      visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
+    )
+
+    this.applicationEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
+      visitType = SOCIAL,
+      visitRestriction = CLOSED,
+      sessionTemplate = sessionTemplate,
+      completed = false,
+      reservedSlot = true,
+    )
+
+    this.applicationEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
+      visitType = SOCIAL,
+      visitRestriction = CLOSED,
+      sessionTemplate = sessionTemplate,
+      completed = true,
+      reservedSlot = true,
+    )
+
+    this.applicationEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = prisonCode,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
+      visitType = SOCIAL,
+      visitRestriction = CLOSED,
+      sessionTemplate = sessionTemplate,
+      completed = true,
+      reservedSlot = false,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = dateTime.plusMinutes(30),
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime().minusHours(1),
+      visitEnd = endTime.toLocalTime(),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime.plusMinutes(30),
-      visitEnd = dateTime.plusHours(1),
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime().minusHours(1),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime.plusHours(1),
-      visitEnd = dateTime.plusHours(2),
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime().plusMinutes(30),
+      visitEnd = endTime.toLocalTime().plusHours(1),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
-      prisonCode = "MDI",
+      prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = dateTime,
-      visitEnd = endTime,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime().plusMinutes(1),
+      visitEnd = endTime.toLocalTime().plusHours(2),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference + "other",
+      sessionTemplate = sessionTemplate,
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      prisonCode = prisonCode,
+      visitRoom = sessionTemplate.visitRoom,
+      slotDate = dateTime.toLocalDate(),
+      visitStart = dateTime.toLocalTime(),
+      visitEnd = endTime.toLocalTime(),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate,
     )
 
     // When
     val responseSpec = callGetSessions(prisonCode, prisonerId)
 
     // Then
-    assertBookCounts(responseSpec, openCount = 4, closeCount = 0)
+    assertBookCounts(responseSpec, openCount = 5, closeCount = 1)
   }
 
   @Test
   fun `visit sessions are returned for a prisoner without any non-associations`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val validFromDate = this.getNextAllowedDay()
 
-    sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
+    sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
@@ -1161,11 +1269,10 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association without a booking`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
+    sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerId,
@@ -1187,22 +1294,22 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `visit sessions are returned for a prisoner with a future non-association with a booked visit`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
     this.visitEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = validFromDate.atTime(9, 0),
-      visitEnd = validFromDate.atTime(9, 30),
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
@@ -1233,24 +1340,52 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `visit sessions are returned for a prisoner with a future non-association with a reserved visit`() {
+  fun `visit sessions are returned prisoner with an existing application and booking that has a non-association prisoner with no bookings`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
-    val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
+    val validFromDate = LocalDate.now()
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
+    val nextBooking = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate)
+
+    this.applicationEntityHelper.create(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      slotDate = nextBooking,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate,
+      reservedSlot = true,
+      completed = false,
+    )
+
+    this.applicationEntityHelper.create(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      slotDate = nextBooking.plusWeeks(1),
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate,
+      reservedSlot = true,
+      completed = false,
+    )
 
     this.visitEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = validFromDate.atTime(9, 0),
-      visitEnd = validFromDate.atTime(9, 30),
+      slotDate = nextBooking.plusWeeks(2),
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
       visitType = SOCIAL,
-      visitStatus = RESERVED,
+      visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
@@ -1275,30 +1410,32 @@ class GetSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionDtos).hasSize(4)
     assertThat(visitSessionDtos[0].sessionConflicts).hasSize(1)
     assertThat(visitSessionDtos[0].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKED)
-    assertThat(visitSessionDtos[1].sessionConflicts).isEmpty()
-    assertThat(visitSessionDtos[2].sessionConflicts).isEmpty()
+    assertThat(visitSessionDtos[1].sessionConflicts).hasSize(1)
+    assertThat(visitSessionDtos[1].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKED)
+    assertThat(visitSessionDtos[2].sessionConflicts).hasSize(1)
+    assertThat(visitSessionDtos[2].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKED)
     assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
   }
 
   @Test
   fun `visit sessions are returned for a prisoner with an expired non-association with a booking`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
     this.visitEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = validFromDate.atTime(9, 0),
-      visitEnd = validFromDate.atTime(9, 30),
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
@@ -1321,22 +1458,22 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = validFromDate.atTime(9, 0),
-      visitEnd = validFromDate.atTime(9, 30),
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
@@ -1359,23 +1496,23 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking CANCELLED`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
 
-    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = validFromDate.atTime(9, 0),
-      visitEnd = validFromDate.atTime(9, 30),
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
       visitType = SOCIAL,
       visitStatus = CANCELLED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
@@ -1398,22 +1535,22 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking in the past`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
+    val validFromDate = this.getNextAllowedDay().minusMonths(6)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = validFromDate.minusMonths(6).atTime(9, 0),
-      visitEnd = validFromDate.minusMonths(6).atTime(9, 30),
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
@@ -1436,22 +1573,22 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `visit sessions are returned for a prisoner with a valid non-association with a booking in the future`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
     val validFromDate = this.getNextAllowedDay()
-    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek)
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, validToDate = null, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
     this.visitEntityHelper.create(
       prisonerId = associationPrisonerId,
       prisonCode = prisonCode,
       visitRoom = sessionTemplate.visitRoom,
-      visitStart = validFromDate.plusMonths(6).atTime(9, 0),
-      visitEnd = validFromDate.plusMonths(6).atTime(9, 30),
+      slotDate = validFromDate.plusMonths(3),
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
       visitType = SOCIAL,
       visitStatus = BOOKED,
       visitRestriction = OPEN,
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prison.code)
@@ -1472,7 +1609,6 @@ class GetSessionsTest : IntegrationTestBase() {
 
   @Test
   fun `when get visit session is called with prison id different to prisoners establishment code bad request error is returned`() {
-    val prisonCode = "MDI"
     val incorrectPrisonCode = "ABC"
     val prisonerId = "A1234AA"
 
@@ -1489,13 +1625,12 @@ class GetSessionsTest : IntegrationTestBase() {
 
     val returnResult = responseSpec.expectStatus().isBadRequest.expectBody()
     val errorResponse = objectMapper.readValue(returnResult.returnResult().responseBody, ErrorResponse::class.java)
-    assertThat(errorResponse.developerMessage).isEqualTo("Prisoner with ID - $prisonerId is not in prison - $incorrectPrisonCode but MDI")
+    assertThat(errorResponse.developerMessage).isEqualTo("Prisoner with ID - $prisonerId is not in prison - $incorrectPrisonCode but STC")
   }
 
   @Test
   fun `when get visit session and prisoner details can not be found bad request error is returned`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
@@ -1532,7 +1667,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `when get visit session and prisoner offender search details can not be found an appropriate error is returned`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
@@ -1569,7 +1703,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `when get visit session and prisoner has 404 error on non association no errors are returned`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
@@ -1604,7 +1737,6 @@ class GetSessionsTest : IntegrationTestBase() {
   @Test
   fun `when get visit session and prisoner has non 404 error on non association errors are returned`() {
     // Given
-    val prisonCode = "MDI"
     val prisonerId = "A1234AA"
     val enhancedIncentiveLevelGroup = "ENH Incentive Level Group"
     val incentiveLevelList = listOf(
@@ -1637,7 +1769,7 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   private fun callGetSessions(
-    prisonCode: String? = "MDI",
+    prisonCode: String? = "SPC",
     prisonerId: String,
     policyNoticeDaysMin: Int,
     policyNoticeDaysMax: Int,

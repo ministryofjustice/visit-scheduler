@@ -11,12 +11,40 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 @Repository
 interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
 
-  fun findAllByReference(reference: String): List<Visit>
+  fun findByReference(reference: String): Visit
 
-  fun findByApplicationReference(reference: String): Visit?
+  @Query(
+    "SELECT v.*  FROM visit v" +
+      "  JOIN application a on a.visit_id = v.id" +
+      "  WHERE a.reference = :applicationReference",
+    nativeQuery = true,
+  )
+  fun findByApplicationReference(applicationReference: String): Visit?
 
   @Modifying
-  fun deleteByApplicationReference(applicationReference: String): Long
+  @Query(
+    "DELETE FROM visit WHERE id IN (SELECT v.id  FROM visit v" +
+      "  JOIN application a on a.visit_id = v.id" +
+      "  WHERE a.reference = :applicationReference)",
+    nativeQuery = true,
+  )
+  fun deleteByApplicationReferenceNative(applicationReference: String): Int
+
+  @Modifying
+  fun deleteByReference(reference: String): Long
+
+  @Modifying
+  @Query(
+    "DELETE FROM visit v " +
+      "  WHERE v.reference = :reference",
+    nativeQuery = true,
+  )
+  fun deleteByReferenceNative(reference: String): Int
+
+  @Query(
+    "SELECT CASE WHEN (COUNT(v) = 1) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.reference = :reference ",
+  )
+  fun hasOneVisit(@Param("reference") reference: String): Boolean
 
   @Query(
     "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v WHERE v.id = :visitId ",

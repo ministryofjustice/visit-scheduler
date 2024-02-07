@@ -11,24 +11,24 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfigura
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.service.ApplicationService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
-import java.time.LocalDateTime
-import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 
 @Component
 class VisitTask(
   private val visitService: VisitService,
+  private val applicationService: ApplicationService,
   private val sessionService: SessionService,
   private val prisonsService: PrisonsService,
   private val telemetryClient: TelemetryClient,
   private val expiredVisitTaskConfiguration: ExpiredVisitTaskConfiguration,
   private val flagVisitTaskConfiguration: FlagVisitTaskConfiguration,
+  private val telemetryClientService: TelemetryClientService,
 ) {
 
   companion object {
@@ -47,10 +47,10 @@ class VisitTask(
     }
 
     log.debug("Entered deleteExpiredReservations")
-    val expiredApplicationReferences = visitService.findExpiredApplicationReferences()
+    val expiredApplicationReferences = applicationService.findExpiredApplicationReferences()
     log.debug("Expired visits: ${expiredApplicationReferences.count()}")
     if (expiredApplicationReferences.isNotEmpty()) {
-      visitService.deleteAllExpiredVisitsByApplicationReference(expiredApplicationReferences)
+      applicationService.deleteAllExpiredApplications(expiredApplicationReferences)
     }
   }
 
@@ -68,15 +68,13 @@ class VisitTask(
     log.debug("Started flagVisits task.")
     prisonsService.getSupportedPrisons().forEach { prisonCode ->
       for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
-        val visitDate = LocalDateTime.now().plusDays(i.toLong())
+        val visitDate = LocalDate.now().plusDays(i.toLong())
 
-        val visitFilter = VisitFilter(
+        val visits = visitService.getBookedVisitsForDate(
           prisonCode = prisonCode,
-          visitStatusList = listOf(VisitStatus.BOOKED),
-          startDateTime = visitDate.with(LocalTime.MIN),
-          endDateTime = visitDate.with(LocalTime.MAX),
+          visitDate,
         )
-        val visits = visitService.findVisitsByFilterPageableDescending(visitFilter)
+
         val retryVisits = mutableListOf<VisitDto>()
 
         visits.forEach {
@@ -161,8 +159,8 @@ class VisitTask(
       "prisonId" to visit.prisonCode,
       "visitType" to visit.visitType.name,
       "visitRestriction" to visit.visitRestriction.name,
-      "visitStart" to visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
-      "visitEnd" to visit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
+      "visitStart" to telemetryClientService.formatDateTimeToString(visit.startTimestamp),
+      "visitEnd" to telemetryClientService.formatDateTimeToString(visit.endTimestamp),
       "visitStatus" to visit.visitStatus.name,
     )
 
