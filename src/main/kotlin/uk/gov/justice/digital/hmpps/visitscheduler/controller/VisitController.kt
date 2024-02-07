@@ -388,16 +388,16 @@ class VisitController(
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_CONTROLLER_SEARCH_FUTURE_VISITS_PATH)
   @Operation(
-    summary = "Get future visits for a prisoner",
+    summary = "Get future (booked and cancelled) visits for a prisoner",
     description = "Get future visits for given prisoner number",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Returned future visits for a prisoner",
+        description = "Returned future visits (booked and cancelled) for a prisoner",
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to get future visits for a prisoner",
+        description = "Incorrect request to get future (booked and cancelled) visits for a prisoner",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
@@ -407,7 +407,7 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to get future visits for a prisoner",
+        description = "Incorrect permissions to get future (booked and cancelled) visits for a prisoner",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
