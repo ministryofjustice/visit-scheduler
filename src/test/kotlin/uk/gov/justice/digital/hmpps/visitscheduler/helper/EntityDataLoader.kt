@@ -508,6 +508,7 @@ class DeleteEntityHelper(
 
 ) {
 
+  @Transactional
   fun deleteAll() {
     println("Delete all")
     sessionRepository.deleteAll()

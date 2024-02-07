@@ -16,6 +16,7 @@ import org.springframework.test.context.DynamicPropertyRegistry
 import org.springframework.test.context.DynamicPropertySource
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
@@ -126,6 +127,7 @@ abstract class IntegrationTestBase {
   }
 
   @AfterEach
+  @Transactional
   internal fun deleteAll() {
     deleteEntityHelper.deleteAll()
   }
