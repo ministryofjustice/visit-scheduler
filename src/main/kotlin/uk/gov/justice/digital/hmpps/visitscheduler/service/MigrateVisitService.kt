@@ -155,7 +155,7 @@ class MigrateVisitService(
         sessionSlotId = sessionSlot.id,
         visitType = migrateVisitRequest.visitType,
         restriction = migrateVisitRequest.visitRestriction,
-        reservedSlot = false,
+        reservedSlot = true,
         completed = true,
         createdBy = actionedBy,
       ),
