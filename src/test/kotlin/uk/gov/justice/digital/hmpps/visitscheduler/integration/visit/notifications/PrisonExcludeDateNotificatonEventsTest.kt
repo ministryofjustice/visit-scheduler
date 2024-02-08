@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAddPrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callRemovePrisonExcludeDate
@@ -35,6 +36,9 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
 
   @SpyBean
   lateinit var visitNotificationEventServiceSpy: VisitNotificationEventService
+
+  @Autowired
+  lateinit var sessionSlotEntityHelper: SessionSlotEntityHelper
 
   @Autowired
   lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
@@ -107,31 +111,28 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when excluded date visit is updated then visit flag is removed`() {
+  fun `when excluded date visit is updated to different slot then visit flag is removed`() {
     // Given
-    val prisonXYZ = prisonEntityHelper.create("XYZ")
     val excludeDate = LocalDate.now().plusDays(10)
-    val sessionTemplateXYZ = sessionTemplateEntityHelper.create(prison = prisonXYZ, startTime = LocalTime.of(10, 0), endTime = LocalTime.of(11, 0))
+    val prison = sessionTemplateDefault.prison
 
     // existing visit for excludeDate in same prison
-    // existing visit for excludeDate in same prison
-    val application = createApplicationAndSave(sessionTemplate = sessionTemplateXYZ, prisonCode = prisonXYZ.code, completed = true, slotDate = excludeDate)
-    val bookedVisit = createVisitAndSave(VisitStatus.BOOKED, application, sessionTemplateXYZ)
-    // When
+    val visit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, slotDate = excludeDate)
+
+    val newSessionSlot = sessionSlotEntityHelper.create(sessionTemplateDefault.reference, prison.id, LocalDate.now().plusDays(5), sessionTemplateDefault.startTime, sessionTemplateDefault.endTime)
+
     // call add exclude dates first
-    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
-
-    // Then
+    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
     responseSpec.expectStatus().isOk
-    verify(visitNotificationEventServiceSpy, times(1)).handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
-    var visitNotifications = testVisitNotificationEventRepository.findAll()
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisit.reference)
+
+    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit.reference)
 
     // create a reserveVisitSlotDto with start and end timestamp different from current visit
     val reserveVisitSlotDto = CreateApplicationDto(
-      prisonerId = bookedVisit.prisonerId,
-      sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!,
-      sessionDate = excludeDate.plusDays(1),
+      prisonerId = visit.prisonerId,
+      sessionTemplateReference = newSessionSlot.sessionTemplateReference!!,
+      sessionDate = newSessionSlot.slotDate,
       applicationRestriction = CreateApplicationRestriction.OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
@@ -139,7 +140,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
       actionedBy = "John Smith",
     )
 
-    responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, bookedVisit.reference)
+    responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, visit.reference)
 
     val returnResult = responseSpec.expectStatus().isCreated
       .expectBody()
@@ -147,11 +148,14 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
 
     val updatedApplication = objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
 
+    // When
     callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updatedApplication.reference)
+
+    // Then
+    verify(visitNotificationEventServiceSpy, times(1)).handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prison.code, excludeDate))
     responseSpec.expectStatus().isCreated
 
-    visitNotifications = testVisitNotificationEventRepository.findAll()
-    Assertions.assertThat(visitNotifications).hasSize(0)
+    Assertions.assertThat(testVisitNotificationEventRepository.findAll()).isEmpty()
   }
 
   @Test

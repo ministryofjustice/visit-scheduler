@@ -110,11 +110,9 @@ class VisitService(
 
   fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
     val existingBooking = if (hasExistingBooking) visitRepository.findVisitByApplicationReference(application.reference) else null
-    var existingBookedVisitDto: VisitDto? = null
-
     if (hasExistingBooking) {
-      existingBookedVisitDto = VisitDtoBuilder().build(existingBooking!!)
-      validateVisitStartDate(existingBooking, "changed")
+      validateVisitStartDate(existingBooking!!, "changed")
+      handleVisitUpdateEvents(existingBooking, application)
     }
 
     val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference!!)
@@ -144,11 +142,6 @@ class VisitService(
     }
 
     val booking = visitRepository.saveAndFlush(notSavedBooking)
-    val newVisitDto = visitDtoBuilder.build(booking)
-
-    existingBookedVisitDto?.let {
-      handleVisitUpdateEvents(existingBookedVisitDto, newVisitDto)
-    }
 
     if (hasNotBeenAddedToBooking(booking, application)) {
       booking.addApplication(application)
@@ -390,8 +383,8 @@ class VisitService(
     }
   }
 
-  private fun handleVisitUpdateEvents(existingBooking: VisitDto, updatedVisit: VisitDto) {
-    if (existingBooking.startTimestamp.toLocalDate() != updatedVisit.startTimestamp.toLocalDate()) {
+  private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
+    if (existingBooking.sessionSlot.id != application.sessionSlot.id) {
       visitNotificationEventRepository.deleteByBookingReferenceAndType(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
     }
   }
