@@ -22,7 +22,7 @@ class ApplicationTask(
 
   @Scheduled(cron = "\${task.expired-visit.cron:0 0/15 * * * ?}")
   @SchedulerLock(
-    name = "deleteExpiredVisitsTask",
+    name = "deleteExpiredApplicationTask",
     lockAtLeastFor = LOCK_AT_LEAST_FOR,
     lockAtMostFor = LOCK_AT_MOST_FOR,
   )

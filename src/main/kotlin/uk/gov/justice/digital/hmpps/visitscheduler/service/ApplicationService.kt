@@ -231,7 +231,7 @@ class ApplicationService(
       applicationRepo.delete(applicationToBeDeleted)
       val applicationEvent = telemetryClientService.createApplicationTrackEventFromVisitEntity(applicationToBeDeleted)
       telemetryClientService.trackEvent(VISIT_SLOT_RELEASED_EVENT, applicationEvent)
-      LOG.debug("Expired Application $applicationToBeDeleted has been deleted")
+      LOG.debug("Expired Application ${applicationToBeDeleted.reference} has been deleted")
     }
   }
 
