@@ -112,6 +112,7 @@ class VisitService(
     val existingBooking = if (hasExistingBooking) visitRepository.findVisitByApplicationReference(application.reference) else null
     if (hasExistingBooking) {
       validateVisitStartDate(existingBooking!!, "changed")
+      handleVisitUpdateEvents(existingBooking, application)
     }
 
     val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference!!)
@@ -379,6 +380,12 @@ class VisitService(
         AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
         ExpiredVisitAmendException("trying to change / cancel an expired visit"),
       )
+    }
+  }
+
+  private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
+    if (existingBooking.sessionSlot.id != application.sessionSlot.id) {
+      visitNotificationEventRepository.deleteByBookingReferenceAndType(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
     }
   }
 

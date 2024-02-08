@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateL
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -454,17 +455,17 @@ class SessionTemplateService(
     val minimumCapacityTuple = this.sessionTemplateRepository.findSessionTemplateMinCapacityBy(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
     val sessionCapacity = sessionTemplateUtil.getMinimumSessionCapacity(minimumCapacityTuple)
 
-    val visitCountsList = getVisitCountsList(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+    val bookedVisitCountsList = getVisitCountsList(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate, VisitStatus.BOOKED)
+    val cancelledVisitCountsList = getVisitCountsList(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate, VisitStatus.CANCELLED)
 
-    val visitCount = this.sessionTemplateRepository.getVisitCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
+    val bookedVisitCount = bookedVisitCountsList.sumOf { (it.visitCounts.open + it.visitCounts.closed) }
+    val cancelCount = cancelledVisitCountsList.sumOf { (it.visitCounts.open + it.visitCounts.closed) }
 
-    val cancelCount = this.sessionTemplateRepository.getVisitCancelCount(reference, requestSessionTemplateVisitStatsDto.visitsFromDate, visitsToDate)
-
-    return SessionTemplateVisitStatsDto(sessionCapacity, visitCount, cancelCount, visitCountsList)
+    return SessionTemplateVisitStatsDto(sessionCapacity, bookedVisitCount, cancelCount, bookedVisitCountsList, cancelledVisitCountsList)
   }
 
-  fun getVisitCountsList(reference: String, fromDate: LocalDate, toDate: LocalDate?): MutableList<SessionTemplateVisitCountsDto> {
-    val visitCountsByDate = this.sessionTemplateRepository.getVisitCountsByDate(reference, fromDate, toDate)
+  fun getVisitCountsList(reference: String, fromDate: LocalDate, toDate: LocalDate?, visitStatus: VisitStatus): MutableList<SessionTemplateVisitCountsDto> {
+    val visitCountsByDate = this.sessionTemplateRepository.getVisitCountsByDate(reference, fromDate, toDate, visitStatus.name)
 
     val visitCountsList = mutableListOf<SessionTemplateVisitCountsDto>()
     val visitCountsByDateMap = visitCountsByDate.groupBy { it.visitDate }
@@ -472,11 +473,10 @@ class SessionTemplateService(
     visitCountsByDateMap.entries.forEach { dateGroup ->
       var openCount = 0
       var closedCount = 0
-      val cancelCount = sessionTemplateRepository.getCancelledVisitCountForDate(reference, dateGroup.key)
       dateGroup.value.forEach {
         if (it.visitRestriction == VisitRestriction.OPEN) openCount = it.visitCount else closedCount = it.visitCount
       }
-      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = dateGroup.key, SessionCapacityDto(closed = closedCount, open = openCount), cancelCount))
+      visitCountsList.add(SessionTemplateVisitCountsDto(visitDate = dateGroup.key, SessionCapacityDto(closed = closedCount, open = openCount)))
     }
 
     return visitCountsList
