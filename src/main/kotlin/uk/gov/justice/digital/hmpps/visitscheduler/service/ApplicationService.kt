@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
@@ -218,24 +219,19 @@ class ApplicationService(
     return !newRestriction.isSame(visit.visitRestriction) || visit.sessionSlotId != newSessionSlot.id
   }
 
-  @Transactional(readOnly = true)
-  fun findExpiredApplicationReferences(): List<String> {
-    LOG.debug("Entered findExpiredApplicationReferences : ${getExpiredApplicationDateAndTime()}")
-    return applicationRepo.findExpiredApplicationReferences(getExpiredApplicationDateAndTime())
-  }
-
   fun getExpiredApplicationDateAndTime(): LocalDateTime {
     return LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
   }
 
-  fun deleteAllExpiredApplications(applicationReferences: List<String>) {
-    applicationReferences.forEach {
-      val applicationToBeDeleted = getApplicationEntity(it)
-      val deleted = applicationRepo.deleteExpiredApplications(getExpiredApplicationDateAndTime(), it)
-      if (deleted > 0) {
-        val bookEvent = telemetryClientService.createApplicationTrackEventFromVisitEntity(applicationToBeDeleted)
-        telemetryClientService.trackEvent(VISIT_SLOT_RELEASED_EVENT, bookEvent)
-      }
+  @Transactional(propagation = REQUIRES_NEW)
+  fun deleteAllExpiredApplications() {
+    LOG.debug("Entered deleteExpiredApplication")
+    val applicationsToBeDeleted = applicationRepo.findExpiredApplicationReferences(getExpiredApplicationDateAndTime())
+    applicationsToBeDeleted.forEach { applicationToBeDeleted ->
+      applicationRepo.delete(applicationToBeDeleted)
+      val applicationEvent = telemetryClientService.createApplicationTrackEventFromVisitEntity(applicationToBeDeleted)
+      telemetryClientService.trackEvent(VISIT_SLOT_RELEASED_EVENT, applicationEvent)
+      LOG.debug("Expired Application $applicationToBeDeleted has been deleted")
     }
   }
 

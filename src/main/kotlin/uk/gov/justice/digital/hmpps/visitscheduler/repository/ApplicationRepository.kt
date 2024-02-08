@@ -16,20 +16,11 @@ import java.time.LocalDateTime
 interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecificationExecutor<Application> {
 
   @Query(
-    "SELECT a.reference FROM Application a " +
+    "SELECT a FROM Application a " +
       "WHERE a.completed = false" +
       " AND a.modifyTimestamp < :expiredDateAndTime ORDER BY a.id",
   )
-  fun findExpiredApplicationReferences(expiredDateAndTime: LocalDateTime): List<String>
-
-  @Modifying
-  @Query(
-    "Delete FROM application " +
-      "WHERE completed = false" +
-      " AND modify_timestamp < :expiredDateAndTime AND reference = :applicationReference ",
-    nativeQuery = true,
-  )
-  fun deleteExpiredApplications(expiredDateAndTime: LocalDateTime, applicationReference: String): Int
+  fun findExpiredApplicationReferences(expiredDateAndTime: LocalDateTime): List<Application>
 
   @Query(
     "SELECT a FROM Application a WHERE a.reference = :applicationReference",
