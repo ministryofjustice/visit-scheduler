@@ -37,42 +37,12 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   ): Tuple
 
   @Query(
-    "SELECT count(*) from visit v " +
-      " JOIN session_slot sl on sl.id = v.session_slot_id " +
-      " WHERE sl.session_template_reference = :reference" +
-      " AND sl.slot_date >= :visitsFromDate" +
-      " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
-      " AND visit_status = 'BOOKED' ",
-    nativeQuery = true,
-  )
-  fun getVisitCount(
-    @Param("reference") reference: String,
-    @Param("visitsFromDate") visitsFromDate: LocalDate,
-    @Param("visitsToDate") visitsToDate: LocalDate?,
-  ): Int
-
-  @Query(
-    "SELECT count(*) from visit v " +
-      " JOIN session_slot sl on sl.id = v.session_slot_id " +
-      " WHERE sl.session_template_reference = :reference" +
-      " AND sl.slot_date >= :visitsFromDate" +
-      " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
-      " AND visit_status = 'CANCELLED'",
-    nativeQuery = true,
-  )
-  fun getVisitCancelCount(
-    @Param("reference") reference: String,
-    @Param("visitsFromDate") visitsFromDate: LocalDate,
-    @Param("visitsToDate") visitsToDate: LocalDate?,
-  ): Int
-
-  @Query(
     "select sl.slot_date as visitDate, v.visit_restriction as visitRestriction, count(*) as visitCount from visit v " +
       " JOIN session_slot sl on sl.id = v.session_slot_id " +
       " WHERE sl.session_template_reference = :reference" +
       " AND sl.slot_date >= :visitsFromDate" +
-      " AND (cast(:visitsToDate as date) is null OR sl.slot_date <= :visitsToDate)" +
-      " AND visit_status = 'BOOKED' " +
+      " AND (cast(:visitsToDate as date) is null OR sl.slot_date < (CAST(:visitsToDate AS DATE) + CAST('1 day' AS INTERVAL)))" +
+      " AND visit_status = :visitStatus " +
       " GROUP BY sl.slot_date, v.visit_restriction" +
       " ORDER BY sl.slot_date",
     nativeQuery = true,
@@ -81,21 +51,8 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
     @Param("reference") reference: String,
     @Param("visitsFromDate") visitsFromDate: LocalDate,
     @Param("visitsToDate") visitsToDate: LocalDate?,
+    @Param("visitStatus") visitStatus: String,
   ): List<VisitCountsByDate>
-
-  @Query(
-    "select count(*) from visit v " +
-      " JOIN session_slot sl on sl.id = v.session_slot_id " +
-      " WHERE sl.session_template_reference = :reference" +
-      " AND sl.slot_date >= :sessionDate" +
-      " AND sl.slot_date < (CAST(:sessionDate AS DATE) + CAST('1 day' AS INTERVAL))" +
-      " AND visit_status = 'CANCELLED'",
-    nativeQuery = true,
-  )
-  fun getCancelledVisitCountForDate(
-    @Param("reference") reference: String,
-    @Param("sessionDate") sessionDate: LocalDate,
-  ): Int
 
   @Query(
     "select u from SessionTemplate u " +

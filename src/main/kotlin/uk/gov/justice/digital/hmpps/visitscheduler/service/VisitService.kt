@@ -110,8 +110,11 @@ class VisitService(
 
   fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
     val existingBooking = if (hasExistingBooking) visitRepository.findVisitByApplicationReference(application.reference) else null
+    var existingBookedVisitDto: VisitDto? = null
+
     if (hasExistingBooking) {
-      validateVisitStartDate(existingBooking!!, "changed")
+      existingBookedVisitDto = VisitDtoBuilder().build(existingBooking!!)
+      validateVisitStartDate(existingBooking, "changed")
     }
 
     val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference!!)
@@ -141,6 +144,11 @@ class VisitService(
     }
 
     val booking = visitRepository.saveAndFlush(notSavedBooking)
+    val newVisitDto = visitDtoBuilder.build(booking)
+
+    existingBookedVisitDto?.let {
+      handleVisitUpdateEvents(existingBookedVisitDto, newVisitDto)
+    }
 
     if (hasNotBeenAddedToBooking(booking, application)) {
       booking.addApplication(application)
@@ -379,6 +387,12 @@ class VisitService(
         AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
         ExpiredVisitAmendException("trying to change / cancel an expired visit"),
       )
+    }
+  }
+
+  private fun handleVisitUpdateEvents(existingBooking: VisitDto, updatedVisit: VisitDto) {
+    if (existingBooking.startTimestamp.toLocalDate() != updatedVisit.startTimestamp.toLocalDate()) {
+      visitNotificationEventRepository.deleteByBookingReferenceAndType(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
     }
   }
 

@@ -20,4 +20,7 @@ data class SessionTemplateVisitStatsDto(
 
   @Schema(description = "count of visits by date", required = false)
   val visitsByDate: List<SessionTemplateVisitCountsDto>?,
+
+  @Schema(description = "count of cancelled visits by date", required = false)
+  val cancelVisitsByDate: List<SessionTemplateVisitCountsDto>?,
 )
