@@ -1,5 +1,5 @@
 
--- Create
+-- Create table
 CREATE TEMP TABLE tmp_delete_applications_from_visits(visit_id int not null);
 
 INSERT INTO tmp_delete_applications_from_visits(visit_id)

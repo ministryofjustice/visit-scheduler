@@ -61,7 +61,7 @@ INSERT INTO application (id,
             a.modify_timestamp
         FROM tmp_application a
             JOIN visit v on v.reference = a.booking_reference
-        WHERE v.visit_status  = 'BOOKED' or (v.visit_status  = 'CANCELLED' and v.outcome_status != 'SUPERSEDED_CANCELLATION')
+        WHERE v.visit_status  = 'BOOKED' or (v.visit_status  = 'CANCELLED' and (v.outcome_status is null or v.outcome_status != 'SUPERSEDED_CANCELLATION'))
         Order by a.id;
 
 ALTER TABLE tmp_visit   DROP application_reference;
