@@ -106,7 +106,6 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     Assertions.assertThat(visitNotifications).hasSize(0)
   }
 
-
   @Test
   fun `when excluded date visit is updated then visit flag is removed`() {
     // Given
