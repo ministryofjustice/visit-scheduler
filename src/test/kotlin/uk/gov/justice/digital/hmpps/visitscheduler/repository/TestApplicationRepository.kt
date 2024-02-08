@@ -20,6 +20,24 @@ interface TestApplicationRepository : JpaRepository<Application, Long>, JpaSpeci
   )
   fun findVisitByApplicationReference(applicationReference: String): Visit?
 
+  @Query(
+    "select count(*)>0 from application_visitor av where av.application_id=:applicationId",
+    nativeQuery = true,
+  )
+  fun hasVisitorsByApplicationId(applicationId: Long): Boolean
+
+  @Query(
+    "select count(*)>0 from application_contact  where application_id=:applicationId",
+    nativeQuery = true,
+  )
+  fun hasContactByApplicationId(applicationId: Long): Boolean
+
+  @Query(
+    "select count(*)>0 from application_support  where application_id=:applicationId",
+    nativeQuery = true,
+  )
+  fun hasSupportByApplicationId(applicationId: Long): Boolean
+
   fun findByReference(reference: String): Application?
 
   @Transactional

@@ -19,7 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
+import uk.gov.justice.digital.hmpps.visitscheduler.task.ApplicationTask
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -32,7 +32,7 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
   private lateinit var testApplicationRepository: TestApplicationRepository
 
   @Autowired
-  private lateinit var visitTask: VisitTask
+  private lateinit var applicationTask: ApplicationTask
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -50,47 +50,38 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    reservedVisitNotExpired = applicationEntityHelper.create(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true)
-    testApplicationRepository.saveAndFlush(reservedVisitNotExpired)
+    reservedVisitNotExpired = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true)
+    reservedVisitNotExpiredChangingStatus = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false)
 
-    reservedVisitNotExpiredChangingStatus = applicationEntityHelper.create(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false)
-
-    reservedVisitExpired = applicationEntityHelper.create(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true)
+    reservedVisitExpired = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true)
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
 
-    reservedVisitExpiredChangingStatus = testApplicationRepository.saveAndFlush(applicationEntityHelper.create(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false))
+    reservedVisitExpiredChangingStatus = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false)
     testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
   }
 
   @Test
   fun `delete only expired reserved applications`() {
     // Given
-    val notExpiredApplicationReference = reservedVisitNotExpired.reference
-    val visitExpiredApplicationReference = reservedVisitExpired.reference
-
     // When
-    visitTask.deleteExpiredReservations()
+    applicationTask.deleteExpiredApplications()
 
     // Then
-    assertThat(testApplicationRepository.findByReference(notExpiredApplicationReference)).isNotNull
-    assertThat(testApplicationRepository.findByReference(visitExpiredApplicationReference)).isNull()
-
+    assertApplicationExistAndChildObjects(reservedVisitNotExpired)
+    assertApplicationAndChildObjectsDeleted(reservedVisitExpired)
     assertDeleteEvent(reservedVisitExpired)
   }
 
   @Test
   fun `delete only expired changing applications`() {
     // Given
-    val notExpiredApplicationReferenceChangingStatus = reservedVisitNotExpiredChangingStatus.reference
-    val visitExpiredApplicationReferenceChangingStatus = reservedVisitExpiredChangingStatus.reference
 
     // When
-    visitTask.deleteExpiredReservations()
+    applicationTask.deleteExpiredApplications()
 
     // Then
-    assertThat(testApplicationRepository.findByReference(notExpiredApplicationReferenceChangingStatus)).isNotNull
-    assertThat(testApplicationRepository.findByReference(visitExpiredApplicationReferenceChangingStatus)).isNull()
-
+    assertApplicationExistAndChildObjects(reservedVisitNotExpiredChangingStatus)
+    assertApplicationAndChildObjectsDeleted(reservedVisitExpiredChangingStatus)
     assertDeleteEvent(reservedVisitExpiredChangingStatus)
   }
 
@@ -108,5 +99,19 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
       },
       isNull(),
     )
+  }
+
+  private fun assertApplicationExistAndChildObjects(application: Application) {
+    assertThat(testApplicationRepository.findByReference(application.reference)).isNotNull
+    assertThat(testApplicationRepository.hasVisitorsByApplicationId(application.id)).isTrue()
+    assertThat(testApplicationRepository.hasSupportByApplicationId(application.id)).isTrue()
+    assertThat(testApplicationRepository.hasContactByApplicationId(application.id)).isTrue()
+  }
+
+  private fun assertApplicationAndChildObjectsDeleted(application: Application) {
+    assertThat(testApplicationRepository.findByReference(application.reference)).isNull()
+    assertThat(testApplicationRepository.hasVisitorsByApplicationId(application.id)).isFalse()
+    assertThat(testApplicationRepository.hasSupportByApplicationId(application.id)).isFalse()
+    assertThat(testApplicationRepository.hasContactByApplicationId(application.id)).isFalse()
   }
 }
