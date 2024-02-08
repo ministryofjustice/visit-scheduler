@@ -34,7 +34,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -109,6 +111,12 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       assertThat(eventAuditList[0].actionedBy).isEqualTo("Aled Evans")
       assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.MIGRATED_VISIT)
       assertThat(eventAuditList[0].createTimestamp).isEqualTo(migrateVisitRequestDto.createDateTime)
+
+      assertThat(visit.getApplications().size).isEqualTo(1)
+      val application = visit.getLastApplication()!!
+      assertVisitMatchesApplication(visit, application)
+      assertThat(application.completed).isTrue()
+      assertThat(application.reservedSlot).isTrue()
     }
   }
 
@@ -584,5 +592,27 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isCreated
+  }
+
+  private fun assertVisitMatchesApplication(visit: Visit, application: Application) {
+    assertThat(visit.reference).isNotEmpty()
+    assertThat(visit.getLastApplication()?.reference).isEqualTo(application.reference)
+    assertThat(visit.prisonerId).isEqualTo(application.prisonerId)
+    assertThat(visit.prison.code).isEqualTo(application.prison.code)
+    assertThat(visit.sessionSlot.slotStart)
+      .isEqualTo(application.sessionSlot.slotStart)
+    assertThat(visit.sessionSlot.slotEnd)
+      .isEqualTo(application.sessionSlot.slotEnd)
+    assertThat(visit.visitType).isEqualTo(application.visitType)
+    assertThat(visit.visitStatus).isEqualTo(BOOKED)
+    assertThat(visit.visitRestriction).isEqualTo(application.restriction)
+    assertThat(visit.visitStatus).isEqualTo(BOOKED)
+    assertThat(visit.visitContact?.name).isEqualTo(application.visitContact!!.name)
+    assertThat(visit.visitContact?.telephone).isEqualTo(application.visitContact!!.telephone)
+    assertThat(visit.visitors.size).isEqualTo(application.visitors.size)
+    assertThat(visit.visitors[0].nomisPersonId).isEqualTo(application.visitors[0].nomisPersonId)
+    assertThat(visit.visitors[0].visitContact).isEqualTo(application.visitors[0].contact)
+    assertThat(visit.support.size).isEqualTo(application.support.size)
+    assertThat(visit.support.size).isEqualTo(0)
   }
 }

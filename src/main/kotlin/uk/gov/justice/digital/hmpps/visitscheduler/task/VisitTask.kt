@@ -6,12 +6,10 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.visitscheduler.config.ExpiredVisitTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
-import uk.gov.justice.digital.hmpps.visitscheduler.service.ApplicationService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
@@ -22,36 +20,15 @@ import java.time.LocalDate
 @Component
 class VisitTask(
   private val visitService: VisitService,
-  private val applicationService: ApplicationService,
   private val sessionService: SessionService,
   private val prisonsService: PrisonsService,
   private val telemetryClient: TelemetryClient,
-  private val expiredVisitTaskConfiguration: ExpiredVisitTaskConfiguration,
   private val flagVisitTaskConfiguration: FlagVisitTaskConfiguration,
   private val telemetryClientService: TelemetryClientService,
 ) {
 
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
-  }
-
-  @Scheduled(cron = "\${task.expired-visit.cron:0 0/15 * * * ?}")
-  @SchedulerLock(
-    name = "deleteExpiredVisitsTask",
-    lockAtLeastFor = ExpiredVisitTaskConfiguration.LOCK_AT_LEAST_FOR,
-    lockAtMostFor = ExpiredVisitTaskConfiguration.LOCK_AT_MOST_FOR,
-  )
-  fun deleteExpiredReservations() {
-    if (!expiredVisitTaskConfiguration.expiredVisitTaskEnabled) {
-      return
-    }
-
-    log.debug("Entered deleteExpiredReservations")
-    val expiredApplicationReferences = applicationService.findExpiredApplicationReferences()
-    log.debug("Expired visits: ${expiredApplicationReferences.count()}")
-    if (expiredApplicationReferences.isNotEmpty()) {
-      applicationService.deleteAllExpiredApplications(expiredApplicationReferences)
-    }
   }
 
   @Scheduled(cron = "\${task.log-non-associations.cron:0 0 3 * * ?}")

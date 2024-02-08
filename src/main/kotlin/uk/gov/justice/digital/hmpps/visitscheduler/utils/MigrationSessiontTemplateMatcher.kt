@@ -29,13 +29,12 @@ class MigrationSessionTemplateMatcher(
   private val prisonerIncentiveLevelMatcher: PrisonerIncentiveLevelMatcher,
   private val sessionValidator: PrisonerSessionValidator,
   private val sessionDatesUtil: SessionDatesUtil,
+  @Value("\${policy.session.max-proximity-minutes:$DEFAULT_MAX_PROX_MINUTES}")
+  private var maxProximityMinutes: Int = DEFAULT_MAX_PROX_MINUTES,
 ) {
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-
-    @Value("\${policy.session.max-proximity-minutes:$DEFAULT_MAX_PROX_MINUTES}")
-    var maxProximityMinutes: Int = DEFAULT_MAX_PROX_MINUTES
   }
 
   private class MigrateMatch() : Comparable<MigrateMatch> {

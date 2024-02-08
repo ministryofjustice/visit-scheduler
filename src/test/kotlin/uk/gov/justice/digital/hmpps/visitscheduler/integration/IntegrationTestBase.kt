@@ -246,7 +246,7 @@ abstract class IntegrationTestBase {
     slotDate: LocalDate? = null,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction)
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
@@ -256,12 +256,14 @@ abstract class IntegrationTestBase {
     prisonCode: String? = null,
     slotDate: LocalDate? = null,
     completed: Boolean,
+    reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
   ): Application {
     val applicationEntity = applicationEntityHelper.create(
       prisonerId = prisonerId!!,
       sessionTemplate = sessionTemplate ?: sessionTemplateDefault,
       completed = completed,
+      reservedSlot = reservedSlot,
       prisonCode = prisonCode,
       slotDate = slotDate ?: sessionTemplate?.validFromDate ?: sessionTemplateDefault.validFromDate,
       visitRestriction = visitRestriction,
