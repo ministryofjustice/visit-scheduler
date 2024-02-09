@@ -384,7 +384,7 @@ class VisitService(
   }
 
   private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
-    if (existingBooking.sessionSlot.id != application.sessionSlot.id) {
+    if (existingBooking.sessionSlot.slotDate != application.sessionSlot.slotDate) {
       visitNotificationEventRepository.deleteByBookingReferenceAndType(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
     }
   }
