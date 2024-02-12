@@ -41,28 +41,54 @@ import java.time.LocalTime
 import java.util.function.BiPredicate
 import java.util.stream.Collectors
 
-private const val maxCapacity = 200
+private const val MAX_CAPACITY = 200
 
 class SessionTemplateSQLGenerator {
 
   private enum class SessionColumnNames {
-    PRISON, VISIT_ROOM, TYPE, OPEN, CLOSED, START_TIME, END_TIME, START_DATE, END_DATE, DAY_OF_WEEK, WEEKLY_FREQUENCY, LOCATION_KEYS, CATEGORY_KEYS, INCENTIVE_LEVEL_KEYS, IS_ACTIVE;
+    PRISON,
+    VISIT_ROOM,
+    TYPE,
+    OPEN,
+    CLOSED,
+    START_TIME,
+    END_TIME,
+    START_DATE,
+    END_DATE,
+    DAY_OF_WEEK,
+    WEEKLY_FREQUENCY,
+    LOCATION_KEYS,
+    CATEGORY_KEYS,
+    INCENTIVE_LEVEL_KEYS,
+    IS_ACTIVE,
   }
 
   private enum class SessionLocationColumnNames {
-    PRISON, KEY, LEVEL_ONE, LEVEL_TWO, LEVEL_THREE, LEVEL_FOUR, NAME;
+    PRISON,
+    KEY,
+    LEVEL_ONE,
+    LEVEL_TWO,
+    LEVEL_THREE,
+    LEVEL_FOUR,
+    NAME,
   }
 
   private enum class SessionPrisonerCategoryColumnNames {
-    PRISON, KEY, CATEGORY, NAME;
+    PRISON,
+    KEY,
+    CATEGORY,
+    NAME,
   }
 
   private enum class SessionPrisonerIncentiveLevelColumnNames {
-    PRISON, KEY, INCENTIVE_LEVEL, NAME;
+    PRISON,
+    KEY,
+    INCENTIVE_LEVEL,
+    NAME,
   }
 
   enum class GroupType(val type: String, val file: String, val columnSize: Int) {
-    LOCATION("location", "session-location-data.csv", SessionLocationColumnNames.values().size),
+    LOCATION("location", "session-location-data.csv", SessionLocationColumnNames.entries.size),
     PRISONER_CATEGORY("prisoner-category", "session-prisoner-category-data.csv", SessionPrisonerCategoryColumnNames.values().size),
     PRISONER_INCENTIVE_LEVEL("prisoner-incentive-level", "session-prisoner-incentive-data.csv", SessionPrisonerCategoryColumnNames.values().size),
   }
@@ -90,7 +116,7 @@ class SessionTemplateSQLGenerator {
       if (open < 0 || closed < 0) {
         throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity be cant be less than zero for (prison:$prisonCode key:$this)!")
       }
-      if (open > maxCapacity || closed > maxCapacity) {
+      if (open > MAX_CAPACITY || closed > MAX_CAPACITY) {
         throw IllegalArgumentException("Session Template : open($open) or close($closed) capacity seems a little high for (prison:$prisonCode key:$this)!")
       }
       if (weeklyFrequency < 1) {
@@ -136,7 +162,7 @@ class SessionTemplateSQLGenerator {
     val prisonTemplateRecords = ArrayList<SessionTemplateColumns>()
     for (record in records) {
       if (record.size() != SessionColumnNames.values().size) {
-        throw IllegalArgumentException("Some session columns are missing line number: ${record.recordNumber}, expected ${SessionColumnNames.values().size} but got ${record.size()} ${record.toList()}")
+        throw IllegalArgumentException("Some session columns are missing line number: ${record.recordNumber}, expected ${SessionColumnNames.entries.size} but got ${record.size()} ${record.toList()}")
       }
       val sessionTemplateColumn = SessionTemplateColumns(record)
       validateSessionTemplateColumns(sessionTemplateColumn)
@@ -239,7 +265,7 @@ class SessionTemplateSQLGenerator {
     val groupValuesMap =
       mutableMapOf<GroupType, Tuple2<List<SessionGroup>, List<SessionItem>>>()
 
-    GroupType.values().forEach { groupType ->
+    GroupType.entries.forEach { groupType ->
       val groupDataFile = File(path, groupType.file)
 
       val groupsColumns =
@@ -421,7 +447,7 @@ class SessionTemplateSQLGenerator {
           try {
             PrisonerCategoryType.valueOf(it)
           } catch (e: Exception) {
-            val allowedValues = PrisonerCategoryType.values().joinToString(",")
+            val allowedValues = PrisonerCategoryType.entries.joinToString(",")
             throw IllegalArgumentException("Category : Invalid category code - $it - allowed values are - $allowedValues  (prison:$prisonCode key:$key)!")
           }
         }
@@ -465,7 +491,7 @@ class SessionTemplateSQLGenerator {
           try {
             IncentiveLevel.valueOf(it)
           } catch (e: Exception) {
-            val allowedValues = IncentiveLevel.values().joinToString(",")
+            val allowedValues = IncentiveLevel.entries.joinToString(",")
             throw IllegalArgumentException("IncentiveLevel : Invalid incentive level - $it - allowed values are - $allowedValues  (prison:$prisonCode key:$key)!")
           }
         }

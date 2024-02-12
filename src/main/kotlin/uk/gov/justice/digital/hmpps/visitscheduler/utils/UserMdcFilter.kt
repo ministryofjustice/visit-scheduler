@@ -39,10 +39,18 @@ class UserMdcFilter @Autowired constructor() : Filter {
 
   private fun getUserName(): String? {
     return when (val principle = SecurityContextHolder.getContext().authentication.principal) {
-      is String -> { principle }
-      is UserDetails -> { principle.username }
-      is Map<*, *> -> { principle[USERNAME_ATTR] as String? }
-      else -> { null }
+      is String -> {
+        principle
+      }
+      is UserDetails -> {
+        principle.username
+      }
+      is Map<*, *> -> {
+        principle[USERNAME_ATTR] as String?
+      }
+      else -> {
+        null
+      }
     }
   }
 

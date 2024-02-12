@@ -242,7 +242,7 @@ abstract class IntegrationTestBase {
   fun createApplicationAndVisit(
     prisonerId: String? = "testPrisonerId",
     sessionTemplate: SessionTemplate,
-    visitStatus: VisitStatus ? = VisitStatus.BOOKED,
+    visitStatus: VisitStatus? = VisitStatus.BOOKED,
     slotDate: LocalDate? = null,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
   ): Visit {
