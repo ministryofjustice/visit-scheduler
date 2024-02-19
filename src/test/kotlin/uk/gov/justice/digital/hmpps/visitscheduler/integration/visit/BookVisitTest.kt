@@ -177,6 +177,141 @@ class BookVisitTest : IntegrationTestBase() {
     assertBookedEvent(visitDto, true)
   }
 
+  @Test
+  fun `when contact is supplied in application for a new visit then visit will be booked with a contact`() {
+    val applicationWithContact = applicationEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = OPEN,
+    )
+
+    // no contact is created on the application
+    applicationEntityHelper.createContact(application = applicationWithContact, name = "Aled Evans", phone = "01348811539")
+    applicationEntityHelper.createVisitor(application = applicationWithContact, nomisPersonId = 123L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = applicationWithContact, nomisPersonId = 666L, visitContact = false)
+    applicationEntityHelper.createSupport(application = applicationWithContact, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.save(applicationWithContact)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithContact.reference)
+
+    // Then
+    val visitDto = createVisitDtoFromResponse(responseSpec)
+    assertThat(visitDto.visitContact!!.name).isEqualTo(applicationWithContact.visitContact!!.name)
+    assertThat(visitDto.visitContact!!.telephone).isEqualTo(applicationWithContact.visitContact!!.telephone)
+    assertVisitMatchesApplication(visitDto, applicationWithContact)
+
+    val application = testApplicationRepository.findByReference(visitDto.applicationReference)
+    assertThat(application!!.completed).isTrue()
+
+    // And
+    assertBookedEvent(visitDto, false)
+  }
+
+  @Test
+  fun `when contact is not supplied in application for a new visit then visit will be booked with no contact`() {
+    val applicationWithNoContact = applicationEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = OPEN,
+    )
+
+    // no contact is created on the application
+    applicationEntityHelper.createVisitor(application = applicationWithNoContact, nomisPersonId = 123L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = applicationWithNoContact, nomisPersonId = 666L, visitContact = false)
+    applicationEntityHelper.createSupport(application = applicationWithNoContact, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.save(applicationWithNoContact)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithNoContact.reference)
+
+    // Then
+    val visitDto = createVisitDtoFromResponse(responseSpec)
+    assertThat(visitDto.visitContact).isNull()
+    assertVisitMatchesApplication(visitDto, applicationWithNoContact)
+
+    val application = testApplicationRepository.findByReference(visitDto.applicationReference)
+    assertThat(application!!.completed).isTrue()
+
+    // And
+    assertBookedEvent(visitDto, false)
+  }
+
+  @Test
+  fun `when contact is not supplied in new application for existing visit then booked visit will not have a contact`() {
+    // Given
+
+    // Original application and visit
+    val slotDateInThePast = LocalDate.now().plusDays(1)
+    val originalVisit = createApplicationAndVisit(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
+
+    val newApplication = applicationEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = if (originalVisit.visitRestriction == OPEN) CLOSED else OPEN,
+    )
+
+    // creating visitor but not contact
+    applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
+    applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.save(newApplication)
+
+    originalVisit.addApplication(newApplication)
+
+    visitEntityHelper.save(originalVisit)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, newApplication.reference)
+
+    // Then
+    val visitDto = createVisitDtoFromResponse(responseSpec)
+    assertThat(visitDto.reference).isEqualTo(originalVisit.reference)
+    assertThat(visitDto.visitContact).isNull()
+    assertVisitMatchesApplication(visitDto, newApplication)
+  }
+
+  @Test
+  fun `when contact is supplied in new application for existing visit without a contact then booked visit will have a contact`() {
+    // Given
+
+    // Original application and visit
+    val slotDateInThePast = LocalDate.now().plusDays(1)
+    val originalVisit = createApplicationAndVisit(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, withContact = false)
+
+    val newApplication = applicationEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = if (originalVisit.visitRestriction == OPEN) CLOSED else OPEN,
+    )
+
+    // creating visitor but not contact
+    applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348811539")
+    applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
+    applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.save(newApplication)
+
+    originalVisit.addApplication(newApplication)
+
+    val visit = visitEntityHelper.save(originalVisit)
+    assertThat(visit.visitContact).isNull()
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, newApplication.reference)
+
+    // Then
+    val visitDto = createVisitDtoFromResponse(responseSpec)
+    assertThat(visitDto.reference).isEqualTo(originalVisit.reference)
+    assertThat(visitDto.visitContact!!.name).isEqualTo(newApplication.visitContact!!.name)
+    assertThat(visitDto.visitContact!!.telephone).isEqualTo(newApplication.visitContact!!.telephone)
+    assertVisitMatchesApplication(visitDto, newApplication)
+  }
+
   private fun createVisitDtoFromResponse(responseSpec: ResponseSpec): VisitDto {
     val returnResult = responseSpec.expectStatus().isOk.expectBody().returnResult().responseBody
     return objectMapper.readValue(returnResult, VisitDto::class.java)
@@ -266,8 +401,12 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
     assertThat(visitDto.visitRestriction).isEqualTo(application.restriction)
     assertThat(visitDto.visitStatus).isEqualTo(BOOKED)
-    assertThat(visitDto.visitContact?.name).isEqualTo(application.visitContact!!.name)
-    assertThat(visitDto.visitContact?.telephone).isEqualTo(application.visitContact!!.telephone)
+    if (application.visitContact != null) {
+      assertThat(visitDto.visitContact!!.name).isEqualTo(application.visitContact!!.name)
+      assertThat(visitDto.visitContact!!.telephone).isEqualTo(application.visitContact!!.telephone)
+    } else {
+      assertThat(visitDto.visitContact).isNull()
+    }
     assertThat(visitDto.visitors.size).isEqualTo(application.visitors.size)
     assertThat(visitDto.visitors[0].nomisPersonId).isEqualTo(application.visitors[0].nomisPersonId)
     assertThat(visitDto.visitors[0].visitContact).isEqualTo(application.visitors[0].contact!!)

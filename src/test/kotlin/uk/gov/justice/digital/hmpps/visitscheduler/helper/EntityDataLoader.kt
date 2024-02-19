@@ -148,8 +148,8 @@ class VisitEntityHelper(
 
     visit.addApplication(application)
 
-    with(application.visitContact!!) {
-      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
+    application.visitContact?.let {
+      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = it.name, telephone = it.telephone)
     }
 
     application.support.let {

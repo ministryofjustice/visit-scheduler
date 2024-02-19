@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -41,6 +42,24 @@ class VisitByReferenceTest() : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
       .expectBody()
       .jsonPath("$.reference").isEqualTo(reference)
+  }
+
+  @Test
+  fun `when booked visit has no contact get visit by reference returns contact as null`() {
+    // Given
+
+    val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, createContact = false)
+
+    val reference = createdVisit.reference
+
+    // When
+    val responseSpec = callVisitByReference(webTestClient, reference, roleVisitSchedulerHttpHeaders)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+    val visit = getVisitDto(returnResult)
+    assertThat(visit.visitContact).isNull()
   }
 
   @Test
