@@ -32,10 +32,10 @@ import java.time.LocalDateTime
 import java.time.LocalTime
 
 @ExtendWith(MockitoExtension::class)
-class VisitDtoBuilderTest() {
+class VisitDtoBuilderTest {
 
   private var prison: Prison = PrisonEntityHelper.createPrison()
-  private val sessionTemplateService: SessionTemplateService = mock<SessionTemplateService>()
+  private val sessionTemplateService = mock<SessionTemplateService>()
 
   @InjectMocks
   val toTest: VisitDtoBuilder = VisitDtoBuilder()
