@@ -8,6 +8,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -374,12 +375,13 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as SWL-D-100-1`() {
-    // Given
+  fun `multiple visit sessions are returned for prisoner with last location as SWL-D-100-1 although current prisoner location is COURT`() {
+    // As the prisoner is in a transitional location (COURT) - sessions are returned based on his last permanent location
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "SWL-D-100-1"
+    val prisonerTemporaryLocation = TransitionalLocationTypes.COURT.toString()
 
-    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation, prisonerTemporaryLocation)
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
@@ -394,6 +396,63 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
     // session available as all D level prisoners are allowed
     assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
+  }
+
+  @Test
+  fun `multiple visit sessions are returned for prisoner based on last location and current location as TAP in prison with TAP sessions`() {
+    // Given no TAP sessions exist for the prisoner - sessions are returned based on his last permanent location
+    val prisonerId = "A0000001"
+    val prisonerInternalLocation = "SWL-D-100-1"
+    val prisonerTemporaryLocation = "SWL-${TransitionalLocationTypes.TAP}"
+
+    prisonApiMockServer.stubGetPrisonerHousingLocation(offenderNo = prisonerId, internalLocation = prisonerTemporaryLocation, lastPermanentLevels = prisonerInternalLocation)
+
+    // When
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
+
+    // session available to all prisoners
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
+    // session available as all D level prisoners are allowed
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
+  }
+
+  @Test
+  fun `only TAP visit sessions are returned for prisoner with current location as TAP in prison with TAP sessions`() {
+    // Given no TAP sessions exist for the prisoner - sessions are returned based on his last permanent location
+    val prisonerId = "A0000001"
+    val prisonerInternalLocation = "SWL-D-100-1"
+    val prisonerTemporaryLocation = "SWL-${TransitionalLocationTypes.TAP}"
+
+    val tapSessionTemplate = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("14:01"),
+      endTime = LocalTime.parse("15:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prison.code,
+      visitRoom = "session available to TAP location only",
+      isTapSession = true,
+    )
+
+    prisonApiMockServer.stubGetPrisonerHousingLocation(offenderNo = prisonerId, internalLocation = prisonerTemporaryLocation, lastPermanentLevels = prisonerInternalLocation)
+
+    // When
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+
+    // only TAP session is available to that prisoner
+    assertSession(visitSessionResults[0], nextAllowedDay, tapSessionTemplate)
   }
 
   @Test
@@ -432,6 +491,29 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
 
     // none of the sessions on the day will be available
     Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
+  }
+
+  @Test
+  fun `multiple visit sessions are returned for prisoner with location as SWL-D-100-1`() {
+    // Given
+    val prisonerId = "A0000001"
+    val prisonerInternalLocation = "SWL-D-100-1"
+
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
+
+    // When
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getResults(returnResult)
+
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
+
+    // session available to all prisoners
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
+    // session available as all D level prisoners are allowed
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
   }
 
   private fun callGetSessionsByPrisonerIdAndPrison(prisonId: String, prisonerId: String): WebTestClient.ResponseSpec {

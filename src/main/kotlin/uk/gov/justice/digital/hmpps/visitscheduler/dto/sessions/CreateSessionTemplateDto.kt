@@ -58,4 +58,7 @@ data class CreateSessionTemplateDto(
 
   @Schema(description = "list of group references for allowed prisoner incentive levels", required = false)
   val incentiveLevelGroupReferences: List<String>? = listOf(),
+
+  @Schema(description = "If a session is a TAP session.", required = true)
+  val isTAPSession: Boolean,
 )

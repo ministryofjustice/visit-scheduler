@@ -53,10 +53,15 @@ class PrisonerService(
   }
 
   private fun isPrisonerInTemporaryLocation(levels: List<PrisonerHousingLevelDto>): Boolean {
-    if (levels.isNotEmpty()) {
-      return TransitionalLocationTypes.contains(levels[0].code)
-    }
-    return false
+    return (levels.isNotEmpty() && TransitionalLocationTypes.contains(levels[0].code))
+  }
+
+  fun isPrisonerInTAPTemporaryLocation(prisonerHousingLocation: PrisonerHousingLocationsDto?): Boolean {
+    return (
+      prisonerHousingLocation != null &&
+        prisonerHousingLocation.levels.isNotEmpty() &&
+        (TransitionalLocationTypes.TAP.toString() == prisonerHousingLocation.levels[0].code.uppercase())
+      )
   }
 
   fun getLevelsMapForPrisoner(prisonerHousingLocationsDto: PrisonerHousingLocationsDto): Map<PrisonerHousingLevels, String?> {

@@ -112,6 +112,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
       incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
       weeklyFrequency = sessionTemplateDefault.weeklyFrequency + 1,
+      isTAPSession = true,
     )
 
     // When
@@ -139,6 +140,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.incentiveLevels }).containsExactlyInAnyOrder(nonEnhancedIncentives)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.active).isEqualTo(true)
+    Assertions.assertThat(sessionTemplateDto.isTapSession).isEqualTo(true)
   }
 
   @Test

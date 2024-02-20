@@ -93,4 +93,7 @@ class SessionTemplate(
 
   @Column(name = "active", nullable = false)
   var active: Boolean,
+
+  @Column(name = "tapSession", nullable = false)
+  var isTapSession: Boolean,
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

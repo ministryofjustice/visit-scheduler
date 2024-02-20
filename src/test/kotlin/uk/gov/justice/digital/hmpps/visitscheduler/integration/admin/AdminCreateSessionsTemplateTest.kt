@@ -78,6 +78,38 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `create session template with TAP session as true`() {
+    // Given
+    val dto = createCreateSessionTemplateDto(
+      sessionDateRange = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
+      isTAPSession = true,
+    )
+
+    // When
+    val responseSpec = callCreateSessionTemplate(webTestClient, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange.validToDate)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.closed).isEqualTo(dto.sessionCapacity.closed)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.open).isEqualTo(dto.sessionCapacity.open)
+    Assertions.assertThat(sessionTemplateDto.prisonCode).isEqualTo(dto.prisonCode)
+    Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(dto.visitRoom)
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.startTime).isEqualTo(dto.sessionTimeSlot.startTime)
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.endTime).isEqualTo(dto.sessionTimeSlot.endTime)
+    Assertions.assertThat(sessionTemplateDto.dayOfWeek).isEqualTo(dto.dayOfWeek)
+    Assertions.assertThat(sessionTemplateDto.permittedLocationGroups).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(dto.weeklyFrequency)
+    Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.isTapSession).isEqualTo(dto.isTAPSession)
+  }
+
+  @Test
   fun `when session template name greater than 100 then validation fails and BAD_REQUEST is returned`() {
     // Given
     val dto = createCreateSessionTemplateDto(
