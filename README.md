@@ -51,6 +51,32 @@ Call info endpoint:
 $ curl 'http://localhost:8080/info' -i -X GET
 ```
 
+## How to restore prpeprod from production on demand
+
+Normally the data in preprod is updated from prod on an interval bases (2 weeks) but some time you need to update now.
+
+```
+kubectl create job --dry-run=client -n visit-someone-in-prison-backend-svc-prod  --from=cronjob/<<con-job>> <<con-job>>-<<user-name>> -o "json" \
+| jq ".spec.template.spec.containers[0].env += [{ \"name\": \"FORCE_RUN\", \"value\": \"true\"}]" | kubectl apply -f -
+```
+
+To get the <<con-job>> (--from=cronjob/<<con-job>>) name you must run the following command
+
+```
+kubectl get cronjobs -n visit-someone-in-prison-backend-svc-prod
+```
+
+The <<user-name>> is basically who did the restore in this case I have added **ae** see the actuall command I used :
+
+```
+kubectl create job --dry-run=client -n visit-someone-in-prison-backend-svc-prod  --from=cronjob/visit-scheduler-postgres-restore visit-scheduler-postgres-restore-ae -o "json" \
+| jq ".spec.template.spec.containers[0].env += [{ \"name\": \"FORCE_RUN\", \"value\": \"true\"}]" | kubectl apply -f -
+```
+
+for more information see
+
+https://github.com/ministryofjustice/hmpps-helm-charts/tree/main/charts/generic-service#manually-running-the-database-restore-cronjob
+
 ## Swagger v3
 Visit Scheduler
 ```
