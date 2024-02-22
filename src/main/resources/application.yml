@@ -46,7 +46,7 @@ spring:
     enabled: true
 
   datasource:
-    url: jdbc:postgresql://${DATABASE_ENDPOINT}/${DATABASE_NAME}?sslmode=verify-full
+    url: jdbc:postgresql://${DATABASE_ENDPOINT}/${DATABASE_NAME}?sslmode=verify-full&statement_timeout=300000
     hikari:
       pool-name: VisitScheduler-CP
       connectionTimeout: 30000
