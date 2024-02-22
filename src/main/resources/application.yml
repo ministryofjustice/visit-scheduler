@@ -51,7 +51,7 @@ spring:
       pool-name: VisitScheduler-CP
       connectionTimeout: 30000
       validationTimeout: 500
-      keepalive-time: 380000
+      keepaliveTime: 1790000
 
   sql:
     init:
