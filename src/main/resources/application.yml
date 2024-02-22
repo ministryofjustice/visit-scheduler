@@ -49,8 +49,9 @@ spring:
     url: jdbc:postgresql://${DATABASE_ENDPOINT}/${DATABASE_NAME}?sslmode=verify-full
     hikari:
       pool-name: VisitScheduler-CP
-      connectionTimeout: 1000
+      connectionTimeout: 30000
       validationTimeout: 500
+      keepalive-time: 380000
 
   sql:
     init:
