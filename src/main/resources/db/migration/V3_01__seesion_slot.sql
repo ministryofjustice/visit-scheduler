@@ -1,13 +1,3 @@
-CREATE TABLE session_slot_no_order
-(
-    id                      	serial          NOT NULL PRIMARY KEY,
-    session_template_reference 	text,
-    prison_id                   integer         NOT NULL,
-    slot_date              		date            NOT NULL,
-    slot_start            		timestamp       with time zone NOT NULL,
-    slot_end                    timestamp       with time zone NOT NULL
-);
-
 -- Insert session info data for applications that are migrated
 INSERT INTO session_slot_no_order (prison_id,slot_date,slot_start,slot_end)
     SELECT v.prison_id,v.visit_start::date,v.visit_start,v.visit_end FROM visit v
@@ -39,7 +29,7 @@ INSERT INTO session_slot (reference,session_template_reference,prison_id,slot_da
 TRUNCATE TABLE session_slot_no_order;
 DROP TABLE session_slot_no_order;
 
--- Create indexes -- time taken 1-min's
+-- Create indexes
 CREATE INDEX idx_session_slot_session_template_reference ON session_slot(session_template_reference);
 CREATE INDEX idx_session_index ON session_slot(prison_id,slot_date,slot_start,slot_end);
 
