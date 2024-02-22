@@ -1,3 +1,11 @@
+-- may be change to serial4
+CREATE INDEX idx_application_reference ON application(reference);
+
+-- THESE WERE PREVENTING THE SYSTEM FROM DELETING THE CHILD OBJECTS
+-- ALTER TABLE application_contact  ADD CONSTRAINT fk_contact_to_application FOREIGN KEY (application_id) REFERENCES application(id);
+-- ALTER TABLE application_support  ADD CONSTRAINT fk_support_to_application FOREIGN KEY (application_id) REFERENCES application(id);
+-- ALTER TABLE application_visitor  ADD CONSTRAINT fk_visitor_to_application FOREIGN KEY (application_id) REFERENCES application(id);
+
 CREATE INDEX idx_visit_prison        ON visit(prison_id);
 CREATE INDEX idx_reference_for_visit ON visit(reference);
 
@@ -23,5 +31,6 @@ ALTER TABLE visit_visitor DROP CONSTRAINT IF EXISTS fk_visitor_to_visit;
 -- ALTER TABLE visit_support  ADD CONSTRAINT fk_support_to_visit FOREIGN KEY (visit_id) REFERENCES visit(id);
 -- ALTER TABLE visit_visitor  ADD CONSTRAINT fk_visitor_to_visit FOREIGN KEY (visit_id) REFERENCES visit(id);
 
-
+CREATE INDEX idx_application_session_slot_id ON application(session_slot_id);
+CREATE INDEX idx_visit_session_slot_id ON visit(session_slot_id);
 

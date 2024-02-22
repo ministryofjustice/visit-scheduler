@@ -108,7 +108,7 @@ class VisitService(
     return bookedVisitDto
   }
 
-  fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
+  private fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
     val existingBooking = if (hasExistingBooking) visitRepository.findVisitByApplicationReference(application.reference) else null
     if (hasExistingBooking) {
       validateVisitStartDate(existingBooking!!, "changed")
