@@ -16,15 +16,8 @@ generic-service:
     path: /
 
   livenessProbe:
-    initialDelaySeconds: 720
     timeoutSeconds: 720
     failureThreshold: 3
-
-  readinessProbe:
-    initialDelaySeconds: 720
-    timeoutSeconds: 720
-    failureThreshold: 3
-
 
   # Environment variables to load into the deployment
   env:
