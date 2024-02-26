@@ -14,16 +14,6 @@ generic-service:
     tlsSecretName: visit-scheduler-cert
     path: /
 
-  livenessProbe:
-    initialDelaySeconds: 780
-    periodSeconds: 30
-    failureThreshold: 1
-
-  readinessProbe:
-      initialDelaySeconds: 780
-      periodSeconds: 30
-      failureThreshold: 1
-
 
   # Environment variables to load into the deployment
   env:
