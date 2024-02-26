@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.RESERVED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
@@ -38,9 +39,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VSIPReportingRepository
@@ -49,7 +52,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
 import kotlin.jvm.optionals.getOrNull
 
@@ -70,7 +72,7 @@ class PrisonEntityHelper(
     }
 
     fun createPrisonDto(
-      prisonCode: String = "MDI",
+      prisonCode: String = "AWE",
       activePrison: Boolean = true,
       excludeDates: Set<LocalDate> = sortedSetOf(),
       policyNoticeDaysMin: Int = 2,
@@ -120,46 +122,107 @@ class PrisonEntityHelper(
 class VisitEntityHelper(
   private val visitRepository: VisitRepository,
   private val prisonEntityHelper: PrisonEntityHelper,
+  private val sessionSlotEntityHelper: SessionSlotEntityHelper,
+  private val applicationEntityHelper: ApplicationEntityHelper,
 ) {
 
-  fun create(
-    visitStatus: VisitStatus = RESERVED,
-    prisonerId: String = "FF0000AA",
-    prisonCode: String = "MDI",
-    visitRoom: String = "A1",
-    visitStart: LocalDateTime = LocalDateTime.of((LocalDateTime.now().year + 1), 11, 1, 12, 30, 44),
-    visitEnd: LocalDateTime = visitStart.plusHours(1),
-    visitType: VisitType = VisitType.SOCIAL,
-    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    reference: String = "",
-    activePrison: Boolean = true,
+  fun createFromApplication(
+    application: Application,
+    visitStatus: VisitStatus = BOOKED,
+    sessionTemplate: SessionTemplate,
     outcomeStatus: OutcomeStatus? = null,
-    sessionTemplateReference: String? = "sessionTemplateReference",
+  ): Visit {
+    val visit = create(
+      visitStatus = visitStatus,
+      sessionTemplate = sessionTemplate,
+      prisonerId = application.prisonerId,
+      slotDate = application.sessionSlot.slotDate,
+      visitStart = application.sessionSlot.slotStart.toLocalTime(),
+      visitEnd = application.sessionSlot.slotEnd.toLocalTime(),
+      visitType = application.visitType,
+      visitRestriction = application.restriction,
+      outcomeStatus = outcomeStatus,
+      createApplication = false,
+      prisonCode = application.prison.code,
+    )
+
+    visit.addApplication(application)
+
+    with(application.visitContact!!) {
+      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
+    }
+
+    application.support.let {
+      application.support.map { applicationSupport ->
+        with(applicationSupport) {
+          visit.support.add(VisitSupport(visit = visit, visitId = visit.id, type = type, text = text))
+        }
+      }
+    }
+
+    application.visitors.let {
+      it.map { applicationVisitor ->
+        with(applicationVisitor) {
+          visit.visitors.add(VisitVisitor(visit = visit, visitId = visit.id, nomisPersonId = nomisPersonId, visitContact = contact))
+        }
+      }
+    }
+
+    return save(visit)
+  }
+
+  @Transactional
+  fun create(
+    visitStatus: VisitStatus = BOOKED,
+    sessionTemplate: SessionTemplate,
+    prisonerId: String = "testPrisonerId",
+    prisonCode: String = sessionTemplate.prison.code,
+    visitRoom: String = sessionTemplate.visitRoom,
+    slotDate: LocalDate = sessionTemplate.validFromDate,
+    visitStart: LocalTime = sessionTemplate.startTime,
+    visitEnd: LocalTime = sessionTemplate.endTime,
+    visitType: VisitType = sessionTemplate.visitType,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    activePrison: Boolean = sessionTemplate.prison.active,
+    outcomeStatus: OutcomeStatus? = null,
+    createApplication: Boolean = true,
+    createContact: Boolean = false,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
+    val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
 
-    return visitRepository.saveAndFlush(
-      Visit(
-        visitStatus = visitStatus,
-        prisonerId = prisonerId,
-        prisonId = prison.id,
-        prison = prison,
-        visitRoom = visitRoom,
-        visitStart = visitStart,
-        visitEnd = visitEnd,
-        visitType = visitType,
-        visitRestriction = visitRestriction,
-        _reference = reference,
-        outcomeStatus = outcomeStatus,
-        sessionTemplateReference = sessionTemplateReference,
-      ),
+    val notSaved = Visit(
+      visitStatus = visitStatus,
+      prisonerId = prisonerId,
+      prisonId = prison.id,
+      prison = prison,
+      visitRoom = visitRoom,
+      sessionSlotId = sessionSlot.id,
+      sessionSlot = sessionSlot,
+      visitType = visitType,
+      visitRestriction = visitRestriction,
     )
+
+    notSaved.outcomeStatus = outcomeStatus
+
+    val savedVisit = visitRepository.saveAndFlush(notSaved)
+
+    if (createContact) {
+      createContact(visit = savedVisit)
+    }
+
+    return if (createApplication) {
+      savedVisit.addApplication(applicationEntityHelper.create(savedVisit))
+      savedVisit
+    } else {
+      savedVisit
+    }
   }
 
   fun createContact(
     visit: Visit,
-    name: String,
-    phone: String,
+    name: String = "bob",
+    phone: String = "0123456789",
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,
@@ -218,8 +281,8 @@ class VisitEntityHelper(
     return visitRepository.saveAndFlush(visit)
   }
 
-  fun getVisit(applicationReference: String): Visit? {
-    return visitRepository.findApplication(applicationReference)
+  fun getBookedVisit(reference: String): Visit? {
+    return visitRepository.findBookedVisit(reference)
   }
 }
 
@@ -237,8 +300,23 @@ class EventAuditEntityHelper(
   ): EventAudit {
     return create(
       reference = visit.reference,
-      applicationReference = visit.applicationReference,
-      sessionTemplateReference = visit.sessionTemplateReference,
+      applicationReference = visit.getLastApplication()?.reference ?: "",
+      sessionTemplateReference = visit.sessionSlot.sessionTemplateReference,
+      actionedBy = actionedBy,
+      type = type,
+      applicationMethodType = applicationMethodType,
+    )
+  }
+
+  fun create(
+    application: Application,
+    actionedBy: String = "ACTIONED_BY",
+    applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
+    type: EventAuditType = EventAuditType.BOOKED_VISIT,
+  ): EventAudit {
+    return create(
+      applicationReference = application.reference,
+      sessionTemplateReference = application.sessionSlot.sessionTemplateReference,
       actionedBy = actionedBy,
       type = type,
       applicationMethodType = applicationMethodType,
@@ -330,7 +408,7 @@ class SessionTemplateEntityHelper(
 
   fun create(
     name: String = "sessionTemplate_",
-    validFromDate: LocalDate = LocalDate.of(2021, 10, 23),
+    validFromDate: LocalDate = LocalDate.now(),
     validToDate: LocalDate? = null,
     closedCapacity: Int = 5,
     openCapacity: Int = 10,
@@ -425,9 +503,14 @@ class DeleteEntityHelper(
   private val eventAuditRepository: TestEventAuditRepository,
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val vsipReportingRepository: VSIPReportingRepository,
+  private val testApplicationRepository: TestApplicationRepository,
+  private val testSessionSlotRepository: TestSessionSlotRepository,
+
 ) {
 
+  @Transactional
   fun deleteAll() {
+    println("Delete all")
     sessionRepository.deleteAll()
     sessionRepository.flush()
     sessionLocationGroupRepository.deleteAll()
@@ -450,6 +533,11 @@ class DeleteEntityHelper(
     visitNotificationEventRepository.flush()
     vsipReportingRepository.deleteAll()
     vsipReportingRepository.flush()
+    testApplicationRepository.deleteAll()
+    testApplicationRepository.flush()
+    testSessionSlotRepository.deleteAll()
+    testSessionSlotRepository.flush()
+    println("Delete all end")
   }
 }
 

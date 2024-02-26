@@ -31,6 +31,13 @@ class SessionDatesUtil {
     )
   }
 
+  fun getFirstBookableSessionDay(
+    sessionTemplate: SessionTemplate,
+  ): LocalDate {
+    val firstBookableSessionDay = sessionTemplate.validFromDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
+    return getFirstBookableSessionDayAdjustForFrequency(firstBookableSessionDay, sessionTemplate)
+  }
+
   private fun getFirstBookableSessionDayAdjustForFrequency(
     firstBookableSessionDay: LocalDate,
     sessionTemplate: SessionTemplate,

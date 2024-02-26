@@ -1,23 +1,3 @@
 -- start a transaction
-BEGIN;
-
-    set schema 'public';
-
-    CREATE TEMP TABLE tmp_future_visits(visit_id INT NOT NULL);
-
-    INSERT INTO tmp_future_visits(visit_id)
-                SELECT v.id  FROM visit v
-                        JOIN legacy_data ld ON ld.visit_id = v.id
-                        WHERE v.visit_start > current_date + INTERVAL '6 months';
-
-    DELETE FROM visit WHERE id IN (SELECT visit_id FROM tmp_future_visits);
-    DELETE FROM visit_contact WHERE visit_id IN (SELECT visit_id FROM tmp_future_visits);
-    DELETE FROM visit_notes WHERE visit_id IN (SELECT visit_id FROM tmp_future_visits);
-    DELETE FROM visit_support WHERE visit_id IN (SELECT visit_id FROM tmp_future_visits);
-    DELETE FROM visit_visitor WHERE visit_id IN (SELECT visit_id FROM tmp_future_visits);
-    DELETE FROM legacy_data WHERE visit_id IN (SELECT visit_id FROM tmp_future_visits);
-
-    DROP TABLE tmp_future_visits;
-
-
-END;
+-- no longer used you will need to run this command on the DB before scipt is run
+-- Update flyway_schema_history set checksum = <add_check_sum_here> WHERE script = 'data/R__remove_legacy_visits_that_are_six_months_in_future.sql'

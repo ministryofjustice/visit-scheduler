@@ -4,8 +4,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Configuration
 
 @Configuration
-class ExpiredVisitTaskConfiguration(
-  @Value("\${task.expired-visit.enabled:false}") val expiredVisitTaskEnabled: Boolean,
+class ExpiredApplicationTaskConfiguration(
+  @Value("\${task.expired-visit.enabled:false}") val expiredApplicationTaskEnabled: Boolean,
 ) {
   companion object {
     const val LOCK_AT_LEAST_FOR = "PT5M"

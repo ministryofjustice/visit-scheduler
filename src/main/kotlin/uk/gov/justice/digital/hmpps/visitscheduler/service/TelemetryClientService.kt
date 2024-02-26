@@ -6,10 +6,13 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -24,6 +27,9 @@ class TelemetryClientService(
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
 
+  @Autowired
+  private lateinit var applicationDtoBuilder: ApplicationDtoBuilder
+
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
@@ -35,6 +41,23 @@ class TelemetryClientService(
   ): MutableMap<String, String> {
     val visitDto = visitDtoBuilder.build(visitEntity)
     return createVisitTrackEventFromVisitDto(visitDto, actionedBy, applicationMethodType)
+  }
+
+  fun createApplicationTrackEventFromVisitEntity(
+    application: Application,
+    actionedBy: String? = null,
+    applicationMethodType: ApplicationMethodType? = null,
+  ): MutableMap<String, String> {
+    val applicationDto = applicationDtoBuilder.build(application)
+    return createApplicationTrackEventFromVisitDto(applicationDto, actionedBy = actionedBy)
+  }
+
+  fun createApplicationVisitTrackEventFromVisitEntity(
+    applicationDto: ApplicationDto,
+    visit: Visit ? = null,
+    actionedBy: String? = null,
+  ): MutableMap<String, String> {
+    return createApplicationTrackEventFromVisitDto(applicationDto, visit, actionedBy)
   }
 
   fun createVisitTrackEventFromVisitDto(
@@ -60,6 +83,28 @@ class TelemetryClientService(
 
     applicationMethodType?.let {
       data.put("applicationMethodType", it.name)
+    }
+
+    return data
+  }
+
+  fun createApplicationTrackEventFromVisitDto(
+    application: ApplicationDto,
+    visitEntity: Visit? = null,
+    actionedBy: String? = null,
+  ): MutableMap<String, String> {
+    val data = mutableMapOf(
+      "reference" to (visitEntity?.let { visitEntity.reference } ?: ""),
+      "applicationReference" to application.reference,
+      "prisonerId" to application.prisonerId,
+      "prisonId" to application.prisonCode,
+      "visitType" to application.visitType.name,
+      "visitRestriction" to application.visitRestriction.name,
+      "visitStart" to formatDateTimeToString(application.startTimestamp),
+      "reserved" to application.reserved.toString(),
+    )
+    actionedBy?.let {
+      data.put("actionedBy", it)
     }
 
     return data

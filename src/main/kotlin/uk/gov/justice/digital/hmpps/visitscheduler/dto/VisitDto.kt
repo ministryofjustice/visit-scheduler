@@ -42,9 +42,9 @@ data class VisitDto(
   val endTimestamp: LocalDateTime,
   @Schema(description = "Visit Notes", required = false)
   val visitNotes: List<VisitNoteDto> = listOf(),
-  @Schema(description = "Contact associated with the visit", required = false)
-  val visitContact: ContactDto? = null,
-  @Schema(description = "List of visitors associated with the visit", required = false)
+  @Schema(description = "Contact associated with the visit", required = true)
+  val visitContact: ContactDto,
+  @Schema(description = "List of visitors associated with the visit", required = true)
   val visitors: List<VisitorDto> = listOf(),
   @Schema(description = "List of additional support associated with the visit", required = false)
   val visitorSupport: List<VisitorSupportDto> = listOf(),

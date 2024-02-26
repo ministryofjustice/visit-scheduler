@@ -1,7 +1,6 @@
 generic-service:
   nameOverride: visit-scheduler
   serviceAccountName: visit-someone-in-prison
-  replicaCount: 4
   productId: "DPS035"
 
   image:
@@ -14,6 +13,17 @@ generic-service:
     host: app-hostname.local # override per environment
     tlsSecretName: visit-scheduler-cert
     path: /
+
+  livenessProbe:
+    initialDelaySeconds: 780
+    periodSeconds: 30
+    failureThreshold: 1
+
+  readinessProbe:
+      initialDelaySeconds: 780
+      periodSeconds: 30
+      failureThreshold: 1
+
 
   # Environment variables to load into the deployment
   env:
