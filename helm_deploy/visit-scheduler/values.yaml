@@ -14,11 +14,6 @@ generic-service:
     tlsSecretName: visit-scheduler-cert
     path: /
 
-  startupProbe:
-    initialDelaySeconds: 780
-    periodSeconds: 30
-    failureThreshold: 1
-
   livenessProbe:
     initialDelaySeconds: 780
     periodSeconds: 30
