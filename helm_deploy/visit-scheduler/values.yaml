@@ -1,7 +1,7 @@
 generic-service:
   nameOverride: visit-scheduler
   serviceAccountName: visit-someone-in-prison
-  replicaCount: 4
+  replicaCount: 1
   productId: "DPS035"
 
   image:
