@@ -1,7 +1,7 @@
 generic-service:
   nameOverride: visit-scheduler
   serviceAccountName: visit-someone-in-prison
-  replicaCount: 1
+  replicaCount: 4
   productId: "DPS035"
 
   image:
@@ -16,6 +16,7 @@ generic-service:
     path: /
 
   livenessProbe:
+    initialDelaySeconds: 720
     timeoutSeconds: 720
     failureThreshold: 3
 
