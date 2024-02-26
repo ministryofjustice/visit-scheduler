@@ -7,6 +7,16 @@ generic-service:
   ingress:
     host: visit-scheduler.prison.service.justice.gov.uk
 
+  livenessProbe:
+    initialDelaySeconds: 780
+    periodSeconds: 30
+    failureThreshold: 1
+
+  readinessProbe:
+    initialDelaySeconds: 780
+    periodSeconds: 30
+    failureThreshold: 1
+
   env:
     HMPPS_AUTH_URL: https://sign-in.hmpps.service.justice.gov.uk/auth
     PRISON_API_URL: https://api.prison.service.justice.gov.uk
