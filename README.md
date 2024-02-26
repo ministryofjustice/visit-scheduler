@@ -98,6 +98,23 @@ psql \
 --password <PASSWORD>
 ```
 
+***Useful psql commands***
+
+list active sqls
+```
+SELECT pid,query_start,query FROM pg_stat_activity WHERE state = 'active';
+```
+
+***Cancel active sql's***
+```
+SELECT pg_cancel_backend(24544);
+```
+
+## Restoring DB from last back up
+
+https://user-guide.cloud-platform.service.justice.gov.uk/documentation/other-topics/rds-snapshots.html
+
+
 ## Swagger v3
 Visit Scheduler
 ```

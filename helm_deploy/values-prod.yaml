@@ -2,7 +2,7 @@
 # Per environment values which override defaults in visit-scheduler/values.yaml
 
 generic-service:
-  replicaCount: 4
+  replicaCount: 1
 
   ingress:
     host: visit-scheduler.prison.service.justice.gov.uk
