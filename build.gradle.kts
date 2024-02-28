@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.15.2"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "5.15.3"
   kotlin("plugin.spring") version "1.9.22"
   kotlin("plugin.jpa") version "1.9.22"
   idea
@@ -42,7 +42,7 @@ dependencies {
   implementation("org.apache.commons:commons-csv:1.10.0")
   implementation("org.freemarker:freemarker:2.3.32")
 
-  runtimeOnly("org.postgresql:postgresql:42.7.1")
+  runtimeOnly("org.postgresql:postgresql:42.7.2")
   runtimeOnly("org.flywaydb:flyway-core")
 
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
@@ -56,9 +56,9 @@ dependencies {
   testImplementation("org.springframework.boot:spring-boot-starter-test")
   testImplementation("io.jsonwebtoken:jjwt:0.12.5")
   testImplementation("org.springframework.security:spring-security-test")
-  testImplementation("org.testcontainers:postgresql:1.19.5")
+  testImplementation("org.testcontainers:postgresql:1.19.6")
   testImplementation("org.testcontainers:localstack:1.19.3")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.660")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.668")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.15.0")
 }
 
