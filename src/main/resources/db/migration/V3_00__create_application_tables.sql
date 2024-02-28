@@ -1,4 +1,6 @@
+-- Create tables for application refactor
 -- Before the application migration is run it may be a good idea to run 'VACUUM FULL;' command!
+-- With migrating large amounts of data it's much faster to insert rather than to update.
 
 CREATE TABLE tmp_visit (
                            id        serial NOT NULL PRIMARY KEY,
@@ -36,7 +38,8 @@ CREATE TABLE application (
                              modify_timestamp timestamp NULL
 );
 
--- Create session slot table
+
+
 CREATE TABLE session_slot
 (
     id                          serial NOT NULL PRIMARY KEY,
@@ -47,6 +50,17 @@ CREATE TABLE session_slot
     slot_start            		timestamp       with time zone NOT NULL,
     slot_end                    timestamp       with time zone NOT NULL
 );
+
+CREATE TABLE session_slot_no_order
+(
+    id                      	serial          NOT NULL PRIMARY KEY,
+    session_template_reference 	text,
+    prison_id                   integer         NOT NULL,
+    slot_date              		date            NOT NULL,
+    slot_start            		timestamp       with time zone NOT NULL,
+    slot_end                    timestamp       with time zone NOT NULL
+);
+
 
 CREATE TABLE application_contact (
                                      id        serial NOT NULL PRIMARY KEY,
