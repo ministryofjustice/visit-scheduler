@@ -74,7 +74,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     visitEntityHelper.createNote(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
     visitEntityHelper.createContact(visit = visit, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 321L, visitContact = true)
-    visitEntityHelper.createSupport(visit = visit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.createSupport(visit = visit, description = "Some Text")
 
     bookedVisit = visitEntityHelper.save(visit)
   }
@@ -313,7 +313,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       applicationRestriction = visitRestriction,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = VisitorSupportDto("Some Text"),
       actionedBy = actionedByUserName,
       sessionTemplateReference = sessionTemplateReference,
     )
@@ -374,19 +374,10 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       }
     }
 
-    val supportDtoList = returnedApplication.visitorSupport.toList()
     createApplicationRequest.visitorSupport?.let {
-      assertThat(returnedApplication.visitorSupport.size).isEqualTo(it.size)
-      it.forEachIndexed { index, supportDto ->
-        assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
-        assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
-      }
+      assertThat(returnedApplication.visitorSupport).isEqualTo(createApplicationRequest.visitorSupport)
     } ?: run {
-      assertThat(returnedApplication.visitorSupport.size).isEqualTo(lastBooking.support.size)
-      lastBooking.support.forEachIndexed { index, support ->
-        assertThat(supportDtoList[index].type).isEqualTo(support.type)
-        assertThat(supportDtoList[index].text).isEqualTo(support.text)
-      }
+      assertThat(returnedApplication.visitorSupport).isEqualTo(lastBooking.support)
     }
 
     assertThat(returnedApplication.createdTimestamp).isNotNull()

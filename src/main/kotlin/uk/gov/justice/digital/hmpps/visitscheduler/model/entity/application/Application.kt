@@ -80,8 +80,8 @@ class Application(
   @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "application", orphanRemoval = true)
   var visitors: MutableList<ApplicationVisitor> = mutableListOf()
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "application", orphanRemoval = true)
-  var support: MutableList<ApplicationSupport> = mutableListOf()
+  @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "application", orphanRemoval = true)
+  var support: ApplicationSupport? = null
 
   @CreationTimestamp
   @Column

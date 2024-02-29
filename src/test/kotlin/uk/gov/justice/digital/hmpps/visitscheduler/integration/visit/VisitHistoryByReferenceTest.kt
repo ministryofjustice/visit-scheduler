@@ -209,7 +209,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = VisitorSupportDto("Some Text"),
       actionedBy = actionedBy,
     )
   }

@@ -152,12 +152,8 @@ class VisitEntityHelper(
       visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
     }
 
-    application.support.let {
-      application.support.map { applicationSupport ->
-        with(applicationSupport) {
-          visit.support.add(VisitSupport(visit = visit, visitId = visit.id, type = type, text = text))
-        }
-      }
+    application.support?.let {
+      visit.support = VisitSupport(visit = visit, visitId = visit.id, description = it.description)
     }
 
     application.visitors.let {
@@ -249,17 +245,14 @@ class VisitEntityHelper(
 
   fun createSupport(
     visit: Visit,
-    name: String,
-    details: String?,
+    description: String,
   ) {
-    visit.support.add(
+    visit.support =
       VisitSupport(
-        type = name,
         visitId = visit.id,
-        text = details,
+        description = description,
         visit = visit,
-      ),
-    )
+      )
   }
 
   fun createNote(

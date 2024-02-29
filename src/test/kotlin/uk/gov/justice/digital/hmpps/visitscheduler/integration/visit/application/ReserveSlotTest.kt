@@ -70,7 +70,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = VisitorSupportDto("Some Text"),
       actionedBy = actionedBy,
     )
   }
@@ -168,9 +168,7 @@ class ReserveSlotTest : IntegrationTestBase() {
         VisitorDto(nomisPersonId = 123, visitContact = true),
         VisitorDto(nomisPersonId = 124, visitContact = true),
       ),
-      visitorSupport = setOf(
-        VisitorSupportDto("OTHER", "Some Text"),
-      ),
+      visitorSupport = VisitorSupportDto("Some Text"),
       actionedBy = actionedByUserName,
     )
 
@@ -191,7 +189,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
-      visitorSupport = setOf(VisitorSupportDto("ANYTHINGWILLDO")),
+      visitorSupport = VisitorSupportDto("ANYTHINGWILLDO"),
       actionedBy = actionedByUserName,
     )
 
@@ -305,19 +303,10 @@ class ReserveSlotTest : IntegrationTestBase() {
       }
     }
 
-    val supportDtoList = returnedApplication.visitorSupport.toList()
     createApplicationRequest.visitorSupport?.let {
-      assertThat(returnedApplication.visitorSupport.size).isEqualTo(it.size)
-      it.forEachIndexed { index, supportDto ->
-        assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
-        assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
-      }
+      assertThat(it.description).isEqualTo(returnedApplication.visitorSupport?.description)
     } ?: run {
-      assertThat(returnedApplication.visitorSupport.size).isEqualTo(persistedApplication.support.size)
-      persistedApplication.support.forEachIndexed { index, support ->
-        assertThat(supportDtoList[index].type).isEqualTo(support.type)
-        assertThat(supportDtoList[index].text).isEqualTo(support.text)
-      }
+      assertThat(persistedApplication.support).isEqualTo(returnedApplication.visitorSupport?.description)
     }
 
     assertThat(returnedApplication.createdTimestamp).isNotNull()

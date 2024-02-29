@@ -271,8 +271,8 @@ abstract class IntegrationTestBase {
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
-    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
-    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER HELP", details = "Some More Text")
+    applicationEntityHelper.createSupport(application = applicationEntity, description = "Some Text")
+    applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")
     applicationEntityHelper.save(applicationEntity)
     return applicationEntity
   }

@@ -29,6 +29,7 @@ data class ChangeApplicationDto(
   @field: VisitorCountValidation
   @field:VisitorContactValidation
   val visitors: Set<@Valid VisitorDto>? = null,
-  @Schema(description = "List of additional support associated with the visit", required = false)
-  val visitorSupport: Set<@Valid VisitorSupportDto>? = null,
+  @Schema(description = "additional support associated with the visit", required = false)
+  @Valid
+  var visitorSupport: VisitorSupportDto? = null,
 )

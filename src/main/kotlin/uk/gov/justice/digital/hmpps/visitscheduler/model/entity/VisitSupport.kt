@@ -6,7 +6,7 @@ import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
-import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import jakarta.persistence.UniqueConstraint
 import org.hibernate.Hibernate
@@ -15,7 +15,7 @@ import org.hibernate.Hibernate
 @Table(
   name = "VISIT_SUPPORT",
   uniqueConstraints = [
-    UniqueConstraint(columnNames = ["VISIT_ID", "TYPE"]),
+    UniqueConstraint(columnNames = ["VISIT_ID"]),
   ],
 )
 class VisitSupport(
@@ -26,15 +26,12 @@ class VisitSupport(
   val id: Long = 0,
 
   @Column(name = "VISIT_ID", nullable = false)
-  var visitId: Long,
+  val visitId: Long,
 
-  @Column(name = "TYPE", nullable = false)
-  var type: String,
+  @Column(name = "DESCRIPTION", nullable = false)
+  val description: String,
 
-  @Column(name = "TEXT", nullable = true)
-  var text: String? = null,
-
-  @ManyToOne
+  @OneToOne
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
   val visit: Visit,
 
@@ -51,6 +48,6 @@ class VisitSupport(
   override fun hashCode(): Int = id.hashCode()
 
   override fun toString(): String {
-    return this::class.simpleName + "(id=$id, text=$text)"
+    return this::class.simpleName + "(id=$id, text=$description)"
   }
 }

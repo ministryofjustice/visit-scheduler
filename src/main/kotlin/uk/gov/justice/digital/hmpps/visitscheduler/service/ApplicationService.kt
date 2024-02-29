@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplica
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
@@ -30,7 +29,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT
@@ -43,7 +41,6 @@ import java.time.LocalDateTime
 class ApplicationService(
   private val applicationRepo: ApplicationRepository,
   private val visitRepo: VisitRepository,
-  private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClientService: TelemetryClientService,
   private val sessionTemplateService: SessionTemplateService,
   private val eventAuditRepository: EventAuditRepository,
@@ -123,13 +120,8 @@ class ApplicationService(
       applicationEntity.visitors.add(createApplicationVisitor(applicationEntity, it.nomisPersonId, it.visitContact))
     }
 
-    createApplicationDto.visitorSupport?.let { supportList ->
-      supportList.forEach {
-        if (!supportTypeRepository.existsByName(it.type)) {
-          throw SupportNotFoundException("Invalid support ${it.type} not found")
-        }
-        applicationEntity.support.add(createApplicationSupport(applicationEntity, it.type, it.text))
-      }
+    createApplicationDto.visitorSupport?.let {
+      applicationEntity.support = createApplicationSupport(applicationEntity, it.description)
     }
 
     visit?.let {
@@ -173,13 +165,10 @@ class ApplicationService(
     }
 
     changeApplicationDto.visitorSupport?.let { visitSupportUpdate ->
-      application.support.clear()
-      applicationRepo.saveAndFlush(application)
-      visitSupportUpdate.forEach {
-        if (!supportTypeRepository.existsByName(it.type)) {
-          throw SupportNotFoundException("Invalid support ${it.type} not found")
-        }
-        application.support.add(createApplicationSupport(application, it.type, it.text))
+      application.support?.let {
+        it.description = visitSupportUpdate.description
+      } ?: run {
+        application.support = createApplicationSupport(application, visitSupportUpdate.description)
       }
     }
 
@@ -280,12 +269,11 @@ class ApplicationService(
     )
   }
 
-  private fun createApplicationSupport(application: Application, type: String, text: String?): ApplicationSupport {
+  private fun createApplicationSupport(application: Application, description: String): ApplicationSupport {
     return ApplicationSupport(
       applicationId = application.id,
       application = application,
-      type = type,
-      text = text,
+      description = description,
     )
   }
 

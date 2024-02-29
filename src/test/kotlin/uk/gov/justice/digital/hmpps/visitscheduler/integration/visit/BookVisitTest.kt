@@ -57,7 +57,7 @@ class BookVisitTest : IntegrationTestBase() {
     reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
     applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = reservedApplication, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = reservedApplication, description = "Some Text")
     applicationEntityHelper.save(reservedApplication)
   }
 
@@ -155,7 +155,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348811539")
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
-    applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.createSupport(application = newApplication, description = "Some More Text")
     applicationEntityHelper.save(newApplication)
 
     originalVisit.addApplication(newApplication)
@@ -189,7 +189,7 @@ class BookVisitTest : IntegrationTestBase() {
     val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = true)
     applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = completedApplication, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = completedApplication, description = "Some Text")
     applicationEntityHelper.save(reservedApplication)
 
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
@@ -200,7 +200,7 @@ class BookVisitTest : IntegrationTestBase() {
     visitEntityHelper.createNote(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
     visitEntityHelper.createContact(visit = visit, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 321L, visitContact = true)
-    visitEntityHelper.createSupport(visit = visit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.createSupport(visit = visit, description = "Some Text")
     visitEntityHelper.save(visit)
 
     val applicationReference = completedApplication.reference
@@ -224,7 +224,7 @@ class BookVisitTest : IntegrationTestBase() {
     val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = false)
     applicationEntityHelper.createContact(application = expiredApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = expiredApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = expiredApplication, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = expiredApplication, description = "Some Text")
     applicationEntityHelper.save(reservedApplication)
 
     val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
@@ -235,7 +235,7 @@ class BookVisitTest : IntegrationTestBase() {
     visitEntityHelper.createNote(visit = expiredVisit, text = "Some text comment", type = VISIT_COMMENT)
     visitEntityHelper.createContact(visit = expiredVisit, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createVisitor(visit = expiredVisit, nomisPersonId = 321L, visitContact = true)
-    visitEntityHelper.createSupport(visit = expiredVisit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.createSupport(visit = expiredVisit, description = "Some Text")
     visitEntityHelper.save(expiredVisit)
 
     val reference = expiredVisit.reference
@@ -271,9 +271,7 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitDto.visitors.size).isEqualTo(application.visitors.size)
     assertThat(visitDto.visitors[0].nomisPersonId).isEqualTo(application.visitors[0].nomisPersonId)
     assertThat(visitDto.visitors[0].visitContact).isEqualTo(application.visitors[0].contact!!)
-    assertThat(visitDto.visitorSupport.size).isEqualTo(application.support.size)
-    assertThat(visitDto.visitorSupport[0].type).isEqualTo(application.support[0].type)
-    assertThat(visitDto.visitorSupport[0].text).isEqualTo(application.support[0].text!!)
+    assertThat(visitDto.visitorSupport?.description).isEqualTo(application.support?.description)
     assertThat(visitDto.createdTimestamp).isNotNull()
   }
 
