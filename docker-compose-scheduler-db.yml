@@ -1,7 +1,7 @@
 version: "3.8"
 services:
   visit-scheduler-db:
-    image: postgres:13.2
+    image: postgres:15.5
     networks:
       - hmpps
     container_name: visit-scheduler-db

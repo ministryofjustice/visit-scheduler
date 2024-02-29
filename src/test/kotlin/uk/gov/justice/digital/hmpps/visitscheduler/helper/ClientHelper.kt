@@ -158,7 +158,6 @@ fun callVisitBook(
   applicationReference: String,
   applicationMethodType: ApplicationMethodType = PHONE,
   bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType),
-
 ): ResponseSpec {
   return callPut(
     bodyValue = bookingRequestDto,

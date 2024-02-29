@@ -58,7 +58,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedApplication, name = "OTHER", details = "Some Text")
-    applicationEntityHelper.save(reservedApplication)
+    reservedApplication = applicationEntityHelper.save(reservedApplication)
   }
 
   @Test
@@ -145,7 +145,7 @@ class BookVisitTest : IntegrationTestBase() {
     val slotDateInThePast = LocalDate.now().plusDays(1)
     val originalVisit = createApplicationAndVisit(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
 
-    val newApplication = applicationEntityHelper.create(
+    var newApplication = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       completed = false,
       reservedSlot = true,
@@ -156,7 +156,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
     applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some More Text")
-    applicationEntityHelper.save(newApplication)
+    newApplication = applicationEntityHelper.save(newApplication)
 
     originalVisit.addApplication(newApplication)
 
@@ -190,7 +190,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = completedApplication, name = "OTHER", details = "Some Text")
-    applicationEntityHelper.save(reservedApplication)
+    reservedApplication = applicationEntityHelper.save(reservedApplication)
 
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
     visit.addApplication(completedApplication)

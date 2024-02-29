@@ -201,7 +201,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationDto::class.java)
   }
 
-  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.actionedByUserName, sessionTemplate: SessionTemplate): CreateApplicationDto {
+  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.ACTIONED_BY_USER_NAME, sessionTemplate: SessionTemplate): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = "FF0000FF",
       sessionDate = startDate,
