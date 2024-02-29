@@ -46,7 +46,7 @@ data class VisitDto(
   val visitContact: ContactDto,
   @Schema(description = "List of visitors associated with the visit", required = true)
   val visitors: List<VisitorDto> = listOf(),
-  @Schema(description = "additional support associated with the visit", required = false)
+  @Schema(description = "Additional support associated with the visit", required = false)
   val visitorSupport: VisitorSupportDto ? = null,
   @Schema(description = "The visit created date and time", example = "2018-12-01T13:45:00", required = true)
   @field:NotNull
