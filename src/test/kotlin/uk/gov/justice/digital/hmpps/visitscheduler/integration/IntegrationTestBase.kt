@@ -273,8 +273,8 @@ abstract class IntegrationTestBase {
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
     applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
     applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER HELP", details = "Some More Text")
-    applicationEntityHelper.save(applicationEntity)
-    return applicationEntity
+
+    return applicationEntityHelper.save(applicationEntity)
   }
 
   fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit {
