@@ -1,11 +1,3 @@
--- noinspection SqlWithoutWhere
-DELETE FROM support_type;
-
-INSERT INTO support_type(code, name, description)
-VALUES
-    (1010, 'WHEELCHAIR', 'Wheelchair ramp'),
-    (1020, 'INDUCTION_LOOP','Portable induction loop for people with hearing aids'),
-    (1030, 'BSL_INTERPRETER','British Sign Language (BSL) Interpreter'),
-    (1040, 'MASK_EXEMPT','Face covering exemption'),
-    (1050, 'OTHER','Other')
-;
+-- start a transaction
+-- no longer used you will need to run this command on the DB before script is run
+-- Update flyway_schema_history set checksum = <add_check_sum_here> WHERE script = 'data/R__add_support.sql'

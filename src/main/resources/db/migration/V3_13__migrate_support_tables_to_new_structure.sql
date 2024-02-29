@@ -62,5 +62,10 @@ TRUNCATE TABLE application_support;
 INSERT INTO application_support (application_id, description)
     SELECT application_id, string_agg(description,'. ') as description FROM tmp_application_support group by application_id;
 
+-- Remove temptables
 DROP TABLE IF EXISTS tmp_visit_support;
 DROP TABLE IF EXISTS tmp_application_support;
+
+-- add constraint of one to one
+ALTER TABLE visit_support ADD CONSTRAINT visit_support_unique_constraint UNIQUE (visit_id);
+ALTER TABLE application_support ADD CONSTRAINT application_support_unique_constraint UNIQUE (application_id);
