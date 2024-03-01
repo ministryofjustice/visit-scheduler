@@ -381,7 +381,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     val application = this.testApplicationRepository.findByReference(applicationDto.reference)
 
-    Assertions.assertThat(application?.support).isEqualTo(applicationFull.support)
+    Assertions.assertThat(application?.support!!.description).isEqualTo(applicationFull.support!!.description)
   }
 
   @Test

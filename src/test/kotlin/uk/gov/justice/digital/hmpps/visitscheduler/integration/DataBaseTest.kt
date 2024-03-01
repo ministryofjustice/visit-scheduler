@@ -45,7 +45,7 @@ class DataBaseTest(
     visitEntityHelper.createContact(visit = visitWithApplication, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createVisitor(visit = visitWithApplication, nomisPersonId = 321L, visitContact = true)
     visitEntityHelper.createSupport(visit = visitWithApplication, description = "Some Text")
-    visitEntityHelper.save(visitWithApplication)
+    visitWithApplication = visitEntityHelper.save(visitWithApplication)
 
     applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = true)
     applicationEntityHelper.createContact(application = applicationWithVisit, name = "Jane Doe", phone = "01234 098765")
@@ -54,7 +54,6 @@ class DataBaseTest(
     applicationEntityHelper.save(applicationWithVisit)
 
     visitWithApplication.addApplication(applicationWithVisit)
-    visitEntityHelper.save(visitWithApplication)
 
     sessionTemplateDefault = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))

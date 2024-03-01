@@ -510,7 +510,7 @@ class DeleteEntityHelper(
     sessionLocationGroupRepository.flush()
     permittedSessionLocationRepository.deleteAll()
     permittedSessionLocationRepository.flush()
-    visitRepository.deleteAllInBatch()
+    visitRepository.deleteAll()
     visitRepository.flush()
     permittedSessionLocationRepository.deleteAll()
     permittedSessionLocationRepository.flush()

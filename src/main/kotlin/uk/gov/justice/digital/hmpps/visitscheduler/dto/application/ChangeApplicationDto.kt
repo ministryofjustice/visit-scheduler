@@ -25,7 +25,7 @@ data class ChangeApplicationDto(
   val visitContact: ContactDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false)
   @field:NullableNotEmpty
-  @field: VisitorCountValidation
+  @field:VisitorCountValidation
   @field:VisitorContactValidation
   val visitors: Set<@Valid VisitorDto>? = null,
   @Schema(description = "additional support associated with the visit, if null support will not be updated", required = false)

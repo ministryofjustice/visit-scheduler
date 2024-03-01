@@ -401,9 +401,9 @@ class VisitService(
 
   fun getFutureVisitsBy(
     prisonerNumber: String,
-    prisonCode: String ? = null,
+    prisonCode: String? = null,
     startDateTime: LocalDateTime = LocalDateTime.now(),
-    endDateTime: LocalDateTime ? = null,
+    endDateTime: LocalDateTime? = null,
   ): List<VisitDto> {
     return this.visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
