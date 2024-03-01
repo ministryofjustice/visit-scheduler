@@ -121,7 +121,9 @@ class ApplicationService(
     }
 
     createApplicationDto.visitorSupport?.let {
-      applicationEntity.support = createApplicationSupport(applicationEntity, it.description)
+      if (it.description.trim().isNotEmpty()) {
+        applicationEntity.support = createApplicationSupport(applicationEntity, it.description)
+      }
     }
 
     visit?.let {
