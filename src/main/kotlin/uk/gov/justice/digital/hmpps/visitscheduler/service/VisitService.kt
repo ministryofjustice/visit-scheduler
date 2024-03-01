@@ -255,7 +255,7 @@ class VisitService(
       PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
 
     val results = if (sessionTemplateReference != null) {
-       visitRepository.findVisitsBySessionTemplateReference(
+      visitRepository.findVisitsBySessionTemplateReference(
         sessionTemplateReference = sessionTemplateReference,
         fromDate = fromDate,
         toDate = toDate,
