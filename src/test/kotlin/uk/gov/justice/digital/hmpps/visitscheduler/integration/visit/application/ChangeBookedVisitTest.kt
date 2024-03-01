@@ -22,8 +22,8 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
@@ -313,7 +313,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       applicationRestriction = visitRestriction,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = VisitorSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = actionedByUserName,
       sessionTemplateReference = sessionTemplateReference,
     )
@@ -375,9 +375,9 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     }
 
     createApplicationRequest.visitorSupport?.let {
-      assertThat(returnedApplication.visitorSupport).isEqualTo(createApplicationRequest.visitorSupport)
+      assertThat(returnedApplication.visitorSupport?.description).isEqualTo(createApplicationRequest.visitorSupport?.description)
     } ?: run {
-      assertThat(returnedApplication.visitorSupport).isEqualTo(lastBooking.support)
+      assertThat(returnedApplication.visitorSupport?.description).isEqualTo(lastBooking.support?.description)
     }
 
     assertThat(returnedApplication.createdTimestamp).isNotNull()

@@ -21,8 +21,8 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getSubmitApplicationUrl
@@ -70,7 +70,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = VisitorSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = actionedBy,
     )
   }
@@ -168,7 +168,7 @@ class ReserveSlotTest : IntegrationTestBase() {
         VisitorDto(nomisPersonId = 123, visitContact = true),
         VisitorDto(nomisPersonId = 124, visitContact = true),
       ),
-      visitorSupport = VisitorSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = actionedByUserName,
     )
 
@@ -189,7 +189,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
-      visitorSupport = VisitorSupportDto("ANYTHINGWILLDO"),
+      visitorSupport = ApplicationSupportDto("ANYTHINGWILLDO"),
       actionedBy = actionedByUserName,
     )
 

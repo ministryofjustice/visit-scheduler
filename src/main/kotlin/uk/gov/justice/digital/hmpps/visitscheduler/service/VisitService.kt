@@ -161,8 +161,14 @@ class VisitService(
       }
     }
 
-    application.support?.let {
-      booking.support = VisitSupport(visit = booking, visitId = booking.id, description = it.description)
+    application.support?.let { applicationSupport ->
+      booking.support?.let {
+        it.description = applicationSupport.description
+      } ?: run {
+        booking.support = VisitSupport(visit = booking, visitId = booking.id, description = applicationSupport.description)
+      }
+    } ?: run {
+      booking.support = null
     }
 
     application.visitors.let {

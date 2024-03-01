@@ -165,10 +165,15 @@ class ApplicationService(
     }
 
     changeApplicationDto.visitorSupport?.let { visitSupportUpdate ->
-      application.support?.let {
-        it.description = visitSupportUpdate.description
-      } ?: run {
-        application.support = createApplicationSupport(application, visitSupportUpdate.description)
+      val deleteSupport = visitSupportUpdate.description.trim().isEmpty()
+      if (deleteSupport) {
+        application.support = null
+      } else {
+        application.support?.let {
+          it.description = visitSupportUpdate.description
+        } ?: run {
+          application.support = createApplicationSupport(application, visitSupportUpdate.description)
+        }
       }
     }
 

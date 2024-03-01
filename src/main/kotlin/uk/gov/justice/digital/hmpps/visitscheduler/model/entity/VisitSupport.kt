@@ -29,7 +29,7 @@ class VisitSupport(
   val visitId: Long,
 
   @Column(name = "DESCRIPTION", nullable = false)
-  val description: String,
+  var description: String? = null,
 
   @OneToOne
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)

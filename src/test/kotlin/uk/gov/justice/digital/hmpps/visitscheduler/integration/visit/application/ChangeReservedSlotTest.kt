@@ -21,8 +21,8 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
@@ -79,7 +79,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       applicationRestriction = swapRestriction(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
-      visitorSupport = VisitorSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto("Some Text"),
     )
 
     val applicationReference = applicationFull.reference
@@ -107,7 +107,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       applicationRestriction = swapRestriction(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
-      visitorSupport = VisitorSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto("Some Text"),
     )
 
     val applicationReference = applicationMin.reference
@@ -293,7 +293,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `change reserved slot - amend support`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      visitorSupport = VisitorSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto("Some Other Text"),
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
     )
@@ -316,12 +316,81 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `change reserved slot - delete support when empty description given`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      visitorSupport = ApplicationSupportDto(""),
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationFull.sessionSlot.slotDate,
+    )
+
+    val applicationReference = applicationFull.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+    val applicationDto = getApplicationDto(returnResult)
+
+    val application = this.testApplicationRepository.findByReference(applicationDto.reference)
+
+    Assertions.assertThat(application?.support).isNull()
+  }
+
+  @Test
+  fun `change reserved slot - delete support when blank description given`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      visitorSupport = ApplicationSupportDto("    "),
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationFull.sessionSlot.slotDate,
+    )
+
+    val applicationReference = applicationFull.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+    val applicationDto = getApplicationDto(returnResult)
+
+    val application = this.testApplicationRepository.findByReference(applicationDto.reference)
+
+    Assertions.assertThat(application?.support).isNull()
+  }
+
+  @Test
+  fun `change reserved slot - no change when  visitorSupport is null`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      visitorSupport = null,
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationFull.sessionSlot.slotDate,
+    )
+
+    val applicationReference = applicationFull.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+    val applicationDto = getApplicationDto(returnResult)
+
+    val application = this.testApplicationRepository.findByReference(applicationDto.reference)
+
+    Assertions.assertThat(application?.support).isEqualTo(applicationFull.support)
+  }
+
+  @Test
   fun `when reserved slot changed if session template updated then visit has new session template reference and slot`() {
     // Given
     val newSessionTemplate = sessionTemplateEntityHelper.create()
 
     val updateRequest = ChangeApplicationDto(
-      visitorSupport = VisitorSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto("Some Text"),
       sessionTemplateReference = newSessionTemplate.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
     )
@@ -371,7 +440,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       applicationRestriction = CreateApplicationRestriction.get(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = emptySet(),
-      visitorSupport = VisitorSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto("Some Text"),
     )
     val applicationReference = applicationFull.reference
 
@@ -398,7 +467,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         VisitorDto(9, false), VisitorDto(10, false),
         VisitorDto(11, false), VisitorDto(12, false),
       ),
-      visitorSupport = VisitorSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto("Some Text"),
     )
     val applicationReference = applicationFull.reference
 
