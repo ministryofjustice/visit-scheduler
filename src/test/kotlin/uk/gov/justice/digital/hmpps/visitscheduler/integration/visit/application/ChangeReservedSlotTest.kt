@@ -21,8 +21,8 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
@@ -64,7 +64,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
     applicationEntityHelper.createContact(application = applicationFull, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationFull, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = applicationFull, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = applicationFull, description = "Some Text")
     applicationEntityHelper.save(applicationFull)
   }
 
@@ -79,7 +79,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       applicationRestriction = swapRestriction(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = ApplicationSupportDto("Some Text"),
     )
 
     val applicationReference = applicationFull.reference
@@ -107,7 +107,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       applicationRestriction = swapRestriction(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(VisitorDto(123L, visitContact = true), VisitorDto(124L, visitContact = false)),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = ApplicationSupportDto("Some Text"),
     )
 
     val applicationReference = applicationMin.reference
@@ -293,7 +293,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   fun `change reserved slot - amend support`() {
     // Given
     val updateRequest = ChangeApplicationDto(
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = ApplicationSupportDto("Some Other Text"),
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
     )
@@ -307,14 +307,101 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val returnResult = getResult(responseSpec)
     val applicationDto = getApplicationDto(returnResult)
 
-    Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(updateRequest.visitorSupport!!.size)
-    applicationDto.visitorSupport.forEachIndexed { index, supportDto ->
-      Assertions.assertThat(supportDto.type).isEqualTo(updateRequest.visitorSupport!!.toList()[index].type)
-      Assertions.assertThat(supportDto.text).isEqualTo(updateRequest.visitorSupport!!.toList()[index].text)
+    applicationDto.visitorSupport?.let {
+      Assertions.assertThat(it.description).isEqualTo(updateRequest.visitorSupport?.description)
     }
 
     // And
     assertTelemetry(applicationDto)
+  }
+
+  @Test
+  fun `change reserved slot - delete support when empty description given`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      visitorSupport = ApplicationSupportDto(""),
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationFull.sessionSlot.slotDate,
+    )
+
+    val applicationReference = applicationFull.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+    val applicationDto = getApplicationDto(returnResult)
+
+    val application = this.testApplicationRepository.findByReference(applicationDto.reference)
+
+    Assertions.assertThat(application?.support).isNull()
+  }
+
+  @Test
+  fun `change reserved slot - delete support when blank description given`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      visitorSupport = ApplicationSupportDto("    "),
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationFull.sessionSlot.slotDate,
+    )
+
+    val applicationReference = applicationFull.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+    val applicationDto = getApplicationDto(returnResult)
+
+    val application = this.testApplicationRepository.findByReference(applicationDto.reference)
+
+    Assertions.assertThat(application?.support).isNull()
+  }
+
+  @Test
+  fun `change reserved slot - no change when  visitorSupport is null`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      visitorSupport = null,
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationFull.sessionSlot.slotDate,
+    )
+
+    val applicationReference = applicationFull.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+    val applicationDto = getApplicationDto(returnResult)
+
+    val application = this.testApplicationRepository.findByReference(applicationDto.reference)
+
+    Assertions.assertThat(application?.support).isEqualTo(applicationFull.support)
+  }
+
+  @Test
+  fun `change reserved slot and support is less than three then exception thrown`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      visitorSupport = ApplicationSupportDto("12"),
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationFull.sessionSlot.slotDate,
+    )
+
+    val applicationReference = applicationFull.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").isEqualTo("Support value description is too small")
   }
 
   @Test
@@ -323,7 +410,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     val newSessionTemplate = sessionTemplateEntityHelper.create()
 
     val updateRequest = ChangeApplicationDto(
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = ApplicationSupportDto("Some Text"),
       sessionTemplateReference = newSessionTemplate.reference,
       sessionDate = applicationFull.sessionSlot.slotDate,
     )
@@ -373,7 +460,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       applicationRestriction = CreateApplicationRestriction.get(applicationFull.restriction),
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = emptySet(),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = ApplicationSupportDto("Some Text"),
     )
     val applicationReference = applicationFull.reference
 
@@ -400,7 +487,7 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
         VisitorDto(9, false), VisitorDto(10, false),
         VisitorDto(11, false), VisitorDto(12, false),
       ),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = ApplicationSupportDto("Some Text"),
     )
     val applicationReference = applicationFull.reference
 
@@ -538,19 +625,10 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
       }
     }
 
-    val supportDtoList = applicationDto.visitorSupport.toList()
     updateRequest.visitorSupport?.let {
-      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(it.size)
-      it.forEachIndexed { index, supportDto ->
-        Assertions.assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
-        Assertions.assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
-      }
+      Assertions.assertThat(applicationDto.visitorSupport?.description).isEqualTo(it.description)
     } ?: run {
-      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(originalApplication.support.size)
-      originalApplication.support.forEachIndexed { index, support ->
-        Assertions.assertThat(supportDtoList[index].type).isEqualTo(support.type)
-        Assertions.assertThat(supportDtoList[index].text).isEqualTo(support.text)
-      }
+      Assertions.assertThat(applicationDto.visitorSupport?.description).isEqualTo(originalApplication.support)
     }
 
     Assertions.assertThat(applicationDto.createdTimestamp).isNotNull()

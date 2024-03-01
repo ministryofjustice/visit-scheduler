@@ -612,7 +612,6 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     assertThat(visit.visitors.size).isEqualTo(application.visitors.size)
     assertThat(visit.visitors[0].nomisPersonId).isEqualTo(application.visitors[0].nomisPersonId)
     assertThat(visit.visitors[0].visitContact).isEqualTo(application.visitors[0].contact)
-    assertThat(visit.support.size).isEqualTo(application.support.size)
-    assertThat(visit.support.size).isEqualTo(0)
+    assertThat(visit.support).isEqualTo(application.support)
   }
 }

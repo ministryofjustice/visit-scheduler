@@ -30,7 +30,7 @@ class VisitDtoBuilder {
       visitNotes = visitEntity.visitNotes.map { VisitNoteDto(it) },
       visitContact = ContactDto(visitEntity.visitContact!!),
       visitors = visitEntity.visitors.map { VisitorDto(it) },
-      visitorSupport = visitEntity.support.map { VisitorSupportDto(it) },
+      visitorSupport = visitEntity.support?.let { VisitorSupportDto(it) },
       createdTimestamp = visitEntity.createTimestamp ?: LocalDateTime.now(),
       modifiedTimestamp = visitEntity.modifyTimestamp ?: LocalDateTime.now(),
       sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,

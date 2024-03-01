@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
 import jakarta.persistence.CascadeType
+import jakarta.persistence.CascadeType.ALL
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -66,20 +67,20 @@ class Visit(
   @Enumerated(EnumType.STRING)
   var outcomeStatus: OutcomeStatus? = null
 
-  @OneToOne(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   var visitContact: VisitContact? = null
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   val visitors: MutableList<VisitVisitor> = mutableListOf()
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
-  val support: MutableList<VisitSupport> = mutableListOf()
+  @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
+  var support: VisitSupport? = null
 
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   val visitNotes: MutableList<VisitNote> = mutableListOf()
 
   @OrderBy("id")
-  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "visit", orphanRemoval = true)
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
   private val applications: MutableList<Application> = mutableListOf()
 
   @CreationTimestamp
