@@ -32,11 +32,12 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
   @Transactional
   @Modifying
   @Query(
-    "Update event_audit SET application_method_type=:#{#applicationMethodType.name()}  " +
+    "Update event_audit SET application_method_type=:#{#applicationMethodType.name()},  " +
+      " booking_reference= :bookingReference " +
       "WHERE application_reference = :applicationReference AND type in ('RESERVED_VISIT','CHANGING_VISIT')",
     nativeQuery = true,
   )
-  fun updateVisitApplication(applicationReference: String, applicationMethodType: ApplicationMethodType): Int?
+  fun updateVisitApplication(applicationReference: String, bookingReference: String, applicationMethodType: ApplicationMethodType): Int?
 
   @Transactional
   @Modifying

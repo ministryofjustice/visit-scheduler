@@ -17,10 +17,6 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
@@ -31,9 +27,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
 import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.LocalDateTime
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
+import java.util.function.Consumer
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("Flag Visits")
@@ -54,7 +49,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    prison = PrisonEntityHelper.createPrison()
+    prison = PrisonEntityHelper.createPrison("FVT")
   }
 
   @Test
@@ -63,7 +58,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     val sessionTemplateReference = createSessionTemplate(startTime = startTime, endTime = endTime, dayOfWeek = visitDate.dayOfWeek)
 
     // prisoner A has non association with prisoner B who has a visit on the same day
-    val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
+    val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
 
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
       prisonerAId,
@@ -71,11 +66,11 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     )
 
     // prisoner B has a visit on the same day but offender list is empty for test purposes
-    createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerBId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerBId)
 
     // prisoner C has no non associations
-    createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerCId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerCId)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code)
@@ -89,25 +84,14 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    // Then
 
-    verify(telemetryClient).trackEvent(
-      eq("flagged-visit-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(prisonerAVisit.prison.code)
-        Assertions.assertThat(it["visitType"]).isEqualTo(prisonerAVisit.visitType.name)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(prisonerAVisit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["hasException"]).isNull()
-        Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-        Assertions.assertThat(it["additionalInformation"]).isNull()
-      },
-      isNull(),
-    )
+    assertFlaggedVisitEvent(prisonerAVisit)
+    assertFlaggedVisitEvent {
+      Assertions.assertThat(it["hasException"]).isNull()
+      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
+      Assertions.assertThat(it["additionalInformation"]).isNull()
+    }
   }
 
   @Test
@@ -123,45 +107,34 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       permittedLocations = permittedLocations,
     )
 
-    val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
+    val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
     // prisoner A has moved location since the visit was created
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerAId)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code)
 
     // prisoner B visit will not be flagged
-    createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerBId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerBId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A-0-001")
 
     // prisoner C visit will not be flagged
-    createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerCId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerCId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-A-2")
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    // Then
 
-    verify(telemetryClient).trackEvent(
-      eq("flagged-visit-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(prisonerAVisit.prison.code)
-        Assertions.assertThat(it["visitType"]).isEqualTo(prisonerAVisit.visitType.name)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(prisonerAVisit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["hasException"]).isNull()
-        Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-        Assertions.assertThat(it["additionalInformation"]).isNull()
-      },
-      isNull(),
-    )
+    assertFlaggedVisitEvent(prisonerAVisit)
+    assertFlaggedVisitEvent {
+      Assertions.assertThat(it["hasException"]).isNull()
+      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
+      Assertions.assertThat(it["additionalInformation"]).isNull()
+    }
   }
 
   @Test
@@ -175,45 +148,34 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       permittedCategories = listOf(PrisonerCategoryType.A_STANDARD),
     )
 
-    val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplate.reference)
+    val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplate)
     // prisoner A has changed category to B since the visit was created
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerAId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code, category = PrisonerCategoryType.B.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
 
     // prisoner B visit will not be flagged
-    createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplate.reference)
+    createApplicationAndVisit(prisonerId = prisonerBId, sessionTemplate = sessionTemplate)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerBId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code, category = PrisonerCategoryType.A_STANDARD.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
 
     // prisoner C visit will not be flagged
-    createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplate.reference)
+    createApplicationAndVisit(prisonerId = prisonerCId, sessionTemplate = sessionTemplate)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerCId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code, category = PrisonerCategoryType.A_STANDARD.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    // Then
 
-    verify(telemetryClient).trackEvent(
-      eq("flagged-visit-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(prisonerAVisit.prison.code)
-        Assertions.assertThat(it["visitType"]).isEqualTo(prisonerAVisit.visitType.name)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(prisonerAVisit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["hasException"]).isNull()
-        Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-        Assertions.assertThat(it["additionalInformation"]).isNull()
-      },
-      isNull(),
-    )
+    assertFlaggedVisitEvent(prisonerAVisit)
+    assertFlaggedVisitEvent {
+      Assertions.assertThat(it["hasException"]).isNull()
+      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
+      Assertions.assertThat(it["additionalInformation"]).isNull()
+    }
   }
 
   @Test
@@ -227,45 +189,35 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       permittedIncentiveLevels = listOf(IncentiveLevel.ENHANCED),
     )
 
-    val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
+    val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
     // prisoner A has changed category to B since the visit was created
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerAId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code, incentiveLevelCode = IncentiveLevel.STANDARD)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
 
     // prisoner B visit will not be flagged as incentiveLevel is ENHANCED
-    createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerBId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerBId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code, incentiveLevelCode = IncentiveLevel.ENHANCED)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
 
     // prisoner C visit will not be flagged as incentiveLevel is ENHANCED
-    createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerCId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerCId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code, incentiveLevelCode = IncentiveLevel.ENHANCED)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
-    verify(telemetryClient).trackEvent(
-      eq("flagged-visit-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(prisonerAVisit.prison.code)
-        Assertions.assertThat(it["visitType"]).isEqualTo(prisonerAVisit.visitType.name)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(prisonerAVisit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["hasException"]).isNull()
-        Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-        Assertions.assertThat(it["additionalInformation"]).isNull()
-      },
-      isNull(),
-    )
+    // Then
+
+    assertFlaggedVisitEvent(prisonerAVisit)
+    assertFlaggedVisitEvent {
+      Assertions.assertThat(it["hasException"]).isNull()
+      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
+      Assertions.assertThat(it["additionalInformation"]).isNull()
+    }
   }
 
   @Test
@@ -278,45 +230,35 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       dayOfWeek = visitDate.dayOfWeek,
     )
 
-    val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
+    val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerAId)
     // prisoner is now in prison XYZ
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, newPrisonCode)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
 
     // prisoner B visit will not be flagged as in the same prison
-    createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerBId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerBId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
 
     // prisoner C visit will not be flagged as in the same prison
-    createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerCId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerCId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
-    verify(telemetryClient).trackEvent(
-      eq("flagged-visit-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(prisonerAVisit.prison.code)
-        Assertions.assertThat(it["visitType"]).isEqualTo(prisonerAVisit.visitType.name)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(prisonerAVisit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["hasException"]).isEqualTo("true")
-        Assertions.assertThat(it["hasPrisonerMoved"]).isEqualTo("true")
-        Assertions.assertThat(it["additionalInformation"]).isEqualTo("Prisoner with ID - $prisonerAId is not in prison - ${prison.code} but $newPrisonCode")
-      },
-      isNull(),
-    )
+    // Then
+
+    assertFlaggedVisitEvent(prisonerAVisit)
+    assertFlaggedVisitEvent {
+      Assertions.assertThat(it["hasException"]).isEqualTo("true")
+      Assertions.assertThat(it["hasPrisonerMoved"]).isEqualTo("true")
+      Assertions.assertThat(it["additionalInformation"]).isEqualTo("Prisoner with ID - $prisonerAId is not in prison - ${prison.code} but $newPrisonCode")
+    }
   }
 
   @Test
@@ -328,72 +270,56 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       dayOfWeek = visitDate.dayOfWeek,
     )
 
-    val prisonerAVisit = createVisit(prisonerId = prisonerAId, reference = "aa-bb-cc-dd", sessionTemplateReference = sessionTemplateReference.reference)
+    val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerAId)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerAId, null)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
 
-    createVisit(prisonerId = prisonerBId, reference = "ee-ff-gg-hh", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerBId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerBId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
 
-    createVisit(prisonerId = prisonerCId, reference = "ii-jj-kk-ll", sessionTemplateReference = sessionTemplateReference.reference)
+    createApplicationAndVisit(prisonerId = prisonerCId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerCId)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerCId, prison.code)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
 
     // When
     visitTask.flagVisits()
-    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
-    verify(telemetryClient).trackEvent(
-      eq("flagged-visit-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(prisonerAVisit.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(prisonerAVisit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(prisonerAVisit.prison.code)
-        Assertions.assertThat(it["visitType"]).isEqualTo(prisonerAVisit.visitType.name)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(prisonerAVisit.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(prisonerAVisit.visitStart.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitEnd"]).isEqualTo(prisonerAVisit.visitEnd.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(prisonerAVisit.visitStatus.name)
-        Assertions.assertThat(it["hasException"]).isEqualTo("true")
-        Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-        Assertions.assertThat(it["additionalInformation"]).isNotNull()
-      },
-      isNull(),
-    )
+    // Then
+
+    assertFlaggedVisitEvent(prisonerAVisit)
+    assertFlaggedVisitEvent {
+      Assertions.assertThat(it["hasException"]).isEqualTo("true")
+      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
+      Assertions.assertThat(it["additionalInformation"]).isNotNull()
+    }
   }
 
-  private fun createVisit(
-    visitStatus: VisitStatus = BOOKED,
-    prisonerId: String,
-    prisonCode: String = "MDI",
-    visitRoom: String = "A1",
-    visitStart: LocalDateTime = LocalDateTime.of(visitDate, startTime),
-    visitEnd: LocalDateTime = LocalDateTime.of(visitDate, endTime),
-    visitType: VisitType = VisitType.SOCIAL,
-    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    reference: String,
-    sessionTemplateReference: String,
-  ): Visit {
-    val visit = visitEntityHelper.create(
-      visitStatus = visitStatus,
-      prisonerId = prisonerId,
-      prisonCode = prisonCode,
-      visitRoom = visitRoom,
-      visitStart = visitStart,
-      visitEnd = visitEnd,
-      visitType = visitType,
-      visitRestriction = visitRestriction,
-      reference = reference,
-      sessionTemplateReference = sessionTemplateReference,
+  private fun assertFlaggedVisitEvent(visit: Visit) {
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+
+    val base = Consumer<Map<String, String>> {
+      Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
+      Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+      Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
+      Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+      Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+      Assertions.assertThat(it["visitStart"]).isEqualTo(formatStartSlotDateTimeToString(visit.sessionSlot))
+      Assertions.assertThat(it["visitEnd"]).isEqualTo(formatSlotEndDateTimeToString(visit.sessionSlot))
+    }
+
+    assertFlaggedVisitEvent(base)
+  }
+
+  private fun assertFlaggedVisitEvent(test: Consumer<Map<String, String>>) {
+    verify(telemetryClient).trackEvent(
+      eq("flagged-visit-event"),
+      org.mockito.kotlin.check { test.accept(it) },
+      isNull(),
     )
-
-    eventAuditEntityHelper.create(visit)
-
-    return visit
   }
 
   private fun createSessionTemplate(
@@ -421,6 +347,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     }
 
     return sessionTemplateEntityHelper.create(
+      prisonCode = prison.code,
       startTime = startTime,
       endTime = endTime,
       dayOfWeek = dayOfWeek,

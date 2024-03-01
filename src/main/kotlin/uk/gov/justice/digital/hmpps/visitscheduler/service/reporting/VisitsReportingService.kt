@@ -89,20 +89,18 @@ class VisitsReportingService(
   private fun getVisitCountsBySession(sessionTemplateReference: String, visitStatus: VisitStatus, visitDate: LocalDate): List<VisitRestrictionStats> {
     return when (visitStatus) {
       VisitStatus.BOOKED -> {
-        return visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
+        visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
           sessionTemplateReference = sessionTemplateReference,
-          sessionDate = visitDate,
+          slotDate = visitDate,
         )
       }
 
       VisitStatus.CANCELLED -> {
-        return visitRepository.getCountOfCancelledSessionVisitsForOpenOrClosedRestriction(
+        visitRepository.getCountOfCancelledSessionVisitsForOpenOrClosedRestriction(
           sessionTemplateReference = sessionTemplateReference,
-          sessionDate = visitDate,
+          slotDate = visitDate,
         )
       }
-
-      VisitStatus.RESERVED, VisitStatus.CHANGING -> emptyList()
     }
   }
 

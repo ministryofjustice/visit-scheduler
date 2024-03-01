@@ -6,7 +6,6 @@ import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
-import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.whenever
@@ -75,7 +74,7 @@ class VisitNotificationEventServiceTest {
     whenever(prisonerService.getPrisonerSupportedPrisonCode(any())).thenReturn(
       "CFI",
     )
-    whenever(visitService.getBookedVisits(any(), any(), any(), any())).thenReturn(
+    whenever(visitService.getBookedVisits(any(), any(), any())).thenReturn(
       emptyList(),
     )
 
@@ -83,7 +82,7 @@ class VisitNotificationEventServiceTest {
     visitNotificationEventService.handleNonAssociations(nonAssociationChangedNotification)
 
     // Then
-    Mockito.verify(visitService, times(2)).getBookedVisits(any(), any(), any(), anyOrNull())
+    Mockito.verify(visitService, times(2)).getBookedVisits(any(), any(), any())
     Mockito.verify(telemetryClientService, times(0)).trackEvent(any(), any())
     Mockito.verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }

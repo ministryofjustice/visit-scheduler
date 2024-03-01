@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.admin
 
 import org.assertj.core.api.Assertions
+import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -23,6 +24,11 @@ class AdminGetSessionTemplateTest(
 ) : IntegrationTestBase() {
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
+
+  @BeforeEach
+  internal fun setUpTests() {
+    deleteEntityHelper.deleteAll()
+  }
 
   @Test
   fun `all session templates are returned empty list`() {

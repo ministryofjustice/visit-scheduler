@@ -110,7 +110,7 @@ class PrisonConfigTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid MDI, max 29 , min 28")
+      .jsonPath("$.developerMessage").isEqualTo("Policy notice days invalid AWE, max 29 , min 28")
   }
 
   @Test
@@ -213,24 +213,24 @@ class PrisonConfigTest : IntegrationTestBase() {
   @Test
   fun `when add exclude date called for visit with dates then exclude date is successfully added and visits are marked for review`() {
     // Given
-    val prison = PrisonEntityHelper.createPrisonDto("XYZ")
-    prisonEntityHelper.create(prison.code, prison.active)
     val excludeDate = LocalDate.now().plusDays(10)
 
+    val prison = prisonEntityHelper.create("XYZ")
+    val sessionTemplateXYZ = sessionTemplateEntityHelper.create(prison = prison)
+
+    prisonEntityHelper.create(prison.code, prison.active)
+
     // existing visit for excludeDate in same prison
-    val bookedVisitForSamePrison = visitEntityHelper.create(visitStatus = VisitStatus.BOOKED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0), prisonCode = prison.code)
+    val bookedVisitForSamePrison = createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
-    // existing visit for excludeDate in different prison (MDI)
-    visitEntityHelper.create(visitStatus = VisitStatus.BOOKED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0))
-
-    // reserved visit for excludeDate in same prison
-    visitEntityHelper.create(visitStatus = VisitStatus.RESERVED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0), prisonCode = prison.code)
+    // existing visit for excludeDate in different prison
+    createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate)
 
     // cancelled visit for excludeDate in same prison
-    visitEntityHelper.create(visitStatus = VisitStatus.CANCELLED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0), prisonCode = prison.code)
+    createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.CANCELLED, slotDate = excludeDate)
 
-    // existing visit not for excludeDate in same prison
-    visitEntityHelper.create(visitStatus = VisitStatus.BOOKED, visitStart = excludeDate.plusDays(1).atTime(10, 0), visitEnd = excludeDate.plusDays(1).atTime(11, 0), prisonCode = prison.code)
+    // existing visit different excludeDate in same prison
+    createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate.plusDays(1))
 
     // When
     val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
@@ -246,7 +246,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(updatedPrison.code).isEqualTo(prison.code)
     Assertions.assertThat(updatedPrison.excludeDates).contains(excludeDate)
 
-    val visitNotifications = testVisitNotificationEventRepository.findAll()
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
 
     // only 1 visit for the same date with status of BOOKED will be flagged.
     Assertions.assertThat(visitNotifications).hasSize(1)
@@ -299,12 +299,12 @@ class PrisonConfigTest : IntegrationTestBase() {
   fun `when remove exclude date called with existing date then exclude date is successfully removed and any notified visits are removed`() {
     // Given
     val existingExcludeDates = setOf(LocalDate.now(), LocalDate.now().plusDays(7))
-    val prison = PrisonEntityHelper.createPrisonDto("JML")
+    val prison = sessionTemplateDefault.prison
     val createdPrison = prisonEntityHelper.create(prison.code, prison.active, existingExcludeDates.toList())
     val excludeDate = LocalDate.now().plusDays(7)
 
     // existing visit for excludeDate in same prison
-    val bookedVisitForSamePrison = visitEntityHelper.create(visitStatus = VisitStatus.BOOKED, visitStart = excludeDate.atTime(10, 0), visitEnd = excludeDate.atTime(11, 0), prisonCode = prison.code)
+    val bookedVisitForSamePrison = visitEntityHelper.create(sessionTemplate = sessionTemplateDefault, visitStatus = VisitStatus.BOOKED, prisonCode = prison.code)
 
     visitNotificationEventHelper.create(bookedVisitForSamePrison.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
 

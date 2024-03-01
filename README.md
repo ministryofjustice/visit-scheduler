@@ -51,6 +51,70 @@ Call info endpoint:
 $ curl 'http://localhost:8080/info' -i -X GET
 ```
 
+## How to restore pre prod from production on demand
+
+Normally the data in preprod is updated from prod on an interval bases (2 weeks) but some time you need to update now.
+
+```
+kubectl create job --dry-run=client -n visit-someone-in-prison-backend-svc-prod  --from=cronjob/<cron-job> <cron-job>-<user-name> -o "json" \
+| jq ".spec.template.spec.containers[0].env += [{ \"name\": \"FORCE_RUN\", \"value\": \"true\"}]" | kubectl apply -f -
+```
+
+To get the <cron-job> (--from=cronjob/<cron-job>) name you must run the following command
+
+```
+kubectl get cronjobs -n visit-someone-in-prison-backend-svc-prod
+```
+
+The <user-name> is basically who did the restore in this case I have added **ae** see the actual command I used :
+
+```
+kubectl create job --dry-run=client -n visit-someone-in-prison-backend-svc-prod  --from=cronjob/visit-scheduler-postgres-restore visit-scheduler-postgres-restore-ae -o "json" \
+| jq ".spec.template.spec.containers[0].env += [{ \"name\": \"FORCE_RUN\", \"value\": \"true\"}]" | kubectl apply -f -
+```
+
+for more information see
+
+https://github.com/ministryofjustice/hmpps-helm-charts/tree/main/charts/generic-service#manually-running-the-database-restore-cronjob
+
+## How to connect to DB from command line
+
+**Prerequisites** : setup forwarding to the DB in question and use same port
+
+Get db_name and user name and password using 
+
+```
+kubectl -n <name_space> get secrets <rds_name>   -o json | jq '.data | map_values(@base64d)'
+```
+
+Then run the below command with the acquired details from above:
+
+```
+psql \
+--host localhost \
+--port <FORWARD_PORT> \
+--dbname <DB_NAME> \
+--username <USER_NAME> \
+--password <PASSWORD>
+```
+
+***Useful psql commands***
+
+list active sqls
+```
+SELECT pid,query_start,query FROM pg_stat_activity WHERE state = 'active';
+```
+
+***Cancel active sql's***
+```
+SELECT pg_cancel_backend(24544);
+```
+
+## Restoring DB from last back up
+
+https://user-guide.cloud-platform.service.justice.gov.uk/documentation/other-topics/rds-snapshots.html
+
+
 ## Swagger v3
 Visit Scheduler
 ```

@@ -10,17 +10,20 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitHistoryByReference
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlot
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application.ReserveSlotTest
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.EMAIL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.PHONE
@@ -31,8 +34,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import java.time.DayOfWeek.SATURDAY
 
 @DisplayName("GET $GET_VISIT_BY_REFERENCE")
 class VisitHistoryByReferenceTest : IntegrationTestBase() {
@@ -50,15 +53,15 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplateEntityHelper.create()
     val reserveVisitSlotDto = createReserveVisitSlotDto(
       actionedBy = "reserve_guy",
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplate,
     )
 
-    val reservedDto = reserveVisit(reserveVisitSlotDto)
-    val bookedDto = bookVisit(reservedDto.applicationReference, PHONE)
-    val changingVisitDto1 = updateBooking(sessionTemplate, bookedDto.reference)
-    bookVisit(changingVisitDto1.applicationReference, EMAIL)
-    val changingVisitDto2 = updateBooking(sessionTemplate, bookedDto.reference)
-    bookVisit(changingVisitDto2.applicationReference, EMAIL)
+    val reservedDto = submitApplication(reserveVisitSlotDto)
+    val bookedDto = bookVisit(reservedDto.reference, PHONE)
+    val changingVisitDto1 = sumbmitApplicationToUpdateBooking(sessionTemplate, bookedDto.reference)
+    bookVisit(changingVisitDto1.reference, EMAIL)
+    val changingVisitDto2 = sumbmitApplicationToUpdateBooking(sessionTemplate, bookedDto.reference)
+    bookVisit(changingVisitDto2.reference, EMAIL)
     cancelVisit(bookedDto)
 
     // When
@@ -116,18 +119,17 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
   @Test
   fun `visit history in sequence for session template change`() {
     // Given
-    val sessionTemplate = sessionTemplateEntityHelper.create()
-    val sessionTemplateToChangeTo = sessionTemplateEntityHelper.create()
+    val sessionTemplateToChangeTo = sessionTemplateEntityHelper.create(prisonCode = sessionTemplateDefault.prison.code, dayOfWeek = SATURDAY)
 
     val reserveVisitSlotDto = createReserveVisitSlotDto(
       actionedBy = "reserve_guy",
-      sessionTemplateReference = sessionTemplate.reference,
+      sessionTemplate = sessionTemplateDefault,
     )
 
-    val reservedDto = reserveVisit(reserveVisitSlotDto)
-    val bookedDto = bookVisit(reservedDto.applicationReference, PHONE)
-    val changingVisitDto = updateBooking(sessionTemplateToChangeTo, bookedDto.reference)
-    bookVisit(changingVisitDto.applicationReference, EMAIL)
+    val applicationDto = submitApplication(reserveVisitSlotDto)
+    val bookedDto = bookVisit(applicationDto.reference, PHONE)
+    val changingVisitDto = sumbmitApplicationToUpdateBooking(sessionTemplateToChangeTo, bookedDto.reference)
+    bookVisit(changingVisitDto.reference, EMAIL)
 
     // When
     val responseSpec = callVisitHistoryByReference(webTestClient, bookedDto.reference, roleVisitSchedulerHttpHeaders)
@@ -137,8 +139,10 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     val eventAuditList = getEventAuditList(responseSpec)
 
     Assertions.assertThat(eventAuditList.size).isEqualTo(4)
-    Assertions.assertThat(eventAuditList[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
-    Assertions.assertThat(eventAuditList[1].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    Assertions.assertThat(eventAuditList[0].type).isEqualTo(RESERVED_VISIT)
+    Assertions.assertThat(eventAuditList[0].sessionTemplateReference).isEqualTo(sessionTemplateDefault.reference)
+    Assertions.assertThat(eventAuditList[1].type).isEqualTo(BOOKED_VISIT)
+    Assertions.assertThat(eventAuditList[1].sessionTemplateReference).isEqualTo(sessionTemplateDefault.reference)
     Assertions.assertThat(eventAuditList[2].type).isEqualTo(RESERVED_VISIT)
     Assertions.assertThat(eventAuditList[2].sessionTemplateReference).isEqualTo(sessionTemplateToChangeTo.reference)
     Assertions.assertThat(eventAuditList[3].type).isEqualTo(UPDATED_VISIT)
@@ -166,10 +170,10 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     cancelResponse.expectStatus().isOk
   }
 
-  private fun reserveVisit(reserveVisitSlotDto: ReserveVisitSlotDto): VisitDto {
-    val reservedResponse = callVisitReserveSlot(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+  private fun submitApplication(createApplicationDto: CreateApplicationDto): ApplicationDto {
+    val reservedResponse = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationDto)
     reservedResponse.expectStatus().isCreated
-    return getVisitFromRestResponse(reservedResponse)
+    return getApplicationFomRestResponse(reservedResponse)
   }
 
   private fun bookVisit(applicationReference: String, applicationMethodType: ApplicationMethodType): VisitDto {
@@ -178,32 +182,35 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     return getVisitFromRestResponse(bookedResponse)
   }
 
-  private fun updateBooking(
+  private fun sumbmitApplicationToUpdateBooking(
     sessionTemplate: SessionTemplate,
     bookingReference: String,
-  ): VisitDto {
-    val changeVisitRequest = createReserveVisitSlotDto(actionedBy = "updated_by", sessionTemplateReference = sessionTemplate.reference)
+  ): ApplicationDto {
+    val changeVisitRequest = createReserveVisitSlotDto(actionedBy = "updated_by", sessionTemplate)
     val changedBookingResponse =
-      callVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, changeVisitRequest, bookingReference)
+      callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, changeVisitRequest, bookingReference)
     changedBookingResponse.expectStatus().isCreated
-    return getVisitFromRestResponse(changedBookingResponse)
+    return getApplicationFomRestResponse(changedBookingResponse)
   }
 
   private fun getVisitFromRestResponse(responseSpec: ResponseSpec): VisitDto {
     return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
   }
 
-  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.actionedByUserName, sessionTemplateReference: String = "sessionTemplateReference"): ReserveVisitSlotDto {
-    return ReserveVisitSlotDto(
+  private fun getApplicationFomRestResponse(responseSpec: ResponseSpec): ApplicationDto {
+    return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationDto::class.java)
+  }
+
+  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.ACTIONED_BY_USER_NAME, sessionTemplate: SessionTemplate): CreateApplicationDto {
+    return CreateApplicationDto(
       prisonerId = "FF0000FF",
-      startTimestamp = ReserveSlotTest.visitTime,
-      endTimestamp = ReserveSlotTest.visitTime.plusHours(1),
-      visitRestriction = OPEN,
+      sessionDate = startDate,
+      sessionTemplateReference = sessionTemplate.reference,
+      applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
       actionedBy = actionedBy,
-      sessionTemplateReference = sessionTemplateReference,
     )
   }
 }

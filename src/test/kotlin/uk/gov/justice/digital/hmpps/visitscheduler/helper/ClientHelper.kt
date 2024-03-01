@@ -5,17 +5,17 @@ import org.springframework.http.MediaType
 import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_TYPES
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVED_SLOT_CHANGE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
@@ -40,12 +40,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMP
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ChangeVisitSlotRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.ReserveVisitSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
@@ -102,7 +102,7 @@ fun getMigrateCancelVisitUrl(reference: String): String {
 fun callVisitReserveSlotChange(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: ChangeVisitSlotRequestDto? = null,
+  dto: ChangeApplicationDto? = null,
   applicationReference: String,
 ): ResponseSpec {
   return callPut(
@@ -114,42 +114,42 @@ fun callVisitReserveSlotChange(
 }
 
 fun getVisitReserveSlotChangeUrl(reference: String): String {
-  return VISIT_RESERVED_SLOT_CHANGE.replace("{applicationReference}", reference)
+  return APPLICATION_RESERVED_SLOT_CHANGE.replace("{reference}", reference)
 }
 
-fun callVisitReserveSlot(
+fun submitApplication(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: ReserveVisitSlotDto? = null,
+  dto: CreateApplicationDto? = null,
 ): ResponseSpec {
   return callPost(
     dto,
     webTestClient,
-    getVisitReserveSlotUrl(),
+    getSubmitApplicationUrl(),
     authHttpHeaders,
   )
 }
 
-fun getVisitReserveSlotUrl(): String {
-  return VISIT_RESERVE_SLOT
+fun getSubmitApplicationUrl(): String {
+  return APPLICATION_RESERVE_SLOT
 }
 
-fun callVisitChange(
+fun callApplicationForVisitChange(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: ReserveVisitSlotDto? = null,
+  dto: CreateApplicationDto? = null,
   reference: String,
 ): ResponseSpec {
   return callPut(
     dto,
     webTestClient,
-    getVisitChangeUrl(reference),
+    getApplicationChangeVisitUrl(reference),
     authHttpHeaders,
   )
 }
 
-fun getVisitChangeUrl(reference: String): String {
-  return VISIT_CHANGE.replace("{reference}", reference)
+fun getApplicationChangeVisitUrl(reference: String): String {
+  return APPLICATION_CHANGE.replace("{bookingReference}", reference)
 }
 
 fun callVisitBook(
@@ -158,7 +158,6 @@ fun callVisitBook(
   applicationReference: String,
   applicationMethodType: ApplicationMethodType = PHONE,
   bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType),
-
 ): ResponseSpec {
   return callPut(
     bodyValue = bookingRequestDto,

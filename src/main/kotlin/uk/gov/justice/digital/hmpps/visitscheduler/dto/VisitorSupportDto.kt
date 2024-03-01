@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationSupport
 
 @Schema(description = "Visitor support")
 data class VisitorSupportDto(
@@ -13,8 +14,13 @@ data class VisitorSupportDto(
   val text: String? = null,
 ) {
 
-  constructor(visitSupportEntity: VisitSupport) : this(
-    type = visitSupportEntity.type,
-    text = visitSupportEntity.text,
+  constructor(entity: VisitSupport) : this(
+    type = entity.type,
+    text = entity.text,
+  )
+
+  constructor(entity: ApplicationSupport) : this(
+    type = entity.type,
+    text = entity.text,
   )
 }
