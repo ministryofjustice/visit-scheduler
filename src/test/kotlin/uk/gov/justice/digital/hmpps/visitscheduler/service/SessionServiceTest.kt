@@ -38,9 +38,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
@@ -60,6 +62,7 @@ class SessionServiceTest {
 
   private val sessionTemplateRepository = mock<SessionTemplateRepository>()
   private val visitRepository = mock<VisitRepository>()
+  private val sessionSlotRepository = mock<SessionSlotRepository>()
   private val prisonerService = mock<PrisonerService>()
   private val prisonerValidationService = mock<PrisonerValidationService>()
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
@@ -105,15 +108,21 @@ class SessionServiceTest {
     ).thenReturn(response)
   }
 
-  private fun mockVisitRepositoryCountResponse(visits: List<Visit>, sessionTemplate: SessionTemplate) {
+  private fun mockVisitRepositoryCountResponse(visits: List<Visit>, sessionTemplate: SessionTemplate, sessionSlot: SessionSlot? = null) {
     val startDateTime = currentDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.startTime)
 
     whenever(
-      visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
+      sessionSlotRepository.findSessionSlotId(
         sessionTemplateReference = sessionTemplate.reference,
         startDateTime.toLocalDate(),
       ),
-    ).thenReturn(getVisitRestrictionStatsList(visits))
+    ).thenReturn(sessionSlot?.id)
+
+    sessionSlot?.let {
+      whenever(
+        visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(it.id),
+      ).thenReturn(getVisitRestrictionStatsList(visits))
+    }
   }
 
   private fun getVisitRestrictionStatsList(visits: List<Visit>): List<VisitRestrictionStats> {
@@ -138,6 +147,7 @@ class SessionServiceTest {
         sessionTemplateRepository,
         visitRepository,
         applicationRepository,
+        sessionSlotRepository,
         prisonerService,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
@@ -325,7 +335,7 @@ class SessionServiceTest {
         visitRestriction = CLOSED,
         visitRoom = "1",
       )
-      mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession)
+      mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession, sessionSlot)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -373,7 +383,7 @@ class SessionServiceTest {
 
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
-      mockVisitRepositoryCountResponse(listOf(closedVisit), singleSession)
+      mockVisitRepositoryCountResponse(listOf(closedVisit), singleSession, sessionSlot)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -424,6 +434,7 @@ class SessionServiceTest {
         sessionTemplateRepository,
         visitRepository,
         applicationRepository,
+        sessionSlotRepository,
         prisonerService,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
@@ -661,6 +672,7 @@ class SessionServiceTest {
         sessionTemplateRepository,
         visitRepository,
         applicationRepository,
+        sessionSlotRepository,
         prisonerService,
         policyFilterDoubleBooking = true,
         policyFilterNonAssociation = true,
