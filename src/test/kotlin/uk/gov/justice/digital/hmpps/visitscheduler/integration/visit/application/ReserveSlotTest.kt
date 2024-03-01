@@ -62,7 +62,12 @@ class ReserveSlotTest : IntegrationTestBase() {
     prisonEntityHelper.create("MDI", true)
   }
 
-  private fun createReserveVisitSlotDto(actionedBy: String = actionedByUserName, sessionTemplate: SessionTemplate? = null): CreateApplicationDto {
+  private fun createReserveVisitSlotDto(
+    actionedBy: String = actionedByUserName,
+    sessionTemplate: SessionTemplate? = null,
+    support: String = "Some Text",
+
+  ): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = "FF0000FF",
       sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
@@ -70,7 +75,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = ApplicationSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto(support),
       actionedBy = actionedBy,
     )
   }
@@ -93,6 +98,21 @@ class ReserveSlotTest : IntegrationTestBase() {
 
     // And
     assertTelemetry(applicationDto)
+  }
+
+  @Test
+  fun `reserve visit slot and support is less than three then exception thrown`() {
+    // Given
+    val sessionTemplate = sessionTemplateEntityHelper.create(startTime = visitTime.toLocalTime(), endTime = visitTime.plusHours(1).toLocalTime())
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate, support = "12")
+
+    // When
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").isEqualTo("Support value description is too small")
   }
 
   @Test

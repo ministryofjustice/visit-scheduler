@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
@@ -88,6 +89,8 @@ class ApplicationService(
   }
 
   private fun createApplication(createApplicationDto: CreateApplicationDto, visit: Visit? = null): ApplicationDto {
+    validate(createApplicationDto)
+
     val sessionTemplateReference = createApplicationDto.sessionTemplateReference
     val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
     val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
@@ -139,6 +142,8 @@ class ApplicationService(
   }
 
   fun changeIncompleteApplication(applicationReference: String, changeApplicationDto: ChangeApplicationDto): ApplicationDto {
+    validate(changeApplicationDto)
+
     val application = getApplicationEntity(applicationReference)
     val sessionTemplateReference = changeApplicationDto.sessionTemplateReference
     val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
@@ -319,6 +324,24 @@ class ApplicationService(
         AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
         ExpiredVisitAmendException("trying to change an expired visit"),
       )
+    }
+  }
+
+  private fun validate(changeApplicationDto: ChangeApplicationDto) {
+    changeApplicationDto.visitorSupport?.let {
+      validate(it)
+    }
+  }
+  private fun validate(createApplicationDto: CreateApplicationDto) {
+    createApplicationDto.visitorSupport?.let {
+      validate(it)
+    }
+  }
+
+  private fun validate(support: ApplicationSupportDto) {
+    val value = support.description.trim()
+    if (value.isNotBlank() && value.length < 3) {
+      throw VSiPValidationException(arrayOf("Support value description is too small"))
     }
   }
 }

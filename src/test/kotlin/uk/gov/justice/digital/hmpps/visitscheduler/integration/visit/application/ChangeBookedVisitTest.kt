@@ -98,6 +98,25 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `application to change visit is added and support is less than three then exception thrown`() {
+    // Given
+    val reference = bookedVisit.reference
+    val createApplicationRequest =
+      createApplicationRequest(
+        sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!,
+        support = "12",
+      )
+
+    // When
+    val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").isEqualTo("Support value description is too small")
+  }
+
+  @Test
   fun `application to change visit but no slot change is not reserved`() {
     // Given
     val reference = bookedVisit.reference
@@ -306,6 +325,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     slotDate: LocalDate = bookedVisit.sessionSlot.slotDate,
     visitRestriction: CreateApplicationRestriction = CreateApplicationRestriction.OPEN,
     sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
+    support: String = "Some Text",
   ): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = prisonerId,
@@ -313,7 +333,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       applicationRestriction = visitRestriction,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = ApplicationSupportDto("Some Text"),
+      visitorSupport = ApplicationSupportDto(support),
       actionedBy = actionedByUserName,
       sessionTemplateReference = sessionTemplateReference,
     )

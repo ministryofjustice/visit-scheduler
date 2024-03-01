@@ -385,6 +385,26 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `change reserved slot and support is less than three then exception thrown`() {
+    // Given
+    val updateRequest = ChangeApplicationDto(
+      visitorSupport = ApplicationSupportDto("12"),
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationFull.sessionSlot.slotDate,
+    )
+
+    val applicationReference = applicationFull.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").isEqualTo("Support value description is too small")
+  }
+
+  @Test
   fun `when reserved slot changed if session template updated then visit has new session template reference and slot`() {
     // Given
     val newSessionTemplate = sessionTemplateEntityHelper.create()

@@ -15,7 +15,7 @@ data class VisitorSupportDto(
 ) {
 
   constructor(entity: VisitSupport) : this(
-    description = entity.description!!,
+    description = entity.description,
   )
 
   constructor(entity: ApplicationSupport) : this(
