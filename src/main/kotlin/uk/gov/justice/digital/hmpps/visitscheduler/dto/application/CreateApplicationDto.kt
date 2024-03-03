@@ -30,7 +30,7 @@ data class CreateApplicationDto(
   val visitContact: ContactDto?,
   @Schema(description = "List of visitors associated with the visit", required = true)
   @field:NotEmpty
-  @field: VisitorCountValidation
+  @field:VisitorCountValidation
   @field:VisitorContactValidation
   var visitors: Set<@Valid VisitorDto>,
   @Schema(description = "List of additional support associated with the visit", required = false)

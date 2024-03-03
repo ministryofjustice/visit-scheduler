@@ -289,7 +289,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
   private fun assertErrorResult(
     responseSpec: ResponseSpec,
     httpStatusCode: HttpStatusCode = HttpStatusCode.valueOf(HttpStatus.SC_BAD_REQUEST),
-    errorMessage: String ? = null,
+    errorMessage: String? = null,
   ) {
     responseSpec.expectStatus().isEqualTo(httpStatusCode)
     errorMessage?.let {

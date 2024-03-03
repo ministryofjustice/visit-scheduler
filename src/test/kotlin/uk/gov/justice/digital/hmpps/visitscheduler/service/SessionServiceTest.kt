@@ -65,7 +65,6 @@ class SessionServiceTest {
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
   private val sessionDatesUtil = SessionDatesUtil()
   private val prisonsService = mock<PrisonsService>()
-  private val applicationService = mock<ApplicationService>()
   private val applicationRepository = mock<ApplicationRepository>()
 
   private lateinit var sessionService: SessionService
@@ -92,7 +91,7 @@ class SessionServiceTest {
     whenever(prisonerSessionValidator.isSessionAvailableToPrisonerLocation(any(), any())).thenReturn(true)
   }
 
-  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incentiveLevel: IncentiveLevel? = null, category: String ? = null) {
+  private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incentiveLevel: IncentiveLevel? = null, category: String? = null) {
     whenever(
       prisonerService.getPrisoner(any()),
     ).thenReturn(PrisonerDto(prisonerId = prisonerId, category = category, incentiveLevel = incentiveLevel))
@@ -181,7 +180,8 @@ class SessionServiceTest {
       // Given
       val weeklySession = sessionTemplate(
         validFromDate = currentDate,
-        validToDate = currentDate.plusWeeks(5), // 5 weeks from today
+        // 5 weeks from today
+        validToDate = currentDate.plusWeeks(5),
         openCapacity = 10,
         closedCapacity = 5,
         startTime = LocalTime.parse("11:30"),
@@ -210,8 +210,10 @@ class SessionServiceTest {
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
-        startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
+        // future time
+        startTime = LocalTime.parse("11:30"),
+        // future time
+        endTime = LocalTime.parse("12:30"),
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
@@ -248,8 +250,10 @@ class SessionServiceTest {
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
-        startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
+        // future time
+        startTime = LocalTime.parse("11:30"),
+        // future time
+        endTime = LocalTime.parse("12:30"),
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
@@ -269,8 +273,10 @@ class SessionServiceTest {
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
-        startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
+        // future time
+        startTime = LocalTime.parse("11:30"),
+        // future time
+        endTime = LocalTime.parse("12:30"),
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
@@ -337,8 +343,10 @@ class SessionServiceTest {
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
-        startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
+        // future time
+        startTime = LocalTime.parse("11:30"),
+        // future time
+        endTime = LocalTime.parse("12:30"),
       )
 
       val prison = PrisonEntityHelper.createPrison()
@@ -383,8 +391,10 @@ class SessionServiceTest {
         validFromDate = currentDate,
         validToDate = currentDate.plusWeeks(1),
         dayOfWeek = MONDAY,
-        startTime = LocalTime.parse("11:30"), // future time
-        endTime = LocalTime.parse("12:30"), // future time
+        // future time
+        startTime = LocalTime.parse("11:30"),
+        // future time
+        endTime = LocalTime.parse("12:30"),
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 

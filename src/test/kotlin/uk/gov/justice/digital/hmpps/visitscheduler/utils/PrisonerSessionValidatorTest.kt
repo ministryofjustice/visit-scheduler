@@ -521,8 +521,4 @@ class PrisonerSessionValidatorTest {
       levelFourCode = allowedSessionLocationHierarchy.levelFourCode,
     )
   }
-
-  companion object {
-    const val prisonCode = "XYZ"
-  }
 }
