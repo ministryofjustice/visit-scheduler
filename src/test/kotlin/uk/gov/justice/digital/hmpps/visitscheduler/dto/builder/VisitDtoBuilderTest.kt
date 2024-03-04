@@ -61,28 +61,6 @@ class VisitDtoBuilderTest {
     assertVisitDto(result, visit, slotDate, visitStart, visitEnd)
   }
 
-  @Test
-  fun `when visit contact is null visit dto is still built correctly from the entity`() {
-    // Given
-    val now = LocalDateTime.now()
-    val slotDate = now.toLocalDate()
-    val visitStart = now.toLocalTime()
-    val visitEnd = visitStart.plusHours(2)
-
-    val visit = create(slotDate = slotDate, visitStart = visitStart, visitEnd = visitEnd, reference = "test", visitContact = null)
-    val slot = SessionTimeSlotDto(visitStart, visitEnd)
-
-    whenever(sessionTemplateService.getSessionTimeSlotDto(visit.sessionSlot.reference)).thenReturn(slot)
-
-    // When
-
-    val result = toTest.build(visit)
-
-    // Then
-    assertVisitDto(result, visit, slotDate, visitStart, visitEnd)
-    Assertions.assertThat(result.visitContact).isNull()
-  }
-
   private fun assertVisitDto(
     visitDto: VisitDto,
     visit: Visit,
@@ -109,8 +87,8 @@ class VisitDtoBuilderTest {
     Assertions.assertThat(visitDto.modifiedTimestamp).isNotNull()
 
     visit.visitContact?.let {
-      Assertions.assertThat(visitDto.visitContact?.name).isEqualTo(it.name)
-      Assertions.assertThat(visitDto.visitContact?.telephone).isEqualTo(it.telephone)
+      Assertions.assertThat(visitDto.visitContact.name).isEqualTo(it.name)
+      Assertions.assertThat(visitDto.visitContact.telephone).isEqualTo(it.telephone)
     }
 
     visit.visitNotes.let { notes ->
@@ -146,7 +124,6 @@ class VisitDtoBuilderTest {
     reference: String = "",
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
-    visitContact: VisitContact? = null,
   ): Visit {
     val sessionSlot = SessionSlot(sessionTemplateReference, prison.id, slotDate, slotDate.atTime(visitStart), slotDate.atTime(visitEnd))
 
@@ -166,7 +143,7 @@ class VisitDtoBuilderTest {
     visit.support = VisitSupport(1, visit.id, "description", visit)
     visit.visitNotes.add(VisitNote(1, visit.id, VISIT_COMMENT, "text", visit))
     visit.visitors.add(VisitVisitor(1, visit.id, 123445, true, visit))
-    visit.visitContact = visitContact
+    visit.visitContact = VisitContact(1, visit.id, "test", "0123456", visit)
 
     val spyVisit = spy(visit)
 

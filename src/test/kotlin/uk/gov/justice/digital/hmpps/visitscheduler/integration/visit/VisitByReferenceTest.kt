@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
@@ -14,7 +15,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @DisplayName("GET $GET_VISIT_BY_REFERENCE")
-class VisitByReferenceTest() : IntegrationTestBase() {
+class VisitByReferenceTest : IntegrationTestBase() {
 
   private val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
 
@@ -31,7 +32,7 @@ class VisitByReferenceTest() : IntegrationTestBase() {
     // Given
 
     val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
 
     val reference = createdVisit.reference
 
@@ -45,11 +46,11 @@ class VisitByReferenceTest() : IntegrationTestBase() {
   }
 
   @Test
-  fun `when booked visit has no contact get visit by reference returns contact as null`() {
+  fun `when booked visit has no contact telephone get visit by reference returns contact phone as null`() {
     // Given
 
     val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, createContact = false)
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Test User", null))
 
     val reference = createdVisit.reference
 
@@ -59,14 +60,16 @@ class VisitByReferenceTest() : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk
     val visit = getVisitDto(returnResult)
-    assertThat(visit.visitContact).isNull()
+    assertThat(visit.visitContact).isNotNull()
+    assertThat(visit.visitContact.name).isEqualTo("Test User")
+    assertThat(visit.visitContact.telephone).isNull()
   }
 
   @Test
   fun `Canceled visit by reference`() {
     // Given
     val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
 
     val reference = createdVisit.reference
 

@@ -263,7 +263,7 @@ class ApplicationService(
     )
   }
 
-  private fun createApplicationContact(application: Application, name: String, telephone: String): ApplicationContact {
+  private fun createApplicationContact(application: Application, name: String, telephone: String?): ApplicationContact {
     return ApplicationContact(
       applicationId = application.id,
       application = application,

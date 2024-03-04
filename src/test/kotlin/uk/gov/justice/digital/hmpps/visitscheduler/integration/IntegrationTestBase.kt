@@ -18,6 +18,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
@@ -245,9 +246,9 @@ abstract class IntegrationTestBase {
     visitStatus: VisitStatus? = VisitStatus.BOOKED,
     slotDate: LocalDate? = null,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    withContact: Boolean = true,
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction, withContact = withContact)
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction, visitContact = visitContact)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
@@ -259,7 +260,7 @@ abstract class IntegrationTestBase {
     completed: Boolean,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    withContact: Boolean = true,
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
   ): Application {
     val applicationEntity = applicationEntityHelper.create(
       prisonerId = prisonerId!!,
@@ -270,9 +271,7 @@ abstract class IntegrationTestBase {
       slotDate = slotDate ?: sessionTemplate?.validFromDate ?: sessionTemplateDefault.validFromDate,
       visitRestriction = visitRestriction,
     )
-    if (withContact) {
-      applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
-    }
+    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
     applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")

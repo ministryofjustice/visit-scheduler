@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation.REQUIRED
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
@@ -148,8 +149,8 @@ class VisitEntityHelper(
 
     visit.addApplication(application)
 
-    application.visitContact?.let {
-      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = it.name, telephone = it.telephone)
+    with(application.visitContact!!) {
+      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
     }
 
     application.support?.let {
@@ -182,7 +183,7 @@ class VisitEntityHelper(
     activePrison: Boolean = sessionTemplate.prison.active,
     outcomeStatus: OutcomeStatus? = null,
     createApplication: Boolean = true,
-    createContact: Boolean = false,
+    visitContact: ContactDto? = null,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
@@ -202,9 +203,8 @@ class VisitEntityHelper(
     notSaved.outcomeStatus = outcomeStatus
 
     val savedVisit = visitRepository.saveAndFlush(notSaved)
-
-    if (createContact) {
-      createContact(visit = savedVisit)
+    if (visitContact != null) {
+      createContact(visit = savedVisit, visitContact.name, visitContact.telephone)
     }
 
     return if (createApplication) {
@@ -218,7 +218,7 @@ class VisitEntityHelper(
   fun createContact(
     visit: Visit,
     name: String = "bob",
-    phone: String = "0123456789",
+    phone: String? = "0123456789",
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,

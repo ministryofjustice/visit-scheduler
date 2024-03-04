@@ -28,9 +28,7 @@ class VisitDtoBuilder {
       startTimestamp = visitEntity.sessionSlot.slotStart,
       endTimestamp = visitEntity.sessionSlot.slotEnd,
       visitNotes = visitEntity.visitNotes.map { VisitNoteDto(it) },
-      visitContact = visitEntity.visitContact?.let {
-        ContactDto(it)
-      },
+      visitContact = ContactDto(visitEntity.visitContact!!),
       visitors = visitEntity.visitors.map { VisitorDto(it) },
       visitorSupport = visitEntity.support?.let { VisitorSupportDto(it) },
       createdTimestamp = visitEntity.createTimestamp ?: LocalDateTime.now(),

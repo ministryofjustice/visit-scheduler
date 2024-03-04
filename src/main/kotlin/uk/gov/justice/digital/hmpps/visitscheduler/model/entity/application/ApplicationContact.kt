@@ -25,8 +25,8 @@ class ApplicationContact(
   @Column(name = "CONTACT_NAME", nullable = false)
   var name: String,
 
-  @Column(name = "CONTACT_PHONE", nullable = false)
-  var telephone: String,
+  @Column(name = "CONTACT_PHONE", nullable = true)
+  var telephone: String?,
 
   @OneToOne
   @JoinColumn(name = "APPLICATION_ID", updatable = false, insertable = false)

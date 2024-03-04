@@ -159,9 +159,6 @@ class VisitService(
           telephone = it.telephone,
         )
       }
-    } ?: run {
-      booking.visitContact = null
-      visitRepository.saveAndFlush(booking)
     }
 
     application.support?.let { applicationSupport ->
