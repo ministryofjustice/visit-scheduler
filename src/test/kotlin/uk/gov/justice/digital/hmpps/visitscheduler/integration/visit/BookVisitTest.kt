@@ -190,7 +190,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createContact(application = applicationWithContact, name = "Aled Evans", phone = "01348811539")
     applicationEntityHelper.createVisitor(application = applicationWithContact, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationWithContact, nomisPersonId = 666L, visitContact = false)
-    applicationEntityHelper.createSupport(application = applicationWithContact, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.createSupport(application = applicationWithContact, description = "Some More Text")
     applicationWithContact = applicationEntityHelper.save(applicationWithContact)
 
     // When
@@ -221,7 +221,7 @@ class BookVisitTest : IntegrationTestBase() {
     // no contact is created on the application
     applicationEntityHelper.createVisitor(application = applicationWithNoContact, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationWithNoContact, nomisPersonId = 666L, visitContact = false)
-    applicationEntityHelper.createSupport(application = applicationWithNoContact, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.createSupport(application = applicationWithNoContact, description = "Some More Text")
     applicationEntityHelper.save(applicationWithNoContact)
 
     // When
@@ -257,7 +257,7 @@ class BookVisitTest : IntegrationTestBase() {
     // creating visitor but not contact
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
-    applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.createSupport(application = newApplication, description = "Some More Text")
     newApplication = applicationEntityHelper.save(newApplication)
 
     originalVisit.addApplication(newApplication)
@@ -293,7 +293,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348811539")
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
-    applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some More Text")
+    applicationEntityHelper.createSupport(application = newApplication, description = "Some More Text")
     newApplication = applicationEntityHelper.save(newApplication)
 
     originalVisit.addApplication(newApplication)
