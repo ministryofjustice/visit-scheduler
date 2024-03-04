@@ -121,12 +121,8 @@ class VisitDtoBuilderTest {
       }
     }
 
-    visit.support.let { supportList ->
-      Assertions.assertThat(visitDto.visitorSupport).hasSize(supportList.size)
-      visitDto.visitorSupport.forEach { dtoSupport ->
-        val support = visit.support.find { it.type == dtoSupport.type }!!
-        Assertions.assertThat(dtoSupport.text).isEqualTo(support.text)
-      }
+    visit.support?.let {
+      Assertions.assertThat(it.description).isEqualTo(visitDto.visitorSupport?.description)
     }
 
     visit.visitors.let { visitors ->
@@ -167,7 +163,7 @@ class VisitDtoBuilderTest {
     )
 
     visit.outcomeStatus = outcomeStatus
-    visit.support.add(VisitSupport(1, visit.id, "test", "text", visit))
+    visit.support = VisitSupport(1, visit.id, "description", visit)
     visit.visitNotes.add(VisitNote(1, visit.id, VISIT_COMMENT, "text", visit))
     visit.visitors.add(VisitVisitor(1, visit.id, 123445, true, visit))
     visit.visitContact = visitContact

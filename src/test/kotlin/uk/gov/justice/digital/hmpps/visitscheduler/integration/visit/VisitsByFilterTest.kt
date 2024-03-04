@@ -310,10 +310,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
       Assertions.assertThat(visitDto.visitors[index].visitContact).isEqualTo(visitVisitor.visitContact)
     }
 
-    Assertions.assertThat(visitDto.visitorSupport.size).isEqualTo(visit.support.size)
-    visit.support.forEachIndexed { index, support ->
-      Assertions.assertThat(visitDto.visitorSupport[index].type).isEqualTo(support.type)
-      Assertions.assertThat(visitDto.visitorSupport[index].text).isEqualTo(support.text)
+    visit.support?.let {
+      Assertions.assertThat(visitDto.visitorSupport?.description).isEqualTo(it.description)
     }
 
     Assertions.assertThat(visitDto.visitNotes.size).isEqualTo(visit.visitNotes.size)

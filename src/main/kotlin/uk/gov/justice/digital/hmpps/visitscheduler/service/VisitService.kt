@@ -164,14 +164,14 @@ class VisitService(
       visitRepository.saveAndFlush(booking)
     }
 
-    application.support.let {
-      booking.support.clear()
-      visitRepository.saveAndFlush(booking)
-      application.support.map { applicationSupport ->
-        with(applicationSupport) {
-          booking.support.add(VisitSupport(visit = booking, visitId = booking.id, type = type, text = text))
-        }
+    application.support?.let { applicationSupport ->
+      booking.support?.let {
+        it.description = applicationSupport.description
+      } ?: run {
+        booking.support = VisitSupport(visit = booking, visitId = booking.id, description = applicationSupport.description)
       }
+    } ?: run {
+      booking.support = null
     }
 
     application.visitors.let {
