@@ -42,7 +42,7 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   companion object {
     val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
-    const val actionedByUserName = "user-1"
+    const val ACTIONED_BY_USER_NAME = "user-1"
   }
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -63,10 +63,9 @@ class ReserveSlotTest : IntegrationTestBase() {
   }
 
   private fun createReserveVisitSlotDto(
-    actionedBy: String = actionedByUserName,
+    actionedBy: String = ACTIONED_BY_USER_NAME,
     sessionTemplate: SessionTemplate? = null,
     support: String = "Some Text",
-
   ): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = "FF0000FF",
@@ -125,7 +124,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitors = setOf(),
       visitContact = ContactDto("John Smith", "01234 567890"),
-      actionedBy = actionedByUserName,
+      actionedBy = ACTIONED_BY_USER_NAME,
     )
 
     // When
@@ -189,7 +188,7 @@ class ReserveSlotTest : IntegrationTestBase() {
         VisitorDto(nomisPersonId = 124, visitContact = true),
       ),
       visitorSupport = ApplicationSupportDto("Some Text"),
-      actionedBy = actionedByUserName,
+      actionedBy = ACTIONED_BY_USER_NAME,
     )
 
     // When
@@ -210,7 +209,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
       visitorSupport = ApplicationSupportDto("ANYTHINGWILLDO"),
-      actionedBy = actionedByUserName,
+      actionedBy = ACTIONED_BY_USER_NAME,
     )
 
     // When

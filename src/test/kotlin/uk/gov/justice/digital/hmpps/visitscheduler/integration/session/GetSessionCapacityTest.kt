@@ -216,10 +216,10 @@ class GetSessionCapacityTest : IntegrationTestBase() {
   }
 
   private fun callGetSessionCapacity(
-    prisonCode: String ? = "MDI",
-    sessionDate: LocalDate ? = LocalDate.parse("2023-01-26"),
-    sessionStartTime: LocalTime ? = LocalTime.parse("13:45"),
-    sessionEndTime: LocalTime ? = LocalTime.parse("14:45"),
+    prisonCode: String? = "MDI",
+    sessionDate: LocalDate? = LocalDate.parse("2023-01-26"),
+    sessionStartTime: LocalTime? = LocalTime.parse("13:45"),
+    sessionEndTime: LocalTime? = LocalTime.parse("14:45"),
   ): ResponseSpec {
     return webTestClient.get().uri("$GET_SESSION_CAPACITY?prisonId=$prisonCode&sessionDate=$sessionDate&sessionStartTime=$sessionStartTime&sessionEndTime=$sessionEndTime")
       .headers(setAuthorisation(roles = requiredRole))

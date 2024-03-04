@@ -59,7 +59,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   private lateinit var telemetryClient: TelemetryClient
 
   companion object {
-    const val actionedByUserName = "user-1"
+    const val ACTIONED_BY_USER_NAME = "user-1"
   }
 
   @BeforeEach
@@ -334,7 +334,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto(support),
-      actionedBy = actionedByUserName,
+      actionedBy = ACTIONED_BY_USER_NAME,
       sessionTemplateReference = sessionTemplateReference,
     )
   }

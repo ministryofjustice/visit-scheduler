@@ -16,7 +16,7 @@ class SessionSlotEntityHelper(
   companion object {
 
     fun createSessionSlot(
-      sessionTemplateReference: String ? = "sessionTemplateReference",
+      sessionTemplateReference: String? = "sessionTemplateReference",
       prisonId: Long,
       slotDate: LocalDate = LocalDate.now().plusDays(2),
       slotTime: LocalTime = LocalTime.now().plusHours(4),
