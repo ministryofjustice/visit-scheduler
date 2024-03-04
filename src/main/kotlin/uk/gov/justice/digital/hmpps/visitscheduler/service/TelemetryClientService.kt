@@ -75,6 +75,7 @@ class TelemetryClientService(
       "visitStart" to formatDateTimeToString(visit.startTimestamp),
       "visitStatus" to visit.visitStatus.name,
       "applicationReference" to visit.applicationReference,
+      "hasContactInformation" to ((visit.visitContact != null).toString()),
     )
 
     actionedBy?.let {

@@ -179,7 +179,7 @@ class BookVisitTest : IntegrationTestBase() {
 
   @Test
   fun `when contact is supplied in application for a new visit then visit will be booked with a contact`() {
-    val applicationWithContact = applicationEntityHelper.create(
+    var applicationWithContact = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       completed = false,
       reservedSlot = true,
@@ -191,7 +191,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createVisitor(application = applicationWithContact, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationWithContact, nomisPersonId = 666L, visitContact = false)
     applicationEntityHelper.createSupport(application = applicationWithContact, name = "OTHER", details = "Some More Text")
-    applicationEntityHelper.save(applicationWithContact)
+    applicationWithContact = applicationEntityHelper.save(applicationWithContact)
 
     // When
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithContact.reference)
@@ -240,14 +240,14 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when contact is not supplied in new application for existing visit then booked visit will not have a contact`() {
+  fun `when contact is not supplied in new application for existing visit with a contact then updated visit will not have a contact`() {
     // Given
 
-    // Original application and visit
+    // Original application and visit has a contact
     val slotDateInThePast = LocalDate.now().plusDays(1)
-    val originalVisit = createApplicationAndVisit(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
+    val originalVisit = createApplicationAndVisit(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, withContact = true)
 
-    val newApplication = applicationEntityHelper.create(
+    var newApplication = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       completed = false,
       reservedSlot = true,
@@ -258,7 +258,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
     applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some More Text")
-    applicationEntityHelper.save(newApplication)
+    newApplication = applicationEntityHelper.save(newApplication)
 
     originalVisit.addApplication(newApplication)
 
@@ -282,7 +282,7 @@ class BookVisitTest : IntegrationTestBase() {
     val slotDateInThePast = LocalDate.now().plusDays(1)
     val originalVisit = createApplicationAndVisit(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, withContact = false)
 
-    val newApplication = applicationEntityHelper.create(
+    var newApplication = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       completed = false,
       reservedSlot = true,
@@ -294,7 +294,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
     applicationEntityHelper.createSupport(application = newApplication, name = "OTHER", details = "Some More Text")
-    applicationEntityHelper.save(newApplication)
+    newApplication = applicationEntityHelper.save(newApplication)
 
     originalVisit.addApplication(newApplication)
 
@@ -434,6 +434,7 @@ class BookVisitTest : IntegrationTestBase() {
         assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
         assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
         assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
+        assertThat(it["hasContactInformation"]).isEqualTo((visit.visitContact != null).toString())
       },
       isNull(),
     )

@@ -483,6 +483,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
         Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
         Assertions.assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
+        Assertions.assertThat(it["hasContactInformation"]).isEqualTo((cancelledVisit.visitContact != null).toString())
       },
       isNull(),
     )
@@ -500,6 +501,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "outcomeStatus" to cancelledVisit.outcomeStatus!!.name,
       "actionedBy" to eventAudit.actionedBy,
       "applicationMethodType" to eventAudit.applicationMethodType.name,
+      "hasContactInformation" to ((cancelledVisit.visitContact != null).toString()),
     )
     verify(telemetryClient, times(1)).trackEvent(type.eventName, eventsMap, null)
   }
