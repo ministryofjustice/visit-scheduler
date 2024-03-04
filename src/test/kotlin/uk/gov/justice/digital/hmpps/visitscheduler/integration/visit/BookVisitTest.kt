@@ -432,6 +432,7 @@ class BookVisitTest : IntegrationTestBase() {
         assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
         assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
         assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
+        assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
         assertThat(it["hasContactInformation"]).isEqualTo((visit.visitContact != null).toString())
       },
       isNull(),
