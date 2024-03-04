@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.Visitor
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import java.time.LocalDate
 
 data class CreateApplicationDto(
@@ -30,11 +29,12 @@ data class CreateApplicationDto(
   val visitContact: ContactDto?,
   @Schema(description = "List of visitors associated with the visit", required = true)
   @field:NotEmpty
-  @field: VisitorCountValidation
+  @field:VisitorCountValidation
   @field:VisitorContactValidation
   var visitors: Set<@Valid VisitorDto>,
-  @Schema(description = "List of additional support associated with the visit", required = false)
-  val visitorSupport: Set<@Valid VisitorSupportDto>? = setOf(),
+  @Schema(description = "additional support associated with the visit", required = false)
+  @Valid
+  var visitorSupport: ApplicationSupportDto? = null,
   @Schema(description = "Username for user who actioned this request", required = true)
   val actionedBy: String,
 )

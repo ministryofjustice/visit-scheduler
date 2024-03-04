@@ -108,7 +108,7 @@ class VisitService(
     return bookedVisitDto
   }
 
-  fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
+  private fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
     val existingBooking = if (hasExistingBooking) visitRepository.findVisitByApplicationReference(application.reference) else null
     if (hasExistingBooking) {
       validateVisitStartDate(existingBooking!!, "changed")
@@ -161,14 +161,14 @@ class VisitService(
       }
     }
 
-    application.support.let {
-      booking.support.clear()
-      visitRepository.saveAndFlush(booking)
-      application.support.map { applicationSupport ->
-        with(applicationSupport) {
-          booking.support.add(VisitSupport(visit = booking, visitId = booking.id, type = type, text = text))
-        }
+    application.support?.let { applicationSupport ->
+      booking.support?.let {
+        it.description = applicationSupport.description
+      } ?: run {
+        booking.support = VisitSupport(visit = booking, visitId = booking.id, description = applicationSupport.description)
       }
+    } ?: run {
+      booking.support = null
     }
 
     application.visitors.let {
@@ -401,9 +401,9 @@ class VisitService(
 
   fun getFutureVisitsBy(
     prisonerNumber: String,
-    prisonCode: String ? = null,
+    prisonCode: String? = null,
     startDateTime: LocalDateTime = LocalDateTime.now(),
-    endDateTime: LocalDateTime ? = null,
+    endDateTime: LocalDateTime? = null,
   ): List<VisitDto> {
     return this.visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }

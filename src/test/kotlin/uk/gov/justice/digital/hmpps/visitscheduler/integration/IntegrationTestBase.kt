@@ -242,7 +242,7 @@ abstract class IntegrationTestBase {
   fun createApplicationAndVisit(
     prisonerId: String? = "testPrisonerId",
     sessionTemplate: SessionTemplate,
-    visitStatus: VisitStatus ? = VisitStatus.BOOKED,
+    visitStatus: VisitStatus? = VisitStatus.BOOKED,
     slotDate: LocalDate? = null,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
   ): Visit {
@@ -271,10 +271,9 @@ abstract class IntegrationTestBase {
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
-    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
-    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER HELP", details = "Some More Text")
-    applicationEntityHelper.save(applicationEntity)
-    return applicationEntity
+    applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")
+
+    return applicationEntityHelper.save(applicationEntity)
   }
 
   fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit {

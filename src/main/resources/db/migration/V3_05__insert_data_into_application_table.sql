@@ -1,36 +1,5 @@
 
-
-CREATE TABLE tmp_application AS TABLE application WITH NO DATA;
-
-INSERT INTO tmp_application (   id,
-                            prison_id,
-                            prisoner_id,
-                            session_slot_id,
-                            reserved_slot,
-                            reference,
-                            booking_reference,
-                            visit_type,
-                            restriction,
-                            completed,
-                            created_by,
-                            create_timestamp,
-                            modify_timestamp)
-    SELECT
-        id,
-        prison_id,
-        prisoner_id,
-        session_slot_id,
-        visit_status != 'CHANGING' as reserved_slot,
-        application_reference,
-        reference,
-        visit_type,
-        visit_restriction,
-        visit_status not in ('RESERVED','CHANGING') as completed,
-        created_by,
-        create_timestamp,
-        modify_timestamp
-    FROM  tmp_visit v order by id;
-
+-- insert tmp application data into application in order aslo add visit id
 INSERT INTO application (id,
                         prison_id,
                         prisoner_id,
@@ -64,6 +33,7 @@ INSERT INTO application (id,
         WHERE v.visit_status  = 'BOOKED' or (v.visit_status  = 'CANCELLED' and (v.outcome_status is null or v.outcome_status != 'SUPERSEDED_CANCELLATION'))
         Order by a.id;
 
+-- Drop columns that are no longer needed
 ALTER TABLE tmp_visit   DROP application_reference;
 ALTER TABLE application DROP booking_reference;
 

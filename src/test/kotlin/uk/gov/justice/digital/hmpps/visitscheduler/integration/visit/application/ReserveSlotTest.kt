@@ -21,8 +21,8 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getSubmitApplicationUrl
@@ -42,7 +42,7 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   companion object {
     val visitTime: LocalDateTime = LocalDateTime.of(LocalDate.now().year + 1, 11, 1, 12, 30, 44)
-    const val actionedByUserName = "user-1"
+    const val ACTIONED_BY_USER_NAME = "user-1"
   }
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -62,7 +62,11 @@ class ReserveSlotTest : IntegrationTestBase() {
     prisonEntityHelper.create("MDI", true)
   }
 
-  private fun createReserveVisitSlotDto(actionedBy: String = actionedByUserName, sessionTemplate: SessionTemplate? = null): CreateApplicationDto {
+  private fun createReserveVisitSlotDto(
+    actionedBy: String = ACTIONED_BY_USER_NAME,
+    sessionTemplate: SessionTemplate? = null,
+    support: String = "Some Text",
+  ): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = "FF0000FF",
       sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
@@ -70,7 +74,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = ApplicationSupportDto(support),
       actionedBy = actionedBy,
     )
   }
@@ -96,6 +100,21 @@ class ReserveSlotTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `reserve visit slot and support is less than three then exception thrown`() {
+    // Given
+    val sessionTemplate = sessionTemplateEntityHelper.create(startTime = visitTime.toLocalTime(), endTime = visitTime.plusHours(1).toLocalTime())
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate, support = "12")
+
+    // When
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").isEqualTo("Support value description is too small")
+  }
+
+  @Test
   fun `when reserve visit slot has no visitors then bad request is returned`() {
     // Given
     val createReservationRequest = CreateApplicationDto(
@@ -105,7 +124,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitors = setOf(),
       visitContact = ContactDto("John Smith", "01234 567890"),
-      actionedBy = actionedByUserName,
+      actionedBy = ACTIONED_BY_USER_NAME,
     )
 
     // When
@@ -168,10 +187,8 @@ class ReserveSlotTest : IntegrationTestBase() {
         VisitorDto(nomisPersonId = 123, visitContact = true),
         VisitorDto(nomisPersonId = 124, visitContact = true),
       ),
-      visitorSupport = setOf(
-        VisitorSupportDto("OTHER", "Some Text"),
-      ),
-      actionedBy = actionedByUserName,
+      visitorSupport = ApplicationSupportDto("Some Text"),
+      actionedBy = ACTIONED_BY_USER_NAME,
     )
 
     // When
@@ -191,8 +208,8 @@ class ReserveSlotTest : IntegrationTestBase() {
       applicationRestriction = OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(),
-      visitorSupport = setOf(VisitorSupportDto("ANYTHINGWILLDO")),
-      actionedBy = actionedByUserName,
+      visitorSupport = ApplicationSupportDto("ANYTHINGWILLDO"),
+      actionedBy = ACTIONED_BY_USER_NAME,
     )
 
     // When
@@ -305,19 +322,10 @@ class ReserveSlotTest : IntegrationTestBase() {
       }
     }
 
-    val supportDtoList = returnedApplication.visitorSupport.toList()
     createApplicationRequest.visitorSupport?.let {
-      assertThat(returnedApplication.visitorSupport.size).isEqualTo(it.size)
-      it.forEachIndexed { index, supportDto ->
-        assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
-        assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
-      }
+      assertThat(it.description).isEqualTo(returnedApplication.visitorSupport?.description)
     } ?: run {
-      assertThat(returnedApplication.visitorSupport.size).isEqualTo(persistedApplication.support.size)
-      persistedApplication.support.forEachIndexed { index, support ->
-        assertThat(supportDtoList[index].type).isEqualTo(support.type)
-        assertThat(supportDtoList[index].text).isEqualTo(support.text)
-      }
+      assertThat(persistedApplication.support).isEqualTo(returnedApplication.visitorSupport?.description)
     }
 
     assertThat(returnedApplication.createdTimestamp).isNotNull()

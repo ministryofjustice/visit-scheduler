@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.Visitor
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.validation.NullableNotEmpty
 import java.time.LocalDate
 
@@ -26,9 +25,10 @@ data class ChangeApplicationDto(
   val visitContact: ContactDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false)
   @field:NullableNotEmpty
-  @field: VisitorCountValidation
+  @field:VisitorCountValidation
   @field:VisitorContactValidation
   val visitors: Set<@Valid VisitorDto>? = null,
-  @Schema(description = "List of additional support associated with the visit", required = false)
-  val visitorSupport: Set<@Valid VisitorSupportDto>? = null,
+  @Schema(description = "additional support associated with the visit, if null support will not be updated", required = false)
+  @Valid
+  var visitorSupport: ApplicationSupportDto? = null,
 )

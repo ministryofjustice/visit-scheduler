@@ -44,7 +44,9 @@ const val ACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference
 const val DEACTIVATE_SESSION_TEMPLATE: String = "$SESSION_TEMPLATE_PATH/{reference}/deactivate"
 
 enum class SessionTemplateRangeType {
-  CURRENT_OR_FUTURE, HISTORIC, ALL
+  CURRENT_OR_FUTURE,
+  HISTORIC,
+  ALL,
 }
 
 @RestController

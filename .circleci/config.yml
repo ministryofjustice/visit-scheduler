@@ -78,9 +78,9 @@ jobs:
     executor:
       name: hmpps/java_localstack_postgres
       jdk_tag: "21.0"
-      localstack_tag: "0.14.0"
+      localstack_tag: "3"
       services: "sns,sqs"
-      postgres_tag: "14"
+      postgres_tag: "15"
       postgres_username: "visit_scheduler"
       postgres_password: "visit_scheduler"
     environment:

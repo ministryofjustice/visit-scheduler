@@ -87,7 +87,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     // Then
 
     assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent() {
+    assertFlaggedVisitEvent {
       Assertions.assertThat(it["hasException"]).isNull()
       Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
       Assertions.assertThat(it["additionalInformation"]).isNull()
@@ -130,7 +130,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     // Then
 
     assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent() {
+    assertFlaggedVisitEvent {
       Assertions.assertThat(it["hasException"]).isNull()
       Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
       Assertions.assertThat(it["additionalInformation"]).isNull()
@@ -171,7 +171,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     // Then
 
     assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent() {
+    assertFlaggedVisitEvent {
       Assertions.assertThat(it["hasException"]).isNull()
       Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
       Assertions.assertThat(it["additionalInformation"]).isNull()
@@ -213,7 +213,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     // Then
 
     assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent() {
+    assertFlaggedVisitEvent {
       Assertions.assertThat(it["hasException"]).isNull()
       Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
       Assertions.assertThat(it["additionalInformation"]).isNull()
@@ -254,7 +254,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     // Then
 
     assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent() {
+    assertFlaggedVisitEvent {
       Assertions.assertThat(it["hasException"]).isEqualTo("true")
       Assertions.assertThat(it["hasPrisonerMoved"]).isEqualTo("true")
       Assertions.assertThat(it["additionalInformation"]).isEqualTo("Prisoner with ID - $prisonerAId is not in prison - ${prison.code} but $newPrisonCode")
@@ -291,7 +291,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     // Then
 
     assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent() {
+    assertFlaggedVisitEvent {
       Assertions.assertThat(it["hasException"]).isEqualTo("true")
       Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
       Assertions.assertThat(it["additionalInformation"]).isNotNull()

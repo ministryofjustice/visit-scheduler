@@ -1,7 +1,6 @@
 generic-service:
   nameOverride: visit-scheduler
   serviceAccountName: visit-someone-in-prison
-  replicaCount: 4
   productId: "DPS035"
 
   image:
@@ -14,6 +13,7 @@ generic-service:
     host: app-hostname.local # override per environment
     tlsSecretName: visit-scheduler-cert
     path: /
+
 
   # Environment variables to load into the deployment
   env:
@@ -40,8 +40,6 @@ generic-service:
       DATABASE_NAME: "database_name"
       DATABASE_ENDPOINT: "rds_instance_endpoint"
     hmpps-domain-events-topic:
-      #HMPPS_SQS_TOPICS_DOMAINEVENTS_ACCESS_KEY_ID: "access_key_id"
-      #HMPPS_SQS_TOPICS_DOMAINEVENTS_SECRET_ACCESS_KEY: "secret_access_key"
       HMPPS_SQS_TOPICS_DOMAINEVENTS_ARN: "topic_arn"
 
   allowlist:

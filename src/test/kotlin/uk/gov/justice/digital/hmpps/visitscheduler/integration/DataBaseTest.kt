@@ -44,17 +44,16 @@ class DataBaseTest(
     visitEntityHelper.createNote(visit = visitWithApplication, text = "Some text comment", type = VISIT_COMMENT)
     visitEntityHelper.createContact(visit = visitWithApplication, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createVisitor(visit = visitWithApplication, nomisPersonId = 321L, visitContact = true)
-    visitEntityHelper.createSupport(visit = visitWithApplication, name = "OTHER", details = "Some Text")
-    visitEntityHelper.save(visitWithApplication)
+    visitEntityHelper.createSupport(visit = visitWithApplication, description = "Some Text")
+    visitWithApplication = visitEntityHelper.save(visitWithApplication)
 
     applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = true)
     applicationEntityHelper.createContact(application = applicationWithVisit, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationWithVisit, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = applicationWithVisit, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = applicationWithVisit, description = "Some Text")
     applicationEntityHelper.save(applicationWithVisit)
 
     visitWithApplication.addApplication(applicationWithVisit)
-    visitEntityHelper.save(visitWithApplication)
 
     sessionTemplateDefault = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now())
     val allowedPermittedLocations1 = listOf(AllowedSessionLocationHierarchy("A", "1", "001"))
@@ -68,7 +67,7 @@ class DataBaseTest(
     inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false)
     applicationEntityHelper.createContact(application = inCompleteApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = inCompleteApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = inCompleteApplication, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = inCompleteApplication, description = "Some Text")
     applicationEntityHelper.save(inCompleteApplication)
   }
 

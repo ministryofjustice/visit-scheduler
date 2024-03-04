@@ -110,17 +110,14 @@ class ApplicationEntityHelper(
 
   fun createSupport(
     application: Application,
-    name: String,
-    details: String?,
+    description: String,
   ) {
-    application.support.add(
+    application.support =
       ApplicationSupport(
-        type = name,
         applicationId = application.id,
-        text = details,
+        description = description,
         application = application,
-      ),
-    )
+      )
   }
 
   fun save(application: Application): Application {
