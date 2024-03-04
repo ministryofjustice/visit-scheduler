@@ -34,7 +34,16 @@ class TelemetryClientService(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun createVisitTrackEventFromVisitEntity(
+  fun createVisitBookedTrackEventFromVisitEntity(
+    visitEntity: Visit,
+    actionedBy: String? = null,
+    applicationMethodType: ApplicationMethodType? = null,
+  ): MutableMap<String, String> {
+    val visitDto = visitDtoBuilder.build(visitEntity)
+    return createVisitTrackEventFromVisitDto(visitDto, actionedBy, applicationMethodType, isBooking = true)
+  }
+
+  fun createCancelVisitTrackEventFromVisitEntity(
     visitEntity: Visit,
     actionedBy: String? = null,
     applicationMethodType: ApplicationMethodType? = null,
@@ -64,6 +73,7 @@ class TelemetryClientService(
     visit: VisitDto,
     actionedBy: String? = null,
     applicationMethodType: ApplicationMethodType? = null,
+    isBooking: Boolean = false,
   ): MutableMap<String, String> {
     val data = mutableMapOf(
       "reference" to visit.reference,
@@ -76,6 +86,12 @@ class TelemetryClientService(
       "visitStatus" to visit.visitStatus.name,
       "applicationReference" to visit.applicationReference,
     )
+
+    if (isBooking) {
+      visit.visitorSupport?.let {
+        data.put("supportRequired", it.description)
+      }
+    }
 
     actionedBy?.let {
       data.put("actionedBy", it)
