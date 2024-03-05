@@ -85,7 +85,7 @@ open class SessionService(
       buildVisitSessionsUsingTemplate(it, dateRange.fromDate, dateRange.toDate)
     }.flatten()
 
-    val sessionSlots = getSessionSlotIds(visitSessions)
+    val sessionSlots = getSessionSlots(visitSessions)
     val nonAssociationConflictSessions = getNonAssociationSessions(visitSessions, sessionSlots, prisonerId)
     val doubleBookings = getDoubleBookingSessions(visitSessions, sessionSlots, prisonerId)
 
@@ -131,7 +131,7 @@ open class SessionService(
     }
   }
 
-  private fun getSessionSlotIds(sessionTemplates: List<VisitSessionDto>): List<SessionSlot> {
+  private fun getSessionSlots(sessionTemplates: List<VisitSessionDto>): List<SessionSlot> {
     val sessionDates = sessionTemplates.map { it.startTimestamp.toLocalDate() }.distinct()
     val sessionTemplateReference = sessionTemplates.map { it.sessionTemplateReference }.distinct()
 
