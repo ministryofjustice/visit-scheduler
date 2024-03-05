@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
@@ -38,6 +39,7 @@ class SessionService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
   private val applicationRepository: ApplicationRepository,
+  private val sessionSlotRepository: SessionSlotRepository,
   private val prisonerService: PrisonerService,
   @Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,
@@ -342,17 +344,14 @@ class SessionService(
   private fun getVisitRestrictionStats(session: VisitSessionDto): List<VisitRestrictionStats> {
     val slotDate = session.startTimestamp.toLocalDate()
 
-    val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
-      sessionTemplateReference = session.sessionTemplateReference,
-      slotDate = slotDate,
-    )
+    val sessionSlotId = sessionSlotRepository.findSessionSlotId(session.sessionTemplateReference, slotDate)
+    sessionSlotId?.let {
+      val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(it)
+      val restrictionReservedApplicationStats = applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(it)
 
-    val restrictionReservedApplicationStats = applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
-      sessionTemplateReference = session.sessionTemplateReference,
-      slotDate = slotDate,
-    )
-
-    return restrictionBookedStats + restrictionReservedApplicationStats
+      return restrictionBookedStats + restrictionReservedApplicationStats
+    }
+    return emptyList()
   }
 
   fun getSessionCapacity(
