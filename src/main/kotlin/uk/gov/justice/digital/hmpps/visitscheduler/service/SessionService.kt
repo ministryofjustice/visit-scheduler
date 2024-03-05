@@ -212,7 +212,7 @@ open class SessionService(
     sessionTemplate: SessionTemplate,
     requestedBookableStartDate: LocalDate,
     requestedBookableEndDate: LocalDate,
-  ): MutableList<VisitSessionDto> {
+  ): List<VisitSessionDto> {
     val firstBookableSessionDay =
       getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek)
     val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.validToDate)
@@ -238,7 +238,7 @@ open class SessionService(
         .toList()
     }
 
-    return mutableListOf()
+    return listOf()
   }
 
   private fun getExcludeDates(prison: Prison): Set<LocalDate> {
