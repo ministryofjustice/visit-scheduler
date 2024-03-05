@@ -3,8 +3,9 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 import com.fasterxml.jackson.annotation.JsonCreator
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import uk.gov.justice.digital.hmpps.visitscheduler.validation.NullableNotBlank
 
-data class CreateLegacyContactOnVisitRequestDto(@field:NotBlank val name: String, @field:NotBlank val telephone: String) {
+data class CreateLegacyContactOnVisitRequestDto(@field:NotBlank val name: String, @field:NullableNotBlank val telephone: String?) {
   companion object {
     const val UNKNOWN_TOKEN = "UNKNOWN"
 
@@ -15,9 +16,9 @@ data class CreateLegacyContactOnVisitRequestDto(@field:NotBlank val name: String
     fun create(
       @Schema(description = "Contact Name", example = "John Smith", defaultValue = UNKNOWN_TOKEN, required = false)
       name: String? = null,
-      @Schema(description = "Contact Phone Number", example = "01234 567890", defaultValue = UNKNOWN_TOKEN, required = false)
+      @Schema(description = "Contact Phone Number", example = "01234 567890", required = false)
       telephone: String? = null,
     ) =
-      CreateLegacyContactOnVisitRequestDto(name ?: UNKNOWN_TOKEN, telephone ?: UNKNOWN_TOKEN)
+      CreateLegacyContactOnVisitRequestDto(name ?: UNKNOWN_TOKEN, telephone)
   }
 }

@@ -67,7 +67,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit by reference -  with outcome and outcome text`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
@@ -111,7 +111,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit by reference -  with outcome and without outcome text`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
@@ -143,7 +143,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit twice by reference - just send one event`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
     val reference = visit.reference
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
@@ -178,7 +178,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel visit by reference - without outcome`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault)
     val reference = visit.reference
     val eventsMap = mutableMapOf(
       "reference" to reference,
@@ -199,7 +199,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel an updated visit by reference`() {
     // Given
-    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val bookedVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault)
     val roles = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     // update the visit
@@ -345,7 +345,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `cancel expired visit returns bad request error`() {
     val yesterday = LocalDateTime.now().minusDays(visitCancellationDayLimit + 1)
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = yesterday.toLocalDate(), sessionTemplate = sessionTemplateDefault, createContact = true)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = yesterday.toLocalDate(), sessionTemplate = sessionTemplateDefault)
 
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
@@ -390,7 +390,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val slotDate = now.toLocalDate()
     val visitStart = now.toLocalTime()
 
-    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, cancelVisitDto)
@@ -420,7 +420,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val oneAm = LocalDateTime.now().truncatedTo(ChronoUnit.DAYS).withHour(1)
     val slotDate = oneAm.toLocalDate()
     val visitStart = oneAm.toLocalTime()
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
 
@@ -446,7 +446,7 @@ class CancelVisitTest : IntegrationTestBase() {
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
 
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
@@ -484,6 +484,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
         Assertions.assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
         Assertions.assertThat(it["supportRequired"]).isNull()
+        Assertions.assertThat(it["hasPhoneNumber"]).isEqualTo((cancelledVisit.visitContact.telephone != null).toString())
       },
       isNull(),
     )
@@ -501,6 +502,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "outcomeStatus" to cancelledVisit.outcomeStatus!!.name,
       "actionedBy" to eventAudit.actionedBy,
       "applicationMethodType" to eventAudit.applicationMethodType.name,
+      "hasPhoneNumber" to ((cancelledVisit.visitContact.telephone != null).toString()),
     )
     verify(telemetryClient, times(1)).trackEvent(type.eventName, eventsMap, null)
   }
@@ -508,7 +510,7 @@ class CancelVisitTest : IntegrationTestBase() {
   @Test
   fun `when cancel visit by reference then any associated notifications are also deleted`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, createContact = true)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)
