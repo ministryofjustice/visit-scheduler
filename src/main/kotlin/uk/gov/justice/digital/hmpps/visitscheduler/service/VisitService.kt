@@ -296,7 +296,7 @@ class VisitService(
     bookingRequestDto: BookingRequestDto,
     hasExistingBooking: Boolean,
   ) {
-    val bookEvent = telemetryClientService.createVisitTrackEventFromVisitEntity(bookedVisit, bookingRequestDto.actionedBy, bookingRequestDto.applicationMethodType)
+    val bookEvent = telemetryClientService.createVisitBookedTrackEventFromVisitEntity(bookedVisit, bookingRequestDto.actionedBy, bookingRequestDto.applicationMethodType)
     bookEvent["isUpdated"] = hasExistingBooking.toString()
     telemetryClientService.trackEvent(VISIT_BOOKED_EVENT, bookEvent)
 
@@ -320,7 +320,7 @@ class VisitService(
     visitDto: VisitDto,
     cancelVisitDto: CancelVisitDto,
   ) {
-    val eventsMap = telemetryClientService.createVisitTrackEventFromVisitEntity(visit, cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType)
+    val eventsMap = telemetryClientService.createCancelVisitTrackEventFromVisitEntity(visit, cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType)
     visitDto.outcomeStatus?.let {
       eventsMap.put("outcomeStatus", it.name)
     }

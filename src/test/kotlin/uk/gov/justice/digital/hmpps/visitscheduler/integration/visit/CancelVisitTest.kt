@@ -483,6 +483,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
         Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
         Assertions.assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
+        Assertions.assertThat(it["supportRequired"]).isNull()
       },
       isNull(),
     )

@@ -7,6 +7,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleD
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
@@ -17,6 +18,7 @@ class VisitsReportingService(
   private val prisonsService: PrisonsService,
   private val sessionService: SessionService,
   private val visitRepository: VisitRepository,
+  private val sessionSlotRepository: SessionSlotRepository,
 ) {
   fun getVisitCountsBySession(reportDate: LocalDate): List<SessionVisitCountsDto> {
     return getSessionsReport(reportDate)
@@ -87,21 +89,22 @@ class VisitsReportingService(
   }
 
   private fun getVisitCountsBySession(sessionTemplateReference: String, visitStatus: VisitStatus, visitDate: LocalDate): List<VisitRestrictionStats> {
-    return when (visitStatus) {
-      VisitStatus.BOOKED -> {
-        visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(
-          sessionTemplateReference = sessionTemplateReference,
-          slotDate = visitDate,
-        )
-      }
+    val sessionSlotId = sessionSlotRepository.findSessionSlotId(sessionTemplateReference, visitDate)
+    sessionSlotId?.let {
+      return when (visitStatus) {
+        VisitStatus.BOOKED -> {
+          visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(it)
+        }
 
-      VisitStatus.CANCELLED -> {
-        visitRepository.getCountOfCancelledSessionVisitsForOpenOrClosedRestriction(
-          sessionTemplateReference = sessionTemplateReference,
-          slotDate = visitDate,
-        )
+        VisitStatus.CANCELLED -> {
+          visitRepository.getCountOfCancelledSessionVisitsForOpenOrClosedRestriction(
+            it,
+          )
+        }
       }
     }
+
+    return listOf()
   }
 
   fun getSessionVisitCounts(
