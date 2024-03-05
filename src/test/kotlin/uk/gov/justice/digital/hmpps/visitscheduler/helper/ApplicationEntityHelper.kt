@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -83,12 +84,24 @@ class ApplicationEntityHelper(
   fun createContact(
     application: Application,
     name: String,
-    phone: String,
+    phone: String?,
   ) {
     application.visitContact = ApplicationContact(
       applicationId = application.id,
       name = name,
       telephone = phone,
+      application = application,
+    )
+  }
+
+  fun createContact(
+    application: Application,
+    contact: ContactDto,
+  ) {
+    application.visitContact = ApplicationContact(
+      applicationId = application.id,
+      name = contact.name,
+      telephone = contact.telephone,
       application = application,
     )
   }

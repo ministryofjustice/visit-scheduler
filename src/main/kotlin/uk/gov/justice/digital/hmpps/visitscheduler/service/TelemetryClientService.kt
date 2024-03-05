@@ -85,6 +85,7 @@ class TelemetryClientService(
       "visitStart" to formatDateTimeToString(visit.startTimestamp),
       "visitStatus" to visit.visitStatus.name,
       "applicationReference" to visit.applicationReference,
+      "hasPhoneNumber" to ((visit.visitContact.telephone != null).toString()),
     )
 
     if (isBooking) {

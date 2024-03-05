@@ -224,7 +224,9 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     assertThat(visit).isNotNull
     visit?.let {
       assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
+
+      // telephone number will be null and not UNKNOWN
+      assertThat(visit.visitContact!!.telephone).isNull()
     }
 
     verify(telemetryClient, times(1)).trackEvent(eq("visit-migrated"), any(), isNull())
@@ -305,7 +307,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   }
 
   @Test
-  fun `When telephone number and contact name is NULL then an UNKNOWN will be migrated`() {
+  fun `When telephone number and contact name is NULL then an UNKNOWN will be migrated for name but telephone will be null`() {
     // Given
     val migrateVisitDto = createMigrateVisitRequestDto()
     createSessionTemplateFrom(migrateVisitDto)
@@ -334,7 +336,8 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     val visit = visitRepository.findByReference(getReference(responseSpec))
     assertThat(visit).isNotNull
     visit?.let {
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
+      // telephone number will be null and not UNKNOWN
+      assertThat(visit.visitContact!!.telephone).isNull()
       assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
     }
 
@@ -343,7 +346,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   }
 
   @Test
-  fun `When contact name, contact tel and  outcome status are not given then an UNKNOWN name and NOT_RECORDED will be migrated  `() {
+  fun `When contact name, contact tel and  outcome status are not given then an UNKNOWN name, null telephone number and NOT_RECORDED will be migrated  `() {
     // Given
     val migrateVisitDto = createMigrateVisitRequestDto()
     createSessionTemplateFrom(migrateVisitDto)
@@ -371,7 +374,8 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     assertThat(visit).isNotNull
     visit?.let {
       assertThat(visit.visitContact!!.name).isEqualTo(UNKNOWN_TOKEN)
-      assertThat(visit.visitContact!!.telephone).isEqualTo(UNKNOWN_TOKEN)
+      // telephone number will be null and not UNKNOWN
+      assertThat(visit.visitContact!!.telephone).isNull()
       assertThat(visit.outcomeStatus).isEqualTo(NOT_RECORDED)
     }
 
