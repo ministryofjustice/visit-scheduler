@@ -68,5 +68,5 @@ data class VisitSessionDto(
   val endTimestamp: LocalDateTime,
 
   @Schema(description = "Session conflicts", required = false)
-  val sessionConflicts: MutableSet<@Valid SessionConflict>? = mutableSetOf(),
+  val sessionConflicts: MutableSet<@Valid SessionConflict> = mutableSetOf(),
 )
