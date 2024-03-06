@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplica
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
@@ -39,7 +40,7 @@ import java.time.LocalDateTime
 
 @Service
 @Transactional
-class ApplicationService(
+open class ApplicationService(
   private val applicationRepo: ApplicationRepository,
   private val visitRepo: VisitRepository,
   private val telemetryClientService: TelemetryClientService,
@@ -225,7 +226,7 @@ class ApplicationService(
   }
 
   @Transactional(propagation = REQUIRES_NEW)
-  fun deleteAllExpiredApplications() {
+  open fun deleteAllExpiredApplications() {
     LOG.debug("Entered deleteExpiredApplication")
     val applicationsToBeDeleted = applicationRepo.findExpiredApplicationReferences(getExpiredApplicationDateAndTime())
     applicationsToBeDeleted.forEach { applicationToBeDeleted ->
@@ -233,6 +234,17 @@ class ApplicationService(
       val applicationEvent = telemetryClientService.createApplicationTrackEventFromVisitEntity(applicationToBeDeleted)
       telemetryClientService.trackEvent(VISIT_SLOT_RELEASED_EVENT, applicationEvent)
       LOG.debug("Expired Application ${applicationToBeDeleted.reference} has been deleted")
+    }
+  }
+
+  @Transactional(propagation = REQUIRES_NEW)
+  open fun deleteApplication(reference: String) {
+    VisitService.LOG.debug("Entered deleteApplication reference $reference")
+    val visitToBeDeleted = this.applicationRepo.findApplication(reference)
+    visitToBeDeleted?.let {
+      this.applicationRepo.delete(visitToBeDeleted)
+    } ?: {
+      throw ItemNotFoundException("Application not found $reference")
     }
   }
 

@@ -44,6 +44,7 @@ const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/bo
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 const val GET_VISITS_BY_SESSION_TEMPLATE_REFERENCE: String = "$VISIT_CONTROLLER_PATH/session-template/{sessionTemplateReference}"
+const val VISIT_DELETE: String = "$VISIT_CONTROLLER_PATH/{reference}/delete"
 
 @RestController
 @Validated
@@ -420,5 +421,41 @@ class VisitController(
     prisonerNumber: String,
   ): List<VisitDto> {
     return visitService.findFutureVisitsBySessionPrisoner(prisonerNumber)
+  }
+
+  @PreAuthorize("hasRole('TEST_VISIT_SCHEDULER')")
+  @PutMapping(VISIT_DELETE)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+    summary = "Delete visit and all associated child objects",
+    description = "Delete visit and all associated child objects",
+    responses = [
+      ApiResponse(
+        responseCode = "204",
+        description = "Visit Deleted",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to delete visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to delete visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun deleteVisit(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+  ) {
+    visitService.deleteVisit(reference)
   }
 }

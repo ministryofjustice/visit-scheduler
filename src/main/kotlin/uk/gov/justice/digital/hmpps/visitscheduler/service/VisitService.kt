@@ -10,6 +10,7 @@ import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
 import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
@@ -49,7 +50,7 @@ import java.time.temporal.ChronoUnit
 
 @Service
 @Transactional
-class VisitService(
+open class VisitService(
   private val visitRepository: VisitRepository,
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val telemetryClientService: TelemetryClientService,
@@ -220,7 +221,7 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
+  open fun findVisitsByFilterPageableDescending(visitFilter: VisitFilter, pageablePage: Int? = null, pageableSize: Int? = null): Page<VisitDto> {
     if (visitFilter.prisonCode == null && visitFilter.prisonerId == null) {
       throw ValidationException("Must have prisonId or prisonerId")
     }
@@ -241,7 +242,7 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun findVisitsBySessionTemplateFilterPageableDescending(
+  open fun findVisitsBySessionTemplateFilterPageableDescending(
     sessionTemplateReference: String,
     fromDate: LocalDate,
     toDate: LocalDate,
@@ -347,23 +348,23 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun getVisitByReference(reference: String): VisitDto {
+  open fun getVisitByReference(reference: String): VisitDto {
     val visitEntity = visitRepository.findByReference(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
     return visitDtoBuilder.build(visitEntity)
   }
 
   @Transactional(readOnly = true)
-  fun getHistoryByReference(bookingReference: String): List<EventAuditDto> {
+  open fun getHistoryByReference(bookingReference: String): List<EventAuditDto> {
     return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
   }
 
   @Transactional(readOnly = true)
-  fun getLastUserNameToUpdateToSlotByReference(bookingReference: String): String {
+  open fun getLastUserNameToUpdateToSlotByReference(bookingReference: String): String {
     return eventAuditRepository.getLastUserToUpdateSlotByReference(bookingReference)
   }
 
   @Transactional(readOnly = true)
-  fun getLastEventForBooking(bookingReference: String): EventAuditDto? {
+  open fun getLastEventForBooking(bookingReference: String): EventAuditDto? {
     return eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
       EventAuditDto(it)
     }
@@ -409,5 +410,16 @@ class VisitService(
 
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
+  }
+
+  @Transactional(propagation = REQUIRES_NEW)
+  open fun deleteVisit(reference: String) {
+    LOG.debug("Entered deleteVisit reference $reference")
+    val visitToBeDeleted = this.visitRepository.findByReference(reference)
+    visitToBeDeleted?.let {
+      this.visitRepository.delete(visitToBeDeleted)
+    } ?: {
+      throw ItemNotFoundException("Visit not found $reference")
+    }
   }
 }

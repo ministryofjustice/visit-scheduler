@@ -27,6 +27,7 @@ const val APPLICATION_CONTROLLER_PATH: String = "/visits/application"
 const val APPLICATION_RESERVE_SLOT: String = "$APPLICATION_CONTROLLER_PATH/slot/reserve"
 const val APPLICATION_RESERVED_SLOT_CHANGE: String = "$APPLICATION_CONTROLLER_PATH/{reference}/slot/change"
 const val APPLICATION_CHANGE: String = "$APPLICATION_CONTROLLER_PATH/{bookingReference}/change"
+const val APPLICATION_DELETE: String = "$APPLICATION_CONTROLLER_PATH/{reference}/delete"
 
 @RestController
 @Validated
@@ -170,5 +171,41 @@ class ApplicationController(
     createApplicationDto: CreateApplicationDto,
   ): ApplicationDto {
     return applicationService.createApplicationForAnExistingVisit(bookingReference.trim(), createApplicationDto)
+  }
+
+  @PreAuthorize("hasRole('TEST_VISIT_SCHEDULER')")
+  @PutMapping(APPLICATION_DELETE)
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  @Operation(
+    summary = "Delete application and all associated child objects",
+    description = "Delete application and all associated child objects",
+    responses = [
+      ApiResponse(
+        responseCode = "204",
+        description = "Application Deleted",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to delete application",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to delete application",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun deleteApplication(
+    @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+    @PathVariable
+    reference: String,
+  ) {
+    applicationService.deleteApplication(reference)
   }
 }
