@@ -129,7 +129,7 @@ abstract class IntegrationTestBase {
 
   @AfterEach
   @Transactional
-  internal fun deleteAll() {
+  internal open fun deleteAll() {
     deleteEntityHelper.deleteAll()
   }
 
@@ -249,7 +249,7 @@ abstract class IntegrationTestBase {
     visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
   ): Visit {
     val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction, visitContact = visitContact)
-    return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
+    return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application, sessionTemplateLocal = sessionTemplate)
   }
 
   fun createApplicationAndSave(

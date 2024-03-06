@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
+import org.mockito.ArgumentMatchers.anyList
 import org.mockito.Mockito
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
@@ -108,6 +109,15 @@ class SessionServiceTest {
     ).thenReturn(response)
   }
 
+  private fun mockSessionSlotRepositoryResponse(sessionSlot: SessionSlot) {
+    whenever(
+      sessionSlotRepository.findSessionSlot(
+        listOf(sessionSlot.slotDate),
+        listOf(sessionSlot.sessionTemplateReference!!),
+      ),
+    ).thenReturn(listOf(sessionSlot))
+  }
+
   private fun mockVisitRepositoryCountResponse(visits: List<Visit>, sessionTemplate: SessionTemplate, sessionSlot: SessionSlot? = null) {
     val startDateTime = currentDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek)).atTime(sessionTemplate.startTime)
 
@@ -135,6 +145,20 @@ class SessionServiceTest {
     backingMap["visitRestriction"] = visitRestriction
     backingMap["count"] = visits.count { it.visitRestriction == visitRestriction }
     return factory.createProjection(VisitRestrictionStats::class.java, backingMap)
+  }
+
+  private fun mockSessionSlots(
+    sessionTemplate: SessionTemplate,
+  ): List<SessionSlot> {
+    val slotDate = sessionTemplate.validFromDate.plusDays(1)
+    val slotStart = slotDate.atTime(sessionTemplate.startTime)
+    val slotEnd = slotDate.atTime(sessionTemplate.endTime)
+    val slots = listOf(SessionSlot(sessionTemplate.reference, sessionTemplate.prisonId, slotDate, slotStart, slotEnd))
+
+    whenever(sessionSlotRepository.findSessionSlot(listOf(slotDate), listOf(sessionTemplate.reference))).thenReturn(
+      slots,
+    )
+    return slots
   }
 
   @Nested
@@ -292,18 +316,22 @@ class SessionServiceTest {
 
       val prison = PrisonEntityHelper.createPrison()
 
+      val slotDate = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek))
+
       val sessionSlot = SessionSlotEntityHelper.createSessionSlot(
         prisonId = prison.id,
         sessionTemplateReference = singleSession.reference,
-        slotDate = currentDate,
+        slotDate = slotDate,
         slotTime = LocalTime.of(11, 30),
         slotEndTime = LocalTime.of(12, 30),
       )
 
+      mockSessionSlotRepositoryResponse(sessionSlot)
+
       val openVisit1 = Visit(
-        prisonerId = "Anythingwilldo",
+        prisonerId = prisonerId,
         sessionSlot = sessionSlot,
-        sessionSlotId = 1,
+        sessionSlotId = sessionSlot.id,
         visitType = SOCIAL,
         prisonId = prison.id,
         prison = prison,
@@ -313,9 +341,9 @@ class SessionServiceTest {
       )
 
       val openVisit2 = Visit(
-        prisonerId = "Anythingwilldo",
+        prisonerId = prisonerId,
         sessionSlot = sessionSlot,
-        sessionSlotId = 1,
+        sessionSlotId = sessionSlot.id,
         visitType = SOCIAL,
         prisonId = prison.id,
         prison = prison,
@@ -325,9 +353,9 @@ class SessionServiceTest {
       )
 
       val closedVisit = Visit(
-        prisonerId = "Anythingwilldo",
+        prisonerId = prisonerId,
         sessionSlot = sessionSlot,
-        sessionSlotId = 1,
+        sessionSlotId = sessionSlot.id,
         visitType = SOCIAL,
         prisonId = prison.id,
         prison = prison,
@@ -490,7 +518,9 @@ class SessionServiceTest {
 
       mockGetPrisonerNonAssociation(prisonerId, associationId)
 
-      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
+      whenever(sessionSlotRepository.findSessionSlot(anyList(), anyList())).thenReturn(
+        listOf(),
+      )
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -524,9 +554,10 @@ class SessionServiceTest {
 
       val expectedAssociations = listOf(associationId)
 
-      val slotDate = validFromDate.plusDays(1)
+      val slots = mockSessionSlots(singleSession)
 
-      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, prisonCode, slotDate))
+      val slotIds = slots.map { it.id }
+      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotIds))
         .thenReturn(
           true,
           false,
@@ -540,7 +571,7 @@ class SessionServiceTest {
       val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
+      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
@@ -561,11 +592,13 @@ class SessionServiceTest {
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
+      mockSessionSlots(singleSession)
+
       whenever(
         prisonerService.getPrisonerNonAssociationList(prisonerId),
       ).thenReturn(PrisonerNonAssociationDetailsDto().nonAssociations)
 
-      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -575,7 +608,7 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts!!.first()).isEqualTo(SessionConflict.DOUBLE_BOOKED)
+      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.DOUBLE_BOOKED)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
@@ -725,7 +758,7 @@ class SessionServiceTest {
 
       mockGetPrisonerNonAssociation(prisonerId, associationId)
 
-      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
+      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull())).thenReturn(false)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -749,10 +782,20 @@ class SessionServiceTest {
         endTime = LocalTime.parse("12:30"),
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
-
       mockGetPrisonerNonAssociation(prisonerId, associationId)
+      val slotDate = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek))
 
-      whenever(visitRepository.hasActiveVisitsForDate(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      val sessionSlot = SessionSlotEntityHelper.createSessionSlot(
+        prisonId = singleSession.prisonId,
+        sessionTemplateReference = singleSession.reference,
+        slotDate = slotDate,
+        slotTime = LocalTime.of(11, 30),
+        slotEndTime = LocalTime.of(12, 30),
+      )
+
+      mockSessionSlotRepositoryResponse(sessionSlot)
+
+      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -777,8 +820,17 @@ class SessionServiceTest {
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
 
       mockGetPrisonerNonAssociation(prisonerId, "associationID")
+      val slotDate = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek))
+      val sessionSlot = SessionSlotEntityHelper.createSessionSlot(
+        prisonId = singleSession.prisonId,
+        sessionTemplateReference = singleSession.reference,
+        slotDate = slotDate,
+        slotTime = LocalTime.of(11, 30),
+        slotEndTime = LocalTime.of(12, 30),
+      )
+      mockSessionSlotRepositoryResponse(sessionSlot)
 
-      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -808,17 +860,14 @@ class SessionServiceTest {
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
       )
+
       mockSessionTemplateRepositoryResponse(listOf(firstSession, secondSession))
-
-      mockGetPrisonerNonAssociation(prisonerId, "associationID")
-
-      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
 
       // Then
-      assertThat(sessions).size().isEqualTo(0)
+      assertThat(sessions).size().isEqualTo(3)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
   }

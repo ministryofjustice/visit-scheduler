@@ -32,16 +32,15 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun isBookingCancelled(reference: String): Boolean
 
   @Query(
-    "SELECT count(v) > 0 FROM Visit v " +
-      "WHERE v.prisonerId IN (:prisonerIds) AND " +
-      "v.prison.code = :prisonCode AND " +
-      "v.sessionSlot.slotDate = :slotDate AND " +
-      "v.visitStatus = 'BOOKED'",
+    "SELECT count(*) > 0 FROM visit v " +
+      "WHERE v.prisoner_id IN :prisonerIds AND " +
+      "v.session_slot_id IN :sessionIds AND " +
+      "v.visit_status = 'BOOKED'",
+    nativeQuery = true,
   )
   fun hasActiveVisitsForDate(
     prisonerIds: List<String>,
-    prisonCode: String,
-    slotDate: LocalDate,
+    sessionIds: List<Long>,
   ): Boolean
 
   @Query(
@@ -128,13 +127,11 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED'  AND " +
       "(v.prisonerId = :prisonerId) AND " +
-      "(v.sessionSlot.sessionTemplateReference = :sessionTemplateReference) AND " +
-      "v.sessionSlot.slotDate = :slotDate ",
+      "(v.sessionSlotId = :sessionSlotId)",
   )
   fun hasActiveVisitForDate(
     @Param("prisonerId") prisonerId: String,
-    @Param("sessionTemplateReference") sessionTemplateReference: String,
-    @Param("slotDate") slotDate: LocalDate,
+    @Param("sessionSlotId") sessionSlotId: Long,
   ): Boolean
 
   @Query(

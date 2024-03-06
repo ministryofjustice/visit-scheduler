@@ -98,11 +98,10 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     val visits = parseVisitsPageResponse(responseSpec)
-    Assertions.assertThat(visits.size).isEqualTo(4)
+    Assertions.assertThat(visits.size).isEqualTo(3)
     Assertions.assertThat(visits[0].visitStatus).isEqualTo(BOOKED)
     Assertions.assertThat(visits[1].visitStatus).isEqualTo(BOOKED)
     Assertions.assertThat(visits[2].visitStatus).isEqualTo(BOOKED)
-    Assertions.assertThat(visits[3].visitStatus).isEqualTo(BOOKED)
   }
 
   @Test
@@ -118,10 +117,9 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     val visits = parseVisitsPageResponse(responseSpec)
-    Assertions.assertThat(visits.size).isEqualTo(3)
+    Assertions.assertThat(visits.size).isEqualTo(2)
     Assertions.assertThat(visits[0].visitRestriction).isEqualTo(OPEN)
     Assertions.assertThat(visits[1].visitRestriction).isEqualTo(OPEN)
-    Assertions.assertThat(visits[2].visitRestriction).isEqualTo(OPEN)
   }
 
   @Test
@@ -137,11 +135,13 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     val visits = parseVisitsPageResponse(responseSpec)
-    Assertions.assertThat(visits.size).isEqualTo(4)
+    Assertions.assertThat(visits.size).isEqualTo(3)
     Assertions.assertThat(visits[0].visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(visits[0].visitRestriction).isEqualTo(OPEN)
     Assertions.assertThat(visits[1].visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(visits[1].visitRestriction).isEqualTo(OPEN)
     Assertions.assertThat(visits[2].visitStatus).isEqualTo(BOOKED)
-    Assertions.assertThat(visits[3].visitStatus).isEqualTo(BOOKED)
+    Assertions.assertThat(visits[2].visitRestriction).isEqualTo(CLOSED)
   }
 
   @Test
@@ -175,14 +175,14 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
     val visits = parseVisitsPageResponse(responseSpec)
-    Assertions.assertThat(visits.size).isEqualTo(4)
+    Assertions.assertThat(visits.size).isEqualTo(3)
   }
 
   @Test
   fun `when session has no visits for a date no records are returned`() {
     // Given
     val sessionTemplateReference = sessionTemplate2.reference
-    val sessionDate = startDate
+    val sessionDate = startDate.plusDays(1)
 
     // When
     val responseSpec = callVisitsBySessionEndPoint(sessionTemplateReference, "?fromDate=$sessionDate&toDate=$sessionDate&visitStatus=BOOKED")
