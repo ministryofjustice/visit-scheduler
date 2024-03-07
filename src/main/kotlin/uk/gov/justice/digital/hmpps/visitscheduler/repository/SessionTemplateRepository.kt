@@ -171,8 +171,8 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   fun updateActiveByReference(reference: String, isActive: Boolean): Int
 
   @Modifying
-  @Query("Update SessionTemplate s set s.includeLocationGroups = :includeLocationGroups WHERE s.reference = :reference")
-  fun updateIncludeLocationGroups(reference: String, includeLocationGroups: Boolean): Int
+  @Query("Update SessionTemplate s set s.includeLocationGroupType = :includeLocationGroupType WHERE s.reference = :reference")
+  fun updateIncludeLocationGroupType(reference: String, includeLocationGroupType: Boolean): Int
 
   @Query(
     "SELECT new uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto(st.startTime,st.endTime)  FROM SessionTemplate st WHERE st.reference = :reference",

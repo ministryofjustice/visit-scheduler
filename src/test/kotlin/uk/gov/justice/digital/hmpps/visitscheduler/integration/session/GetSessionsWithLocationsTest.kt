@@ -49,7 +49,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "Session available to all prisoners",
-      includeLocationGroups = false,
+      includeLocationGroupType = false,
       permittedLocationGroups = mutableListOf(tapAsLocation),
     )
 
@@ -449,7 +449,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to TAP location only",
-      includeLocationGroups = true,
+      includeLocationGroupType = true,
       permittedLocationGroups = mutableListOf(tapAsLocation),
     )
 

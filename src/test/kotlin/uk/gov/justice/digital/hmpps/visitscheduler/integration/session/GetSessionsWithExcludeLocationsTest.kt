@@ -46,7 +46,7 @@ class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "Session available to all prisoners",
-      includeLocationGroups = false,
+      includeLocationGroupType = false,
       permittedLocationGroups = mutableListOf(tapAsLocation),
     )
 
@@ -70,7 +70,7 @@ class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
       prisonCode = prison.code,
       visitRoom = "session available to some level 1",
       permittedLocationGroups = mutableListOf(location1, tapAsLocation),
-      includeLocationGroups = false,
+      includeLocationGroupType = false,
     )
 
     // this session template is unavailable to levels A-1,A-2,A-3 and B-1
@@ -91,7 +91,7 @@ class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
       prisonCode = prison.code,
       visitRoom = "session available to some level 2s",
       permittedLocationGroups = mutableListOf(location2, tapAsLocation),
-      includeLocationGroups = false,
+      includeLocationGroupType = false,
     )
 
     // this session template is unavailable to levels A-1-100, A-1-200, and B-1
@@ -111,7 +111,7 @@ class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
       prisonCode = prison.code,
       visitRoom = "session available to some level 3s and level 2s",
       permittedLocationGroups = mutableListOf(location3, tapAsLocation),
-      includeLocationGroups = false,
+      includeLocationGroupType = false,
     )
 
     disAllowedPermittedLocations = listOf(
@@ -130,7 +130,7 @@ class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
       prisonCode = prison.code,
       visitRoom = "session available to some level 4s and level 2s",
       permittedLocationGroups = mutableListOf(location4, tapAsLocation),
-      includeLocationGroups = false,
+      includeLocationGroupType = false,
     )
     sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = disAllowedPermittedLocations)
 
@@ -428,7 +428,7 @@ class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to TAP location only",
-      includeLocationGroups = true,
+      includeLocationGroupType = true,
       permittedLocationGroups = mutableListOf(tapAsLocation),
     )
 

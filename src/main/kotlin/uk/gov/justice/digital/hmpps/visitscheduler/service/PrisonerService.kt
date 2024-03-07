@@ -53,16 +53,20 @@ class PrisonerService(
     return prisonApiClient.getPrisonerHousingLocation(prisonerId)
   }
 
+  fun getHousingLevelForTransitionalPrisoner(transitionalLocation: String, lastPermanentLevels: List<PrisonerHousingLevelDto>, sessionTemplates: List<SessionTemplate>?): List<PrisonerHousingLevelDto> {
+    // if there are sessions for the prisoners temporary location - level one code needs to be that transitional location
+    // else return the prisoner's last permanent levels
+    return if (sessionTemplates != null && hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates, transitionalLocation)) {
+      getHousingLevelForPrisonerInTemporaryLocation(transitionalLocation)
+    } else {
+      lastPermanentLevels
+    }
+  }
+
   fun getLevelsMapForPrisoner(prisonerHousingLocation: PrisonerHousingLocationsDto, sessionTemplates: List<SessionTemplate>?): Map<PrisonerHousingLevels, String?> {
     with(prisonerHousingLocation) {
       val housingLevel = if (isPrisonerInTemporaryLocation(levels)) {
-        val transitionalLocation = if (levels.isNotEmpty()) levels[0].code else ""
-        // if there are sessions for the prisoners temporary location - level one code needs to be that transitional location
-        if (sessionTemplates != null && hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates, transitionalLocation)) {
-          getHousingLevelForPrisonerInTemporaryLocation(transitionalLocation)
-        } else {
-          lastPermanentLevels
-        }
+        getHousingLevelForTransitionalPrisoner(levels[0].code, lastPermanentLevels, sessionTemplates)
       } else {
         levels
       }
@@ -112,7 +116,7 @@ class PrisonerService(
   }
 
   fun hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates: List<SessionTemplate>, prisonersTransitionalLocation: String): Boolean {
-    return sessionTemplates.asSequence().filter { it.includeLocationGroups }.map { it.permittedSessionLocationGroups }.flatten().map { it.sessionLocations }.flatten().any { it.levelOneCode == prisonersTransitionalLocation }
+    return sessionTemplates.asSequence().filter { it.includeLocationGroupType }.map { it.permittedSessionLocationGroups }.flatten().map { it.sessionLocations }.flatten().any { it.levelOneCode == prisonersTransitionalLocation }
   }
 
   fun getPrisonerSupportedPrisonCode(prisonerCode: String): String? {

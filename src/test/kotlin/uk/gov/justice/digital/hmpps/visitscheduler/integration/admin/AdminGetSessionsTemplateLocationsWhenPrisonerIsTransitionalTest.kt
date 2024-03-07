@@ -267,7 +267,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
 
   private fun setupSessionTemplate(
     sessionPrisonCode: String,
-    includeLocationGroups: Boolean = true,
+    includeLocationGroupType: Boolean = true,
     allowedPermittedLocations: List<AllowedSessionLocationHierarchy> = listOf(
       AllowedSessionLocationHierarchy("A", "1", "100", "1"),
     ),
@@ -284,7 +284,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
       prisonCode = sessionPrisonCode,
       visitRoom = "session available to some level 4s and level 2s",
       permittedLocationGroups = mutableListOf(location),
-      includeLocationGroups = includeLocationGroups,
+      includeLocationGroupType = includeLocationGroupType,
     )
   }
 

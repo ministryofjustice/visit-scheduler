@@ -39,7 +39,7 @@ class SessionTemplate(
   val visitRoom: String,
 
   @Column(nullable = false)
-  val includeLocationGroups: Boolean,
+  val includeLocationGroupType: Boolean,
 
   @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
   @JoinTable(

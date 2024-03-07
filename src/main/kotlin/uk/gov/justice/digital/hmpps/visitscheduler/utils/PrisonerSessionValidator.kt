@@ -28,7 +28,7 @@ class PrisonerSessionValidator(
     sessionTemplate: SessionTemplate,
   ): Boolean {
     if (!isSessionForAllPrisonerLocations(sessionTemplate)) {
-      return if (sessionTemplate.includeLocationGroups) {
+      return if (sessionTemplate.includeLocationGroupType) {
         sessionTemplate.permittedSessionLocationGroups.any { levelMatcher.test(it, prisonerLevels) }
       } else {
         sessionTemplate.permittedSessionLocationGroups.none { levelMatcher.test(it, prisonerLevels) }

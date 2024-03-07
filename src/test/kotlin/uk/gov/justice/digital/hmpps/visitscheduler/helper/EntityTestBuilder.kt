@@ -47,7 +47,7 @@ fun sessionTemplate(
   policyNoticeDaysMin: Int = 2,
   policyNoticeDaysMax: Int = 28,
   isActive: Boolean = true,
-  includeLocationGroups: Boolean = true,
+  includeLocationGroupType: Boolean = true,
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax)
 
@@ -68,7 +68,7 @@ fun sessionTemplate(
     active = isActive,
     permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
-    includeLocationGroups = includeLocationGroups,
+    includeLocationGroupType = includeLocationGroupType,
   ).also { it.reference = UUID.randomUUID().toString() }
 }
 
@@ -84,7 +84,7 @@ fun createCreateSessionTemplateDto(
   locationGroupReferences: List<String> = listOf(),
   categoryGroupReferences: List<String> = listOf(),
   incentiveLevelGroupReferences: List<String> = listOf(),
-  includeLocationGroups: Boolean = true,
+  includeLocationGroupType: Boolean = true,
 ): CreateSessionTemplateDto {
   return CreateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -98,7 +98,7 @@ fun createCreateSessionTemplateDto(
     locationGroupReferences = locationGroupReferences,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
-    includeLocationGroups = includeLocationGroups,
+    includeLocationGroupType = includeLocationGroupType,
   )
 }
 
@@ -109,7 +109,7 @@ fun createCreateSessionTemplateDto(
   sessionDateRange: SessionDateRangeDto? = sessionTemplateDto.sessionDateRange,
   sessionTimeSlot: SessionTimeSlotDto? = sessionTemplateDto.sessionTimeSlot,
   weeklyFrequency: Int? = sessionTemplateDto.weeklyFrequency,
-  includeLocationGroups: Boolean = true,
+  includeLocationGroupType: Boolean = true,
 ): CreateSessionTemplateDto {
   return CreateSessionTemplateDto(
     name = name + sessionTemplateDto.dayOfWeek,
@@ -123,7 +123,7 @@ fun createCreateSessionTemplateDto(
     locationGroupReferences = sessionTemplateDto.permittedLocationGroups.stream().map { it.reference }.toList(),
     categoryGroupReferences = sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
     incentiveLevelGroupReferences = sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
-    includeLocationGroups = includeLocationGroups,
+    includeLocationGroupType = includeLocationGroupType,
   )
 }
 
@@ -138,7 +138,7 @@ fun createUpdateSessionTemplateDto(
   locationGroupReferences: MutableList<String> = mutableListOf(),
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
-  includeLocationGroups: Boolean = true,
+  includeLocationGroupType: Boolean = true,
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = name + dayOfWeek,
@@ -150,7 +150,7 @@ fun createUpdateSessionTemplateDto(
     weeklyFrequency = weeklyFrequency,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
-    includeLocationGroups = includeLocationGroups,
+    includeLocationGroupType = includeLocationGroupType,
   )
 }
 
@@ -160,7 +160,7 @@ fun createUpdateSessionTemplateDto(
   locationGroupReferences: List<String>? = null,
   categoryGroupReferences: List<String>? = null,
   incentiveLevelReferences: List<String>? = null,
-  includeLocationGroups: Boolean = true,
+  includeLocationGroupType: Boolean = true,
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = sessionTemplateDto.name,
@@ -172,7 +172,7 @@ fun createUpdateSessionTemplateDto(
     categoryGroupReferences = categoryGroupReferences ?: sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
     incentiveLevelGroupReferences = incentiveLevelReferences ?: sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
     visitRoom = sessionTemplateDto.visitRoom,
-    includeLocationGroups = includeLocationGroups,
+    includeLocationGroupType = includeLocationGroupType,
   )
 }
 
