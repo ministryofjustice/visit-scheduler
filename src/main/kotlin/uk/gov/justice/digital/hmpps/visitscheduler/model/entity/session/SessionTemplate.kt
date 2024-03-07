@@ -38,6 +38,9 @@ class SessionTemplate(
   @Column(nullable = false)
   val visitRoom: String,
 
+  @Column(nullable = false)
+  val includeLocationGroups: Boolean,
+
   @ManyToMany(fetch = FetchType.LAZY, cascade = [CascadeType.REFRESH])
   @JoinTable(
     name = "SESSION_TO_LOCATION_GROUP",
@@ -93,7 +96,4 @@ class SessionTemplate(
 
   @Column(name = "active", nullable = false)
   var active: Boolean,
-
-  @Column(name = "tapSession", nullable = false)
-  var isTapSession: Boolean,
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

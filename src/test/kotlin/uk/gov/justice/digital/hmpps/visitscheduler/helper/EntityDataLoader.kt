@@ -417,7 +417,7 @@ class SessionTemplateEntityHelper(
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
     isActive: Boolean = true,
-    isTapSession: Boolean = false,
+    includeLocationGroups: Boolean = true,
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -438,7 +438,7 @@ class SessionTemplateEntityHelper(
       permittedCategories = permittedCategories,
       permittedIncentiveLevels = permittedIncentiveLevels,
       isActive = isActive,
-      isTapSession = isTapSession,
+      includeLocationGroups = includeLocationGroups,
     )
   }
 
@@ -460,7 +460,7 @@ class SessionTemplateEntityHelper(
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
-    isTapSession: Boolean = false,
+    includeLocationGroups: Boolean = true,
   ): SessionTemplate {
     return sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -481,7 +481,7 @@ class SessionTemplateEntityHelper(
         permittedSessionLocationGroups = permittedSessionGroups,
         permittedSessionCategoryGroups = permittedCategories,
         permittedSessionIncentiveLevelGroups = permittedIncentiveLevels,
-        isTapSession = isTapSession,
+        includeLocationGroups = includeLocationGroups,
       ),
     )
   }

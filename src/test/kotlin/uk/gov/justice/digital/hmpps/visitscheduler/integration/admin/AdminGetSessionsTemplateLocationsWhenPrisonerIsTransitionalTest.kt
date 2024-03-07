@@ -81,7 +81,8 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
 
     setUpStub(prisonerId, prisonCode, TAP)
     setupSessionTemplate(prisonCode)
-    val sessionTemplateTAP = setupTAPSessionTemplate(prisonCode)
+    val allowedSessionLocationHierarchy = AllowedSessionLocationHierarchy("TAP")
+    val sessionTemplateTAP = setupSessionTemplate(prisonCode, allowedPermittedLocations = listOf(allowedSessionLocationHierarchy))
 
     // When
     val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
@@ -264,10 +265,13 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     prisonApiMockServer.stubGetCellHistory(bookingID, prisonerCellHistoryNativeDto)
   }
 
-  private fun setupSessionTemplate(sessionPrisonCode: String): SessionTemplate {
-    val allowedPermittedLocations = listOf(
+  private fun setupSessionTemplate(
+    sessionPrisonCode: String,
+    includeLocationGroups: Boolean = true,
+    allowedPermittedLocations: List<AllowedSessionLocationHierarchy> = listOf(
       AllowedSessionLocationHierarchy("A", "1", "100", "1"),
-    )
+    ),
+  ): SessionTemplate {
     val location =
       sessionLocationGroupHelper.create(prisonCode = sessionPrisonCode, prisonHierarchies = allowedPermittedLocations)
 
@@ -280,19 +284,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
       prisonCode = sessionPrisonCode,
       visitRoom = "session available to some level 4s and level 2s",
       permittedLocationGroups = mutableListOf(location),
-    )
-  }
-
-  private fun setupTAPSessionTemplate(sessionPrisonCode: String): SessionTemplate {
-    return sessionTemplateEntityHelper.create(
-      validFromDate = nextAllowedDay,
-      validToDate = nextAllowedDay,
-      startTime = LocalTime.parse("15:01"),
-      endTime = LocalTime.parse("16:00"),
-      dayOfWeek = nextAllowedDay.dayOfWeek,
-      prisonCode = sessionPrisonCode,
-      visitRoom = "session available to some level 4s and level 2s",
-      isTapSession = true,
+      includeLocationGroups = includeLocationGroups,
     )
   }
 

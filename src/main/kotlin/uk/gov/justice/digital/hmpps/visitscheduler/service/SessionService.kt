@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
@@ -70,22 +69,14 @@ class SessionService(
       prisonerValidationService.validatePrisonerIsFromPrison(it!!, prisonCode)
     }!!
 
-    // get the prisoner's housing location
-    val prisonerHousingLocation = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
-
     val prison = prisonsService.findPrisonByCode(prisonCode)
     val dateRange = getDateRange(prison, minOverride, maxOverride)
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
-
-    sessionTemplates = if (sessionTemplates.any { it.isTapSession } && prisonerService.isPrisonerInTAPTemporaryLocation(prisonerHousingLocation)) {
-      sessionTemplates.filter { it.isTapSession }
-    } else {
-      sessionTemplates.filter {
-        isAvailableToLocation(it, sessionTemplates, prisonerId, prisonCode, prisonerHousingLocation)
-          .and(isAvailableToCategory(it, sessionTemplates, prisoner.category))
-          .and(isAvailableToIncentiveLevel(it, sessionTemplates, prisoner.incentiveLevel))
-      }
+    sessionTemplates = sessionTemplates.filter {
+      isAvailableToLocation(it, sessionTemplates, prisonerId, prisonCode)
+        .and(isAvailableToCategory(it, sessionTemplates, prisoner.category))
+        .and(isAvailableToIncentiveLevel(it, sessionTemplates, prisoner.incentiveLevel))
     }
 
     val noAssociationConflictSessions: List<VisitSessionDto>
@@ -133,12 +124,12 @@ class SessionService(
     sessionTemplates: List<SessionTemplate>,
     prisonerId: String,
     prisonCode: String,
-    prisonerHousingLocation: PrisonerHousingLocationsDto?,
   ): Boolean {
     val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
     return if (hasSessionsWithLocationGroups) {
-      prisonerHousingLocation?.let {
-        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerHousingLocation)
+      val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
+      prisonerDetailDto?.let {
+        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto, sessionTemplates)
         val keep = sessionValidator.isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)
         LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference} Keep:$keep")
         keep

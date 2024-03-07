@@ -165,7 +165,7 @@ class SessionTemplateService(
       dayOfWeek = createSessionTemplateDto.dayOfWeek,
       visitType = VisitType.SOCIAL,
       active = false,
-      isTapSession = createSessionTemplateDto.isTAPSession,
+      includeLocationGroups = createSessionTemplateDto.includeLocationGroups,
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
@@ -219,7 +219,7 @@ class SessionTemplateService(
         sessionTemplateRepository.updateWeeklyFrequencyByReference(reference, weeklyFrequency)
       }
 
-      sessionTemplateRepository.updateIsTapSessionByReference(reference, this.isTAPSession)
+      sessionTemplateRepository.updateIncludeLocationGroups(reference, this.includeLocationGroups)
     }
 
     val updatedSessionTemplateEntity = getSessionTemplate(reference)

@@ -52,7 +52,7 @@ class AdminGetSessionTemplateTest(
     val prisonCode = "MDI"
 
     sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), prisonCode = prisonCode)
-    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), prisonCode = prisonCode, isTapSession = true)
+    sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), prisonCode = prisonCode, includeLocationGroups = true)
 
     // When
     val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATES_PATH?prisonCode=$prisonCode&rangeType=ALL")
@@ -74,7 +74,7 @@ class AdminGetSessionTemplateTest(
     sessionTemplateEntityHelper.create(name = "pass1_", validFromDate = LocalDate.now().minusDays(90), prisonCode = prisonCode)
     sessionTemplateEntityHelper.create(name = "pass2_", validFromDate = LocalDate.now(), prisonCode = prisonCode)
     sessionTemplateEntityHelper.create(name = "pass3_", validFromDate = LocalDate.now().plusDays(10), prisonCode = prisonCode)
-    sessionTemplateEntityHelper.create(name = "pass4_", validFromDate = LocalDate.now().plusDays(11), validToDate = LocalDate.now().plusDays(15), prisonCode = prisonCode, isTapSession = true)
+    sessionTemplateEntityHelper.create(name = "pass4_", validFromDate = LocalDate.now().plusDays(11), validToDate = LocalDate.now().plusDays(15), prisonCode = prisonCode, includeLocationGroups = false)
 
     // When
     val responseSpec = webTestClient.get().uri("$ADMIN_SESSION_TEMPLATES_PATH?prisonCode=$prisonCode&rangeType=CURRENT_OR_FUTURE")
@@ -87,13 +87,13 @@ class AdminGetSessionTemplateTest(
     val sessionTemplateDtos = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionTemplateDto>::class.java)
     Assertions.assertThat(sessionTemplateDtos).hasSize(4)
     Assertions.assertThat(sessionTemplateDtos[0].name).isEqualTo("pass1_FRIDAYFRIDAY")
-    Assertions.assertThat(sessionTemplateDtos[0].isTapSession).isFalse()
+    Assertions.assertThat(sessionTemplateDtos[0].includeLocationGroups).isTrue()
     Assertions.assertThat(sessionTemplateDtos[1].name).isEqualTo("pass2_FRIDAYFRIDAY")
-    Assertions.assertThat(sessionTemplateDtos[1].isTapSession).isFalse()
+    Assertions.assertThat(sessionTemplateDtos[1].includeLocationGroups).isTrue()
     Assertions.assertThat(sessionTemplateDtos[2].name).isEqualTo("pass3_FRIDAYFRIDAY")
-    Assertions.assertThat(sessionTemplateDtos[2].isTapSession).isFalse()
+    Assertions.assertThat(sessionTemplateDtos[2].includeLocationGroups).isTrue()
     Assertions.assertThat(sessionTemplateDtos[3].name).isEqualTo("pass4_FRIDAYFRIDAY")
-    Assertions.assertThat(sessionTemplateDtos[3].isTapSession).isTrue()
+    Assertions.assertThat(sessionTemplateDtos[3].includeLocationGroups).isFalse()
   }
 
   @Test

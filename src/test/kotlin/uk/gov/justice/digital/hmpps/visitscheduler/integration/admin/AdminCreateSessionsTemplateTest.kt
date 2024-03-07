@@ -82,7 +82,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     // Given
     val dto = createCreateSessionTemplateDto(
       sessionDateRange = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
-      isTAPSession = true,
+      includeLocationGroups = true,
     )
 
     // When
@@ -106,7 +106,7 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(dto.weeklyFrequency)
     Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups).isEmpty()
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups).isEmpty()
-    Assertions.assertThat(sessionTemplateDto.isTapSession).isEqualTo(dto.isTAPSession)
+    Assertions.assertThat(sessionTemplateDto.includeLocationGroups).isEqualTo(dto.includeLocationGroups)
   }
 
   @Test

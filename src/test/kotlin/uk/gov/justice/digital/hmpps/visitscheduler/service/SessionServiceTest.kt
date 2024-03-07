@@ -90,7 +90,7 @@ class SessionServiceTest {
       ),
     )
 
-    whenever(prisonerService.getLevelsMapForPrisoner(any())).thenReturn(mutableMapOf<PrisonerHousingLevels, String?>())
+    whenever(prisonerService.getLevelsMapForPrisoner(any(), any())).thenReturn(mutableMapOf<PrisonerHousingLevels, String?>())
     whenever(prisonerSessionValidator.isSessionAvailableToPrisonerLocation(any(), any())).thenReturn(true)
   }
 

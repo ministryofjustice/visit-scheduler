@@ -45,6 +45,6 @@ data class UpdateSessionTemplateDto(
   @Schema(description = "list of group references for allowed prisoner incentive levels", required = false)
   val incentiveLevelGroupReferences: List<String>? = null,
 
-  @Schema(description = "If a session is a TAP session.", required = true)
-  val isTAPSession: Boolean,
+  @Schema(description = "Include location groups if true, exclude if false.", required = true)
+  val includeLocationGroups: Boolean,
 )
