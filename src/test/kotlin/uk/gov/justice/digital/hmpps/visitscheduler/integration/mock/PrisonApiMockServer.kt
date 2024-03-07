@@ -52,15 +52,17 @@ class PrisonApiMockServer : WireMockServer(8092) {
     val housingLevels = mutableListOf<PrisonerHousingLevelDto>()
 
     internalLocation?.let {
-      val values = it.split("-")
-
-      for (i in 1..4) {
-        val code = values.getOrNull(i)
-        code?.let {
-          housingLevels.add(getHousingLevel(i, code))
+      val values = internalLocation.split("-")
+      if (values.isNotEmpty()) {
+        for (i in 1..4) {
+          val code = values.getOrNull(i)
+          code?.let {
+            housingLevels.add(getHousingLevel(i, code))
+          }
         }
       }
     }
+
     return housingLevels.toList()
   }
 

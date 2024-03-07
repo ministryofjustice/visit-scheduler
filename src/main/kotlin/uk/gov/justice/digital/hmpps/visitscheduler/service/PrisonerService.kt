@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 
 @Service
@@ -52,16 +53,23 @@ class PrisonerService(
     return prisonApiClient.getPrisonerHousingLocation(prisonerId)
   }
 
-  private fun isPrisonerInTemporaryLocation(levels: List<PrisonerHousingLevelDto>): Boolean {
-    if (levels.isNotEmpty()) {
-      return TransitionalLocationTypes.contains(levels[0].code)
+  private fun getHousingLevelForTransitionalPrisoner(transitionalLocation: String, lastPermanentLevels: List<PrisonerHousingLevelDto>, sessionTemplates: List<SessionTemplate>?): List<PrisonerHousingLevelDto> {
+    // if there are sessions for the prisoners temporary location - level one code needs to be that transitional location
+    // else return the prisoner's last permanent levels
+    return if (sessionTemplates != null && hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates, transitionalLocation)) {
+      getHousingLevelForPrisonerInTemporaryLocation(transitionalLocation)
+    } else {
+      lastPermanentLevels
     }
-    return false
   }
 
-  fun getLevelsMapForPrisoner(prisonerHousingLocationsDto: PrisonerHousingLocationsDto): Map<PrisonerHousingLevels, String?> {
-    with(prisonerHousingLocationsDto) {
-      val housingLevel = if (isPrisonerInTemporaryLocation(levels)) lastPermanentLevels else levels
+  fun getLevelsMapForPrisoner(prisonerHousingLocation: PrisonerHousingLocationsDto, sessionTemplates: List<SessionTemplate>?): Map<PrisonerHousingLevels, String?> {
+    with(prisonerHousingLocation) {
+      val housingLevel = if (isPrisonerInTemporaryLocation(levels)) {
+        getHousingLevelForTransitionalPrisoner(levels[0].code, lastPermanentLevels, sessionTemplates)
+      } else {
+        levels
+      }
 
       val levelsMap: MutableMap<PrisonerHousingLevels, String?> = mutableMapOf()
 
@@ -72,6 +80,13 @@ class PrisonerService(
 
       return levelsMap.toMap()
     }
+  }
+
+  private fun getHousingLevelForPrisonerInTemporaryLocation(prisonersTransitionalLocation: String): List<PrisonerHousingLevelDto> {
+    val prisonerHousingLocationForTransitionalPrisoners = mutableListOf<PrisonerHousingLevelDto>()
+    val prisonerHousingLocation = PrisonerHousingLevelDto(level = LEVEL_ONE.level, code = prisonersTransitionalLocation, description = prisonersTransitionalLocation)
+    prisonerHousingLocationForTransitionalPrisoners.add(prisonerHousingLocation)
+    return prisonerHousingLocationForTransitionalPrisoners.toList()
   }
 
   private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: PrisonerHousingLevels): PrisonerHousingLevelDto? {
@@ -94,6 +109,14 @@ class PrisonerService(
 
       PrisonerDto(prisonerId, prisonerSearchResultDto.category, incentiveLevel, prisonCode = prisonerSearchResultDto.prisonId)
     }
+  }
+
+  fun isPrisonerInTemporaryLocation(levels: List<PrisonerHousingLevelDto>): Boolean {
+    return (levels.isNotEmpty() && TransitionalLocationTypes.contains(levels[0].code))
+  }
+
+  fun hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates: List<SessionTemplate>, prisonersTransitionalLocation: String): Boolean {
+    return sessionTemplates.asSequence().filter { it.includeLocationGroupType }.map { it.permittedSessionLocationGroups }.flatten().map { it.sessionLocations }.flatten().any { it.levelOneCode == prisonersTransitionalLocation }
   }
 
   fun getPrisonerSupportedPrisonCode(prisonerCode: String): String? {

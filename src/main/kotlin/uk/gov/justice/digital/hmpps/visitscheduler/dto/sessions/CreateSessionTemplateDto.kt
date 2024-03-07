@@ -58,4 +58,7 @@ data class CreateSessionTemplateDto(
 
   @Schema(description = "list of group references for allowed prisoner incentive levels", required = false)
   val incentiveLevelGroupReferences: List<String>? = listOf(),
+
+  @Schema(description = "Include location group types if true, exclude if false.", required = true)
+  val includeLocationGroupType: Boolean,
 )

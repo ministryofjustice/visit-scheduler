@@ -65,7 +65,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     initialChangeApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = newRestriction)
     applicationEntityHelper.createContact(application = initialChangeApplication, name = "Aled Wyn Evans", phone = "01348 811539")
     applicationEntityHelper.createVisitor(application = initialChangeApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = initialChangeApplication, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = initialChangeApplication, description = "Some Text")
     initialChangeApplication = applicationEntityHelper.save(initialChangeApplication)
 
     oldBooking.addApplication(initialChangeApplication)
@@ -226,19 +226,10 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
       }
     }
 
-    val supportDtoList = applicationDto.visitorSupport.toList()
     changeApplicationRequest.visitorSupport?.let {
-      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(it.size)
-      it.forEachIndexed { index, supportDto ->
-        Assertions.assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
-        Assertions.assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
-      }
+      Assertions.assertThat(applicationDto.visitorSupport?.description).isEqualTo(it.description)
     } ?: run {
-      Assertions.assertThat(applicationDto.visitorSupport.size).isEqualTo(initialApplication.support.size)
-      initialApplication.support.forEachIndexed { index, support ->
-        Assertions.assertThat(supportDtoList[index].type).isEqualTo(support.type)
-        Assertions.assertThat(supportDtoList[index].text).isEqualTo(support.text)
-      }
+      Assertions.assertThat(applicationDto.visitorSupport?.description).isEqualTo(initialApplication.support?.description)
     }
 
     Assertions.assertThat(applicationDto.createdTimestamp).isNotNull()

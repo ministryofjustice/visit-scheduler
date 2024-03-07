@@ -9,16 +9,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.TransitionalLocationTypes
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.LocalDate
 import java.time.LocalTime
 
 @DisplayName("Get /visit-sessions")
-class GetSessionsWithLocationsTest : IntegrationTestBase() {
+class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
   private val nextAllowedDay = getNextAllowedDay()
@@ -53,8 +50,8 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       permittedLocationGroups = mutableListOf(tapAsLocation),
     )
 
-    // this session template is available to levels A,B,D, E and F but not for C
-    var allowedPermittedLocations: List<AllowedSessionLocationHierarchy> = listOf(
+    // this session template is unavailable to levels A,B,D, E and F but not for C
+    var disAllowedPermittedLocations: List<AllowedSessionLocationHierarchy> = listOf(
       AllowedSessionLocationHierarchy("A", null, null, null),
       AllowedSessionLocationHierarchy("B", null, null, null),
       AllowedSessionLocationHierarchy("D", null, null, null),
@@ -62,7 +59,7 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       AllowedSessionLocationHierarchy("F", null, null, null),
     )
 
-    val location1 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+    val location1 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = disAllowedPermittedLocations)
 
     sessionTemplateForSomeLevel1s = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
@@ -72,17 +69,18 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 1",
-      permittedLocationGroups = mutableListOf(location1),
+      permittedLocationGroups = mutableListOf(location1, tapAsLocation),
+      includeLocationGroupType = false,
     )
 
-    // this session template is available to levels A-1,A-2,A-3 and B-1
-    allowedPermittedLocations = listOf(
+    // this session template is unavailable to levels A-1,A-2,A-3 and B-1
+    disAllowedPermittedLocations = listOf(
       AllowedSessionLocationHierarchy("A", "1", null, null),
       AllowedSessionLocationHierarchy("A", "2", null, null),
       AllowedSessionLocationHierarchy("A", "3", null, null),
       AllowedSessionLocationHierarchy("B", "1", null, null),
     )
-    val location2 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+    val location2 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = disAllowedPermittedLocations)
 
     sessionTemplateForSomeLevel2s = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
@@ -92,16 +90,17 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 2s",
-      permittedLocationGroups = mutableListOf(location2),
+      permittedLocationGroups = mutableListOf(location2, tapAsLocation),
+      includeLocationGroupType = false,
     )
 
-    // this session template is available to levels A-1-100, A-1-200, and B-1
-    allowedPermittedLocations = listOf(
+    // this session template is unavailable to levels A-1-100, A-1-200, and B-1
+    disAllowedPermittedLocations = listOf(
       AllowedSessionLocationHierarchy("A", "1", "100", null),
       AllowedSessionLocationHierarchy("A", "2", "200", null),
       AllowedSessionLocationHierarchy("B", "1", null, null),
     )
-    val location3 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+    val location3 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = disAllowedPermittedLocations)
 
     sessionTemplateForSomeLevel3sAnd1Level2 = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
@@ -111,15 +110,16 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 3s and level 2s",
-      permittedLocationGroups = mutableListOf(location3),
+      permittedLocationGroups = mutableListOf(location3, tapAsLocation),
+      includeLocationGroupType = false,
     )
 
-    allowedPermittedLocations = listOf(
+    disAllowedPermittedLocations = listOf(
       AllowedSessionLocationHierarchy("A", "1", "100", "1"),
       AllowedSessionLocationHierarchy("A", "2", "100", "3"),
       AllowedSessionLocationHierarchy("B", "1", null, null),
     )
-    val location4 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+    val location4 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = disAllowedPermittedLocations)
 
     sessionTemplateForSomeLevel4sAnd2s = sessionTemplateEntityHelper.create(
       validFromDate = nextAllowedDay,
@@ -129,15 +129,16 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prison.code,
       visitRoom = "session available to some level 4s and level 2s",
-      permittedLocationGroups = mutableListOf(location4),
+      permittedLocationGroups = mutableListOf(location4, tapAsLocation),
+      includeLocationGroupType = false,
     )
-    sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocations)
+    sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = disAllowedPermittedLocations)
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = "A0000001", prisonCode = prison.code)
   }
 
   @Test
-  fun `multiple visit sessions are returned for prisoner with location as SWL-A-1-100-1`() {
+  fun `no visit sessions are returned for prisoner with location as SWL-A-1-100-1`() {
     // Given
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "SWL-A-1-100-1"
@@ -150,18 +151,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
 
-    // session available to all prisoners
+    // only session available to all prisoners is returned
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
-    // session available as all A level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
-    // session available as all A-1 level prisoners allowed
-    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel2s)
-    // session available as all A-1-100 level prisoners allowed
-    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
-    // session available as all A-1-100-1 level prisoners allowed
-    assertSession(visitSessionResults[4], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -178,16 +171,12 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(4)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
-    // session available as all A level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
-    // session available as all A-2 level prisoners allowed
-    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel2s)
-    // session available as all A-2-100-3 level prisoners allowed
-    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
+    // session available as A-2-100-3 level prisoners are not disallowed
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
   }
 
   @Test
@@ -209,9 +198,9 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
     // session available as all A level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
     // session available as all A-2 level prisoners allowed
-    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel2s)
+    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -228,14 +217,11 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(4)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
-    // session available as all A level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
-    // session available as all A-2 level prisoners allowed
-    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel2s)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -256,10 +242,8 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
-    // session available as all A level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
-    // session available as all A-1 level prisoners allowed
-    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel2s)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
+    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -276,12 +260,14 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(4)
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
     // session available as all A level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel2s)
+    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
+    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -298,12 +284,14 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(4)
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
     // session available as all B level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel2s)
+    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
+    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -321,18 +309,10 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
 
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
-    // session available as all B level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
-    // session available as all B-1 level prisoners allowed
-    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel2s)
-    // session available as all B-1 level prisoners allowed
-    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
-    // session available as all B-1 level prisoners allowed
-    assertSession(visitSessionResults[4], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -350,22 +330,14 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
 
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
-    // session available as all B level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
-    // session available as all B-1 level prisoners allowed
-    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel2s)
-    // session available as all B-1 level prisoners allowed
-    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
-    // session available as all B-1 level prisoners allowed
-    assertSession(visitSessionResults[4], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
-  fun `single visit sessions are returned for prisoner in C Level`() {
+  fun `multiple visit sessions are returned for prisoner in C Level`() {
     // Given
     val prisonerId = "A0000001"
     val prisonerInternalLocation = "SWL-C-100-1"
@@ -379,10 +351,14 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
 
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(1)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(5)
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
+    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel2s)
+    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
+    assertSession(visitSessionResults[4], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -401,12 +377,14 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
 
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(4)
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
     // session available as all D level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel2s)
+    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
+    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -425,12 +403,13 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
 
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
+    Assertions.assertThat(visitSessionResults.size).isEqualTo(4)
 
     // session available to all prisoners
     assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
-    // session available as all D level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel2s)
+    assertSession(visitSessionResults[2], nextAllowedDay, sessionTemplateForSomeLevel3sAnd1Level2)
+    assertSession(visitSessionResults[3], nextAllowedDay, sessionTemplateForSomeLevel4sAnd2s)
   }
 
   @Test
@@ -466,67 +445,6 @@ class GetSessionsWithLocationsTest : IntegrationTestBase() {
 
     // only TAP session is available to that prisoner
     assertSession(visitSessionResults[0], nextAllowedDay, tapSessionTemplate)
-  }
-
-  @Test
-  fun `one session unavailable when non association has a visit for one of the sessions`() {
-    // Given
-    val prisonerId = "A0000001"
-    val prisonerInternalLocation = "SWL-A-1-100-1"
-    val associationId = "B1234BB"
-
-    this.visitEntityHelper.create(
-      prisonerId = associationId,
-      prisonCode = prison.code,
-      visitRoom = sessionTemplateForAllPrisoners.visitRoom,
-      slotDate = nextAllowedDay,
-      visitStart = LocalTime.of(9, 0),
-      visitEnd = LocalTime.of(9, 30),
-      visitType = VisitType.SOCIAL,
-      visitStatus = VisitStatus.BOOKED,
-      visitRestriction = VisitRestriction.OPEN,
-      sessionTemplate = sessionTemplateForAllPrisoners,
-    )
-
-    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
-      prisonerId,
-      associationId,
-    )
-
-    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-
-    // When
-    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk.expectBody()
-    val visitSessionResults = getResults(returnResult)
-
-    // none of the sessions on the day will be available
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(0)
-  }
-
-  @Test
-  fun `multiple visit sessions are returned for prisoner with location as SWL-D-100-1`() {
-    // Given
-    val prisonerId = "A0000001"
-    val prisonerInternalLocation = "SWL-D-100-1"
-
-    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, prisonerInternalLocation)
-
-    // When
-    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prison.code, prisonerId)
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk.expectBody()
-    val visitSessionResults = getResults(returnResult)
-
-    Assertions.assertThat(visitSessionResults.size).isEqualTo(2)
-
-    // session available to all prisoners
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplateForAllPrisoners)
-    // session available as all D level prisoners are allowed
-    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplateForSomeLevel1s)
   }
 
   private fun callGetSessionsByPrisonerIdAndPrison(prisonId: String, prisonerId: String): WebTestClient.ResponseSpec {

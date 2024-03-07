@@ -14,6 +14,13 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
 
   @Query(
     "SELECT s FROM SessionSlot s " +
+      "WHERE s.sessionTemplateReference in :sessionTemplateReferences" +
+      " AND s.slotDate in :slotDates ",
+  )
+  fun findSessionSlot(slotDates: List<LocalDate>, sessionTemplateReferences: List<String>): List<SessionSlot>
+
+  @Query(
+    "SELECT s FROM SessionSlot s " +
       "WHERE s.sessionTemplateReference = :sessionTemplateReference" +
       " AND s.slotDate = :slotDate ",
   )
@@ -21,6 +28,16 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
     sessionTemplateReference: String,
     slotDate: LocalDate,
   ): SessionSlot?
+
+  @Query(
+    "SELECT s.id FROM SessionSlot s " +
+      "WHERE s.sessionTemplateReference = :sessionTemplateReference" +
+      " AND s.slotDate = :slotDate ",
+  )
+  fun findSessionSlotId(
+    sessionTemplateReference: String,
+    slotDate: LocalDate,
+  ): Long?
 
   @Query(
     "SELECT s FROM SessionSlot s " +

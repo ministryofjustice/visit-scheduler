@@ -8,12 +8,12 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
@@ -30,7 +30,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SupportTypeRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT
@@ -43,7 +42,6 @@ import java.time.LocalDateTime
 class ApplicationService(
   private val applicationRepo: ApplicationRepository,
   private val visitRepo: VisitRepository,
-  private val supportTypeRepository: SupportTypeRepository,
   private val telemetryClientService: TelemetryClientService,
   private val sessionTemplateService: SessionTemplateService,
   private val eventAuditRepository: EventAuditRepository,
@@ -91,6 +89,8 @@ class ApplicationService(
   }
 
   private fun createApplication(createApplicationDto: CreateApplicationDto, visit: Visit? = null): ApplicationDto {
+    validate(createApplicationDto)
+
     val sessionTemplateReference = createApplicationDto.sessionTemplateReference
     val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
     val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
@@ -123,12 +123,9 @@ class ApplicationService(
       applicationEntity.visitors.add(createApplicationVisitor(applicationEntity, it.nomisPersonId, it.visitContact))
     }
 
-    createApplicationDto.visitorSupport?.let { supportList ->
-      supportList.forEach {
-        if (!supportTypeRepository.existsByName(it.type)) {
-          throw SupportNotFoundException("Invalid support ${it.type} not found")
-        }
-        applicationEntity.support.add(createApplicationSupport(applicationEntity, it.type, it.text))
+    createApplicationDto.visitorSupport?.let {
+      if (it.description.trim().isNotEmpty()) {
+        applicationEntity.support = createApplicationSupport(applicationEntity, it.description)
       }
     }
 
@@ -145,6 +142,8 @@ class ApplicationService(
   }
 
   fun changeIncompleteApplication(applicationReference: String, changeApplicationDto: ChangeApplicationDto): ApplicationDto {
+    validate(changeApplicationDto)
+
     val application = getApplicationEntity(applicationReference)
     val sessionTemplateReference = changeApplicationDto.sessionTemplateReference
     val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
@@ -173,13 +172,15 @@ class ApplicationService(
     }
 
     changeApplicationDto.visitorSupport?.let { visitSupportUpdate ->
-      application.support.clear()
-      applicationRepo.saveAndFlush(application)
-      visitSupportUpdate.forEach {
-        if (!supportTypeRepository.existsByName(it.type)) {
-          throw SupportNotFoundException("Invalid support ${it.type} not found")
+      val deleteSupport = visitSupportUpdate.description.trim().isEmpty()
+      if (deleteSupport) {
+        application.support = null
+      } else {
+        application.support?.let {
+          it.description = visitSupportUpdate.description
+        } ?: run {
+          application.support = createApplicationSupport(application, visitSupportUpdate.description)
         }
-        application.support.add(createApplicationSupport(application, it.type, it.text))
       }
     }
 
@@ -262,7 +263,7 @@ class ApplicationService(
     )
   }
 
-  private fun createApplicationContact(application: Application, name: String, telephone: String): ApplicationContact {
+  private fun createApplicationContact(application: Application, name: String, telephone: String?): ApplicationContact {
     return ApplicationContact(
       applicationId = application.id,
       application = application,
@@ -280,12 +281,11 @@ class ApplicationService(
     )
   }
 
-  private fun createApplicationSupport(application: Application, type: String, text: String?): ApplicationSupport {
+  private fun createApplicationSupport(application: Application, description: String): ApplicationSupport {
     return ApplicationSupport(
       applicationId = application.id,
       application = application,
-      type = type,
-      text = text,
+      description = description,
     )
   }
 
@@ -324,6 +324,24 @@ class ApplicationService(
         AMEND_EXPIRED_ERROR_MESSAGE.format(visit.reference, action),
         ExpiredVisitAmendException("trying to change an expired visit"),
       )
+    }
+  }
+
+  private fun validate(changeApplicationDto: ChangeApplicationDto) {
+    changeApplicationDto.visitorSupport?.let {
+      validate(it)
+    }
+  }
+  private fun validate(createApplicationDto: CreateApplicationDto) {
+    createApplicationDto.visitorSupport?.let {
+      validate(it)
+    }
+  }
+
+  private fun validate(support: ApplicationSupportDto) {
+    val value = support.description.trim()
+    if (value.isNotBlank() && value.length < 3) {
+      throw VSiPValidationException(arrayOf("Support value description is too small"))
     }
   }
 }

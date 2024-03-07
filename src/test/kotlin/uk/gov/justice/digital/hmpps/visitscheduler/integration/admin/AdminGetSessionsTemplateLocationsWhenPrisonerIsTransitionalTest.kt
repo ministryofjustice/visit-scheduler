@@ -57,12 +57,13 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
   }
 
   @Test
-  fun `visit sessions are returned for prisoner in TAP with last location`() {
+  fun `when prisoner is in TAP and TAP visit sessions do not exist sessions are returned for last location`() {
     // Given
     val prisonCode = "CR1"
     val prisonerId = "A0000001"
 
     setUpStub(prisonerId, prisonCode, TAP)
+    // no TAP sessions exist for the prison
     val sessionTemplate = setupSessionTemplate(prisonCode)
 
     // When
@@ -70,6 +71,24 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
 
     // Then
     assertReturnedResult(responseSpec, sessionTemplate)
+  }
+
+  @Test
+  fun `when prisoner is in TAP and TAP visit sessions exist in prison the only TAP sessions are returned for prisoner`() {
+    // Given
+    val prisonCode = "CR1"
+    val prisonerId = "A0000001"
+
+    setUpStub(prisonerId, prisonCode, TAP)
+    setupSessionTemplate(prisonCode)
+    val allowedSessionLocationHierarchy = AllowedSessionLocationHierarchy("TAP")
+    val sessionTemplateTAP = setupSessionTemplate(prisonCode, allowedPermittedLocations = listOf(allowedSessionLocationHierarchy))
+
+    // When
+    val responseSpec = callGetSessionsByPrisonerIdAndPrison(prisonCode, prisonerId)
+
+    // Then
+    assertReturnedResult(responseSpec, sessionTemplateTAP)
   }
 
   @Test
@@ -246,10 +265,13 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     prisonApiMockServer.stubGetCellHistory(bookingID, prisonerCellHistoryNativeDto)
   }
 
-  private fun setupSessionTemplate(sessionPrisonCode: String): SessionTemplate {
-    val allowedPermittedLocations = listOf(
+  private fun setupSessionTemplate(
+    sessionPrisonCode: String,
+    includeLocationGroupType: Boolean = true,
+    allowedPermittedLocations: List<AllowedSessionLocationHierarchy> = listOf(
       AllowedSessionLocationHierarchy("A", "1", "100", "1"),
-    )
+    ),
+  ): SessionTemplate {
     val location =
       sessionLocationGroupHelper.create(prisonCode = sessionPrisonCode, prisonHierarchies = allowedPermittedLocations)
 
@@ -262,6 +284,7 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
       prisonCode = sessionPrisonCode,
       visitRoom = "session available to some level 4s and level 2s",
       permittedLocationGroups = mutableListOf(location),
+      includeLocationGroupType = includeLocationGroupType,
     )
   }
 

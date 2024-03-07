@@ -38,8 +38,8 @@ data class ApplicationDto(
   val visitContact: ContactDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false)
   val visitors: List<VisitorDto> = listOf(),
-  @Schema(description = "List of additional support associated with the visit", required = false)
-  val visitorSupport: List<VisitorSupportDto> = listOf(),
+  @Schema(description = "Additional support associated with the application", required = false)
+  val visitorSupport: VisitorSupportDto? = null,
   @Schema(description = "The visit created date and time", example = "2018-12-01T13:45:00", required = true)
   @field:NotNull
   val createdTimestamp: LocalDateTime,
