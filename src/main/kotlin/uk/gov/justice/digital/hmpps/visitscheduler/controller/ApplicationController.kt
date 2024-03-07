@@ -97,7 +97,7 @@ class ApplicationController(
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to changed a application slot",
+        description = "Incorrect request to change a application slot",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
@@ -107,7 +107,7 @@ class ApplicationController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to changed application slot",
+        description = "Incorrect permissions to change application slot",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
