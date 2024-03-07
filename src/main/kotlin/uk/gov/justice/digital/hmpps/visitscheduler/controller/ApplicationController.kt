@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.ApplicationService
 
 const val APPLICATION_CONTROLLER_PATH: String = "/visits/application"
 const val APPLICATION_RESERVE_SLOT: String = "$APPLICATION_CONTROLLER_PATH/slot/reserve"
-const val APPLICATION_RESERVED_SLOT_CHANGE: String = "$APPLICATION_CONTROLLER_PATH/{reference}/slot/change"
+const val APPLICATION_RESERVED_SLOT_CHANGE: String = "$APPLICATION_CONTROLLER_PATH/{applicationReference}/slot/change"
 const val APPLICATION_CHANGE: String = "$APPLICATION_CONTROLLER_PATH/{bookingReference}/change"
 
 @RestController
@@ -51,7 +51,7 @@ class ApplicationController(
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "Visit slot reserved",
+        description = "Application slot reserved",
       ),
       ApiResponse(
         responseCode = "400",
@@ -65,7 +65,7 @@ class ApplicationController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to reserve a slot",
+        description = "Incorrect permissions to reserve a slot for the application",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
@@ -93,11 +93,11 @@ class ApplicationController(
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit slot changed",
+        description = "Application slot changed",
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to changed a visit slot",
+        description = "Incorrect request to changed a application slot",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
@@ -107,7 +107,7 @@ class ApplicationController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to changed a visit slot",
+        description = "Incorrect permissions to changed application slot",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
@@ -118,13 +118,13 @@ class ApplicationController(
     ],
   )
   fun changeIncompleteApplication(
-    @Schema(description = "reference", example = "dfs-wjs-eqr", required = true)
+    @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
     @PathVariable
-    reference: String,
+    applicationReference: String,
     @RequestBody @Valid
     changeApplicationDto: ChangeApplicationDto,
   ): ApplicationDto {
-    return applicationService.changeIncompleteApplication(reference.trim(), changeApplicationDto)
+    return applicationService.changeIncompleteApplication(applicationReference.trim(), changeApplicationDto)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -143,11 +143,11 @@ class ApplicationController(
     responses = [
       ApiResponse(
         responseCode = "201",
-        description = "Visit created",
+        description = "Application created",
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to change a visit",
+        description = "Incorrect application to change a visit",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
@@ -157,7 +157,7 @@ class ApplicationController(
       ),
       ApiResponse(
         responseCode = "403",
-        description = "Incorrect permissions to change a visit",
+        description = "Incorrect permissions for application to change a visit",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
