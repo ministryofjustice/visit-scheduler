@@ -114,7 +114,7 @@ fun callVisitReserveSlotChange(
 }
 
 fun getVisitReserveSlotChangeUrl(reference: String): String {
-  return APPLICATION_RESERVED_SLOT_CHANGE.replace("{reference}", reference)
+  return APPLICATION_RESERVED_SLOT_CHANGE.replace("{applicationReference}", reference)
 }
 
 fun submitApplication(
