@@ -53,7 +53,7 @@ class PrisonerService(
     return prisonApiClient.getPrisonerHousingLocation(prisonerId)
   }
 
-  fun getHousingLevelForTransitionalPrisoner(transitionalLocation: String, lastPermanentLevels: List<PrisonerHousingLevelDto>, sessionTemplates: List<SessionTemplate>?): List<PrisonerHousingLevelDto> {
+  private fun getHousingLevelForTransitionalPrisoner(transitionalLocation: String, lastPermanentLevels: List<PrisonerHousingLevelDto>, sessionTemplates: List<SessionTemplate>?): List<PrisonerHousingLevelDto> {
     // if there are sessions for the prisoners temporary location - level one code needs to be that transitional location
     // else return the prisoner's last permanent levels
     return if (sessionTemplates != null && hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates, transitionalLocation)) {
@@ -82,7 +82,7 @@ class PrisonerService(
     }
   }
 
-  fun getHousingLevelForPrisonerInTemporaryLocation(prisonersTransitionalLocation: String): List<PrisonerHousingLevelDto> {
+  private fun getHousingLevelForPrisonerInTemporaryLocation(prisonersTransitionalLocation: String): List<PrisonerHousingLevelDto> {
     val prisonerHousingLocationForTransitionalPrisoners = mutableListOf<PrisonerHousingLevelDto>()
     val prisonerHousingLocation = PrisonerHousingLevelDto(level = LEVEL_ONE.level, code = prisonersTransitionalLocation, description = prisonersTransitionalLocation)
     prisonerHousingLocationForTransitionalPrisoners.add(prisonerHousingLocation)
