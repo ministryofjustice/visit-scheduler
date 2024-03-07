@@ -171,7 +171,7 @@ open class SessionService(
     return if (hasSessionsWithLocationGroups) {
       val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
       prisonerDetailDto?.let {
-        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
+        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto, sessionTemplates)
         val keep = sessionValidator.isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)
         LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference} Keep:$keep")
         keep

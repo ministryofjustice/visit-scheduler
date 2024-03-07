@@ -145,7 +145,7 @@ class MigrationSessionTemplateMatcher(
     }
 
     val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)!!
-    val prisonLevelMap = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
+    val prisonLevelMap = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto, null)
 
     sessionTemplates.forEach { template ->
       val matcher = matchedSessionTemplate[template]
@@ -233,7 +233,7 @@ class MigrationSessionTemplateMatcher(
     matchedSessionTemplate: Map<SessionTemplate, MigrateMatch>,
   ) {
     val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)!!
-    val prisonLevelMap = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto)
+    val prisonLevelMap = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto, null)
     sessionTemplates.forEach { template ->
       matchedSessionTemplate[template]?.locationScore = sessionValidator.getLocationScore(prisonLevelMap, template)
     }
