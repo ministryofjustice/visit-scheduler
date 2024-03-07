@@ -147,7 +147,7 @@ class ApplicationController(
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect application to change a visit",
+        description = "Incorrect application details to change a visit",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
