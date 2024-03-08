@@ -127,6 +127,31 @@ class VisitEntityHelper(
   private val applicationEntityHelper: ApplicationEntityHelper,
 ) {
 
+  fun createVisit(
+    application: Application,
+    visit: Visit,
+  ): Visit {
+    visit.addApplication(application)
+
+    with(application.visitContact!!) {
+      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
+    }
+
+    application.support?.let {
+      visit.support = VisitSupport(visit = visit, visitId = visit.id, description = it.description)
+    }
+
+    application.visitors.let {
+      it.map { applicationVisitor ->
+        with(applicationVisitor) {
+          visit.visitors.add(VisitVisitor(visit = visit, visitId = visit.id, nomisPersonId = nomisPersonId, visitContact = contact))
+        }
+      }
+    }
+
+    return save(visit)
+  }
+
   fun createFromApplication(
     application: Application,
     visitStatus: VisitStatus = BOOKED,
@@ -147,25 +172,30 @@ class VisitEntityHelper(
       prisonCode = application.prison.code,
     )
 
-    visit.addApplication(application)
+    return createVisit(application, visit)
+  }
 
-    with(application.visitContact!!) {
-      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
-    }
+  fun createFromApplication(
+    application: Application,
+    visitStatus: VisitStatus = BOOKED,
+    outcomeStatus: OutcomeStatus? = null,
+  ): Visit {
+    val visit = create(
+      visitStatus = visitStatus,
+      prisonerId = application.prisonerId,
+      slotDate = application.sessionSlot.slotDate,
+      visitStart = application.sessionSlot.slotStart.toLocalTime(),
+      visitEnd = application.sessionSlot.slotEnd.toLocalTime(),
+      visitType = application.visitType,
+      visitRestriction = application.restriction,
+      outcomeStatus = outcomeStatus,
+      createApplication = false,
+      prisonCode = application.prison.code,
+      activePrison = true,
+      visitRoom = "Visit Room 1",
+    )
 
-    application.support?.let {
-      visit.support = VisitSupport(visit = visit, visitId = visit.id, description = it.description)
-    }
-
-    application.visitors.let {
-      it.map { applicationVisitor ->
-        with(applicationVisitor) {
-          visit.visitors.add(VisitVisitor(visit = visit, visitId = visit.id, nomisPersonId = nomisPersonId, visitContact = contact))
-        }
-      }
-    }
-
-    return save(visit)
+    return createVisit(application, visit)
   }
 
   @Transactional
@@ -205,6 +235,53 @@ class VisitEntityHelper(
     val savedVisit = visitRepository.saveAndFlush(notSaved)
     if (visitContact != null) {
       createContact(visit = savedVisit, visitContact.name, visitContact.telephone)
+    }
+
+    return if (createApplication) {
+      savedVisit.addApplication(applicationEntityHelper.create(savedVisit))
+      savedVisit
+    } else {
+      savedVisit
+    }
+  }
+
+  @Transactional
+  fun create(
+    visitStatus: VisitStatus = BOOKED,
+    prisonerId: String = "testPrisonerId",
+    prisonCode: String,
+    visitRoom: String,
+    slotDate: LocalDate,
+    visitStart: LocalTime,
+    visitEnd: LocalTime,
+    visitType: VisitType,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    activePrison: Boolean,
+    outcomeStatus: OutcomeStatus? = null,
+    createApplication: Boolean = true,
+    createContact: Boolean = false,
+  ): Visit {
+    val prison = prisonEntityHelper.create(prisonCode, activePrison)
+    val sessionSlot = sessionSlotEntityHelper.create(prison.id, slotDate, visitStart, visitEnd)
+
+    val notSaved = Visit(
+      visitStatus = visitStatus,
+      prisonerId = prisonerId,
+      prisonId = prison.id,
+      prison = prison,
+      visitRoom = visitRoom,
+      sessionSlotId = sessionSlot.id,
+      sessionSlot = sessionSlot,
+      visitType = visitType,
+      visitRestriction = visitRestriction,
+    )
+
+    notSaved.outcomeStatus = outcomeStatus
+
+    val savedVisit = visitRepository.saveAndFlush(notSaved)
+
+    if (createContact) {
+      createContact(visit = savedVisit)
     }
 
     return if (createApplication) {

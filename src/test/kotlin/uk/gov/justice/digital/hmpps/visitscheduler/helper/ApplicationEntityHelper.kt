@@ -81,6 +81,37 @@ class ApplicationEntityHelper(
     )
   }
 
+  fun create(
+    prisonerId: String = "testPrisonerId",
+    slotDate: LocalDate = LocalDate.of((LocalDate.now().year + 1), 11, 1),
+    visitStart: LocalTime = LocalTime.of(10, 0),
+    visitEnd: LocalTime = LocalTime.of(11, 0),
+    visitRestriction: VisitRestriction = OPEN,
+    activePrison: Boolean = true,
+    prisonCode: String?,
+    visitType: VisitType = VisitType.SOCIAL,
+    reservedSlot: Boolean = true,
+    completed: Boolean = true,
+  ): Application {
+    val prison = prisonEntityHelper.create(prisonCode ?: "MDI", activePrison)
+    val sessionSlot = sessionSlotEntityHelper.create(prison.id, slotDate, visitStart, visitEnd)
+
+    return applicationRepo.saveAndFlush(
+      Application(
+        prisonerId = prisonerId,
+        prisonId = prison.id,
+        prison = prison,
+        sessionSlotId = sessionSlot.id,
+        sessionSlot = sessionSlot,
+        visitType = visitType,
+        restriction = visitRestriction,
+        createdBy = "",
+        reservedSlot = reservedSlot,
+        completed = completed,
+      ),
+    )
+  }
+
   fun createContact(
     application: Application,
     name: String,

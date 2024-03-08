@@ -252,6 +252,16 @@ abstract class IntegrationTestBase {
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application, sessionTemplateLocal = sessionTemplate)
   }
 
+  fun createApplicationAndVisit(
+    prisonerId: String? = "testPrisonerId",
+    visitStatus: VisitStatus? = VisitStatus.BOOKED,
+    slotDate: LocalDate,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  ): Visit {
+    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, visitRestriction = visitRestriction)
+    return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
+  }
+
   fun createApplicationAndSave(
     prisonerId: String? = "testPrisonerId",
     sessionTemplate: SessionTemplate? = null,
@@ -279,12 +289,41 @@ abstract class IntegrationTestBase {
     return applicationEntityHelper.save(applicationEntity)
   }
 
+  fun createApplicationAndSave(
+    prisonerId: String? = "testPrisonerId",
+    prisonCode: String? = null,
+    slotDate: LocalDate,
+    completed: Boolean,
+    reservedSlot: Boolean = true,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  ): Application {
+    val applicationEntity = applicationEntityHelper.create(
+      prisonerId = prisonerId!!,
+      completed = completed,
+      reservedSlot = reservedSlot,
+      prisonCode = prisonCode,
+      slotDate = slotDate,
+      visitRestriction = visitRestriction,
+    )
+    applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
+    applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")
+
+    return applicationEntityHelper.save(applicationEntity)
+  }
+
   fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit {
     return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplateDefault, application = applicationEntity)
   }
 
+  // creates a visit with a null session template reference
+  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application): Visit {
+    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, application = applicationEntity)
+  }
+
   fun parseVisitsPageResponse(responseSpec: ResponseSpec): List<VisitDto> {
-    class Page() {
+    class Page {
       @JsonProperty("content")
       lateinit var content: List<VisitDto>
     }

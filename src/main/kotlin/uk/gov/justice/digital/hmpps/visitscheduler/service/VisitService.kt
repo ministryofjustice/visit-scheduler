@@ -242,7 +242,7 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun findVisitsBySessionTemplateFilterPageableDescending(
-    sessionTemplateReference: String,
+    sessionTemplateReference: String?,
     fromDate: LocalDate,
     toDate: LocalDate,
     visitStatusList: List<VisitStatus>,
@@ -250,16 +250,29 @@ class VisitService(
     pageablePage: Int? = null,
     pageableSize: Int? = null,
   ): Page<VisitDto> {
-    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
+    val page: Pageable =
+      PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
 
-    return visitRepository.findVisitsOrderByCreateTimestamp(
-      sessionTemplateReference = sessionTemplateReference,
-      fromDate = fromDate,
-      toDate = toDate,
-      visitStatusList = if (visitStatusList.isNotEmpty()) visitStatusList else null,
-      visitRestrictions = visitRestrictions,
-      page,
-    ).map { visitDtoBuilder.build(it) }
+    val results = if (sessionTemplateReference != null) {
+      visitRepository.findVisitsBySessionTemplateReference(
+        sessionTemplateReference = sessionTemplateReference,
+        fromDate = fromDate,
+        toDate = toDate,
+        visitStatusList = visitStatusList.ifEmpty { null },
+        visitRestrictions = visitRestrictions,
+        page,
+      )
+    } else {
+      visitRepository.findVisitsWithNoSessionTemplateReference(
+        fromDate = fromDate,
+        toDate = toDate,
+        visitStatusList = visitStatusList.ifEmpty { null },
+        visitRestrictions = visitRestrictions,
+        page,
+      )
+    }
+
+    return results.map { visitDtoBuilder.build(it) }
   }
 
   private fun saveEventAudit(

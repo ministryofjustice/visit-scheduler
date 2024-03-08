@@ -182,15 +182,32 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "SELECT v FROM Visit v WHERE " +
-      " v.sessionSlot.sessionTemplateReference = :sessionTemplateReference  AND " +
+      " (v.sessionSlot.sessionTemplateReference = :sessionTemplateReference)  AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
       "v.sessionSlot.slotDate >= :fromDate  AND " +
       "v.sessionSlot.slotDate <= :toDate " +
       " ORDER BY v.createTimestamp",
   )
-  fun findVisitsOrderByCreateTimestamp(
+  fun findVisitsBySessionTemplateReference(
     sessionTemplateReference: String,
+    fromDate: LocalDate,
+    toDate: LocalDate,
+    visitStatusList: List<VisitStatus>?,
+    visitRestrictions: List<VisitRestriction>?,
+    pageable: Pageable,
+  ): Page<Visit>
+
+  @Query(
+    "SELECT v FROM Visit v WHERE " +
+      " (v.sessionSlot.sessionTemplateReference is NULL)  AND " +
+      "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
+      "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
+      "v.sessionSlot.slotDate >= :fromDate  AND " +
+      "v.sessionSlot.slotDate <= :toDate " +
+      " ORDER BY v.createTimestamp",
+  )
+  fun findVisitsWithNoSessionTemplateReference(
     fromDate: LocalDate,
     toDate: LocalDate,
     visitStatusList: List<VisitStatus>?,

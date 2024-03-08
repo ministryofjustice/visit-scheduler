@@ -509,8 +509,8 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   fun `cancel visit migrated by reference -  with outcome and outcome text`() {
     // Given
 
-    val application = createApplicationAndSave(completed = true)
-    val visit = createVisitAndSave(visitStatus = BOOKED, application)
+    val application = createApplicationAndSave(completed = true, sessionTemplate = sessionTemplateDefault)
+    val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
 
     val cancelVisitDto = MigratedCancelVisitDto(
       OutcomeDto(
