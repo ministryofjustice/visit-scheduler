@@ -80,7 +80,7 @@ class PrisonerSessionValidator(
     prisonerLevels: Map<PrisonerHousingLevels, String?>,
     sessionTemplate: SessionTemplate,
   ): Int {
-    if (!isSessionForAllPrisonerLocations(sessionTemplate)) {
+    if (!isSessionForAllPrisonerLocations(sessionTemplate) && sessionTemplate.includeLocationGroupType) {
       var highestScore = LOCATION_NOT_PERMITTED // If minus 10 then it does not match at all should be rejected
       sessionTemplate.permittedSessionLocationGroups.forEach { sessionGroup ->
         for (permittedSessionLocation in sessionGroup.sessionLocations) {

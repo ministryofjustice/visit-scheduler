@@ -112,9 +112,10 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     visitRestriction: VisitRestriction = OPEN,
     createDateTime: LocalDateTime = LocalDateTime.of(2022, 9, 11, 12, 30),
     modifyDateTime: LocalDateTime? = null,
+    lastPermanentLevels: String? = null,
   ): MigrateVisitRequestDto {
     val migrateVisitRequestDto = MigrateVisitRequestDto(
-      prisonCode = PRISON_CODE,
+      prisonCode = prisonCode,
       prisonerId = prisonerId,
       visitRoom = visitRoom,
       visitType = SOCIAL,
@@ -137,7 +138,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
       actionedBy = actionedBy,
     )
 
-    mockApiCalls(prisonerId, prisonCode, housingLocations, category, incentiveLevelCode = incentiveLevelCode)
+    mockApiCalls(prisonerId, prisonCode, housingLocations, category, incentiveLevelCode = incentiveLevelCode, lastPermanentLevels = lastPermanentLevels)
 
     return migrateVisitRequestDto
   }
