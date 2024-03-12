@@ -44,7 +44,7 @@ data class SessionTemplateDto(
   val prisonerCategoryGroups: List<SessionCategoryGroupDto> = listOf(),
   @Schema(description = "list of permitted incentive level groups", required = false)
   val prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto> = listOf(),
-  @Schema(description = "Include location group types if true, exclude if false.", required = true)
+  @Schema(description = "Determines behaviour of location groups. True will mean these location groups are included, false means they will be excluded.", required = true)
   val includeLocationGroupType: Boolean,
 ) {
   constructor(sessionTemplateEntity: SessionTemplate) : this(

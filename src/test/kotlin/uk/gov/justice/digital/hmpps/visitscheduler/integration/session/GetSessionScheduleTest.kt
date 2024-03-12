@@ -59,6 +59,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[0].capacity.closed).isEqualTo(sessionTemplate.closedCapacity)
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[0]).isEqualTo(sessionLocationGroup.name)
     Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[0]).isEqualTo(sessionCategoryGroup.name)
+    Assertions.assertThat(sessionScheduleResults[0].areLocationGroupsIncluded).isTrue()
   }
 
   @Test
@@ -72,6 +73,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       startTime = LocalTime.parse("09:00"),
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = sessionDate.dayOfWeek,
+      includeLocationGroupType = false,
     )
 
     val sessionTemplate2 = sessionTemplateEntityHelper.create(
@@ -108,12 +110,16 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults.size).isEqualTo(4)
     Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.startTime).isEqualTo(sessionTemplate4.startTime)
     Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.endTime).isEqualTo(sessionTemplate4.endTime)
+    Assertions.assertThat(sessionScheduleResults[0].areLocationGroupsIncluded).isTrue()
     Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.startTime).isEqualTo(sessionTemplate3.startTime)
     Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.endTime).isEqualTo(sessionTemplate3.endTime)
+    Assertions.assertThat(sessionScheduleResults[1].areLocationGroupsIncluded).isTrue()
     Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.startTime).isEqualTo(sessionTemplate1.startTime)
     Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.endTime).isEqualTo(sessionTemplate1.endTime)
+    Assertions.assertThat(sessionScheduleResults[2].areLocationGroupsIncluded).isFalse()
     Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.startTime).isEqualTo(sessionTemplate2.startTime)
     Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.endTime).isEqualTo(sessionTemplate2.endTime)
+    Assertions.assertThat(sessionScheduleResults[3].areLocationGroupsIncluded).isTrue()
   }
 
   @Test
