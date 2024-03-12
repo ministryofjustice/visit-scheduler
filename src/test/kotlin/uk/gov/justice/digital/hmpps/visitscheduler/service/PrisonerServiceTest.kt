@@ -543,7 +543,7 @@ class PrisonerServiceTest {
   }
 
   private fun getLevel(prisonerHousingLocationsDto: PrisonerHousingLocationsDto, level: PrisonerHousingLevels): String? {
-    val levels = prisonerService.getLevelsMapForPrisoner(prisonerHousingLocationsDto, null)
+    val levels = prisonerService.getLevelsMapForPrisoner(prisonerHousingLocationsDto, emptyList())
     return levels[level]
   }
 }
