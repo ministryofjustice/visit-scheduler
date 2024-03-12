@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationExcep
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
@@ -41,7 +42,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateComparator
@@ -59,7 +59,6 @@ class SessionTemplateService(
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
-  private val sessionSlotRepository: SessionSlotRepository,
   private val visitRepository: VisitRepository,
   private val prisonsService: PrisonsService,
   private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
@@ -67,6 +66,7 @@ class SessionTemplateService(
   private val sessionTemplateMapper: SessionTemplateMapper,
   private val sessionTemplateUtil: SessionTemplateUtil,
   private val visitMoveValidator: SessionTemplateVisitMoveValidator,
+  private val sessionSlotService: SessionSlotService,
 ) {
 
   companion object {
@@ -513,20 +513,32 @@ class SessionTemplateService(
     return overlappingSessions
   }
 
+  @Transactional
   fun moveSessionTemplateVisits(fromSessionTemplateReference: String, toSessionTemplateReference: String, fromDate: LocalDate): Int {
-    val fromSessionTemplate = SessionTemplateDto(getSessionTemplate(fromSessionTemplateReference))
-    val toSessionTemplate = SessionTemplateDto(getSessionTemplate(toSessionTemplateReference))
+    val fromSessionTemplate = getSessionTemplate(fromSessionTemplateReference)
+    val toSessionTemplate = getSessionTemplate(toSessionTemplateReference)
     // validate move before updating session template reference
-    validateMoveSessionTemplateVisits(fromSessionTemplate, toSessionTemplate, fromDate)
+    validateMoveSessionTemplateVisits(SessionTemplateDto(fromSessionTemplate), SessionTemplateDto(toSessionTemplate), fromDate)
 
-    return if (fromSessionTemplate.sessionTimeSlot == toSessionTemplate.sessionTimeSlot) {
-      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
-    } else {
-      val startSlot = fromDate.atTime(toSessionTemplate.sessionTimeSlot.startTime)
-      val endSlot = fromDate.atTime(toSessionTemplate.sessionTimeSlot.endTime)
-
-      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, startSlot, endSlot)
+    val visits = visitRepository.findBookedVisitsBySessionTemplateReference(
+      sessionTemplateReference = fromSessionTemplateReference,
+      fromDate = fromDate,
+    ).toList().also {
+      val updatedVisits = updateSessionSlotId(it, toSessionTemplate)
+      visitRepository.saveAllAndFlush(updatedVisits)
     }
+
+    return visits.size
+  }
+
+  private fun updateSessionSlotId(visits: List<Visit>, toSessionTemplate: SessionTemplate): List<Visit> {
+    visits.forEach { visit ->
+      val sessionSlot = sessionSlotService.getSessionSlot(visit.sessionSlot.slotDate, SessionTemplateDto(toSessionTemplate), toSessionTemplate.prison)
+      visit.sessionSlot = sessionSlot
+      visit.sessionSlotId = sessionSlot.id
+    }
+
+    return visits
   }
 
   @Throws(VSiPValidationException::class)
