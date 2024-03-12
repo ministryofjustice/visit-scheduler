@@ -312,11 +312,9 @@ class AdminMoveTemplateVisitsTest : IntegrationTestBase() {
     Assertions.assertThat(updatedVisit.sessionSlot.slotDate).isEqualTo(visitDate)
   }
 
-
-  //@Test
+  // @Test
   fun `when to session template has higher weekly frequency than current but all visits can be moved are successful`() {
-
-    //TODO this is failing as it updating session slot and the values already exist
+    // TODO this is failing as it updating session slot and the values already exist
 
     // Given
     val today = LocalDate.now()
