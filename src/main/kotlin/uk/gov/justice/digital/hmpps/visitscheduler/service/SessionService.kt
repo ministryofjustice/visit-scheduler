@@ -448,6 +448,7 @@ open class SessionService(
       sessionTemplateReference = sessionTemplate.reference,
       sessionTimeSlot = SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
       capacity = SessionCapacityDto(sessionTemplate),
+      areLocationGroupsIncluded = sessionTemplate.includeLocationGroupType,
       prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
       prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
       prisonerIncentiveLevelGroupNames = sessionTemplate.permittedSessionIncentiveLevelGroups.map { it.name }.toList(),
