@@ -80,22 +80,27 @@ class PrisonerSessionValidator(
     prisonerLevels: Map<PrisonerHousingLevels, String?>,
     sessionTemplate: SessionTemplate,
   ): Int {
-    if (!isSessionForAllPrisonerLocations(sessionTemplate) && sessionTemplate.includeLocationGroupType) {
-      var highestScore = LOCATION_NOT_PERMITTED // If minus 10 then it does not match at all should be rejected
-      sessionTemplate.permittedSessionLocationGroups.forEach { sessionGroup ->
-        for (permittedSessionLocation in sessionGroup.sessionLocations) {
-          with(permittedSessionLocation) {
-            if (levelMatcher.hasLevelMatch(permittedSessionLocation, prisonerLevels)) {
-              val score = levelFourCode?.let { 4 } ?: levelThreeCode?.let { 3 } ?: levelTwoCode?.let { 2 } ?: levelOneCode.let { 1 }
-              if (score > highestScore) {
-                highestScore = score
+    return if (!isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)) {
+      LOCATION_NOT_PERMITTED
+    } else {
+      if (isSessionForAllPrisonerLocations(sessionTemplate) || !sessionTemplate.includeLocationGroupType) {
+        0
+      } else {
+        var highestScore = LOCATION_NOT_PERMITTED // If minus 10 then it does not match at all should be rejected
+        sessionTemplate.permittedSessionLocationGroups.forEach { sessionGroup ->
+          for (permittedSessionLocation in sessionGroup.sessionLocations) {
+            with(permittedSessionLocation) {
+              if (levelMatcher.hasLevelMatch(permittedSessionLocation, prisonerLevels)) {
+                val score = levelFourCode?.let { 4 } ?: levelThreeCode?.let { 3 } ?: levelTwoCode?.let { 2 } ?: levelOneCode.let { 1 }
+                if (score > highestScore) {
+                  highestScore = score
+                }
               }
             }
           }
         }
+        highestScore
       }
-      return highestScore
     }
-    return 0
   }
 }

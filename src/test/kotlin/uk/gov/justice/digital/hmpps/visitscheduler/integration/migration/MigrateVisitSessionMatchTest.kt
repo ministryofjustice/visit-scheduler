@@ -1102,6 +1102,76 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
   }
 
   @Test
+  fun `Migrated session match - when prison has TAP session and prisoner is in TAP location match closest matching location session template`() {
+    // Given
+    val prisonCode = "AWE"
+    val lastPermanentLocation = "$prisonCode-B-1-2-3"
+    val transitionalLocationGroup = "$prisonCode-TAP"
+    val tapLocationGroup = createSessionLocationGroup(transitionalLocationGroup)
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(prisonCode = prisonCode, housingLocations = transitionalLocationGroup, lastPermanentLevels = lastPermanentLocation)
+
+    val validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1)
+    val startTime = migrateVisitRequestDto.startTimestamp.toLocalTime()
+    val endTime = migrateVisitRequestDto.endTimestamp.toLocalTime()
+    val dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek
+
+    // session template for all prisoners except TAP - this is a closer match but is not eligible as TAP location groups are excluded
+    sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom + "1",
+      startTime = startTime,
+      endTime = endTime,
+      includeLocationGroupType = false,
+      permittedLocationGroups = tapLocationGroup,
+    )
+
+    // session template for TAP locations only
+    sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom + "1",
+      startTime = startTime.plusMinutes(90),
+      endTime = endTime.plusMinutes(90),
+      includeLocationGroupType = true,
+      permittedLocationGroups = tapLocationGroup,
+    )
+
+    // session template for all locations including TAP - this session should be matched
+    val sessionTemplateForAllLocationsIncludingTAP = sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      prisonCode = migrateVisitRequestDto.prisonCode,
+      dayOfWeek = dayOfWeek,
+      visitRoom = migrateVisitRequestDto.visitRoom + "1",
+      startTime = startTime,
+      endTime = endTime,
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.sessionSlot.sessionTemplateReference).isEqualTo(sessionTemplateForAllLocationsIncludingTAP.reference)
+
+      val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
+      assertThat(eventAudit.type).isEqualTo(EventAuditType.MIGRATED_VISIT)
+      assertThat(eventAudit.actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
+      assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
+      assertThat(eventAudit.applicationReference).isEqualTo(visit.getLastApplication()?.reference)
+    }
+  }
+
+  @Test
   fun `Migrated session match - when prison has no TAP sessions and prisoner is in TAP location match based on last known permanent levels`() {
     // Given
     val prisonCode = "AWE"
