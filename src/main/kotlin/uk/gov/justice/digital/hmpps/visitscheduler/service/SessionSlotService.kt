@@ -1,6 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -13,6 +16,10 @@ import java.time.format.DateTimeFormatter
 
 @Service
 class SessionSlotService {
+
+  companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
 
   @Autowired
   private lateinit var sessionSlotRepository: SessionSlotRepository
@@ -72,26 +79,36 @@ class SessionSlotService {
 
     sessionTemplateReference?.let {
       return sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate) ?: run {
-        sessionSlotRepository.saveAndFlush(
-          SessionSlot(
-            sessionTemplateReference,
-            prison.id,
-            slotDate,
-            slotStart = slotStart,
-            slotEnd = slotEnd,
-          ),
-        )
+        try {
+          sessionSlotRepository.saveAndFlush(
+            SessionSlot(
+              sessionTemplateReference,
+              prison.id,
+              slotDate,
+              slotStart = slotStart,
+              slotEnd = slotEnd,
+            ),
+          )
+        } catch (e: DataIntegrityViolationException) {
+          LOG.warn("Constraint issue with session slot session template reference: $sessionTemplateReference slot date: $slotDate.")
+          sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate)!!
+        }
       }
     } ?: run {
       return sessionSlotRepository.findSessionSlotWithOutSessionReference(prison.id, slotStart, slotEnd) ?: run {
-        sessionSlotRepository.saveAndFlush(
-          SessionSlot(
-            prisonId = prison.id,
-            slotDate = slotDate,
-            slotStart = slotStart,
-            slotEnd = slotEnd,
-          ),
-        )
+        try {
+          sessionSlotRepository.saveAndFlush(
+            SessionSlot(
+              prisonId = prison.id,
+              slotDate = slotDate,
+              slotStart = slotStart,
+              slotEnd = slotEnd,
+            ),
+          )
+        } catch (e: DataIntegrityViolationException) {
+          LOG.warn("Constraint issue with session slot prisonId: ${prison.id} slot date : $slotDate.")
+          sessionSlotRepository.findSessionSlotWithOutSessionReference(prison.id, slotStart, slotEnd)!!
+        }
       }
     }
   }
