@@ -4,7 +4,9 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
@@ -14,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
@@ -21,7 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepositor
 import java.time.LocalDate
 
 @DisplayName("Data base test")
-class DataBaseTest(
+open class DataBaseTest(
   @Autowired val testVisitRepository: TestVisitRepository,
   @Autowired val testSessionLocationGroupRepository: TestSessionLocationGroupRepository,
   @Autowired val testTemplateRepository: TestSessionTemplateRepository,
@@ -44,13 +47,13 @@ class DataBaseTest(
     visitEntityHelper.createNote(visit = visitWithApplication, text = "Some text comment", type = VISIT_COMMENT)
     visitEntityHelper.createContact(visit = visitWithApplication, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createVisitor(visit = visitWithApplication, nomisPersonId = 321L, visitContact = true)
-    visitEntityHelper.createSupport(visit = visitWithApplication, name = "OTHER", details = "Some Text")
+    visitEntityHelper.createSupport(visit = visitWithApplication, description = "Some Text")
     visitWithApplication = visitEntityHelper.save(visitWithApplication)
 
     applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = true)
     applicationEntityHelper.createContact(application = applicationWithVisit, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationWithVisit, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = applicationWithVisit, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = applicationWithVisit, description = "Some Text")
     applicationEntityHelper.save(applicationWithVisit)
 
     visitWithApplication.addApplication(applicationWithVisit)
@@ -67,13 +70,13 @@ class DataBaseTest(
     inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false)
     applicationEntityHelper.createContact(application = inCompleteApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = inCompleteApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = inCompleteApplication, name = "OTHER", details = "Some Text")
+    applicationEntityHelper.createSupport(application = inCompleteApplication, description = "Some Text")
     applicationEntityHelper.save(inCompleteApplication)
   }
 
   @Transactional(propagation = REQUIRES_NEW)
   @Test
-  fun `When visit deleted - all connected child objects are also removed`() {
+  open fun `When visit deleted - all connected child objects are also removed`() {
     val didExist = testVisitRepository.hasVisit(visitWithApplication.id)
     val didApplicationExist = testApplicationRepository.hasApplication(applicationWithVisit.id)
 
@@ -127,7 +130,7 @@ class DataBaseTest(
 
   @Transactional(propagation = REQUIRES_NEW)
   @Test
-  fun `When sessionTemplate deleted - location groups are not deleted but join is`() {
+  open fun `When sessionTemplate deleted - location groups are not deleted but join is`() {
     // Given
     val reference = sessionTemplateDefault.reference
     val sessionId = sessionTemplateDefault.id
@@ -143,5 +146,29 @@ class DataBaseTest(
     Assertions.assertThat(testSessionLocationGroupRepository.hasById(grp2Id)).isTrue
     Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionId, grp1Id)).isFalse
     Assertions.assertThat(testSessionLocationGroupRepository.hasJoinTable(sessionId, grp2Id)).isFalse
+  }
+
+  @Test
+  fun `test constraint on session template slot, with all values then exception is thrown`() {
+    // Given
+    val slotDate = LocalDate.now()
+    testSessionSlotRepository.save(SessionSlot("ref", 1, slotDate, slotDate.atTime(1, 30), slotDate.atTime(2, 30)))
+
+    // When
+    assertThrows<DataIntegrityViolationException> {
+      testSessionSlotRepository.save(SessionSlot("ref", 1, slotDate, slotDate.atTime(1, 30), slotDate.atTime(2, 30)))
+    }
+  }
+
+  @Test
+  fun `test constraint on session template, with no session template reference then exception is thrown`() {
+    // Given
+    val slotDate = LocalDate.now()
+    testSessionSlotRepository.save(SessionSlot(null, 1, slotDate, slotDate.atTime(1, 30), slotDate.atTime(2, 30)))
+
+    // When
+    assertThrows<DataIntegrityViolationException> {
+      testSessionSlotRepository.save(SessionSlot(null, 1, slotDate, slotDate.atTime(1, 30), slotDate.atTime(2, 30)))
+    }
   }
 }

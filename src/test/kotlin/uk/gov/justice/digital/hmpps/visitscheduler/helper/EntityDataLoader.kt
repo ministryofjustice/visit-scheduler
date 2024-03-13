@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Propagation.REQUIRED
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
@@ -126,6 +127,31 @@ class VisitEntityHelper(
   private val applicationEntityHelper: ApplicationEntityHelper,
 ) {
 
+  fun createVisit(
+    application: Application,
+    visit: Visit,
+  ): Visit {
+    visit.addApplication(application)
+
+    with(application.visitContact!!) {
+      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
+    }
+
+    application.support?.let {
+      visit.support = VisitSupport(visit = visit, visitId = visit.id, description = it.description)
+    }
+
+    application.visitors.let {
+      it.map { applicationVisitor ->
+        with(applicationVisitor) {
+          visit.visitors.add(VisitVisitor(visit = visit, visitId = visit.id, nomisPersonId = nomisPersonId, visitContact = contact))
+        }
+      }
+    }
+
+    return save(visit)
+  }
+
   fun createFromApplication(
     application: Application,
     visitStatus: VisitStatus = BOOKED,
@@ -146,29 +172,30 @@ class VisitEntityHelper(
       prisonCode = application.prison.code,
     )
 
-    visit.addApplication(application)
+    return createVisit(application, visit)
+  }
 
-    with(application.visitContact!!) {
-      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
-    }
+  fun createFromApplication(
+    application: Application,
+    visitStatus: VisitStatus = BOOKED,
+    outcomeStatus: OutcomeStatus? = null,
+  ): Visit {
+    val visit = create(
+      visitStatus = visitStatus,
+      prisonerId = application.prisonerId,
+      slotDate = application.sessionSlot.slotDate,
+      visitStart = application.sessionSlot.slotStart.toLocalTime(),
+      visitEnd = application.sessionSlot.slotEnd.toLocalTime(),
+      visitType = application.visitType,
+      visitRestriction = application.restriction,
+      outcomeStatus = outcomeStatus,
+      createApplication = false,
+      prisonCode = application.prison.code,
+      activePrison = true,
+      visitRoom = "Visit Room 1",
+    )
 
-    application.support.let {
-      application.support.map { applicationSupport ->
-        with(applicationSupport) {
-          visit.support.add(VisitSupport(visit = visit, visitId = visit.id, type = type, text = text))
-        }
-      }
-    }
-
-    application.visitors.let {
-      it.map { applicationVisitor ->
-        with(applicationVisitor) {
-          visit.visitors.add(VisitVisitor(visit = visit, visitId = visit.id, nomisPersonId = nomisPersonId, visitContact = contact))
-        }
-      }
-    }
-
-    return save(visit)
+    return createVisit(application, visit)
   }
 
   @Transactional
@@ -186,10 +213,56 @@ class VisitEntityHelper(
     activePrison: Boolean = sessionTemplate.prison.active,
     outcomeStatus: OutcomeStatus? = null,
     createApplication: Boolean = true,
-    createContact: Boolean = false,
+    visitContact: ContactDto? = null,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
+
+    val notSaved = Visit(
+      visitStatus = visitStatus,
+      prisonerId = prisonerId,
+      prisonId = prison.id,
+      prison = prison,
+      visitRoom = visitRoom,
+      sessionSlotId = sessionSlot.id,
+      sessionSlot = sessionSlot,
+      visitType = visitType,
+      visitRestriction = visitRestriction,
+    )
+
+    notSaved.outcomeStatus = outcomeStatus
+
+    val savedVisit = visitRepository.saveAndFlush(notSaved)
+    if (visitContact != null) {
+      createContact(visit = savedVisit, visitContact.name, visitContact.telephone)
+    }
+
+    return if (createApplication) {
+      savedVisit.addApplication(applicationEntityHelper.create(savedVisit))
+      savedVisit
+    } else {
+      savedVisit
+    }
+  }
+
+  @Transactional
+  fun create(
+    visitStatus: VisitStatus = BOOKED,
+    prisonerId: String = "testPrisonerId",
+    prisonCode: String,
+    visitRoom: String,
+    slotDate: LocalDate,
+    visitStart: LocalTime,
+    visitEnd: LocalTime,
+    visitType: VisitType,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    activePrison: Boolean,
+    outcomeStatus: OutcomeStatus? = null,
+    createApplication: Boolean = true,
+    createContact: Boolean = false,
+  ): Visit {
+    val prison = prisonEntityHelper.create(prisonCode, activePrison)
+    val sessionSlot = sessionSlotEntityHelper.create(prison.id, slotDate, visitStart, visitEnd)
 
     val notSaved = Visit(
       visitStatus = visitStatus,
@@ -222,7 +295,7 @@ class VisitEntityHelper(
   fun createContact(
     visit: Visit,
     name: String = "bob",
-    phone: String = "0123456789",
+    phone: String? = "0123456789",
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,
@@ -249,17 +322,14 @@ class VisitEntityHelper(
 
   fun createSupport(
     visit: Visit,
-    name: String,
-    details: String?,
+    description: String,
   ) {
-    visit.support.add(
+    visit.support =
       VisitSupport(
-        type = name,
         visitId = visit.id,
-        text = details,
+        description = description,
         visit = visit,
-      ),
-    )
+      )
   }
 
   fun createNote(
@@ -424,6 +494,7 @@ class SessionTemplateEntityHelper(
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
     isActive: Boolean = true,
+    includeLocationGroupType: Boolean = true,
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -444,6 +515,7 @@ class SessionTemplateEntityHelper(
       permittedCategories = permittedCategories,
       permittedIncentiveLevels = permittedIncentiveLevels,
       isActive = isActive,
+      includeLocationGroupType = includeLocationGroupType,
     )
   }
 
@@ -465,6 +537,7 @@ class SessionTemplateEntityHelper(
     permittedSessionGroups: MutableList<SessionLocationGroup> = mutableListOf(),
     permittedCategories: MutableList<SessionCategoryGroup> = mutableListOf(),
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
+    includeLocationGroupType: Boolean = true,
   ): SessionTemplate {
     return sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -485,6 +558,7 @@ class SessionTemplateEntityHelper(
         permittedSessionLocationGroups = permittedSessionGroups,
         permittedSessionCategoryGroups = permittedCategories,
         permittedSessionIncentiveLevelGroups = permittedIncentiveLevels,
+        includeLocationGroupType = includeLocationGroupType,
       ),
     )
   }
@@ -517,7 +591,7 @@ class DeleteEntityHelper(
     sessionLocationGroupRepository.flush()
     permittedSessionLocationRepository.deleteAll()
     permittedSessionLocationRepository.flush()
-    visitRepository.deleteAllInBatch()
+    visitRepository.deleteAll()
     visitRepository.flush()
     permittedSessionLocationRepository.deleteAll()
     permittedSessionLocationRepository.flush()

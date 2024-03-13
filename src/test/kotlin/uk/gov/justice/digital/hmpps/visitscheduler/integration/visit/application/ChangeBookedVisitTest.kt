@@ -22,8 +22,8 @@ import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
@@ -74,7 +74,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     visitEntityHelper.createNote(visit = visit, text = "Some text comment", type = VISIT_COMMENT)
     visitEntityHelper.createContact(visit = visit, name = "Jane Doe", phone = "01234 098765")
     visitEntityHelper.createVisitor(visit = visit, nomisPersonId = 321L, visitContact = true)
-    visitEntityHelper.createSupport(visit = visit, name = "OTHER", details = "Some Text")
+    visitEntityHelper.createSupport(visit = visit, description = "Some Text")
 
     bookedVisit = visitEntityHelper.save(visit)
   }
@@ -95,6 +95,25 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val applicationDto = getApplicationDto(returnResult)
     assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false)
     assertTelemetryData(applicationDto)
+  }
+
+  @Test
+  fun `application to change visit is added and support is less than three then exception thrown`() {
+    // Given
+    val reference = bookedVisit.reference
+    val createApplicationRequest =
+      createApplicationRequest(
+        sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!,
+        support = "12",
+      )
+
+    // When
+    val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").isEqualTo("Support value description is too small")
   }
 
   @Test
@@ -306,6 +325,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     slotDate: LocalDate = bookedVisit.sessionSlot.slotDate,
     visitRestriction: CreateApplicationRestriction = CreateApplicationRestriction.OPEN,
     sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
+    support: String = "Some Text",
   ): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = prisonerId,
@@ -313,7 +333,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       applicationRestriction = visitRestriction,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = setOf(VisitorSupportDto("OTHER", "Some Text")),
+      visitorSupport = ApplicationSupportDto(support),
       actionedBy = ACTIONED_BY_USER_NAME,
       sessionTemplateReference = sessionTemplateReference,
     )
@@ -374,19 +394,10 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       }
     }
 
-    val supportDtoList = returnedApplication.visitorSupport.toList()
     createApplicationRequest.visitorSupport?.let {
-      assertThat(returnedApplication.visitorSupport.size).isEqualTo(it.size)
-      it.forEachIndexed { index, supportDto ->
-        assertThat(supportDtoList[index].type).isEqualTo(supportDto.type)
-        assertThat(supportDtoList[index].text).isEqualTo(supportDto.text)
-      }
+      assertThat(returnedApplication.visitorSupport?.description).isEqualTo(createApplicationRequest.visitorSupport?.description)
     } ?: run {
-      assertThat(returnedApplication.visitorSupport.size).isEqualTo(lastBooking.support.size)
-      lastBooking.support.forEachIndexed { index, support ->
-        assertThat(supportDtoList[index].type).isEqualTo(support.type)
-        assertThat(supportDtoList[index].text).isEqualTo(support.text)
-      }
+      assertThat(returnedApplication.visitorSupport?.description).isEqualTo(lastBooking.support?.description)
     }
 
     assertThat(returnedApplication.createdTimestamp).isNotNull()

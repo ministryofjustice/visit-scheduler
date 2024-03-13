@@ -11,9 +11,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDateTime
 
-@Schema(description = "Visit")
+@Schema(description = "Application")
 data class ApplicationDto(
-  @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
+  @Schema(description = "application reference", example = "v9-d7-ed-7u", required = true)
   val reference: String,
   @Schema(description = "session template Reference", example = "dfs-wjs-eqr", required = false)
   val sessionTemplateReference: String? = null,
@@ -34,12 +34,12 @@ data class ApplicationDto(
   val endTimestamp: LocalDateTime,
   @Schema(description = "Visit Notes", required = false)
   val visitNotes: List<VisitNoteDto> = listOf(),
-  @Schema(description = "Contact associated with the visit", required = false)
+  @Schema(description = "Contact associated with the application", required = false)
   val visitContact: ContactDto? = null,
-  @Schema(description = "List of visitors associated with the visit", required = false)
+  @Schema(description = "List of visitors associated with the application", required = false)
   val visitors: List<VisitorDto> = listOf(),
-  @Schema(description = "List of additional support associated with the visit", required = false)
-  val visitorSupport: List<VisitorSupportDto> = listOf(),
+  @Schema(description = "Additional support associated with the application", required = false)
+  val visitorSupport: VisitorSupportDto? = null,
   @Schema(description = "The visit created date and time", example = "2018-12-01T13:45:00", required = true)
   @field:NotNull
   val createdTimestamp: LocalDateTime,

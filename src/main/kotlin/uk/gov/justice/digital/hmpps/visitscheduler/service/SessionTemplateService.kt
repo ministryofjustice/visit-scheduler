@@ -31,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationExcep
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
@@ -41,7 +42,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateComparator
@@ -54,12 +54,11 @@ import java.util.function.Supplier
 
 @Service
 @Transactional
-class SessionTemplateService(
+open class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
-  private val sessionSlotRepository: SessionSlotRepository,
   private val visitRepository: VisitRepository,
   private val prisonsService: PrisonsService,
   private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
@@ -67,6 +66,7 @@ class SessionTemplateService(
   private val sessionTemplateMapper: SessionTemplateMapper,
   private val sessionTemplateUtil: SessionTemplateUtil,
   private val visitMoveValidator: SessionTemplateVisitMoveValidator,
+  private val sessionSlotService: SessionSlotService,
 ) {
 
   companion object {
@@ -74,7 +74,7 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionTemplates(prisonCode: String, rangeType: SessionTemplateRangeType): List<SessionTemplateDto> {
+  open fun getSessionTemplates(prisonCode: String, rangeType: SessionTemplateRangeType): List<SessionTemplateDto> {
     val sessionTemplates = when (rangeType) {
       ALL -> sessionTemplateRepository.findSessionTemplatesByPrisonCode(prisonCode)
       HISTORIC -> sessionTemplateRepository.findHistoricSessionTemplates(prisonCode)
@@ -84,17 +84,17 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionTemplates(reference: String): SessionTemplateDto {
+  open fun getSessionTemplates(reference: String): SessionTemplateDto {
     return SessionTemplateDto(getSessionTemplate(reference))
   }
 
   @Transactional(readOnly = true)
-  fun getSessionLocationGroup(reference: String): SessionLocationGroupDto {
+  open fun getSessionLocationGroup(reference: String): SessionLocationGroupDto {
     return SessionLocationGroupDto(getLocationGroupByReference(reference))
   }
 
   @Transactional(readOnly = true)
-  fun getSessionLocationGroups(prisonCode: String): List<SessionLocationGroupDto> {
+  open fun getSessionLocationGroups(prisonCode: String): List<SessionLocationGroupDto> {
     return sessionLocationGroupRepository.findByPrisonCode(prisonCode).map { SessionLocationGroupDto(it) }
   }
 
@@ -165,6 +165,7 @@ class SessionTemplateService(
       dayOfWeek = createSessionTemplateDto.dayOfWeek,
       visitType = VisitType.SOCIAL,
       active = false,
+      includeLocationGroupType = createSessionTemplateDto.includeLocationGroupType,
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
@@ -217,6 +218,8 @@ class SessionTemplateService(
       weeklyFrequency?.let {
         sessionTemplateRepository.updateWeeklyFrequencyByReference(reference, weeklyFrequency)
       }
+
+      sessionTemplateRepository.updateIncludeLocationGroupType(reference, this.includeLocationGroupType)
     }
 
     val updatedSessionTemplateEntity = getSessionTemplate(reference)
@@ -359,7 +362,7 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionCategoryGroup(reference: String): SessionCategoryGroupDto {
+  open fun getSessionCategoryGroup(reference: String): SessionCategoryGroupDto {
     return SessionCategoryGroupDto(getSessionCategoryGroupEntityByReference(reference))
   }
 
@@ -369,17 +372,17 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionCategoryGroups(prisonCode: String): List<SessionCategoryGroupDto> {
+  open fun getSessionCategoryGroups(prisonCode: String): List<SessionCategoryGroupDto> {
     return sessionCategoryGroupRepository.findByPrisonCode(prisonCode).map { SessionCategoryGroupDto(it) }
   }
 
   @Transactional(readOnly = true)
-  fun getSessionIncentiveGroups(prisonCode: String): List<SessionIncentiveLevelGroupDto> {
+  open fun getSessionIncentiveGroups(prisonCode: String): List<SessionIncentiveLevelGroupDto> {
     return sessionIncentiveLevelGroupRepository.findByPrisonCode(prisonCode).map { SessionIncentiveLevelGroupDto(it) }
   }
 
   @Transactional(readOnly = true)
-  fun getSessionIncentiveGroup(reference: String): SessionIncentiveLevelGroupDto {
+  open fun getSessionIncentiveGroup(reference: String): SessionIncentiveLevelGroupDto {
     return SessionIncentiveLevelGroupDto(getIncentiveLevelGroupByReference(reference))
   }
 
@@ -510,20 +513,32 @@ class SessionTemplateService(
     return overlappingSessions
   }
 
-  fun moveSessionTemplateVisits(fromSessionTemplateReference: String, toSessionTemplateReference: String, fromDate: LocalDate): Int {
-    val fromSessionTemplate = SessionTemplateDto(getSessionTemplate(fromSessionTemplateReference))
-    val toSessionTemplate = SessionTemplateDto(getSessionTemplate(toSessionTemplateReference))
+  @Transactional
+  open fun moveSessionTemplateVisits(fromSessionTemplateReference: String, toSessionTemplateReference: String, fromDate: LocalDate): Int {
+    val fromSessionTemplate = getSessionTemplate(fromSessionTemplateReference)
+    val toSessionTemplate = getSessionTemplate(toSessionTemplateReference)
     // validate move before updating session template reference
-    validateMoveSessionTemplateVisits(fromSessionTemplate, toSessionTemplate, fromDate)
+    validateMoveSessionTemplateVisits(SessionTemplateDto(fromSessionTemplate), SessionTemplateDto(toSessionTemplate), fromDate)
 
-    return if (fromSessionTemplate.sessionTimeSlot == toSessionTemplate.sessionTimeSlot) {
-      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate)
-    } else {
-      val startSlot = fromDate.atTime(toSessionTemplate.sessionTimeSlot.startTime)
-      val endSlot = fromDate.atTime(toSessionTemplate.sessionTimeSlot.endTime)
-
-      sessionSlotRepository.updateSessionTemplateReference(existingSessionTemplateReference = fromSessionTemplateReference, newSessionTemplateReference = toSessionTemplateReference, fromDate, startSlot, endSlot)
+    val visits = visitRepository.findBookedVisitsBySessionTemplateReference(
+      sessionTemplateReference = fromSessionTemplateReference,
+      fromDate = fromDate,
+    ).also {
+      val updatedVisits = updateSessionSlotId(it, toSessionTemplate)
+      visitRepository.saveAllAndFlush(updatedVisits)
     }
+
+    return visits.size
+  }
+
+  private fun updateSessionSlotId(visits: List<Visit>, toSessionTemplate: SessionTemplate): List<Visit> {
+    visits.forEach { visit ->
+      val sessionSlot = sessionSlotService.getSessionSlot(visit.sessionSlot.slotDate, SessionTemplateDto(toSessionTemplate), toSessionTemplate.prison)
+      visit.sessionSlot = sessionSlot
+      visit.sessionSlotId = sessionSlot.id
+    }
+
+    return visits
   }
 
   @Throws(VSiPValidationException::class)

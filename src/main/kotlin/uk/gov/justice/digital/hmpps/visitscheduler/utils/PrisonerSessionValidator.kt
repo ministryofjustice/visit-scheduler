@@ -27,11 +27,15 @@ class PrisonerSessionValidator(
     prisonerLevels: Map<PrisonerHousingLevels, String?>,
     sessionTemplate: SessionTemplate,
   ): Boolean {
-    if (!isSessionForAllPrisonerLocations(sessionTemplate)) {
-      return sessionTemplate.permittedSessionLocationGroups.any { levelMatcher.test(it, prisonerLevels) }
+    if (isSessionForAllPrisonerLocations(sessionTemplate)) {
+      return true
     }
 
-    return true
+    return if (sessionTemplate.includeLocationGroupType) {
+      sessionTemplate.permittedSessionLocationGroups.any { levelMatcher.test(it, prisonerLevels) }
+    } else {
+      sessionTemplate.permittedSessionLocationGroups.none { levelMatcher.test(it, prisonerLevels) }
+    }
   }
 
   fun isSessionAvailableToPrisonerCategory(
@@ -76,22 +80,34 @@ class PrisonerSessionValidator(
     prisonerLevels: Map<PrisonerHousingLevels, String?>,
     sessionTemplate: SessionTemplate,
   ): Int {
-    if (!isSessionForAllPrisonerLocations(sessionTemplate)) {
-      var highestScore = LOCATION_NOT_PERMITTED // If minus 10 then it does not match at all should be rejected
-      sessionTemplate.permittedSessionLocationGroups.forEach { sessionGroup ->
-        for (permittedSessionLocation in sessionGroup.sessionLocations) {
-          with(permittedSessionLocation) {
-            if (levelMatcher.hasLevelMatch(permittedSessionLocation, prisonerLevels)) {
-              val score = levelFourCode?.let { 4 } ?: levelThreeCode?.let { 3 } ?: levelTwoCode?.let { 2 } ?: levelOneCode.let { 1 }
-              if (score > highestScore) {
-                highestScore = score
-              }
+    if (isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)) {
+      return if (isSessionForAllPrisonerLocations(sessionTemplate) || !sessionTemplate.includeLocationGroupType) {
+        0
+      } else {
+        getHighestLevelScore(sessionTemplate, prisonerLevels)
+      }
+    }
+
+    return LOCATION_NOT_PERMITTED
+  }
+
+  private fun getHighestLevelScore(
+    sessionTemplate: SessionTemplate,
+    prisonerLevels: Map<PrisonerHousingLevels, String?>,
+  ): Int {
+    var highestScore = LOCATION_NOT_PERMITTED // If minus 10 then it does not match at all should be rejected
+    sessionTemplate.permittedSessionLocationGroups.forEach { sessionGroup ->
+      sessionGroup.sessionLocations.forEach { permittedSessionLocation ->
+        with(permittedSessionLocation) {
+          if (levelMatcher.hasLevelMatch(permittedSessionLocation, prisonerLevels)) {
+            val score = levelFourCode?.let { 4 } ?: levelThreeCode?.let { 3 } ?: levelTwoCode?.let { 2 } ?: levelOneCode.let { 1 }
+            if (score > highestScore) {
+              highestScore = score
             }
           }
         }
       }
-      return highestScore
     }
-    return 0
+    return highestScore
   }
 }

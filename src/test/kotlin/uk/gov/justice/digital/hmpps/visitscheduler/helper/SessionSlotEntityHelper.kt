@@ -52,6 +52,25 @@ class SessionSlotEntityHelper(
     }
   }
 
+  fun create(
+    prisonId: Long,
+    slotDate: LocalDate = LocalDate.now().plusDays(2),
+    slotTime: LocalTime = LocalTime.now().plusHours(4),
+    slotEndTime: LocalTime = slotTime.plusHours(2),
+  ): SessionSlot {
+    return sessionSlotRepository.findSessionSlotWithNullReference(slotDate) ?: run {
+      save(
+        SessionSlot(
+          null,
+          prisonId,
+          slotDate,
+          slotStart = slotDate.atTime(slotTime),
+          slotEnd = slotDate.atTime(slotEndTime),
+        ),
+      )
+    }
+  }
+
   fun save(slot: SessionSlot): SessionSlot {
     return sessionSlotRepository.saveAndFlush(slot)
   }

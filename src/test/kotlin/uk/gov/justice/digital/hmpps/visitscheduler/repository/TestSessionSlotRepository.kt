@@ -18,4 +18,13 @@ interface TestSessionSlotRepository : JpaRepository<SessionSlot, Long> {
     sessionTemplateReference: String,
     slotDate: LocalDate,
   ): SessionSlot?
+
+  @Query(
+    "SELECT s FROM SessionSlot s " +
+      "WHERE s.sessionTemplateReference IS NULL " +
+      " AND s.slotDate = :slotDate ",
+  )
+  fun findSessionSlotWithNullReference(
+    slotDate: LocalDate,
+  ): SessionSlot?
 }

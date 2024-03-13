@@ -22,7 +22,7 @@ class ApplicationDtoBuilder {
       endTimestamp = applicationEntity.sessionSlot.slotEnd,
       visitContact = applicationEntity.visitContact?.let { ContactDto(it) },
       visitors = applicationEntity.visitors.map { VisitorDto(it) },
-      visitorSupport = applicationEntity.support.map { VisitorSupportDto(it) },
+      visitorSupport = applicationEntity.support?.let { VisitorSupportDto(it) },
       createdTimestamp = applicationEntity.createTimestamp ?: LocalDateTime.now(),
       modifiedTimestamp = applicationEntity.modifyTimestamp ?: LocalDateTime.now(),
       sessionTemplateReference = applicationEntity.sessionSlot.sessionTemplateReference,

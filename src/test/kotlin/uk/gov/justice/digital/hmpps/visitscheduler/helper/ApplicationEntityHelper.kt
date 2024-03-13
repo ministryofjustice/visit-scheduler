@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -80,15 +81,58 @@ class ApplicationEntityHelper(
     )
   }
 
+  fun create(
+    prisonerId: String = "testPrisonerId",
+    slotDate: LocalDate = LocalDate.of((LocalDate.now().year + 1), 11, 1),
+    visitStart: LocalTime = LocalTime.of(10, 0),
+    visitEnd: LocalTime = LocalTime.of(11, 0),
+    visitRestriction: VisitRestriction = OPEN,
+    activePrison: Boolean = true,
+    prisonCode: String?,
+    visitType: VisitType = VisitType.SOCIAL,
+    reservedSlot: Boolean = true,
+    completed: Boolean = true,
+  ): Application {
+    val prison = prisonEntityHelper.create(prisonCode ?: "MDI", activePrison)
+    val sessionSlot = sessionSlotEntityHelper.create(prison.id, slotDate, visitStart, visitEnd)
+
+    return applicationRepo.saveAndFlush(
+      Application(
+        prisonerId = prisonerId,
+        prisonId = prison.id,
+        prison = prison,
+        sessionSlotId = sessionSlot.id,
+        sessionSlot = sessionSlot,
+        visitType = visitType,
+        restriction = visitRestriction,
+        createdBy = "",
+        reservedSlot = reservedSlot,
+        completed = completed,
+      ),
+    )
+  }
+
   fun createContact(
     application: Application,
     name: String,
-    phone: String,
+    phone: String?,
   ) {
     application.visitContact = ApplicationContact(
       applicationId = application.id,
       name = name,
       telephone = phone,
+      application = application,
+    )
+  }
+
+  fun createContact(
+    application: Application,
+    contact: ContactDto,
+  ) {
+    application.visitContact = ApplicationContact(
+      applicationId = application.id,
+      name = contact.name,
+      telephone = contact.telephone,
       application = application,
     )
   }
@@ -110,17 +154,14 @@ class ApplicationEntityHelper(
 
   fun createSupport(
     application: Application,
-    name: String,
-    details: String?,
+    description: String,
   ) {
-    application.support.add(
+    application.support =
       ApplicationSupport(
-        type = name,
         applicationId = application.id,
-        text = details,
+        description = description,
         application = application,
-      ),
-    )
+      )
   }
 
   fun save(application: Application): Application {

@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
-import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
@@ -20,9 +19,10 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
   fun findSessionSlot(slotDates: List<LocalDate>, sessionTemplateReferences: List<String>): List<SessionSlot>
 
   @Query(
-    "SELECT s FROM SessionSlot s " +
-      "WHERE s.sessionTemplateReference = :sessionTemplateReference" +
-      " AND s.slotDate = :slotDate ",
+    "SELECT * FROM session_slot s " +
+      "WHERE s.session_template_reference = :sessionTemplateReference" +
+      " AND s.slot_date = :slotDate limit 1",
+    nativeQuery = true,
   )
   fun findSessionSlot(
     sessionTemplateReference: String,
@@ -30,9 +30,10 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
   ): SessionSlot?
 
   @Query(
-    "SELECT s.id FROM SessionSlot s " +
-      "WHERE s.sessionTemplateReference = :sessionTemplateReference" +
-      " AND s.slotDate = :slotDate ",
+    "SELECT s.id FROM session_slot s " +
+      "WHERE s.session_template_reference = :sessionTemplateReference" +
+      " AND s.slot_date = :slotDate limit 1",
+    nativeQuery = true,
   )
   fun findSessionSlotId(
     sessionTemplateReference: String,
@@ -40,44 +41,16 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
   ): Long?
 
   @Query(
-    "SELECT s FROM SessionSlot s " +
-      "WHERE s.prisonId = :prisonId AND " +
-      "s.slotStart = :slotStart AND " +
-      "s.slotEnd = :slotEnd AND " +
-      "s.sessionTemplateReference is null",
+    "SELECT * FROM session_slot s " +
+      "WHERE s.prison_id = :prisonId AND " +
+      "s.slot_start = :slotStart AND " +
+      "s.slot_end = :slotEnd AND " +
+      "s.session_template_reference is null limit 1",
+    nativeQuery = true,
   )
   fun findSessionSlotWithOutSessionReference(
     prisonId: Long,
     slotStart: LocalDateTime,
     slotEnd: LocalDateTime,
   ): SessionSlot?
-
-  @Modifying
-  @Query(
-    "Update SessionSlot set sessionTemplateReference = :newSessionTemplateReference " +
-      "WHERE sessionTemplateReference = :existingSessionTemplateReference AND " +
-      "slotDate >= :fromDate ",
-  )
-  fun updateSessionTemplateReference(
-    existingSessionTemplateReference: String,
-    newSessionTemplateReference: String,
-    fromDate: LocalDate,
-  ): Int
-
-  @Modifying
-  @Query(
-    "Update SessionSlot set " +
-      "sessionTemplateReference = :newSessionTemplateReference, " +
-      "slotStart = :newStartTime, " +
-      "slotEnd = :newEndTime " +
-      "WHERE sessionTemplateReference = :existingSessionTemplateReference AND " +
-      "slotDate >= :fromDate ",
-  )
-  fun updateSessionTemplateReference(
-    existingSessionTemplateReference: String,
-    newSessionTemplateReference: String,
-    fromDate: LocalDate,
-    newStartTime: LocalDateTime,
-    newEndTime: LocalDateTime,
-  ): Int
 }

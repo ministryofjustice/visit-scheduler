@@ -18,6 +18,7 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
@@ -50,6 +51,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -87,6 +89,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var eventAuditRepository: TestEventAuditRepository
+
+  @Autowired
+  protected lateinit var testSessionSlotRepository: TestSessionSlotRepository
 
   @Autowired
   protected lateinit var sessionPrisonerIncentiveLevelHelper: SessionPrisonerIncentiveLevelHelper
@@ -245,9 +250,20 @@ abstract class IntegrationTestBase {
     visitStatus: VisitStatus? = VisitStatus.BOOKED,
     slotDate: LocalDate? = null,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction)
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction, visitContact = visitContact)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application, sessionTemplateLocal = sessionTemplate)
+  }
+
+  fun createApplicationAndVisit(
+    prisonerId: String? = "testPrisonerId",
+    visitStatus: VisitStatus? = VisitStatus.BOOKED,
+    slotDate: LocalDate,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  ): Visit {
+    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, visitRestriction = visitRestriction)
+    return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
   fun createApplicationAndSave(
@@ -258,6 +274,7 @@ abstract class IntegrationTestBase {
     completed: Boolean,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
   ): Application {
     val applicationEntity = applicationEntityHelper.create(
       prisonerId = prisonerId!!,
@@ -268,11 +285,34 @@ abstract class IntegrationTestBase {
       slotDate = slotDate ?: sessionTemplate?.validFromDate ?: sessionTemplateDefault.validFromDate,
       visitRestriction = visitRestriction,
     )
+    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone)
+    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
+    applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")
+
+    return applicationEntityHelper.save(applicationEntity)
+  }
+
+  fun createApplicationAndSave(
+    prisonerId: String? = "testPrisonerId",
+    prisonCode: String? = null,
+    slotDate: LocalDate,
+    completed: Boolean,
+    reservedSlot: Boolean = true,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+  ): Application {
+    val applicationEntity = applicationEntityHelper.create(
+      prisonerId = prisonerId!!,
+      completed = completed,
+      reservedSlot = reservedSlot,
+      prisonCode = prisonCode,
+      slotDate = slotDate,
+      visitRestriction = visitRestriction,
+    )
     applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
-    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER", details = "Some Text")
-    applicationEntityHelper.createSupport(application = applicationEntity, name = "OTHER HELP", details = "Some More Text")
+    applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")
 
     return applicationEntityHelper.save(applicationEntity)
   }
@@ -281,8 +321,13 @@ abstract class IntegrationTestBase {
     return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplateDefault, application = applicationEntity)
   }
 
+  // creates a visit with a null session template reference
+  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application): Visit {
+    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, application = applicationEntity)
+  }
+
   fun parseVisitsPageResponse(responseSpec: ResponseSpec): List<VisitDto> {
-    class Page() {
+    class Page {
       @JsonProperty("content")
       lateinit var content: List<VisitDto>
     }

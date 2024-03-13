@@ -161,14 +161,14 @@ class VisitService(
       }
     }
 
-    application.support.let {
-      booking.support.clear()
-      visitRepository.saveAndFlush(booking)
-      application.support.map { applicationSupport ->
-        with(applicationSupport) {
-          booking.support.add(VisitSupport(visit = booking, visitId = booking.id, type = type, text = text))
-        }
+    application.support?.let { applicationSupport ->
+      booking.support?.let {
+        it.description = applicationSupport.description
+      } ?: run {
+        booking.support = VisitSupport(visit = booking, visitId = booking.id, description = applicationSupport.description)
       }
+    } ?: run {
+      booking.support = null
     }
 
     application.visitors.let {
@@ -226,8 +226,7 @@ class VisitService(
     }
 
     val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS)
-    val results = findVisitsOrderByDateAndTime(visitFilter, pageable = page).map { visitDtoBuilder.build(it) }
-    return results
+    return findVisitsOrderByDateAndTime(visitFilter, pageable = page).map { visitDtoBuilder.build(it) }
   }
 
   private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable): Page<Visit> {
@@ -243,7 +242,7 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun findVisitsBySessionTemplateFilterPageableDescending(
-    sessionTemplateReference: String,
+    sessionTemplateReference: String?,
     fromDate: LocalDate,
     toDate: LocalDate,
     visitStatusList: List<VisitStatus>,
@@ -251,16 +250,29 @@ class VisitService(
     pageablePage: Int? = null,
     pageableSize: Int? = null,
   ): Page<VisitDto> {
-    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
+    val page: Pageable =
+      PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
 
-    return visitRepository.findVisitsOrderByCreateTimestamp(
-      sessionTemplateReference = sessionTemplateReference,
-      fromDate = fromDate,
-      toDate = toDate,
-      visitStatusList = if (visitStatusList.isNotEmpty()) visitStatusList else null,
-      visitRestrictions = visitRestrictions,
-      page,
-    ).map { visitDtoBuilder.build(it) }
+    val results = if (sessionTemplateReference != null) {
+      visitRepository.findVisitsBySessionTemplateReference(
+        sessionTemplateReference = sessionTemplateReference,
+        fromDate = fromDate,
+        toDate = toDate,
+        visitStatusList = visitStatusList.ifEmpty { null },
+        visitRestrictions = visitRestrictions,
+        page,
+      )
+    } else {
+      visitRepository.findVisitsWithNoSessionTemplateReference(
+        fromDate = fromDate,
+        toDate = toDate,
+        visitStatusList = visitStatusList.ifEmpty { null },
+        visitRestrictions = visitRestrictions,
+        page,
+      )
+    }
+
+    return results.map { visitDtoBuilder.build(it) }
   }
 
   private fun saveEventAudit(
@@ -296,7 +308,7 @@ class VisitService(
     bookingRequestDto: BookingRequestDto,
     hasExistingBooking: Boolean,
   ) {
-    val bookEvent = telemetryClientService.createVisitTrackEventFromVisitEntity(bookedVisit, bookingRequestDto.actionedBy, bookingRequestDto.applicationMethodType)
+    val bookEvent = telemetryClientService.createVisitBookedTrackEventFromVisitEntity(bookedVisit, bookingRequestDto.actionedBy, bookingRequestDto.applicationMethodType)
     bookEvent["isUpdated"] = hasExistingBooking.toString()
     telemetryClientService.trackEvent(VISIT_BOOKED_EVENT, bookEvent)
 
@@ -320,7 +332,7 @@ class VisitService(
     visitDto: VisitDto,
     cancelVisitDto: CancelVisitDto,
   ) {
-    val eventsMap = telemetryClientService.createVisitTrackEventFromVisitEntity(visit, cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType)
+    val eventsMap = telemetryClientService.createCancelVisitTrackEventFromVisitEntity(visit, cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType)
     visitDto.outcomeStatus?.let {
       eventsMap.put("outcomeStatus", it.name)
     }
