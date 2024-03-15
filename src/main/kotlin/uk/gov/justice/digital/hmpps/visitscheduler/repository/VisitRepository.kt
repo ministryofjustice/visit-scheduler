@@ -186,7 +186,8 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
       "v.sessionSlot.slotDate >= :fromDate  AND " +
-      "v.sessionSlot.slotDate <= :toDate " +
+      "v.sessionSlot.slotDate <= :toDate AND " +
+      "v.prison.code = :prisonCode " +
       " ORDER BY v.createTimestamp",
   )
   fun findVisitsBySessionTemplateReference(
@@ -195,8 +196,23 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     toDate: LocalDate,
     visitStatusList: List<VisitStatus>?,
     visitRestrictions: List<VisitRestriction>?,
+    prisonCode: String,
     pageable: Pageable,
   ): Page<Visit>
+
+  @Query(
+    "SELECT v FROM Visit v WHERE " +
+      " (v.sessionSlot.sessionTemplateReference = :sessionTemplateReference)  AND " +
+      "v.sessionSlot.slotDate >= :fromDate AND " +
+      "v.visitStatus = 'BOOKED' AND " +
+      "(:#{#toDate} is null OR v.sessionSlot.slotDate <= :toDate) " +
+      " ORDER BY v.createTimestamp",
+  )
+  fun findBookedVisitsBySessionTemplateReference(
+    sessionTemplateReference: String,
+    fromDate: LocalDate,
+    toDate: LocalDate? = null,
+  ): List<Visit>
 
   @Query(
     "SELECT v FROM Visit v WHERE " +
@@ -204,7 +220,8 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
       "v.sessionSlot.slotDate >= :fromDate  AND " +
-      "v.sessionSlot.slotDate <= :toDate " +
+      "v.sessionSlot.slotDate <= :toDate AND " +
+      "v.prison.code = :prisonCode " +
       " ORDER BY v.createTimestamp",
   )
   fun findVisitsWithNoSessionTemplateReference(
@@ -212,6 +229,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     toDate: LocalDate,
     visitStatusList: List<VisitStatus>?,
     visitRestrictions: List<VisitRestriction>?,
+    prisonCode: String,
     pageable: Pageable,
   ): Page<Visit>
 

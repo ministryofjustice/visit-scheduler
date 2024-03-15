@@ -51,6 +51,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -88,6 +89,9 @@ abstract class IntegrationTestBase {
 
   @Autowired
   protected lateinit var eventAuditRepository: TestEventAuditRepository
+
+  @Autowired
+  protected lateinit var testSessionSlotRepository: TestSessionSlotRepository
 
   @Autowired
   protected lateinit var sessionPrisonerIncentiveLevelHelper: SessionPrisonerIncentiveLevelHelper
@@ -257,8 +261,9 @@ abstract class IntegrationTestBase {
     visitStatus: VisitStatus? = VisitStatus.BOOKED,
     slotDate: LocalDate,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    prisonCode: String? = null,
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, visitRestriction = visitRestriction)
+    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, visitRestriction = visitRestriction, prisonCode = prisonCode)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
