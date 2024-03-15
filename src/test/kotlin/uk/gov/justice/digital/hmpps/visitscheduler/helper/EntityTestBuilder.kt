@@ -150,7 +150,6 @@ fun createUpdateSessionTemplateDto(
     weeklyFrequency = weeklyFrequency,
     categoryGroupReferences = categoryGroupReferences,
     incentiveLevelGroupReferences = incentiveLevelGroupReferences,
-    includeLocationGroupType = includeLocationGroupType,
   )
 }
 
@@ -160,7 +159,6 @@ fun createUpdateSessionTemplateDto(
   locationGroupReferences: List<String>? = null,
   categoryGroupReferences: List<String>? = null,
   incentiveLevelReferences: List<String>? = null,
-  includeLocationGroupType: Boolean = true,
 ): UpdateSessionTemplateDto {
   return UpdateSessionTemplateDto(
     name = sessionTemplateDto.name,
@@ -172,7 +170,6 @@ fun createUpdateSessionTemplateDto(
     categoryGroupReferences = categoryGroupReferences ?: sessionTemplateDto.prisonerCategoryGroups.stream().map { it.reference }.toList(),
     incentiveLevelGroupReferences = incentiveLevelReferences ?: sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.reference }.toList(),
     visitRoom = sessionTemplateDto.visitRoom,
-    includeLocationGroupType = includeLocationGroupType,
   )
 }
 
