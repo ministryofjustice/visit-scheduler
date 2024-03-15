@@ -261,8 +261,9 @@ abstract class IntegrationTestBase {
     visitStatus: VisitStatus? = VisitStatus.BOOKED,
     slotDate: LocalDate,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    prisonCode: String? = null,
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, visitRestriction = visitRestriction)
+    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, visitRestriction = visitRestriction, prisonCode = prisonCode)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 

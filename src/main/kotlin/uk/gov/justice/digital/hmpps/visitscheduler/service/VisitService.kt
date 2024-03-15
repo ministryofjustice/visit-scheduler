@@ -247,6 +247,7 @@ class VisitService(
     toDate: LocalDate,
     visitStatusList: List<VisitStatus>,
     visitRestrictions: List<VisitRestriction>?,
+    prisonCode: String,
     pageablePage: Int? = null,
     pageableSize: Int? = null,
   ): Page<VisitDto> {
@@ -260,6 +261,7 @@ class VisitService(
         toDate = toDate,
         visitStatusList = visitStatusList.ifEmpty { null },
         visitRestrictions = visitRestrictions,
+        prisonCode = prisonCode,
         page,
       )
     } else {
@@ -268,6 +270,7 @@ class VisitService(
         toDate = toDate,
         visitStatusList = visitStatusList.ifEmpty { null },
         visitRestrictions = visitRestrictions,
+        prisonCode = prisonCode,
         page,
       )
     }
