@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.NonAssociationDomainE
 class VisitNotificationEventServiceTest {
 
   private val visitService = mock<VisitService>()
-  private val telemetryClientService = mock<TelemetryClientService>()
+  private val visitNotificationFlaggingService = mock<VisitNotificationFlaggingService>()
   private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
   private val prisonerService = mock<PrisonerService>()
 
@@ -34,7 +34,7 @@ class VisitNotificationEventServiceTest {
 
   @BeforeEach
   fun beforeEachTestSetup() {
-    visitNotificationEventService = VisitNotificationEventService(visitService, telemetryClientService, visitNotificationEventRepository, prisonerService)
+    visitNotificationEventService = VisitNotificationEventService(visitService, visitNotificationEventRepository, prisonerService, visitNotificationFlaggingService)
 
     whenever(prisonerService.getPrisoner(primaryNonAssociationNumber)).thenReturn(
       PrisonerDto(
@@ -83,7 +83,7 @@ class VisitNotificationEventServiceTest {
 
     // Then
     Mockito.verify(visitService, times(2)).getBookedVisits(any(), any(), any())
-    Mockito.verify(telemetryClientService, times(0)).trackEvent(any(), any())
+    Mockito.verify(visitNotificationFlaggingService, times(0)).flagTrackEvents(any(), any(), any())
     Mockito.verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
   }
 }

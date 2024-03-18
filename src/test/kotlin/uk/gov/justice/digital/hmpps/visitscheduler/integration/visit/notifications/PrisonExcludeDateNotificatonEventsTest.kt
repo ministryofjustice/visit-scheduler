@@ -1,8 +1,12 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notifications
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
@@ -25,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import java.time.LocalDate
 import java.time.LocalTime
@@ -42,6 +47,9 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
 
   @Autowired
   lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
+
+  @SpyBean
+  private lateinit var telemetryClient: TelemetryClient
 
   @BeforeEach
   internal fun setUp() {
@@ -108,6 +116,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     verify(visitNotificationEventServiceSpy, times(1)).handleRemovePrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
     visitNotifications = testVisitNotificationEventRepository.findAll()
     Assertions.assertThat(visitNotifications).hasSize(0)
+    assertUnFlagEvent(bookedVisitForSamePrison.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
   }
 
   @Test
@@ -156,6 +165,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isCreated
 
     Assertions.assertThat(testVisitNotificationEventRepository.findAll()).isEmpty()
+    assertUnFlagEvent(visit.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
   }
 
   @Test
@@ -204,5 +214,21 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
 
     visitNotifications = testVisitNotificationEventRepository.findAll()
     Assertions.assertThat(visitNotifications).hasSize(1)
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+  }
+
+  fun assertUnFlagEvent(
+    visitReference: String,
+    notificationEventType: NotificationEventType,
+  ) {
+    verify(telemetryClient).trackEvent(
+      eq("unflagged-visit-event"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visitReference)
+        Assertions.assertThat(it["reviewType"]).isEqualTo(notificationEventType.reviewType)
+      },
+      isNull(),
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 }

@@ -29,7 +29,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -37,9 +36,9 @@ import java.time.LocalTime
 @Service
 class VisitNotificationEventService(
   private val visitService: VisitService,
-  private val telemetryClientService: TelemetryClientService,
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val prisonerService: PrisonerService,
+  private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
 ) {
 
   @Autowired
@@ -84,7 +83,7 @@ class VisitNotificationEventService(
       prisonDateBlockedDto.visitDate,
       PRISON_VISITS_BLOCKED_FOR_DATE,
     )
-    deleteNotificationsThatAreNoLongerValid(affectedNotifications)
+    deleteNotificationsThatAreNoLongerValid(affectedNotifications, PRISON_VISITS_BLOCKED_FOR_DATE)
   }
 
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
@@ -123,7 +122,11 @@ class VisitNotificationEventService(
 
   private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType) {
     val affectedVisitsNoDuplicate = affectedVisits.filter { !visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type) }
-    flagTrackEvents(affectedVisitsNoDuplicate, type)
+
+    affectedVisitsNoDuplicate.forEach {
+      val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
+      visitNotificationFlaggingService.flagTrackEvents(it, bookingEventAudit, type)
+    }
 
     if (isPairGroupRequired(type)) {
       val affectedPairedVisits = pairWithEachOther(affectedVisits)
@@ -179,19 +182,10 @@ class VisitNotificationEventService(
     }
   }
 
-  private fun flagTrackEvents(
-    visits: List<VisitDto>,
-    type: NotificationEventType,
-  ) {
-    visits.forEach {
-      LOG.info("Flagging visit with reference {} for ${type.reviewType}", it.reference)
-      val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
-      val data = telemetryClientService.createFlagEventFromVisitDto(it, bookingEventAudit, type)
-      telemetryClientService.trackEvent(FLAGGED_VISIT_EVENT, data)
+  private fun deleteNotificationsThatAreNoLongerValid(visitNotificationEvents: List<VisitNotificationEvent>, notificationEventType: NotificationEventType? = null) {
+    visitNotificationEvents.forEach {
+      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, notificationEventType)
     }
-  }
-
-  private fun deleteNotificationsThatAreNoLongerValid(visitNotificationEvents: List<VisitNotificationEvent>) {
     visitNotificationEventRepository.deleteAll(visitNotificationEvents)
   }
 

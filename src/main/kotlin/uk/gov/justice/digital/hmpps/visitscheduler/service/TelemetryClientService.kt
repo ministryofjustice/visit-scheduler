@@ -153,6 +153,21 @@ class TelemetryClientService(
     return flagEventDataMap
   }
 
+  fun createUnFlagEventForVisit(
+    visitReference: String,
+    notificationEventType: NotificationEventType?,
+  ): MutableMap<String, String> {
+    val unFlagEventDataMap = mutableMapOf(
+      "reference" to visitReference,
+    )
+
+    notificationEventType?.let {
+      unFlagEventDataMap["reviewType"] = it.reviewType
+    }
+
+    return unFlagEventDataMap
+  }
+
   fun trackEvent(visitEvent: TelemetryVisitEvents, properties: Map<String, String>) {
     try {
       telemetryClient.trackEvent(visitEvent.eventName, properties, null)
