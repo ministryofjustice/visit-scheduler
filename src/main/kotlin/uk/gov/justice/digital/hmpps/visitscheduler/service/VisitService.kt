@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -215,7 +216,7 @@ class VisitService(
     saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
-    deleteVisitNotificationEvents(visitDto.reference, null)
+    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
     return visitDto
   }
 
@@ -400,7 +401,7 @@ class VisitService(
 
   private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
     if (existingBooking.sessionSlot.slotDate != application.sessionSlot.slotDate) {
-      deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+      deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED)
     }
   }
 
@@ -427,12 +428,12 @@ class VisitService(
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 
-  private fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?) {
+  private fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason) {
     type?.let {
       visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
     } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)
 
     // after deleting the visit notifications - update applciation insights
-    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type)
+    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason)
   }
 }

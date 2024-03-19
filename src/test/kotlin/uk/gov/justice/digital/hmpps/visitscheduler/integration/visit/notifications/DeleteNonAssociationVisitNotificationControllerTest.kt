@@ -4,10 +4,16 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonAssociationHasChanged
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
@@ -93,6 +99,9 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(0)
+    assertNonAssociationUnFlagEvent(visitPrimary.reference)
+    assertNonAssociationUnFlagEvent(visitSecondary.reference)
+    verify(telemetryClient, times(2)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
   @Test
@@ -138,6 +147,8 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
       Assertions.assertThat(reference).isEqualTo(visitNotifications[0].reference)
       Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
     }
+
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), any())
   }
 
   @Test
@@ -175,6 +186,7 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), any())
   }
 
   @Test
@@ -214,6 +226,7 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
     Assertions.assertThat(visitNotifications).hasSize(2)
 
     verifyNoInteractions(visitNotificationEventRepository)
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), any())
   }
 
   @Test
@@ -252,5 +265,20 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     Assertions.assertThat(visitNotifications).hasSize(2)
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), any())
+  }
+
+  fun assertNonAssociationUnFlagEvent(
+    visitReference: String,
+  ) {
+    verify(telemetryClient).trackEvent(
+      eq("unflagged-visit-event"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(visitReference)
+        Assertions.assertThat(it["reviewType"]).isEqualTo(NON_ASSOCIATION_EVENT.reviewType)
+        Assertions.assertThat(it["reason"]).isEqualTo(UnFlagEventReason.NON_ASSOCIATION_REMOVED.desc)
+      },
+      isNull(),
+    )
   }
 }

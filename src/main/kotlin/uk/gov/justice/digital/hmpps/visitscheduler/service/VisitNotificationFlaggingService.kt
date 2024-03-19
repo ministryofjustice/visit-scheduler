@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.UNFLAGGED_VISIT_EVENT
 
@@ -29,9 +30,10 @@ class VisitNotificationFlaggingService(
   fun unFlagTrackEvents(
     visitReference: String,
     type: NotificationEventType?,
+    reason: UnFlagEventReason,
   ) {
-    LOG.info("Unflagging visit with reference {} , review type(s) - {}", visitReference, type?.reviewType ?: "ALL")
-    val data = telemetryClientService.createUnFlagEventForVisit(visitReference, type)
+    LOG.info("Unflagging visit with reference {} , review type(s) - {}, reason - {} ", visitReference, type?.reviewType ?: "ALL", reason.desc)
+    val data = telemetryClientService.createUnFlagEventForVisit(visitReference, type, reason)
     telemetryClientService.trackEvent(UNFLAGGED_VISIT_EVENT, data)
   }
 }

@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAddPrisonExcludeDate
@@ -116,7 +117,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     verify(visitNotificationEventServiceSpy, times(1)).handleRemovePrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
     visitNotifications = testVisitNotificationEventRepository.findAll()
     Assertions.assertThat(visitNotifications).hasSize(0)
-    assertUnFlagEvent(bookedVisitForSamePrison.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+    assertPrisonExcludeDateRemovalUnFlagEvent(bookedVisitForSamePrison.reference, UnFlagEventReason.PRISON_EXCLUDE_DATE_REMOVED)
   }
 
   @Test
@@ -165,7 +166,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isCreated
 
     Assertions.assertThat(testVisitNotificationEventRepository.findAll()).isEmpty()
-    assertUnFlagEvent(visit.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+    assertPrisonExcludeDateRemovalUnFlagEvent(visit.reference, UnFlagEventReason.VISIT_DATE_UPDATED)
   }
 
   @Test
@@ -217,15 +218,16 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
-  fun assertUnFlagEvent(
+  fun assertPrisonExcludeDateRemovalUnFlagEvent(
     visitReference: String,
-    notificationEventType: NotificationEventType,
+    unFlagEventReason: UnFlagEventReason,
   ) {
     verify(telemetryClient).trackEvent(
       eq("unflagged-visit-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visitReference)
-        Assertions.assertThat(it["reviewType"]).isEqualTo(notificationEventType.reviewType)
+        Assertions.assertThat(it["reviewType"]).isEqualTo(NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE.reviewType)
+        Assertions.assertThat(it["reason"]).isEqualTo(unFlagEventReason.desc)
       },
       isNull(),
     )

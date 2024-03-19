@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
@@ -61,7 +62,7 @@ class VisitNotificationEventService(
         val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
         prisonCode?.let {
           val affectedNotifications = getAffectedNotifications(notificationDto, it)
-          deleteNotificationsThatAreNoLongerValid(affectedNotifications)
+          deleteNotificationsThatAreNoLongerValid(affectedNotifications, NON_ASSOCIATION_EVENT, UnFlagEventReason.NON_ASSOCIATION_REMOVED)
         }
       }
     }
@@ -83,7 +84,7 @@ class VisitNotificationEventService(
       prisonDateBlockedDto.visitDate,
       PRISON_VISITS_BLOCKED_FOR_DATE,
     )
-    deleteNotificationsThatAreNoLongerValid(affectedNotifications, PRISON_VISITS_BLOCKED_FOR_DATE)
+    deleteNotificationsThatAreNoLongerValid(affectedNotifications, PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.PRISON_EXCLUDE_DATE_REMOVED)
   }
 
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
@@ -182,9 +183,13 @@ class VisitNotificationEventService(
     }
   }
 
-  private fun deleteNotificationsThatAreNoLongerValid(visitNotificationEvents: List<VisitNotificationEvent>, notificationEventType: NotificationEventType? = null) {
+  private fun deleteNotificationsThatAreNoLongerValid(
+    visitNotificationEvents: List<VisitNotificationEvent>,
+    notificationEventType: NotificationEventType? = null,
+    reason: UnFlagEventReason,
+  ) {
     visitNotificationEvents.forEach {
-      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, notificationEventType)
+      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, notificationEventType, reason)
     }
     visitNotificationEventRepository.deleteAll(visitNotificationEvents)
   }
