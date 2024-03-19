@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
@@ -544,6 +545,7 @@ class CancelVisitTest : IntegrationTestBase() {
     verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
 
     Assertions.assertThat(visitNotifications.size).isEqualTo(0)
+    assertUnFlagEvent(visitCancelled)
   }
 
   fun assertCancelledDomainEvent(
@@ -557,5 +559,19 @@ class CancelVisitTest : IntegrationTestBase() {
       isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
+  }
+
+  fun assertUnFlagEvent(
+    cancelledVisit: VisitDto,
+  ) {
+    verify(telemetryClient).trackEvent(
+      eq("unflagged-visit-event"),
+      org.mockito.kotlin.check {
+        Assertions.assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
+        Assertions.assertThat(it["reason"]).isEqualTo(UnFlagEventReason.VISIT_CANCELLED.desc)
+      },
+      isNull(),
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 }

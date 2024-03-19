@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -151,6 +152,23 @@ class TelemetryClientService(
     }
 
     return flagEventDataMap
+  }
+
+  fun createUnFlagEventForVisit(
+    visitReference: String,
+    notificationEventType: NotificationEventType?,
+    reason: UnFlagEventReason,
+  ): MutableMap<String, String> {
+    val unFlagEventDataMap = mutableMapOf(
+      "reference" to visitReference,
+      "reason" to reason.desc,
+    )
+
+    notificationEventType?.let {
+      unFlagEventDataMap["reviewType"] = it.reviewType
+    }
+
+    return unFlagEventDataMap
   }
 
   fun trackEvent(visitEvent: TelemetryVisitEvents, properties: Map<String, String>) {
