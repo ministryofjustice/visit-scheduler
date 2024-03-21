@@ -360,6 +360,10 @@ class VisitController(
     )
     @NotNull
     visitStatusList: List<VisitStatus>,
+    @Schema(name = "prisonCode", description = "Filter results by prison id/code", example = "MDI", required = true)
+    @RequestParam
+    @NotNull
+    prisonCode: String,
     @RequestParam(value = "page", required = true)
     @Parameter(
       description = "Pagination page number, starting at zero",
@@ -379,6 +383,7 @@ class VisitController(
       toDate = toDate,
       visitStatusList = visitStatusList,
       visitRestrictions = visitRestrictions,
+      prisonCode = prisonCode,
       pageablePage = page,
       pageableSize = size,
     )

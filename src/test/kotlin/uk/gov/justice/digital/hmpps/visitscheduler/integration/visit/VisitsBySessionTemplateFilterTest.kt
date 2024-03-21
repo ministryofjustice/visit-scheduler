@@ -43,7 +43,10 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun createVisits() {
-    sessionTemplate2 = sessionTemplateEntityHelper.create(name = "template-2", prisonCode = "DFT")
+    val prisonDFT = prisonEntityHelper.create(prisonCode = "DFT", activePrison = true)
+
+    sessionTemplate2 = sessionTemplateEntityHelper.create(name = "template-2", prisonCode = prisonDFT.code)
+
     // visit 1 booked for session template reference - session-1
     visit1 = createApplicationAndVisit(slotDate = LocalDate.now(), prisonerId = "FF0000AA", sessionTemplate = sessionTemplateDefault, visitStatus = BOOKED, visitRestriction = OPEN)
     // visit 2 cancelled for session template reference - session-1
@@ -55,9 +58,13 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // visit 5 - closed visit booked for session template reference - session-1 but on next day
     visit5 = createApplicationAndVisit(slotDate = LocalDate.now().plusDays(1), prisonerId = "FF0000BB", sessionTemplate = sessionTemplateDefault, visitStatus = BOOKED, visitRestriction = CLOSED)
     // session template reference is null and status is BOOKED
-    visit6 = createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = BOOKED, slotDate = LocalDate.now().plusDays(1))
+    visit6 = createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = BOOKED, slotDate = LocalDate.now().plusDays(1), prisonCode = "MDI")
     // session template reference is null and status is CANCELLED
-    visit7 = createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = CANCELLED, slotDate = LocalDate.now().plusDays(1))
+    visit7 = createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = CANCELLED, slotDate = LocalDate.now().plusDays(1), prisonCode = "MDI")
+
+    // session template reference is null and status is BOOKED but prison is different (DFT)
+    createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = BOOKED, slotDate = LocalDate.now().plusDays(1), prisonCode = prisonDFT.code)
+    createApplicationAndVisit(prisonerId = "FF0000BB", visitStatus = CANCELLED, slotDate = LocalDate.now().plusDays(1), prisonCode = prisonDFT.code)
   }
 
   @Test
@@ -65,9 +72,10 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // Given
     val sessionTemplateReference = sessionTemplateDefault.reference
     val sessionDate = LocalDate.now()
+    val prisonCode = sessionTemplateDefault.prison.code
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
@@ -82,9 +90,10 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // Given
     val sessionTemplateReference = sessionTemplateDefault.reference
     val sessionDate = LocalDate.now()
+    val prisonCode = sessionTemplateDefault.prison.code
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED, CANCELLED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED, CANCELLED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
@@ -99,11 +108,12 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   fun `get booked visits by session template reference for a date range`() {
     // Given
     val sessionTemplateReference = sessionTemplateDefault.reference
+    val prisonCode = sessionTemplateDefault.prison.code
     val fromDate = LocalDate.now()
     val toDate = fromDate.plusDays(1)
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
@@ -119,11 +129,12 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   fun `get booked visits with restriction type OPEN by session template reference for a date range`() {
     // Given
     val sessionTemplateReference = sessionTemplateDefault.reference
+    val prisonCode = sessionTemplateDefault.prison.code
     val fromDate = LocalDate.now()
     val toDate = fromDate.plusDays(1)
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED, CANCELLED), visitRestrictions = listOf(OPEN)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED, CANCELLED), visitRestrictions = listOf(OPEN), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
@@ -139,11 +150,12 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   fun `get booked visits with restriction type OPEN or CLOSED by session template reference for a date range`() {
     // Given
     val sessionTemplateReference = sessionTemplateDefault.reference
+    val prisonCode = sessionTemplateDefault.prison.code
     val fromDate = LocalDate.now()
     val toDate = fromDate.plusDays(1)
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED, CANCELLED), visitRestrictions = listOf(OPEN, CLOSED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED, CANCELLED), visitRestrictions = listOf(OPEN, CLOSED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
@@ -160,11 +172,12 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   fun `get booked visits with restriction type CLOSED by session template reference for a date range`() {
     // Given
     val sessionTemplateReference = sessionTemplateDefault.reference
+    val prisonCode = sessionTemplateDefault.prison.code
     val fromDate = LocalDate.now()
     val toDate = fromDate.plusDays(1)
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED), visitRestrictions = listOf(CLOSED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED), visitRestrictions = listOf(CLOSED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
@@ -176,13 +189,14 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when session template reference passed is null only session template reference null records are returned`() {
+  fun `when session template reference passed is null only session template reference null records are returned for that prison`() {
     // Given
     val fromDate = LocalDate.now()
     val toDate = startDate.plusDays(2)
+    val prisonCode = "MDI"
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference = null, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED, CANCELLED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference = null, fromDate = fromDate, toDate = toDate, visitStatus = listOf(BOOKED, CANCELLED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
@@ -193,13 +207,14 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when session template reference passed is null only session template reference null records matching status are returned`() {
+  fun `when session template reference passed is null only session template reference null records matching status are returned for that prison`() {
     // Given
     val fromDate = LocalDate.now()
     val toDate = startDate.plusDays(2)
+    val prisonCode = "MDI"
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference = null, fromDate = fromDate, toDate = toDate, visitStatus = listOf(CANCELLED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference = null, fromDate = fromDate, toDate = toDate, visitStatus = listOf(CANCELLED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
@@ -213,9 +228,29 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // Given
     val sessionTemplateReference = sessionTemplate2.reference
     val sessionDate = LocalDate.now().plusDays(7)
+    val prisonCode = sessionTemplate2.prison.code
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED, CANCELLED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED, CANCELLED), prisonCode = prisonCode).joinToString("&")
+    val responseSpec = callVisitsBySessionEndPoint(params)
+
+    // Then
+    responseSpec.expectStatus().isOk
+      .expectBody()
+      .jsonPath("$.content.length()").isEqualTo(0)
+  }
+
+  @Test
+  fun `when session template passed is not for the same prison no records are returned`() {
+    // Given
+    val sessionTemplateReference = sessionTemplateDefault.reference
+    val sessionDate = LocalDate.now()
+
+    // prison code passed is different to the prison for given sessionTemplateReference
+    val prisonCode = "MDI"
+
+    // When
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED, CANCELLED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params)
 
     // Then
@@ -228,9 +263,10 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
   fun `access forbidden when no role`() {
     val sessionTemplateReference = sessionTemplateDefault.reference
     val sessionDate = startDate
+    val prisonCode = sessionTemplateDefault.prison.code
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = callVisitsBySessionEndPoint(params, roles = listOf())
 
     // Then
@@ -243,9 +279,10 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     // Given
     val sessionTemplateReference = "FF0000AA"
     val sessionDate = LocalDate.now()
+    val prisonCode = sessionTemplateDefault.prison.code
 
     // When
-    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED)).joinToString("&")
+    val params = getVisitsBySessionTemplateQueryParams(sessionTemplateReference, fromDate = sessionDate, toDate = sessionDate, visitStatus = listOf(BOOKED), prisonCode = prisonCode).joinToString("&")
     val responseSpec = webTestClient.get().uri("/visits/session-template?$params").exchange()
 
     // Then
@@ -270,6 +307,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     toDate: LocalDate,
     visitStatus: List<VisitStatus>? = null,
     visitRestrictions: List<VisitRestriction>? = null,
+    prisonCode: String,
     page: Int? = 0,
     size: Int? = 100,
   ): List<String> {
@@ -286,6 +324,7 @@ class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
     visitRestrictions?.forEach {
       queryParams.add("visitRestrictions=$it")
     }
+    queryParams.add("prisonCode=$prisonCode")
     queryParams.add("page=$page")
     queryParams.add("size=$size")
     return queryParams

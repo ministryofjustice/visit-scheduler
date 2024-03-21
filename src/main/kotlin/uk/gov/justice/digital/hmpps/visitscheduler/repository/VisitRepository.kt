@@ -186,7 +186,8 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
       "v.sessionSlot.slotDate >= :fromDate  AND " +
-      "v.sessionSlot.slotDate <= :toDate " +
+      "v.sessionSlot.slotDate <= :toDate AND " +
+      "v.prison.code = :prisonCode " +
       " ORDER BY v.createTimestamp",
   )
   fun findVisitsBySessionTemplateReference(
@@ -195,6 +196,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     toDate: LocalDate,
     visitStatusList: List<VisitStatus>?,
     visitRestrictions: List<VisitRestriction>?,
+    prisonCode: String,
     pageable: Pageable,
   ): Page<Visit>
 
@@ -218,7 +220,8 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +
       "(:#{#visitRestrictions} is null OR v.visitRestriction in :visitRestrictions) AND " +
       "v.sessionSlot.slotDate >= :fromDate  AND " +
-      "v.sessionSlot.slotDate <= :toDate " +
+      "v.sessionSlot.slotDate <= :toDate AND " +
+      "v.prison.code = :prisonCode " +
       " ORDER BY v.createTimestamp",
   )
   fun findVisitsWithNoSessionTemplateReference(
@@ -226,6 +229,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     toDate: LocalDate,
     visitStatusList: List<VisitStatus>?,
     visitRestrictions: List<VisitRestriction>?,
+    prisonCode: String,
     pageable: Pageable,
   ): Page<Visit>
 

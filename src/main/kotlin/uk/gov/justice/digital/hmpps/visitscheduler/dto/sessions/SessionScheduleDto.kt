@@ -24,8 +24,8 @@ data class SessionScheduleDto(
   @Schema(description = "visit type", example = "Social", required = true)
   val visitType: VisitType,
 
-  @Schema(description = "Determines behaviour of location groups. True will mean the location groups are included, false means they are excluded.", required = true)
-  val areLocationGroupsIncluded: Boolean,
+  @Schema(description = "Determines behaviour of location groups. True will mean the location groups are inclusive, false means they are exclusive.", required = true)
+  val areLocationGroupsInclusive: Boolean,
 
   @Schema(description = "prisoner location groups", example = "Wing C", required = false)
   val prisonerLocationGroupNames: List<String>,

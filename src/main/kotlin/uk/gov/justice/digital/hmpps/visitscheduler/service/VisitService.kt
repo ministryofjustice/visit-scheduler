@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -55,6 +56,7 @@ class VisitService(
   private val telemetryClientService: TelemetryClientService,
   private val eventAuditRepository: EventAuditRepository,
   private val snsService: SnsService,
+  private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
@@ -213,9 +215,8 @@ class VisitService(
 
     saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
 
-    // delete any visit notifications from the visit notifications table
-    visitNotificationEventRepository.deleteByBookingReference(reference)
-
+    // delete all visit notifications for the cancelled visit from the visit notifications table
+    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
     return visitDto
   }
 
@@ -247,6 +248,7 @@ class VisitService(
     toDate: LocalDate,
     visitStatusList: List<VisitStatus>,
     visitRestrictions: List<VisitRestriction>?,
+    prisonCode: String,
     pageablePage: Int? = null,
     pageableSize: Int? = null,
   ): Page<VisitDto> {
@@ -260,6 +262,7 @@ class VisitService(
         toDate = toDate,
         visitStatusList = visitStatusList.ifEmpty { null },
         visitRestrictions = visitRestrictions,
+        prisonCode = prisonCode,
         page,
       )
     } else {
@@ -268,6 +271,7 @@ class VisitService(
         toDate = toDate,
         visitStatusList = visitStatusList.ifEmpty { null },
         visitRestrictions = visitRestrictions,
+        prisonCode = prisonCode,
         page,
       )
     }
@@ -397,7 +401,7 @@ class VisitService(
 
   private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
     if (existingBooking.sessionSlot.slotDate != application.sessionSlot.slotDate) {
-      visitNotificationEventRepository.deleteByBookingReferenceAndType(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
+      deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED)
     }
   }
 
@@ -422,5 +426,14 @@ class VisitService(
 
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
+  }
+
+  private fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason) {
+    type?.let {
+      visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
+    } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)
+
+    // after deleting the visit notifications - update applciation insights
+    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason)
   }
 }
