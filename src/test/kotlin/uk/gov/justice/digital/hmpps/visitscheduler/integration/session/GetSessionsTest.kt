@@ -1786,8 +1786,8 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   private fun getNextAllowedDay(): LocalDate {
-    // The two days is based on the default SessionService.policyNoticeDaysMin
-    return LocalDate.now().plusDays(2)
+    // The 3 days is based on the default SessionService.policyNoticeDaysMin
+    return LocalDate.now().plusDays(3)
   }
 
   private fun getStartOfWeek(today: LocalDate) =
