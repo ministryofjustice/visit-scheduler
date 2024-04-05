@@ -217,7 +217,7 @@ class VisitService(
     saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
-    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED, null)
+    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
     return visitDto
   }
 
@@ -402,7 +402,7 @@ class VisitService(
 
   private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
     if (existingBooking.sessionSlot.slotDate != application.sessionSlot.slotDate) {
-      deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED, null)
+      deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED)
     }
   }
 
@@ -442,12 +442,12 @@ class VisitService(
     return visitDto
   }
 
-  private fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String?) {
+  private fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String? = null) {
     type?.let {
       visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
     } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)
 
-    // after deleting the visit notifications - update appliciation insights
+    // after deleting the visit notifications - update application insights
     visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason, text)
   }
 }
