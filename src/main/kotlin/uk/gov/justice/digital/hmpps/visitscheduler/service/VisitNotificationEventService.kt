@@ -189,7 +189,7 @@ class VisitNotificationEventService(
     reason: UnFlagEventReason,
   ) {
     visitNotificationEvents.forEach {
-      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, notificationEventType, reason)
+      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, notificationEventType, reason, null)
     }
     visitNotificationEventRepository.deleteAll(visitNotificationEvents)
   }

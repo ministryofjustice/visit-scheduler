@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
@@ -216,7 +217,7 @@ class VisitService(
     saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
-    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
+    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED, null)
     return visitDto
   }
 
@@ -401,7 +402,7 @@ class VisitService(
 
   private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
     if (existingBooking.sessionSlot.slotDate != application.sessionSlot.slotDate) {
-      deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED)
+      deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED, null)
     }
   }
 
@@ -428,12 +429,25 @@ class VisitService(
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 
-  private fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason) {
+  fun ignoreVisitNotifications(reference: String, ignoreVisitNotifications: IgnoreVisitNotificationsDto): VisitDto {
+    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
+    visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.IGNORE_VISIT_NOTIFICATIONS_REASON, ignoreVisitNotifications.reason))
+
+    val visitDto = visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
+
+    saveEventAudit(ignoreVisitNotifications.actionedBy, visitDto, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE)
+
+    // delete all visit notifications for the visit from the visit notifications table
+    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotifications.reason)
+    return visitDto
+  }
+
+  private fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String?) {
     type?.let {
       visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
     } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)
 
-    // after deleting the visit notifications - update applciation insights
-    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason)
+    // after deleting the visit notifications - update appliciation insights
+    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason, text)
   }
 }
