@@ -391,7 +391,6 @@ class VisitNotificationController(
     return visitNotificationEventService.getNotificationsTypesForBookingReference(reference)
   }
 
-
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(VISIT_NOTIFICATION_IGNORE)
   @ResponseStatus(HttpStatus.OK)

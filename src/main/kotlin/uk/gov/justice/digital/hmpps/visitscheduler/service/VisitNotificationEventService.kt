@@ -334,6 +334,6 @@ class VisitNotificationEventService(
   }
 
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotificationsDto: IgnoreVisitNotificationsDto): VisitDto {
-    return visitService.ignoreVisitNotifications(visitReference , ignoreVisitNotificationsDto)
+    return visitService.ignoreVisitNotifications(visitReference, ignoreVisitNotificationsDto)
   }
 }
