@@ -339,7 +339,16 @@ class VisitNotificationEventService(
     val visit = visitService.getBookedVisitByReference(visitReference)
     val visitDto = visitService.addVisitNote(visit, VisitNoteType.IGNORE_VISIT_NOTIFICATIONS_REASON, ignoreVisitNotification.reason)
     visitService.addEventAudit(ignoreVisitNotification.actionedBy, visitDto, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE)
-    visitService.deleteVisitNotificationEvents(visitReference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
+    deleteVisitNotificationEvents(visitReference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
     return visitDto
+  }
+
+  fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String? = null) {
+    type?.let {
+      visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
+    } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)
+
+    // after deleting the visit notifications - update application insights
+    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason, text)
   }
 }

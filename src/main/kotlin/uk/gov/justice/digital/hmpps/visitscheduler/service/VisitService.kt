@@ -52,13 +52,14 @@ import java.time.temporal.ChronoUnit
 @Transactional
 class VisitService(
   private val visitRepository: VisitRepository,
-  private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val telemetryClientService: TelemetryClientService,
   private val eventAuditRepository: EventAuditRepository,
   private val snsService: SnsService,
-  private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
+
+  @Autowired
+  private lateinit var visitNotificationEventService: VisitNotificationEventService
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
@@ -216,7 +217,7 @@ class VisitService(
     addEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
-    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
+    visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
     return visitDto
   }
 
@@ -406,7 +407,7 @@ class VisitService(
 
   private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
     if (existingBooking.sessionSlot.slotDate != application.sessionSlot.slotDate) {
-      deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED)
+      visitNotificationEventService.deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED)
     }
   }
 
@@ -443,12 +444,5 @@ class VisitService(
     saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType)
   }
 
-  fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String? = null) {
-    type?.let {
-      visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
-    } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)
 
-    // after deleting the visit notifications - update application insights
-    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason, text)
-  }
 }
