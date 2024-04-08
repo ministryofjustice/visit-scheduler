@@ -473,8 +473,8 @@ class VisitController(
     @PathVariable
     reference: String,
     @RequestBody @Valid
-    doNotChangeVisit: IgnoreVisitNotificationsDto,
+    ignoreNotifications: IgnoreVisitNotificationsDto,
   ): VisitDto {
-    return visitService.ignoreVisitNotifications(reference.trim(), doNotChangeVisit)
+    return visitService.ignoreVisitNotifications(reference.trim(), ignoreNotifications)
   }
 }
