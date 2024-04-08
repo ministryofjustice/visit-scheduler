@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
@@ -99,7 +98,7 @@ class VisitService(
       throw ItemNotFoundException(message, e)
     }
 
-    saveEventAudit(
+    addEventAudit(
       bookingRequestDto.actionedBy,
       bookedVisitDto,
       if (hasExistingBooking) UPDATED_VISIT else BOOKED_VISIT,
@@ -208,13 +207,13 @@ class VisitService(
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {
-      visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
+      addVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text)
     }
 
     val visitDto = visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
     processCancelEvents(visitEntity, visitDto, cancelVisitDto)
 
-    saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
+    addEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
     deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
@@ -371,6 +370,11 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
+  fun getBookedVisitByReference(reference: String): Visit {
+    return visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
+  }
+
+  @Transactional(readOnly = true)
   fun getHistoryByReference(bookingReference: String): List<EventAuditDto> {
     return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
   }
@@ -429,20 +433,17 @@ class VisitService(
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 
-  fun ignoreVisitNotifications(reference: String, ignoreVisitNotifications: IgnoreVisitNotificationsDto): VisitDto {
-    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
-    visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.IGNORE_VISIT_NOTIFICATIONS_REASON, ignoreVisitNotifications.reason))
+  fun addVisitNote(visit: Visit, visitNoteType: VisitNoteType, note: String): VisitDto {
+    visit.visitNotes.add(createVisitNote(visit, visitNoteType, note))
 
-    val visitDto = visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
-
-    saveEventAudit(ignoreVisitNotifications.actionedBy, visitDto, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE)
-
-    // delete all visit notifications for the visit from the visit notifications table
-    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotifications.reason)
-    return visitDto
+    return visitDtoBuilder.build(visitRepository.saveAndFlush(visit))
   }
 
-  private fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String? = null) {
+  fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType) {
+    saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType)
+  }
+
+  fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String? = null) {
     type?.let {
       visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
     } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)

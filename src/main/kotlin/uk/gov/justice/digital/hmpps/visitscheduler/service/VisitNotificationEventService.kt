@@ -18,8 +18,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
@@ -333,7 +335,11 @@ class VisitNotificationEventService(
     return this.visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
   }
 
-  fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotificationsDto: IgnoreVisitNotificationsDto): VisitDto {
-    return visitService.ignoreVisitNotifications(visitReference, ignoreVisitNotificationsDto)
+  fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
+    val visit = visitService.getBookedVisitByReference(visitReference)
+    val visitDto = visitService.addVisitNote(visit, VisitNoteType.IGNORE_VISIT_NOTIFICATIONS_REASON, ignoreVisitNotification.reason)
+    visitService.addEventAudit(ignoreVisitNotification.actionedBy, visitDto, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE)
+    visitService.deleteVisitNotificationEvents(visitReference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
+    return visitDto
   }
 }
