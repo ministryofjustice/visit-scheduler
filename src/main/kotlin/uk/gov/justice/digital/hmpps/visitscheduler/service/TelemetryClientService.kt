@@ -158,6 +158,7 @@ class TelemetryClientService(
     visitReference: String,
     notificationEventType: NotificationEventType?,
     reason: UnFlagEventReason,
+    reasonText: String? = null,
   ): MutableMap<String, String> {
     val unFlagEventDataMap = mutableMapOf(
       "reference" to visitReference,
@@ -166,6 +167,10 @@ class TelemetryClientService(
 
     notificationEventType?.let {
       unFlagEventDataMap["reviewType"] = it.reviewType
+    }
+
+    reasonText?.let {
+      unFlagEventDataMap["text"] = it
     }
 
     return unFlagEventDataMap

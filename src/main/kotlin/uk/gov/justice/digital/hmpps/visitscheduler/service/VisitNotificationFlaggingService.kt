@@ -31,9 +31,10 @@ class VisitNotificationFlaggingService(
     visitReference: String,
     type: NotificationEventType?,
     reason: UnFlagEventReason,
+    reasonText: String?,
   ) {
     LOG.info("Unflagging visit with reference {} , review type(s) - {}, reason - {} ", visitReference, type?.reviewType ?: "ALL", reason.desc)
-    val data = telemetryClientService.createUnFlagEventForVisit(visitReference, type, reason)
+    val data = telemetryClientService.createUnFlagEventForVisit(visitReference, type, reason, reasonText)
     telemetryClientService.trackEvent(UNFLAGGED_VISIT_EVENT, data)
   }
 }

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
@@ -17,8 +18,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
@@ -189,7 +192,7 @@ class VisitNotificationEventService(
     reason: UnFlagEventReason,
   ) {
     visitNotificationEvents.forEach {
-      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, notificationEventType, reason)
+      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, notificationEventType, reason, null)
     }
     visitNotificationEventRepository.deleteAll(visitNotificationEvents)
   }
@@ -330,5 +333,23 @@ class VisitNotificationEventService(
 
   fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> {
     return this.visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
+  }
+
+  @Transactional
+  fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
+    val visitDto = visitService.addVisitNote(visitReference, VisitNoteType.IGNORE_VISIT_NOTIFICATIONS_REASON, ignoreVisitNotification.reason)
+    visitService.addEventAudit(ignoreVisitNotification.actionedBy, visitDto, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE)
+    deleteVisitNotificationEvents(visitReference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
+    return visitDto
+  }
+
+  @Transactional
+  fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String? = null) {
+    type?.let {
+      visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
+    } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)
+
+    // after deleting the visit notifications - update application insights
+    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason, text)
   }
 }

@@ -5,6 +5,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Lazy
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -39,7 +40,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
@@ -52,13 +52,15 @@ import java.time.temporal.ChronoUnit
 @Transactional
 class VisitService(
   private val visitRepository: VisitRepository,
-  private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val telemetryClientService: TelemetryClientService,
   private val eventAuditRepository: EventAuditRepository,
   private val snsService: SnsService,
-  private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
+
+  @Lazy
+  @Autowired
+  private lateinit var visitNotificationEventService: VisitNotificationEventService
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
@@ -216,7 +218,7 @@ class VisitService(
     saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
-    deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
+    visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
     return visitDto
   }
 
@@ -370,6 +372,11 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
+  fun getBookedVisitByReference(reference: String): Visit {
+    return visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
+  }
+
+  @Transactional(readOnly = true)
   fun getHistoryByReference(bookingReference: String): List<EventAuditDto> {
     return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
   }
@@ -401,7 +408,7 @@ class VisitService(
 
   private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
     if (existingBooking.sessionSlot.slotDate != application.sessionSlot.slotDate) {
-      deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED)
+      visitNotificationEventService.deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED)
     }
   }
 
@@ -428,12 +435,14 @@ class VisitService(
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 
-  private fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason) {
-    type?.let {
-      visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
-    } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)
+  fun addVisitNote(visitReference: String, visitNoteType: VisitNoteType, note: String): VisitDto {
+    val visit = getBookedVisitByReference(visitReference)
+    visit.visitNotes.add(createVisitNote(visit, visitNoteType, note))
 
-    // after deleting the visit notifications - update applciation insights
-    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason)
+    return visitDtoBuilder.build(visitRepository.saveAndFlush(visit))
+  }
+
+  fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType) {
+    saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType)
   }
 }
