@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
@@ -330,5 +331,9 @@ class VisitNotificationEventService(
 
   fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> {
     return this.visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
+  }
+
+  fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotificationsDto: IgnoreVisitNotificationsDto): VisitDto {
+    return visitService.ignoreVisitNotifications(visitReference , ignoreVisitNotificationsDto)
   }
 }

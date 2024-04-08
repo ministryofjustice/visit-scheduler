@@ -12,7 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFER
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_IGNORE_NOTIFICATIONS
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
@@ -188,7 +188,7 @@ fun callIgnoreVisitNotifications(
 }
 
 fun getIgnoreVisitNotificationsUrl(reference: String): String {
-  return VISIT_IGNORE_NOTIFICATIONS.replace("{reference}", reference)
+  return VISIT_NOTIFICATION_IGNORE.replace("{reference}", reference)
 }
 
 fun callVisitHistoryByReference(

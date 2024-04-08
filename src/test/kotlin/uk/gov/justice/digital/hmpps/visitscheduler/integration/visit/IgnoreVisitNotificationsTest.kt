@@ -12,7 +12,7 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.web.reactive.function.BodyInserters
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_IGNORE_NOTIFICATIONS
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -26,7 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 
-@DisplayName("Put $VISIT_IGNORE_NOTIFICATIONS")
+@DisplayName("Put $VISIT_NOTIFICATION_IGNORE")
 class IgnoreVisitNotificationsTest : IntegrationTestBase() {
   @Autowired
   protected lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
