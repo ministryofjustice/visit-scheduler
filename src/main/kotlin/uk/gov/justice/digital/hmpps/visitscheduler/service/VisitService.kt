@@ -5,6 +5,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Lazy
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
@@ -39,7 +40,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
@@ -58,6 +58,7 @@ class VisitService(
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
+  @Lazy
   @Autowired
   private lateinit var visitNotificationEventService: VisitNotificationEventService
 
@@ -99,7 +100,7 @@ class VisitService(
       throw ItemNotFoundException(message, e)
     }
 
-    addEventAudit(
+    saveEventAudit(
       bookingRequestDto.actionedBy,
       bookedVisitDto,
       if (hasExistingBooking) UPDATED_VISIT else BOOKED_VISIT,
@@ -208,13 +209,13 @@ class VisitService(
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
     cancelOutcome.text?.let {
-      addVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text)
+      visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
     }
 
     val visitDto = visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
     processCancelEvents(visitEntity, visitDto, cancelVisitDto)
 
-    addEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
+    saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
     visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
@@ -434,7 +435,8 @@ class VisitService(
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 
-  fun addVisitNote(visit: Visit, visitNoteType: VisitNoteType, note: String): VisitDto {
+  fun addVisitNote(visitReference: String, visitNoteType: VisitNoteType, note: String): VisitDto {
+    val visit = getBookedVisitByReference(visitReference)
     visit.visitNotes.add(createVisitNote(visit, visitNoteType, note))
 
     return visitDtoBuilder.build(visitRepository.saveAndFlush(visit))
@@ -443,6 +445,4 @@ class VisitService(
   fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType) {
     saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType)
   }
-
-
 }

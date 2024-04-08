@@ -335,14 +335,15 @@ class VisitNotificationEventService(
     return this.visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
   }
 
+  @Transactional
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
-    val visit = visitService.getBookedVisitByReference(visitReference)
-    val visitDto = visitService.addVisitNote(visit, VisitNoteType.IGNORE_VISIT_NOTIFICATIONS_REASON, ignoreVisitNotification.reason)
+    val visitDto = visitService.addVisitNote(visitReference, VisitNoteType.IGNORE_VISIT_NOTIFICATIONS_REASON, ignoreVisitNotification.reason)
     visitService.addEventAudit(ignoreVisitNotification.actionedBy, visitDto, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE)
     deleteVisitNotificationEvents(visitReference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
     return visitDto
   }
 
+  @Transactional
   fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String? = null) {
     type?.let {
       visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
