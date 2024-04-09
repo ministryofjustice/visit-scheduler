@@ -188,9 +188,8 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
   }
 
   fun assertIgnoredVisit(visit: VisitDto, ignoreVisitNotification: IgnoreVisitNotificationsDto) {
-    assertHelper.assertIgnoredVisit(visit, ignoreVisitNotification.actionedBy)
-    Assertions.assertThat(visit.visitNotes.size).isEqualTo(1)
-    Assertions.assertThat(visit.visitNotes[0].text).isEqualTo(ignoreVisitNotification.reason)
+    assertHelper.assertIgnoredVisit(visit, ignoreVisitNotification.actionedBy, ignoreVisitNotification.reason)
+    Assertions.assertThat(visit.visitNotes.size).isEqualTo(0)
 
     val visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
     verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))

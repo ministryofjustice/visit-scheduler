@@ -38,6 +38,7 @@ class AssertHelper {
   fun assertIgnoredVisit(
     visit: VisitDto,
     cancelledBy: String,
+    reason: String,
   ) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visit.reference)
 
@@ -47,6 +48,7 @@ class AssertHelper {
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
     Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionTemplateReference)
     Assertions.assertThat(eventAudit.applicationReference).isEqualTo(visit.applicationReference)
+    Assertions.assertThat(eventAudit.text).isEqualTo(reason)
 
     Assertions.assertThat(visit.visitStatus).isEqualTo(VisitStatus.BOOKED)
   }

@@ -22,8 +22,11 @@ class EventAuditDto(
   @Schema(description = "Event actioned by - user id", example = "AB12345A", required = false)
   val actionedBy: String,
 
-  @Schema(description = "Session template used for this event ", required = false)
+  @Schema(description = "Session template used for this event", required = false)
   var sessionTemplateReference: String? = null,
+
+  @Schema(description = "Notes added against the event", required = false)
+  var text: String? = null,
 
   @Schema(description = "event creat date and time", example = "2018-12-01T13:45:00", required = true)
   @field:NotBlank
@@ -35,5 +38,6 @@ class EventAuditDto(
     actionedBy = eventAuditEntity.actionedBy,
     sessionTemplateReference = eventAuditEntity.sessionTemplateReference,
     createTimestamp = eventAuditEntity.createTimestamp,
+    text = eventAuditEntity.text,
   )
 }

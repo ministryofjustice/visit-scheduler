@@ -286,6 +286,7 @@ class VisitService(
     visit: VisitDto,
     type: EventAuditType,
     applicationMethodType: ApplicationMethodType,
+    text: String? = null,
   ) {
     eventAuditRepository.saveAndFlush(
       EventAudit(
@@ -295,6 +296,7 @@ class VisitService(
         sessionTemplateReference = visit.sessionTemplateReference,
         type = type,
         applicationMethodType = applicationMethodType,
+        text = text,
       ),
     )
   }
@@ -372,8 +374,9 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun getBookedVisitByReference(reference: String): Visit {
-    return visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit reference $reference not found")
+  fun getBookedVisitByReference(reference: String): VisitDto {
+    val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Booked visit with reference $reference not found")
+    return visitDtoBuilder.build(visitEntity)
   }
 
   @Transactional(readOnly = true)
@@ -435,14 +438,7 @@ class VisitService(
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 
-  fun addVisitNote(visitReference: String, visitNoteType: VisitNoteType, note: String): VisitDto {
-    val visit = getBookedVisitByReference(visitReference)
-    visit.visitNotes.add(createVisitNote(visit, visitNoteType, note))
-
-    return visitDtoBuilder.build(visitRepository.saveAndFlush(visit))
-  }
-
-  fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType) {
-    saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType)
+  fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?) {
+    saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text)
   }
 }
