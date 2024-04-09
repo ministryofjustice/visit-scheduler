@@ -119,6 +119,7 @@ class MigrateVisitService(
         sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
         type = MIGRATED_VISIT,
         applicationMethodType = NOT_KNOWN,
+        text = null,
       ),
     )
 
@@ -268,6 +269,7 @@ class MigrateVisitService(
         sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
         type = CANCELLED_VISIT,
         applicationMethodType = NOT_KNOWN,
+        text = null,
       ),
     )
 

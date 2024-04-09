@@ -21,7 +21,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Visitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
@@ -225,6 +224,7 @@ class VisitNotificationEventService(
         sessionTemplateReference = impactedVisit.sessionTemplateReference,
         type = EventAuditType.valueOf(type.name),
         applicationMethodType = NOT_KNOWN,
+        text = null,
       ),
     )
 
@@ -337,10 +337,10 @@ class VisitNotificationEventService(
 
   @Transactional
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
-    val visitDto = visitService.addVisitNote(visitReference, VisitNoteType.IGNORE_VISIT_NOTIFICATIONS_REASON, ignoreVisitNotification.reason)
-    visitService.addEventAudit(ignoreVisitNotification.actionedBy, visitDto, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE)
+    val visit = visitService.getBookedVisitByReference(visitReference)
+    visitService.addEventAudit(ignoreVisitNotification.actionedBy, visit, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE, ignoreVisitNotification.reason)
     deleteVisitNotificationEvents(visitReference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
-    return visitDto
+    return visit
   }
 
   @Transactional

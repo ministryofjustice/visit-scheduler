@@ -44,6 +44,9 @@ class EventAudit(
   @Column(nullable = false)
   var actionedBy: String,
 
+  @Column(nullable = true)
+  var text: String?,
+
   @CreationTimestamp
   @Column
   val createTimestamp: LocalDateTime = LocalDateTime.now(),

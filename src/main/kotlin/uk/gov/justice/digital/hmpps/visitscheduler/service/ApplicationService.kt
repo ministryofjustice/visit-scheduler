@@ -259,6 +259,7 @@ class ApplicationService(
         sessionTemplateReference = application.sessionTemplateReference,
         type = if (application.reserved) RESERVED_VISIT else CHANGING_VISIT,
         applicationMethodType = applicationMethodType,
+        text = null,
       ),
     )
   }

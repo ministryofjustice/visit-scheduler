@@ -367,6 +367,7 @@ class EventAuditEntityHelper(
     actionedBy: String = "ACTIONED_BY",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = EventAuditType.BOOKED_VISIT,
+    text: String? = null,
   ): EventAudit {
     return create(
       reference = visit.reference,
@@ -375,6 +376,7 @@ class EventAuditEntityHelper(
       actionedBy = actionedBy,
       type = type,
       applicationMethodType = applicationMethodType,
+      text = text,
     )
   }
 
@@ -383,6 +385,7 @@ class EventAuditEntityHelper(
     actionedBy: String = "ACTIONED_BY",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = EventAuditType.BOOKED_VISIT,
+    text: String? = null,
   ): EventAudit {
     return create(
       applicationReference = application.reference,
@@ -390,6 +393,7 @@ class EventAuditEntityHelper(
       actionedBy = actionedBy,
       type = type,
       applicationMethodType = applicationMethodType,
+      text = text,
     )
   }
 
@@ -400,6 +404,7 @@ class EventAuditEntityHelper(
     sessionTemplateReference: String? = "sessionTemplateReference",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = EventAuditType.BOOKED_VISIT,
+    text: String?,
   ): EventAudit {
     return save(
       EventAudit(
@@ -409,6 +414,7 @@ class EventAuditEntityHelper(
         sessionTemplateReference = sessionTemplateReference,
         type = type,
         applicationMethodType = applicationMethodType,
+        text = text,
       ),
     )
   }
