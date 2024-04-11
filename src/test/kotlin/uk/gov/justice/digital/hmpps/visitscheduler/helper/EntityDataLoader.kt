@@ -68,8 +68,12 @@ class PrisonEntityHelper(
       activePrison: Boolean = true,
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
+      maxTotalVisitors: Int = 6,
+      maxAdultVisitors: Int = 3,
+      maxChildVisitors: Int = 3,
+      adultAgeYears: Int = 18,
     ): Prison {
-      return Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax)
+      return Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
     }
 
     fun createPrisonDto(
@@ -78,15 +82,23 @@ class PrisonEntityHelper(
       excludeDates: Set<LocalDate> = sortedSetOf(),
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
+      maxTotalVisitors: Int = 6,
+      maxAdultVisitors: Int = 3,
+      maxChildVisitors: Int = 3,
+      adultAgeYears: Int = 18,
     ): PrisonDto {
-      return PrisonDto(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, excludeDates = excludeDates)
+      return PrisonDto(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, excludeDates = excludeDates)
     }
 
     fun updatePrisonDto(
       policyNoticeDaysMin: Int = 10,
       policyNoticeDaysMax: Int = 20,
+      maxTotalVisitors: Int = 4,
+      maxAdultVisitors: Int = 2,
+      maxChildVisitors: Int = 2,
+      adultAgeYears: Int = 16,
     ): UpdatePrisonDto {
-      return UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax)
+      return UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
     }
   }
 

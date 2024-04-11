@@ -13,6 +13,7 @@ import jakarta.persistence.TemporalType
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import java.time.LocalDateTime
 
 @Entity
@@ -28,6 +29,15 @@ class Prison(
   var policyNoticeDaysMin: Int,
   @Column(name = "policy_notice_days_max")
   var policyNoticeDaysMax: Int,
+
+  @Column(name = "max_total_visitors")
+  var maxTotalVisitors: Int,
+  @Column(name = "max_adult_visitors")
+  var maxAdultVisitors: Int,
+  @Column(name = "max_child_visitors")
+  var maxChildVisitors: Int,
+  @Column(name = "adult_age_years")
+  var adultAgeYears: Int,
 
   @CreationTimestamp
   @Temporal(TemporalType.TIMESTAMP)
@@ -64,4 +74,15 @@ class Prison(
   override fun toString(): String {
     return this::class.simpleName + "(id=$id, code= '$code')"
   }
+
+  constructor(dto: PrisonDto) : this(
+    code = dto.code,
+    active = dto.active,
+    policyNoticeDaysMin = dto.policyNoticeDaysMin,
+    policyNoticeDaysMax = dto.policyNoticeDaysMax,
+    maxTotalVisitors = dto.maxTotalVisitors,
+    maxAdultVisitors = dto.maxAdultVisitors,
+    maxChildVisitors = dto.maxChildVisitors,
+    adultAgeYears = dto.adultAgeYears,
+  )
 }

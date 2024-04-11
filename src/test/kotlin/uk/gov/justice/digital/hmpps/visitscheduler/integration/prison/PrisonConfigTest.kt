@@ -63,22 +63,27 @@ class PrisonConfigTest : IntegrationTestBase() {
   @Test
   fun `when create prison called with unique code prison is created`() {
     // Given
-    val prison = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ")
+    val prisonDto = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ")
 
     // When
 
-    val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison)
+    val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prisonDto)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
     val result = getPrison(returnResult)
 
-    Assertions.assertThat(result.code).isEqualTo(prison.code)
+    Assertions.assertThat(result.code).isEqualTo(prisonDto.code)
     Assertions.assertThat(result.active).isTrue
     Assertions.assertThat(result.excludeDates).isEmpty()
-    Assertions.assertThat(result.policyNoticeDaysMin).isEqualTo(prison.policyNoticeDaysMin)
-    Assertions.assertThat(result.policyNoticeDaysMax).isEqualTo(prison.policyNoticeDaysMax)
+    Assertions.assertThat(result.policyNoticeDaysMin).isEqualTo(prisonDto.policyNoticeDaysMin)
+    Assertions.assertThat(result.policyNoticeDaysMax).isEqualTo(prisonDto.policyNoticeDaysMax)
+
+    Assertions.assertThat(result.maxTotalVisitors).isEqualTo(prisonDto.maxTotalVisitors)
+    Assertions.assertThat(result.maxAdultVisitors).isEqualTo(prisonDto.maxAdultVisitors)
+    Assertions.assertThat(result.maxChildVisitors).isEqualTo(prisonDto.maxChildVisitors)
+    Assertions.assertThat(result.adultAgeYears).isEqualTo(prisonDto.adultAgeYears)
 
     verify(prisonConfigServiceSpy, times(1)).createPrison(any())
     verify(prisonRepositorySpy, times(1)).saveAndFlush(any())
@@ -114,6 +119,32 @@ class PrisonConfigTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `on create when max visitors is less than max adult visitors`() {
+    // Given
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(maxTotalVisitors = 1, maxChildVisitors = 1, maxAdultVisitors = 10)
+
+    // When
+    val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Max total visitors invalid AWE, max visitors 1 should be >= 10")
+  }
+
+  @Test
+  fun `on create when max visitors is less than max child visitors`() {
+    // Given
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(maxTotalVisitors = 1, maxChildVisitors = 10, maxAdultVisitors = 1)
+
+    // When
+    val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Max total visitors invalid AWE, max visitors 1 should be >= 10")
+  }
+
+  @Test
   fun `on create when notice days min and max is less than zero error is returned`() {
     // Given
     val createPrisonRequest = PrisonEntityHelper.createPrisonDto(policyNoticeDaysMin = -1, policyNoticeDaysMax = -1)
@@ -130,7 +161,24 @@ class PrisonConfigTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when update prison called for existing prison then BAD_REQUEST is returned`() {
+  fun `on create when max visitors and adult age have invalid values then errors are thrown`() {
+    // Given
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(maxTotalVisitors = 0, maxAdultVisitors = 0, maxChildVisitors = -2)
+
+    // When
+    val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
+
+    // Then
+    val errorResponse = getErrorResponse(responseSpec)
+
+    Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'maxTotalVisitors': rejected value [0]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'maxAdultVisitors': rejected value [0]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'maxChildVisitors': rejected value [-2]")
+  }
+
+  @Test
+  fun `when update prison called for existing prison then values are updated correctly`() {
     // Given
     // prison already exists in DB
     prison = prisonEntityHelper.create()
@@ -149,8 +197,17 @@ class PrisonConfigTest : IntegrationTestBase() {
     val result = getPrison(responseSpec.expectBody())
     Assertions.assertThat(result.policyNoticeDaysMin).isNotEqualTo(prison.policyNoticeDaysMin)
     Assertions.assertThat(result.policyNoticeDaysMax).isNotEqualTo(prison.policyNoticeDaysMax)
+    Assertions.assertThat(result.maxTotalVisitors).isNotEqualTo(prison.maxTotalVisitors)
+    Assertions.assertThat(result.maxAdultVisitors).isNotEqualTo(prison.maxAdultVisitors)
+    Assertions.assertThat(result.maxChildVisitors).isNotEqualTo(prison.maxChildVisitors)
+    Assertions.assertThat(result.adultAgeYears).isNotEqualTo(prison.adultAgeYears)
+
     Assertions.assertThat(result.policyNoticeDaysMin).isEqualTo(updatePrisonRequest.policyNoticeDaysMin)
     Assertions.assertThat(result.policyNoticeDaysMax).isEqualTo(updatePrisonRequest.policyNoticeDaysMax)
+    Assertions.assertThat(result.maxTotalVisitors).isEqualTo(updatePrisonRequest.maxTotalVisitors)
+    Assertions.assertThat(result.maxAdultVisitors).isEqualTo(updatePrisonRequest.maxAdultVisitors)
+    Assertions.assertThat(result.maxChildVisitors).isEqualTo(updatePrisonRequest.maxChildVisitors)
+    Assertions.assertThat(result.adultAgeYears).isEqualTo(updatePrisonRequest.adultAgeYears)
   }
 
   @Test
@@ -171,10 +228,44 @@ class PrisonConfigTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `on update when max visitors is less than max adult visitors`() {
+    // Given
+    // prison already exists in DB
+    prison = prisonEntityHelper.create()
+
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(maxTotalVisitors = 1, maxChildVisitors = 1, maxAdultVisitors = 10)
+    prisonEntityHelper.create(prison.code, prison.active)
+
+    // When
+    val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Max total visitors invalid MDI, max visitors 1 should be >= 10")
+  }
+
+  @Test
+  fun `on update when max visitors is less than max child visitors`() {
+    // Given
+    // prison already exists in DB
+    prison = prisonEntityHelper.create()
+
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(maxTotalVisitors = 1, maxChildVisitors = 10, maxAdultVisitors = 1)
+    prisonEntityHelper.create(prison.code, prison.active)
+
+    // When
+    val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Max total visitors invalid MDI, max visitors 1 should be >= 10")
+  }
+
+  @Test
   fun `on update when notice days min and max is less than zero error is returned`() {
     // Given
     // prison already exists in DB
-    prison = prisonEntityHelper.create(policyNoticeDaysMin = 1, policyNoticeDaysMax = 28)
+    prison = prisonEntityHelper.create()
 
     val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(policyNoticeDaysMin = -1, policyNoticeDaysMax = -1)
     prisonEntityHelper.create(prison.code, prison.active)
@@ -187,6 +278,26 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
     Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'updatePrisonDto' on field 'policyNoticeDaysMin': rejected value [-1]")
     Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'updatePrisonDto' on field 'policyNoticeDaysMax': rejected value [-1]")
+  }
+
+  @Test
+  fun `on update when max visitors and adult age have invalid values then errors are thrown`() {
+    // Given
+    // prison already exists in DB
+    prison = prisonEntityHelper.create()
+
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(maxTotalVisitors = 0, maxAdultVisitors = 0, maxChildVisitors = -2)
+    prisonEntityHelper.create(prison.code, prison.active)
+    // When
+    val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
+
+    // Then
+    val errorResponse = getErrorResponse(responseSpec)
+
+    Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'maxTotalVisitors': rejected value [0]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'maxAdultVisitors': rejected value [0]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'maxChildVisitors': rejected value [-2]")
   }
 
   @Test
