@@ -10,9 +10,11 @@ import java.time.LocalDate
 data class PrisonDto(
 
   @Schema(description = "prison code", example = "BHI", required = true)
+  @field:NotNull
   var code: String,
 
   @Schema(description = "is prison active", example = "true", required = true)
+  @field:NotNull
   var active: Boolean = false,
 
   @Schema(description = "minimum number of days notice from the current date to booked a visit", example = "2", required = true)
