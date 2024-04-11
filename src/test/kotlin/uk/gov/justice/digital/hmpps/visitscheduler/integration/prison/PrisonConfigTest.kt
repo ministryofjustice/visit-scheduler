@@ -163,7 +163,7 @@ class PrisonConfigTest : IntegrationTestBase() {
   @Test
   fun `on create when max visitors and adult age have invalid values then errors are thrown`() {
     // Given
-    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(maxTotalVisitors = 0, maxAdultVisitors = 0, maxChildVisitors = -2, adultAgeYears = 5)
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(maxTotalVisitors = 0, maxAdultVisitors = 0, maxChildVisitors = -2)
 
     // When
     val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
@@ -175,7 +175,6 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxTotalVisitors': rejected value [0]")
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxAdultVisitors': rejected value [0]")
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxChildVisitors': rejected value [-2]")
-    Assertions.assertThat(errorResponse.developerMessage).contains("'adultAgeYears': rejected value [5]")
   }
 
   @Test
@@ -287,7 +286,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     // prison already exists in DB
     prison = prisonEntityHelper.create()
 
-    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(maxTotalVisitors = 0, maxAdultVisitors = 0, maxChildVisitors = -2, adultAgeYears = 5)
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(maxTotalVisitors = 0, maxAdultVisitors = 0, maxChildVisitors = -2)
     prisonEntityHelper.create(prison.code, prison.active)
     // When
     val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
@@ -299,7 +298,6 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxTotalVisitors': rejected value [0]")
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxAdultVisitors': rejected value [0]")
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxChildVisitors': rejected value [-2]")
-    Assertions.assertThat(errorResponse.developerMessage).contains("'adultAgeYears': rejected value [5]")
   }
 
   @Test

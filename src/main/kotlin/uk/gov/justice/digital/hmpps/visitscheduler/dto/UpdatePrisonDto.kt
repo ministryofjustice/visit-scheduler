@@ -21,6 +21,5 @@ data class UpdatePrisonDto(
   @field:Min(-1)
   val maxChildVisitors: Int?,
   @Schema(description = "Age of adults in years")
-  @field:Min(6)
   val adultAgeYears: Int?,
 )
