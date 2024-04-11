@@ -40,7 +40,7 @@ data class PrisonDto(
   val maxChildVisitors: Int,
   @Schema(description = "Age of adults in years")
   @field:NotNull
-  @field:Min(10)
+  @field:Min(6)
   val adultAgeYears: Int,
 
   @Schema(description = "exclude dates", required = false)

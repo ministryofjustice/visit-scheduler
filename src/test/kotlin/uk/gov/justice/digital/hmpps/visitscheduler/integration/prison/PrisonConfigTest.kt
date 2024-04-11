@@ -163,7 +163,7 @@ class PrisonConfigTest : IntegrationTestBase() {
   @Test
   fun `on create when max visitors and adult age have invalid values then errors are thrown`() {
     // Given
-    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(maxTotalVisitors = 0, maxAdultVisitors = 0, maxChildVisitors = -2, adultAgeYears = 9)
+    val createPrisonRequest = PrisonEntityHelper.createPrisonDto(maxTotalVisitors = 0, maxAdultVisitors = 0, maxChildVisitors = -2, adultAgeYears = 5)
 
     // When
     val responseSpec = callCreatePrison(webTestClient, roleVisitSchedulerHttpHeaders, createPrisonRequest)
@@ -175,7 +175,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxTotalVisitors': rejected value [0]")
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxAdultVisitors': rejected value [0]")
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxChildVisitors': rejected value [-2]")
-    Assertions.assertThat(errorResponse.developerMessage).contains("'adultAgeYears': rejected value [9]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'adultAgeYears': rejected value [5]")
   }
 
   @Test
@@ -266,7 +266,7 @@ class PrisonConfigTest : IntegrationTestBase() {
   fun `on update when notice days min and max is less than zero error is returned`() {
     // Given
     // prison already exists in DB
-    prison = prisonEntityHelper.create(policyNoticeDaysMin = 1, policyNoticeDaysMax = 28)
+    prison = prisonEntityHelper.create()
 
     val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(policyNoticeDaysMin = -1, policyNoticeDaysMax = -1)
     prisonEntityHelper.create(prison.code, prison.active)
@@ -279,6 +279,27 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
     Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'updatePrisonDto' on field 'policyNoticeDaysMin': rejected value [-1]")
     Assertions.assertThat(errorResponse.developerMessage).contains("Field error in object 'updatePrisonDto' on field 'policyNoticeDaysMax': rejected value [-1]")
+  }
+
+  @Test
+  fun `on update when max visitors and adult age have invalid values then errors are thrown`() {
+    // Given
+    // prison already exists in DB
+    prison = prisonEntityHelper.create()
+
+    val updatePrisonRequest = PrisonEntityHelper.updatePrisonDto(maxTotalVisitors = 0, maxAdultVisitors = 0, maxChildVisitors = -2, adultAgeYears = 5)
+    prisonEntityHelper.create(prison.code, prison.active)
+    // When
+    val responseSpec = callUpdatePrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, updatePrisonRequest)
+
+    // Then
+    val errorResponse = getErrorResponse(responseSpec)
+
+    Assertions.assertThat(errorResponse.userMessage).isEqualTo("Invalid Arguments")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'maxTotalVisitors': rejected value [0]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'maxAdultVisitors': rejected value [0]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'maxChildVisitors': rejected value [-2]")
+    Assertions.assertThat(errorResponse.developerMessage).contains("'adultAgeYears': rejected value [5]")
   }
 
   @Test
