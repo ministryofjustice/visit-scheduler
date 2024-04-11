@@ -27,9 +27,16 @@ class PrisonConfigService(
     if (prisonRepository.findByCode(prisonDto.code) != null) {
       throw ValidationException(messageService.getMessage("validation.create.prison.found", prisonDto.code))
     }
-    validatePrisonDetails(prisonDto.policyNoticeDaysMin, prisonDto.policyNoticeDaysMax, prisonDto.code)
+    validatePrisonDetails(
+      prisonDto.policyNoticeDaysMin,
+      prisonDto.policyNoticeDaysMax,
+      prisonDto.code,
+      prisonDto.maxTotalVisitors,
+      prisonDto.maxAdultVisitors,
+      prisonDto.maxChildVisitors,
+    )
 
-    val newPrison = Prison(prisonDto.code, prisonDto.active, prisonDto.policyNoticeDaysMin, prisonDto.policyNoticeDaysMax)
+    val newPrison = Prison(prisonDto)
     val savedPrison = prisonRepository.saveAndFlush(newPrison)
     val excludeDates = prisonDto.excludeDates.map { PrisonExcludeDate(prisonId = savedPrison.id, prison = savedPrison, it) }
     savedPrison.excludeDates.addAll(excludeDates)
@@ -43,10 +50,19 @@ class PrisonConfigService(
     val policyNoticeDaysMin = prisonDto.policyNoticeDaysMin ?: prison.policyNoticeDaysMin
     val policyNoticeDaysMax = prisonDto.policyNoticeDaysMax ?: prison.policyNoticeDaysMax
 
-    validatePrisonDetails(policyNoticeDaysMin, policyNoticeDaysMax, prisonCode)
+    val maxTotalVisitors = prisonDto.maxTotalVisitors ?: prison.maxTotalVisitors
+    val maxAdultVisitors = prisonDto.maxAdultVisitors ?: prison.maxAdultVisitors
+    val maxChildVisitors = prisonDto.maxChildVisitors ?: prison.maxChildVisitors
+    val adultAgeYears = prisonDto.adultAgeYears ?: prison.adultAgeYears
+
+    validatePrisonDetails(policyNoticeDaysMin, policyNoticeDaysMax, prisonCode, maxTotalVisitors, maxAdultVisitors, maxChildVisitors)
 
     prison.policyNoticeDaysMin = policyNoticeDaysMin
     prison.policyNoticeDaysMax = policyNoticeDaysMax
+    prison.maxTotalVisitors = maxTotalVisitors
+    prison.maxAdultVisitors = maxAdultVisitors
+    prison.maxChildVisitors = maxChildVisitors
+    prison.adultAgeYears = adultAgeYears
 
     val savedPrison = prisonRepository.saveAndFlush(prison)
     return prisonsService.mapEntityToDto(savedPrison)
@@ -105,7 +121,22 @@ class PrisonConfigService(
     policyNoticeDaysMin: Int,
     policyNoticeDaysMax: Int,
     prisonCode: String,
+    maxTotalVisitors: Int,
+    maxAdultVisitors: Int,
+    maxChildVisitors: Int,
   ) {
+    val highestMax = if (maxAdultVisitors > maxChildVisitors) maxAdultVisitors else maxChildVisitors
+    if (maxTotalVisitors < highestMax) {
+      throw ValidationException(
+        messageService.getMessage(
+          "validation.prison.maxTotalVisitors.invalid",
+          prisonCode,
+          maxTotalVisitors.toString(),
+          highestMax.toString(),
+        ),
+      )
+    }
+
     if (policyNoticeDaysMin > policyNoticeDaysMax) {
       throw ValidationException(
         messageService.getMessage(
