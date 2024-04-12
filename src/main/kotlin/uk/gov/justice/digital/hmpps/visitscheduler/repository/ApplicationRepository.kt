@@ -19,7 +19,7 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
       "WHERE a.completed = false" +
       " AND a.modifyTimestamp < :expiredDateAndTime ORDER BY a.id",
   )
-  fun findExpiredApplicationReferences(expiredDateAndTime: LocalDateTime): List<Application>
+  fun findApplicationByModifyTimes(expiredDateAndTime: LocalDateTime): List<Application>
 
   @Query(
     "SELECT a FROM Application a WHERE a.reference = :applicationReference",
@@ -35,35 +35,41 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
     "SELECT a.restriction AS visitRestriction, COUNT(*) AS count  FROM application a " +
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction IN ('OPEN','CLOSED') AND " +
-      " a.reserved_slot = true AND a.completed = false " +
+      " a.reserved_slot = true AND a.completed = false AND" +
+      " a.modify_timestamp >= :expiredDateAndTime " +
       " GROUP BY a.restriction",
     nativeQuery = true,
   )
   fun getCountOfReservedSessionForOpenOrClosedRestriction(
     sessionSlotId: Long,
+    @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
   ): List<VisitRestrictionStats>
 
   @Query(
     "SELECT COUNT(a) > 0 FROM Application a " +
       "WHERE a.completed = false AND a.reservedSlot = true AND " +
-      "(a.prisonerId = :prisonerId) AND " +
-      "(a.sessionSlotId = :sessionSlotId) ",
+      "a.prisonerId = :prisonerId AND " +
+      "a.modifyTimestamp >= :expiredDateAndTime AND " +
+      "a.sessionSlotId = :sessionSlotId ",
   )
   fun hasReservations(
     @Param("prisonerId") prisonerId: String,
     @Param("sessionSlotId") sessionSlotId: Long,
+    @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
   ): Boolean
 
   @Query(
     "SELECT count(*) > 0 FROM application a " +
       "WHERE a.prisoner_id IN :prisonerIds AND " +
       "a.session_slot_id IN :sessionIds AND " +
+      "a.modify_timestamp >= :expiredDateAndTime AND " +
       "a.completed = false AND a.reserved_slot = true",
     nativeQuery = true,
   )
   fun hasActiveApplicationsForDate(
     prisonerIds: List<String>,
     sessionIds: List<Long>,
+    @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
   ): Boolean
 
   @Transactional

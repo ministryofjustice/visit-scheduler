@@ -21,7 +21,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -40,7 +39,6 @@ open class SessionService(
   private val sessionDatesUtil: SessionDatesUtil,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
-  private val applicationRepository: ApplicationRepository,
   private val sessionSlotRepository: SessionSlotRepository,
   private val prisonerService: PrisonerService,
   @Value("\${policy.session.double-booking.filter:false}")
@@ -50,6 +48,7 @@ open class SessionService(
   private val sessionValidator: PrisonerSessionValidator,
   private val prisonerValidationService: PrisonerValidationService,
   private val prisonsService: PrisonsService,
+  private val applicationService: ApplicationService,
 ) {
 
   companion object {
@@ -352,7 +351,7 @@ open class SessionService(
       return true
     }
 
-    return applicationRepository.hasActiveApplicationsForDate(
+    return applicationService.hasActiveApplicationsForDate(
       nonAssociationPrisonerIds,
       sessionSlotIds,
     )
@@ -373,10 +372,12 @@ open class SessionService(
       return true
     }
 
-    return applicationRepository.hasReservations(
+    val result = applicationService.hasReservations(
       prisonerId = prisonerId,
       sessionSlotId = sessionSlot.id,
     )
+
+    return result
   }
 
   private fun getVisitRestrictionStats(session: VisitSessionDto, sessionSlotIdsByKey: Map<String, SessionSlot>): List<VisitRestrictionStats> {
@@ -384,7 +385,7 @@ open class SessionService(
     val sessionSlot = sessionSlotIdsByKey.get(session.sessionTemplateReference + slotDate)
     sessionSlot?.let {
       val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(it.id)
-      val restrictionReservedApplicationStats = applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(it.id)
+      val restrictionReservedApplicationStats = applicationService.getCountOfReservedSessionForOpenOrClosedRestriction(it.id)
 
       return restrictionBookedStats + restrictionReservedApplicationStats
     }

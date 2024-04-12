@@ -54,10 +54,10 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
     reservedVisitNotExpiredChangingStatus = createApplicationAndSave(prisonerId = "NOT_EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false)
 
     reservedVisitExpired = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true)
-    testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpired.id)
+    testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(25), reservedVisitExpired.id)
 
     reservedVisitExpiredChangingStatus = createApplicationAndSave(prisonerId = "EXPIRED", sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = false)
-    testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(2), reservedVisitExpiredChangingStatus.id)
+    testApplicationRepository.updateModifyTimestamp(LocalDateTime.now().minusHours(24), reservedVisitExpiredChangingStatus.id)
   }
 
   @Test

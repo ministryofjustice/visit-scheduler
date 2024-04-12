@@ -42,7 +42,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -69,7 +68,7 @@ class SessionServiceTest {
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
   private val sessionDatesUtil = SessionDatesUtil()
   private val prisonsService = mock<PrisonsService>()
-  private val applicationRepository = mock<ApplicationRepository>()
+  private val applicationService = mock<ApplicationService>()
 
   private lateinit var sessionService: SessionService
 
@@ -170,7 +169,6 @@ class SessionServiceTest {
         sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
-        applicationRepository,
         sessionSlotRepository,
         prisonerService,
         policyFilterDoubleBooking = false,
@@ -178,6 +176,7 @@ class SessionServiceTest {
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
+        applicationService = applicationService,
       )
     }
 
@@ -461,7 +460,6 @@ class SessionServiceTest {
         sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
-        applicationRepository,
         sessionSlotRepository,
         prisonerService,
         policyFilterDoubleBooking = false,
@@ -469,6 +467,7 @@ class SessionServiceTest {
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
+        applicationService = applicationService,
       )
     }
 
@@ -704,7 +703,6 @@ class SessionServiceTest {
         sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
-        applicationRepository,
         sessionSlotRepository,
         prisonerService,
         policyFilterDoubleBooking = true,
@@ -712,6 +710,7 @@ class SessionServiceTest {
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
+        applicationService,
       )
     }
 
