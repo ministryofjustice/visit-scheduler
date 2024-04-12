@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
@@ -63,7 +64,7 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Book visit visit by application Reference`() {
+  fun `Book visit by application Reference`() {
     // Given
     val applicationReference = reservedApplication.reference
 
@@ -77,6 +78,40 @@ class BookVisitTest : IntegrationTestBase() {
 
     // Then
     assertVisitMatchesApplication(visitDto, reservedApplication)
+
+    val visitEntity = testVisitRepository.findByReference(visitDto.reference)
+    assertThat(visitEntity.getApplications().size).isEqualTo(1)
+    assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
+    assertThat(visitEntity.getLastApplication()?.completed).isTrue()
+
+    // And
+    assertBookedEvent(visitDto, false)
+  }
+
+  @Test
+  fun `Book visit with an expired application`() {
+    // Given
+
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+    testApplicationRepository.updateTimestamsp(LocalDateTime.now().minusDays(1), applicationReference)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val visitDto = getVisitDto(responseSpec)
+
+    // Then
+    assertVisitMatchesApplication(visitDto, expiredReservedApplication)
 
     val visitEntity = testVisitRepository.findByReference(visitDto.reference)
     assertThat(visitEntity.getApplications().size).isEqualTo(1)
@@ -346,7 +381,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createSupport(application = completedApplication, description = "Some Text")
     reservedApplication = applicationEntityHelper.save(reservedApplication)
 
-    var visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
     visit.addApplication(completedApplication)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
