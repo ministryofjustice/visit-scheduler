@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.applicatio
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
+import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -154,23 +155,23 @@ class ReserveSlotTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when reserve visit slot has more than 10 visitors then bad request is returned`() {
+  fun `when reserve visit slot has more than max visitors then bad request is returned`() {
     // Given
     val sessionTemplate = sessionTemplateEntityHelper.create()
     val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate)
     reserveVisitSlotDto.visitors = setOf(
       VisitorDto(1, true), VisitorDto(2, false),
-      VisitorDto(3, true), VisitorDto(4, false),
+      VisitorDto(3, false), VisitorDto(4, false),
       VisitorDto(5, false), VisitorDto(6, false),
-      VisitorDto(7, false), VisitorDto(8, false),
-      VisitorDto(9, false), VisitorDto(10, false),
-      VisitorDto(11, false), VisitorDto(12, false),
+      VisitorDto(7, false),
     )
 
     // When
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
     // Then
     responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").isEqualTo("This application has too many Visitors for this prison MDI max visitors 6")
   }
 
   @Test
@@ -196,6 +197,9 @@ class ReserveSlotTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage")
+      .value(Matchers.containsString("Only one visit contact allowed"))
   }
 
   @Test

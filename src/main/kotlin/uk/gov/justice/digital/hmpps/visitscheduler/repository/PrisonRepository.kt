@@ -29,4 +29,11 @@ interface PrisonRepository : JpaRepository<Prison, Long> {
       "where p.code=:prisonCode",
   )
   fun getPrisonId(prisonCode: String): Long?
+
+  @Query(
+    "SELECT max_total_visitors FROM prison " +
+      "WHERE code = :prisonCode",
+    nativeQuery = true,
+  )
+  fun getPrisonMaxVisitors(prisonCode: String): Long?
 }
