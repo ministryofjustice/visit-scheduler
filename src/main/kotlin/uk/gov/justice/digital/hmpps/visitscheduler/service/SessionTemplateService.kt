@@ -54,7 +54,7 @@ import java.util.function.Supplier
 
 @Service
 @Transactional
-open class SessionTemplateService(
+class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
@@ -89,12 +89,12 @@ open class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionLocationGroup(reference: String): SessionLocationGroupDto {
+  fun getSessionLocationGroup(reference: String): SessionLocationGroupDto {
     return SessionLocationGroupDto(getLocationGroupByReference(reference))
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionLocationGroups(prisonCode: String): List<SessionLocationGroupDto> {
+  fun getSessionLocationGroups(prisonCode: String): List<SessionLocationGroupDto> {
     return sessionLocationGroupRepository.findByPrisonCode(prisonCode).map { SessionLocationGroupDto(it) }
   }
 
@@ -512,7 +512,7 @@ open class SessionTemplateService(
   }
 
   @Transactional
-  open fun moveSessionTemplateVisits(fromSessionTemplateReference: String, toSessionTemplateReference: String, fromDate: LocalDate): Int {
+  fun moveSessionTemplateVisits(fromSessionTemplateReference: String, toSessionTemplateReference: String, fromDate: LocalDate): Int {
     val fromSessionTemplate = getSessionTemplate(fromSessionTemplateReference)
     val toSessionTemplate = getSessionTemplate(toSessionTemplateReference)
     // validate move before updating session template reference
@@ -557,6 +557,14 @@ open class SessionTemplateService(
 
   fun getVisitRoom(sessionTemplateReference: String): String {
     return sessionTemplateRepository.getVisitRoom(sessionTemplateReference)
+  }
+
+  fun getSessionTemplatesCapacity(sessionTemplateReference: String, restriction: VisitRestriction): Int {
+    return if (VisitRestriction.OPEN == restriction) {
+      sessionTemplateRepository.getOpenCapacity(sessionTemplateReference)
+    } else {
+      sessionTemplateRepository.getClosedCapacity(sessionTemplateReference)
+    }
   }
 }
 

@@ -8,12 +8,14 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ExpiredApplicationTaskConfiguration
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -23,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
@@ -94,11 +97,10 @@ class ApplicationService(
   }
 
   private fun createApplication(createApplicationDto: CreateApplicationDto, visit: Visit? = null): ApplicationDto {
-    validate(createApplicationDto)
-
-    val sessionTemplateReference = createApplicationDto.sessionTemplateReference
-    val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
+    val sessionTemplate = getSessionTemplate(createApplicationDto.sessionTemplateReference)
     val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
+
+    validate(createApplicationDto, prison)
 
     val sessionSlot = sessionSlotService.getSessionSlot(createApplicationDto.sessionDate, sessionTemplate, prison)
     val isReservedSlot = visit?.let {
@@ -146,13 +148,17 @@ class ApplicationService(
     return applicationDto
   }
 
+  private fun getSessionTemplate(sessionTemplateReference: String): SessionTemplateDto {
+    return sessionTemplateService.getSessionTemplates(sessionTemplateReference)
+  }
+
   fun changeIncompleteApplication(applicationReference: String, changeApplicationDto: ChangeApplicationDto): ApplicationDto {
-    validate(changeApplicationDto)
+    val sessionTemplate = getSessionTemplate(changeApplicationDto.sessionTemplateReference)
+    val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
+
+    validate(changeApplicationDto, prison)
 
     val application = getApplicationEntity(applicationReference)
-    val sessionTemplateReference = changeApplicationDto.sessionTemplateReference
-    val sessionTemplate = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
-    val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
     val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
     application.sessionSlotId = sessionSlot.id
@@ -229,7 +235,7 @@ class ApplicationService(
     return LocalDateTime.now().minusMinutes(expiredApplicationTaskConfiguration.deleteExpiredApplicationsAfterMinutes.toLong())
   }
 
-  private fun getExpiredApplicationDateAndTime(): LocalDateTime {
+  fun getExpiredApplicationDateAndTime(): LocalDateTime {
     return LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
   }
 
@@ -337,21 +343,30 @@ class ApplicationService(
     }
   }
 
-  private fun validate(changeApplicationDto: ChangeApplicationDto) {
-    changeApplicationDto.visitorSupport?.let {
-      validate(it)
-    }
+  private fun validate(changeApplicationDto: ChangeApplicationDto, prison: Prison) {
+    validate(changeApplicationDto.visitorSupport, changeApplicationDto.visitors, prison)
   }
-  private fun validate(createApplicationDto: CreateApplicationDto) {
-    createApplicationDto.visitorSupport?.let {
-      validate(it)
-    }
+  private fun validate(createApplicationDto: CreateApplicationDto, prison: Prison) {
+    validate(createApplicationDto.visitorSupport, createApplicationDto.visitors, prison)
   }
+  private fun validate(support: ApplicationSupportDto?, visitors: Set<VisitorDto>?, prison: Prison) {
+    val validationErrors = mutableListOf<String>()
 
-  private fun validate(support: ApplicationSupportDto) {
-    val value = support.description.trim()
-    if (value.isNotBlank() && value.length < 3) {
-      throw VSiPValidationException(arrayOf("Support value description is too small"))
+    support?.let {
+      val value = support.description.trim()
+      if (value.isNotBlank() && value.length < 3) {
+        validationErrors.add("Support value description is too small")
+      }
+    }
+
+    visitors?.let {
+      if (prison.maxTotalVisitors < visitors.size) {
+        validationErrors.add("This application has too many Visitors for this prison ${prison.code} max visitors ${prison.maxTotalVisitors}")
+      }
+    }
+
+    if (validationErrors.isNotEmpty()) {
+      throw VSiPValidationException(validationErrors.toTypedArray())
     }
   }
 

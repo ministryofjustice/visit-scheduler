@@ -5,7 +5,6 @@ import jakarta.validation.Valid
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.validation.NullableNotEmpty
@@ -25,7 +24,6 @@ data class ChangeApplicationDto(
   val visitContact: ContactDto? = null,
   @Schema(description = "List of visitors associated with the visit", required = false)
   @field:NullableNotEmpty
-  @field:VisitorCountValidation
   @field:VisitorContactValidation
   val visitors: Set<@Valid VisitorDto>? = null,
   @Schema(description = "additional support associated with the visit, if null support will not be updated", required = false)
