@@ -159,7 +159,8 @@ fun callVisitBook(
   authHttpHeaders: (HttpHeaders) -> Unit,
   applicationReference: String,
   applicationMethodType: ApplicationMethodType = PHONE,
-  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType),
+  allowOverBooking: Boolean = false,
+  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking),
 ): ResponseSpec {
   return callPut(
     bodyValue = bookingRequestDto,
