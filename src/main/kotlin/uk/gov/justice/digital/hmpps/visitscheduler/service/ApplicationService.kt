@@ -394,4 +394,12 @@ class ApplicationService(
       getExpiredApplicationDateAndTime(),
     )
   }
+
+  fun getReservedApplicationsCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
+    return if (VisitRestriction.OPEN == restriction) {
+      applicationRepo.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime())
+    } else {
+      applicationRepo.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime())
+    }
+  }
 }

@@ -78,5 +78,5 @@ interface TestApplicationRepository : JpaRepository<Application, Long>, JpaSpeci
     "Update application SET  modify_timestamp = :dateAndTime, create_timestamp = :dateAndTime  WHERE reference=:reference",
     nativeQuery = true,
   )
-  fun updateTimestamsp(dateAndTime: LocalDateTime, reference: String): Int
+  fun updateTimestamp(dateAndTime: LocalDateTime, reference: String): Int
 }

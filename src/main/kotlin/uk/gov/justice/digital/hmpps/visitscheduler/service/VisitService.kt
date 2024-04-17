@@ -87,7 +87,7 @@ class VisitService(
     }
 
     val application = applicationService.getApplicationEntity(applicationReference)
-    if (!bookingRequestDto.allowOverBooking && hasExceededMaxBooking(application)) {
+    if (!bookingRequestDto.allowOverBooking && hasExceededMaxCapacity(application)) {
       throw OverCapacityException("Booking can not be maid because capacity has been exceeded for slot ${application.sessionSlot.reference}")
     }
 
@@ -125,22 +125,25 @@ class VisitService(
     }
   }
 
-  private fun hasExceededMaxBooking(
+  private fun hasExceededMaxCapacity(
     application: Application,
   ): Boolean {
-    var exceededMaxBooking = false
-    application.modifyTimestamp?.let {
-      // This check is to make sure current behaviour does not change, might not be needed!
-      if (it.isBefore(applicationService.getExpiredApplicationDateAndTime())) {
-        val bookCount = getBookCountForSlot(application.sessionSlotId, application.restriction)
-        val maxBookings = sessionTemplateService.getSessionTemplatesCapacity(
-          application.sessionSlot.sessionTemplateReference!!,
-          application.restriction,
-        )
-        exceededMaxBooking = bookCount >= maxBookings
-      }
+    var slotTakenCount = getBookCountForSlot(application.sessionSlotId, application.restriction)
+
+    if (isExpiredApplication(application.modifyTimestamp!!)) {
+      slotTakenCount += applicationService.getReservedApplicationsCountForSlot(application.sessionSlotId, application.restriction)
     }
-    return exceededMaxBooking
+
+    val maxBookings = sessionTemplateService.getSessionTemplatesCapacity(
+      application.sessionSlot.sessionTemplateReference!!,
+      application.restriction,
+    )
+
+    return slotTakenCount >= maxBookings
+  }
+
+  private fun isExpiredApplication(modifyTimestamp: LocalDateTime): Boolean {
+    return modifyTimestamp.isBefore(applicationService.getExpiredApplicationDateAndTime())
   }
 
   private fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
