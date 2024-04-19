@@ -91,12 +91,12 @@ class VisitSessionController(
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH)
   @Operation(
-    summary = "Returns only available (not fully booked / already booked for prisoner) visit sessions for visit restriction and within the reservable time period",
-    description = "Retrieve available visit sessions for a specified prisoner by restriction",
+    summary = "Returns only available visit sessions for a specified prisoner by restriction and within the reservable time period",
+    description = "Returns only available visit sessions for a specified prisoner by restriction and within the reservable time period",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Visit session information returned",
+        description = "Available visit session details returned",
       ),
       ApiResponse(
         responseCode = "401",
@@ -105,7 +105,7 @@ class VisitSessionController(
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to GET available visit sessions ",
+        description = "Incorrect request to GET available visit sessions",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
