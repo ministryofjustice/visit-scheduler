@@ -118,14 +118,14 @@ class VisitNotificationEventService(
     }
   }
 
-  fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
-    // TODO not yet implemented
-  }
-
   fun handleVisitorRestrictionChangeNotification(notificationDto: VisitorRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
       // TODO not yet implemented
     }
+  }
+
+  fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
+    // TODO not yet implemented
   }
 
   private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType) {
