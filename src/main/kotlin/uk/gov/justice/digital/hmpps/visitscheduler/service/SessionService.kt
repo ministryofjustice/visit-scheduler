@@ -37,7 +37,7 @@ import java.util.stream.Stream
 
 @Service
 @Transactional
-open class SessionService(
+class SessionService(
   private val sessionDatesUtil: SessionDatesUtil,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
@@ -58,7 +58,7 @@ open class SessionService(
   }
 
   @Transactional(readOnly = true)
-  open fun getVisitSessions(
+  fun getVisitSessions(
     prisonCode: String,
     prisonerId: String,
     minOverride: Int? = null,
@@ -111,7 +111,7 @@ open class SessionService(
     LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, visitRestriction: {} ", prisonCode, prisonerId, visitRestriction)
     return getVisitSessions(prisonCode, prisonerId, minOverride, maxOverride).filter {
       hasSessionGotCapacity(it, visitRestriction).and(it.sessionConflicts.isEmpty())
-    }.map { AvailableVisitSessionDto(it) }.toList()
+    }.map { AvailableVisitSessionDto(it, visitRestriction) }.toList()
   }
 
   private fun hasSessionGotCapacity(session: VisitSessionDto, visitRestriction: VisitRestriction): Boolean {

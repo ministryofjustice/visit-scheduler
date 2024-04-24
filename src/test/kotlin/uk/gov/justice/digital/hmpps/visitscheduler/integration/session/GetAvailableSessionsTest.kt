@@ -64,7 +64,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       .expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate, OPEN)
   }
 
   @Test
@@ -101,7 +101,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, closedSessionTemplate)
+    assertSession(visitSessionResults[0], nextAllowedDay, closedSessionTemplate, CLOSED)
   }
 
   @Test
@@ -145,7 +145,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       .expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2, CLOSED)
   }
 
   @Test
@@ -197,7 +197,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       .expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2, CLOSED)
   }
 
   @Test
@@ -251,7 +251,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       .expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2, CLOSED)
   }
 
   @Test
@@ -296,7 +296,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       .expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2, OPEN)
   }
 
   @Test
@@ -341,7 +341,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2, OPEN)
   }
 
   @Test
@@ -407,7 +407,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isEqualTo(1)
 
     // only session template 3 needs to be returned as it's on the next day
-    assertSession(visitSessionResults[0], nextAllowedDay.plusDays(1), sessionTemplate3)
+    assertSession(visitSessionResults[0], nextAllowedDay.plusDays(1), sessionTemplate3, OPEN)
   }
 
   @Test
@@ -474,7 +474,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     assertThat(visitSessionResults.size).isEqualTo(1)
 
     // only session template 3 needs to be returned as it's on the next day even though the other visit has not been booked
-    assertSession(visitSessionResults[0], nextAllowedDay.plusDays(1), sessionTemplate3)
+    assertSession(visitSessionResults[0], nextAllowedDay.plusDays(1), sessionTemplate3, OPEN)
   }
 
   @Test
@@ -504,7 +504,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       .expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], now.plusWeeks(1), sessionTemplate)
+    assertSession(visitSessionResults[0], now.plusWeeks(1), sessionTemplate, OPEN)
   }
 
   @Test
@@ -533,7 +533,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate, OPEN)
   }
 
   @Test
@@ -590,9 +590,9 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(3)
-    assertSession(visitSessionResults[0], nextAllowedDay, session1)
-    assertSession(visitSessionResults[1], nextAllowedDay, session2)
-    assertSession(visitSessionResults[2], nextAllowedDay, session3)
+    assertSession(visitSessionResults[0], nextAllowedDay, session1, OPEN)
+    assertSession(visitSessionResults[1], nextAllowedDay, session2, OPEN)
+    assertSession(visitSessionResults[2], nextAllowedDay, session3, OPEN)
   }
 
   @Test
@@ -628,7 +628,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate, OPEN)
   }
 
   @Test
@@ -1025,14 +1025,14 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val visitSessionResults = getResults(returnResult)
 
     assertThat(visitSessionResults.size).isEqualTo(8)
-    assertSession(visitSessionResults[0], nextAllowedDay, nextDaySessionTemplate)
-    assertSession(visitSessionResults[1], dayAfterNextAllowedDay, dayAfterNextSessionTemplate)
-    assertSession(visitSessionResults[2], nextAllowedDay.plusWeeks(1), nextDaySessionTemplate)
-    assertSession(visitSessionResults[3], dayAfterNextAllowedDay.plusWeeks(1), dayAfterNextSessionTemplate)
-    assertSession(visitSessionResults[4], nextAllowedDay.plusWeeks(2), nextDaySessionTemplate)
-    assertSession(visitSessionResults[5], dayAfterNextAllowedDay.plusWeeks(2), dayAfterNextSessionTemplate)
-    assertSession(visitSessionResults[6], nextAllowedDay.plusWeeks(3), nextDaySessionTemplate)
-    assertSession(visitSessionResults[7], dayAfterNextAllowedDay.plusWeeks(3), dayAfterNextSessionTemplate)
+    assertSession(visitSessionResults[0], nextAllowedDay, nextDaySessionTemplate, OPEN)
+    assertSession(visitSessionResults[1], dayAfterNextAllowedDay, dayAfterNextSessionTemplate, OPEN)
+    assertSession(visitSessionResults[2], nextAllowedDay.plusWeeks(1), nextDaySessionTemplate, OPEN)
+    assertSession(visitSessionResults[3], dayAfterNextAllowedDay.plusWeeks(1), dayAfterNextSessionTemplate, OPEN)
+    assertSession(visitSessionResults[4], nextAllowedDay.plusWeeks(2), nextDaySessionTemplate, OPEN)
+    assertSession(visitSessionResults[5], dayAfterNextAllowedDay.plusWeeks(2), dayAfterNextSessionTemplate, OPEN)
+    assertSession(visitSessionResults[6], nextAllowedDay.plusWeeks(3), nextDaySessionTemplate, OPEN)
+    assertSession(visitSessionResults[7], dayAfterNextAllowedDay.plusWeeks(3), dayAfterNextSessionTemplate, OPEN)
   }
 
   @Test
@@ -1059,7 +1059,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val visitSessionResults = getResults(returnResult)
 
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate, OPEN)
   }
 
   @Test
@@ -1614,9 +1614,9 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val visitSessionDtos = getResults(returnResult)
 
     assertThat(visitSessionDtos).hasSize(3)
-    assertSession(visitSessionDtos[0], validFromDate.plusWeeks(1), sessionTemplate)
-    assertSession(visitSessionDtos[1], validFromDate.plusWeeks(2), sessionTemplate)
-    assertSession(visitSessionDtos[2], validFromDate.plusWeeks(3), sessionTemplate)
+    assertSession(visitSessionDtos[0], validFromDate.plusWeeks(1), sessionTemplate, OPEN)
+    assertSession(visitSessionDtos[1], validFromDate.plusWeeks(2), sessionTemplate, OPEN)
+    assertSession(visitSessionDtos[2], validFromDate.plusWeeks(3), sessionTemplate, OPEN)
   }
 
   @Test
@@ -1684,7 +1684,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val visitSessionDtos = getResults(returnResult)
 
     assertThat(visitSessionDtos).hasSize(1)
-    assertSession(visitSessionDtos[0], validFromDate.plusWeeks(4), sessionTemplate)
+    assertSession(visitSessionDtos[0], validFromDate.plusWeeks(4), sessionTemplate, OPEN)
   }
 
   @Test
@@ -2009,10 +2009,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     visitSession: AvailableVisitSessionDto,
     expectedDate: LocalDate,
     expectedSessionTemplate: SessionTemplate,
+    visitRestriction: VisitRestriction,
   ) {
     assertThat(visitSession.sessionDate).isEqualTo(expectedDate)
     assertThat(visitSession.sessionTimeSlot.startTime).isEqualTo(expectedSessionTemplate.startTime)
     assertThat(visitSession.sessionTimeSlot.endTime).isEqualTo(expectedSessionTemplate.endTime)
+    assertThat(visitSession.visitRestriction).isEqualTo(visitRestriction)
   }
 
   private fun assertResponseLength(responseSpec: ResponseSpec, length: Int) {
