@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 
-const val PRISONS_PATH: String = "/config/prisons/user-type/{type}/supported/"
+const val PRISONS_PATH: String = "/config/prisons/user-type/{type}/supported"
 
 @RestController
 @Validated
