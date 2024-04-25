@@ -52,6 +52,8 @@ class Prison(
   @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "prison", orphanRemoval = true)
   var excludeDates: MutableList<PrisonExcludeDate> = mutableListOf(),
 
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "prison", orphanRemoval = true)
+  var clients: MutableList<PrisonUserClient> = mutableListOf(),
 ) {
 
   @Id

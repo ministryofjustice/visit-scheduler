@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.repository
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.stereotype.Repository
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 
 @Repository
@@ -11,16 +12,24 @@ interface PrisonRepository : JpaRepository<Prison, Long> {
   fun findByCode(prisonCode: String): Prison?
 
   @Query(
-    "select p.code from Prison p " +
-      "where p.active = true order by p.code",
+    "SELECT p.code FROM Prison p " +
+      " JOIN PrisonUserClient puc ON puc.prisonId = p.id " +
+      " WHERE p.active = true AND puc.userType = :type AND puc.active = true " +
+      " ORDER BY p.code",
   )
-  fun getSupportedPrisons(): List<String>
+  fun getSupportedPrisons(type: UserType): List<String>
+
+  @Query(
+    "SELECT p.code FROM Prison p " +
+      " ORDER BY p.code",
+  )
+  fun getPrisonCodes(): List<String>
 
   @Query(
     "select p.code from Prison p " +
-      "where p.active = true AND p.code=:prisonCode",
+      "where p.code=:prisonCode",
   )
-  fun getSupportedPrison(prisonCode: String): String?
+  fun getPrisonCode(prisonCode: String): String?
 
   fun findAllByOrderByCodeAsc(): List<Prison>
 

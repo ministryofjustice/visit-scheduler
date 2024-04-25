@@ -71,7 +71,7 @@ class VisitNotificationEventServiceTest {
 
     val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(NON_ASSOCIATION_CREATED, primaryNonAssociationNumber, secondaryNonAssociationNumber)
 
-    whenever(prisonerService.getPrisonerSupportedPrisonCode(any())).thenReturn(
+    whenever(prisonerService.getPrisonerPrisonCode(any())).thenReturn(
       "CFI",
     )
     whenever(visitService.getBookedVisits(any(), any(), any())).thenReturn(
