@@ -44,11 +44,15 @@ policy:
       minimum-days: 2
       maximum-days: 28
 
+expired:
+  applications:
+    validity-minutes : 10
+
 task:
-  expired-visit:
-    enabled: true
-    cron: 0 0/10 * * * ?
-    validity-minutes: 20
+  delete:
+    expired-applications:
+      enabled: true
+      validity-minutes: 1440
 
 
 local-stack-aws:

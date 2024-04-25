@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ExpiredApplicationTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
@@ -30,6 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
@@ -49,8 +51,11 @@ class ApplicationService(
   private val sessionTemplateService: SessionTemplateService,
   private val eventAuditRepository: EventAuditRepository,
   private val prisonsService: PrisonsService,
-  @Value("\${task.expired-visit.validity-minutes:10}") private val expiredPeriodMinutes: Int,
+  @Value("\${expired.applications.validity-minutes:10}") private val expiredPeriodMinutes: Int,
 ) {
+
+  @Autowired
+  private lateinit var expiredApplicationTaskConfiguration: ExpiredApplicationTaskConfiguration
 
   @Autowired
   private lateinit var applicationDtoBuilder: ApplicationDtoBuilder
@@ -226,6 +231,10 @@ class ApplicationService(
     return !newRestriction.isSame(visit.visitRestriction) || visit.sessionSlotId != newSessionSlot.id
   }
 
+  private fun getExpiredApplicationToDeleteDateAndTime(): LocalDateTime {
+    return LocalDateTime.now().minusMinutes(expiredApplicationTaskConfiguration.deleteExpiredApplicationsAfterMinutes.toLong())
+  }
+
   fun getExpiredApplicationDateAndTime(): LocalDateTime {
     return LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
   }
@@ -233,7 +242,7 @@ class ApplicationService(
   @Transactional(propagation = REQUIRES_NEW)
   fun deleteAllExpiredApplications() {
     LOG.debug("Entered deleteExpiredApplication")
-    val applicationsToBeDeleted = applicationRepo.findExpiredApplicationReferences(getExpiredApplicationDateAndTime())
+    val applicationsToBeDeleted = applicationRepo.findApplicationByModifyTimes(getExpiredApplicationToDeleteDateAndTime())
     applicationsToBeDeleted.forEach { applicationToBeDeleted ->
       applicationRepo.delete(applicationToBeDeleted)
       val applicationEvent = telemetryClientService.createApplicationTrackEventFromVisitEntity(applicationToBeDeleted)
@@ -358,6 +367,39 @@ class ApplicationService(
 
     if (validationErrors.isNotEmpty()) {
       throw VSiPValidationException(validationErrors.toTypedArray())
+    }
+  }
+
+  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotIds: List<Long>): Boolean {
+    return applicationRepo.hasActiveApplicationsForDate(
+      nonAssociationPrisonerIds,
+      sessionSlotIds,
+      getExpiredApplicationDateAndTime(),
+    )
+  }
+
+  fun hasReservations(prisonerId: String, sessionSlotId: Long): Boolean {
+    val expiredDateAndTime = getExpiredApplicationDateAndTime()
+
+    return applicationRepo.hasReservations(
+      prisonerId = prisonerId,
+      sessionSlotId = sessionSlotId,
+      expiredDateAndTime,
+    )
+  }
+
+  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long): List<VisitRestrictionStats> {
+    return applicationRepo.getCountOfReservedSessionForOpenOrClosedRestriction(
+      id,
+      getExpiredApplicationDateAndTime(),
+    )
+  }
+
+  fun getReservedApplicationsCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
+    return if (VisitRestriction.OPEN == restriction) {
+      applicationRepo.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime())
+    } else {
+      applicationRepo.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime())
     }
   }
 }

@@ -18,6 +18,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -173,6 +174,20 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
           userMessage = "Capacity not found",
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(OverCapacityException::class)
+  fun handleOverCapacityException(e: OverCapacityException): ResponseEntity<ErrorResponse?>? {
+    log.debug("Over capacity exception caught : {}", e.message)
+    return ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.BAD_REQUEST,
+          userMessage = "Over capacity for time slot",
           developerMessage = e.message,
         ),
       )

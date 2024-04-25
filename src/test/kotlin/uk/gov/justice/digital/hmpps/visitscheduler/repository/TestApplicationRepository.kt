@@ -71,4 +71,12 @@ interface TestApplicationRepository : JpaRepository<Application, Long>, JpaSpeci
     "SELECT CASE WHEN (COUNT(ac) > 0) THEN TRUE ELSE FALSE END FROM ApplicationContact ac WHERE ac.applicationId = :id ",
   )
   fun hasContact(@Param("id") id: Long): Boolean
+
+  @Transactional
+  @Modifying
+  @Query(
+    "Update application SET  modify_timestamp = :dateAndTime, create_timestamp = :dateAndTime  WHERE reference=:reference",
+    nativeQuery = true,
+  )
+  fun updateTimestamp(dateAndTime: LocalDateTime, reference: String): Int
 }

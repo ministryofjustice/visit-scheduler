@@ -72,6 +72,22 @@ interface SessionTemplateRepository : JpaRepository<SessionTemplate, Long> {
   ): List<SessionTemplate>
 
   @Query(
+    "select u.openCapacity from SessionTemplate u " +
+      "where u.reference = :reference ",
+  )
+  fun getOpenCapacity(
+    @Param("reference") reference: String,
+  ): Int
+
+  @Query(
+    "select u.closedCapacity from SessionTemplate u " +
+      "where u.reference = :reference ",
+  )
+  fun getClosedCapacity(
+    @Param("reference") reference: String,
+  ): Int
+
+  @Query(
     "select st.visitRoom from SessionTemplate st " +
       "where st.reference = :reference ",
   )

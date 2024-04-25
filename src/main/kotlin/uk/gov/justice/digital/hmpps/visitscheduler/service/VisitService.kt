@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
@@ -85,8 +86,14 @@ class VisitService(
       return visitDtoBuilder.build(visit)
     }
 
-    val hasExistingBooking = visitRepository.doesBookedVisitExist(applicationReference)
     val application = applicationService.getApplicationEntity(applicationReference)
+    if (!bookingRequestDto.allowOverBooking && hasExceededMaxCapacity(application)) {
+      val messages = "Booking can not be made because capacity has been exceeded for slot ${application.sessionSlot.reference}"
+      LOG.debug(messages)
+      throw OverCapacityException(messages)
+    }
+
+    val hasExistingBooking = visitRepository.doesBookedVisitExist(applicationReference)
     val booking = createBooking(application, hasExistingBooking)
     application.completed = true
 
@@ -110,6 +117,35 @@ class VisitService(
     processBookingEvents(booking, bookedVisitDto, bookingRequestDto, hasExistingBooking)
 
     return bookedVisitDto
+  }
+
+  fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
+    return if (VisitRestriction.OPEN == restriction) {
+      visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
+    } else {
+      visitRepository.getCountOfBookedForClosedSessionSlot(sessionSlotId)
+    }
+  }
+
+  private fun hasExceededMaxCapacity(
+    application: Application,
+  ): Boolean {
+    var slotTakenCount = getBookCountForSlot(application.sessionSlotId, application.restriction)
+
+    if (isExpiredApplication(application.modifyTimestamp!!)) {
+      slotTakenCount += applicationService.getReservedApplicationsCountForSlot(application.sessionSlotId, application.restriction)
+    }
+
+    val maxBookings = sessionTemplateService.getSessionTemplatesCapacity(
+      application.sessionSlot.sessionTemplateReference!!,
+      application.restriction,
+    )
+
+    return slotTakenCount >= maxBookings
+  }
+
+  private fun isExpiredApplication(modifyTimestamp: LocalDateTime): Boolean {
+    return modifyTimestamp.isBefore(applicationService.getExpiredApplicationDateAndTime())
   }
 
   private fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {

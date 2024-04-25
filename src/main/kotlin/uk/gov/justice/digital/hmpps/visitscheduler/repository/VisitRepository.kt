@@ -75,6 +75,24 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun getCountOfBookedSessionVisitsForOpenOrClosedRestriction(sessionSlotId: Long): List<VisitRestrictionStats>
 
   @Query(
+    "SELECT COUNT(*) AS count  FROM visit v " +
+      "WHERE v.session_slot_id = :sessionSlotId AND " +
+      "v.visit_restriction = 'OPEN' AND " +
+      "v.visit_status = 'BOOKED' ",
+    nativeQuery = true,
+  )
+  fun getCountOfBookedForOpenSessionSlot(sessionSlotId: Long): Long
+
+  @Query(
+    "SELECT COUNT(*) AS count  FROM visit v " +
+      "WHERE v.session_slot_id = :sessionSlotId AND " +
+      "v.visit_restriction = 'CLOSED' AND " +
+      "v.visit_status = 'BOOKED' ",
+    nativeQuery = true,
+  )
+  fun getCountOfBookedForClosedSessionSlot(sessionSlotId: Long): Long
+
+  @Query(
     "SELECT v.visit_restriction AS visitRestriction, COUNT(*) AS count  FROM visit v " +
       "WHERE v.session_slot_id = :sessionSlotId AND " +
       "v.visit_restriction in ('OPEN','CLOSED') AND " +
