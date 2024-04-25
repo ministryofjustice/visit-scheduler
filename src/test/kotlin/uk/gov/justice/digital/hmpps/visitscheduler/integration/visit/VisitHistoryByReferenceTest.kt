@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek.SATURDAY
 
@@ -222,6 +223,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = actionedBy,
+      userType = STAFF,
     )
   }
 }

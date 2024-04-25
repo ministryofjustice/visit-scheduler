@@ -18,6 +18,7 @@ import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -58,6 +59,10 @@ class Application(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   var restriction: VisitRestriction,
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "user_type")
+  val userType: UserType,
 
   @Column(nullable = false)
   var completed: Boolean = false,

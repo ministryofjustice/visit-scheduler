@@ -8,6 +8,7 @@ import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType
 import java.time.LocalDate
 
 data class CreateApplicationDto(
@@ -35,4 +36,7 @@ data class CreateApplicationDto(
   var visitorSupport: ApplicationSupportDto? = null,
   @Schema(description = "Username for user who actioned this request", required = true)
   val actionedBy: String,
+  @Schema(description = "User type", example = "STAFF", required = true)
+  @field:NotNull
+  val userType: UserType,
 )
