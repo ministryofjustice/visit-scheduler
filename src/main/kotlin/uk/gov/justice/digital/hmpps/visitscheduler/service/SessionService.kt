@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
@@ -35,7 +36,7 @@ import java.util.stream.Stream
 
 @Service
 @Transactional
-open class SessionService(
+class SessionService(
   private val sessionDatesUtil: SessionDatesUtil,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
@@ -56,7 +57,7 @@ open class SessionService(
   }
 
   @Transactional(readOnly = true)
-  open fun getVisitSessions(
+  fun getVisitSessions(
     prisonCode: String,
     prisonerId: String,
     minOverride: Int? = null,
@@ -97,6 +98,27 @@ open class SessionService(
     }.also {
       populateBookedCount(sessionSlots, it)
     }.sortedWith(compareBy { it.startTimestamp })
+  }
+
+  fun getAvailableVisitSessions(
+    prisonCode: String,
+    prisonerId: String,
+    visitRestriction: VisitRestriction,
+    minOverride: Int? = null,
+    maxOverride: Int? = null,
+  ): List<AvailableVisitSessionDto> {
+    LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, visitRestriction: {} ", prisonCode, prisonerId, visitRestriction)
+    return getVisitSessions(prisonCode, prisonerId, minOverride, maxOverride).filter {
+      hasSessionGotCapacity(it, visitRestriction).and(it.sessionConflicts.isEmpty())
+    }.map { AvailableVisitSessionDto(it, visitRestriction) }.toList()
+  }
+
+  private fun hasSessionGotCapacity(session: VisitSessionDto, visitRestriction: VisitRestriction): Boolean {
+    return if (visitRestriction == VisitRestriction.CLOSED) {
+      session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0))
+    } else {
+      session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0))
+    }
   }
 
   private fun addConflicts(
