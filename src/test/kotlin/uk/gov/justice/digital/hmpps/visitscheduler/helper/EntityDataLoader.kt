@@ -68,8 +68,12 @@ class PrisonEntityHelper(
       activePrison: Boolean = true,
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
+      maxTotalVisitors: Int = 6,
+      maxAdultVisitors: Int = 3,
+      maxChildVisitors: Int = 3,
+      adultAgeYears: Int = 18,
     ): Prison {
-      return Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax)
+      return Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
     }
 
     fun createPrisonDto(
@@ -78,15 +82,23 @@ class PrisonEntityHelper(
       excludeDates: Set<LocalDate> = sortedSetOf(),
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
+      maxTotalVisitors: Int = 6,
+      maxAdultVisitors: Int = 3,
+      maxChildVisitors: Int = 3,
+      adultAgeYears: Int = 18,
     ): PrisonDto {
-      return PrisonDto(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, excludeDates = excludeDates)
+      return PrisonDto(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, excludeDates = excludeDates)
     }
 
     fun updatePrisonDto(
       policyNoticeDaysMin: Int = 10,
       policyNoticeDaysMax: Int = 20,
+      maxTotalVisitors: Int = 4,
+      maxAdultVisitors: Int = 2,
+      maxChildVisitors: Int = 2,
+      adultAgeYears: Int = 16,
     ): UpdatePrisonDto {
-      return UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax)
+      return UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
     }
   }
 
@@ -367,6 +379,7 @@ class EventAuditEntityHelper(
     actionedBy: String = "ACTIONED_BY",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = EventAuditType.BOOKED_VISIT,
+    text: String? = null,
   ): EventAudit {
     return create(
       reference = visit.reference,
@@ -375,6 +388,7 @@ class EventAuditEntityHelper(
       actionedBy = actionedBy,
       type = type,
       applicationMethodType = applicationMethodType,
+      text = text,
     )
   }
 
@@ -383,6 +397,7 @@ class EventAuditEntityHelper(
     actionedBy: String = "ACTIONED_BY",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = EventAuditType.BOOKED_VISIT,
+    text: String? = null,
   ): EventAudit {
     return create(
       applicationReference = application.reference,
@@ -390,6 +405,7 @@ class EventAuditEntityHelper(
       actionedBy = actionedBy,
       type = type,
       applicationMethodType = applicationMethodType,
+      text = text,
     )
   }
 
@@ -400,6 +416,7 @@ class EventAuditEntityHelper(
     sessionTemplateReference: String? = "sessionTemplateReference",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = EventAuditType.BOOKED_VISIT,
+    text: String?,
   ): EventAudit {
     return save(
       EventAudit(
@@ -409,6 +426,7 @@ class EventAuditEntityHelper(
         sessionTemplateReference = sessionTemplateReference,
         type = type,
         applicationMethodType = applicationMethodType,
+        text = text,
       ),
     )
   }

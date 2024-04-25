@@ -46,10 +46,14 @@ fun sessionTemplate(
   weeklyFrequency: Int = 1,
   policyNoticeDaysMin: Int = 2,
   policyNoticeDaysMax: Int = 28,
+  maxTotalVisitors: Int = 6,
+  maxAdultVisitors: Int = 3,
+  maxChildVisitors: Int = 3,
+  adultAgeYears: Int = 18,
   isActive: Boolean = true,
   includeLocationGroupType: Boolean = true,
 ): SessionTemplate {
-  val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax)
+  val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
 
   return SessionTemplate(
     name = name + dayOfWeek,

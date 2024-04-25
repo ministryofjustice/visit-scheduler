@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
@@ -17,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
@@ -51,6 +53,7 @@ class VisitNotificationEventService(
 
   @Transactional
   fun handleNonAssociations(notificationDto: NonAssociationChangedNotificationDto) {
+    LOG.debug("NonAssociations notification received : $notificationDto")
     if (NON_ASSOCIATION_CREATED == notificationDto.type) {
       val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
       prisonCode?.let {
@@ -70,6 +73,7 @@ class VisitNotificationEventService(
 
   @Transactional
   fun handleAddPrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
+    LOG.debug("PrisonVisitBlockDate notification received : $prisonDateBlockedDto")
     val affectedVisits = visitService.getBookedVisitsForDate(
       prisonCode = prisonDateBlockedDto.prisonCode,
       date = prisonDateBlockedDto.visitDate,
@@ -79,6 +83,7 @@ class VisitNotificationEventService(
 
   @Transactional
   fun handleRemovePrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
+    LOG.debug("RemovePrisonVisitBlockDate notification received : $prisonDateBlockedDto")
     val affectedNotifications = visitNotificationEventRepository.getEventsByVisitDate(
       prisonDateBlockedDto.prisonCode,
       prisonDateBlockedDto.visitDate,
@@ -88,6 +93,7 @@ class VisitNotificationEventService(
   }
 
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
+    LOG.debug("PrisonerReleasedNotification notification received : $notificationDto")
     if (RELEASED == notificationDto.reasonType) {
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, notificationDto.prisonCode)
       processVisitsWithNotifications(affectedVisits, PRISONER_RELEASED_EVENT)
@@ -95,6 +101,7 @@ class VisitNotificationEventService(
   }
 
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
+    LOG.debug("PrisonerRestrictionChange notification received")
     if (isNotificationDatesValid(notificationDto.validToDate)) {
       val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
 
@@ -111,14 +118,14 @@ class VisitNotificationEventService(
     }
   }
 
-  fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
-    // TODO not yet implemented
-  }
-
   fun handleVisitorRestrictionChangeNotification(notificationDto: VisitorRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
       // TODO not yet implemented
     }
+  }
+
+  fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
+    // TODO not yet implemented
   }
 
   private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType) {
@@ -189,7 +196,7 @@ class VisitNotificationEventService(
     reason: UnFlagEventReason,
   ) {
     visitNotificationEvents.forEach {
-      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, notificationEventType, reason)
+      visitNotificationFlaggingService.unFlagTrackEvents(it.bookingReference, notificationEventType, reason, null)
     }
     visitNotificationEventRepository.deleteAll(visitNotificationEvents)
   }
@@ -222,6 +229,7 @@ class VisitNotificationEventService(
         sessionTemplateReference = impactedVisit.sessionTemplateReference,
         type = EventAuditType.valueOf(type.name),
         applicationMethodType = NOT_KNOWN,
+        text = null,
       ),
     )
 
@@ -330,5 +338,23 @@ class VisitNotificationEventService(
 
   fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> {
     return this.visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
+  }
+
+  @Transactional
+  fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
+    val visit = visitService.getBookedVisitByReference(visitReference)
+    visitService.addEventAudit(ignoreVisitNotification.actionedBy, visit, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE, ignoreVisitNotification.reason)
+    deleteVisitNotificationEvents(visitReference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
+    return visit
+  }
+
+  @Transactional
+  fun deleteVisitNotificationEvents(visitReference: String, type: NotificationEventType?, reason: UnFlagEventReason, text: String? = null) {
+    type?.let {
+      visitNotificationEventRepository.deleteByBookingReferenceAndType(visitReference, it)
+    } ?: visitNotificationEventRepository.deleteByBookingReference(visitReference)
+
+    // after deleting the visit notifications - update application insights
+    visitNotificationFlaggingService.unFlagTrackEvents(visitReference, type, reason, text)
   }
 }

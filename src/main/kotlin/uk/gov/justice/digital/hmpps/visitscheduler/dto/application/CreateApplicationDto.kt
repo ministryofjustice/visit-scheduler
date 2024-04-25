@@ -6,7 +6,6 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorCountValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import java.time.LocalDate
@@ -29,7 +28,6 @@ data class CreateApplicationDto(
   val visitContact: ContactDto?,
   @Schema(description = "List of visitors associated with the visit", required = true)
   @field:NotEmpty
-  @field:VisitorCountValidation
   @field:VisitorContactValidation
   var visitors: Set<@Valid VisitorDto>,
   @Schema(description = "additional support associated with the visit", required = false)

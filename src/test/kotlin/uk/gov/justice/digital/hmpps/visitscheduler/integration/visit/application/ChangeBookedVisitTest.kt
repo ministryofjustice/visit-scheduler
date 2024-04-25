@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.applicatio
 
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
+import org.hamcrest.Matchers
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -170,6 +171,57 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val applicationDto = getApplicationDto(returnResult)
     assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, true)
     assertTelemetryData(applicationDto, eventType = "visit-slot-reserved")
+  }
+
+  @Test
+  fun `when application to change visit has more than max visitors then bad request is returned`() {
+    // Given
+    val reference = bookedVisit.reference
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "DFT")
+    val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference)
+    createApplicationRequest.visitors = setOf(
+      VisitorDto(1, true), VisitorDto(2, false),
+      VisitorDto(3, false), VisitorDto(4, false),
+      VisitorDto(5, false), VisitorDto(6, false),
+      VisitorDto(7, false),
+    )
+
+    // When
+    val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.validationMessages[0]").isEqualTo("This application has too many Visitors for this prison DFT max visitors 6")
+  }
+
+  @Test
+  fun `reserve visit slot - only one visit contact allowed`() {
+    // Given
+    val reference = bookedVisit.reference
+
+    val createApplicationRequest = CreateApplicationDto(
+      prisonerId = "FF0000FF",
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
+      applicationRestriction = CreateApplicationRestriction.OPEN,
+      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitors = setOf(
+        VisitorDto(nomisPersonId = 123, visitContact = true),
+        VisitorDto(nomisPersonId = 124, visitContact = true),
+      ),
+      visitorSupport = ApplicationSupportDto("Some Text"),
+      actionedBy = ReserveSlotTest.ACTIONED_BY_USER_NAME,
+    )
+
+    // When
+    val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage")
+      .value(Matchers.containsString("Only one visit contact allowed"))
   }
 
   @Test
