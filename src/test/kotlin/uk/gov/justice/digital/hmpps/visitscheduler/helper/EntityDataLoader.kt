@@ -1,14 +1,16 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import org.springframework.stereotype.Component
-import org.springframework.transaction.annotation.Propagation.REQUIRED
+import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -18,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -36,7 +39,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentiv
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonUserClientRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
@@ -44,6 +47,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRep
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPermittedSessionLocationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonUserClientRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
@@ -60,6 +64,7 @@ import kotlin.jvm.optionals.getOrNull
 @Transactional
 class PrisonEntityHelper(
   private val prisonRepository: TestPrisonRepository,
+  private val prisonUserClientRepository: PrisonUserClientRepository,
 ) {
 
   companion object {
@@ -80,6 +85,7 @@ class PrisonEntityHelper(
       prisonCode: String = "AWE",
       activePrison: Boolean = true,
       excludeDates: Set<LocalDate> = sortedSetOf(),
+      clients: List<PrisonUserClientDto> = mutableListOf(),
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
       maxTotalVisitors: Int = 6,
@@ -87,7 +93,10 @@ class PrisonEntityHelper(
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
     ): PrisonDto {
-      return PrisonDto(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears, excludeDates = excludeDates)
+      return PrisonDto(
+        code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears,
+        excludeDates = excludeDates, clients = clients,
+      )
     }
 
     fun updatePrisonDto(
@@ -102,13 +111,14 @@ class PrisonEntityHelper(
     }
   }
 
-  @Transactional(propagation = REQUIRED)
+  @Transactional(propagation = REQUIRES_NEW)
   fun create(
     prisonCode: String = "MDI",
     activePrison: Boolean = true,
     excludeDates: List<LocalDate> = listOf(),
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
+    dontMakeClient: Boolean = false,
   ): Prison {
     var prison = prisonRepository.findByCode(prisonCode)
     if (prison == null) {
@@ -120,6 +130,24 @@ class PrisonEntityHelper(
           policyNoticeDaysMax = policyNoticeDaysMax,
         ),
       )
+
+      if (!dontMakeClient) {
+        prisonUserClientRepository.saveAndFlush(
+          createPrisonUserClient(
+            prison = prison,
+            active = true,
+            userType = UserType.STAFF,
+          ),
+        )
+
+        prisonUserClientRepository.saveAndFlush(
+          createPrisonUserClient(
+            prison = prison,
+            active = true,
+            userType = UserType.PUBLIC,
+          ),
+        )
+      }
     } else {
       prison.active = activePrison
     }
@@ -127,6 +155,12 @@ class PrisonEntityHelper(
       prison.excludeDates.addAll(excludeDates.map { PrisonExcludeDate(prisonId = prison.id, prison = prison, it) })
     }
     return prison!!
+  }
+
+  private fun createPrisonUserClient(prison: Prison, active: Boolean, userType: UserType): PrisonUserClient {
+    val prisonUserClient = PrisonUserClient(prison = prison, prisonId = prison.id, active = active, userType = userType)
+    prison.clients.add(prisonUserClient)
+    return prisonUserClient
   }
 }
 
@@ -586,7 +620,7 @@ class SessionTemplateEntityHelper(
 @Component
 class DeleteEntityHelper(
   private val visitRepository: VisitRepository,
-  private val prisonRepository: PrisonRepository,
+  private val prisonRepository: TestPrisonRepository,
   private val prisonExcludeDateRepository: PrisonExcludeDateRepository,
   private val sessionRepository: TestSessionTemplateRepository,
   private val permittedSessionLocationRepository: TestPermittedSessionLocationRepository,
@@ -597,10 +631,10 @@ class DeleteEntityHelper(
   private val vsipReportingRepository: VSIPReportingRepository,
   private val testApplicationRepository: TestApplicationRepository,
   private val testSessionSlotRepository: TestSessionSlotRepository,
-
+  private val testPrisonUserClientRepository: TestPrisonUserClientRepository,
 ) {
 
-  @Transactional
+  @Transactional(propagation = REQUIRES_NEW)
   fun deleteAll() {
     println("Delete all")
     sessionRepository.deleteAll()
@@ -613,6 +647,8 @@ class DeleteEntityHelper(
     visitRepository.flush()
     permittedSessionLocationRepository.deleteAll()
     permittedSessionLocationRepository.flush()
+    testPrisonUserClientRepository.deleteAll()
+    testPrisonUserClientRepository.flush()
     prisonRepository.deleteAll()
     prisonRepository.flush()
     prisonExcludeDateRepository.deleteAll()

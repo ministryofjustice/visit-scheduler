@@ -55,14 +55,14 @@ class VisitNotificationEventService(
   fun handleNonAssociations(notificationDto: NonAssociationChangedNotificationDto) {
     LOG.debug("NonAssociations notification received : $notificationDto")
     if (NON_ASSOCIATION_CREATED == notificationDto.type) {
-      val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
+      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
       prisonCode?.let {
         val affectedVisits = getOverLappingVisits(notificationDto, prisonCode)
         processVisitsWithNotifications(affectedVisits, NON_ASSOCIATION_EVENT)
       }
     } else if (notificationDto.type in arrayOf(NON_ASSOCIATION_DELETED, NON_ASSOCIATION_CLOSED)) {
       if (!prisonerService.hasPrisonerGotANonAssociationWith(notificationDto.prisonerNumber, notificationDto.nonAssociationPrisonerNumber)) {
-        val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
+        val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
         prisonCode?.let {
           val affectedNotifications = getAffectedNotifications(notificationDto, it)
           deleteNotificationsThatAreNoLongerValid(affectedNotifications, NON_ASSOCIATION_EVENT, UnFlagEventReason.NON_ASSOCIATION_REMOVED)
@@ -103,7 +103,7 @@ class VisitNotificationEventService(
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     LOG.debug("PrisonerRestrictionChange notification received")
     if (isNotificationDatesValid(notificationDto.validToDate)) {
-      val prisonCode = prisonerService.getPrisonerSupportedPrisonCode(notificationDto.prisonerNumber)
+      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
 
       val startDateTime = (if (LocalDate.now() > notificationDto.validFromDate) LocalDate.now() else notificationDto.validFromDate).atStartOfDay()
       val endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX)

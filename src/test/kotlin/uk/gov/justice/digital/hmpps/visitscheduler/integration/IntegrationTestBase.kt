@@ -51,6 +51,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonUserClientRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.LocalDate
@@ -94,6 +96,12 @@ abstract class IntegrationTestBase {
   protected lateinit var testSessionSlotRepository: TestSessionSlotRepository
 
   @Autowired
+  protected lateinit var testPrisonRepository: TestPrisonRepository
+
+  @Autowired
+  protected lateinit var testPrisonUserClientRepository: TestPrisonUserClientRepository
+
+  @Autowired
   protected lateinit var sessionPrisonerIncentiveLevelHelper: SessionPrisonerIncentiveLevelHelper
 
   @Autowired
@@ -131,9 +139,13 @@ abstract class IntegrationTestBase {
     startDate = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
   }
 
+  fun shouldICreateDefault(): Boolean {
+    return true
+  }
+
   @AfterEach
   @Transactional
-  internal open fun deleteAll() {
+  internal fun deleteAll() {
     deleteEntityHelper.deleteAll()
   }
 

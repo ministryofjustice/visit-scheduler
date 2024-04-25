@@ -7,30 +7,37 @@ import org.junit.jupiter.api.Test
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.boot.test.mock.mockito.SpyBean
-import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
-import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_PRISON_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_PRISONS_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_PRISON
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_PRISON_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
 
+@Transactional
 @DisplayName("Admin $ADMIN_PRISONS_PATH")
 class AdminPrisonsTest : IntegrationTestBase() {
   @SpyBean
-  private lateinit var prisonRepository: PrisonRepository
+  private lateinit var spyPrisonRepository: PrisonRepository
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
 
   @BeforeEach
   internal fun setUpTests() {
+    // We need this hear to delete the default prison in IntegrationTestBase
     deleteEntityHelper.deleteAll()
   }
 
@@ -39,8 +46,6 @@ class AdminPrisonsTest : IntegrationTestBase() {
     // Given
     prisonEntityHelper.create(prisonCode = "AWE")
     prisonEntityHelper.create(prisonCode = "GRE", activePrison = false)
-    prisonEntityHelper.create(prisonCode = "CDE")
-    prisonEntityHelper.create(prisonCode = "BDE", activePrison = false)
     prisonEntityHelper.create(prisonCode = "WDE")
 
     // When
@@ -49,23 +54,18 @@ class AdminPrisonsTest : IntegrationTestBase() {
       .exchange()
 
     // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val results = getPrisonsResults(returnResult)
+    val results = getPrisonsResults(responseSpec)
 
-    assertThat(results.size).isEqualTo(5)
-    assertThat(results[0].code).isEqualTo("AWE")
-    assertThat(results[0].active).isTrue
-    assertThat(results[1].code).isEqualTo("BDE")
-    assertThat(results[1].active).isFalse
-    assertThat(results[2].code).isEqualTo("CDE")
-    assertThat(results[2].active).isTrue
-    assertThat(results[3].code).isEqualTo("GRE")
-    assertThat(results[3].active).isFalse
-    assertThat(results[4].code).isEqualTo("WDE")
-    assertThat(results[4].active).isTrue
+    assertThat(results.size).isEqualTo(3)
+    assertPrisonDto(results[0], prisonCode = "AWE", isActive = true, isStaffActive = true, isPublicActive = true)
+    assertPrisonDto(results[1], prisonCode = "GRE", isActive = false, isStaffActive = true, isPublicActive = true)
+    assertPrisonDto(results[2], prisonCode = "WDE", isActive = true, isStaffActive = true, isPublicActive = true)
 
-    verify(prisonRepository, times(1)).findAllByOrderByCodeAsc()
+    results.forEach { dto ->
+      assertPrisonEntity(prisonCode = dto.code, isActive = dto.active, isStaffActive = true, isPublicActive = true)
+    }
+
+    verify(spyPrisonRepository, times(1)).findAllByOrderByCodeAsc()
   }
 
   @Test
@@ -80,16 +80,90 @@ class AdminPrisonsTest : IntegrationTestBase() {
       .exchange()
 
     // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val result = getPrisonResults(returnResult)
-    assertThat(result.code).isEqualTo("AWE")
-    assertThat(result.active).isTrue
+    val dto = getPrisonResults(responseSpec)
+    assertPrisonDto(dto, prisonCode = "AWE", isActive = true, isStaffActive = true, isPublicActive = true)
+    assertPrisonEntity(prisonCode = dto.code, isActive = dto.active, isStaffActive = true, isPublicActive = true)
+  }
 
-    val prisonEntity = prisonRepository.findByCode("AWE")
-    prisonEntity?.let {
-      assertThat(prisonEntity.code).isEqualTo("AWE")
-      assertThat(prisonEntity.active).isTrue
+  @Test
+  fun `make new prisonClient active for prison`() {
+    // Given
+    val type = STAFF
+    prisonEntityHelper.create(prisonCode = "AWE", dontMakeClient = true)
+
+    // When
+    val responseSpec = webTestClient.put().uri(ACTIVATE_PRISON_CLIENT.replace("{prisonCode}", "AWE").replace("{type}", type.name))
+      .headers(setAuthorisation(roles = adminRole))
+      .exchange()
+
+    // Then
+    val dto = getPrisonClientResults(responseSpec)
+    assertClientPrisonDto(dto, isActive = true, type = type)
+    assertClientPrisonEntity(dto, prisonCode = "AWE", isActive = true, type = type)
+  }
+
+  @Test
+  fun `make new prisonClient in-active for prison`() {
+    // Given
+    val type = STAFF
+    prisonEntityHelper.create(prisonCode = "AWE", dontMakeClient = true)
+
+    // When
+    val responseSpec = webTestClient.put().uri(DEACTIVATE_PRISON_CLIENT.replace("{prisonCode}", "AWE").replace("{type}", type.name))
+      .headers(setAuthorisation(roles = adminRole))
+      .exchange()
+
+    // Then
+    val dto = getPrisonClientResults(responseSpec)
+    assertClientPrisonDto(dto, isActive = false, type = type)
+    assertClientPrisonEntity(dto, prisonCode = "AWE", isActive = false, type = type)
+  }
+
+  @Test
+  fun `update new prisonClient active for prison`() {
+    // Given
+    val type = PUBLIC
+    prisonEntityHelper.create(prisonCode = "AWE", dontMakeClient = false)
+
+    // When
+    val responseSpec = webTestClient.put().uri(ACTIVATE_PRISON_CLIENT.replace("{prisonCode}", "AWE").replace("{type}", type.name))
+      .headers(setAuthorisation(roles = adminRole))
+      .exchange()
+
+    // Then
+    val dto = getPrisonClientResults(responseSpec)
+    assertClientPrisonDto(dto, isActive = true, type = type)
+    assertClientPrisonEntity(dto, prisonCode = "AWE", isActive = true, type = type)
+  }
+
+  @Test
+  fun `update prisonClient in-active for prison`() {
+    // Given
+    val type = PUBLIC
+    prisonEntityHelper.create(prisonCode = "AWE", dontMakeClient = false)
+
+    // When
+    val responseSpec = webTestClient.put().uri(DEACTIVATE_PRISON_CLIENT.replace("{prisonCode}", "AWE").replace("{type}", type.name))
+      .headers(setAuthorisation(roles = adminRole))
+      .exchange()
+
+    // Then
+    val dto = getPrisonClientResults(responseSpec)
+    assertClientPrisonDto(dto, isActive = false, type = type)
+    assertClientPrisonEntity(dto, prisonCode = "AWE", isActive = false, type = type)
+  }
+
+  fun assertClientPrisonDto(dto: PrisonUserClientDto, isActive: Boolean, type: UserType) {
+    assertThat(dto.active).isEqualTo(isActive)
+    assertThat(dto.userType).isEqualTo(type)
+  }
+
+  fun assertClientPrisonEntity(dto: PrisonUserClientDto, prisonCode: String, isActive: Boolean, type: UserType) {
+    val client = testPrisonUserClientRepository.getPrisonClient(prisonCode, type)
+    assertThat(client).isNotNull
+    client?.let {
+      assertThat(client.active).isEqualTo(isActive)
+      assertThat(client.userType).isEqualTo(type)
     }
   }
 
@@ -105,26 +179,17 @@ class AdminPrisonsTest : IntegrationTestBase() {
       .exchange()
 
     // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val result = getPrisonResults(returnResult)
-
-    assertThat(result.code).isEqualTo("AWE")
-    assertThat(result.active).isFalse
-
-    val prisonEnitiy = prisonRepository.findByCode("AWE")
-    prisonEnitiy?.let {
-      assertThat(prisonEnitiy.code).isEqualTo("AWE")
-      assertThat(prisonEnitiy.active).isFalse
-    }
+    val dto = getPrisonResults(responseSpec)
+    assertPrisonDto(dto, prisonCode = "AWE", isActive = false, isStaffActive = true, isPublicActive = true)
+    assertPrisonEntity(prisonCode = dto.code, isActive = dto.active, isStaffActive = true, isPublicActive = true)
   }
 
-  @Transactional(propagation = REQUIRES_NEW)
   @Test
   fun `create prison`() {
     // Given
-    val excludeDate = LocalDate.now()
-    val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, excludeDates = sortedSetOf(excludeDate))
+    val excludeDate = sortedSetOf(LocalDate.now())
+    val clients = listOf(PrisonUserClientDto(PUBLIC, true), PrisonUserClientDto(STAFF, false))
+    val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, excludeDates = excludeDate, clients = clients)
 
     // When
     val responseSpec = webTestClient.post().uri(PRISON_ADMIN_PATH.replace("{prisonCode}", "AWE"))
@@ -133,19 +198,9 @@ class AdminPrisonsTest : IntegrationTestBase() {
       .exchange()
 
     // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val result = getPrisonResults(returnResult)
-    assertThat(result.code).isEqualTo("AWE")
-    assertThat(result.active).isTrue
-    assertThat(result.excludeDates.toList()[0]).isEqualTo(excludeDate)
-
-    val prisonEntity = prisonRepository.findByCode("AWE")
-    prisonEntity?.let {
-      assertThat(prisonEntity.code).isEqualTo("AWE")
-      assertThat(prisonEntity.active).isTrue
-      assertThat(prisonEntity.excludeDates.toList()[0].excludeDate).isEqualTo(excludeDate)
-    }
+    val dto = getPrisonResults(responseSpec)
+    assertPrisonDto(dto, prisonCode = "AWE", isActive = true, excludeDate = excludeDate.first, isStaffActive = false, isPublicActive = true)
+    assertPrisonEntity(prisonCode = dto.code, isActive = dto.active, isStaffActive = false, isPublicActive = true, excludeDate.first)
   }
 
   @Test
@@ -182,19 +237,109 @@ class AdminPrisonsTest : IntegrationTestBase() {
       .exchange()
 
     // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-    val results = getPrisonResults(returnResult)
-    assertThat(results.code).isEqualTo("AWE")
-    assertThat(results.active).isTrue()
-    assertThat(results.excludeDates).contains(excludeDate)
+    val dto = getPrisonResults(responseSpec)
+    assertPrisonDto(dto, prisonCode = "AWE", isActive = true, isStaffActive = true, isPublicActive = true, excludeDate = excludeDate)
+    assertPrisonEntity(prisonCode = dto.code, isActive = dto.active, isStaffActive = true, isPublicActive = true, excludeDate)
   }
 
-  private fun getPrisonResults(returnResult: BodyContentSpec): PrisonDto {
+  private fun assertPrisonDto(
+    prison: PrisonDto,
+    prisonCode: String,
+    isActive: Boolean = true,
+    isStaffActive: Boolean? = null,
+    isPublicActive: Boolean? = null,
+    excludeDate: LocalDate? = null,
+  ) {
+    assertThat(prison.code).isEqualTo(prisonCode)
+    assertThat(prison.active).isEqualTo(isActive)
+
+    var expectedClientCounts = 0
+    if (isStaffActive != null) expectedClientCounts++
+    if (isStaffActive != null) expectedClientCounts++
+
+    assertThat(prison.clients.size).isEqualTo(expectedClientCounts)
+
+    if (isStaffActive != null) {
+      val client = prison.clients.first { it.userType == STAFF }
+      assertThat(client.userType).isEqualTo(STAFF)
+      assertThat(client.active).isEqualTo(isStaffActive)
+    } else {
+      assertThat(prison.clients.firstOrNull { it.userType == STAFF }).isNull()
+    }
+
+    if (isPublicActive != null) {
+      val client = prison.clients.first { it.userType == PUBLIC }
+      assertThat(client.userType).isEqualTo(PUBLIC)
+      assertThat(client.active).isEqualTo(isPublicActive)
+    } else {
+      assertThat(prison.clients.firstOrNull { it.userType == PUBLIC }).isNull()
+    }
+
+    excludeDate?.let {
+      assertThat(prison.excludeDates.toList()[0]).isEqualTo(excludeDate)
+    }
+  }
+
+  private fun assertPrisonEntity(
+    prisonCode: String,
+    isActive: Boolean = true,
+    isStaffActive: Boolean ?= null,
+    isPublicActive: Boolean ?= null,
+    exceptedExcludeDate: LocalDate? = null,
+  ) {
+    val prisonEntity = testPrisonRepository.findByCode(prisonCode)
+    System.out.println(" Prison code :" + prisonCode)
+    assertThat(prisonEntity).isNotNull
+    prisonEntity?.let { prison ->
+      assertThat(prison.code).isEqualTo(prisonCode)
+      assertThat(prison.active).isEqualTo(isActive)
+
+      var expectedClientCounts = 0
+      if (isStaffActive != null) expectedClientCounts++
+      if (isStaffActive != null) expectedClientCounts++
+
+      assertThat(prison.clients.size).isEqualTo(expectedClientCounts)
+
+      if (isStaffActive != null) {
+        val client = prison.clients.first { it.userType == STAFF }
+        assertThat(client.userType).isEqualTo(STAFF)
+        assertThat(client.active).isEqualTo(isStaffActive)
+      } else {
+        assertThat(prison.clients.firstOrNull { it.userType == STAFF }).isNull()
+      }
+
+      if (isPublicActive != null) {
+        val client = prison.clients.first { it.userType == PUBLIC }
+        assertThat(client.userType).isEqualTo(PUBLIC)
+        assertThat(client.active).isEqualTo(isPublicActive)
+      } else {
+        assertThat(prison.clients.firstOrNull { it.userType == PUBLIC }).isNull()
+      }
+
+      exceptedExcludeDate?.let {
+        with(prison.excludeDates[0]) {
+          assertThat(prisonId).isEqualTo(prison.id)
+          assertThat(excludeDate).isEqualTo(exceptedExcludeDate)
+        }
+      }
+    }
+  }
+
+  private fun getPrisonResults(responseSpec: ResponseSpec): PrisonDto {
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
     return objectMapper.readValue(returnResult.returnResult().responseBody, PrisonDto::class.java)
   }
 
-  private fun getPrisonsResults(returnResult: BodyContentSpec): Array<PrisonDto> {
+  private fun getPrisonClientResults(responseSpec: ResponseSpec): PrisonUserClientDto {
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    return objectMapper.readValue(returnResult.returnResult().responseBody, PrisonUserClientDto::class.java)
+  }
+
+  private fun getPrisonsResults(responseSpec: ResponseSpec): Array<PrisonDto> {
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
     return objectMapper.readValue(returnResult.returnResult().responseBody, Array<PrisonDto>::class.java)
   }
 }

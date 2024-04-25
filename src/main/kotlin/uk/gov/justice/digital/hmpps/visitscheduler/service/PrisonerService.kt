@@ -119,11 +119,11 @@ class PrisonerService(
     return sessionTemplates.asSequence().filter { it.includeLocationGroupType }.map { it.permittedSessionLocationGroups }.flatten().map { it.sessionLocations }.flatten().any { it.levelOneCode == prisonersTransitionalLocation }
   }
 
-  fun getPrisonerSupportedPrisonCode(prisonerCode: String): String? {
+  fun getPrisonerPrisonCode(prisonerCode: String): String? {
     try {
       val prisonCode = prisonerOffenderSearchClient.getPrisoner(prisonerCode)?.prisonId
       prisonCode?.let {
-        return this.prisonService.getSupportedPrison(prisonCode)
+        return this.prisonService.getPrisonCode(prisonCode)
       }
     } catch (_: ItemNotFoundException) {}
     return null

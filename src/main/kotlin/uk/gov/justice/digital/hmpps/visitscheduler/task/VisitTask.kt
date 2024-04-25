@@ -43,7 +43,7 @@ class VisitTask(
     }
 
     log.debug("Started flagVisits task.")
-    prisonsService.getSupportedPrisons().forEach { prisonCode ->
+    prisonsService.getPrisonCodes().forEach { prisonCode ->
       for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
         val visitDate = LocalDate.now().plusDays(i.toLong())
 
