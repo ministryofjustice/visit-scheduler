@@ -148,7 +148,7 @@ class BookVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage").isEqualTo("Booking can not be maid because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
+      .jsonPath("$.developerMessage").isEqualTo("Booking can not be made because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
   }
 
   @Test
@@ -176,7 +176,7 @@ class BookVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage").isEqualTo("Booking can not be maid because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
+      .jsonPath("$.developerMessage").isEqualTo("Booking can not be made because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
   }
 
   @Test
@@ -205,7 +205,7 @@ class BookVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage").isEqualTo("Booking can not be maid because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
+      .jsonPath("$.developerMessage").isEqualTo("Booking can not be made because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
   }
 
   @Test
@@ -234,7 +234,7 @@ class BookVisitTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage").isEqualTo("Booking can not be maid because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
+      .jsonPath("$.developerMessage").isEqualTo("Booking can not be made because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
   }
 
   @Test
