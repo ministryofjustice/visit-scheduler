@@ -283,8 +283,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
   private fun assertPrisonEntity(
     prisonCode: String,
     isActive: Boolean = true,
-    isStaffActive: Boolean ?= null,
-    isPublicActive: Boolean ?= null,
+    isStaffActive: Boolean? = null,
+    isPublicActive: Boolean? = null,
     exceptedExcludeDate: LocalDate? = null,
   ) {
     val prisonEntity = testPrisonRepository.findByCode(prisonCode)
