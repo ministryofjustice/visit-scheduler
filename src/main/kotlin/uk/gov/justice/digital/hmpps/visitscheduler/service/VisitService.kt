@@ -88,7 +88,9 @@ class VisitService(
 
     val application = applicationService.getApplicationEntity(applicationReference)
     if (!bookingRequestDto.allowOverBooking && hasExceededMaxCapacity(application)) {
-      throw OverCapacityException("Booking can not be maid because capacity has been exceeded for slot ${application.sessionSlot.reference}")
+      val messages = "Booking can not be made because capacity has been exceeded for slot ${application.sessionSlot.reference}"
+      LOG.debug(messages)
+      throw OverCapacityException(messages)
     }
 
     val hasExistingBooking = visitRepository.doesBookedVisitExist(applicationReference)

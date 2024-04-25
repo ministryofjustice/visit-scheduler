@@ -52,7 +52,7 @@ task:
   delete:
     expired-applications:
       enabled: true
-      validity-minutes: 1440 #delete reserved visits older than 10 minutes
+      validity-minutes: 1440
 
 
 local-stack-aws:

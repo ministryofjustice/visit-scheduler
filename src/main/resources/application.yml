@@ -126,7 +126,7 @@ task:
   delete:
     expired-applications:
       enabled: true
-      validity-minutes: 1440 #delete reserved visits older than 10 minutes
+      validity-minutes: 1440
   log-non-associations:
     enabled: true
     cron: "0 0 3 * * ?" #every day at 3 AM

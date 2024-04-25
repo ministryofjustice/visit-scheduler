@@ -180,8 +180,8 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(OverCapacityException::class)
-  fun handleCapacityNotFoundException(e: OverCapacityException): ResponseEntity<ErrorResponse?>? {
-    log.debug("Ove capacity exception caught : {}", e.message)
+  fun handleOverCapacityException(e: OverCapacityException): ResponseEntity<ErrorResponse?>? {
+    log.debug("OveR capacity exception caught : {}", e.message)
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
       .body(
