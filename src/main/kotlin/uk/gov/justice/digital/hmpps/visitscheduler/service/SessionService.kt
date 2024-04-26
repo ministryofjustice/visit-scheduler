@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict.DOUBLE_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict.NON_ASSOCIATION
+import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
@@ -103,21 +104,20 @@ class SessionService(
   fun getAvailableVisitSessions(
     prisonCode: String,
     prisonerId: String,
-    visitRestriction: VisitRestriction,
+    sessionType: SessionType,
     minOverride: Int? = null,
     maxOverride: Int? = null,
   ): List<AvailableVisitSessionDto> {
-    LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, visitRestriction: {} ", prisonCode, prisonerId, visitRestriction)
+    LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionType: {} ", prisonCode, prisonerId, sessionType)
     return getVisitSessions(prisonCode, prisonerId, minOverride, maxOverride).filter {
-      hasSessionGotCapacity(it, visitRestriction).and(it.sessionConflicts.isEmpty())
-    }.map { AvailableVisitSessionDto(it, visitRestriction) }.toList()
+      hasSessionGotCapacity(it, sessionType).and(it.sessionConflicts.isEmpty())
+    }.map { AvailableVisitSessionDto(it, sessionType) }.toList()
   }
 
-  private fun hasSessionGotCapacity(session: VisitSessionDto, visitRestriction: VisitRestriction): Boolean {
-    return if (visitRestriction == VisitRestriction.CLOSED) {
-      session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0))
-    } else {
-      session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0))
+  private fun hasSessionGotCapacity(session: VisitSessionDto, sessionType: SessionType): Boolean {
+    return when (sessionType) {
+      SessionType.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
+      SessionType.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
     }
   }
 
