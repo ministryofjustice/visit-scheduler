@@ -4,7 +4,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import java.lang.IllegalArgumentException
 
 @Suppress("unused")
-enum class CreateApplicationRestriction(
+enum class SessionRestriction(
   val description: String,
 ) {
   OPEN("Open"),
@@ -12,11 +12,11 @@ enum class CreateApplicationRestriction(
   ;
 
   companion object {
-    fun get(restriction: VisitRestriction): CreateApplicationRestriction {
+    fun get(restriction: VisitRestriction): SessionRestriction {
       return when (restriction) {
         VisitRestriction.OPEN -> OPEN
         VisitRestriction.CLOSED -> CLOSED
-        VisitRestriction.UNKNOWN -> throw IllegalArgumentException("UNKNOWN is not allowed for CreateApplicationRestriction")
+        VisitRestriction.UNKNOWN -> throw IllegalArgumentException("UNKNOWN is not allowed for SessionRestriction")
       }
     }
   }

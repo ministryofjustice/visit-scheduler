@@ -23,7 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
@@ -208,7 +208,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // first create a reserveVisitSlotDto with same details as the booked visit
     val createApplicationDto = CreateApplicationDto(
       prisonerId = bookedVisit.prisonerId,
-      applicationRestriction = CreateApplicationRestriction.get(bookedVisit.visitRestriction),
+      applicationRestriction = SessionRestriction.get(bookedVisit.visitRestriction),
       sessionDate = bookedVisit.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "011223344"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),

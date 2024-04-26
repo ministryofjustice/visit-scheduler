@@ -13,7 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
@@ -227,7 +227,7 @@ class ApplicationService(
   private fun isReservationRequired(
     visit: Visit,
     newSessionSlot: SessionSlot,
-    newRestriction: CreateApplicationRestriction,
+    newRestriction: SessionRestriction,
   ): Boolean {
     return !newRestriction.isSame(visit.visitRestriction) || visit.sessionSlotId != newSessionSlot.id
   }

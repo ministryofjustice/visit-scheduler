@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -16,7 +17,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict.DOUBLE_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict.NON_ASSOCIATION
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
@@ -104,20 +104,20 @@ class SessionService(
   fun getAvailableVisitSessions(
     prisonCode: String,
     prisonerId: String,
-    sessionType: SessionType,
+    sessionRestriction: SessionRestriction,
     minOverride: Int? = null,
     maxOverride: Int? = null,
   ): List<AvailableVisitSessionDto> {
-    LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionType: {} ", prisonCode, prisonerId, sessionType)
+    LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {} ", prisonCode, prisonerId, sessionRestriction)
     return getVisitSessions(prisonCode, prisonerId, minOverride, maxOverride).filter {
-      hasSessionGotCapacity(it, sessionType).and(it.sessionConflicts.isEmpty())
-    }.map { AvailableVisitSessionDto(it, sessionType) }.toList()
+      hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
+    }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList()
   }
 
-  private fun hasSessionGotCapacity(session: VisitSessionDto, sessionType: SessionType): Boolean {
-    return when (sessionType) {
-      SessionType.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
-      SessionType.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
+  private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean {
+    return when (sessionRestriction) {
+      SessionRestriction.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
+      SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
     }
   }
 

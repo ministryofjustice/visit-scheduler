@@ -19,7 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
@@ -144,7 +144,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
       prisonerId = visit.prisonerId,
       sessionTemplateReference = newSessionSlot.sessionTemplateReference!!,
       sessionDate = newSessionSlot.slotDate,
-      applicationRestriction = CreateApplicationRestriction.OPEN,
+      applicationRestriction = SessionRestriction.OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto("Some Text"),
@@ -197,7 +197,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
       prisonerId = bookedVisit.prisonerId,
       sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!,
       sessionDate = excludeDate,
-      applicationRestriction = CreateApplicationRestriction.OPEN,
+      applicationRestriction = SessionRestriction.OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto("Some Text"),

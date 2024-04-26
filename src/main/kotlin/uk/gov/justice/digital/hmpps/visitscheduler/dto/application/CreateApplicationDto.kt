@@ -23,7 +23,7 @@ data class CreateApplicationDto(
   val sessionDate: LocalDate,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   @field:NotNull
-  val applicationRestriction: CreateApplicationRestriction,
+  val applicationRestriction: SessionRestriction,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
   val visitContact: ContactDto?,
