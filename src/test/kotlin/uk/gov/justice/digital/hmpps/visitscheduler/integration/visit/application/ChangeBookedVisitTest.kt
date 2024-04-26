@@ -368,6 +368,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
           assertThat(it["visitRestriction"]).isEqualTo(applicationDto.visitRestriction.name)
           assertThat(it["visitStart"]).isEqualTo(visitStartStr)
           assertThat(it["reserved"]).isEqualTo(applicationDto.reserved.toString())
+          assertThat(it["userType"]).isEqualTo(applicationDto.userType.toString())
         },
         isNull(),
       )

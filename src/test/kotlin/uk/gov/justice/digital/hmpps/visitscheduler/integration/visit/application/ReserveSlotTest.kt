@@ -353,6 +353,7 @@ class ReserveSlotTest : IntegrationTestBase() {
         assertThat(it["visitStart"])
           .isEqualTo(applicationDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         assertThat(it["reserved"]).isEqualTo(applicationDto.reserved.toString())
+        assertThat(it["userType"]).isEqualTo(applicationDto.userType.toString())
       },
       isNull(),
     )
