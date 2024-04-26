@@ -26,7 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getApplicationChangeVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -204,7 +204,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       prisonerId = "FF0000FF",
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
-      applicationRestriction = CreateApplicationRestriction.OPEN,
+      applicationRestriction = SessionRestriction.OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 123, visitContact = true),
@@ -228,7 +228,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `changed booked visit creates new application and updates visit restriction has changed`() {
     // Given
     val reference = bookedVisit.reference
-    val newRestriction = if (bookedVisit.visitRestriction == OPEN) CreateApplicationRestriction.CLOSED else CreateApplicationRestriction.OPEN
+    val newRestriction = if (bookedVisit.visitRestriction == OPEN) SessionRestriction.CLOSED else SessionRestriction.OPEN
     val createApplicationRequest = createApplicationRequest(visitRestriction = newRestriction)
 
     // When
@@ -375,7 +375,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   private fun createApplicationRequest(
     prisonerId: String = "testPrisonerId",
     slotDate: LocalDate = bookedVisit.sessionSlot.slotDate,
-    visitRestriction: CreateApplicationRestriction = CreateApplicationRestriction.OPEN,
+    visitRestriction: SessionRestriction = SessionRestriction.OPEN,
     sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
     support: String = "Some Text",
   ): CreateApplicationDto {

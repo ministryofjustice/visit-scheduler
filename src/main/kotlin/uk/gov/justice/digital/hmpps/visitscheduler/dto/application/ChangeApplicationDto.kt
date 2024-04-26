@@ -11,8 +11,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.validation.NullableNotEmpty
 import java.time.LocalDate
 
 data class ChangeApplicationDto(
-  @Schema(description = "Visit Restriction", example = "OPEN", required = false)
-  val applicationRestriction: CreateApplicationRestriction? = null,
+  @Schema(description = "Session Restriction", example = "OPEN", required = false)
+  val applicationRestriction: SessionRestriction? = null,
   @Schema(description = "Session template reference", example = "v9d.7ed.7u", required = true)
   @field:NotBlank
   val sessionTemplateReference: String,

@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
@@ -79,7 +79,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldBooking.sessionSlot.slotDate,
-      applicationRestriction = CreateApplicationRestriction.get(oldBooking.visitRestriction),
+      applicationRestriction = SessionRestriction.get(oldBooking.visitRestriction),
     )
 
     val applicationReference = initialChangeApplication.reference
@@ -106,7 +106,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldBooking.sessionSlot.slotDate,
-      applicationRestriction = CreateApplicationRestriction.get(initialChangeApplication.restriction),
+      applicationRestriction = SessionRestriction.get(initialChangeApplication.restriction),
     )
 
     val applicationReference = initialChangeApplication.reference
@@ -132,7 +132,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldApplication.sessionSlot.slotDate,
-      applicationRestriction = CreateApplicationRestriction.get(oldBooking.visitRestriction),
+      applicationRestriction = SessionRestriction.get(oldBooking.visitRestriction),
     )
 
     val applicationReference = initialChangeApplication.reference
