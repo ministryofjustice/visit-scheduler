@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.N
 import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.PHONE
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
@@ -213,6 +214,7 @@ class CancelVisitTest : IntegrationTestBase() {
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       actionedBy = RESERVED_BY_USER,
       sessionTemplateReference = sessionTemplateDefault.reference,
+      userType = STAFF,
     )
 
     // call visit change and then book the visit

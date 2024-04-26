@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisi
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callRemovePrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
@@ -148,6 +149,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = "John Smith",
+      userType = STAFF,
     )
 
     responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, visit.reference)
@@ -200,6 +202,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = "John Smith",
+      userType = STAFF,
     )
 
     responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto, bookedVisit.reference)

@@ -30,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplica
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getApplicationChangeVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
@@ -212,6 +213,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       ),
       visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = ReserveSlotTest.ACTIONED_BY_USER_NAME,
+      userType = STAFF,
     )
 
     // When
@@ -366,6 +368,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
           assertThat(it["visitRestriction"]).isEqualTo(applicationDto.visitRestriction.name)
           assertThat(it["visitStart"]).isEqualTo(visitStartStr)
           assertThat(it["reserved"]).isEqualTo(applicationDto.reserved.toString())
+          assertThat(it["userType"]).isEqualTo(applicationDto.userType.toString())
         },
         isNull(),
       )
@@ -388,6 +391,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       visitorSupport = ApplicationSupportDto(support),
       actionedBy = ACTIONED_BY_USER_NAME,
       sessionTemplateReference = sessionTemplateReference,
+      userType = STAFF,
     )
   }
 
@@ -428,6 +432,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     assertThat(returnedApplication.completed).isFalse()
     assertThat(returnedApplication.visitRestriction.name).isEqualTo(createApplicationRequest.applicationRestriction.name)
     assertThat(returnedApplication.sessionTemplateReference).isEqualTo(createApplicationRequest.sessionTemplateReference)
+    assertThat(returnedApplication.userType).isEqualTo(createApplicationRequest.userType)
 
     createApplicationRequest.visitContact?.let {
       assertThat(returnedApplication.visitContact!!.name).isEqualTo(it.name)

@@ -117,6 +117,7 @@ class ApplicationService(
         reservedSlot = isReservedSlot,
         visitType = sessionTemplate.visitType,
         restriction = createApplicationDto.applicationRestriction.getVisitRestriction(),
+        userType = createApplicationDto.userType,
         completed = false,
         createdBy = createApplicationDto.actionedBy,
       ),

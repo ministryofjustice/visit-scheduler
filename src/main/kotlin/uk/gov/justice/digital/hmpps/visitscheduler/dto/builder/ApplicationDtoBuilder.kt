@@ -28,6 +28,7 @@ class ApplicationDtoBuilder {
       sessionTemplateReference = applicationEntity.sessionSlot.sessionTemplateReference,
       reserved = applicationEntity.reservedSlot,
       completed = applicationEntity.completed,
+      userType = applicationEntity.userType,
     )
   }
 }

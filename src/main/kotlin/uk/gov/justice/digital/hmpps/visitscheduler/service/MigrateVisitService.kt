@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.N
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.MIGRATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
@@ -159,6 +160,7 @@ class MigrateVisitService(
         reservedSlot = true,
         completed = true,
         createdBy = actionedBy,
+        userType = STAFF,
       ),
     )
 

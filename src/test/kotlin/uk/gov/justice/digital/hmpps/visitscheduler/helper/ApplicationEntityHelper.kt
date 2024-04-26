@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
@@ -38,6 +39,7 @@ class ApplicationEntityHelper(
         createdBy = "",
         reservedSlot = true,
         completed = true,
+        userType = STAFF,
       )
       return application
     }
@@ -77,6 +79,7 @@ class ApplicationEntityHelper(
         createdBy = "",
         reservedSlot = reservedSlot,
         completed = completed,
+        userType = STAFF,
       ),
     )
   }
@@ -108,6 +111,7 @@ class ApplicationEntityHelper(
         createdBy = "",
         reservedSlot = reservedSlot,
         completed = completed,
+        userType = STAFF,
       ),
     )
   }
