@@ -175,12 +175,12 @@ class ApplicationService(
 
     val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
 
-    val reservation = changeApplicationDto.applicationRestriction?.getVisitRestriction() ?: run { application.restriction }
-    val isReservedSlot = isReservationRequired(application, sessionSlot, reservation)
+    val restriction = changeApplicationDto.applicationRestriction?.getVisitRestriction() ?: run { application.restriction }
+    val isReservedSlot = isReservationRequired(application, sessionSlot, restriction)
     if (isReservedSlot && !changeApplicationDto.allowOverBooking) {
       slotCapacityService.checkCapacityForApplicationReservation(
         sessionSlot.reference,
-        reservation,
+        restriction,
         true,
       )
     }

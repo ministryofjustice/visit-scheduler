@@ -28,6 +28,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
@@ -139,15 +142,16 @@ class VisitService(
     existingBooking: Visit?,
     application: Application,
   ): Boolean {
-    return existingBooking?.let { it.visitRestriction != application.restriction || it.sessionSlot.id != application.sessionSlotId
+    return existingBooking?.let {
+      it.visitRestriction != application.restriction || it.sessionSlot.id != application.sessionSlotId
     } ?: run { true }
   }
 
   fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
-    return if (VisitRestriction.OPEN == restriction) {
-      visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
-    } else {
-      visitRepository.getCountOfBookedForClosedSessionSlot(sessionSlotId)
+    return when (restriction) {
+      OPEN -> visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
+      CLOSED -> visitRepository.getCountOfBookedForClosedSessionSlot(sessionSlotId)
+      UNKNOWN -> throw IllegalStateException("Cant acquire a book count for an UNKNOWN restriction")
     }
   }
 
