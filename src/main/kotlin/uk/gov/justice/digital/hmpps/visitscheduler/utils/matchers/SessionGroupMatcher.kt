@@ -1,8 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils.matchers
 
 import org.springframework.stereotype.Component
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 
 interface SessionGroupMatcher<T> {
   fun hasAllMatch(o1: Set<T>, o2: Set<T>): Boolean {

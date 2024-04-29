@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotEmpty
 import jakarta.validation.constraints.NotNull
-import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 
 class NotificationGroupDto(
   @Schema(description = "notification group Reference", example = "v9*d7*ed*7u", required = true)

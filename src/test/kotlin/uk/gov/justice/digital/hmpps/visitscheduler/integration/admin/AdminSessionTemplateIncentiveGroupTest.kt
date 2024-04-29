@@ -6,6 +6,10 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel.BASIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel.ENHANCED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel.ENHANCED_2
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel.ENHANCED_3
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateIncentiveSessionGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteIncentiveGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetIncentiveGroupByReference
@@ -15,10 +19,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.createIncentiveGroupDt
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.updateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel.BASIC
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel.ENHANCED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel.ENHANCED_2
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel.ENHANCED_3
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionPrisonerIncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository

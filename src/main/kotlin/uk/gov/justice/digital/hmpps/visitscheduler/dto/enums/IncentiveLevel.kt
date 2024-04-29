@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums
 
 import java.util.Arrays
 import kotlin.jvm.optionals.getOrNull
