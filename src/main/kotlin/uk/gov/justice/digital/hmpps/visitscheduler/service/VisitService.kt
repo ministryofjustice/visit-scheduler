@@ -126,9 +126,7 @@ class VisitService(
     application: Application,
     existingBooking: Visit?,
   ) {
-    val differentSlotFromLastBooking = applicationRequiresANewSlot(existingBooking, application)
-
-    if (!bookingRequestDto.allowOverBooking && differentSlotFromLastBooking) {
+    if (!bookingRequestDto.allowOverBooking && hasSlotHasChangedSincLastBooking(existingBooking, application)) {
       slotCapacityService.checkCapacityForBooking(
         application.sessionSlot.reference,
         application.restriction,
@@ -137,15 +135,12 @@ class VisitService(
     }
   }
 
-  private fun applicationRequiresANewSlot(
+  private fun hasSlotHasChangedSincLastBooking(
     existingBooking: Visit?,
     application: Application,
   ): Boolean {
-    var differentSlotFromLastBooking = true
-    existingBooking?.let {
-      differentSlotFromLastBooking = existingBooking.visitRestriction != application.restriction || it.sessionSlot.id != application.sessionSlotId
-    }
-    return differentSlotFromLastBooking
+    return existingBooking?.let { it.visitRestriction != application.restriction || it.sessionSlot.id != application.sessionSlotId
+    } ?: run { true }
   }
 
   fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
