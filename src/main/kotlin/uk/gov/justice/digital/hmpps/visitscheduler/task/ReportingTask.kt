@@ -6,12 +6,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ReportingTaskConfiguration
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VSIPReportingRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.reporting.VisitsReportingService
 import java.time.LocalDate
 import kotlin.jvm.optionals.getOrNull

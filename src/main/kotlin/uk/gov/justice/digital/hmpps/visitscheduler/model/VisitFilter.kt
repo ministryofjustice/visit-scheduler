@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model
 
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import java.time.LocalDate
 
 data class VisitFilter(

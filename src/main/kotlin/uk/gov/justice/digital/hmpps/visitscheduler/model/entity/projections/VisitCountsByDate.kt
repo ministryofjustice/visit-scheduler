@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections
 
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import java.time.LocalDate
 
 interface VisitCountsByDate {

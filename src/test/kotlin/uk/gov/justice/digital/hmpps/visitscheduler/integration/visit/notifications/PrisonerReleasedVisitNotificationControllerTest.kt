@@ -13,20 +13,20 @@ import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.RELEASED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.RELEASED_TO_HOSPITAL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.SENT_TO_COURT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.TEMPORARY_ABSENCE_RELEASE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.TRANSFERRED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.UNKNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.RELEASED_TO_HOSPITAL
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.SENT_TO_COURT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.TEMPORARY_ABSENCE_RELEASE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.TRANSFERRED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ReleaseReasonType.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerHadBeenReleased
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)

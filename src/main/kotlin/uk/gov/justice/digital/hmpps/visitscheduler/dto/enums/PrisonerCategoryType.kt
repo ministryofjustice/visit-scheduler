@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums
 
 enum class PrisonerCategoryType(
   val code: String,
