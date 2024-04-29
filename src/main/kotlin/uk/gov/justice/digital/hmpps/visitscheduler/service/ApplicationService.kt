@@ -19,7 +19,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
