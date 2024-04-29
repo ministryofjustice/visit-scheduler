@@ -126,7 +126,7 @@ class VisitService(
     application: Application,
     existingBooking: Visit?,
   ) {
-    if (!bookingRequestDto.allowOverBooking && hasSlotHasChangedSincLastBooking(existingBooking, application)) {
+    if (!bookingRequestDto.allowOverBooking && hasSlotChangedSinceLastBooking(existingBooking, application)) {
       slotCapacityService.checkCapacityForBooking(
         application.sessionSlot.reference,
         application.restriction,
@@ -135,7 +135,7 @@ class VisitService(
     }
   }
 
-  private fun hasSlotHasChangedSincLastBooking(
+  private fun hasSlotChangedSinceLastBooking(
     existingBooking: Visit?,
     application: Application,
   ): Boolean {
