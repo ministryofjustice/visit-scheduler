@@ -130,7 +130,7 @@ class BookVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1)
 
     val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
-    val existingReservedApplication = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
 
     var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
@@ -145,10 +145,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage").isEqualTo("Booking can not be made because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
+    assertCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -158,7 +155,7 @@ class BookVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", closedCapacity = 1)
 
     val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
-    val existingReservedApplication = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
 
     var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
@@ -173,10 +170,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage").isEqualTo("Booking can not be made because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
+    assertCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -186,7 +180,7 @@ class BookVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 2)
 
     val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
-    val existingReservedApplication = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
 
     var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
@@ -202,10 +196,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage").isEqualTo("Booking can not be made because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
+    assertCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -215,7 +206,7 @@ class BookVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", closedCapacity = 2)
 
     val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
-    val existingReservedApplication = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
 
     var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
     applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
@@ -231,10 +222,96 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
+    assertCapacityError(responseSpec, expiredReservedApplication)
+  }
+
+  @Test
+  fun `Updated Booking with application with no open capacity but no change to slot or restriction books normally`() {
+    // Given
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1)
+    val bookingToUpdate = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
+
+    val newSlotDate = bookingToUpdate.sessionSlot.slotDate.plusWeeks(1)
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = newSlotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+    expiredReservedApplication.visit = bookingToUpdate
+    expiredReservedApplication.visitId = bookingToUpdate.id
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `Updated Booking with application with no open capacity with change to restriction throws exception`() {
+    // Given
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 1)
+    val bookingToUpdate = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = OPEN)
+    createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = CLOSED)
+
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = CLOSED)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+    expiredReservedApplication.visit = bookingToUpdate
+    expiredReservedApplication.visitId = bookingToUpdate.id
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    assertCapacityError(responseSpec, expiredReservedApplication)
+  }
+
+  @Test
+  fun `Updated Booking with application with no open capacity with change to slot throws exception`() {
+    // Given
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 1)
+    val bookingToUpdate = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
+    val otherSlotDate = bookingToUpdate.sessionSlot.slotDate.plusWeeks(1)
+    createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction, slotDate = otherSlotDate)
+
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction, slotDate = otherSlotDate)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+    expiredReservedApplication.visit = bookingToUpdate
+    expiredReservedApplication.visitId = bookingToUpdate.id
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    assertCapacityError(responseSpec, expiredReservedApplication)
+  }
+
+  private fun assertCapacityError(
+    responseSpec: ResponseSpec,
+    application: Application,
+  ) {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage").isEqualTo("Booking can not be made because capacity has been exceeded for slot ${expiredReservedApplication.sessionSlot.reference}")
+      .jsonPath("$.developerMessage")
+      .isEqualTo("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
   }
 
   @Test

@@ -4,6 +4,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
@@ -54,6 +55,10 @@ class ApplicationService(
   @Value("\${expired.applications.validity-minutes:10}") private val expiredPeriodMinutes: Int,
 ) {
 
+  @Lazy
+  @Autowired
+  private lateinit var slotCapacityService: SlotCapacityService
+
   @Autowired
   private lateinit var expiredApplicationTaskConfiguration: ExpiredApplicationTaskConfiguration
 
@@ -96,17 +101,25 @@ class ApplicationService(
     return applicationDto
   }
 
-  private fun createApplication(createApplicationDto: CreateApplicationDto, visit: Visit? = null): ApplicationDto {
+  private fun createApplication(createApplicationDto: CreateApplicationDto, existingVisit: Visit? = null): ApplicationDto {
     val sessionTemplate = getSessionTemplate(createApplicationDto.sessionTemplateReference)
     val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
     validate(createApplicationDto, prison)
 
     val sessionSlot = sessionSlotService.getSessionSlot(createApplicationDto.sessionDate, sessionTemplate, prison)
-    val isReservedSlot = visit?.let {
-      isReservationRequired(visit, sessionSlot, createApplicationDto.applicationRestriction)
+
+    val isReservedSlot = existingVisit?.let {
+      isReservationRequired(existingVisit, sessionSlot, createApplicationDto.applicationRestriction)
     } ?: true
 
+    if (isReservedSlot && !createApplicationDto.allowOverBooking) {
+      slotCapacityService.checkCapacityForApplicationReservation(
+        sessionSlot.reference,
+        createApplicationDto.applicationRestriction.getVisitRestriction(),
+        true,
+      )
+    }
     val applicationEntity = applicationRepo.saveAndFlush(
       Application(
         prisonerId = createApplicationDto.prisonerId,
@@ -137,15 +150,15 @@ class ApplicationService(
       }
     }
 
-    visit?.let {
+    existingVisit?.let {
       // add even though it's not complete, because an existing booking is present
-      visit.addApplication(applicationEntity)
+      existingVisit.addApplication(applicationEntity)
     }
 
     val applicationDto = applicationDtoBuilder.build(applicationEntity)
 
     val eventName = if (isReservedSlot) VISIT_SLOT_RESERVED_EVENT else VISIT_CHANGED_EVENT
-    telemetryClientService.trackEvent(eventName, telemetryClientService.createApplicationVisitTrackEventFromVisitEntity(applicationDto, visit))
+    telemetryClientService.trackEvent(eventName, telemetryClientService.createApplicationVisitTrackEventFromVisitEntity(applicationDto, existingVisit))
     return applicationDto
   }
 
@@ -216,12 +229,16 @@ class ApplicationService(
     return applicationDtoBuilder.build(application)
   }
 
+  fun isExpiredApplication(modifyTimestamp: LocalDateTime): Boolean {
+    return modifyTimestamp.isBefore(getExpiredApplicationDateAndTime())
+  }
+
   private fun isReservationRequired(
     visit: Visit,
     newSessionSlot: SessionSlot,
     newRestriction: VisitRestriction,
   ): Boolean {
-    return visit.visitRestriction != newRestriction || visit.sessionSlotId != newSessionSlot.id
+    return isReservationRequired(visit.sessionSlot, visit.visitRestriction, newSessionSlot, newRestriction)
   }
 
   private fun isReservationRequired(
@@ -229,7 +246,16 @@ class ApplicationService(
     newSessionSlot: SessionSlot,
     newRestriction: SessionRestriction,
   ): Boolean {
-    return !newRestriction.isSame(visit.visitRestriction) || visit.sessionSlotId != newSessionSlot.id
+    return isReservationRequired(visit.sessionSlot, visit.visitRestriction, newSessionSlot, newRestriction.getVisitRestriction())
+  }
+
+  private fun isReservationRequired(
+    oldSessionSlot: SessionSlot,
+    oldVisitRestriction: VisitRestriction,
+    newSessionSlot: SessionSlot,
+    newVisitRestriction: VisitRestriction,
+  ): Boolean {
+    return newVisitRestriction != oldVisitRestriction || newSessionSlot.id != oldSessionSlot.id
   }
 
   private fun getExpiredApplicationToDeleteDateAndTime(): LocalDateTime {
