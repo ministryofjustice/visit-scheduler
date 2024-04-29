@@ -1,9 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Component
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.util.function.Predicate
 
 const val LOCATION_NOT_PERMITTED = -10

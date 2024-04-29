@@ -4,7 +4,7 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.Valid
 import jakarta.validation.constraints.FutureOrPresent
 import jakarta.validation.constraints.NotNull
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import java.time.LocalDate
 
 @Schema(description = "Visit Session")

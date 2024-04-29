@@ -14,7 +14,7 @@ import jakarta.persistence.TemporalType
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
-import uk.gov.justice.digital.hmpps.visitscheduler.model.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import java.time.LocalDateTime
 
 @Entity
