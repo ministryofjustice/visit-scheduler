@@ -1,6 +1,5 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.dto.application
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums
 
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import java.lang.IllegalArgumentException
 
 @Suppress("unused")

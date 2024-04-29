@@ -1,4 +1,4 @@
-package uk.gov.justice.digital.hmpps.visitscheduler.service
+package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums
 
 enum class TelemetryVisitEvents(val eventName: String) {
   VISIT_SLOT_RESERVED_EVENT("visit-slot-reserved"),

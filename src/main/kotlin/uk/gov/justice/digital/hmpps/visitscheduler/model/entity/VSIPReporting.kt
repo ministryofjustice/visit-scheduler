@@ -6,7 +6,7 @@ import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
 import jakarta.persistence.Id
 import jakarta.persistence.Table
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VSIPReport
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport
 import java.time.LocalDate
 
 @Entity

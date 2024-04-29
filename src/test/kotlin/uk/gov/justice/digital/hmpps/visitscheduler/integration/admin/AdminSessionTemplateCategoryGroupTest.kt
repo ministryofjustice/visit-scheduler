@@ -6,6 +6,10 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_HIGH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_PROVISIONAL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.FEMALE_SEMI
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.YOI_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateCategorySessionGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callDeleteCategoryGroupByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetCategoryGroupByReference
@@ -15,10 +19,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.updateCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_HIGH
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.A_PROVISIONAL
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.FEMALE_SEMI
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType.YOI_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGroupRepository
