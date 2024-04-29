@@ -39,7 +39,7 @@ data class CreateApplicationDto(
   @Schema(description = "User type", example = "STAFF", required = true)
   @field:NotNull
   val userType: UserType,
-  @Schema(description = "allow over booking method", required = false)
+  @Schema(description = "allow over booking", required = false)
   @field:NotNull
   val allowOverBooking: Boolean = false,
 )
