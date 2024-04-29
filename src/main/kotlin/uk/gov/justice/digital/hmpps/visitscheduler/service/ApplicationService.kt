@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDt
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
@@ -110,7 +109,7 @@ class ApplicationService(
     val sessionSlot = sessionSlotService.getSessionSlot(createApplicationDto.sessionDate, sessionTemplate, prison)
 
     val isReservedSlot = existingVisit?.let {
-      isReservationRequired(existingVisit, sessionSlot, createApplicationDto.applicationRestriction)
+      isReservationRequired(existingVisit, sessionSlot, createApplicationDto.applicationRestriction.getVisitRestriction())
     } ?: true
 
     if (isReservedSlot && !createApplicationDto.allowOverBooking) {
@@ -175,6 +174,17 @@ class ApplicationService(
     val application = getApplicationEntity(applicationReference)
 
     val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
+
+    val reservation = changeApplicationDto.applicationRestriction?.getVisitRestriction() ?: run { application.restriction }
+    val isReservedSlot = isReservationRequired(application, sessionSlot, reservation)
+    if (isReservedSlot && !changeApplicationDto.allowOverBooking) {
+      slotCapacityService.checkCapacityForApplicationReservation(
+        sessionSlot.reference,
+        reservation,
+        true,
+      )
+    }
+
     application.sessionSlotId = sessionSlot.id
     application.sessionSlot = sessionSlot
 
@@ -242,11 +252,11 @@ class ApplicationService(
   }
 
   private fun isReservationRequired(
-    visit: Visit,
+    application: Application,
     newSessionSlot: SessionSlot,
-    newRestriction: SessionRestriction,
+    newRestriction: VisitRestriction,
   ): Boolean {
-    return isReservationRequired(visit.sessionSlot, visit.visitRestriction, newSessionSlot, newRestriction.getVisitRestriction())
+    return isReservationRequired(application.sessionSlot, application.restriction, newSessionSlot, newRestriction)
   }
 
   private fun isReservationRequired(

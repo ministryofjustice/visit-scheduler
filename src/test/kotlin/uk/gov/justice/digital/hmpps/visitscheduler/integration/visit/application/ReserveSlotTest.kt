@@ -123,7 +123,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
-    assertCapacityError(responseSpec)
+    assertHelper.assertCapacityError(responseSpec)
   }
 
   @Test
@@ -162,7 +162,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
-    assertCapacityError(responseSpec)
+    assertHelper.assertCapacityError(responseSpec)
   }
 
   @Test
@@ -194,7 +194,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
-    assertCapacityError(responseSpec)
+    assertHelper.assertCapacityError(responseSpec)
   }
 
   @Test
@@ -469,15 +469,5 @@ class ReserveSlotTest : IntegrationTestBase() {
       isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-reserved"), any(), isNull())
-  }
-
-  private fun assertCapacityError(
-    responseSpec: ResponseSpec,
-  ) {
-    responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage")
-      .value(Matchers.containsString("Application can not be reserved because capacity has been exceeded for the slot"))
   }
 }

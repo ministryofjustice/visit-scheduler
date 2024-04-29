@@ -293,7 +293,7 @@ abstract class IntegrationTestBase {
   fun createApplicationAndSave(
     prisonerId: String? = "testPrisonerId",
     sessionTemplate: SessionTemplate? = null,
-    prisonCode: String? = null,
+    prisonCode: String? = sessionTemplateDefault.prison.code,
     slotDate: LocalDate? = null,
     completed: Boolean,
     reservedSlot: Boolean = true,

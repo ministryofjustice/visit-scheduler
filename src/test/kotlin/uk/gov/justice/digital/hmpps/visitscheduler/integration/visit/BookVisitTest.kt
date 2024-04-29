@@ -145,7 +145,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -170,7 +170,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -196,7 +196,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -222,7 +222,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -273,7 +273,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -300,18 +300,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertCapacityError(responseSpec, expiredReservedApplication)
-  }
-
-  private fun assertCapacityError(
-    responseSpec: ResponseSpec,
-    application: Application,
-  ) {
-    responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage")
-      .isEqualTo("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
