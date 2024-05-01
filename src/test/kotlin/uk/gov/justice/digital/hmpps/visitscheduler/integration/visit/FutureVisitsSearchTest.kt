@@ -31,7 +31,7 @@ class FutureVisitsSearchTest : IntegrationTestBase() {
     sessionTemplateBeforeNowTimes = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now().minusDays(1), startTime = LocalTime.now().minusHours(3))
     sessionTemplateFromNowTimes = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), startTime = LocalTime.now().plusHours(1))
 
-    beforeNowVisit = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateBeforeNowTimes, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)
+    beforeNowVisit = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateBeforeNowTimes, slotDate = sessionTemplateBeforeNowTimes.validFromDate, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)
     vist1 = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)
     vist2 = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = CANCELLED, visitRestriction = VisitRestriction.OPEN)
     vist3 = createApplicationAndVisit(prisonerId = "GG0000BB", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)

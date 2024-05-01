@@ -100,6 +100,126 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `change reserved slot with no more capacity - no change to slot date or restriction results in no exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 1)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate,
+      applicationRestriction = SessionRestriction.get(visitRestriction),
+      allowOverBooking = false,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    getResult(responseSpec)
+  }
+
+  @Test
+  fun `change reserved slot with no more capacity and restriction change - results in exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 0)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate,
+      applicationRestriction = SessionRestriction.CLOSED,
+      allowOverBooking = false,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec)
+  }
+
+  @Test
+  fun `change reserved slot with no more capacity and slot date change - results in exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0, closedCapacity = 0)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate.plusWeeks(1),
+      applicationRestriction = SessionRestriction.get(visitRestriction),
+      allowOverBooking = false,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec)
+  }
+
+  @Test
+  fun `change reserved slot with no more capacity allowOverBooking true and restriction change - no exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 0)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate,
+      applicationRestriction = SessionRestriction.CLOSED,
+      allowOverBooking = true,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    getResult(responseSpec)
+  }
+
+  @Test
+  fun `change reserved slot with no more capacity allowOverBooking true and slot date change - no exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0, closedCapacity = 0)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate.plusWeeks(1),
+      applicationRestriction = SessionRestriction.get(visitRestriction),
+      allowOverBooking = true,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    getResult(responseSpec)
+  }
+
+  @Test
   fun `change reserved slot by application reference - visit restriction has still changed from original booking and application is Reserved`() {
     // Given
 

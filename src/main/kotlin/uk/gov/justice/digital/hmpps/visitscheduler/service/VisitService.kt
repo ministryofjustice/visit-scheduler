@@ -28,12 +28,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
@@ -64,6 +66,10 @@ class VisitService(
   @Autowired
   private lateinit var visitNotificationEventService: VisitNotificationEventService
 
+  @Lazy
+  @Autowired
+  private lateinit var slotCapacityService: SlotCapacityService
+
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
 
@@ -88,14 +94,11 @@ class VisitService(
     }
 
     val application = applicationService.getApplicationEntity(applicationReference)
-    if (!bookingRequestDto.allowOverBooking && hasExceededMaxCapacity(application)) {
-      val messages = "Booking can not be made because capacity has been exceeded for slot ${application.sessionSlot.reference}"
-      LOG.debug(messages)
-      throw OverCapacityException(messages)
-    }
 
-    val hasExistingBooking = visitRepository.doesBookedVisitExist(applicationReference)
-    val booking = createBooking(application, hasExistingBooking)
+    val existingBooking = visitRepository.findVisitByApplicationReference(application.reference)
+    checkSlotCapacity(bookingRequestDto, application, existingBooking)
+
+    val booking = createBooking(application, existingBooking)
     application.completed = true
 
     val bookedVisitDto = visitDtoBuilder.build(booking)
@@ -108,6 +111,7 @@ class VisitService(
       throw ItemNotFoundException(message, e)
     }
 
+    val hasExistingBooking = existingBooking != null
     saveEventAudit(
       bookingRequestDto.actionedBy,
       bookedVisitDto,
@@ -120,53 +124,52 @@ class VisitService(
     return bookedVisitDto
   }
 
-  fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
-    return if (VisitRestriction.OPEN == restriction) {
-      visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
-    } else {
-      visitRepository.getCountOfBookedForClosedSessionSlot(sessionSlotId)
+  private fun checkSlotCapacity(
+    bookingRequestDto: BookingRequestDto,
+    application: Application,
+    existingBooking: Visit?,
+  ) {
+    if (!bookingRequestDto.allowOverBooking && hasSlotChangedSinceLastBooking(existingBooking, application)) {
+      slotCapacityService.checkCapacityForBooking(
+        application.sessionSlot.reference,
+        application.restriction,
+        applicationService.isExpiredApplication(application.modifyTimestamp!!),
+      )
     }
   }
 
-  private fun hasExceededMaxCapacity(
+  private fun hasSlotChangedSinceLastBooking(
+    existingBooking: Visit?,
     application: Application,
   ): Boolean {
-    var slotTakenCount = getBookCountForSlot(application.sessionSlotId, application.restriction)
-
-    if (isExpiredApplication(application.modifyTimestamp!!)) {
-      slotTakenCount += applicationService.getReservedApplicationsCountForSlot(application.sessionSlotId, application.restriction)
-    }
-
-    val maxBookings = sessionTemplateService.getSessionTemplatesCapacity(
-      application.sessionSlot.sessionTemplateReference!!,
-      application.restriction,
-    )
-
-    return slotTakenCount >= maxBookings
+    return existingBooking?.let {
+      it.visitRestriction != application.restriction || it.sessionSlot.id != application.sessionSlotId
+    } ?: run { true }
   }
 
-  private fun isExpiredApplication(modifyTimestamp: LocalDateTime): Boolean {
-    return modifyTimestamp.isBefore(applicationService.getExpiredApplicationDateAndTime())
+  fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
+    return when (restriction) {
+      OPEN -> visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
+      CLOSED -> visitRepository.getCountOfBookedForClosedSessionSlot(sessionSlotId)
+      UNKNOWN -> throw IllegalStateException("Cant acquire a book count for an UNKNOWN restriction")
+    }
   }
 
-  private fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
-    val existingBooking = if (hasExistingBooking) visitRepository.findVisitByApplicationReference(application.reference) else null
-    if (hasExistingBooking) {
-      validateVisitStartDate(existingBooking!!, "changed")
-      handleVisitUpdateEvents(existingBooking, application)
-    }
-
+  private fun createBooking(application: Application, existingBooking: Visit?): Visit {
     val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference!!)
 
     val notSavedBooking = existingBooking?.let {
+      validateVisitStartDate(it, "changed")
+      handleVisitUpdateEvents(it, application)
+
       // Update existing booking
-      existingBooking.sessionSlotId = application.sessionSlotId
-      existingBooking.sessionSlot = application.sessionSlot
-      existingBooking.visitType = application.visitType
-      existingBooking.visitRestriction = application.restriction
-      existingBooking.visitRoom = visitRoom
-      existingBooking.visitStatus = BOOKED
-      existingBooking
+      it.sessionSlotId = application.sessionSlotId
+      it.sessionSlot = application.sessionSlot
+      it.visitType = application.visitType
+      it.visitRestriction = application.restriction
+      it.visitRoom = visitRoom
+      it.visitStatus = BOOKED
+      it
     } ?: run {
       // Create new booking
       Visit(

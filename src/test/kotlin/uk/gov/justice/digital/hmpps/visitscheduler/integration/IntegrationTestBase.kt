@@ -281,48 +281,40 @@ abstract class IntegrationTestBase {
 
   fun createApplicationAndSave(
     prisonerId: String? = "testPrisonerId",
-    sessionTemplate: SessionTemplate? = null,
-    prisonCode: String? = null,
-    slotDate: LocalDate? = null,
-    completed: Boolean,
-    reservedSlot: Boolean = true,
-    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
-  ): Application {
-    val applicationEntity = applicationEntityHelper.create(
-      prisonerId = prisonerId!!,
-      sessionTemplate = sessionTemplate ?: sessionTemplateDefault,
-      completed = completed,
-      reservedSlot = reservedSlot,
-      prisonCode = prisonCode,
-      slotDate = slotDate ?: sessionTemplate?.validFromDate ?: sessionTemplateDefault.validFromDate,
-      visitRestriction = visitRestriction,
-    )
-    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone)
-    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
-    applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")
-
-    return applicationEntityHelper.save(applicationEntity)
-  }
-
-  fun createApplicationAndSave(
-    prisonerId: String? = "testPrisonerId",
     prisonCode: String? = null,
     slotDate: LocalDate,
     completed: Boolean,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
   ): Application {
+    return createApplicationAndSave(prisonerId = prisonerId, sessionTemplate = sessionTemplateDefault, prisonCode = prisonCode, slotDate = slotDate, completed = completed, reservedSlot = reservedSlot, visitRestriction = visitRestriction)
+  }
+
+  fun createApplicationAndSave(
+    prisonerId: String? = "testPrisonerId",
+    sessionTemplate: SessionTemplate? = null,
+    prisonCode: String? = sessionTemplateDefault.prison.code,
+    slotDate: LocalDate? = null,
+    completed: Boolean,
+    reservedSlot: Boolean = true,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
+  ): Application {
+    val sessionTemplateLocal = sessionTemplate ?: sessionTemplateDefault
+    val slotDateLocal = slotDate ?: run {
+      sessionTemplateLocal.validFromDate.with(sessionTemplateLocal.dayOfWeek).plusWeeks(1)
+    }
+
     val applicationEntity = applicationEntityHelper.create(
       prisonerId = prisonerId!!,
+      sessionTemplate = sessionTemplateLocal,
       completed = completed,
       reservedSlot = reservedSlot,
       prisonCode = prisonCode,
-      slotDate = slotDate,
+      slotDate = slotDateLocal,
       visitRestriction = visitRestriction,
     )
-    applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
     applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")

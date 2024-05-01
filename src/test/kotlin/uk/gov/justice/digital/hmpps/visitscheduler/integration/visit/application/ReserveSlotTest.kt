@@ -25,8 +25,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getSubmitApplicationUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -66,19 +68,24 @@ class ReserveSlotTest : IntegrationTestBase() {
 
   private fun createReserveVisitSlotDto(
     actionedBy: String = ACTIONED_BY_USER_NAME,
+    prisonerId: String = "FF0000FF",
     sessionTemplate: SessionTemplate? = null,
+    slotDate: LocalDate? = null,
     support: String = "Some Text",
+    sessionRestriction: SessionRestriction = OPEN,
+    allowOverBooking: Boolean = false,
   ): CreateApplicationDto {
     return CreateApplicationDto(
-      prisonerId = "FF0000FF",
+      prisonerId,
       sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
-      sessionDate = sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
-      applicationRestriction = OPEN,
+      sessionDate = slotDate ?: sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
+      applicationRestriction = sessionRestriction,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto(support),
       actionedBy = actionedBy,
       userType = STAFF,
+      allowOverBooking = allowOverBooking,
     )
   }
 
@@ -100,6 +107,110 @@ class ReserveSlotTest : IntegrationTestBase() {
 
     // And
     assertTelemetry(applicationDto)
+  }
+
+  @Test
+  fun `reserve visit slot capacity - over capacity exception`() {
+    // Given
+    val visitRestriction = VisitRestriction.OPEN
+    val sessionRestriction = SessionRestriction.get(visitRestriction)
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 1)
+    val existingBooking = createApplicationAndVisit(sessionTemplate = sessionTemplate, visitRestriction = visitRestriction)
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate, sessionRestriction = sessionRestriction, slotDate = existingBooking.sessionSlot.slotDate)
+
+    // When
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec)
+  }
+
+  @Test
+  fun `reserve visit slot capacity - no capacity exception thrown as we have allowed over booking`() {
+    // Given
+    val visitRestriction = VisitRestriction.OPEN
+    val sessionRestriction = SessionRestriction.get(visitRestriction)
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 1)
+    val existingBooking = createApplicationAndVisit(sessionTemplate = sessionTemplate, visitRestriction = visitRestriction)
+    val reserveVisitSlotDto = createReserveVisitSlotDto(allowOverBooking = true, sessionTemplate = sessionTemplate, sessionRestriction = sessionRestriction, slotDate = existingBooking.sessionSlot.slotDate)
+
+    // When
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+  }
+
+  @Test
+  fun `reserve visit slot capacity gone due to reserved application - over capacity exception`() {
+    // Given
+    val visitRestriction = VisitRestriction.OPEN
+    val sessionRestriction = SessionRestriction.get(visitRestriction)
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 1)
+    val application = createApplicationAndSave(sessionTemplate = sessionTemplate, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+    val reserveVisitSlotDto = createReserveVisitSlotDto(
+      prisonerId = application.prisonerId,
+      sessionTemplate = sessionTemplate,
+      sessionRestriction = sessionRestriction,
+      slotDate = application.sessionSlot.slotDate,
+    )
+
+    // When
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec)
+  }
+
+  @Test
+  fun `reserve visit slot capacity - change restriction`() {
+    // Given
+    val visitRestriction = VisitRestriction.OPEN
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 1)
+    val existingBooking = createApplicationAndVisit(sessionTemplate = sessionTemplate, visitRestriction = visitRestriction)
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate, sessionRestriction = SessionRestriction.CLOSED, slotDate = existingBooking.sessionSlot.slotDate)
+
+    // When
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+  }
+
+  @Test
+  fun `reserve visit slot capacity - change restriction but no capacity on new restriction`() {
+    // Given
+    val visitRestriction = VisitRestriction.OPEN
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 0)
+    val existingBooking = createApplicationAndVisit(sessionTemplate = sessionTemplate, visitRestriction = visitRestriction)
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate, sessionRestriction = SessionRestriction.CLOSED, slotDate = existingBooking.sessionSlot.slotDate)
+
+    // When
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec)
+  }
+
+  @Test
+  fun `reserve visit slot capacity - change slot date`() {
+    // Given
+    val visitRestriction = VisitRestriction.OPEN
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 1)
+    val existingBooking = createApplicationAndVisit(sessionTemplate = sessionTemplate, visitRestriction = visitRestriction)
+    val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate, sessionRestriction = SessionRestriction.CLOSED, slotDate = existingBooking.sessionSlot.slotDate.plusWeeks(1))
+
+    // When
+    val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
   }
 
   @Test
