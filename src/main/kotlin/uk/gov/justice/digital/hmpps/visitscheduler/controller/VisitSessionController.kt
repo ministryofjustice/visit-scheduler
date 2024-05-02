@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSe
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.service.DateRange
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import java.time.LocalDate
 import java.time.LocalTime
@@ -129,20 +130,20 @@ class VisitSessionController(
       example = "CLOSED",
     )
     sessionRestriction: SessionRestriction,
-    @RequestParam(value = "min", required = false)
+    @RequestParam(value = "fromDate", required = true)
     @Parameter(
-      description = "Override the default minimum number of days notice from the current date",
-      example = "2",
+      description = "Session slot from date",
+      example = "2024-12-03",
     )
-    min: Int?,
-    @RequestParam(value = "max", required = false)
+    fromDate: LocalDate,
+    @RequestParam(value = "toDate", required = true)
     @Parameter(
-      description = "Override the default maximum number of days to book-ahead from the current date",
-      example = "28",
+      description = "Session slot to date",
+      example = "2024-12-20",
     )
-    max: Int?,
+    toDate: LocalDate,
   ): List<AvailableVisitSessionDto> {
-    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, min, max)
+    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate))
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
