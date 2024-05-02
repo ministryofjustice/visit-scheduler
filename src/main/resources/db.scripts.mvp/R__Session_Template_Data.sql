@@ -19,22 +19,22 @@
         TRUNCATE TABLE session_prisoner_category  RESTART IDENTITY CASCADE;
         TRUNCATE TABLE session_prisoner_incentive  RESTART IDENTITY CASCADE;
 
-            INSERT INTO prison(code, active) SELECT 'HEI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'HEI');
-        INSERT INTO prison(code, active) SELECT 'BLI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BLI');
-        INSERT INTO prison(code, active) SELECT 'CFI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'CFI');
-        INSERT INTO prison(code, active) SELECT 'WWI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'WWI');
-        INSERT INTO prison(code, active) SELECT 'PNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'PNI');
-        INSERT INTO prison(code, active) SELECT 'EWI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'EWI');
-        INSERT INTO prison(code, active) SELECT 'DHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'DHI');
-        INSERT INTO prison(code, active) SELECT 'MHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'MHI');
-        INSERT INTO prison(code, active) SELECT 'BNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BNI');
-        INSERT INTO prison(code, active) SELECT 'FNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FNI');
-        INSERT INTO prison(code, active) SELECT 'LNI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'LNI');
-        INSERT INTO prison(code, active) SELECT 'FHI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FHI');
-        INSERT INTO prison(code, active) SELECT 'ESI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'ESI');
-        INSERT INTO prison(code, active) SELECT 'BSI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BSI');
-        INSERT INTO prison(code, active) SELECT 'AGI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'AGI');
-        INSERT INTO prison(code, active) SELECT 'DMI', false WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'DMI');
+        INSERT INTO prison(code, active) SELECT 'HEI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'HEI');
+        INSERT INTO prison(code, active) SELECT 'BLI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BLI');
+        INSERT INTO prison(code, active) SELECT 'CFI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'CFI');
+        INSERT INTO prison(code, active) SELECT 'WWI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'WWI');
+        INSERT INTO prison(code, active) SELECT 'PNI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'PNI');
+        INSERT INTO prison(code, active) SELECT 'EWI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'EWI');
+        INSERT INTO prison(code, active) SELECT 'DHI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'DHI');
+        INSERT INTO prison(code, active) SELECT 'MHI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'MHI');
+        INSERT INTO prison(code, active) SELECT 'BNI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BNI');
+        INSERT INTO prison(code, active) SELECT 'FNI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FNI');
+        INSERT INTO prison(code, active) SELECT 'LNI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'LNI');
+        INSERT INTO prison(code, active) SELECT 'FHI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'FHI');
+        INSERT INTO prison(code, active) SELECT 'ESI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'ESI');
+        INSERT INTO prison(code, active) SELECT 'BSI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'BSI');
+        INSERT INTO prison(code, active) SELECT 'AGI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'AGI');
+        INSERT INTO prison(code, active) SELECT 'DMI', true WHERE NOT EXISTS ( SELECT id FROM prison WHERE code = 'DMI');
 
         -- Creating session template data
         CREATE TEMP TABLE tmp_session_template(
@@ -644,6 +644,8 @@
     JOIN tmp_session_incentive_group g ON POSITION(g.key  IN st.incentiveLevelKeys)<>0 ORDER BY st.id,g.id;
 
     -- Category group names are only descriptions they need to be updated when the group categories change
+
+    INSERT INTO prison_user_client (prison_id,user_type, active) SELECT id,'STAFF',true FROM prison;
 
     -- Drop temporary tables
         DROP TABLE tmp_session_template;
