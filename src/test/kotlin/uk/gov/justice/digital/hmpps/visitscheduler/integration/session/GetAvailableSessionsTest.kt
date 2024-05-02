@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.service.DateRange
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SUNDAY
 import java.time.LocalDate
@@ -496,7 +497,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonId = prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(prisonCode = prisonCode, prisonerId, SessionRestriction.OPEN, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -526,7 +527,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonId = "AWE", prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId, SessionRestriction.OPEN)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1835,9 +1836,10 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     val incorrectPrisonCode = "ABC"
     val prisonerId = "A1234AA"
 
+    prisonEntityHelper.create(incorrectPrisonCode)
+
     // prisoner is in prison with code MDI
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-
     // When
     // get sessions call is being made with the incorrect prison Code
     val responseSpec = callGetAvailableSessions(incorrectPrisonCode, prisonerId, SessionRestriction.OPEN)
@@ -1985,16 +1987,15 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonCode: String? = "SPC",
     prisonerId: String,
     sessionRestriction: SessionRestriction,
-    policyNoticeDaysMin: Int,
-    policyNoticeDaysMax: Int,
+    policyNoticeDaysMin: Int = 2,
+    policyNoticeDaysMax: Int = 28,
   ): ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions/available?prisonId=$prisonCode&prisonerId=$prisonerId&sessionRestriction=$sessionRestriction&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
-  }
+    val today = LocalDate.now()
+    val fromDate = today.plusDays(policyNoticeDaysMin.toLong())
+    val toDate = today.plusDays(policyNoticeDaysMax.toLong())
+    val dateRange = DateRange(fromDate, toDate)
 
-  private fun callGetAvailableSessions(prisonId: String, prisonerId: String, sessionRestriction: SessionRestriction): ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions/available?prisonId=$prisonId&prisonerId=$prisonerId&sessionRestriction=$sessionRestriction")
+    return webTestClient.get().uri("/visit-sessions/available?prisonId=$prisonCode&prisonerId=$prisonerId&sessionRestriction=$sessionRestriction&fromDate=${dateRange.fromDate}&toDate=${dateRange.toDate}")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }

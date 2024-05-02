@@ -1612,6 +1612,8 @@ class GetSessionsTest : IntegrationTestBase() {
     val incorrectPrisonCode = "ABC"
     val prisonerId = "A1234AA"
 
+    prisonEntityHelper.create(incorrectPrisonCode)
+
     // prisoner is in prison with code MDI
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 

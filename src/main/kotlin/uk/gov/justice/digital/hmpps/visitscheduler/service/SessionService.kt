@@ -64,16 +64,35 @@ class SessionService(
     minOverride: Int? = null,
     maxOverride: Int? = null,
   ): List<VisitSessionDto> {
-    LOG.debug("Enter getVisitSessions prisonCode:$prisonCode, prisonerId : $prisonerId ")
+    val prison = prisonsService.findPrisonByCode(prisonCode)
+    val dateRange = getDateRange(prison, minOverride, maxOverride)
+
+    return getVisitSessions(prison, prisonerId, dateRange)
+  }
+
+  @Transactional(readOnly = true)
+  fun getVisitSessions(
+    prisonCode: String,
+    prisonerId: String,
+    dateRange: DateRange,
+  ): List<VisitSessionDto> {
+    val prison = prisonsService.findPrisonByCode(prisonCode)
+    return getVisitSessions(prison, prisonerId, dateRange)
+  }
+
+  fun getVisitSessions(
+    prison: Prison,
+    prisonerId: String,
+    dateRange: DateRange,
+  ): List<VisitSessionDto> {
+    val prisonCode = prison.code
+    LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId ")
 
     // ensure the prisoner - if supplied belongs to the same prison as supplied prisonCode
     val prisoner = prisonerService.getPrisoner(prisonerId).also {
       prisonerValidationService.validatePrisonerNotNull(prisonerId, it)
       prisonerValidationService.validatePrisonerIsFromPrison(it!!, prisonCode)
     }!!
-
-    val prison = prisonsService.findPrisonByCode(prisonCode)
-    val dateRange = getDateRange(prison, minOverride, maxOverride)
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
     sessionTemplates = sessionTemplates.filter {
@@ -105,11 +124,10 @@ class SessionService(
     prisonCode: String,
     prisonerId: String,
     sessionRestriction: SessionRestriction,
-    minOverride: Int? = null,
-    maxOverride: Int? = null,
+    dateRange: DateRange,
   ): List<AvailableVisitSessionDto> {
     LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {} ", prisonCode, prisonerId, sessionRestriction)
-    return getVisitSessions(prisonCode, prisonerId, minOverride, maxOverride).filter {
+    return getVisitSessions(prisonCode, prisonerId, dateRange).filter {
       hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
     }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList()
   }
@@ -489,4 +507,7 @@ class SessionService(
   }
 }
 
-data class DateRange(val fromDate: LocalDate, val toDate: LocalDate)
+data class DateRange(
+  val fromDate: LocalDate,
+  val toDate: LocalDate,
+)
