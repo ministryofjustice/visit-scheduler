@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -136,7 +137,7 @@ class PrisonEntityHelper(
           createPrisonUserClient(
             prison = prison,
             active = true,
-            userType = UserType.STAFF,
+            userType = STAFF,
           ),
         )
 
@@ -274,6 +275,7 @@ class VisitEntityHelper(
       sessionSlot = sessionSlot,
       visitType = visitType,
       visitRestriction = visitRestriction,
+      userType = STAFF,
     )
 
     notSaved.outcomeStatus = outcomeStatus
@@ -320,6 +322,7 @@ class VisitEntityHelper(
       sessionSlot = sessionSlot,
       visitType = visitType,
       visitRestriction = visitRestriction,
+      userType = STAFF,
     )
 
     notSaved.outcomeStatus = outcomeStatus

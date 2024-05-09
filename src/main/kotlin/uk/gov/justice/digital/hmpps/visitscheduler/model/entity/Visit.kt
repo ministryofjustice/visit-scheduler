@@ -17,6 +17,7 @@ import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
@@ -61,6 +62,11 @@ class Visit(
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
   var visitRestriction: VisitRestriction,
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "user_type")
+  val userType: UserType,
+
 ) : AbstractIdEntity() {
 
   @Column(nullable = true)

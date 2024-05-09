@@ -182,6 +182,7 @@ class VisitService(
         visitRestriction = application.restriction,
         visitRoom = visitRoom,
         visitStatus = BOOKED,
+        userType = application.userType,
       )
     }
 

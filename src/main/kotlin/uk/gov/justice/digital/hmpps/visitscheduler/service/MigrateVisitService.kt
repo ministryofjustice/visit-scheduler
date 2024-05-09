@@ -205,6 +205,7 @@ class MigrateVisitService(
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
         visitRestriction = migrateVisitRequest.visitRestriction,
+        userType = STAFF,
       ),
     )
 
