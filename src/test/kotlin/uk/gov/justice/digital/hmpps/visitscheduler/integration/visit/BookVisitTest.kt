@@ -669,6 +669,8 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitDto.visitors[0].visitContact).isEqualTo(application.visitors[0].contact!!)
     assertThat(visitDto.visitorSupport?.description).isEqualTo(application.support?.description)
     assertThat(visitDto.createdTimestamp).isNotNull()
+    assertThat(visitDto).isNotNull()
+    assertThat(visitDto.userType).isEqualTo(application.userType)
   }
 
   private fun assertBookedEvent(visit: VisitDto, isUpdated: Boolean) {

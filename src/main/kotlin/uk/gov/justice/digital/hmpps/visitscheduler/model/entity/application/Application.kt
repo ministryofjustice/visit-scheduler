@@ -61,7 +61,7 @@ class Application(
   var restriction: VisitRestriction,
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "user_type")
+  @Column(name = "user_type", nullable = false)
   val userType: UserType,
 
   @Column(nullable = false)

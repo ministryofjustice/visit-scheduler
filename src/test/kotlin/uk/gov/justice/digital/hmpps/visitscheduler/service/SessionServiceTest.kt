@@ -23,6 +23,7 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
@@ -337,6 +338,7 @@ class SessionServiceTest {
         visitStatus = BOOKED,
         visitRestriction = OPEN,
         visitRoom = "1",
+        userType = STAFF,
       )
 
       val openVisit2 = Visit(
@@ -349,6 +351,7 @@ class SessionServiceTest {
         visitStatus = BOOKED,
         visitRestriction = OPEN,
         visitRoom = "1",
+        userType = STAFF,
       )
 
       val closedVisit = Visit(
@@ -361,6 +364,7 @@ class SessionServiceTest {
         visitStatus = BOOKED,
         visitRestriction = CLOSED,
         visitRoom = "1",
+        userType = STAFF,
       )
       mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession, sessionSlot)
 
@@ -406,6 +410,7 @@ class SessionServiceTest {
         visitStatus = BOOKED,
         visitRestriction = UNKNOWN,
         visitRoom = "1",
+        userType = STAFF,
       )
 
       mockSessionTemplateRepositoryResponse(listOf(singleSession))

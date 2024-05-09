@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.COMPL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.NOT_RECORDED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.PRISONER_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.STATUS_CHANGED_REASON
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
@@ -95,6 +96,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
           tuple(VISIT_COMMENT, "A visit comment"),
           tuple(STATUS_CHANGED_REASON, "Status has changed"),
         )
+      assertThat(visit.userType).isEqualTo(STAFF)
 
       val legacyData = legacyDataRepository.findByVisitId(visit.id)
       assertThat(legacyData).isNotNull
@@ -117,6 +119,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       assertVisitMatchesApplication(visit, application)
       assertThat(application.completed).isTrue()
       assertThat(application.reservedSlot).isTrue()
+      assertThat(application.userType).isEqualTo(STAFF)
     }
   }
 

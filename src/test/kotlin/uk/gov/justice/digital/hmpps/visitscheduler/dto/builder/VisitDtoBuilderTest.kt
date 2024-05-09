@@ -11,6 +11,7 @@ import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -124,6 +125,7 @@ class VisitDtoBuilderTest {
     reference: String = "",
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
+    userType: UserType = UserType.STAFF,
   ): Visit {
     val sessionSlot = SessionSlot(sessionTemplateReference, prison.id, slotDate, slotDate.atTime(visitStart), slotDate.atTime(visitEnd))
 
@@ -137,6 +139,7 @@ class VisitDtoBuilderTest {
       visitRestriction = visitRestriction,
       sessionSlotId = sessionSlot.id,
       sessionSlot = sessionSlot,
+      userType = userType,
     )
 
     visit.outcomeStatus = outcomeStatus
