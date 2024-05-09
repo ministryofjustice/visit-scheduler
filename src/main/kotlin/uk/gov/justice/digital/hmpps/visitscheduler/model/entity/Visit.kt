@@ -64,7 +64,7 @@ class Visit(
   var visitRestriction: VisitRestriction,
 
   @Enumerated(EnumType.STRING)
-  @Column(name = "user_type")
+  @Column(name = "user_type", nullable = false)
   val userType: UserType,
 
 ) : AbstractIdEntity() {
