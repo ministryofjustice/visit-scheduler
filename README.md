@@ -2,7 +2,7 @@
 
 [![CircleCI](https://circleci.com/gh/ministryofjustice/visit-scheduler/tree/main.svg?style=shield)](https://app.circleci.com/pipelines/github/ministryofjustice/visit-scheduler)
 
-This is a Spring Boot application, written in Kotlin, providing visit schedule information. Used by [Visit Someone in Prison](https://github.com/ministryofjustice/book-a-prison-visit-staff-ui).
+This is a Spring Boot application, written in Kotlin, providing visit schedule information. Used by [Visits UI](https://github.com/ministryofjustice/book-a-prison-visit-staff-ui).
 
 Posted event Specification [![Event docs](https://img.shields.io/badge/Event_docs-view-85EA2D.svg)](https://studio.asyncapi.com/?url=https://raw.githubusercontent.com/ministryofjustice/visit-scheduler/main/visit-scheduler-event-specification.yaml)
 
@@ -22,33 +22,51 @@ Run:
 
 ## Running
 
-Create a Spring Boot run configuration with active profile of dev/local, to run against te development environment.
+The visit-scheduler uses the deployed dev environment to connect to most of the required services,
+with an exception of the scheduler-db and local-stack.
 
-Alternatively the service can be run using docker-compose with client 'book-a-prison-visit-client' and the usual dev secret.
+To run the visit-scheduler, first start the required local services using docker-compose.
 ```
 docker-compose up -d
 ```
-or for particular compose files
+Next create a .env file at the project root and add 2 secrets to it
 ```
-docker-compose -f docker-compose-local.yml up -d
+SYSTEM_CLIENT_ID="get from kubernetes secrets for dev namespace"
+SYSTEM_CLIENT_SECRET"get from kubernetes secrets for dev namespace"
 ```
+
+Then create a Spring Boot run configuration with active profile of 'dev' and set an environments file to the 
+`.env` file we just created. Run the service in your chosen IDE.
+
 Ports
 
 | Service            | Port |  
 |--------------------|------|
-| visit-scheduler    | 8080 |
+| visit-scheduler    | 8081 |
 | visit-scheduler-db | 5432 |
-| hmpps-auth         | 8090 |
-| prison-api         | 8091 |
 
-To create a Token (local):
+### Populating local Db with data
+Connect to the localhost database and run this script `resources/db.scripts.mvp/R__Session_Template_Data.sql`
+
+### Auth token retrieval
+
+To create a Token via curl (local):
 ```
-curl --location --request POST "http://localhost:8081/auth/oauth/token?grant_type=client_credentials" --header "Authorization: Basic $(echo -n {Client}:{ClientSecret} | base64)"
+curl --location --request POST "https://sign-in-dev.hmpps.service.justice.gov.uk/auth/oauth/token?grant_type=client_credentials" --header "Authorization: Basic $(echo -n {Client}:{ClientSecret} | base64)"
+```
+
+or via postman collection using the following authorisation urls:
+```
+Grant type: Client Credentials
+Access Token URL: https://sign-in-dev.hmpps.service.justice.gov.uk/auth/oauth/token
+Client ID: <get from kubernetes secrets for dev namespace>
+Client Secret: <get from kubernetes secrets for dev namespace>
+Client Authentication: "Send as Basic Auth Header"
 ```
 
 Call info endpoint:
 ```
-$ curl 'http://localhost:8080/info' -i -X GET
+$ curl 'http://localhost:8081/info' -i -X GET
 ```
 
 ## How to restore pre prod from production on demand
@@ -118,12 +136,12 @@ https://user-guide.cloud-platform.service.justice.gov.uk/documentation/other-top
 ## Swagger v3
 Visit Scheduler
 ```
-http://localhost:8080/swagger-ui/index.html
+http://localhost:8081/swagger-ui/index.html
 ```
 
 Export Spec
 ```
-http://localhost:8080/v3/api-docs?group=full-api
+http://localhost:8081/v3/api-docs?group=full-api
 ```
 
 ## Application Tracing

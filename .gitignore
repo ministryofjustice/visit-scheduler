@@ -62,7 +62,7 @@ dist
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 
-# AWS DOcker build
+# AWS Docker build
 ecr.repo
 /dps-gradle-spring-boot-suppressions.xml
 .editorconfig
@@ -72,3 +72,10 @@ ecr.repo
 
 .DS_Store
 /src/main/resources/session-template-data/R__Session_Template_Data.sql
+
+# Local stack
+/localstack/
+/volume/
+
+# Local development env file
+.env
