@@ -72,6 +72,11 @@ ecr.repo
 
 .DS_Store
 /src/main/resources/session-template-data/R__Session_Template_Data.sql
+/volume/cache/machine.json
+/volume/cache/server.test.pem
+/volume/cache/server.test.pem.crt
+/volume/cache/server.test.pem.key
+/volume/cache/service-catalog-3_2_0-1_34_49.pickle
 
 # Local stack
 /localstack/

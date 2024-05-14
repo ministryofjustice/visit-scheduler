@@ -1,6 +1,8 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import com.microsoft.applicationinsights.TelemetryClient
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
@@ -32,11 +34,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService.Companion
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplateMatcher
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -60,6 +62,10 @@ class MigrateVisitService(
   private val migrateMaxMonthsInFuture: Long,
 ) {
 
+  companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
+
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
 
@@ -78,24 +84,17 @@ class MigrateVisitService(
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
-    val shouldMigrateWithSessionTemplate = shouldMigrateWithSessionMapping(migrateVisitRequest)
     val prison: Prison
     val visitRoom: String
     val sessionSlot: SessionSlot
 
+    val shouldMigrateWithSessionTemplate = shouldMigrateWithSessionMapping(migrateVisitRequest)
     if (shouldMigrateWithSessionTemplate) {
       val sessionTemplate = migrationSessionTemplateMatcher.getMatchingSessionTemplate(migrateVisitRequest)
-
       prison = sessionTemplate.prison
-      val sessionTemplateReference = sessionTemplate.reference
       visitRoom = sessionTemplate.visitRoom
 
-      sessionSlot = sessionSlotService.getSessionSlot(
-        startTimeDate = migrateVisitRequest.startTimestamp,
-        endTimeAndDate = migrateVisitRequest.endTimestamp,
-        sessionTemplateReference,
-        prison,
-      )
+      sessionSlot = getSessionSlotFromSessionTemplate(migrateVisitRequest, sessionTemplate, prison)
     } else {
       prison = prisonsService.findPrisonByCode(migrateVisitRequest.prisonCode)
       visitRoom = migrateVisitRequest.visitRoom
@@ -141,6 +140,39 @@ class MigrateVisitService(
     }
 
     return visitEntity.reference
+  }
+
+  private fun getSessionSlotFromSessionTemplate(
+    migrateVisitRequest: MigrateVisitRequestDto,
+    sessionTemplate: SessionTemplate,
+    prison: Prison,
+  ): SessionSlot {
+    val startTimeDate: LocalDateTime
+    val endTimeAndDate: LocalDateTime
+
+    if (migrationSessionTemplateMatcher.isThereASessionTimeMisMatch(migrateVisitRequest, sessionTemplate)) {
+      startTimeDate = migrateVisitRequest.startTimestamp.toLocalDate().atTime(sessionTemplate.startTime)
+      endTimeAndDate = migrateVisitRequest.endTimestamp.toLocalDate().atTime(sessionTemplate.endTime)
+
+      LOG.debug(
+        "getSessionSlotFromSessionTemplate session miss match: session migrated '{}' to '{}' = '{}' to '{}' session template : {}",
+        migrateVisitRequest.startTimestamp.toLocalTime(),
+        migrateVisitRequest.endTimestamp.toLocalTime(),
+        sessionTemplate.startTime,
+        sessionTemplate.endTime,
+        sessionTemplate.reference,
+      )
+    } else {
+      startTimeDate = migrateVisitRequest.startTimestamp
+      endTimeAndDate = migrateVisitRequest.endTimestamp
+    }
+
+    return sessionSlotService.getSessionSlot(
+      startTimeDate = startTimeDate,
+      endTimeAndDate = endTimeAndDate,
+      sessionTemplate.reference,
+      prison,
+    )
   }
 
   private fun createApplication(
@@ -318,7 +350,7 @@ class MigrateVisitService(
     try {
       telemetryClient.trackEvent(eventName, properties, null)
     } catch (e: RuntimeException) {
-      Companion.LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
+      LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
     }
   }
 

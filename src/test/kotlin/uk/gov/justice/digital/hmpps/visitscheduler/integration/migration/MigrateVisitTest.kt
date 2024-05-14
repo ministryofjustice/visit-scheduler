@@ -124,6 +124,91 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
   }
 
   @Test
+  fun `migrate visit when start migrated session slot mismatch with session template - should use session template start date`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
+    val sessionTemplate = createSessionTemplateFrom(migrateVisitRequestDto, startTime = migrateVisitRequestDto.startTimestamp.plusHours(1).toLocalTime())
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    assertThat(migrateVisitRequestDto.startTimestamp.toLocalTime()).isNotEqualTo(sessionTemplate.startTime)
+    assertThat(migrateVisitRequestDto.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.sessionSlot.slotDate).isEqualTo(migrateVisitRequestDto.endTimestamp.toLocalDate())
+      assertThat(visit.sessionSlot.slotStart.toLocalTime()).isEqualTo(sessionTemplate.startTime)
+      assertThat(visit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(sessionTemplate.endTime)
+      assertVisitMatchesApplication(visit, visit.getLastApplication()!!)
+    }
+  }
+
+  @Test
+  fun `migrate visit when end migrated session slot mismatch with session template - should use session template end date`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
+    val sessionTemplate = createSessionTemplateFrom(migrateVisitRequestDto, endTime = migrateVisitRequestDto.endTimestamp.minusHours(1).toLocalTime())
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    assertThat(migrateVisitRequestDto.startTimestamp.toLocalTime()).isEqualTo(sessionTemplate.startTime)
+    assertThat(migrateVisitRequestDto.endTimestamp.toLocalTime()).isNotEqualTo(sessionTemplate.endTime)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.sessionSlot.slotDate).isEqualTo(migrateVisitRequestDto.endTimestamp.toLocalDate())
+      assertThat(visit.sessionSlot.slotStart.toLocalTime()).isEqualTo(sessionTemplate.startTime)
+      assertThat(visit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(sessionTemplate.endTime)
+      assertVisitMatchesApplication(visit, visit.getLastApplication()!!)
+    }
+  }
+
+  @Test
+  fun `migrate visit when end and start migrated session slot mismatch with session template - should use session template start and end date`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
+    val sessionTemplate = createSessionTemplateFrom(
+      migrateVisitRequestDto,
+      startTime = migrateVisitRequestDto.startTimestamp.minusHours(1).toLocalTime(),
+      endTime = migrateVisitRequestDto.endTimestamp.plusHours(1).toLocalTime(),
+    )
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    assertThat(migrateVisitRequestDto.startTimestamp.toLocalTime()).isNotEqualTo(sessionTemplate.startTime)
+    assertThat(migrateVisitRequestDto.endTimestamp.toLocalTime()).isNotEqualTo(sessionTemplate.endTime)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.sessionSlot.slotDate).isEqualTo(migrateVisitRequestDto.endTimestamp.toLocalDate())
+      assertThat(visit.sessionSlot.slotStart.toLocalTime()).isEqualTo(sessionTemplate.startTime)
+      assertThat(visit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(sessionTemplate.endTime)
+      assertVisitMatchesApplication(visit, visit.getLastApplication()!!)
+    }
+  }
+
+  @Test
   fun `Migrate cancelled visit`() {
     // Given
 
