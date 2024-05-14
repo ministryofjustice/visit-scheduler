@@ -117,6 +117,12 @@ class MigrationSessionTemplateMatcher(
     }
   }
 
+  fun isThereASessionTimeMisMatch(
+    migrateVisitRequest: MigrateVisitRequestDto,
+    sessionTemplate: SessionTemplate,
+  ) = migrateVisitRequest.startTimestamp.toLocalTime() != sessionTemplate.startTime ||
+    migrateVisitRequest.endTimestamp.toLocalTime() != sessionTemplate.endTime
+
   fun getNearestSessionTemplate(
     migrateVisitRequest: MigrateVisitRequestDto,
     sessionTemplates: List<SessionTemplate>,
