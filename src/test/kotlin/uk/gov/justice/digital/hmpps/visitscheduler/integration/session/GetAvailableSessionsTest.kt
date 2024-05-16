@@ -2011,6 +2011,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     expectedSessionTemplate: SessionTemplate,
     sessionRestriction: SessionRestriction,
   ) {
+    assertThat(visitSession.sessionTemplateReference).isEqualTo(expectedSessionTemplate.reference)
     assertThat(visitSession.sessionDate).isEqualTo(expectedDate)
     assertThat(visitSession.sessionTimeSlot.startTime).isEqualTo(expectedSessionTemplate.startTime)
     assertThat(visitSession.sessionTimeSlot.endTime).isEqualTo(expectedSessionTemplate.endTime)
