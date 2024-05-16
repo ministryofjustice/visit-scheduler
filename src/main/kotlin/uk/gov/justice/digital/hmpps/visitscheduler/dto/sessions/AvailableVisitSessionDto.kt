@@ -19,11 +19,15 @@ data class AvailableVisitSessionDto(
   @Valid
   val sessionTimeSlot: SessionTimeSlotDto,
 
+  @Schema(description = "sessionTemplateReference", example = "v9d.7ed.7u", required = true)
+  val sessionTemplateReference: String,
+
   @Schema(description = "Session Restriction", example = "OPEN", required = true)
   @field:NotNull
   val sessionRestriction: SessionRestriction,
 ) {
   constructor(visitSession: VisitSessionDto, sessionRestriction: SessionRestriction) : this(
+    sessionTemplateReference = visitSession.sessionTemplateReference,
     sessionDate = visitSession.startTimestamp.toLocalDate(),
     sessionTimeSlot = SessionTimeSlotDto(visitSession.startTimestamp.toLocalTime(), visitSession.endTimestamp.toLocalTime()),
     sessionRestriction = sessionRestriction,
