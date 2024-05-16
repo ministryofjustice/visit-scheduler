@@ -20,7 +20,7 @@ class ApplicationTask(
     val log: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  @Scheduled(cron = "@midnight")
+  @Scheduled(cron = "0 0 0 * * *")
   @SchedulerLock(
     name = "deleteExpiredApplicationTask",
     lockAtLeastFor = LOCK_AT_LEAST_FOR,
