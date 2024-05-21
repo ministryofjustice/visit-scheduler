@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notifications
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -13,6 +13,8 @@ import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.RELEASED_TO_HOSPITAL
@@ -20,6 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.S
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.TEMPORARY_ABSENCE_RELEASE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.TRANSFERRED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.UNKNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
@@ -90,9 +93,20 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    Assertions.assertThat(visitNotifications).hasSize(1)
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RELEASED_EVENT")).isEqualTo(1)
+    assertThat(visitNotifications).hasSize(1)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RELEASED_EVENT)
+    assertThat(auditEvents).hasSize(1)
+    with(auditEvents[0]) {
+      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(bookingReference).isEqualTo(visit1.reference)
+      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(PRISONER_RELEASED_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(userType).isEqualTo(UserType.STAFF)
+    }
   }
 
   @Test
@@ -134,14 +148,14 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     verify(visitNotificationEventRepository, times(3)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.getFutureVisitNotificationEvents(notificationDto.prisonCode)
-    Assertions.assertThat(visitNotifications).hasSize(3)
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    Assertions.assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
-    Assertions.assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    Assertions.assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
-    Assertions.assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
-    Assertions.assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RELEASED_EVENT")).isEqualTo(3)
+    assertThat(visitNotifications).hasSize(3)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
+    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
+    assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
+    assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
+    assertThat(testEventAuditRepository.getAuditCount(PRISONER_RELEASED_EVENT)).isEqualTo(3)
   }
 
   @Test
@@ -212,6 +226,6 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   private fun assertNotHandled() {
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RELEASED_EVENT")).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(PRISONER_RELEASED_EVENT)).isEqualTo(0)
   }
 }

@@ -454,6 +454,7 @@ class EventAuditEntityHelper(
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = EventAuditType.BOOKED_VISIT,
     text: String?,
+    userType: UserType = STAFF,
   ): EventAudit {
     return save(
       EventAudit(
@@ -464,6 +465,7 @@ class EventAuditEntityHelper(
         type = type,
         applicationMethodType = applicationMethodType,
         text = text,
+        userType = userType,
       ),
     )
   }

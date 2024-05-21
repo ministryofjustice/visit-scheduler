@@ -26,6 +26,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
@@ -117,6 +119,7 @@ class VisitService(
       bookedVisitDto,
       if (hasExistingBooking) UPDATED_VISIT else BOOKED_VISIT,
       bookingRequestDto.applicationMethodType,
+      userType = bookedVisitDto.userType,
     )
 
     processBookingEvents(booking, bookedVisitDto, bookingRequestDto, hasExistingBooking)
@@ -256,7 +259,7 @@ class VisitService(
     val visitDto = visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
     processCancelEvents(visitEntity, visitDto, cancelVisitDto)
 
-    saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
+    saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType, userType = STAFF)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
     visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
@@ -328,6 +331,7 @@ class VisitService(
     type: EventAuditType,
     applicationMethodType: ApplicationMethodType,
     text: String? = null,
+    userType: UserType,
   ) {
     eventAuditRepository.saveAndFlush(
       EventAudit(
@@ -338,6 +342,7 @@ class VisitService(
         type = type,
         applicationMethodType = applicationMethodType,
         text = text,
+        userType = userType,
       ),
     )
   }
@@ -479,7 +484,7 @@ class VisitService(
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 
-  fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?) {
-    saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text)
+  fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?, userType: UserType = STAFF) {
+    saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text, userType)
   }
 }

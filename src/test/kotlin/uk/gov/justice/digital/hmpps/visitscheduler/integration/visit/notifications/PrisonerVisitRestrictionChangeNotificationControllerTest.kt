@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notifications
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -13,9 +13,12 @@ import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonPrisonCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -87,9 +90,20 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    Assertions.assertThat(visitNotifications).hasSize(1)
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(1)
+    assertThat(visitNotifications).hasSize(1)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RESTRICTION_CHANGE_EVENT)
+    assertThat(auditEvents).hasSize(1)
+    with(auditEvents[0]) {
+      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(bookingReference).isEqualTo(visit1.reference)
+      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(userType).isEqualTo(STAFF)
+    }
   }
 
   @Test
@@ -132,14 +146,14 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     verify(visitNotificationEventRepository, times(3)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.getFutureVisitNotificationEvents(prisonCode)
-    Assertions.assertThat(visitNotifications).hasSize(3)
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    Assertions.assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
-    Assertions.assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    Assertions.assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
-    Assertions.assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
-    Assertions.assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(3)
+    assertThat(visitNotifications).hasSize(3)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
+    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
+    assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
+    assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
+    assertThat(testEventAuditRepository.getAuditCount(PRISONER_RESTRICTION_CHANGE_EVENT)).isEqualTo(3)
   }
 
   @Test
@@ -239,10 +253,10 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    Assertions.assertThat(visitNotifications).hasSize(2)
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    Assertions.assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(2)
+    assertThat(visitNotifications).hasSize(2)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    assertThat(testEventAuditRepository.getAuditCount(PRISONER_RESTRICTION_CHANGE_EVENT)).isEqualTo(2)
   }
 
   @Test
@@ -278,15 +292,35 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    Assertions.assertThat(visitNotifications).hasSize(2)
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    Assertions.assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(2)
+    assertThat(visitNotifications).hasSize(2)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RESTRICTION_CHANGE_EVENT)
+    assertThat(auditEvents).hasSize(2)
+    with(auditEvents[0]) {
+      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(bookingReference).isEqualTo(visit1.reference)
+      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(userType).isEqualTo(STAFF)
+    }
+    with(auditEvents[1]) {
+      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(bookingReference).isEqualTo(visit2.reference)
+      assertThat(applicationReference).isEqualTo(visit2.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit2.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(userType).isEqualTo(STAFF)
+    }
   }
 
   private fun assertNotHandled() {
     verifyNoInteractions(telemetryClient)
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("PRISONER_RESTRICTION_CHANGE_EVENT")).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(PRISONER_RESTRICTION_CHANGE_EVENT)).isEqualTo(0)
   }
 }

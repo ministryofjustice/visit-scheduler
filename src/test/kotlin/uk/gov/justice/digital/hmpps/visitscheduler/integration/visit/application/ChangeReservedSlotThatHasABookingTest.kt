@@ -93,7 +93,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
 
     Assertions.assertThat(visit).isNotNull
-    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false)
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false, oldBooking.reference)
 
     // And
     assertTelemetry(applicationDto, visit!!)
@@ -240,7 +240,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
 
     Assertions.assertThat(visit).isNotNull
-    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true)
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true, oldBooking.reference)
 
     // And
     assertTelemetry(applicationDto, visit!!)
@@ -266,7 +266,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
     Assertions.assertThat(visit).isNotNull
 
-    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false)
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false, oldBooking.reference)
 
     // And
     assertTelemetry(applicationDto, visit!!)
@@ -291,7 +291,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
     Assertions.assertThat(visit).isNotNull
 
-    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true)
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true, oldBooking.reference)
 
     // And
     assertTelemetry(applicationDto, visit!!)
@@ -302,6 +302,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     applicationDto: ApplicationDto,
     changeApplicationRequest: ChangeApplicationDto,
     reserved: Boolean,
+    bookingReference: String,
   ) {
     val sessionTemplate = testSessionTemplateRepository.findByReference(changeApplicationRequest.sessionTemplateReference)
 
