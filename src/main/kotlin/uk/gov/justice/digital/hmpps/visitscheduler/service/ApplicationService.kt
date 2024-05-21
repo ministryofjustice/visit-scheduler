@@ -312,6 +312,7 @@ class ApplicationService(
         type = if (application.reserved) RESERVED_VISIT else CHANGING_VISIT,
         applicationMethodType = applicationMethodType,
         text = null,
+        userType = application.userType,
       ),
     )
   }

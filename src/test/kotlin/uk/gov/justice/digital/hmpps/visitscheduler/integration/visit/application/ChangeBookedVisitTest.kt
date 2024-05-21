@@ -26,6 +26,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
@@ -95,7 +99,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val returnResult = getResult(responseSpec)
 
     val applicationDto = getApplicationDto(returnResult)
-    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false)
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false, eventAuditType = CHANGING_VISIT)
     assertTelemetryData(applicationDto)
   }
 
@@ -133,7 +137,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     // And
 
     val applicationDto = getApplicationDto(returnResult)
-    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false)
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false, eventAuditType = CHANGING_VISIT)
     assertTelemetryData(applicationDto)
   }
 
@@ -414,6 +418,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     returnedApplication: ApplicationDto,
     createApplicationRequest: CreateApplicationDto,
     reserved: Boolean,
+    eventAuditType: EventAuditType = RESERVED_VISIT,
   ) {
     val sessionTemplate = testSessionTemplateRepository.findByReference(createApplicationRequest.sessionTemplateReference)
 
@@ -458,5 +463,13 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     }
 
     assertThat(returnedApplication.createdTimestamp).isNotNull()
+
+    val eventAudit = this.eventAuditRepository.findLastEventByApplicationReference(returnedApplication.reference, eventAuditType)
+    assertThat(eventAudit.type).isEqualTo(eventAuditType)
+    assertThat(eventAudit.actionedBy).isEqualTo(createApplicationRequest.actionedBy)
+    assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.NOT_KNOWN)
+    assertThat(eventAudit.bookingReference).isEqualTo(lastBooking.reference)
+    assertThat(eventAudit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    assertThat(eventAudit.applicationReference).isEqualTo(returnedApplication.reference)
   }
 }

@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notifications
 
-import com.microsoft.applicationinsights.TelemetryClient
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
@@ -19,6 +18,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISON_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
@@ -30,14 +31,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAddPrisonExcludeDa
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callRemovePrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
-import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import java.time.LocalDate
 import java.time.LocalTime
 
 @Transactional(propagation = SUPPORTS)
-class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
+class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
@@ -46,12 +45,6 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
 
   @Autowired
   lateinit var sessionSlotEntityHelper: SessionSlotEntityHelper
-
-  @Autowired
-  lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
-
-  @SpyBean
-  private lateinit var telemetryClient: TelemetryClient
 
   @BeforeEach
   internal fun setUp() {
@@ -88,8 +81,20 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     val visitNotifications = testVisitNotificationEventRepository.findAll()
 
     // only 1 visit for the same date with status of BOOKED will be flagged.
-    Assertions.assertThat(visitNotifications).hasSize(1)
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+    assertThat(visitNotifications).hasSize(1)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISON_VISITS_BLOCKED_FOR_DATE)
+    assertThat(auditEvents).hasSize(1)
+    with(auditEvents[0]) {
+      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+      assertThat(applicationReference).isEqualTo(bookedVisitForSamePrison.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(bookedVisitForSamePrison.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(PRISON_VISITS_BLOCKED_FOR_DATE)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(userType).isEqualTo(STAFF)
+    }
   }
 
   @Test
@@ -110,14 +115,14 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     verify(visitNotificationEventServiceSpy, times(1)).handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
     var visitNotifications = testVisitNotificationEventRepository.findAll()
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
 
     // call remove exclude dates next
     responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
     responseSpec.expectStatus().isOk
     verify(visitNotificationEventServiceSpy, times(1)).handleRemovePrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
     visitNotifications = testVisitNotificationEventRepository.findAll()
-    Assertions.assertThat(visitNotifications).hasSize(0)
+    assertThat(visitNotifications).hasSize(0)
     assertPrisonExcludeDateRemovalUnFlagEvent(bookedVisitForSamePrison.reference, UnFlagEventReason.PRISON_EXCLUDE_DATE_REMOVED)
   }
 
@@ -137,7 +142,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
 
     val visitNotifications = testVisitNotificationEventRepository.findAll()
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(visit.reference)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit.reference)
 
     // create a reserveVisitSlotDto with start and end timestamp different from current visit
     val reserveVisitSlotDto = CreateApplicationDto(
@@ -167,7 +172,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     verify(visitNotificationEventServiceSpy, times(1)).handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prison.code, excludeDate))
     responseSpec.expectStatus().isCreated
 
-    Assertions.assertThat(testVisitNotificationEventRepository.findAll()).isEmpty()
+    assertThat(testVisitNotificationEventRepository.findAll()).isEmpty()
     assertPrisonExcludeDateRemovalUnFlagEvent(visit.reference, UnFlagEventReason.VISIT_DATE_UPDATED)
   }
 
@@ -190,7 +195,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     verify(visitNotificationEventServiceSpy, times(1)).handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
     var visitNotifications = testVisitNotificationEventRepository.findAll()
-    Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisit.reference)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisit.reference)
 
     // create a reserveVisitSlotDto with sessionDAte same as current visit
     val reserveVisitSlotDto = CreateApplicationDto(
@@ -217,7 +222,7 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isCreated
 
     visitNotifications = testVisitNotificationEventRepository.findAll()
-    Assertions.assertThat(visitNotifications).hasSize(1)
+    assertThat(visitNotifications).hasSize(1)
     verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
@@ -228,9 +233,9 @@ class PrisonExcludeDateNotificatonEventsTest : IntegrationTestBase() {
     verify(telemetryClient).trackEvent(
       eq("unflagged-visit-event"),
       org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visitReference)
-        Assertions.assertThat(it["reviewType"]).isEqualTo(NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE.reviewType)
-        Assertions.assertThat(it["reason"]).isEqualTo(unFlagEventReason.desc)
+        assertThat(it["reference"]).isEqualTo(visitReference)
+        assertThat(it["reviewType"]).isEqualTo(NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE.reviewType)
+        assertThat(it["reason"]).isEqualTo(unFlagEventReason.desc)
       },
       isNull(),
     )

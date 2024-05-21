@@ -19,6 +19,8 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_OUTCOMES
@@ -28,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitBookUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
@@ -78,8 +81,8 @@ class BookVisitTest : IntegrationTestBase() {
 
     // Then
     assertVisitMatchesApplication(visitDto, reservedApplication)
-
     val visitEntity = testVisitRepository.findByReference(visitDto.reference)
+    assertAuditEvent(visitDto, visitEntity)
     assertThat(visitEntity.getApplications().size).isEqualTo(1)
     assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
     assertThat(visitEntity.getLastApplication()?.completed).isTrue()
@@ -642,6 +645,16 @@ class BookVisitTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Validation failure: trying to change / cancel an expired visit")
       .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be changed")
+  }
+
+  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit) {
+    val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitDto.reference)
+    assertThat(eventAudit.type).isEqualTo(EventAuditType.BOOKED_VISIT)
+    assertThat(eventAudit.actionedBy).isEqualTo("booking_guy")
+    assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.PHONE)
+    assertThat(eventAudit.bookingReference).isEqualTo(visitEntity.reference)
+    assertThat(eventAudit.sessionTemplateReference).isEqualTo(visitEntity.sessionSlot.sessionTemplateReference)
+    assertThat(eventAudit.applicationReference).isEqualTo(visitEntity.getLastApplication()!!.reference)
   }
 
   private fun assertVisitMatchesApplication(visitDto: VisitDto, application: Application) {

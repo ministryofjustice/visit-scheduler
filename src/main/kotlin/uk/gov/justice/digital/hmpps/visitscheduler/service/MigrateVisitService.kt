@@ -121,6 +121,7 @@ class MigrateVisitService(
         type = MIGRATED_VISIT,
         applicationMethodType = NOT_KNOWN,
         text = null,
+        userType = visitEntity.userType,
       ),
     )
 
@@ -306,6 +307,7 @@ class MigrateVisitService(
         type = CANCELLED_VISIT,
         applicationMethodType = NOT_KNOWN,
         text = null,
+        userType = STAFF,
       ),
     )
 

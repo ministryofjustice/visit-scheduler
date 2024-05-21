@@ -231,6 +231,7 @@ class VisitNotificationEventService(
         type = EventAuditType.valueOf(type.name),
         applicationMethodType = NOT_KNOWN,
         text = null,
+        userType = impactedVisit.userType,
       ),
     )
 

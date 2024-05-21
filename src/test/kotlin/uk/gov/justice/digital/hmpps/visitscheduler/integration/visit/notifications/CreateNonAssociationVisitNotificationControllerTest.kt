@@ -1,6 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notifications
 
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.NON_
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonAssociationHasChanged
@@ -81,26 +82,28 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    Assertions.assertThat(visitNotifications).hasSize(2)
-    Assertions.assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
+    assertThat(visitNotifications).hasSize(2)
+    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
 
-    val auditEvents = testEventAuditRepository.getAuditByType("NON_ASSOCIATION_EVENT")
-    Assertions.assertThat(auditEvents).hasSize(2)
+    val auditEvents = testEventAuditRepository.getAuditByType(NON_ASSOCIATION_EVENT)
+    assertThat(auditEvents).hasSize(2)
     with(auditEvents[0]) {
-      Assertions.assertThat(actionedBy).isEqualTo("NOT_KNOWN")
-      Assertions.assertThat(bookingReference).isEqualTo(primaryVisit.reference)
-      Assertions.assertThat(applicationReference).isEqualTo(primaryVisit.getLastApplication()?.reference)
-      Assertions.assertThat(sessionTemplateReference).isEqualTo(primaryVisit.sessionSlot.sessionTemplateReference)
-      Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
-      Assertions.assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(bookingReference).isEqualTo(primaryVisit.reference)
+      assertThat(applicationReference).isEqualTo(primaryVisit.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(primaryVisit.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(userType).isEqualTo(UserType.STAFF)
     }
     with(auditEvents[1]) {
-      Assertions.assertThat(actionedBy).isEqualTo("NOT_KNOWN")
-      Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit.reference)
-      Assertions.assertThat(applicationReference).isEqualTo(secondaryVisit.getLastApplication()?.reference)
-      Assertions.assertThat(sessionTemplateReference).isEqualTo(secondaryVisit.sessionSlot.sessionTemplateReference)
-      Assertions.assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
-      Assertions.assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(bookingReference).isEqualTo(secondaryVisit.reference)
+      assertThat(applicationReference).isEqualTo(secondaryVisit.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(secondaryVisit.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(userType).isEqualTo(UserType.STAFF)
     }
   }
 
@@ -145,22 +148,22 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     verify(visitNotificationEventRepository, times(4)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    Assertions.assertThat(visitNotifications).hasSize(4)
+    assertThat(visitNotifications).hasSize(4)
     with(visitNotifications[0]) {
-      Assertions.assertThat(bookingReference).isEqualTo(primaryVisit.reference)
+      assertThat(bookingReference).isEqualTo(primaryVisit.reference)
     }
     with(visitNotifications[1]) {
-      Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit.reference)
+      assertThat(bookingReference).isEqualTo(secondaryVisit.reference)
       // Check group 1
-      Assertions.assertThat(reference).isEqualTo(visitNotifications[0].reference)
+      assertThat(reference).isEqualTo(visitNotifications[0].reference)
     }
     with(visitNotifications[2]) {
-      Assertions.assertThat(bookingReference).isEqualTo(primaryVisit2.reference)
+      assertThat(bookingReference).isEqualTo(primaryVisit2.reference)
     }
     with(visitNotifications[3]) {
-      Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit.reference)
+      assertThat(bookingReference).isEqualTo(secondaryVisit.reference)
       // Check group 2
-      Assertions.assertThat(reference).isEqualTo(visitNotifications[2].reference)
+      assertThat(reference).isEqualTo(visitNotifications[2].reference)
     }
   }
 
@@ -227,13 +230,13 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     verify(visitNotificationEventRepository, times(8)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    Assertions.assertThat(visitNotifications).hasSize(8)
-    Assertions.assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
-    Assertions.assertThat(visitNotifications[2].reference).isEqualTo(visitNotifications[3].reference)
-    Assertions.assertThat(visitNotifications[4].reference).isEqualTo(visitNotifications[5].reference)
-    Assertions.assertThat(visitNotifications[6].reference).isEqualTo(visitNotifications[7].reference)
+    assertThat(visitNotifications).hasSize(8)
+    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
+    assertThat(visitNotifications[2].reference).isEqualTo(visitNotifications[3].reference)
+    assertThat(visitNotifications[4].reference).isEqualTo(visitNotifications[5].reference)
+    assertThat(visitNotifications[6].reference).isEqualTo(visitNotifications[7].reference)
 
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("NON_ASSOCIATION_EVENT")).isEqualTo(8)
+    assertThat(testEventAuditRepository.getAuditCount(NON_ASSOCIATION_EVENT)).isEqualTo(8)
   }
 
   @Test
@@ -284,25 +287,25 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
 
     // Then
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    Assertions.assertThat(visitNotifications).hasSize(4)
+    assertThat(visitNotifications).hasSize(4)
 
     with(visitNotifications[0]) {
-      Assertions.assertThat(reference).isNotNull()
-      Assertions.assertThat(bookingReference).isEqualTo(primaryVisit1.reference)
+      assertThat(reference).isNotNull()
+      assertThat(bookingReference).isEqualTo(primaryVisit1.reference)
     }
     with(visitNotifications[1]) {
-      Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit1.reference)
-      Assertions.assertThat(reference).isEqualTo(visitNotifications[0].reference)
+      assertThat(bookingReference).isEqualTo(secondaryVisit1.reference)
+      assertThat(reference).isEqualTo(visitNotifications[0].reference)
     }
     with(visitNotifications[2]) {
-      Assertions.assertThat(reference).isNotNull()
-      Assertions.assertThat(bookingReference).isEqualTo(primaryVisit2.reference)
+      assertThat(reference).isNotNull()
+      assertThat(bookingReference).isEqualTo(primaryVisit2.reference)
     }
     with(visitNotifications[3]) {
-      Assertions.assertThat(bookingReference).isEqualTo(secondaryVisit2.reference)
-      Assertions.assertThat(reference).isEqualTo(visitNotifications[2].reference)
+      assertThat(bookingReference).isEqualTo(secondaryVisit2.reference)
+      assertThat(reference).isEqualTo(visitNotifications[2].reference)
     }
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("NON_ASSOCIATION_EVENT")).isEqualTo(4)
+    assertThat(testEventAuditRepository.getAuditCount(NON_ASSOCIATION_EVENT)).isEqualTo(4)
   }
 
   @Test
@@ -591,6 +594,6 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
   private fun assertNotHandle() {
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    Assertions.assertThat(testEventAuditRepository.getAuditCount("NON_ASSOCIATION_EVENT")).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(NON_ASSOCIATION_EVENT)).isEqualTo(0)
   }
 }

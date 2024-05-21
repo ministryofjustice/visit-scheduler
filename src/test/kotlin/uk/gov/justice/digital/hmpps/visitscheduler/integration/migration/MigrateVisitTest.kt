@@ -113,6 +113,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       assertThat(eventAuditList[0].actionedBy).isEqualTo("Aled Evans")
       assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.MIGRATED_VISIT)
       assertThat(eventAuditList[0].createTimestamp).isEqualTo(migrateVisitRequestDto.createDateTime)
+      assertThat(eventAuditList[0].userType).isEqualTo(STAFF)
 
       assertThat(visit.getApplications().size).isEqualTo(1)
       val application = visit.getLastApplication()!!
@@ -625,6 +626,12 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
+
+    val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
+    assertThat(eventAuditList).hasSize(1)
+    assertThat(eventAuditList[0].actionedBy).isEqualTo("user-2")
+    assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.CANCELLED_VISIT)
+    assertThat(eventAuditList[0].userType).isEqualTo(STAFF)
   }
 
   @Test
