@@ -208,8 +208,6 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     }
   }
 
-
-
   @Test
   fun `Migrate cancelled visit`() {
     // Given
