@@ -131,12 +131,6 @@ workflows:
             branches:
               only:
                 - main
-          requires:
-            - request-staging-approval
-      - request-staging-approval:
-          type: approval
-          requires:
-            - deploy_dev
 
       - acceptance_tests_main:
           requires:
