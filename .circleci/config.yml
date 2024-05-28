@@ -42,38 +42,6 @@ jobs:
             cd hmpps-vsip-ui-tests
             mvn test -Dbrowser=remote-chrome -Dspring.profiles.active="staging" -Dtest=uk.gov.justice.digital.hmpps.vsip.suites.RunSuite 
 
-
-  acceptance_tests_develop:
-    docker:
-      - image: maven:3.9.5-eclipse-temurin-21
-      - image: seleniarm/standalone-chromium
-        environment:
-          CHROME_HEADLESS: 1
-    circleci_ip_ranges: true
-
-    steps:
-      - run:
-          name: Checkout VSIP UI Tests
-          command: git clone https://github.com/ministryofjustice/hmpps-vsip-ui-tests.git
-      - run:
-          name: get git status
-          command: |
-            cd hmpps-vsip-ui-tests
-            git checkout develop
-            git pull
-            git status
-      - run:
-          name: Change to project directory then clean install
-          command: |
-            cd hmpps-vsip-ui-tests
-            mvn -f pom.xml clean install -Dmaven.test.skip=true
-      - run:
-          name: Change to project directory and run tests
-          command: |
-            cd hmpps-vsip-ui-tests
-            mvn test -Dbrowser=remote-chrome -Dspring.profiles.active="staging" -Dtest=uk.gov.justice.digital.hmpps.vsip.suites.RunSuite
-
-
   validate:
     executor:
       name: hmpps/java_localstack_postgres
@@ -116,24 +84,30 @@ jobs:
 workflows:
   version: 2
 
-  build-test-and-deploy-flow:
-    when:
-      and:
-        - not:
-            equal: [ develop, << pipeline.git.branch >> ]
+  build-test-deploy-main:
     jobs:
       - validate:
           filters:
             tags:
               ignore: /.*/
+            branches:
+              only:
+                - main
+
       - hmpps/helm_lint:
           name: helm_lint
+          filters:
+            branches:
+              only:
+                - main
+
       - hmpps/build_docker:
           name: build_docker
           filters:
             branches:
               only:
                 - main
+
       - hmpps/deploy_env:
           name: deploy_dev
           env: "dev"
@@ -146,41 +120,53 @@ workflows:
             - validate
             - build_docker
             - helm_lint
-      - request-staging-approval:
-          type: approval
-          requires:
-            - deploy_dev
+
       - hmpps/deploy_env:
           name: deploy_staging
           env: "staging"
           context:
             - hmpps-common-vars
             - visit-scheduler-stage
+          filters:
+            branches:
+              only:
+                - main
           requires:
             - request-staging-approval
+      - request-staging-approval:
+          type: approval
+          requires:
+            - deploy_dev
+
+      - acceptance_tests_main:
+          requires:
+            - request-acceptance-tests-approval
+          filters:
+            branches:
+              only:
+                - main
       - request-acceptance-tests-approval:
           type: approval
           requires:
             - deploy_staging
-      - acceptance_tests_main:
-          requires:
-            - request-acceptance-tests-approval
-      - request-preprod-approval:
-          type: approval
-          requires:
-            - deploy_staging
+
       - hmpps/deploy_env:
           name: deploy_preprod
           env: "preprod"
           context:
             - hmpps-common-vars
             - visit-scheduler-preprod
+          filters:
+            branches:
+              only:
+                - main
           requires:
             - request-preprod-approval
-      - request-prod-approval:
+      - request-preprod-approval:
           type: approval
           requires:
-            - deploy_preprod
+            - deploy_staging
+
       - hmpps/deploy_env:
           name: deploy_prod
           env: "prod"
@@ -189,71 +175,68 @@ workflows:
           context:
             - hmpps-common-vars
             - visit-scheduler-prod
+          filters:
+            branches:
+              only:
+                - main
           requires:
             - request-prod-approval
-  build-test-develop-flow:
-    when:
-      and:
-        - equal: [ develop, << pipeline.git.branch >> ]
+      - request-prod-approval:
+          type: approval
+          requires:
+            - deploy_preprod
+
+
+  build-test-deploy-feature:
     jobs:
       - validate:
           filters:
             tags:
               ignore: /.*/
+            branches:
+              ignore:
+                - main
+
       - hmpps/helm_lint:
           name: helm_lint
-      - hmpps/build_docker:
-          name: build_docker
           filters:
             branches:
-              only:
-                - develop
-      - request-dev-approval:
-          type: approval
+              ignore:
+                - main
+
       - hmpps/deploy_env:
           name: deploy_dev
           env: "dev"
           context: hmpps-common-vars
           filters:
             branches:
-              only:
-                - develop
+              ignore:
+                - main
           requires:
             - validate
             - build_docker
             - helm_lint
             - request-dev-approval
-      - request-staging-approval:
+      - request-dev-approval:
           type: approval
-          requires:
-            - deploy_dev
+
       - hmpps/deploy_env:
           name: deploy_staging
           env: "staging"
           context:
             - hmpps-common-vars
             - visit-scheduler-stage
+          filters:
+            branches:
+              ignore:
+                - main
           requires:
             - request-staging-approval
-      - request-acceptance-tests-approval:
+      - request-staging-approval:
           type: approval
           requires:
-            - deploy_staging
-      - acceptance_tests_develop:
-          requires:
-            - request-acceptance-tests-approval
-      - request-preprod-approval:
-          type: approval
-          requires:
-            - deploy_staging
-      - hmpps/deploy_env:
-          name: deploy_preprod
-          env: "preprod"
-          context:
-            - hmpps-common-vars
-            - visit-scheduler-preprod
-          requires:
-            - request-preprod-approval
+            - deploy_dev
+
   security:
     triggers:
       - schedule:
