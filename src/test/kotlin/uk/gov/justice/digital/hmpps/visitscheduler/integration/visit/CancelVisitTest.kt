@@ -23,24 +23,25 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.PHONE
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -207,12 +208,13 @@ class CancelVisitTest : IntegrationTestBase() {
     // first create a reserveVisitSlotDto with same details as the booked visit
     val createApplicationDto = CreateApplicationDto(
       prisonerId = bookedVisit.prisonerId,
-      applicationRestriction = CreateApplicationRestriction.get(bookedVisit.visitRestriction),
+      applicationRestriction = SessionRestriction.get(bookedVisit.visitRestriction),
       sessionDate = bookedVisit.sessionSlot.slotDate,
       visitContact = ContactDto("John Smith", "011223344"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       actionedBy = RESERVED_BY_USER,
       sessionTemplateReference = sessionTemplateDefault.reference,
+      userType = STAFF,
     )
 
     // call visit change and then book the visit

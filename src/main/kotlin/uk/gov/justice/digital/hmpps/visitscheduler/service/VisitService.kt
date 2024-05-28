@@ -17,21 +17,29 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_BOOKED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.BOOKED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -41,8 +49,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_BOOKED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
 import java.lang.reflect.InvocationTargetException
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -61,6 +67,10 @@ class VisitService(
   @Lazy
   @Autowired
   private lateinit var visitNotificationEventService: VisitNotificationEventService
+
+  @Lazy
+  @Autowired
+  private lateinit var slotCapacityService: SlotCapacityService
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
@@ -85,9 +95,12 @@ class VisitService(
       return visitDtoBuilder.build(visit)
     }
 
-    val hasExistingBooking = visitRepository.doesBookedVisitExist(applicationReference)
     val application = applicationService.getApplicationEntity(applicationReference)
-    val booking = createBooking(application, hasExistingBooking)
+
+    val existingBooking = visitRepository.findVisitByApplicationReference(application.reference)
+    checkSlotCapacity(bookingRequestDto, application, existingBooking)
+
+    val booking = createBooking(application, existingBooking)
     application.completed = true
 
     val bookedVisitDto = visitDtoBuilder.build(booking)
@@ -100,11 +113,13 @@ class VisitService(
       throw ItemNotFoundException(message, e)
     }
 
+    val hasExistingBooking = existingBooking != null
     saveEventAudit(
       bookingRequestDto.actionedBy,
       bookedVisitDto,
       if (hasExistingBooking) UPDATED_VISIT else BOOKED_VISIT,
       bookingRequestDto.applicationMethodType,
+      userType = bookedVisitDto.userType,
     )
 
     processBookingEvents(booking, bookedVisitDto, bookingRequestDto, hasExistingBooking)
@@ -112,24 +127,52 @@ class VisitService(
     return bookedVisitDto
   }
 
-  private fun createBooking(application: Application, hasExistingBooking: Boolean): Visit {
-    val existingBooking = if (hasExistingBooking) visitRepository.findVisitByApplicationReference(application.reference) else null
-    if (hasExistingBooking) {
-      validateVisitStartDate(existingBooking!!, "changed")
-      handleVisitUpdateEvents(existingBooking, application)
+  private fun checkSlotCapacity(
+    bookingRequestDto: BookingRequestDto,
+    application: Application,
+    existingBooking: Visit?,
+  ) {
+    if (!bookingRequestDto.allowOverBooking && hasSlotChangedSinceLastBooking(existingBooking, application)) {
+      slotCapacityService.checkCapacityForBooking(
+        application.sessionSlot.reference,
+        application.restriction,
+        applicationService.isExpiredApplication(application.modifyTimestamp!!),
+      )
     }
+  }
 
+  private fun hasSlotChangedSinceLastBooking(
+    existingBooking: Visit?,
+    application: Application,
+  ): Boolean {
+    return existingBooking?.let {
+      it.visitRestriction != application.restriction || it.sessionSlot.id != application.sessionSlotId
+    } ?: run { true }
+  }
+
+  fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
+    return when (restriction) {
+      OPEN -> visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
+      CLOSED -> visitRepository.getCountOfBookedForClosedSessionSlot(sessionSlotId)
+      UNKNOWN -> throw IllegalStateException("Cant acquire a book count for an UNKNOWN restriction")
+    }
+  }
+
+  private fun createBooking(application: Application, existingBooking: Visit?): Visit {
     val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference!!)
 
     val notSavedBooking = existingBooking?.let {
+      validateVisitStartDate(it, "changed")
+      handleVisitUpdateEvents(it, application)
+
       // Update existing booking
-      existingBooking.sessionSlotId = application.sessionSlotId
-      existingBooking.sessionSlot = application.sessionSlot
-      existingBooking.visitType = application.visitType
-      existingBooking.visitRestriction = application.restriction
-      existingBooking.visitRoom = visitRoom
-      existingBooking.visitStatus = BOOKED
-      existingBooking
+      it.sessionSlotId = application.sessionSlotId
+      it.sessionSlot = application.sessionSlot
+      it.visitType = application.visitType
+      it.visitRestriction = application.restriction
+      it.visitRoom = visitRoom
+      it.visitStatus = BOOKED
+      it
     } ?: run {
       // Create new booking
       Visit(
@@ -142,6 +185,7 @@ class VisitService(
         visitRestriction = application.restriction,
         visitRoom = visitRoom,
         visitStatus = BOOKED,
+        userType = application.userType,
       )
     }
 
@@ -215,7 +259,7 @@ class VisitService(
     val visitDto = visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
     processCancelEvents(visitEntity, visitDto, cancelVisitDto)
 
-    saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType)
+    saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType, userType = STAFF)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
     visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
@@ -287,6 +331,7 @@ class VisitService(
     type: EventAuditType,
     applicationMethodType: ApplicationMethodType,
     text: String? = null,
+    userType: UserType,
   ) {
     eventAuditRepository.saveAndFlush(
       EventAudit(
@@ -297,6 +342,7 @@ class VisitService(
         type = type,
         applicationMethodType = applicationMethodType,
         text = text,
+        userType = userType,
       ),
     )
   }
@@ -438,7 +484,7 @@ class VisitService(
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 
-  fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?) {
-    saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text)
+  fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?, userType: UserType = STAFF) {
+    saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text, userType)
   }
 }

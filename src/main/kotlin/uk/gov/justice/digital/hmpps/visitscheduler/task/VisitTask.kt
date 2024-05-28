@@ -8,12 +8,12 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
 
@@ -43,7 +43,7 @@ class VisitTask(
     }
 
     log.debug("Started flagVisits task.")
-    prisonsService.getSupportedPrisons().forEach { prisonCode ->
+    prisonsService.getPrisonCodes().forEach { prisonCode ->
       for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
         val visitDate = LocalDate.now().plusDays(i.toLong())
 

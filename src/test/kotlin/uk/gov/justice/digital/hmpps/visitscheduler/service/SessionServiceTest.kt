@@ -21,6 +21,15 @@ import org.springframework.http.HttpHeaders
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.OtherPrisonerDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
@@ -30,19 +39,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppli
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.UNKNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -69,7 +69,7 @@ class SessionServiceTest {
   private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
   private val sessionDatesUtil = SessionDatesUtil()
   private val prisonsService = mock<PrisonsService>()
-  private val applicationRepository = mock<ApplicationRepository>()
+  private val applicationService = mock<ApplicationService>()
 
   private lateinit var sessionService: SessionService
 
@@ -170,7 +170,6 @@ class SessionServiceTest {
         sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
-        applicationRepository,
         sessionSlotRepository,
         prisonerService,
         policyFilterDoubleBooking = false,
@@ -178,6 +177,7 @@ class SessionServiceTest {
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
+        applicationService = applicationService,
       )
     }
 
@@ -338,6 +338,7 @@ class SessionServiceTest {
         visitStatus = BOOKED,
         visitRestriction = OPEN,
         visitRoom = "1",
+        userType = STAFF,
       )
 
       val openVisit2 = Visit(
@@ -350,6 +351,7 @@ class SessionServiceTest {
         visitStatus = BOOKED,
         visitRestriction = OPEN,
         visitRoom = "1",
+        userType = STAFF,
       )
 
       val closedVisit = Visit(
@@ -362,6 +364,7 @@ class SessionServiceTest {
         visitStatus = BOOKED,
         visitRestriction = CLOSED,
         visitRoom = "1",
+        userType = STAFF,
       )
       mockVisitRepositoryCountResponse(listOf(openVisit1, openVisit2, closedVisit), singleSession, sessionSlot)
 
@@ -407,6 +410,7 @@ class SessionServiceTest {
         visitStatus = BOOKED,
         visitRestriction = UNKNOWN,
         visitRoom = "1",
+        userType = STAFF,
       )
 
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
@@ -461,7 +465,6 @@ class SessionServiceTest {
         sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
-        applicationRepository,
         sessionSlotRepository,
         prisonerService,
         policyFilterDoubleBooking = false,
@@ -469,6 +472,7 @@ class SessionServiceTest {
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
+        applicationService = applicationService,
       )
     }
 
@@ -704,7 +708,6 @@ class SessionServiceTest {
         sessionDatesUtil,
         sessionTemplateRepository,
         visitRepository,
-        applicationRepository,
         sessionSlotRepository,
         prisonerService,
         policyFilterDoubleBooking = true,
@@ -712,6 +715,7 @@ class SessionServiceTest {
         sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
+        applicationService,
       )
     }
 

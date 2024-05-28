@@ -4,8 +4,8 @@ import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
-import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 import java.time.LocalDate
 
 @Repository

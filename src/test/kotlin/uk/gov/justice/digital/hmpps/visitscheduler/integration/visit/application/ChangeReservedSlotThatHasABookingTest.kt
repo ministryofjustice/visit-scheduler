@@ -20,13 +20,13 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVED_SLOT_CHANGE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitReserveSlotChange
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
@@ -79,7 +79,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldBooking.sessionSlot.slotDate,
-      applicationRestriction = CreateApplicationRestriction.get(oldBooking.visitRestriction),
+      applicationRestriction = SessionRestriction.get(oldBooking.visitRestriction),
     )
 
     val applicationReference = initialChangeApplication.reference
@@ -93,10 +93,130 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
 
     Assertions.assertThat(visit).isNotNull
-    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false)
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false, oldBooking.reference)
 
     // And
     assertTelemetry(applicationDto, visit!!)
+  }
+
+  @Test
+  fun `change reserved slot with no more capacity - no change to slot date or restriction results in no exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 1)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate,
+      applicationRestriction = SessionRestriction.get(visitRestriction),
+      allowOverBooking = false,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    getResult(responseSpec)
+  }
+
+  @Test
+  fun `change reserved slot with no more capacity and restriction change - results in exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 0)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate,
+      applicationRestriction = SessionRestriction.CLOSED,
+      allowOverBooking = false,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec)
+  }
+
+  @Test
+  fun `change reserved slot with no more capacity and slot date change - results in exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0, closedCapacity = 0)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate.plusWeeks(1),
+      applicationRestriction = SessionRestriction.get(visitRestriction),
+      allowOverBooking = false,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec)
+  }
+
+  @Test
+  fun `change reserved slot with no more capacity allowOverBooking true and restriction change - no exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 0)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate,
+      applicationRestriction = SessionRestriction.CLOSED,
+      allowOverBooking = true,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    getResult(responseSpec)
+  }
+
+  @Test
+  fun `change reserved slot with no more capacity allowOverBooking true and slot date change - no exception`() {
+    // Given
+
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0, closedCapacity = 0)
+    val applicationThatNeedChanging = createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = visitRestriction)
+
+    val updateRequest = ChangeApplicationDto(
+      sessionTemplateReference = sessionTemplateDefault.reference,
+      sessionDate = applicationThatNeedChanging.sessionSlot.slotDate.plusWeeks(1),
+      applicationRestriction = SessionRestriction.get(visitRestriction),
+      allowOverBooking = true,
+    )
+
+    val applicationReference = applicationThatNeedChanging.reference
+
+    // When
+    val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
+
+    // Then
+    getResult(responseSpec)
   }
 
   @Test
@@ -106,7 +226,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldBooking.sessionSlot.slotDate,
-      applicationRestriction = CreateApplicationRestriction.get(initialChangeApplication.restriction),
+      applicationRestriction = SessionRestriction.get(initialChangeApplication.restriction),
     )
 
     val applicationReference = initialChangeApplication.reference
@@ -120,7 +240,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
 
     Assertions.assertThat(visit).isNotNull
-    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true)
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true, oldBooking.reference)
 
     // And
     assertTelemetry(applicationDto, visit!!)
@@ -132,7 +252,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val updateRequest = ChangeApplicationDto(
       sessionTemplateReference = oldBooking.sessionSlot.sessionTemplateReference!!,
       sessionDate = oldApplication.sessionSlot.slotDate,
-      applicationRestriction = CreateApplicationRestriction.get(oldBooking.visitRestriction),
+      applicationRestriction = SessionRestriction.get(oldBooking.visitRestriction),
     )
 
     val applicationReference = initialChangeApplication.reference
@@ -146,7 +266,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
     Assertions.assertThat(visit).isNotNull
 
-    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false)
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, false, oldBooking.reference)
 
     // And
     assertTelemetry(applicationDto, visit!!)
@@ -171,7 +291,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val visit = getVisit(applicationDto.reference)
     Assertions.assertThat(visit).isNotNull
 
-    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true)
+    assertChangedApplicationDetails(initialChangeApplication, applicationDto, updateRequest, true, oldBooking.reference)
 
     // And
     assertTelemetry(applicationDto, visit!!)
@@ -182,6 +302,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     applicationDto: ApplicationDto,
     changeApplicationRequest: ChangeApplicationDto,
     reserved: Boolean,
+    bookingReference: String,
   ) {
     val sessionTemplate = testSessionTemplateRepository.findByReference(changeApplicationRequest.sessionTemplateReference)
 

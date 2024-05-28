@@ -7,8 +7,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
 @Schema(description = "Application")
@@ -52,4 +53,7 @@ data class ApplicationDto(
   @Schema(description = "Is the application complete", example = "true", required = true)
   @field:NotNull
   val completed: Boolean,
+  @Schema(description = "User type", example = "STAFF", required = true)
+  @field:NotNull
+  val userType: UserType,
 )

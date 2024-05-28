@@ -8,6 +8,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.ALL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.CURRENT_OR_FUTURE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.HISTORIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -28,9 +31,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.Session
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
@@ -54,7 +54,7 @@ import java.util.function.Supplier
 
 @Service
 @Transactional
-open class SessionTemplateService(
+class SessionTemplateService(
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
@@ -89,12 +89,12 @@ open class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionLocationGroup(reference: String): SessionLocationGroupDto {
+  fun getSessionLocationGroup(reference: String): SessionLocationGroupDto {
     return SessionLocationGroupDto(getLocationGroupByReference(reference))
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionLocationGroups(prisonCode: String): List<SessionLocationGroupDto> {
+  fun getSessionLocationGroups(prisonCode: String): List<SessionLocationGroupDto> {
     return sessionLocationGroupRepository.findByPrisonCode(prisonCode).map { SessionLocationGroupDto(it) }
   }
 
@@ -512,7 +512,7 @@ open class SessionTemplateService(
   }
 
   @Transactional
-  open fun moveSessionTemplateVisits(fromSessionTemplateReference: String, toSessionTemplateReference: String, fromDate: LocalDate): Int {
+  fun moveSessionTemplateVisits(fromSessionTemplateReference: String, toSessionTemplateReference: String, fromDate: LocalDate): Int {
     val fromSessionTemplate = getSessionTemplate(fromSessionTemplateReference)
     val toSessionTemplate = getSessionTemplate(toSessionTemplateReference)
     // validate move before updating session template reference
@@ -557,6 +557,14 @@ open class SessionTemplateService(
 
   fun getVisitRoom(sessionTemplateReference: String): String {
     return sessionTemplateRepository.getVisitRoom(sessionTemplateReference)
+  }
+
+  fun getSessionTemplatesCapacity(sessionTemplateReference: String, restriction: VisitRestriction): Int {
+    return if (VisitRestriction.OPEN == restriction) {
+      sessionTemplateRepository.getOpenCapacity(sessionTemplateReference)
+    } else {
+      sessionTemplateRepository.getClosedCapacity(sessionTemplateReference)
+    }
   }
 }
 

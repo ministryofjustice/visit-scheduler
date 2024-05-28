@@ -118,11 +118,15 @@ policy:
       minimum-days: 2
       maximum-days: ${BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS:#{28}}
 
+expired:
+  applications:
+    validity-minutes : 10
+
 task:
-  expired-visit:
-    enabled: true
-    cron: 0 0/5 * * * * #frequency of delete expired reserved visits cron job - every 5 minutes
-    validity-minutes: 10 #delete reserved visits older than 10 minutes
+  delete:
+    expired-applications:
+      enabled: true
+      validity-minutes: 1440
   log-non-associations:
     enabled: true
     cron: "0 0 3 * * ?" #every day at 3 AM

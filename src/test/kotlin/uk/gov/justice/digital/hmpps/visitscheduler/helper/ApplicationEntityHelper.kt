@@ -3,9 +3,10 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
@@ -27,7 +28,7 @@ class ApplicationEntityHelper(
   companion object {
 
     fun createApplication(visit: Visit): Application {
-      val application = Application(
+      return Application(
         prisonerId = visit.prisonerId,
         prisonId = visit.prisonId,
         prison = visit.prison,
@@ -38,8 +39,8 @@ class ApplicationEntityHelper(
         createdBy = "",
         reservedSlot = true,
         completed = true,
+        userType = STAFF,
       )
-      return application
     }
   }
 
@@ -51,7 +52,7 @@ class ApplicationEntityHelper(
 
   fun create(
     prisonerId: String = "testPrisonerId",
-    slotDate: LocalDate = LocalDate.of((LocalDate.now().year + 1), 11, 1),
+    slotDate: LocalDate? = null,
     sessionTemplate: SessionTemplate,
     visitStart: LocalTime = sessionTemplate.startTime,
     visitEnd: LocalTime = sessionTemplate.endTime,
@@ -62,8 +63,12 @@ class ApplicationEntityHelper(
     reservedSlot: Boolean = true,
     completed: Boolean = true,
   ): Application {
+    val slotDateLocal = slotDate ?: run {
+      sessionTemplate.validFromDate.with(sessionTemplate.dayOfWeek).plusWeeks(1)
+    }
+
     val prison = prisonEntityHelper.create(prisonCode ?: "MDI", activePrison)
-    val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
+    val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDateLocal, visitStart, visitEnd)
 
     return applicationRepo.saveAndFlush(
       Application(
@@ -77,6 +82,7 @@ class ApplicationEntityHelper(
         createdBy = "",
         reservedSlot = reservedSlot,
         completed = completed,
+        userType = STAFF,
       ),
     )
   }
@@ -108,6 +114,7 @@ class ApplicationEntityHelper(
         createdBy = "",
         reservedSlot = reservedSlot,
         completed = completed,
+        userType = STAFF,
       ),
     )
   }

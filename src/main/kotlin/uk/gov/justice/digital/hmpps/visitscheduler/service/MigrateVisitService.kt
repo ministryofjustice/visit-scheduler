@@ -12,15 +12,17 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitToMigrateException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.MIGRATED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -119,6 +121,7 @@ class MigrateVisitService(
         type = MIGRATED_VISIT,
         applicationMethodType = NOT_KNOWN,
         text = null,
+        userType = visitEntity.userType,
       ),
     )
 
@@ -191,6 +194,7 @@ class MigrateVisitService(
         reservedSlot = true,
         completed = true,
         createdBy = actionedBy,
+        userType = STAFF,
       ),
     )
 
@@ -234,6 +238,7 @@ class MigrateVisitService(
         visitType = migrateVisitRequest.visitType,
         visitStatus = migrateVisitRequest.visitStatus,
         visitRestriction = migrateVisitRequest.visitRestriction,
+        userType = STAFF,
       ),
     )
 
@@ -302,6 +307,7 @@ class MigrateVisitService(
         type = CANCELLED_VISIT,
         applicationMethodType = NOT_KNOWN,
         text = null,
+        userType = STAFF,
       ),
     )
 

@@ -18,6 +18,8 @@ interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecifica
   )
   fun findSessionSlot(slotDates: List<LocalDate>, sessionTemplateReferences: List<String>): List<SessionSlot>
 
+  fun findByReference(reference: String): SessionSlot
+
   @Query(
     "SELECT * FROM session_slot s " +
       "WHERE s.session_template_reference = :sessionTemplateReference" +

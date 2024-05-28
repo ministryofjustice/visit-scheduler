@@ -21,6 +21,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
@@ -43,14 +45,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExt
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociationsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonUserClientRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.LocalDate
@@ -94,6 +96,12 @@ abstract class IntegrationTestBase {
   protected lateinit var testSessionSlotRepository: TestSessionSlotRepository
 
   @Autowired
+  protected lateinit var testPrisonRepository: TestPrisonRepository
+
+  @Autowired
+  protected lateinit var testPrisonUserClientRepository: TestPrisonUserClientRepository
+
+  @Autowired
   protected lateinit var sessionPrisonerIncentiveLevelHelper: SessionPrisonerIncentiveLevelHelper
 
   @Autowired
@@ -131,9 +139,13 @@ abstract class IntegrationTestBase {
     startDate = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
   }
 
+  fun shouldICreateDefault(): Boolean {
+    return true
+  }
+
   @AfterEach
   @Transactional
-  internal open fun deleteAll() {
+  internal fun deleteAll() {
     deleteEntityHelper.deleteAll()
   }
 
@@ -269,48 +281,40 @@ abstract class IntegrationTestBase {
 
   fun createApplicationAndSave(
     prisonerId: String? = "testPrisonerId",
-    sessionTemplate: SessionTemplate? = null,
-    prisonCode: String? = null,
-    slotDate: LocalDate? = null,
-    completed: Boolean,
-    reservedSlot: Boolean = true,
-    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
-  ): Application {
-    val applicationEntity = applicationEntityHelper.create(
-      prisonerId = prisonerId!!,
-      sessionTemplate = sessionTemplate ?: sessionTemplateDefault,
-      completed = completed,
-      reservedSlot = reservedSlot,
-      prisonCode = prisonCode,
-      slotDate = slotDate ?: sessionTemplate?.validFromDate ?: sessionTemplateDefault.validFromDate,
-      visitRestriction = visitRestriction,
-    )
-    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone)
-    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
-    applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")
-
-    return applicationEntityHelper.save(applicationEntity)
-  }
-
-  fun createApplicationAndSave(
-    prisonerId: String? = "testPrisonerId",
     prisonCode: String? = null,
     slotDate: LocalDate,
     completed: Boolean,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
   ): Application {
+    return createApplicationAndSave(prisonerId = prisonerId, sessionTemplate = sessionTemplateDefault, prisonCode = prisonCode, slotDate = slotDate, completed = completed, reservedSlot = reservedSlot, visitRestriction = visitRestriction)
+  }
+
+  fun createApplicationAndSave(
+    prisonerId: String? = "testPrisonerId",
+    sessionTemplate: SessionTemplate? = null,
+    prisonCode: String? = sessionTemplateDefault.prison.code,
+    slotDate: LocalDate? = null,
+    completed: Boolean,
+    reservedSlot: Boolean = true,
+    visitRestriction: VisitRestriction = VisitRestriction.OPEN,
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
+  ): Application {
+    val sessionTemplateLocal = sessionTemplate ?: sessionTemplateDefault
+    val slotDateLocal = slotDate ?: run {
+      sessionTemplateLocal.validFromDate.with(sessionTemplateLocal.dayOfWeek).plusWeeks(1)
+    }
+
     val applicationEntity = applicationEntityHelper.create(
       prisonerId = prisonerId!!,
+      sessionTemplate = sessionTemplateLocal,
       completed = completed,
       reservedSlot = reservedSlot,
       prisonCode = prisonCode,
-      slotDate = slotDate,
+      slotDate = slotDateLocal,
       visitRestriction = visitRestriction,
     )
-    applicationEntityHelper.createContact(application = applicationEntity, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
     applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")

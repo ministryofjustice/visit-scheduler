@@ -26,15 +26,20 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_OUTCOMES
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getApplicationChangeVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
@@ -94,7 +99,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val returnResult = getResult(responseSpec)
 
     val applicationDto = getApplicationDto(returnResult)
-    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false)
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false, eventAuditType = CHANGING_VISIT)
     assertTelemetryData(applicationDto)
   }
 
@@ -132,7 +137,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     // And
 
     val applicationDto = getApplicationDto(returnResult)
-    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false)
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false, eventAuditType = CHANGING_VISIT)
     assertTelemetryData(applicationDto)
   }
 
@@ -204,7 +209,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       prisonerId = "FF0000FF",
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
-      applicationRestriction = CreateApplicationRestriction.OPEN,
+      applicationRestriction = SessionRestriction.OPEN,
       visitContact = ContactDto("John Smith", "01234 567890"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 123, visitContact = true),
@@ -212,6 +217,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       ),
       visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = ReserveSlotTest.ACTIONED_BY_USER_NAME,
+      userType = STAFF,
     )
 
     // When
@@ -228,7 +234,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   fun `changed booked visit creates new application and updates visit restriction has changed`() {
     // Given
     val reference = bookedVisit.reference
-    val newRestriction = if (bookedVisit.visitRestriction == OPEN) CreateApplicationRestriction.CLOSED else CreateApplicationRestriction.OPEN
+    val newRestriction = if (bookedVisit.visitRestriction == OPEN) SessionRestriction.CLOSED else SessionRestriction.OPEN
     val createApplicationRequest = createApplicationRequest(visitRestriction = newRestriction)
 
     // When
@@ -366,6 +372,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
           assertThat(it["visitRestriction"]).isEqualTo(applicationDto.visitRestriction.name)
           assertThat(it["visitStart"]).isEqualTo(visitStartStr)
           assertThat(it["reserved"]).isEqualTo(applicationDto.reserved.toString())
+          assertThat(it["userType"]).isEqualTo(applicationDto.userType.toString())
         },
         isNull(),
       )
@@ -375,7 +382,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
   private fun createApplicationRequest(
     prisonerId: String = "testPrisonerId",
     slotDate: LocalDate = bookedVisit.sessionSlot.slotDate,
-    visitRestriction: CreateApplicationRestriction = CreateApplicationRestriction.OPEN,
+    visitRestriction: SessionRestriction = SessionRestriction.OPEN,
     sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
     support: String = "Some Text",
   ): CreateApplicationDto {
@@ -388,6 +395,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       visitorSupport = ApplicationSupportDto(support),
       actionedBy = ACTIONED_BY_USER_NAME,
       sessionTemplateReference = sessionTemplateReference,
+      userType = STAFF,
     )
   }
 
@@ -410,6 +418,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     returnedApplication: ApplicationDto,
     createApplicationRequest: CreateApplicationDto,
     reserved: Boolean,
+    eventAuditType: EventAuditType = RESERVED_VISIT,
   ) {
     val sessionTemplate = testSessionTemplateRepository.findByReference(createApplicationRequest.sessionTemplateReference)
 
@@ -428,6 +437,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     assertThat(returnedApplication.completed).isFalse()
     assertThat(returnedApplication.visitRestriction.name).isEqualTo(createApplicationRequest.applicationRestriction.name)
     assertThat(returnedApplication.sessionTemplateReference).isEqualTo(createApplicationRequest.sessionTemplateReference)
+    assertThat(returnedApplication.userType).isEqualTo(createApplicationRequest.userType)
 
     createApplicationRequest.visitContact?.let {
       assertThat(returnedApplication.visitContact!!.name).isEqualTo(it.name)
@@ -453,5 +463,13 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     }
 
     assertThat(returnedApplication.createdTimestamp).isNotNull()
+
+    val eventAudit = this.eventAuditRepository.findLastEventByApplicationReference(returnedApplication.reference, eventAuditType)
+    assertThat(eventAudit.type).isEqualTo(eventAuditType)
+    assertThat(eventAudit.actionedBy).isEqualTo(createApplicationRequest.actionedBy)
+    assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.NOT_KNOWN)
+    assertThat(eventAudit.bookingReference).isEqualTo(lastBooking.reference)
+    assertThat(eventAudit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)
+    assertThat(eventAudit.applicationReference).isEqualTo(returnedApplication.reference)
   }
 }

@@ -34,6 +34,7 @@ class VisitDtoBuilder {
       createdTimestamp = visitEntity.createTimestamp ?: LocalDateTime.now(),
       modifiedTimestamp = visitEntity.modifyTimestamp ?: LocalDateTime.now(),
       sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
+      userType = visitEntity.userType,
     )
   }
 }

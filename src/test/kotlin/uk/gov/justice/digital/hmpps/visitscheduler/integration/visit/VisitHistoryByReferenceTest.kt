@@ -15,8 +15,19 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.EMAIL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.WEBSITE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.PRISONER_CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
@@ -24,16 +35,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitHistoryByRefe
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application.ReserveSlotTest
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.EMAIL
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.PHONE
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.WEBSITE
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.BOOKED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CANCELLED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.CHANGING_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.RESERVED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType.UPDATED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek.SATURDAY
 
@@ -222,6 +223,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = actionedBy,
+      userType = STAFF,
     )
   }
 }

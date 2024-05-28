@@ -16,15 +16,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callIgnoreVisitNotifications
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getIgnoreVisitNotificationsUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.service.NotificationEventType
 
 @DisplayName("Put $VISIT_NOTIFICATION_IGNORE")
 class IgnoreVisitNotificationsTest : IntegrationTestBase() {

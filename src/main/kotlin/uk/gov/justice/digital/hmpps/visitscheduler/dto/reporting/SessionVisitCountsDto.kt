@@ -3,9 +3,9 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import java.time.LocalDate
 
 data class SessionVisitCountsDto(

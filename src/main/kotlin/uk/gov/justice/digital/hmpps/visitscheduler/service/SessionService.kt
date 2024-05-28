@@ -6,6 +6,11 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -14,15 +19,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict.DOUBLE_BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict.NON_ASSOCIATION
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
@@ -41,7 +41,6 @@ class SessionService(
   private val sessionDatesUtil: SessionDatesUtil,
   private val sessionTemplateRepository: SessionTemplateRepository,
   private val visitRepository: VisitRepository,
-  private val applicationRepository: ApplicationRepository,
   private val sessionSlotRepository: SessionSlotRepository,
   private val prisonerService: PrisonerService,
   @Value("\${policy.session.double-booking.filter:false}")
@@ -51,6 +50,7 @@ class SessionService(
   private val sessionValidator: PrisonerSessionValidator,
   private val prisonerValidationService: PrisonerValidationService,
   private val prisonsService: PrisonsService,
+  private val applicationService: ApplicationService,
 ) {
 
   companion object {
@@ -64,16 +64,35 @@ class SessionService(
     minOverride: Int? = null,
     maxOverride: Int? = null,
   ): List<VisitSessionDto> {
-    LOG.debug("Enter getVisitSessions prisonCode:$prisonCode, prisonerId : $prisonerId ")
+    val prison = prisonsService.findPrisonByCode(prisonCode)
+    val dateRange = getDateRange(prison, minOverride, maxOverride)
+
+    return getVisitSessions(prison, prisonerId, dateRange)
+  }
+
+  @Transactional(readOnly = true)
+  fun getVisitSessions(
+    prisonCode: String,
+    prisonerId: String,
+    dateRange: DateRange,
+  ): List<VisitSessionDto> {
+    val prison = prisonsService.findPrisonByCode(prisonCode)
+    return getVisitSessions(prison, prisonerId, dateRange)
+  }
+
+  fun getVisitSessions(
+    prison: Prison,
+    prisonerId: String,
+    dateRange: DateRange,
+  ): List<VisitSessionDto> {
+    val prisonCode = prison.code
+    LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId ")
 
     // ensure the prisoner - if supplied belongs to the same prison as supplied prisonCode
     val prisoner = prisonerService.getPrisoner(prisonerId).also {
       prisonerValidationService.validatePrisonerNotNull(prisonerId, it)
       prisonerValidationService.validatePrisonerIsFromPrison(it!!, prisonCode)
     }!!
-
-    val prison = prisonsService.findPrisonByCode(prisonCode)
-    val dateRange = getDateRange(prison, minOverride, maxOverride)
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
     sessionTemplates = sessionTemplates.filter {
@@ -104,21 +123,19 @@ class SessionService(
   fun getAvailableVisitSessions(
     prisonCode: String,
     prisonerId: String,
-    visitRestriction: VisitRestriction,
-    minOverride: Int? = null,
-    maxOverride: Int? = null,
+    sessionRestriction: SessionRestriction,
+    dateRange: DateRange,
   ): List<AvailableVisitSessionDto> {
-    LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, visitRestriction: {} ", prisonCode, prisonerId, visitRestriction)
-    return getVisitSessions(prisonCode, prisonerId, minOverride, maxOverride).filter {
-      hasSessionGotCapacity(it, visitRestriction).and(it.sessionConflicts.isEmpty())
-    }.map { AvailableVisitSessionDto(it, visitRestriction) }.toList()
+    LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {} ", prisonCode, prisonerId, sessionRestriction)
+    return getVisitSessions(prisonCode, prisonerId, dateRange).filter {
+      hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
+    }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList()
   }
 
-  private fun hasSessionGotCapacity(session: VisitSessionDto, visitRestriction: VisitRestriction): Boolean {
-    return if (visitRestriction == VisitRestriction.CLOSED) {
-      session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0))
-    } else {
-      session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0))
+  private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean {
+    return when (sessionRestriction) {
+      SessionRestriction.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
+      SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
     }
   }
 
@@ -374,7 +391,7 @@ class SessionService(
       return true
     }
 
-    return applicationRepository.hasActiveApplicationsForDate(
+    return applicationService.hasActiveApplicationsForDate(
       nonAssociationPrisonerIds,
       sessionSlotIds,
     )
@@ -395,10 +412,12 @@ class SessionService(
       return true
     }
 
-    return applicationRepository.hasReservations(
+    val result = applicationService.hasReservations(
       prisonerId = prisonerId,
       sessionSlotId = sessionSlot.id,
     )
+
+    return result
   }
 
   private fun getVisitRestrictionStats(session: VisitSessionDto, sessionSlotIdsByKey: Map<String, SessionSlot>): List<VisitRestrictionStats> {
@@ -406,7 +425,7 @@ class SessionService(
     val sessionSlot = sessionSlotIdsByKey.get(session.sessionTemplateReference + slotDate)
     sessionSlot?.let {
       val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(it.id)
-      val restrictionReservedApplicationStats = applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(it.id)
+      val restrictionReservedApplicationStats = applicationService.getCountOfReservedSessionForOpenOrClosedRestriction(it.id)
 
       return restrictionBookedStats + restrictionReservedApplicationStats
     }
@@ -488,4 +507,7 @@ class SessionService(
   }
 }
 
-data class DateRange(val fromDate: LocalDate, val toDate: LocalDate)
+data class DateRange(
+  val fromDate: LocalDate,
+  val toDate: LocalDate,
+)

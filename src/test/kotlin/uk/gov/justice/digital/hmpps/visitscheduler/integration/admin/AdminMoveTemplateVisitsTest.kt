@@ -5,13 +5,13 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.MOVE_VISITS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMoveVisits
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.nio.charset.StandardCharsets

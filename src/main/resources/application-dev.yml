@@ -1,5 +1,6 @@
 server:
   shutdown: immediate
+  port: 8081
 
 management.endpoint:
   health.cache.time-to-live: 0
@@ -11,22 +12,25 @@ spring:
     username: visit_scheduler
     password: visit_scheduler
 
-hmpps.auth.url: http://localhost:8090/auth
+  jpa:
+    show-sql: true
+
+hmpps.auth.url: https://sign-in-dev.hmpps.service.justice.gov.uk/auth
 
 prison:
   api:
-    url: http://localhost:8091
+    url: https://prison-api-dev.prison.service.justice.gov.uk
     timeout: 10s
 
 prisoner:
   offender:
     search:
-      url: http://localhost:8092
+      url: https://prisoner-search-dev.prison.service.justice.gov.uk
       timeout: 10s
 
 non-associations:
   api:
-    url: http://localhost:8094
+    url: https://non-associations-api-dev.hmpps.service.justice.gov.uk
     timeout: 10s
 
 policy:
@@ -36,12 +40,22 @@ policy:
       maximum-days: 28
 
 task:
-  expired-visit:
-    enabled: true
-    cron: 0 0/10 * * * ?
-    validity-minutes: 20
+  delete:
+    expired-applications:
+      enabled: true
+      validity-minutes: 1440
 
 cache:
   evict:
     support-types:
       cron: "0 */15 * * * ?"
+
+hmpps.sqs:
+  provider: localstack
+  queues:
+    domaineventsqueue:
+      queueName: ${random.uuid}
+      subscribeTopicId: domainevents
+  topics:
+    domainevents:
+      arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}

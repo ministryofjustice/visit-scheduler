@@ -12,6 +12,10 @@ import org.mockito.kotlin.verify
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
@@ -20,12 +24,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocation
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdateSessionTemplateByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createUpdateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository

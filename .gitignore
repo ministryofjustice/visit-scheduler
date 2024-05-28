@@ -62,7 +62,7 @@ dist
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 
-# AWS DOcker build
+# AWS Docker build
 ecr.repo
 /dps-gradle-spring-boot-suppressions.xml
 .editorconfig
@@ -77,3 +77,10 @@ ecr.repo
 /volume/cache/server.test.pem.crt
 /volume/cache/server.test.pem.key
 /volume/cache/service-catalog-3_2_0-1_34_49.pickle
+
+# Local stack
+/localstack/
+/volume/
+
+# Local development env file
+.env

@@ -10,15 +10,16 @@ import org.mockito.kotlin.doReturn
 import org.mockito.kotlin.spy
 import org.mockito.kotlin.whenever
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.ApplicationEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -124,6 +125,7 @@ class VisitDtoBuilderTest {
     reference: String = "",
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
+    userType: UserType = UserType.STAFF,
   ): Visit {
     val sessionSlot = SessionSlot(sessionTemplateReference, prison.id, slotDate, slotDate.atTime(visitStart), slotDate.atTime(visitEnd))
 
@@ -137,6 +139,7 @@ class VisitDtoBuilderTest {
       visitRestriction = visitRestriction,
       sessionSlotId = sessionSlot.id,
       sessionSlot = sessionSlot,
+      userType = userType,
     )
 
     visit.outcomeStatus = outcomeStatus

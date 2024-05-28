@@ -8,17 +8,17 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.SessionConflict
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import java.time.DayOfWeek.MONDAY
 import java.time.DayOfWeek.SATURDAY
 import java.time.DayOfWeek.SUNDAY
@@ -1611,6 +1611,8 @@ class GetSessionsTest : IntegrationTestBase() {
   fun `when get visit session is called with prison id different to prisoners establishment code bad request error is returned`() {
     val incorrectPrisonCode = "ABC"
     val prisonerId = "A1234AA"
+
+    prisonEntityHelper.create(incorrectPrisonCode)
 
     // prisoner is in prison with code MDI
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)

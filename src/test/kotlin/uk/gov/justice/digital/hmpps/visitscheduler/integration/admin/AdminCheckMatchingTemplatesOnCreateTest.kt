@@ -5,6 +5,8 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
@@ -12,9 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCheckingMatchingTe
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.createCreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.DayOfWeek

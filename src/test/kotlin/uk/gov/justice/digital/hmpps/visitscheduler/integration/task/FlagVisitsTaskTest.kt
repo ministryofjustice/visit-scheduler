@@ -14,14 +14,14 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask

@@ -20,7 +20,9 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 
@@ -29,6 +31,9 @@ const val PRISON_ADMIN_PATH: String = "$ADMIN_PRISONS_PATH/prison"
 const val PRISON: String = "$PRISON_ADMIN_PATH/{prisonCode}"
 const val ACTIVATE_PRISON: String = "$PRISON/activate"
 const val DEACTIVATE_PRISON: String = "$PRISON/deactivate"
+const val ACTIVATE_PRISON_CLIENT: String = "$PRISON/client/{type}/activate"
+const val DEACTIVATE_PRISON_CLIENT: String = "$PRISON/client/{type}/deactivate"
+
 const val ADD_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-date/add"
 const val REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-date/remove"
 
@@ -248,6 +253,82 @@ class PrisonAdminController(
     prisonCode: String,
   ): PrisonDto {
     return prisonConfigService.deActivatePrison(prisonCode)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PutMapping(ACTIVATE_PRISON_CLIENT)
+  @Operation(
+    summary = "Activate prison client using given prison id/code and client type",
+    description = "Activate prison client using given prison id/code and client type",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "prison client activated",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to activate prison client",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "prison cant be found to activate prison client",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun activatePrisonForClient(
+    @Schema(description = "prison id", example = "BHI", required = true)
+    @PathVariable
+    prisonCode: String,
+    @Schema(description = "type", example = "STAFF", required = true)
+    @PathVariable
+    type: UserType,
+  ): PrisonUserClientDto {
+    return prisonConfigService.activatePrisonClient(prisonCode, type)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @PutMapping(DEACTIVATE_PRISON_CLIENT)
+  @Operation(
+    summary = "Deactivate prison client using given prison id/code and client type",
+    description = "Deactivate prison client using given prison id/code and client type",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "prison client activated",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to activate prison client",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "prison cant be found to activate prison client",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun deActivatePrisonClient(
+    @Schema(description = "prison id", example = "BHI", required = true)
+    @PathVariable
+    prisonCode: String,
+    @Schema(description = "type", example = "STAFF", required = true)
+    @PathVariable
+    type: UserType,
+  ): PrisonUserClientDto {
+    return prisonConfigService.deActivatePrisonClient(prisonCode, type)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")

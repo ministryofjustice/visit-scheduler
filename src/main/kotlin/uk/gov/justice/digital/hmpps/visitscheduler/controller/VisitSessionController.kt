@@ -15,11 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.service.DateRange
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import java.time.LocalDate
 import java.time.LocalTime
@@ -123,26 +124,26 @@ class VisitSessionController(
       example = "A12345DC",
     )
     prisonerId: String,
-    @RequestParam(value = "visitRestriction", required = true)
+    @RequestParam(value = "sessionRestriction", required = true)
     @Parameter(
-      description = "Filter results by visitRestriction",
+      description = "Filter results by session restriction - OPEN or CLOSED",
       example = "CLOSED",
     )
-    visitRestriction: VisitRestriction,
-    @RequestParam(value = "min", required = false)
+    sessionRestriction: SessionRestriction,
+    @RequestParam(value = "fromDate", required = true)
     @Parameter(
-      description = "Override the default minimum number of days notice from the current date",
-      example = "2",
+      description = "Session slot from date",
+      example = "2024-12-03",
     )
-    min: Int?,
-    @RequestParam(value = "max", required = false)
+    fromDate: LocalDate,
+    @RequestParam(value = "toDate", required = true)
     @Parameter(
-      description = "Override the default maximum number of days to book-ahead from the current date",
-      example = "28",
+      description = "Session slot to date",
+      example = "2024-12-20",
     )
-    max: Int?,
+    toDate: LocalDate,
   ): List<AvailableVisitSessionDto> {
-    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, visitRestriction, min, max)
+    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate))
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

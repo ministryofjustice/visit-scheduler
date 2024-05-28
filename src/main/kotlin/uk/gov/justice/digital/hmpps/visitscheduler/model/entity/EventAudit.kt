@@ -9,8 +9,9 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import java.time.LocalDateTime
 
 @Entity
@@ -43,6 +44,10 @@ class EventAudit(
 
   @Column(nullable = false)
   var actionedBy: String,
+
+  @Enumerated(EnumType.STRING)
+  @Column(name = "user_type", nullable = false)
+  val userType: UserType,
 
   @Column(nullable = true)
   var text: String?,

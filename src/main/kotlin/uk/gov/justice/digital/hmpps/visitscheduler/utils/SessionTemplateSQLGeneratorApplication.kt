@@ -7,9 +7,9 @@ import org.apache.commons.csv.CSVFormat
 import org.apache.commons.csv.CSVRecord
 import reactor.util.function.Tuple2
 import reactor.util.function.Tuples
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CATEGORY_KEYS
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateSQLGenerator.SessionColumnNames.DAY_OF_WEEK

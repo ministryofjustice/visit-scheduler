@@ -11,12 +11,14 @@ import org.springframework.http.MediaType
 import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 
-const val PRISONS_PATH: String = "/config/prisons/supported"
+const val PRISONS_PATH: String = "/config/prisons/user-type/{type}/supported"
 
 @RestController
 @Validated
@@ -57,7 +59,11 @@ class VisitPrisonsController(
       ),
     ],
   )
-  fun getSupportedPrisons(): List<String> {
-    return prisonsService.getSupportedPrisons()
+  fun getSupportedPrisonCodes(
+    @Schema(description = "type", example = "STAFF", required = true)
+    @PathVariable
+    type: UserType,
+  ): List<String> {
+    return prisonsService.getSupportedPrisonCodes(type)
   }
 }

@@ -19,19 +19,23 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_OUTCOMES
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitBookUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.CLOSED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
@@ -63,7 +67,7 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Book visit visit by application Reference`() {
+  fun `Book visit by application Reference`() {
     // Given
     val applicationReference = reservedApplication.reference
 
@@ -77,6 +81,41 @@ class BookVisitTest : IntegrationTestBase() {
 
     // Then
     assertVisitMatchesApplication(visitDto, reservedApplication)
+    val visitEntity = testVisitRepository.findByReference(visitDto.reference)
+    assertAuditEvent(visitDto, visitEntity)
+    assertThat(visitEntity.getApplications().size).isEqualTo(1)
+    assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
+    assertThat(visitEntity.getLastApplication()?.completed).isTrue()
+
+    // And
+    assertBookedEvent(visitDto, false)
+  }
+
+  @Test
+  fun `Book visit with an expired application`() {
+    // Given
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1)
+
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = OPEN)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+    testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val visitDto = getVisitDto(responseSpec)
+
+    // Then
+    assertVisitMatchesApplication(visitDto, expiredReservedApplication)
 
     val visitEntity = testVisitRepository.findByReference(visitDto.reference)
     assertThat(visitEntity.getApplications().size).isEqualTo(1)
@@ -85,6 +124,208 @@ class BookVisitTest : IntegrationTestBase() {
 
     // And
     assertBookedEvent(visitDto, false)
+  }
+
+  @Test
+  fun `Book visit with an open application with no open capacity throws exception - with existing visit and ignores reserved application`() {
+    // Given
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1)
+
+    val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+  }
+
+  @Test
+  fun `Book visit with an close application with no close capacity throws exception - with existing visit and ignores reserved application`() {
+    // Given
+    val visitRestriction = CLOSED
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", closedCapacity = 1)
+
+    val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+  }
+
+  @Test
+  fun `Book visit with an expired open application with no open capacity throw exception - existing visit and reserved application`() {
+    // Given
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 2)
+
+    val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+    testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+  }
+
+  @Test
+  fun `Book visit with an expired closed application with no remaining close capacity throw exception - existing visit and reserved application`() {
+    // Given
+    val visitRestriction = CLOSED
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", closedCapacity = 2)
+
+    val existingVisit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
+    createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+    testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+  }
+
+  @Test
+  fun `Updated Booking with application with no open capacity but no change to slot or restriction books normally`() {
+    // Given
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1)
+    val bookingToUpdate = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
+
+    val newSlotDate = bookingToUpdate.sessionSlot.slotDate.plusWeeks(1)
+    var expiredReservedApplication = applicationEntityHelper.create(slotDate = newSlotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+    expiredReservedApplication.visit = bookingToUpdate
+    expiredReservedApplication.visitId = bookingToUpdate.id
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `Updated Booking with application with no open capacity with change to restriction throws exception`() {
+    // Given
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 1)
+    val bookingToUpdate = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = OPEN)
+    createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = CLOSED)
+
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = CLOSED)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+    expiredReservedApplication.visit = bookingToUpdate
+    expiredReservedApplication.visitId = bookingToUpdate.id
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+  }
+
+  @Test
+  fun `Updated Booking with application with no open capacity with change to slot throws exception`() {
+    // Given
+    val visitRestriction = OPEN
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1, closedCapacity = 1)
+    val bookingToUpdate = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction)
+    val otherSlotDate = bookingToUpdate.sessionSlot.slotDate.plusWeeks(1)
+    createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction, slotDate = otherSlotDate)
+
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction, slotDate = otherSlotDate)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+    expiredReservedApplication.visit = bookingToUpdate
+    expiredReservedApplication.visitId = bookingToUpdate.id
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+  }
+
+  @Test
+  fun `Book visit with an expired closed application with no open capacity and overbook allowed`() {
+    // Given
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", closedCapacity = 0)
+
+    var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = CLOSED)
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
+
+    expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+
+    val applicationReference = expiredReservedApplication.reference
+    testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, allowOverBooking = true)
+
+    // Then
+    responseSpec.expectStatus().isOk
   }
 
   @Test
@@ -346,7 +587,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createSupport(application = completedApplication, description = "Some Text")
     reservedApplication = applicationEntityHelper.save(reservedApplication)
 
-    var visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
     visit.addApplication(completedApplication)
 
     visitEntityHelper.createNote(visit = visit, text = "Some text outcomes", type = VISIT_OUTCOMES)
@@ -406,6 +647,16 @@ class BookVisitTest : IntegrationTestBase() {
       .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be changed")
   }
 
+  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit) {
+    val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitDto.reference)
+    assertThat(eventAudit.type).isEqualTo(EventAuditType.BOOKED_VISIT)
+    assertThat(eventAudit.actionedBy).isEqualTo("booking_guy")
+    assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.PHONE)
+    assertThat(eventAudit.bookingReference).isEqualTo(visitEntity.reference)
+    assertThat(eventAudit.sessionTemplateReference).isEqualTo(visitEntity.sessionSlot.sessionTemplateReference)
+    assertThat(eventAudit.applicationReference).isEqualTo(visitEntity.getLastApplication()!!.reference)
+  }
+
   private fun assertVisitMatchesApplication(visitDto: VisitDto, application: Application) {
     assertThat(visitDto.reference).isNotEmpty()
     assertThat(visitDto.applicationReference).isEqualTo(application.reference)
@@ -431,6 +682,8 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitDto.visitors[0].visitContact).isEqualTo(application.visitors[0].contact!!)
     assertThat(visitDto.visitorSupport?.description).isEqualTo(application.support?.description)
     assertThat(visitDto.createdTimestamp).isNotNull()
+    assertThat(visitDto).isNotNull()
+    assertThat(visitDto.userType).isEqualTo(application.userType)
   }
 
   private fun assertBookedEvent(visit: VisitDto, isUpdated: Boolean) {

@@ -14,12 +14,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.annotation.Propagation
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VSIPReport
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.task.ReportingTask
 import java.time.LocalDate
@@ -34,9 +33,6 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var sessionRepository: TestSessionTemplateRepository
-
-  @Autowired
-  private lateinit var prisonRepository: PrisonRepository
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -74,7 +70,8 @@ class ReportVisitCountsTaskTelemetryTest : IntegrationTestBase() {
 
     // Default session template and prison must be removed
     sessionRepository.deleteAll()
-    prisonRepository.deleteAll()
+    testPrisonRepository.deleteAll()
+    testPrisonUserClientRepository.deleteAll()
 
     val prison1 = prisonEntityHelper.create("ABC", activePrison = true, excludeDates = emptyList())
     val sessionTemplate = sessionTemplateEntityHelper.create(prison = prison1, validFromDate = reportDate.minusMonths(3), weeklyFrequency = 1, dayOfWeek = reportDate.dayOfWeek, startTime = LocalTime.of(11, 0), endTime = LocalTime.of(13, 0), openCapacity = 100, closedCapacity = 35)

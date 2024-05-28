@@ -20,24 +20,25 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.COMPLETED_NORMALLY
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.NOT_RECORDED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.PRISONER_CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.STATUS_CHANGED_REASON
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_OUTCOMES
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.COMPLETED_NORMALLY
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.NOT_RECORDED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus.PRISONER_CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.STATUS_CHANGED_REASON
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISITOR_CONCERN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_COMMENT
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitNoteType.VISIT_OUTCOMES
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryVisitEvents
 import java.time.LocalDate
 import java.time.LocalDateTime
 
@@ -95,6 +96,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
           tuple(VISIT_COMMENT, "A visit comment"),
           tuple(STATUS_CHANGED_REASON, "Status has changed"),
         )
+      assertThat(visit.userType).isEqualTo(STAFF)
 
       val legacyData = legacyDataRepository.findByVisitId(visit.id)
       assertThat(legacyData).isNotNull
@@ -111,39 +113,14 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
       assertThat(eventAuditList[0].actionedBy).isEqualTo("Aled Evans")
       assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.MIGRATED_VISIT)
       assertThat(eventAuditList[0].createTimestamp).isEqualTo(migrateVisitRequestDto.createDateTime)
+      assertThat(eventAuditList[0].userType).isEqualTo(STAFF)
 
       assertThat(visit.getApplications().size).isEqualTo(1)
       val application = visit.getLastApplication()!!
       assertVisitMatchesApplication(visit, application)
       assertThat(application.completed).isTrue()
       assertThat(application.reservedSlot).isTrue()
-    }
-  }
-
-  @Test
-  fun `migrate visit when start migrated session slot mismatch with session template - should use session template start date`() {
-    // Given
-
-    val migrateVisitRequestDto = createMigrateVisitRequestDto(modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
-    val sessionTemplate = createSessionTemplateFrom(migrateVisitRequestDto, startTime = migrateVisitRequestDto.startTimestamp.plusHours(1).toLocalTime())
-
-    // When
-    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
-
-    // Then
-    responseSpec.expectStatus().isCreated
-    val reference = getReference(responseSpec)
-
-    assertThat(migrateVisitRequestDto.startTimestamp.toLocalTime()).isNotEqualTo(sessionTemplate.startTime)
-    assertThat(migrateVisitRequestDto.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
-
-    val visit = visitRepository.findByReference(reference)
-    assertThat(visit).isNotNull
-    visit?.let {
-      assertThat(visit.sessionSlot.slotDate).isEqualTo(migrateVisitRequestDto.endTimestamp.toLocalDate())
-      assertThat(visit.sessionSlot.slotStart.toLocalTime()).isEqualTo(sessionTemplate.startTime)
-      assertThat(visit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(sessionTemplate.endTime)
-      assertVisitMatchesApplication(visit, visit.getLastApplication()!!)
+      assertThat(application.userType).isEqualTo(STAFF)
     }
   }
 
@@ -194,6 +171,33 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     assertThat(migrateVisitRequestDto.startTimestamp.toLocalTime()).isNotEqualTo(sessionTemplate.startTime)
     assertThat(migrateVisitRequestDto.endTimestamp.toLocalTime()).isNotEqualTo(sessionTemplate.endTime)
+
+    val visit = visitRepository.findByReference(reference)
+    assertThat(visit).isNotNull
+    visit?.let {
+      assertThat(visit.sessionSlot.slotDate).isEqualTo(migrateVisitRequestDto.endTimestamp.toLocalDate())
+      assertThat(visit.sessionSlot.slotStart.toLocalTime()).isEqualTo(sessionTemplate.startTime)
+      assertThat(visit.sessionSlot.slotEnd.toLocalTime()).isEqualTo(sessionTemplate.endTime)
+      assertVisitMatchesApplication(visit, visit.getLastApplication()!!)
+    }
+  }
+
+  @Test
+  fun `migrate visit when start migrated session slot mismatch with session template - should use session template start date`() {
+    // Given
+
+    val migrateVisitRequestDto = createMigrateVisitRequestDto(modifyDateTime = LocalDateTime.of(2022, 9, 11, 12, 30))
+    val sessionTemplate = createSessionTemplateFrom(migrateVisitRequestDto, startTime = migrateVisitRequestDto.startTimestamp.plusHours(1).toLocalTime())
+
+    // When
+    val responseSpec = callMigrateVisit(roleVisitSchedulerHttpHeaders, migrateVisitRequestDto)
+
+    // Then
+    responseSpec.expectStatus().isCreated
+    val reference = getReference(responseSpec)
+
+    assertThat(migrateVisitRequestDto.startTimestamp.toLocalTime()).isNotEqualTo(sessionTemplate.startTime)
+    assertThat(migrateVisitRequestDto.endTimestamp.toLocalTime()).isEqualTo(sessionTemplate.endTime)
 
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
@@ -622,6 +626,12 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
+
+    val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
+    assertThat(eventAuditList).hasSize(1)
+    assertThat(eventAuditList[0].actionedBy).isEqualTo("user-2")
+    assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.CANCELLED_VISIT)
+    assertThat(eventAuditList[0].userType).isEqualTo(STAFF)
   }
 
   @Test

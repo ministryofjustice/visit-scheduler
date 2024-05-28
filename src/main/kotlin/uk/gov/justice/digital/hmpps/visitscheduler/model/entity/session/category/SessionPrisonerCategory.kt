@@ -13,6 +13,7 @@ import jakarta.persistence.TemporalType
 import org.hibernate.annotations.CreationTimestamp
 import org.hibernate.annotations.UpdateTimestamp
 import org.springframework.data.jpa.repository.Temporal
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import java.time.LocalDateTime
 

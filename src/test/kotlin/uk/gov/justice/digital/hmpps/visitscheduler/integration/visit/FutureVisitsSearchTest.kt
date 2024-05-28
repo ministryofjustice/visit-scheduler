@@ -6,10 +6,10 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_SEARCH_FUTURE_VISITS_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
@@ -31,7 +31,7 @@ class FutureVisitsSearchTest : IntegrationTestBase() {
     sessionTemplateBeforeNowTimes = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now().minusDays(1), startTime = LocalTime.now().minusHours(3))
     sessionTemplateFromNowTimes = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), startTime = LocalTime.now().plusHours(1))
 
-    beforeNowVisit = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateBeforeNowTimes, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)
+    beforeNowVisit = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateBeforeNowTimes, slotDate = sessionTemplateBeforeNowTimes.validFromDate, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)
     vist1 = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)
     vist2 = createApplicationAndVisit(prisonerId = "FF0000AA", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = CANCELLED, visitRestriction = VisitRestriction.OPEN)
     vist3 = createApplicationAndVisit(prisonerId = "GG0000BB", sessionTemplate = sessionTemplateFromNowTimes, visitStatus = BOOKED, visitRestriction = VisitRestriction.OPEN)

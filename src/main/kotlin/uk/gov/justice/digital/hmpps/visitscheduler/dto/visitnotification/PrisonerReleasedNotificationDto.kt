@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification
 
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType
 
 data class PrisonerReleasedNotificationDto(
   @NotBlank

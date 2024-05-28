@@ -1,15 +1,20 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import jakarta.validation.ValidationException
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonUserClientRepository
 import java.time.LocalDate
 import java.util.stream.Collectors
 
@@ -22,6 +27,10 @@ class PrisonConfigService(
   private val prisonsService: PrisonsService,
   private val visitNotificationEventService: VisitNotificationEventService,
 ) {
+
+  @Autowired
+  private lateinit var prisonUserClientRepository: PrisonUserClientRepository
+
   @Transactional
   fun createPrison(prisonDto: PrisonDto): PrisonDto {
     if (prisonRepository.findByCode(prisonDto.code) != null) {
@@ -38,8 +47,12 @@ class PrisonConfigService(
 
     val newPrison = Prison(prisonDto)
     val savedPrison = prisonRepository.saveAndFlush(newPrison)
+
     val excludeDates = prisonDto.excludeDates.map { PrisonExcludeDate(prisonId = savedPrison.id, prison = savedPrison, it) }
     savedPrison.excludeDates.addAll(excludeDates)
+
+    val clients = prisonDto.clients.map { PrisonUserClient(prisonId = savedPrison.id, prison = savedPrison, userType = it.userType, active = it.active) }
+    savedPrison.clients.addAll(clients)
 
     return prisonsService.mapEntityToDto(savedPrison)
   }
@@ -73,6 +86,33 @@ class PrisonConfigService(
     val prisonToUpdate = prisonsService.findPrisonByCode(prisonCode)
     prisonToUpdate.active = true
     return prisonsService.mapEntityToDto(prisonToUpdate)
+  }
+
+  @Transactional
+  fun activatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto {
+    return createOrUpdatePrisonClient(prisonCode, type, true)
+  }
+
+  @Transactional
+  fun deActivatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto {
+    return createOrUpdatePrisonClient(prisonCode, type, false)
+  }
+
+  private fun createOrUpdatePrisonClient(
+    prisonCode: String,
+    userType: UserType,
+    active: Boolean,
+  ): PrisonUserClientDto {
+    val prisonUserClient: PrisonUserClient
+    if (prisonUserClientRepository.doesPrisonClientExist(prisonCode, userType)) {
+      prisonUserClient = prisonUserClientRepository.getPrisonClient(prisonCode, userType)
+      prisonUserClient.active = active
+    } else {
+      val prison = prisonsService.findPrisonByCode(prisonCode)
+      prisonUserClient = PrisonUserClient(prison.id, prison, userType, active)
+      prison.clients.add(prisonUserClient)
+    }
+    return PrisonUserClientDto(prisonUserClient.userType, prisonUserClient.active)
   }
 
   @Transactional

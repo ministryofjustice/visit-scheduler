@@ -23,13 +23,13 @@ import software.amazon.awssdk.services.sqs.model.ReceiveMessageRequest
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.model.OutcomeStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.HMPPSDomainEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService.Companion.EVENT_PRISON_VISIT_BOOKED_DESC

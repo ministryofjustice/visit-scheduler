@@ -8,6 +8,8 @@ import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.VisitorContactValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import java.time.LocalDate
 
 data class CreateApplicationDto(
@@ -22,7 +24,7 @@ data class CreateApplicationDto(
   val sessionDate: LocalDate,
   @Schema(description = "Visit Restriction", example = "OPEN", required = true)
   @field:NotNull
-  val applicationRestriction: CreateApplicationRestriction,
+  val applicationRestriction: SessionRestriction,
   @Schema(description = "Contact associated with the visit", required = false)
   @field:Valid
   val visitContact: ContactDto?,
@@ -35,4 +37,10 @@ data class CreateApplicationDto(
   var visitorSupport: ApplicationSupportDto? = null,
   @Schema(description = "Username for user who actioned this request", required = true)
   val actionedBy: String,
+  @Schema(description = "User type", example = "STAFF", required = true)
+  @field:NotNull
+  val userType: UserType,
+  @Schema(description = "allow over booking", required = false)
+  @field:NotNull
+  val allowOverBooking: Boolean = false,
 )
