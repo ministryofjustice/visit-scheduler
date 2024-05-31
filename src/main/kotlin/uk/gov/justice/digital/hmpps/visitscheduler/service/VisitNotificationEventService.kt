@@ -14,10 +14,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomai
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_DELETED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
@@ -116,7 +118,16 @@ class VisitNotificationEventService(
 
   fun handlePrisonerAlertCreatedUpdatedNotification(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.debug("handlePrisonerAlertCreatedUpdated notification received")
-    // TODO WIP Feature VB-3763
+
+    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
+    val prisonerAlerts = notificationDto.alertsAdded.filter { code -> code in prisonerSupportedAlertCodes }
+
+    if (prisonerAlerts.isNotEmpty()) {
+      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+      val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
+
+      processVisitsWithNotifications(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT)
+    }
   }
 
   fun handlePersonRestrictionChangeNotification(notificationDto: PersonRestrictionChangeNotificationDto) {
@@ -135,6 +146,9 @@ class VisitNotificationEventService(
     // TODO not yet implemented
   }
 
+  // TODO: Feature VB-3763 - Introduce a Dto here including affectedVisits, NotificationType + optional field description.
+  //  The description will contain a custom message which will be displayed to the staff alongside the affected visits.
+  //  Describing why it's affected.
   private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType) {
     val affectedVisitsNoDuplicate = affectedVisits.filter { !visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type) }
 

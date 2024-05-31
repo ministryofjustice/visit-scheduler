@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.enums
 
 @Suppress("unused")
-enum class PrisonerAlertCodeType(val type: String, val description: String) {
+enum class PrisonerSupportedAlertCodeType(val type: String, val description: String) {
   C1("Child Communication Measures", "L1 Restriction No contact with any child"),
   C2("Child Communication Measures", "L2 Written Contact with Children only"),
   C3("Child Communication Measures", "L3 Monitored Contact written or phone"),
