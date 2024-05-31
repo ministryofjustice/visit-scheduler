@@ -466,6 +466,7 @@ class EventAuditEntityHelper(
         applicationMethodType = applicationMethodType,
         text = text,
         userType = userType,
+        description = null,
       ),
     )
   }

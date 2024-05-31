@@ -8,5 +8,5 @@ data class PrisonerAlertCreatedUpdatedNotificationDto(
   val prisonerNumber: String,
 
   @NotNull
-  val alertsAdded: List<String>
+  val alertsAdded: List<String>,
 )

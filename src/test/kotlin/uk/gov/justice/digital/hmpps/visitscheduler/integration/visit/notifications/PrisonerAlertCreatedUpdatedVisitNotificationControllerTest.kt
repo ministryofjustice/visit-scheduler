@@ -85,7 +85,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
       webTestClient,
       roleVisitSchedulerHttpHeaders,
-      notificationDto
+      notificationDto,
     )
 
     // Then
@@ -108,6 +108,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(userType).isEqualTo(STAFF)
+      assertThat(description).isEqualTo(listOf(PrisonerSupportedAlertCodeType.C1.description).toString())
     }
   }
 
@@ -145,7 +146,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
       webTestClient,
       roleVisitSchedulerHttpHeaders,
-      notificationDto
+      notificationDto,
     )
 
     // Then
@@ -183,7 +184,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
       webTestClient,
       roleVisitSchedulerHttpHeaders,
-      notificationDto
+      notificationDto,
     )
 
     // Then
@@ -277,6 +278,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(userType).isEqualTo(STAFF)
+      assertThat(description).isEqualTo(listOf(PrisonerSupportedAlertCodeType.C1.description).toString())
     }
     with(auditEvents[1]) {
       assertThat(actionedBy).isEqualTo("NOT_KNOWN")
@@ -286,6 +288,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(userType).isEqualTo(STAFF)
+      assertThat(description).isEqualTo(listOf(PrisonerSupportedAlertCodeType.C1.description).toString())
     }
   }
 }
