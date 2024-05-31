@@ -122,7 +122,6 @@ class MigrateVisitService(
         applicationMethodType = NOT_KNOWN,
         text = null,
         userType = visitEntity.userType,
-        description = null,
       ),
     )
 
@@ -309,7 +308,6 @@ class MigrateVisitService(
         applicationMethodType = NOT_KNOWN,
         text = null,
         userType = STAFF,
-        description = null,
       ),
     )
 

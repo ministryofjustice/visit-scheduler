@@ -239,11 +239,13 @@ class VisitNotificationEventService(
         VisitNotificationEvent(
           impactedVisit.reference,
           type,
+          description,
         )
       } else {
         VisitNotificationEvent(
           impactedVisit.reference,
           type,
+          description,
           _reference = reference,
         )
       },
@@ -259,7 +261,6 @@ class VisitNotificationEventService(
         applicationMethodType = NOT_KNOWN,
         text = null,
         userType = impactedVisit.userType,
-        description = description,
       ),
     )
 

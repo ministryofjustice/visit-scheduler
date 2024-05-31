@@ -108,7 +108,6 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(userType).isEqualTo(STAFF)
-      assertThat(description).isEqualTo(listOf(PrisonerSupportedAlertCodeType.C1.description).toString())
     }
   }
 
@@ -159,6 +158,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     assertThat(visitNotifications).hasSize(3)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
+    assertThat(visitNotifications[0].event_description).isEqualTo(listOf(PrisonerSupportedAlertCodeType.C1.description).toString())
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
     assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
     assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
@@ -278,7 +278,6 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(userType).isEqualTo(STAFF)
-      assertThat(description).isEqualTo(listOf(PrisonerSupportedAlertCodeType.C1.description).toString())
     }
     with(auditEvents[1]) {
       assertThat(actionedBy).isEqualTo("NOT_KNOWN")
@@ -288,7 +287,6 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(userType).isEqualTo(STAFF)
-      assertThat(description).isEqualTo(listOf(PrisonerSupportedAlertCodeType.C1.description).toString())
     }
   }
 }

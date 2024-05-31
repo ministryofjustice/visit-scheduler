@@ -313,7 +313,6 @@ class ApplicationService(
         applicationMethodType = applicationMethodType,
         text = null,
         userType = application.userType,
-        description = null,
       ),
     )
   }

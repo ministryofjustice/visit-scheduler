@@ -25,6 +25,9 @@ class VisitNotificationEvent(
   @Enumerated(EnumType.STRING)
   val type: NotificationEventType,
 
+  @Column(nullable = true)
+  val event_description: String? = null,
+
   @Transient
   private val _reference: String = "",
 

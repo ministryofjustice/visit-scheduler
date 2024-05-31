@@ -343,7 +343,6 @@ class VisitService(
         applicationMethodType = applicationMethodType,
         text = text,
         userType = userType,
-        description = null,
       ),
     )
   }

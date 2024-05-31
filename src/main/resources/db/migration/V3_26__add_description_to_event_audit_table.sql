@@ -1,1 +1,0 @@
-ALTER TABLE event_audit ADD description VARCHAR(350);
