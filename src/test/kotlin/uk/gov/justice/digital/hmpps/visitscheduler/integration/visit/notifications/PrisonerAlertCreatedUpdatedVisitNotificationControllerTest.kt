@@ -36,6 +36,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
 
   val prisonerId = "AA11BCC"
   val prisonCode = "ABC"
+  val description = "Prisoner alert codes updated"
   lateinit var prison1: Prison
   lateinit var sessionTemplate1: SessionTemplate
 
@@ -50,7 +51,11 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
   fun `when prisoner has had an alert created or updated and has associated visits then the visits are flagged and saved`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(prisonerId, listOf(PrisonerSupportedAlertCodeType.C1.name))
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+    )
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -115,7 +120,11 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
   fun `when prisoner has had an alert created or updated then only visits are flagged with there own notification references`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(prisonerId, listOf(PrisonerSupportedAlertCodeType.C1.name))
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+    )
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -158,7 +167,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     assertThat(visitNotifications).hasSize(3)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
-    assertThat(visitNotifications[0].event_description).isEqualTo(listOf(PrisonerSupportedAlertCodeType.C1.description).toString())
+    assertThat(visitNotifications[0].event_description).isEqualTo(description)
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
     assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
     assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
@@ -170,7 +179,11 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
   fun `when prisoner has had an alert created or updated its not a supported code then no visits are affected`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(prisonerId, listOf("UNSUPPORTED"))
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      listOf("UNSUPPORTED"),
+    )
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -197,7 +210,11 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
   @Test
   fun `when prisoner has had an alert created or updated and prison location cannot be found then the all visits in all prisons are flagged and saved`() {
     // Given
-    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(prisonerId, listOf(PrisonerSupportedAlertCodeType.C1.name))
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+    )
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -235,7 +252,11 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
   fun `when prisoner has had an alert created or updated and prisoner has a non prison code then the all visits in all prisons are flagged and saved`() {
     // Given
     val nonPrisonCode = NonPrisonCodeType.ADM.name
-    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(prisonerId, listOf(PrisonerSupportedAlertCodeType.C1.name))
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+    )
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, nonPrisonCode, IncentiveLevel.ENHANCED)
 
     val visit1 = createApplicationAndVisit(

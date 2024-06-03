@@ -130,11 +130,7 @@ class VisitNotificationEventService(
       val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
 
-      val alertDescriptions = prisonerAlerts.map { alert ->
-        PrisonerSupportedAlertCodeType.entries.first { it.name == alert }.description
-      }
-
-      processVisitsWithNotifications(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, alertDescriptions.toString())
+      processVisitsWithNotifications(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, notificationDto.description)
     }
   }
 
