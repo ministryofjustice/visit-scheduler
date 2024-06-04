@@ -102,6 +102,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].event_description).isEqualTo(description)
 
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERTS_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(1)
@@ -169,6 +170,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
     assertThat(visitNotifications[0].event_description).isEqualTo(description)
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    assertThat(visitNotifications[1].event_description).isEqualTo(description)
     assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
     assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
     assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
