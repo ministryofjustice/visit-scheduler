@@ -559,9 +559,9 @@ class SessionServiceTest {
       val expectedAssociations = listOf(associationId)
 
       val slots = mockSessionSlots(singleSession)
-
-      val slotIds = slots.map { it.id }
-      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotIds))
+      val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      val slotDate = saturdayAfter.toLocalDate()
+      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotDate))
         .thenReturn(
           true,
           false,
@@ -572,7 +572,6 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)

@@ -40,6 +40,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionS
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Service
@@ -408,10 +409,10 @@ class ApplicationService(
     }
   }
 
-  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotIds: List<Long>): Boolean {
+  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate): Boolean {
     return applicationRepo.hasActiveApplicationsForDate(
       nonAssociationPrisonerIds,
-      sessionSlotIds,
+      sessionSlotDate,
       getExpiredApplicationDateAndTime(),
     )
   }

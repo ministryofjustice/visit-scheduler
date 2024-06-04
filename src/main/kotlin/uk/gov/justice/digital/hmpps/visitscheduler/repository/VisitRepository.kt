@@ -32,15 +32,15 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun isBookingCancelled(reference: String): Boolean
 
   @Query(
-    "SELECT count(*) > 0 FROM visit v " +
+    "SELECT count(*) > 0 FROM visit v left join session_slot sl on v.session_slot_id = sl.id " +
       "WHERE v.prisoner_id IN :prisonerIds AND " +
-      "v.session_slot_id IN :sessionIds AND " +
+      "sl.slot_date = :sessionDate AND " +
       "v.visit_status = 'BOOKED'",
     nativeQuery = true,
   )
   fun hasActiveVisitsForDate(
     prisonerIds: List<String>,
-    sessionIds: List<Long>,
+    sessionDate: LocalDate,
   ): Boolean
 
   @Query(
