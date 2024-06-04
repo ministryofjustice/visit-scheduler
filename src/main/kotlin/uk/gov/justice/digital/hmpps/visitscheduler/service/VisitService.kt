@@ -40,7 +40,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendEx
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
@@ -63,6 +62,10 @@ class VisitService(
   private val snsService: SnsService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
+
+  @Lazy
+  @Autowired
+  private lateinit var visitEventAuditService: VisitEventAuditService
 
   @Lazy
   @Autowired
@@ -114,7 +117,7 @@ class VisitService(
     }
 
     val hasExistingBooking = existingBooking != null
-    saveEventAudit(
+    visitEventAuditService.saveEventAudit(
       bookingRequestDto.actionedBy,
       bookedVisitDto,
       if (hasExistingBooking) UPDATED_VISIT else BOOKED_VISIT,
@@ -259,7 +262,7 @@ class VisitService(
     val visitDto = visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
     processCancelEvents(visitEntity, visitDto, cancelVisitDto)
 
-    saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType, userType = STAFF)
+    visitEventAuditService.saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType, userType = STAFF)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
     visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
@@ -323,28 +326,6 @@ class VisitService(
     }
 
     return results.map { visitDtoBuilder.build(it) }
-  }
-
-  private fun saveEventAudit(
-    actionedBy: String,
-    visit: VisitDto,
-    type: EventAuditType,
-    applicationMethodType: ApplicationMethodType,
-    text: String? = null,
-    userType: UserType,
-  ) {
-    eventAuditRepository.saveAndFlush(
-      EventAudit(
-        actionedBy = actionedBy,
-        bookingReference = visit.reference,
-        applicationReference = visit.applicationReference,
-        sessionTemplateReference = visit.sessionTemplateReference,
-        type = type,
-        applicationMethodType = applicationMethodType,
-        text = text,
-        userType = userType,
-      ),
-    )
   }
 
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
@@ -430,18 +411,6 @@ class VisitService(
     return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
   }
 
-  @Transactional(readOnly = true)
-  fun getLastUserNameToUpdateToSlotByReference(bookingReference: String): String {
-    return eventAuditRepository.getLastUserToUpdateSlotByReference(bookingReference)
-  }
-
-  @Transactional(readOnly = true)
-  fun getLastEventForBooking(bookingReference: String): EventAuditDto? {
-    return eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
-      EventAuditDto(it)
-    }
-  }
-
   private fun validateVisitStartDate(
     visit: Visit,
     action: String,
@@ -485,6 +454,6 @@ class VisitService(
   }
 
   fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?, userType: UserType = STAFF) {
-    saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text, userType)
+    visitEventAuditService.saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text, userType)
   }
 }

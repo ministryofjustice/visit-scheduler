@@ -74,49 +74,56 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList.size).isEqualTo(7)
 
-    Assertions.assertThat(eventAuditList[0].actionedBy).isEqualTo("reserve_guy")
+    Assertions.assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("reserve_guy")
+    Assertions.assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
     Assertions.assertThat(eventAuditList[0].type).isEqualTo(RESERVED_VISIT)
     Assertions.assertThat(eventAuditList[0].applicationMethodType).isEqualTo(PHONE)
     Assertions.assertThat(eventAuditList[0].createTimestamp).isNotNull
     Assertions.assertThat(eventAuditList[0].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(eventAuditList[0].text).isNull()
 
-    Assertions.assertThat(eventAuditList[1].actionedBy).isEqualTo("booking_guy")
+    Assertions.assertThat(eventAuditList[1].actionedBy.userName).isEqualTo("booking_guy")
+    Assertions.assertThat(eventAuditList[1].actionedBy.userType).isEqualTo(STAFF)
     Assertions.assertThat(eventAuditList[1].type).isEqualTo(BOOKED_VISIT)
     Assertions.assertThat(eventAuditList[1].applicationMethodType).isEqualTo(PHONE)
     Assertions.assertThat(eventAuditList[1].createTimestamp).isNotNull
     Assertions.assertThat(eventAuditList[1].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(eventAuditList[1].text).isNull()
 
-    Assertions.assertThat(eventAuditList[2].actionedBy).isEqualTo("updated_by")
+    Assertions.assertThat(eventAuditList[2].actionedBy.userName).isEqualTo("updated_by")
+    Assertions.assertThat(eventAuditList[2].actionedBy.userType).isEqualTo(STAFF)
     Assertions.assertThat(eventAuditList[2].type).isEqualTo(CHANGING_VISIT)
     Assertions.assertThat(eventAuditList[2].applicationMethodType).isEqualTo(EMAIL)
     Assertions.assertThat(eventAuditList[2].createTimestamp).isNotNull
     Assertions.assertThat(eventAuditList[2].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(eventAuditList[2].text).isNull()
 
-    Assertions.assertThat(eventAuditList[3].actionedBy).isEqualTo("booking_guy")
+    Assertions.assertThat(eventAuditList[3].actionedBy.userName).isEqualTo("booking_guy")
+    Assertions.assertThat(eventAuditList[3].actionedBy.userType).isEqualTo(STAFF)
     Assertions.assertThat(eventAuditList[3].type).isEqualTo(UPDATED_VISIT)
     Assertions.assertThat(eventAuditList[3].applicationMethodType).isEqualTo(EMAIL)
     Assertions.assertThat(eventAuditList[3].createTimestamp).isNotNull
     Assertions.assertThat(eventAuditList[3].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(eventAuditList[3].text).isNull()
 
-    Assertions.assertThat(eventAuditList[4].actionedBy).isEqualTo("updated_by")
+    Assertions.assertThat(eventAuditList[4].actionedBy.userName).isEqualTo("updated_by")
+    Assertions.assertThat(eventAuditList[4].actionedBy.userType).isEqualTo(STAFF)
     Assertions.assertThat(eventAuditList[4].type).isEqualTo(CHANGING_VISIT)
     Assertions.assertThat(eventAuditList[4].applicationMethodType).isEqualTo(EMAIL)
     Assertions.assertThat(eventAuditList[4].createTimestamp).isNotNull
     Assertions.assertThat(eventAuditList[4].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(eventAuditList[4].text).isNull()
 
-    Assertions.assertThat(eventAuditList[5].actionedBy).isEqualTo("booking_guy")
+    Assertions.assertThat(eventAuditList[5].actionedBy.userName).isEqualTo("booking_guy")
+    Assertions.assertThat(eventAuditList[5].actionedBy.userType).isEqualTo(STAFF)
     Assertions.assertThat(eventAuditList[5].type).isEqualTo(UPDATED_VISIT)
     Assertions.assertThat(eventAuditList[5].applicationMethodType).isEqualTo(EMAIL)
     Assertions.assertThat(eventAuditList[5].createTimestamp).isNotNull
     Assertions.assertThat(eventAuditList[5].sessionTemplateReference).isEqualTo(sessionTemplate.reference)
     Assertions.assertThat(eventAuditList[5].text).isNull()
 
-    Assertions.assertThat(eventAuditList[6].actionedBy).isEqualTo("cancel_guy")
+    Assertions.assertThat(eventAuditList[6].actionedBy.userName).isEqualTo("cancel_guy")
+    Assertions.assertThat(eventAuditList[6].actionedBy.userType).isEqualTo(STAFF)
     Assertions.assertThat(eventAuditList[6].type).isEqualTo(CANCELLED_VISIT)
     Assertions.assertThat(eventAuditList[6].applicationMethodType).isEqualTo(WEBSITE)
     Assertions.assertThat(eventAuditList[6].createTimestamp).isNotNull

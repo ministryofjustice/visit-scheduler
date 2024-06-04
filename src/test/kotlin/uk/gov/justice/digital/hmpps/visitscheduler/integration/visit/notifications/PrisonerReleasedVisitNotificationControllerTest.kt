@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.S
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.TEMPORARY_ABSENCE_RELEASE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.TRANSFERRED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.UNKNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
@@ -99,13 +99,13 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RELEASED_EVENT)
     assertThat(auditEvents).hasSize(1)
     with(auditEvents[0]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_RELEASED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(UserType.STAFF)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
   }
 

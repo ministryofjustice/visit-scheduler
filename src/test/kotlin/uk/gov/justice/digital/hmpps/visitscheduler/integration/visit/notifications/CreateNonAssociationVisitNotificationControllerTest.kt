@@ -88,22 +88,22 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     val auditEvents = testEventAuditRepository.getAuditByType(NON_ASSOCIATION_EVENT)
     assertThat(auditEvents).hasSize(2)
     with(auditEvents[0]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
       assertThat(bookingReference).isEqualTo(primaryVisit.reference)
       assertThat(applicationReference).isEqualTo(primaryVisit.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(primaryVisit.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(UserType.STAFF)
+      assertThat(actionedBy.userType).isEqualTo(UserType.SYSTEM)
     }
     with(auditEvents[1]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
       assertThat(bookingReference).isEqualTo(secondaryVisit.reference)
       assertThat(applicationReference).isEqualTo(secondaryVisit.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(secondaryVisit.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(NON_ASSOCIATION_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(UserType.STAFF)
+      assertThat(actionedBy.userType).isEqualTo(UserType.SYSTEM)
     }
   }
 

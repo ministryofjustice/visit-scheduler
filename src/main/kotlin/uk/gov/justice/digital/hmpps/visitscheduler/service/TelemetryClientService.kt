@@ -151,7 +151,9 @@ class TelemetryClientService(
 
     bookingEventAudit?.let {
       flagEventDataMap["visitBooked"] = formatDateTimeToString(it.createTimestamp)
-      flagEventDataMap["actionedBy"] = it.actionedBy
+      flagEventDataMap["actionedBy"] = bookingEventAudit.actionedBy.userName ?: ""
+      flagEventDataMap["bookerReference"] = bookingEventAudit.actionedBy.bookerReference ?: ""
+      flagEventDataMap["userType"] = it.actionedBy.userType.name
     }
 
     return flagEventDataMap

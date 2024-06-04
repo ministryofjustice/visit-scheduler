@@ -99,7 +99,7 @@ class CancelVisitTest : IntegrationTestBase() {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitCancelled.reference)
 
     Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
-    Assertions.assertThat(eventAudit.actionedBy).isEqualTo(CANCELLED_BY_USER)
+    Assertions.assertThat(eventAudit.actionedBy.userName).isEqualTo(CANCELLED_BY_USER)
     Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(PHONE)
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
     Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
@@ -484,7 +484,7 @@ class CancelVisitTest : IntegrationTestBase() {
         Assertions.assertThat(it["visitStart"]).isEqualTo(cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
         Assertions.assertThat(it["visitStatus"]).isEqualTo(cancelledVisit.visitStatus.name)
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(cancelledVisit.outcomeStatus!!.name)
-        Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
+        Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy.userName)
         Assertions.assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
         Assertions.assertThat(it["supportRequired"]).isNull()
         Assertions.assertThat(it["hasPhoneNumber"]).isEqualTo((cancelledVisit.visitContact.telephone != null).toString())
@@ -503,7 +503,7 @@ class CancelVisitTest : IntegrationTestBase() {
       "visitStart" to cancelledVisit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
       "visitStatus" to cancelledVisit.visitStatus.name,
       "outcomeStatus" to cancelledVisit.outcomeStatus!!.name,
-      "actionedBy" to eventAudit.actionedBy,
+      "actionedBy" to eventAudit.actionedBy.userName,
       "applicationMethodType" to eventAudit.applicationMethodType.name,
       "hasPhoneNumber" to ((cancelledVisit.visitContact.telephone != null).toString()),
     )

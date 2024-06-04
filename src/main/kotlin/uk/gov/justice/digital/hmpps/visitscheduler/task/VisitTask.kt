@@ -4,6 +4,8 @@ import com.microsoft.applicationinsights.TelemetryClient
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Lazy
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfiguration
@@ -14,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppli
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitEventAuditService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
 
@@ -26,6 +29,10 @@ class VisitTask(
   private val flagVisitTaskConfiguration: FlagVisitTaskConfiguration,
   private val telemetryClientService: TelemetryClientService,
 ) {
+
+  @Lazy
+  @Autowired
+  private lateinit var visitEventAuditService: VisitEventAuditService
 
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)
@@ -128,8 +135,6 @@ class VisitTask(
   }
 
   private fun getFlaggedVisitTrackEvent(visit: VisitDto): MutableMap<String, String> {
-    val eventAudit = this.visitService.getLastEventForBooking(visit.reference)
-
     val flagVisitMap = mutableMapOf(
       "reference" to visit.reference,
       "prisonerId" to visit.prisonerId,
@@ -141,8 +146,11 @@ class VisitTask(
       "visitStatus" to visit.visitStatus.name,
     )
 
+    val eventAudit = visitEventAuditService.getLastEventForBooking(visit.reference)
     eventAudit?.let {
-      flagVisitMap["createdBy"] = it.actionedBy
+      flagVisitMap["actionedBy"] = eventAudit.actionedBy.userName ?: ""
+      flagVisitMap["bookerReference"] = eventAudit.actionedBy.bookerReference ?: ""
+      flagVisitMap["userType"] = it.actionedBy.userType.name
     }
 
     return flagVisitMap

@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRIS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonPrisonCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -96,13 +96,13 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RESTRICTION_CHANGE_EVENT)
     assertThat(auditEvents).hasSize(1)
     with(auditEvents[0]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(STAFF)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
   }
 
@@ -299,22 +299,22 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RESTRICTION_CHANGE_EVENT)
     assertThat(auditEvents).hasSize(2)
     with(auditEvents[0]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(STAFF)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
     with(auditEvents[1]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
       assertThat(bookingReference).isEqualTo(visit2.reference)
       assertThat(applicationReference).isEqualTo(visit2.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit2.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(STAFF)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
   }
 

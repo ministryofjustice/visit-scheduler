@@ -110,10 +110,11 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
       val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
       assertThat(eventAuditList).hasSize(1)
-      assertThat(eventAuditList[0].actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("Aled Evans")
+      assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
       assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.MIGRATED_VISIT)
       assertThat(eventAuditList[0].createTimestamp).isEqualTo(migrateVisitRequestDto.createDateTime)
-      assertThat(eventAuditList[0].userType).isEqualTo(STAFF)
+      assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
 
       assertThat(visit.getApplications().size).isEqualTo(1)
       val application = visit.getLastApplication()!!
@@ -249,7 +250,8 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
     visit?.let {
       val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
       assertThat(eventAuditList).hasSize(1)
-      assertThat(eventAuditList[0].actionedBy).isEqualTo("NOT_KNOWN_NOMIS")
+      assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("NOT_KNOWN_NOMIS")
+      assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
     }
   }
 
@@ -629,9 +631,9 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
     assertThat(eventAuditList).hasSize(1)
-    assertThat(eventAuditList[0].actionedBy).isEqualTo("user-2")
+    assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("user-2")
     assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.CANCELLED_VISIT)
-    assertThat(eventAuditList[0].userType).isEqualTo(STAFF)
+    assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
   }
 
   @Test
