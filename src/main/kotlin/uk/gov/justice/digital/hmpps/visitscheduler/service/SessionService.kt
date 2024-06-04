@@ -362,11 +362,11 @@ class SessionService(
   }
 
   private fun getDatesWithNonAssociationVisitsOrApplications(
-    sessionSlotsByDate: List<LocalDate>,
+    sessionSlotDates: List<LocalDate>,
     prisonerNonAssociationList: List<PrisonerNonAssociationDetailDto>,
   ): MutableSet<LocalDate> {
     val datesWithNonAssociation = mutableSetOf<LocalDate>()
-    sessionSlotsByDate.forEach {
+    sessionSlotDates.forEach {
       if (sessionSlotHasNonAssociation(it, prisonerNonAssociationList)) {
         datesWithNonAssociation.add(it)
       }
