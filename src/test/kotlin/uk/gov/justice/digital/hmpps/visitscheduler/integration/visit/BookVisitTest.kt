@@ -687,10 +687,13 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(eventAudit.type).isEqualTo(EventAuditType.BOOKED_VISIT)
     assertThat(eventAudit.actionedBy).isNotNull()
     assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
+
     if (STAFF == eventAudit.actionedBy.userType) {
       assertThat(eventAudit.actionedBy.userName).isEqualTo("booking_guy")
+      assertThat(eventAudit.actionedBy.bookerReference).isNull()
     }
     if (PUBLIC == eventAudit.actionedBy.userType) {
+      assertThat(eventAudit.actionedBy.userName).isNull()
       assertThat(eventAudit.actionedBy.bookerReference).isEqualTo("booking_guy")
     }
 

@@ -485,9 +485,11 @@ class ReserveSlotTest : IntegrationTestBase() {
 
     if (STAFF == eventAudit.actionedBy.userType) {
       assertThat(eventAudit.actionedBy.userName).isEqualTo(createApplicationRequest.actionedBy)
+      assertThat(eventAudit.actionedBy.bookerReference).isNull()
     }
 
     if (PUBLIC == eventAudit.actionedBy.userType) {
+      assertThat(eventAudit.actionedBy.userName).isNull()
       assertThat(eventAudit.actionedBy.bookerReference).isEqualTo(createApplicationRequest.actionedBy)
     }
 

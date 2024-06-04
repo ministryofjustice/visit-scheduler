@@ -1,7 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
-import jakarta.persistence.CascadeType.MERGE
-import jakarta.persistence.CascadeType.PERSIST
 import jakarta.persistence.CascadeType.REFRESH
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -50,7 +48,7 @@ class EventAudit private constructor(
   @Column(name = "ACTIONED_BY_ID", nullable = true)
   private val actionedById: Long? = null,
 
-  @ManyToOne(fetch = FetchType.LAZY, cascade = [REFRESH, PERSIST, MERGE])
+  @ManyToOne(fetch = FetchType.LAZY, cascade = [REFRESH])
   @JoinColumn(name = "ACTIONED_BY_ID", updatable = false, insertable = false)
   val actionedBy: ActionedBy,
 
