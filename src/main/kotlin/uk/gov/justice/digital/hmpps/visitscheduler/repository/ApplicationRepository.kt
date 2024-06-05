@@ -86,6 +86,7 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
   @Query(
     "SELECT count(*) > 0 FROM application a left join session_slot sl on a.session_slot_id = sl.id " +
       "WHERE a.prisoner_id IN :prisonerIds AND " +
+      "a.prison_id = :prisonId AND " +
       "sl.slot_date = :sessionDate AND " +
       "a.modify_timestamp >= :expiredDateAndTime AND " +
       "a.completed = false AND a.reserved_slot = true",
@@ -94,6 +95,7 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
   fun hasActiveApplicationsForDate(
     prisonerIds: List<String>,
     sessionDate: LocalDate,
+    prisonId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
   ): Boolean
 }

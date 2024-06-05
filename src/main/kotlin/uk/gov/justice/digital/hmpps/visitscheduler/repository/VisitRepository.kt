@@ -34,6 +34,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   @Query(
     "SELECT count(*) > 0 FROM visit v left join session_slot sl on v.session_slot_id = sl.id " +
       "WHERE v.prisoner_id IN :prisonerIds AND " +
+      "v.prison_id = :prisonId AND " +
       "sl.slot_date = :sessionDate AND " +
       "v.visit_status = 'BOOKED'",
     nativeQuery = true,
@@ -41,6 +42,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun hasActiveVisitsForDate(
     prisonerIds: List<String>,
     sessionDate: LocalDate,
+    prisonId: Long,
   ): Boolean
 
   @Query(

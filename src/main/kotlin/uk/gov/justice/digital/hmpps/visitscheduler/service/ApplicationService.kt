@@ -409,10 +409,11 @@ class ApplicationService(
     }
   }
 
-  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate): Boolean {
+  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate, prisonId: Long): Boolean {
     return applicationRepo.hasActiveApplicationsForDate(
       nonAssociationPrisonerIds,
       sessionSlotDate,
+      prisonId,
       getExpiredApplicationDateAndTime(),
     )
   }

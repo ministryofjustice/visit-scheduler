@@ -106,7 +106,7 @@ class SessionService(
     }.flatten()
 
     val sessionSlots = getSessionSlots(visitSessions)
-    val nonAssociationConflictSessions = getNonAssociationSessions(visitSessions, prisonerId)
+    val nonAssociationConflictSessions = getNonAssociationSessions(visitSessions, prisonerId, prison)
     val doubleBookings = getDoubleBookingSessions(visitSessions, sessionSlots, prisonerId)
 
     return visitSessions.filterNot {
@@ -347,12 +347,13 @@ class SessionService(
   private fun getNonAssociationSessions(
     sessions: List<VisitSessionDto>,
     prisonerId: String,
+    prison: Prison,
   ): Set<VisitSessionDto> {
     val sessionSlotsByDate = sessions.map { it.startTimestamp.toLocalDate() }
 
     val prisonerNonAssociationList = prisonerService.getPrisonerNonAssociationList(prisonerId)
     if (prisonerNonAssociationList.isNotEmpty()) {
-      val datesWithNonAssociation = getDatesWithNonAssociationVisitsOrApplications(sessionSlotsByDate, prisonerNonAssociationList)
+      val datesWithNonAssociation = getDatesWithNonAssociationVisitsOrApplications(sessionSlotsByDate, prisonerNonAssociationList, prison)
 
       return sessions.filter {
         datesWithNonAssociation.contains(it.startTimestamp.toLocalDate())
@@ -364,10 +365,11 @@ class SessionService(
   private fun getDatesWithNonAssociationVisitsOrApplications(
     sessionSlotDates: List<LocalDate>,
     prisonerNonAssociationList: List<PrisonerNonAssociationDetailDto>,
+    prison: Prison,
   ): MutableSet<LocalDate> {
     val datesWithNonAssociation = mutableSetOf<LocalDate>()
     sessionSlotDates.forEach {
-      if (sessionSlotHasNonAssociation(it, prisonerNonAssociationList)) {
+      if (sessionSlotHasNonAssociation(it, prisonerNonAssociationList, prison)) {
         datesWithNonAssociation.add(it)
       }
     }
@@ -377,6 +379,7 @@ class SessionService(
   private fun sessionSlotHasNonAssociation(
     sessionSlotDate: LocalDate,
     prisonerNonAssociationList: @NotNull List<PrisonerNonAssociationDetailDto>,
+    prison: Prison,
   ): Boolean {
     val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerNonAssociationList)
 
@@ -387,6 +390,7 @@ class SessionService(
     if (visitRepository.hasActiveVisitsForDate(
         nonAssociationPrisonerIds,
         sessionSlotDate,
+        prison.id,
       )
     ) {
       return true
@@ -395,6 +399,7 @@ class SessionService(
     return applicationService.hasActiveApplicationsForDate(
       nonAssociationPrisonerIds,
       sessionSlotDate,
+      prison.id,
     )
   }
 

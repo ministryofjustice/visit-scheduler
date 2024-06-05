@@ -29,6 +29,57 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.util.*
 
+fun prison(
+  prisonCode: String = "MDI",
+  policyNoticeDaysMin: Int = 2,
+  policyNoticeDaysMax: Int = 28,
+  maxTotalVisitors: Int = 6,
+  maxAdultVisitors: Int = 3,
+  maxChildVisitors: Int = 3,
+  adultAgeYears: Int = 18,
+  isActive: Boolean = true,
+): Prison {
+  return Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
+}
+fun sessionTemplate(
+  name: String = "sessionTemplate_",
+  validFromDate: LocalDate,
+  validToDate: LocalDate? = null,
+  closedCapacity: Int = 5,
+  openCapacity: Int = 10,
+  visitRoom: String = "visitRoom",
+  visitType: VisitType = VisitType.SOCIAL,
+  startTime: LocalTime = LocalTime.parse("09:00"),
+  endTime: LocalTime = LocalTime.parse("10:00"),
+  dayOfWeek: DayOfWeek = DayOfWeek.FRIDAY,
+  permittedSessionLocationGroups: MutableList<SessionLocationGroup> = mutableListOf(),
+  permittedSessionCategoryGroups: MutableList<SessionCategoryGroup> = mutableListOf(),
+  weeklyFrequency: Int = 1,
+  isActive: Boolean = true,
+  includeLocationGroupType: Boolean = true,
+  prison: Prison,
+): SessionTemplate {
+  return SessionTemplate(
+    name = name + dayOfWeek,
+    validFromDate = validFromDate,
+    validToDate = validToDate,
+    closedCapacity = closedCapacity,
+    openCapacity = openCapacity,
+    prisonId = prison.id,
+    prison = prison,
+    visitRoom = visitRoom,
+    visitType = visitType,
+    startTime = startTime,
+    endTime = endTime,
+    dayOfWeek = dayOfWeek,
+    weeklyFrequency = weeklyFrequency,
+    active = isActive,
+    permittedSessionLocationGroups = permittedSessionLocationGroups,
+    permittedSessionCategoryGroups = permittedSessionCategoryGroups,
+    includeLocationGroupType = includeLocationGroupType,
+  ).also { it.reference = UUID.randomUUID().toString() }
+}
+
 fun sessionTemplate(
   name: String = "sessionTemplate_",
   validFromDate: LocalDate,
