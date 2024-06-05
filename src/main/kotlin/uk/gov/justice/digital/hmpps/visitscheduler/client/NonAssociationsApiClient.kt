@@ -26,7 +26,7 @@ class NonAssociationsApiClient(
     LOG.debug("Entered getPrisonerNonAssociation $prisonerNumber")
 
     return webClient.get()
-      .uri("/prisoner/$prisonerNumber/non-associations?includeOtherPrisons=true")
+      .uri("/prisoner/$prisonerNumber/non-associations?includeOtherPrisons=false")
       .retrieve()
       .bodyToMono(TYPE_FOR_OFFENDER_NONASSOCIATION)
       .onErrorResume {
