@@ -381,7 +381,7 @@ class SessionService(
     prisonerNonAssociationList: @NotNull List<PrisonerNonAssociationDetailDto>,
     prison: Prison,
   ): Boolean {
-    val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerNonAssociationList)
+    val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerNonAssociationList, prison.code)
 
     if (nonAssociationPrisonerIds.isEmpty()) {
       return false
@@ -405,8 +405,9 @@ class SessionService(
 
   private fun getNonAssociationPrisonerIds(
     @NotNull prisonerNonAssociationList: List<PrisonerNonAssociationDetailDto>,
+    prisonCode: String,
   ): List<String> {
-    return prisonerNonAssociationList.map { it.otherPrisonerDetails.prisonerNumber }
+    return prisonerNonAssociationList.filter { (it.otherPrisonerDetails.prisonId == null || it.otherPrisonerDetails.prisonId == prisonCode) }.map { it.otherPrisonerDetails.prisonerNumber }
   }
 
   private fun sessionHasBookingOrApplications(sessionSlot: SessionSlot, prisonerId: String): Boolean {
