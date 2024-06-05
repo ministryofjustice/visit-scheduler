@@ -9,6 +9,8 @@ import reactor.core.scheduler.Schedulers
 
 @Component
 class WebTestClientConfig : WebTestClientBuilderCustomizer {
+  // This is to allow calls to web test client to happen at the same time rather than serially
+  // This is how things in real world!
   override fun customize(builder: Builder) {
     builder.filter { clientRequest: ClientRequest?, next: ExchangeFunction ->
       next.exchange(

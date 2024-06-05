@@ -94,7 +94,9 @@ class VisitService(
       val visit = visitRepository.findVisitByApplicationReference(applicationReference)!!
       return visitDtoBuilder.build(visit)
     }
+    // Need to set application complete at earliest opportunity to prevent two bookings from being created, Edge case.
     applicationService.completeApplication(applicationReference)
+
     val application = applicationService.getApplicationEntity(applicationReference)
 
     val existingBooking = visitRepository.findVisitByApplicationReference(application.reference)
