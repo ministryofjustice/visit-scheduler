@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.core.ParameterizedTypeReference
+import org.springframework.http.HttpStatus.GATEWAY_TIMEOUT
 import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.http.MediaType
 import org.springframework.stereotype.Component
@@ -12,6 +13,7 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.GatewayTimeoutException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import java.time.Duration
 
@@ -36,6 +38,9 @@ class PrisonerOffenderSearchClient(
         if (isNotFoundError(e)) {
           LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo", e)
           Mono.error(ItemNotFoundException("Prisoner with prisonNumber - $offenderNo not found on offender search", e) as Throwable)
+        } else if (isGatewayTimeoutError(e)) {
+          LOG.error("Timeout reached while trying to contact prisoner offender search call - /prisoner/$offenderNo", e)
+          Mono.error(GatewayTimeoutException("Timeout while calling prisoner offender search call - /prisoner/$offenderNo", e) as Throwable)
         } else {
           LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo using offender search", e)
           Mono.error(e)
@@ -45,4 +50,7 @@ class PrisonerOffenderSearchClient(
 
   private fun isNotFoundError(e: Throwable?) =
     e is WebClientResponseException && e.statusCode == NOT_FOUND
+
+  private fun isGatewayTimeoutError(e: Throwable?) =
+    e is WebClientResponseException && e.statusCode == GATEWAY_TIMEOUT
 }

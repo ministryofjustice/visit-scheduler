@@ -17,6 +17,7 @@ import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.GatewayTimeoutException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityException
@@ -242,6 +243,20 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
           userMessage = "Not found",
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(GatewayTimeoutException::class)
+  fun handleGatewayTimeoutException(e: GatewayTimeoutException): ResponseEntity<ErrorResponse?>? {
+    log.debug("Gateway timeout exception caught: {}", e.message)
+    return ResponseEntity
+      .status(HttpStatus.GATEWAY_TIMEOUT)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.GATEWAY_TIMEOUT,
+          userMessage = "Call to downstream service failed after timeout",
           developerMessage = e.message,
         ),
       )
