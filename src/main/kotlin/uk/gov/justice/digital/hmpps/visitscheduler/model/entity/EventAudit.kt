@@ -45,8 +45,8 @@ class EventAudit private constructor(
   @Enumerated(EnumType.STRING)
   val applicationMethodType: ApplicationMethodType,
 
-  @Column(name = "ACTIONED_BY_ID", nullable = true)
-  private val actionedById: Long? = null,
+  @Column(name = "ACTIONED_BY_ID", nullable = false)
+  private val actionedById: Long,
 
   @ManyToOne(fetch = FetchType.LAZY, cascade = [REFRESH])
   @JoinColumn(name = "ACTIONED_BY_ID", updatable = false, insertable = false)
