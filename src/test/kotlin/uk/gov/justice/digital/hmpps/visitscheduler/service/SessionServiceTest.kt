@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.prison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
@@ -546,12 +547,14 @@ class SessionServiceTest {
       val validFromDate = currentDate.plusDays(noticeDaysMin.toLong())
       val dayOfWeek = validFromDate.plusDays(1).dayOfWeek
 
+      val prison = prison()
       val singleSession = sessionTemplate(
         validFromDate = currentDate.plusDays(noticeDaysMin.toLong()),
         validToDate = validFromDate.plusWeeks(1),
         dayOfWeek = dayOfWeek,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
+        prison = prison,
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
       mockGetPrisonerNonAssociation(prisonerId, associationId)
@@ -561,7 +564,7 @@ class SessionServiceTest {
       val slots = mockSessionSlots(singleSession)
       val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       val slotDate = saturdayAfter.toLocalDate()
-      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotDate))
+      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotDate, prison.id))
         .thenReturn(
           true,
           false,
