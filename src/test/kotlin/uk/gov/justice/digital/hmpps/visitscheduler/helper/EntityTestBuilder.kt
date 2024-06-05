@@ -41,6 +41,7 @@ fun prison(
 ): Prison {
   return Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
 }
+
 fun sessionTemplate(
   name: String = "sessionTemplate_",
   validFromDate: LocalDate,

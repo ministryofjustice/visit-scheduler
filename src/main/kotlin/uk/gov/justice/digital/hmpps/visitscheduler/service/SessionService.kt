@@ -407,7 +407,7 @@ class SessionService(
     @NotNull prisonerNonAssociationList: List<PrisonerNonAssociationDetailDto>,
     prisonCode: String,
   ): List<String> {
-    return prisonerNonAssociationList.filter { (it.otherPrisonerDetails.prisonId == null || it.otherPrisonerDetails.prisonId == prisonCode) }.map { it.otherPrisonerDetails.prisonerNumber }
+    return prisonerNonAssociationList.map { it.otherPrisonerDetails.prisonerNumber }
   }
 
   private fun sessionHasBookingOrApplications(sessionSlot: SessionSlot, prisonerId: String): Boolean {

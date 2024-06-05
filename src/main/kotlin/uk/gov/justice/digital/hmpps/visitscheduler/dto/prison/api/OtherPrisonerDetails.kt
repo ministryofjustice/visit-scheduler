@@ -6,7 +6,4 @@ import io.swagger.v3.oas.annotations.media.Schema
 class OtherPrisonerDetails(
   @Schema(description = "The prisoner number", example = "G0135GA", required = true)
   val prisonerNumber: String,
-
-  @Schema(description = "The prison code", example = "MDI", required = false)
-  val prisonId: String? = null,
 )
