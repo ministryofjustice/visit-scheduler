@@ -94,15 +94,13 @@ class VisitService(
       val visit = visitRepository.findVisitByApplicationReference(applicationReference)!!
       return visitDtoBuilder.build(visit)
     }
-
+    applicationService.completeApplication(applicationReference)
     val application = applicationService.getApplicationEntity(applicationReference)
 
     val existingBooking = visitRepository.findVisitByApplicationReference(application.reference)
     checkSlotCapacity(bookingRequestDto, application, existingBooking)
 
     val booking = createBooking(application, existingBooking)
-    application.completed = true
-
     val bookedVisitDto = visitDtoBuilder.build(booking)
 
     try {

@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.builder
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -12,8 +14,11 @@ import java.time.LocalDateTime
 @Component
 class VisitDtoBuilder {
 
+  companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
   fun build(visitEntity: Visit): VisitDto {
-    val applicationReference = visitEntity.getLastCompletedApplication()?.reference ?: throw IllegalStateException("Visit must have a completed application")
+    val applicationReference = getApplicationReference(visitEntity)
 
     return VisitDto(
       applicationReference = applicationReference,
@@ -36,5 +41,18 @@ class VisitDtoBuilder {
       sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
       userType = visitEntity.userType,
     )
+  }
+
+  private fun getApplicationReference(
+    visitEntity: Visit,
+  ): String {
+    val application = visitEntity.getLastCompletedApplication()
+    return application?.let {
+      it.reference
+    } ?: run {
+      // This catches an issues when two requests from the booking occur at the same time see bookVisit method in visit service
+      LOG.error("Visit ${visitEntity.reference} should have a completed application")
+      "toBeAnnounced"
+    }
   }
 }

@@ -297,6 +297,10 @@ class ApplicationService(
       ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
   }
 
+  fun completeApplication(applicationReference: String) {
+    applicationRepo.completeApplication(applicationReference)
+  }
+
   private fun saveEventAudit(
     actionedBy: String,
     application: ApplicationDto,
