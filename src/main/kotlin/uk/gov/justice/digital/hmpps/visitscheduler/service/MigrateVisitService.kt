@@ -5,6 +5,7 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
@@ -12,18 +13,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitToMigrateException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -36,7 +32,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplateMatcher
@@ -51,7 +46,6 @@ const val NOT_KNOWN_NOMIS = "NOT_KNOWN_NOMIS"
 class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
-  private val eventAuditRepository: EventAuditRepository,
   private val prisonsService: PrisonsService,
   private val snsService: SnsService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
@@ -65,6 +59,10 @@ class MigrateVisitService(
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
+
+  @Lazy
+  @Autowired
+  private lateinit var visitEventAuditService: VisitEventAuditService
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
@@ -80,7 +78,6 @@ class MigrateVisitService(
       throw VisitToMigrateException("Visit more than $migrateMaxMonthsInFuture months in future, will not be migrated!")
     }
 
-    val actionedBy = migrateVisitRequest.actionedBy ?: NOT_KNOWN_NOMIS
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code
     val outcomeStatus = migrateVisitRequest.outcomeStatus ?: OutcomeStatus.NOT_RECORDED
 
@@ -106,39 +103,13 @@ class MigrateVisitService(
       )
     }
 
-    val applicationEntity: Application = createApplication(migrateVisitRequest, prison, sessionSlot, actionedBy)
-    val visitEntity = createVisit(migrateVisitRequest, prison, visitRoom, sessionSlot, outcomeStatus, actionedBy)
+    val applicationEntity: Application = createApplication(migrateVisitRequest, prison, sessionSlot, migrateVisitRequest.actionedBy!!)
+    val visitEntity = createVisit(migrateVisitRequest, prison, visitRoom, sessionSlot, outcomeStatus)
     visitEntity.addApplication(applicationEntity)
 
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
-    val eventAudit = eventAuditRepository.saveAndFlush(
-      EventAudit(
-        actionedBy = actionedBy,
-        bookingReference = visitEntity.reference,
-        applicationReference = applicationEntity.reference,
-        sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
-        type = MIGRATED_VISIT,
-        applicationMethodType = NOT_KNOWN,
-        text = null,
-        userType = visitEntity.userType,
-      ),
-    )
-
-    migrateVisitRequest.createDateTime?.let {
-      visitRepository.updateCreateTimestamp(it, visitEntity.id)
-      if (migrateVisitRequest.visitStatus == BOOKED) {
-        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
-      }
-    }
-
-    // Do this at end of this method, otherwise modify date would be overridden
-    migrateVisitRequest.modifyDateTime?.let {
-      visitRepository.updateModifyTimestamp(it, visitEntity.id)
-      if (migrateVisitRequest.visitStatus == CANCELLED) {
-        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
-      }
-    }
+    visitEventAuditService.saveEventAudit(migrateVisitRequest, visitEntity)
 
     return visitEntity.reference
   }
@@ -225,7 +196,6 @@ class MigrateVisitService(
     visitRoom: String,
     sessionSlot: SessionSlot,
     outcomeStatus: OutcomeStatus,
-    actionedBy: String,
   ): Visit {
     val visitEntity = visitRepository.saveAndFlush(
       Visit(
@@ -298,18 +268,7 @@ class MigrateVisitService(
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
-    eventAuditRepository.saveAndFlush(
-      EventAudit(
-        actionedBy = cancelVisitDto.actionedBy,
-        bookingReference = visitEntity.reference,
-        applicationReference = visitEntity.getLastCompletedApplication()?.reference,
-        sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
-        type = CANCELLED_VISIT,
-        applicationMethodType = NOT_KNOWN,
-        text = null,
-        userType = STAFF,
-      ),
-    )
+    visitEventAuditService.saveEventAudit(cancelVisitDto, visitEntity)
 
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))

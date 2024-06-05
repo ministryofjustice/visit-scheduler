@@ -57,7 +57,7 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
             Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
             Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.getLastApplication()?.reference)
             Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-            Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
+            Assertions.assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy.userName)
             Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
             Assertions.assertThat(it["visitStart"]).isEqualTo(formatStartSlotDateTimeToString(visit.sessionSlot))
             Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)

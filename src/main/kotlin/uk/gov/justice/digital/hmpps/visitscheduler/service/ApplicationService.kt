@@ -15,10 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSu
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
@@ -28,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateD
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -38,7 +34,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 
@@ -49,10 +44,13 @@ class ApplicationService(
   private val visitRepo: VisitRepository,
   private val telemetryClientService: TelemetryClientService,
   private val sessionTemplateService: SessionTemplateService,
-  private val eventAuditRepository: EventAuditRepository,
   private val prisonsService: PrisonsService,
   @Value("\${expired.applications.validity-minutes:10}") private val expiredPeriodMinutes: Int,
 ) {
+
+  @Lazy
+  @Autowired
+  private lateinit var visitEventAuditService: VisitEventAuditService
 
   @Lazy
   @Autowired
@@ -75,7 +73,7 @@ class ApplicationService(
   fun createInitialApplication(createApplicationDto: CreateApplicationDto): ApplicationDto {
     val applicationDto = createApplication(createApplicationDto)
 
-    saveEventAudit(
+    visitEventAuditService.saveEventAudit(
       createApplicationDto.actionedBy,
       applicationDto,
       applicationMethodType = NOT_KNOWN,
@@ -90,7 +88,7 @@ class ApplicationService(
 
     val applicationDto = createApplication(createApplicationDto, visit)
 
-    saveEventAudit(
+    visitEventAuditService.saveEventAudit(
       createApplicationDto.actionedBy,
       applicationDto,
       visit = visit,
@@ -175,12 +173,12 @@ class ApplicationService(
 
     val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
 
-    val restriction = changeApplicationDto.applicationRestriction?.getVisitRestriction() ?: run { application.restriction }
-    val isReservedSlot = isReservationRequired(application, sessionSlot, restriction)
+    val visitRestriction = changeApplicationDto.applicationRestriction?.getVisitRestriction() ?: run { application.restriction }
+    val isReservedSlot = isReservationRequired(application, sessionSlot, visitRestriction)
     if (isReservedSlot && !changeApplicationDto.allowOverBooking) {
       slotCapacityService.checkCapacityForApplicationReservation(
         sessionSlot.reference,
-        restriction,
+        visitRestriction,
         true,
       )
     }
@@ -295,26 +293,6 @@ class ApplicationService(
   fun getApplicationEntity(applicationReference: String): Application {
     return applicationRepo.findApplication(applicationReference)
       ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
-  }
-
-  private fun saveEventAudit(
-    actionedBy: String,
-    application: ApplicationDto,
-    visit: Visit? = null,
-    applicationMethodType: ApplicationMethodType,
-  ) {
-    eventAuditRepository.saveAndFlush(
-      EventAudit(
-        actionedBy = actionedBy,
-        bookingReference = visit?.reference,
-        applicationReference = application.reference,
-        sessionTemplateReference = application.sessionTemplateReference,
-        type = if (application.reserved) RESERVED_VISIT else CHANGING_VISIT,
-        applicationMethodType = applicationMethodType,
-        text = null,
-        userType = application.userType,
-      ),
-    )
   }
 
   private fun createApplicationContact(application: Application, name: String, telephone: String?): ApplicationContact {
