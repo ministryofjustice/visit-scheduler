@@ -381,7 +381,7 @@ class SessionService(
     prisonerNonAssociationList: @NotNull List<PrisonerNonAssociationDetailDto>,
     prison: Prison,
   ): Boolean {
-    val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerNonAssociationList, prison.code)
+    val nonAssociationPrisonerIds = getNonAssociationPrisonerIds(prisonerNonAssociationList)
 
     if (nonAssociationPrisonerIds.isEmpty()) {
       return false
@@ -405,7 +405,6 @@ class SessionService(
 
   private fun getNonAssociationPrisonerIds(
     @NotNull prisonerNonAssociationList: List<PrisonerNonAssociationDetailDto>,
-    prisonCode: String,
   ): List<String> {
     return prisonerNonAssociationList.map { it.otherPrisonerDetails.prisonerNumber }
   }
