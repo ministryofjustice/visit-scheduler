@@ -38,12 +38,13 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
 
   val prisonerId = "AA11BCC"
   val prisonCode = "ABC"
+  val lastPrisonId = "MCI"
   lateinit var prison1: Prison
   lateinit var sessionTemplate1: SessionTemplate
 
   @BeforeEach
   internal fun setUp() {
-    prison1 = prisonEntityHelper.create(prisonCode = prisonCode)
+    prison1 = prisonEntityHelper.create(prisonCode = lastPrisonId)
     sessionTemplate1 = sessionTemplateEntityHelper.create(prison = prison1)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
@@ -51,7 +52,8 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when prisoner has received with reason transfer then only valid visits are flagged and saved`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, TRANSFERRED, prisonCode)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, TRANSFERRED)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode, lastPrisonId = lastPrisonId)
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -111,7 +113,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when prisoner has been received due to temporary absence return then no visits are flagged or saved`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, TEMPORARY_ABSENCE_RETURN, prisonCode)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, TEMPORARY_ABSENCE_RETURN)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
@@ -124,7 +126,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when prisoner has been received due to return from court then no visits are flagged or saved`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, RETURN_FROM_COURT, prisonCode)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, RETURN_FROM_COURT)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
@@ -137,7 +139,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when prisoner has been received due to admission then no visits are flagged or saved`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, ADMISSION, prisonCode)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, ADMISSION)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)

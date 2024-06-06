@@ -9,7 +9,4 @@ data class PrisonerReceivedNotificationDto(
 
   @NotBlank
   val reason: PrisonerReceivedReasonType,
-
-  @NotBlank
-  val prisonCode: String,
 )

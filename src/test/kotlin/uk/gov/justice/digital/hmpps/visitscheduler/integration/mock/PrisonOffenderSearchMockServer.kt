@@ -49,10 +49,11 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
     prisonCode: String,
     incentiveLevelCode: IncentiveLevel? = null,
     category: String? = null,
+    lastPrisonId: String? = null,
   ) {
     val incentiveLevel = incentiveLevelCode ?.let { IncentiveLevelDto(code = incentiveLevelCode.code, description = "") }
     val currentIncentive = incentiveLevel?.let { CurrentIncentiveDto(incentiveLevel, LocalDateTime.now().minusMonths(1), LocalDate.now().plusMonths(1)) }
-    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonCode, category = category)
+    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonCode, category = category, lastPrisonId = lastPrisonId)
 
     stubGetPrisoner(
       prisonerId,
