@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
@@ -222,6 +223,7 @@ class VisitEntityHelper(
       outcomeStatus = outcomeStatus,
       createApplication = false,
       prisonCode = application.prison.code,
+      userType = application.userType,
     )
 
     return createVisit(application, visit)
@@ -245,6 +247,7 @@ class VisitEntityHelper(
       prisonCode = application.prison.code,
       activePrison = true,
       visitRoom = "Visit Room 1",
+      userType = application.userType,
     )
 
     return createVisit(application, visit)
@@ -266,6 +269,7 @@ class VisitEntityHelper(
     outcomeStatus: OutcomeStatus? = null,
     createApplication: Boolean = true,
     visitContact: ContactDto? = null,
+    userType: UserType? = STAFF,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, prison.id, slotDate, visitStart, visitEnd)
@@ -280,7 +284,7 @@ class VisitEntityHelper(
       sessionSlot = sessionSlot,
       visitType = visitType,
       visitRestriction = visitRestriction,
-      userType = STAFF,
+      userType = userType!!,
     )
 
     notSaved.outcomeStatus = outcomeStatus
@@ -313,6 +317,7 @@ class VisitEntityHelper(
     outcomeStatus: OutcomeStatus? = null,
     createApplication: Boolean = true,
     createContact: Boolean = false,
+    userType: UserType? = STAFF,
   ): Visit {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
     val sessionSlot = sessionSlotEntityHelper.create(prison.id, slotDate, visitStart, visitEnd)
@@ -327,7 +332,7 @@ class VisitEntityHelper(
       sessionSlot = sessionSlot,
       visitType = visitType,
       visitRestriction = visitRestriction,
-      userType = STAFF,
+      userType = userType!!,
     )
 
     notSaved.outcomeStatus = outcomeStatus
@@ -417,11 +422,39 @@ class EventAuditEntityHelper(
   private val testActionedByRepository: TestActionedByRepository,
 ) {
 
+  fun createForVisitAndApplication(
+    visit: Visit,
+    actionedByValue: String = "ACTIONED_BY",
+    applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
+    type: List<EventAuditType>,
+    text: String? = null,
+  ): List<EventAudit> {
+    val application = visit.getLastApplication() ?: throw IllegalArgumentException("Must have an application")
+    val eventAuditList = mutableListOf<EventAudit>()
+
+    type.forEach {
+      eventAuditList.add(
+        create(
+          reference = visit.reference,
+          applicationReference = application.reference,
+          sessionTemplateReference = application.sessionSlot.sessionTemplateReference,
+          actionedByValue = actionedByValue,
+          type = it,
+          applicationMethodType = applicationMethodType,
+          text = text,
+          userType = visit.userType,
+        ),
+      )
+    }
+
+    return eventAuditList
+  }
+
   fun create(
     visit: Visit,
     actionedByValue: String = "ACTIONED_BY",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
-    type: EventAuditType = EventAuditType.BOOKED_VISIT,
+    type: EventAuditType = BOOKED_VISIT,
     text: String? = null,
   ): EventAudit {
     return create(
@@ -439,7 +472,7 @@ class EventAuditEntityHelper(
     application: Application,
     actionedByValue: String = "ACTIONED_BY",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
-    type: EventAuditType = EventAuditType.BOOKED_VISIT,
+    type: EventAuditType = BOOKED_VISIT,
     text: String? = null,
   ): EventAudit {
     return create(
@@ -458,7 +491,7 @@ class EventAuditEntityHelper(
     actionedByValue: String = "ACTIONED_BY",
     sessionTemplateReference: String? = "sessionTemplateReference",
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
-    type: EventAuditType = EventAuditType.BOOKED_VISIT,
+    type: EventAuditType = BOOKED_VISIT,
     text: String?,
     userType: UserType = STAFF,
   ): EventAudit {
@@ -663,6 +696,7 @@ class DeleteEntityHelper(
   private val testApplicationRepository: TestApplicationRepository,
   private val testSessionSlotRepository: TestSessionSlotRepository,
   private val testPrisonUserClientRepository: TestPrisonUserClientRepository,
+  private val testActionedByRepository: TestActionedByRepository,
 ) {
 
   @Transactional(propagation = REQUIRES_NEW)
@@ -696,6 +730,8 @@ class DeleteEntityHelper(
     testApplicationRepository.flush()
     testSessionSlotRepository.deleteAll()
     testSessionSlotRepository.flush()
+    testActionedByRepository.deleteAll()
+    testActionedByRepository.flush()
     println("Delete all end")
   }
 }

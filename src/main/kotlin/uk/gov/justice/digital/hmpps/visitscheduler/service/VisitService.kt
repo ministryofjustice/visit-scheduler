@@ -446,7 +446,7 @@ class VisitService(
     startDateTime: LocalDateTime = LocalDateTime.now(),
     endDateTime: LocalDateTime? = null,
   ): List<VisitDto> {
-    return this.visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
+    return visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
@@ -455,5 +455,10 @@ class VisitService(
 
   fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?, userType: UserType = STAFF) {
     visitEventAuditService.saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text, userType)
+  }
+
+  fun getFuturePublicVisitsByBookerReference(bookerReference: String): List<VisitDto> {
+    val bookingReferenceList = visitRepository.getPublicFutureBookingReferenceByBookerReference(bookerReference)
+    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }
   }
 }
