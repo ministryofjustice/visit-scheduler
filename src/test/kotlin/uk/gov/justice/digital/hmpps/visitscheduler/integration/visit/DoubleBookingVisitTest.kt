@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import java.util.concurrent.CyclicBarrier
 
 @Transactional(propagation = SUPPORTS)
@@ -21,6 +23,9 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
   private lateinit var reservedApplication: Application
+
+  @Autowired
+  private lateinit var testApplicationRepository: TestApplicationRepository
 
   @BeforeEach
   internal fun setUp() {
@@ -77,6 +82,27 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
         assertThat(it.applicationReference).isEqualTo(currentVisitDto.applicationReference)
       }
       lastVisitDto = currentVisitDto
+    }
+  }
+
+  @Test
+  fun `When booking a visit a capacity exception roles back to uncompleted booking`() {
+    // Given
+    val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0)
+    val reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
+    val applicationReference = reservedApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    assertHelper.assertCapacityError(responseSpec, reservedApplication)
+
+    val application = testApplicationRepository.findByApplicationReference(applicationReference)
+    assertThat(application).isNotNull
+    application?.let {
+      assertThat(application.completed).isFalse()
+      assertThat(application.visit).isNull()
     }
   }
 }
