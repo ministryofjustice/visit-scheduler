@@ -144,7 +144,7 @@ class VisitSessionController(
     toDate: LocalDate,
     @RequestParam(value = "excludedApplicationReference", required = false)
     @Parameter(
-      description = "The current application reference be to exclude from capacity count and double booking",
+      description = "The current application reference to be excluded from capacity count and double booking",
       example = "dfs-wjs-eqr",
     )
     excludedApplicationReference: String? = null,
