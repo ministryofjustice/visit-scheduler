@@ -27,7 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 
-@DisplayName("GET /visits")
+@DisplayName("GET $GET_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE")
 class PublicVisitsTest : IntegrationTestBase() {
 
   @Autowired
@@ -79,7 +79,7 @@ class PublicVisitsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `get public booked visit by booker reference aTestRef`() {
+  fun `when booked public visits requested by booker reference aTestRef then associated visits are returned`() {
     // Given
     val bookerReference = "aTestRef"
 
@@ -96,7 +96,7 @@ class PublicVisitsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `get public booked visit by booker reference aOtherTestRef`() {
+  fun `when booked public visits requested by booker reference aOtherTestRef then associated visits are returned`() {
     // Given
     val bookerReference = "aOtherTestRef"
 

@@ -457,7 +457,7 @@ class VisitService(
     visitEventAuditService.saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text, userType)
   }
 
-  fun getFuturePublicVisitsByBookerReference(bookerReference: String): List<VisitDto> {
+  fun getFuturePublicBookedVisitsByBookerReference(bookerReference: String): List<VisitDto> {
     val bookingReferenceList = visitRepository.getPublicFutureBookingReferenceByBookerReference(bookerReference)
     return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }
   }

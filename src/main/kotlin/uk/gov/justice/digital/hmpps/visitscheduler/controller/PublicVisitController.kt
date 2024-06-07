@@ -16,12 +16,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 
-const val GET_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/future"
+const val GET_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/booked/visits/future"
 
 @RestController
 @Validated
-@Tag(name = "1. Visit rest controller")
-@RequestMapping(name = "Visit Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
+@Tag(name = " Public visit rest controller")
+@RequestMapping(name = "Public visit Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PublicVisitController(
   private val visitService: VisitService,
 ) {
@@ -53,11 +53,11 @@ class PublicVisitController(
       ),
     ],
   )
-  fun getFuturePublicVisitsByBookerReference(
+  fun getFuturePublicBookedVisitsByBookerReference(
     @Schema(description = "bookerReference", example = "asd-aed-vhj", required = true)
     @PathVariable
     bookerReference: String,
   ): List<VisitDto> {
-    return visitService.getFuturePublicVisitsByBookerReference(bookerReference)
+    return visitService.getFuturePublicBookedVisitsByBookerReference(bookerReference)
   }
 }

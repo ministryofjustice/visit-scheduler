@@ -262,7 +262,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
 
   @Query(
     "Select v.reference FROM visit v " +
-      " LEFT JOIN event_audit ea on ea.booking_reference = v.reference and ea.type in ('UPDATED_VISIT','BOOKED_VISIT') " +
+      " LEFT JOIN event_audit ea on ea.booking_reference = v.reference and ea.type = 'BOOKED_VISIT' " +
       " LEFT JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " LEFT JOIN session_slot ss on ss.id = v.session_slot_id " +
       " WHERE ab.booker_reference = :bookerReference AND v.visit_status = 'BOOKED' AND ss.slot_date >= CURRENT_DATE AND " +
