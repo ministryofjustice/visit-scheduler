@@ -131,10 +131,13 @@ class VisitNotificationEventService(
     LOG.debug("PrisonerReceivedNotification notification received : {}", notificationDto)
     if (PrisonerReceivedReasonType.TRANSFERRED == notificationDto.reason) {
       val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
-
-      val affectedVisits = prisonerDetails?.let { visitService.getFutureVisitsBy(it.prisonerId, prisonerDetails.lastPrisonCode) }
-      if (!affectedVisits.isNullOrEmpty()) {
-        processVisitsWithNotifications(affectedVisits, PRISONER_RECEIVED_EVENT)
+      prisonerDetails?.let {
+        prisonerDetails.lastPrisonCode?.let {
+          val affectedVisits = visitService.getFutureVisitsBy(prisonerDetails.prisonerId, prisonerDetails.lastPrisonCode)
+          if (affectedVisits.isNotEmpty()) {
+            processVisitsWithNotifications(affectedVisits, PRISONER_RECEIVED_EVENT)
+          }
+        }
       }
     }
   }
