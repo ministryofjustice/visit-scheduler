@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_TYPES
@@ -61,6 +62,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.Update
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import java.time.LocalDate
@@ -680,6 +682,19 @@ fun callNotifyVSiPThatPrisonerHadBeenReleased(
     webTestClient,
     authHttpHeaders,
     VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH,
+    dto,
+  )
+}
+
+fun callNotifyVSiPThatPrisonerHadBeenReceived(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: PrisonerReceivedNotificationDto? = null,
+): ResponseSpec {
+  return callNotifyVSiPOfAEvent(
+    webTestClient,
+    authHttpHeaders,
+    VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH,
     dto,
   )
 }

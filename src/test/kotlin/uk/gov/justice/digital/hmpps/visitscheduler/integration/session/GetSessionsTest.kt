@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.DayOfWeek.MONDAY
@@ -1605,6 +1606,282 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // Then
     assertResponseLength(responseSpec, 4)
+  }
+
+  @Test
+  fun `visit sessions are not returned for a prisoner with non association visit on same date but on a different session template`() {
+    // Given
+    // test for scenario where 2 session templates exist on the same day but
+    // both sessions are for different wings
+
+    val prisonerId = "A1234AA"
+    val associationPrisonerId = "B1234BB"
+    val validFromDate = this.getNextAllowedDay()
+    val allowedPermittedLocationsForSession1: List<AllowedSessionLocationHierarchy> = listOf(
+      AllowedSessionLocationHierarchy("A", null, null, null),
+    )
+    val allowedPermittedLocationsForSession2: List<AllowedSessionLocationHierarchy> = listOf(
+      AllowedSessionLocationHierarchy("B", null, null, null),
+    )
+    val location1 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocationsForSession1)
+    val location2 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocationsForSession2)
+
+    // session 1 is only available for prisoners in Wing A
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      dayOfWeek = validFromDate.dayOfWeek,
+      prisonCode = prisonCode,
+      includeLocationGroupType = true,
+      permittedLocationGroups = mutableListOf(location1),
+    )
+
+    // session 2 is only available for prisoners in Wing B
+    sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      dayOfWeek = validFromDate.dayOfWeek,
+      prisonCode = prisonCode,
+      includeLocationGroupType = true,
+      permittedLocationGroups = mutableListOf(location2),
+    )
+
+    // visit booked for non association prisoner in A wing
+    val visit = this.visitEntityHelper.create(
+      prisonerId = associationPrisonerId,
+      prisonCode = prisonCode,
+      visitRoom = sessionTemplate1.visitRoom,
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
+      prisonerId,
+      associationPrisonerId,
+    )
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+
+    // prisoner 1 is in B wing
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-B-1-C001")
+
+    // non association prisoner is in A wing
+    prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "${prison.code}-A-1-C001")
+
+    // When
+    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange().expectBody()
+
+    // Then
+    val sessions = getResults(responseResult)
+
+    assertThat(sessions.map { it.startTimestamp.toLocalDate() }).doesNotContain(visit.sessionSlot.slotDate)
+    assertThat(sessions.size).isEqualTo(3)
+  }
+
+  @Test
+  fun `visit sessions are not returned for a prisoner with non association application on same date but on a different session template`() {
+    // Given
+    // test for scenario where 2 session templates exist on the same day but
+    // both sessions are for different wings
+
+    val prisonerId = "A1234AA"
+    val associationPrisonerId = "B1234BB"
+    val validFromDate = this.getNextAllowedDay()
+    val allowedPermittedLocationsForSession1: List<AllowedSessionLocationHierarchy> = listOf(
+      AllowedSessionLocationHierarchy("A", null, null, null),
+    )
+    val allowedPermittedLocationsForSession2: List<AllowedSessionLocationHierarchy> = listOf(
+      AllowedSessionLocationHierarchy("B", null, null, null),
+    )
+    val location1 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocationsForSession1)
+    val location2 = sessionLocationGroupHelper.create(prisonCode = prison.code, prisonHierarchies = allowedPermittedLocationsForSession2)
+
+    // session 1 is only available for prisoners in Wing A
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      dayOfWeek = validFromDate.dayOfWeek,
+      prisonCode = prisonCode,
+      includeLocationGroupType = true,
+      permittedLocationGroups = mutableListOf(location1),
+    )
+
+    // session 2 is only available for prisoners in Wing B
+    sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      dayOfWeek = validFromDate.dayOfWeek,
+      prisonCode = prisonCode,
+      includeLocationGroupType = true,
+      permittedLocationGroups = mutableListOf(location2),
+    )
+
+    // application reserved for non association prisoner in A wing
+    val application = this.applicationEntityHelper.create(
+      prisonerId = associationPrisonerId,
+      prisonCode = prisonCode,
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate1,
+      reservedSlot = true,
+      completed = false,
+    )
+
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
+      prisonerId,
+      associationPrisonerId,
+    )
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+
+    // prisoner 1 is in B wing
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-B-1-C001")
+
+    // non association prisoner is in A wing
+    prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "${prison.code}-A-1-C001")
+
+    // When
+    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange().expectBody()
+
+    // Then
+    val sessions = getResults(responseResult)
+
+    assertThat(sessions.map { it.startTimestamp.toLocalDate() }).doesNotContain(application.sessionSlot.slotDate)
+    assertThat(sessions.size).isEqualTo(3)
+  }
+
+  @Test
+  fun `visit sessions  are returned for a prisoner with non association visit on same date but in a different prison`() {
+    // Given
+    // test for scenario where 2 session templates exist on the same day but in different prisons
+
+    val prisonerId = "A1234AA"
+    val prisonerPrison = prisonCode
+    val associationPrisonerId = "B1234BB"
+
+    // non association in different prison
+    val associationPrisonerPrison = "MDI"
+    val validFromDate = this.getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      dayOfWeek = validFromDate.dayOfWeek,
+      prisonCode = associationPrisonerPrison,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      dayOfWeek = validFromDate.dayOfWeek,
+      prisonCode = prisonerPrison,
+    )
+
+    // visit booked for non association prisoner in different prison on same date
+    val visit = this.visitEntityHelper.create(
+      prisonerId = associationPrisonerId,
+      prisonCode = associationPrisonerPrison,
+      visitRoom = sessionTemplate1.visitRoom,
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitStatus = BOOKED,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
+      prisonerId,
+      associationPrisonerId,
+    )
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonerPrison)
+
+    // prisoner 1 is in B wing
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonerPrison-B-1-C001")
+
+    // non association prisoner is in A wing
+    prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "$associationPrisonerPrison-A-1-C001")
+
+    // When
+    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange().expectBody()
+
+    // Then
+    val sessions = getResults(responseResult)
+
+    assertThat(sessions.map { it.startTimestamp.toLocalDate() }).contains(visit.sessionSlot.slotDate)
+    assertThat(sessions.size).isEqualTo(4)
+  }
+
+  @Test
+  fun `visit sessions are returned for a prisoner with non association application on same date but in a different prison`() {
+    // Given
+    // test for scenario where 2 session templates exist on the same day but in different prisons
+
+    val prisonerId = "A1234AA"
+    val prisonerPrison = prisonCode
+    val associationPrisonerId = "B1234BB"
+
+    // non association in different prison
+    val associationPrisonerPrison = "MDI"
+    val validFromDate = this.getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      dayOfWeek = validFromDate.dayOfWeek,
+      prisonCode = associationPrisonerPrison,
+    )
+
+    sessionTemplateEntityHelper.create(
+      validFromDate = validFromDate,
+      dayOfWeek = validFromDate.dayOfWeek,
+      prisonCode = prisonerPrison,
+    )
+
+    // visit booked for non association prisoner in different prison on same date
+    val application = this.applicationEntityHelper.create(
+      prisonerId = associationPrisonerId,
+      prisonCode = associationPrisonerPrison,
+      slotDate = validFromDate,
+      visitStart = LocalTime.of(9, 0),
+      visitEnd = LocalTime.of(9, 30),
+      visitType = SOCIAL,
+      visitRestriction = OPEN,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(
+      prisonerId,
+      associationPrisonerId,
+    )
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonerPrison)
+
+    // prisoner 1 is in B wing
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonerPrison-B-1-C001")
+
+    // non association prisoner is in A wing
+    prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "$associationPrisonerPrison-A-1-C001")
+
+    // When
+    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange().expectBody()
+
+    // Then
+    val sessions = getResults(responseResult)
+
+    assertThat(sessions.map { it.startTimestamp.toLocalDate() }).contains(application.sessionSlot.slotDate)
+    assertThat(sessions.size).isEqualTo(4)
   }
 
   @Test

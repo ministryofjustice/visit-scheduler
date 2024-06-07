@@ -2,11 +2,13 @@ package uk.gov.justice.digital.hmpps.visitscheduler.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor
+import org.springframework.data.jpa.repository.Modifying
 import org.springframework.data.jpa.repository.Query
 import org.springframework.data.repository.query.Param
 import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Repository
@@ -23,6 +25,13 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
     "SELECT a FROM Application a WHERE a.reference = :applicationReference",
   )
   fun findApplication(applicationReference: String): Application?
+
+  @Modifying
+  @Query(
+    "Update application SET completed = true WHERE reference = :applicationReference",
+    nativeQuery = true,
+  )
+  fun completeApplication(applicationReference: String): Int
 
   @Query(
     "SELECT count(a)>0 FROM Application a WHERE a.completed = true AND a.reference = :applicationReference",
@@ -83,16 +92,18 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
   ): Boolean
 
   @Query(
-    "SELECT count(*) > 0 FROM application a " +
+    "SELECT count(*) > 0 FROM application a left join session_slot sl on a.session_slot_id = sl.id " +
       "WHERE a.prisoner_id IN :prisonerIds AND " +
-      "a.session_slot_id IN :sessionIds AND " +
+      "a.prison_id = :prisonId AND " +
+      "sl.slot_date = :sessionDate AND " +
       "a.modify_timestamp >= :expiredDateAndTime AND " +
       "a.completed = false AND a.reserved_slot = true",
     nativeQuery = true,
   )
   fun hasActiveApplicationsForDate(
     prisonerIds: List<String>,
-    sessionIds: List<Long>,
+    sessionDate: LocalDate,
+    prisonId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
   ): Boolean
 }
