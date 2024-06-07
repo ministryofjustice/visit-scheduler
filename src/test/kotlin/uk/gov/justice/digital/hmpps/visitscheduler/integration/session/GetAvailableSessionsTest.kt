@@ -113,7 +113,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when exclude current application reference is given for an existing open booking, then capacity count is not affected`() {
+  fun `when exclude current application reference is given for an existing open application, then capacity count is not affected`() {
     // Given
     val nextAllowedDay = getNextAllowedDay()
 
@@ -128,7 +128,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       closedCapacity = 0,
     )
 
-    val reservedBooking = this.applicationEntityHelper.create(
+    val reservedApplication = this.applicationEntityHelper.create(
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       slotDate = nextAllowedDay,
@@ -139,7 +139,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, 2, 28, excludeCurrentApplicationReference = reservedBooking.reference)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, 2, 28, excludedApplicationReference = reservedApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -150,7 +150,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when exclude current application reference is given for an existing open booking, then double reservations conflict does not occur`() {
+  fun `when exclude current application reference is given for an existing open reservation, then double reservations conflict does not occur`() {
     // Given
     val nextAllowedDay = getNextAllowedDay()
 
@@ -165,7 +165,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       closedCapacity = 0,
     )
 
-    val reservedBooking = this.applicationEntityHelper.create(
+    val reservedApplication = this.applicationEntityHelper.create(
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       slotDate = nextAllowedDay,
@@ -176,7 +176,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, 1, 7, excludeCurrentApplicationReference = reservedBooking.reference)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, 1, 7, excludedApplicationReference = reservedApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -224,7 +224,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when exclude current application reference is given for an existing closed booking, then capacity count is not affected `() {
+  fun `when exclude current application reference is given for an existing closed application, then capacity count is not affected `() {
     // Given
     val nextAllowedDay = getNextAllowedDay()
 
@@ -239,7 +239,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       closedCapacity = 1,
     )
 
-    val reservedBooking = this.applicationEntityHelper.create(
+    val reservedApplication = this.applicationEntityHelper.create(
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       slotDate = nextAllowedDay,
@@ -250,7 +250,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 2, 28, excludeCurrentApplicationReference = reservedBooking.reference)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 2, 28, excludedApplicationReference = reservedApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -261,7 +261,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when exclude current application reference is given for an existing closed booking, then double reservations conflict does not occur`() {
+  fun `when exclude current application reference is given for an existing closed application, then double reservations conflict does not occur`() {
     // Given
     val nextAllowedDay = getNextAllowedDay()
 
@@ -277,7 +277,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       closedCapacity = 2,
     )
 
-    val reservedBooking = this.applicationEntityHelper.create(
+    val reservedApplication = this.applicationEntityHelper.create(
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       slotDate = nextAllowedDay,
@@ -288,7 +288,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 1, 7, excludeCurrentApplicationReference = reservedBooking.reference)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 1, 7, excludedApplicationReference = reservedApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -2457,14 +2457,14 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     sessionRestriction: SessionRestriction,
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
-    excludeCurrentApplicationReference: String? = null,
+    excludedApplicationReference: String? = null,
   ): ResponseSpec {
     val today = LocalDate.now()
     val fromDate = today.plusDays(policyNoticeDaysMin.toLong())
     val toDate = today.plusDays(policyNoticeDaysMax.toLong())
     val dateRange = DateRange(fromDate, toDate)
 
-    val uri = "/visit-sessions/available?prisonId=$prisonCode&prisonerId=$prisonerId&sessionRestriction=$sessionRestriction&fromDate=${dateRange.fromDate}&toDate=${dateRange.toDate}&excludeCurrentApplicationReference=$excludeCurrentApplicationReference"
+    val uri = "/visit-sessions/available?prisonId=$prisonCode&prisonerId=$prisonerId&sessionRestriction=$sessionRestriction&fromDate=${dateRange.fromDate}&toDate=${dateRange.toDate}&excludedApplicationReference=$excludedApplicationReference"
 
     return webTestClient.get().uri(uri)
       .headers(setAuthorisation(roles = requiredRole))

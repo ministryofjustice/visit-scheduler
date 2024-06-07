@@ -49,11 +49,11 @@ class SlotCapacityService {
     sessionSlotReference: String,
     visitRestriction: VisitRestriction,
     incReservedApplications: Boolean,
-    excludeCurrentApplicationReference: String? = null,
+    excludedApplicationReference: String? = null,
   ) {
     val sessionSlot = sessionSlotRepository.findByReference(sessionSlotReference)
 
-    if (hasExceededMaxCapacity(sessionSlot, visitRestriction, true, excludeCurrentApplicationReference = excludeCurrentApplicationReference)) {
+    if (hasExceededMaxCapacity(sessionSlot, visitRestriction, true, excludedApplicationReference = excludedApplicationReference)) {
       val messages = "Application can not be reserved because capacity has been exceeded for the slot $sessionSlotReference"
       LOG.debug(messages)
       throw OverCapacityException(messages)
@@ -64,12 +64,12 @@ class SlotCapacityService {
     sessionSlot: SessionSlot,
     visitRestriction: VisitRestriction,
     incReservedApplications: Boolean,
-    excludeCurrentApplicationReference: String? = null,
+    excludedApplicationReference: String? = null,
   ): Boolean {
     var slotTakenCount = visitService.getBookCountForSlot(sessionSlot.id, visitRestriction)
 
     if (incReservedApplications) {
-      slotTakenCount += applicationService.getReservedApplicationsCountForSlot(sessionSlot.id, visitRestriction, excludeCurrentApplicationReference = excludeCurrentApplicationReference)
+      slotTakenCount += applicationService.getReservedApplicationsCountForSlot(sessionSlot.id, visitRestriction, excludedApplicationReference = excludedApplicationReference)
     }
 
     val maxBookings = sessionTemplateService.getSessionTemplatesCapacity(

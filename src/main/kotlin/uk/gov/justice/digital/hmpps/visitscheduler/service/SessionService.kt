@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_RESERVATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -76,17 +76,17 @@ class SessionService(
     prisonCode: String,
     prisonerId: String,
     dateRange: DateRange,
-    excludeCurrentApplicationReference: String? = null,
+    excludedApplicationReference: String? = null,
   ): List<VisitSessionDto> {
     val prison = prisonsService.findPrisonByCode(prisonCode)
-    return getVisitSessions(prison, prisonerId, dateRange, excludeCurrentApplicationReference)
+    return getVisitSessions(prison, prisonerId, dateRange, excludedApplicationReference)
   }
 
   fun getVisitSessions(
     prison: Prison,
     prisonerId: String,
     dateRange: DateRange,
-    excludeCurrentApplicationReference: String? = null,
+    excludedApplicationReference: String? = null,
   ): List<VisitSessionDto> {
     val prisonCode = prison.code
     LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId ")
@@ -110,16 +110,16 @@ class SessionService(
 
     val sessionSlots = getSessionSlots(visitSessions)
     val nonAssociationConflictSessions = getNonAssociationSessions(visitSessions, prisonerId, prison)
-    val doubleReservationSessions = getDoubleReservationSessions(visitSessions, sessionSlots, prisonerId, excludeCurrentApplicationReference)
+    val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference)
 
     return visitSessions.filterNot {
       hasNonAssociationConflict(nonAssociationConflictSessions, it) && policyFilterNonAssociation
     }.filterNot {
-      hasDoubleReservationSessions(doubleReservationSessions, it) && policyFilterDoubleBooking
+      hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, it) && policyFilterDoubleBooking
     }.also {
-      addConflicts(it, nonAssociationConflictSessions, doubleReservationSessions)
+      addConflicts(it, nonAssociationConflictSessions, doubleBookingOrReservationSessions)
     }.also {
-      populateBookedCount(sessionSlots, it, excludeCurrentApplicationReference)
+      populateBookedCount(sessionSlots, it, excludedApplicationReference)
     }.sortedWith(compareBy { it.startTimestamp })
   }
 
@@ -128,11 +128,11 @@ class SessionService(
     prisonerId: String,
     sessionRestriction: SessionRestriction,
     dateRange: DateRange,
-    excludeCurrentApplicationReference: String?,
+    excludedApplicationReference: String?,
   ): List<AvailableVisitSessionDto> {
     LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {} ", prisonCode, prisonerId, sessionRestriction)
 
-    val visitSessions = getVisitSessions(prisonCode = prisonCode, prisonerId = prisonerId, dateRange = dateRange, excludeCurrentApplicationReference = excludeCurrentApplicationReference)
+    val visitSessions = getVisitSessions(prisonCode = prisonCode, prisonerId = prisonerId, dateRange = dateRange, excludedApplicationReference = excludedApplicationReference)
 
     return visitSessions.filter {
       hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
@@ -149,13 +149,13 @@ class SessionService(
   private fun addConflicts(
     it: List<VisitSessionDto>,
     nonAssociationConflictSessions: Set<VisitSessionDto>,
-    doubleReservationSessions: List<VisitSessionDto>,
+    doubleBookingOrReservationSessions: List<VisitSessionDto>,
   ) {
     it.forEach {
       // set conflict non association flag
       if (hasNonAssociationConflict(nonAssociationConflictSessions, it)) it.sessionConflicts.add(NON_ASSOCIATION)
       // set conflict double booked flag
-      if (hasDoubleReservationSessions(doubleReservationSessions, it)) it.sessionConflicts.add(DOUBLE_RESERVATION)
+      if (hasDoubleBookingOrReservationSessions(doubleBookingOrReservationSessions, it)) it.sessionConflicts.add(DOUBLE_BOOKING_OR_RESERVATION)
     }
   }
 
@@ -167,21 +167,21 @@ class SessionService(
     return noAssociationConflictSessionDates.contains(it.startTimestamp.toLocalDate())
   }
 
-  private fun hasDoubleReservationSessions(
-    doubleReservationSessions: List<VisitSessionDto>,
+  private fun hasDoubleBookingOrReservationSessions(
+    doubleBookingOrReservationSessions: List<VisitSessionDto>,
     it: VisitSessionDto,
-  ): Boolean = doubleReservationSessions.contains(it)
+  ): Boolean = doubleBookingOrReservationSessions.contains(it)
 
-  private fun getDoubleReservationSessions(
+  private fun getDoubleBookingOrReservationSessions(
     visitSessions: List<VisitSessionDto>,
     sessionSlots: List<SessionSlot>,
     prisonerId: String,
-    excludeCurrentApplicationReference: String?,
+    excludedApplicationReference: String?,
   ): List<VisitSessionDto> {
     val sessionSlotsByKey = sessionSlots.associateBy { it.slotDate.toString() + it.sessionTemplateReference }
     return visitSessions.filter {
       val key = it.startTimestamp.toLocalDate().toString() + it.sessionTemplateReference
-      sessionSlotsByKey.containsKey(key) && sessionHasBookingOrApplications(sessionSlotsByKey[key]!!, prisonerId, excludeCurrentApplicationReference)
+      sessionSlotsByKey.containsKey(key) && sessionHasBookingOrApplications(sessionSlotsByKey[key]!!, prisonerId, excludedApplicationReference)
     }
   }
 
@@ -338,12 +338,12 @@ class SessionService(
   private fun populateBookedCount(
     sessionSlotIds: List<SessionSlot>,
     sessions: List<VisitSessionDto>,
-    excludeCurrentApplicationReference: String?,
+    excludedApplicationReference: String?,
   ) {
     val sessionSlotIdsByKey = sessionSlotIds.associateBy { it.sessionTemplateReference + it.slotDate.toString() }
 
     sessions.forEach {
-      val visitRestrictionStatsList: List<VisitRestrictionStats> = getVisitRestrictionStats(it, sessionSlotIdsByKey, excludeCurrentApplicationReference = excludeCurrentApplicationReference)
+      val visitRestrictionStatsList: List<VisitRestrictionStats> = getVisitRestrictionStats(it, sessionSlotIdsByKey, excludedApplicationReference = excludedApplicationReference)
       it.openVisitBookedCount = getCountsByVisitRestriction(VisitRestriction.OPEN, visitRestrictionStatsList)
       it.closedVisitBookedCount = getCountsByVisitRestriction(VisitRestriction.CLOSED, visitRestrictionStatsList)
     }
@@ -425,7 +425,7 @@ class SessionService(
   private fun sessionHasBookingOrApplications(
     sessionSlot: SessionSlot,
     prisonerId: String,
-    excludeCurrentApplicationReference: String?,
+    excludedApplicationReference: String?,
   ): Boolean {
     if (visitRepository.hasActiveVisitForDate(
         prisonerId = prisonerId,
@@ -438,20 +438,20 @@ class SessionService(
     return applicationService.hasReservations(
       prisonerId = prisonerId,
       sessionSlotId = sessionSlot.id,
-      excludeCurrentApplicationReference = excludeCurrentApplicationReference,
+      excludedApplicationReference = excludedApplicationReference,
     )
   }
 
   private fun getVisitRestrictionStats(
     session: VisitSessionDto,
     sessionSlotIdsByKey: Map<String, SessionSlot>,
-    excludeCurrentApplicationReference: String?,
+    excludedApplicationReference: String?,
   ): List<VisitRestrictionStats> {
     val slotDate = session.startTimestamp.toLocalDate()
     val sessionSlot = sessionSlotIdsByKey.get(session.sessionTemplateReference + slotDate)
     sessionSlot?.let {
       val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(it.id)
-      val restrictionReservedApplicationStats = applicationService.getCountOfReservedSessionForOpenOrClosedRestriction(it.id, excludeCurrentApplicationReference = excludeCurrentApplicationReference)
+      val restrictionReservedApplicationStats = applicationService.getCountOfReservedSessionForOpenOrClosedRestriction(it.id, excludedApplicationReference = excludedApplicationReference)
 
       return restrictionBookedStats + restrictionReservedApplicationStats
     }

@@ -422,34 +422,34 @@ class ApplicationService(
     )
   }
 
-  fun hasReservations(prisonerId: String, sessionSlotId: Long, excludeCurrentApplicationReference: String?): Boolean {
+  fun hasReservations(prisonerId: String, sessionSlotId: Long, excludedApplicationReference: String?): Boolean {
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
 
     return applicationRepo.hasReservations(
       prisonerId = prisonerId,
       sessionSlotId = sessionSlotId,
       expiredDateAndTime,
-      excludeApplicationReference = excludeCurrentApplicationReference,
+      excludedApplicationReference = excludedApplicationReference,
     )
   }
 
-  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludeCurrentApplicationReference: String?): List<VisitRestrictionStats> {
+  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?): List<VisitRestrictionStats> {
     return applicationRepo.getCountOfReservedSessionForOpenOrClosedRestriction(
       id,
       getExpiredApplicationDateAndTime(),
-      excludeApplicationReference = excludeCurrentApplicationReference,
+      excludedApplicationReference = excludedApplicationReference,
     )
   }
 
   fun getReservedApplicationsCountForSlot(
     sessionSlotId: Long,
     restriction: VisitRestriction,
-    excludeCurrentApplicationReference: String? = null,
+    excludedApplicationReference: String? = null,
   ): Long {
     return if (VisitRestriction.OPEN == restriction) {
-      applicationRepo.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludeApplicationReference = excludeCurrentApplicationReference)
+      applicationRepo.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
     } else {
-      applicationRepo.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludeApplicationReference = excludeCurrentApplicationReference)
+      applicationRepo.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
     }
   }
 }

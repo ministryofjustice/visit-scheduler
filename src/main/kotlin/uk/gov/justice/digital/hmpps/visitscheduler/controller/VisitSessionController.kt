@@ -142,14 +142,14 @@ class VisitSessionController(
       example = "2024-12-20",
     )
     toDate: LocalDate,
-    @RequestParam(value = "excludeCurrentApplicationReference", required = false)
+    @RequestParam(value = "excludedApplicationReference", required = false)
     @Parameter(
       description = "The current application reference be to exclude from capacity count and double booking",
       example = "dfs-wjs-eqr",
     )
-    excludeCurrentApplicationReference: String? = null,
+    excludedApplicationReference: String? = null,
   ): List<AvailableVisitSessionDto> {
-    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludeCurrentApplicationReference)
+    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
