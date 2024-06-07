@@ -107,7 +107,7 @@ class PrisonerService(
         }
       }
 
-      PrisonerDto(prisonerId, prisonerSearchResultDto.category, incentiveLevel, prisonCode = prisonerSearchResultDto.prisonId)
+      PrisonerDto(prisonerId, prisonerSearchResultDto.category, incentiveLevel, prisonCode = prisonerSearchResultDto.prisonId, lastPrisonCode = prisonerSearchResultDto.lastPrisonCode)
     }
   }
 

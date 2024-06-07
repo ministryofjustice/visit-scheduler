@@ -234,6 +234,10 @@ workflows:
             - request-dev-approval
       - request-dev-approval:
           type: approval
+          filters:
+            branches:
+              ignore:
+                - main
 
       - hmpps/deploy_env:
           name: deploy_staging
