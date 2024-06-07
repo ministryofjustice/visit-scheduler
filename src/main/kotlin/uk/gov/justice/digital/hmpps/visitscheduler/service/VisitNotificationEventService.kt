@@ -132,7 +132,7 @@ class VisitNotificationEventService(
     if (PrisonerReceivedReasonType.TRANSFERRED == notificationDto.reason) {
       val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
 
-      val affectedVisits = prisonerDetails?.let { visitService.getFutureVisitsBy(it.prisonerId, prisonerDetails.lastPrisonId) }
+      val affectedVisits = prisonerDetails?.let { visitService.getFutureVisitsBy(it.prisonerId, prisonerDetails.lastPrisonCode) }
       if (!affectedVisits.isNullOrEmpty()) {
         processVisitsWithNotifications(affectedVisits, PRISONER_RECEIVED_EVENT)
       }

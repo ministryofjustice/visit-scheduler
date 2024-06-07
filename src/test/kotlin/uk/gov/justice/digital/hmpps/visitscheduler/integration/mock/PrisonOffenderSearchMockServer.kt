@@ -53,7 +53,7 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
   ) {
     val incentiveLevel = incentiveLevelCode ?.let { IncentiveLevelDto(code = incentiveLevelCode.code, description = "") }
     val currentIncentive = incentiveLevel?.let { CurrentIncentiveDto(incentiveLevel, LocalDateTime.now().minusMonths(1), LocalDate.now().plusMonths(1)) }
-    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonCode, category = category, lastPrisonId = lastPrisonId)
+    val prisonerSearchResultDto = PrisonerSearchResultDto(prisonerId, currentIncentive, prisonCode, category = category, lastPrisonCode = lastPrisonId)
 
     stubGetPrisoner(
       prisonerId,

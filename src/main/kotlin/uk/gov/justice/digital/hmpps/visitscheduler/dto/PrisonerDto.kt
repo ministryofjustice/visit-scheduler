@@ -18,6 +18,6 @@ data class PrisonerDto(
   @Schema(description = "prison code", example = "BHI", required = true)
   var prisonCode: String? = null,
 
-  @Schema(description = "Last Prison Id", example = "SNI", required = false)
-  var lastPrisonId: String? = null,
+  @Schema(description = "Last Prison Code", example = "SNI", required = false)
+  var lastPrisonCode: String? = null,
 )
