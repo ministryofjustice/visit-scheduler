@@ -40,6 +40,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionS
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Service
@@ -297,6 +298,10 @@ class ApplicationService(
       ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
   }
 
+  fun completeApplication(applicationReference: String) {
+    applicationRepo.completeApplication(applicationReference)
+  }
+
   private fun saveEventAudit(
     actionedBy: String,
     application: ApplicationDto,
@@ -408,10 +413,11 @@ class ApplicationService(
     }
   }
 
-  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotIds: List<Long>): Boolean {
+  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate, prisonId: Long): Boolean {
     return applicationRepo.hasActiveApplicationsForDate(
       nonAssociationPrisonerIds,
-      sessionSlotIds,
+      sessionSlotDate,
+      prisonId,
       getExpiredApplicationDateAndTime(),
     )
   }

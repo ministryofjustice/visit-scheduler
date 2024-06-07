@@ -15,4 +15,7 @@ data class PrisonerSearchResultDto(
 
   @Schema(description = "Prisoner Category", example = "C")
   val category: String? = null,
+
+  @Schema(description = "Last Prison Code", example = "MDI", required = false)
+  val lastPrisonCode: String? = null,
 )

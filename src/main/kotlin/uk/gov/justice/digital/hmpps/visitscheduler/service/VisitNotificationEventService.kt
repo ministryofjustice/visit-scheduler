@@ -16,11 +16,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomai
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RECEIVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ReleaseReasonType.RELEASED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
@@ -147,7 +149,18 @@ class VisitNotificationEventService(
   }
 
   fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
-    // TODO not yet implemented
+    LOG.debug("PrisonerReceivedNotification notification received : {}", notificationDto)
+    if (PrisonerReceivedReasonType.TRANSFERRED == notificationDto.reason) {
+      val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
+      prisonerDetails?.let {
+        prisonerDetails.lastPrisonCode?.let {
+          val affectedVisits = visitService.getFutureVisitsBy(prisonerDetails.prisonerId, prisonerDetails.lastPrisonCode)
+          if (affectedVisits.isNotEmpty()) {
+            processVisitsWithNotifications(affectedVisits, PRISONER_RECEIVED_EVENT)
+          }
+        }
+      }
+    }
   }
 
   private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType, description: String?) {

@@ -38,6 +38,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.prison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.sessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
@@ -546,12 +547,14 @@ class SessionServiceTest {
       val validFromDate = currentDate.plusDays(noticeDaysMin.toLong())
       val dayOfWeek = validFromDate.plusDays(1).dayOfWeek
 
+      val prison = prison()
       val singleSession = sessionTemplate(
         validFromDate = currentDate.plusDays(noticeDaysMin.toLong()),
         validToDate = validFromDate.plusWeeks(1),
         dayOfWeek = dayOfWeek,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
+        prison = prison,
       )
       mockSessionTemplateRepositoryResponse(listOf(singleSession))
       mockGetPrisonerNonAssociation(prisonerId, associationId)
@@ -559,9 +562,9 @@ class SessionServiceTest {
       val expectedAssociations = listOf(associationId)
 
       val slots = mockSessionSlots(singleSession)
-
-      val slotIds = slots.map { it.id }
-      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotIds))
+      val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
+      val slotDate = saturdayAfter.toLocalDate()
+      whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotDate, prison.id))
         .thenReturn(
           true,
           false,
@@ -572,7 +575,6 @@ class SessionServiceTest {
 
       // Then
       assertThat(sessions).size().isEqualTo(1)
-      val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
       assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.NON_ASSOCIATION)
