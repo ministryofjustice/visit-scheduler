@@ -422,28 +422,34 @@ class ApplicationService(
     )
   }
 
-  fun hasReservations(prisonerId: String, sessionSlotId: Long): Boolean {
+  fun hasReservations(prisonerId: String, sessionSlotId: Long, excludeCurrentApplicationReference: String?): Boolean {
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
 
     return applicationRepo.hasReservations(
       prisonerId = prisonerId,
       sessionSlotId = sessionSlotId,
       expiredDateAndTime,
+      excludeApplicationReference = excludeCurrentApplicationReference,
     )
   }
 
-  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long): List<VisitRestrictionStats> {
+  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludeCurrentApplicationReference: String?): List<VisitRestrictionStats> {
     return applicationRepo.getCountOfReservedSessionForOpenOrClosedRestriction(
       id,
       getExpiredApplicationDateAndTime(),
+      excludeApplicationReference = excludeCurrentApplicationReference,
     )
   }
 
-  fun getReservedApplicationsCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
+  fun getReservedApplicationsCountForSlot(
+    sessionSlotId: Long,
+    restriction: VisitRestriction,
+    excludeCurrentApplicationReference: String? = null,
+  ): Long {
     return if (VisitRestriction.OPEN == restriction) {
-      applicationRepo.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime())
+      applicationRepo.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludeApplicationReference = excludeCurrentApplicationReference)
     } else {
-      applicationRepo.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime())
+      applicationRepo.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludeApplicationReference = excludeCurrentApplicationReference)
     }
   }
 }

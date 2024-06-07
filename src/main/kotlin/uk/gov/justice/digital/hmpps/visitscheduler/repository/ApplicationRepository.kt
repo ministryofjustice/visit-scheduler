@@ -43,13 +43,15 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction IN ('OPEN','CLOSED') AND " +
       " a.reserved_slot = true AND a.completed = false AND" +
-      " a.modify_timestamp >= :expiredDateAndTime " +
+      " a.modify_timestamp >= :expiredDateAndTime AND " +
+      " (:excludeApplicationReference is null OR a.reference != :excludeApplicationReference) " +
       " GROUP BY a.restriction",
     nativeQuery = true,
   )
   fun getCountOfReservedSessionForOpenOrClosedRestriction(
     sessionSlotId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
+    excludeApplicationReference: String?,
   ): List<VisitRestrictionStats>
 
   @Query(
@@ -57,12 +59,14 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction = 'CLOSED' AND " +
       " a.reserved_slot = true AND a.completed = false AND" +
-      " a.modify_timestamp >= :expiredDateAndTime ",
+      " a.modify_timestamp >= :expiredDateAndTime AND " +
+      " (:excludeApplicationReference is null OR a.reference != :excludeApplicationReference)",
     nativeQuery = true,
   )
   fun getCountOfReservedApplicationsForClosedSessionSlot(
     sessionSlotId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
+    excludeApplicationReference: String? = null,
   ): Long
 
   @Query(
@@ -70,12 +74,14 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction = 'OPEN' AND " +
       " a.reserved_slot = true AND a.completed = false AND" +
-      " a.modify_timestamp >= :expiredDateAndTime ",
+      " a.modify_timestamp >= :expiredDateAndTime AND " +
+      " (:excludeApplicationReference is null OR a.reference != :excludeApplicationReference)",
     nativeQuery = true,
   )
   fun getCountOfReservedApplicationsForOpenSessionSlot(
     sessionSlotId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
+    excludeApplicationReference: String? = null,
   ): Long
 
   @Query(
@@ -83,12 +89,15 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
       "WHERE a.completed = false AND a.reservedSlot = true AND " +
       "a.prisonerId = :prisonerId AND " +
       "a.modifyTimestamp >= :expiredDateAndTime AND " +
-      "a.sessionSlotId = :sessionSlotId ",
+      "a.sessionSlotId = :sessionSlotId AND " +
+      "(:excludeApplicationReference is null OR a.reference != :excludeApplicationReference)",
+
   )
   fun hasReservations(
     @Param("prisonerId") prisonerId: String,
     @Param("sessionSlotId") sessionSlotId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
+    @Param("excludeApplicationReference") excludeApplicationReference: String?,
   ): Boolean
 
   @Query(

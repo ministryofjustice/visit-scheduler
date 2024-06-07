@@ -79,7 +79,7 @@ class VisitTask(
     var visitTrackEvent = getFlaggedVisitTrackEvent(visit)
 
     try {
-      sessions = sessionService.getVisitSessions(visit.prisonCode, visit.prisonerId, noticeDays, noticeDays)
+      sessions = sessionService.getVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays)
     } catch (e: PrisonerNotInSuppliedPrisonException) {
       visitTrackEvent = handleException(visit, visitTrackEvent, e)
     } catch (e: Exception) {
