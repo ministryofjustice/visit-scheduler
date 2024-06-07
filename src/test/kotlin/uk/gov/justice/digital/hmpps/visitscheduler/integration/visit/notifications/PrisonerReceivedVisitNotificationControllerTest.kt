@@ -14,7 +14,6 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_RECEIVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType.ADMISSION
@@ -97,14 +96,14 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
     assertThat(visitNotifications).hasSize(1)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.PRISONER_RECEIVED_EVENT)
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RECEIVED_EVENT)
     assertThat(auditEvents).hasSize(1)
     with(auditEvents[0]) {
       assertThat(actionedBy).isEqualTo("NOT_KNOWN")
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
-      assertThat(type).isEqualTo(EventAuditType.PRISONER_RECEIVED_EVENT)
+      assertThat(type).isEqualTo(PRISONER_RECEIVED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(userType).isEqualTo(UserType.STAFF)
     }
