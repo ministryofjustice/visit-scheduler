@@ -16,7 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 
-const val GET_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/booked/visits/future"
+const val GET_BOOKED_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/booked/visits/future"
 
 @RestController
 @Validated
@@ -27,18 +27,18 @@ class PublicVisitController(
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(GET_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
+  @GetMapping(GET_BOOKED_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
   @Operation(
-    summary = "Get future public visits by booker reference",
-    description = "Get future public visits by booker reference",
+    summary = "Get future public booked visits by booker reference",
+    description = "Get future public booked visits by booker reference",
     responses = [
       ApiResponse(
         responseCode = "200",
-        description = "Future public visits returned",
+        description = "Future public booked visits returned",
       ),
       ApiResponse(
         responseCode = "400",
-        description = "Incorrect request to get future visits by booker reference",
+        description = "Incorrect request to get future booked visits by booker reference",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
       ApiResponse(
