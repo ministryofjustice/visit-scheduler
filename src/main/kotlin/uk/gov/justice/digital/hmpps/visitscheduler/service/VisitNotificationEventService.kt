@@ -131,7 +131,7 @@ class VisitNotificationEventService(
     LOG.debug("PrisonerReceivedNotification notification received : {}", notificationDto)
     if (PrisonerReceivedReasonType.TRANSFERRED == notificationDto.reason) {
       // First flag visits from all prisons excluding the one the prisoner has moved to.
-      val allAffectedVisits = visitService.getFutureVisitsExcludingPrison(notificationDto.prisonerNumber, notificationDto.prisonCode)
+      val allAffectedVisits = visitService.getFutureBookedVisitsExcludingPrison(notificationDto.prisonerNumber, notificationDto.prisonCode)
       if (allAffectedVisits.isNotEmpty()) {
         processVisitsWithNotifications(allAffectedVisits, PRISONER_RECEIVED_EVENT)
       }

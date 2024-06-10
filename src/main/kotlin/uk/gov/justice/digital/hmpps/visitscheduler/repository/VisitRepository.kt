@@ -210,7 +210,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "sl.slot_start >= NOW()",
     nativeQuery = true,
   )
-  fun getVisitsExcludingPrison(
+  fun getFutureBookedVisitsExcludingPrison(
     @Param("prisonerId") prisonerId: String,
     @Param("excludedPrisonCode") excludedPrisonCode: String,
   ): List<Visit>
