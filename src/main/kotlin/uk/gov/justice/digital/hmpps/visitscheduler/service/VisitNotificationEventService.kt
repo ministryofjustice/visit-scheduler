@@ -130,21 +130,15 @@ class VisitNotificationEventService(
   fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
     LOG.debug("PrisonerReceivedNotification notification received : {}", notificationDto)
     if (PrisonerReceivedReasonType.TRANSFERRED == notificationDto.reason) {
-      val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
-      prisonerDetails?.let {
-        // First flag visits from previous prison as prisoner has moved if they have any
-        prisonerDetails.lastPrisonCode?.let {
-          val previousPrisonAffectedVisits = visitService.getFutureVisitsBy(prisonerDetails.prisonerId, prisonerDetails.lastPrisonCode)
-          if (previousPrisonAffectedVisits.isNotEmpty()) {
-            processVisitsWithNotifications(previousPrisonAffectedVisits, PRISONER_RECEIVED_EVENT)
-          }
-        }
-        // Second un-flag visits from current prison if prisoner has transferred back to somewhere they've previously been
-        prisonerDetails.prisonCode?.let {
-          val affectedNotifications = visitNotificationEventRepository.getEventsBy(prisonerDetails.prisonerId, prisonerDetails.prisonCode!!, PRISONER_RECEIVED_EVENT)
-          deleteNotificationsThatAreNoLongerValid(affectedNotifications, PRISONER_RECEIVED_EVENT, UnFlagEventReason.PRISONER_RETURNED_TO_PRISON)
-        }
+      // First flag visits from all prisons excluding the one the prisoner has moved to.
+      val allAffectedVisits = visitService.getFutureBookedVisitsExcludingPrison(notificationDto.prisonerNumber, notificationDto.prisonCode)
+      if (allAffectedVisits.isNotEmpty()) {
+        processVisitsWithNotifications(allAffectedVisits, PRISONER_RECEIVED_EVENT)
       }
+
+      // Second un-flag visits from current prison if any are flagged, as they are now at this prison.
+      val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, notificationDto.prisonCode, PRISONER_RECEIVED_EVENT)
+      deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_RECEIVED_EVENT, UnFlagEventReason.PRISONER_RETURNED_TO_PRISON)
     }
   }
 
