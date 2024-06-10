@@ -38,23 +38,29 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
 
   val prisonerId = "AA11BCC"
   val prisonCode = "ABC"
-  val lastPrisonId = "MCI"
+  val otherPrisonCode = "DEF"
   lateinit var prison1: Prison
+  lateinit var prison2: Prison
   lateinit var sessionTemplate1: SessionTemplate
+  lateinit var otherSessionTemplate: SessionTemplate
 
   @BeforeEach
   internal fun setUp() {
-    prison1 = prisonEntityHelper.create(prisonCode = lastPrisonId)
+    prison1 = prisonEntityHelper.create(prisonCode = prisonCode)
     sessionTemplate1 = sessionTemplateEntityHelper.create(prison = prison1)
+
+    prison2 = prisonEntityHelper.create(prisonCode = otherPrisonCode)
+    otherSessionTemplate = sessionTemplateEntityHelper.create(prison = prison2
+    )
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
 
   @Test
   fun `when prisoner has received with reason transfer then only valid visits are flagged and saved`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, TRANSFERRED)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode, lastPrisonId = lastPrisonId)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, TRANSFERRED)
 
+    // Prison 1 visits
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
@@ -71,39 +77,40 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
     )
 
     createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().minusDays(1),
-      visitStatus = CANCELLED,
-      sessionTemplate = sessionTemplate1,
-    )
-
-    createApplicationAndVisit(
       prisonerId = "ANOTHERPRISONER",
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate1,
     )
 
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = otherSessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit2)
+
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_RECEIVED_EVENT)
+    assertFlaggedVisitEvent(listOf(visit2), NotificationEventType.PRISONER_RECEIVED_EVENT)
     verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit2.reference)
 
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RECEIVED_EVENT)
     assertThat(auditEvents).hasSize(1)
     with(auditEvents[0]) {
       assertThat(actionedBy).isEqualTo("NOT_KNOWN")
-      assertThat(bookingReference).isEqualTo(visit1.reference)
-      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
-      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
+      assertThat(bookingReference).isEqualTo(visit2.reference)
+      assertThat(applicationReference).isEqualTo(visit2.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit2.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_RECEIVED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(userType).isEqualTo(UserType.STAFF)
@@ -111,10 +118,9 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has received with reason transfer back to a prison they came from then flagged visits are unflagged`() {
+  fun `when prisoner has received with reason transfer back to a prison they came from then flagged visits are un-flagged`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, TRANSFERRED)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, TRANSFERRED)
 
     val visit = visitEntityHelper.create(
       prisonerId = prisonerId,
@@ -147,31 +153,9 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has no lastPrisonCode then no visits are flagged`() {
-    // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, TRANSFERRED)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode)
-
-    val visit1 = createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate1,
-    )
-    eventAuditEntityHelper.create(visit1)
-
-    // When
-    val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    assertNotHandled()
-  }
-
-  @Test
   fun `when prisoner has been received due to temporary absence return then no visits are flagged or saved`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, TEMPORARY_ABSENCE_RETURN)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, TEMPORARY_ABSENCE_RETURN)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
@@ -184,7 +168,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when prisoner has been received due to return from court then no visits are flagged or saved`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, RETURN_FROM_COURT)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, RETURN_FROM_COURT)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
@@ -197,7 +181,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   @Test
   fun `when prisoner has been received due to admission then no visits are flagged or saved`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, ADMISSION)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, ADMISSION)
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
