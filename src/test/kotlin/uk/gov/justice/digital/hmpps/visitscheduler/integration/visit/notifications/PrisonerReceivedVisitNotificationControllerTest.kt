@@ -49,8 +49,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
     sessionTemplate1 = sessionTemplateEntityHelper.create(prison = prison1)
 
     prison2 = prisonEntityHelper.create(prisonCode = otherPrisonCode)
-    otherSessionTemplate = sessionTemplateEntityHelper.create(prison = prison2
-    )
+    otherSessionTemplate = sessionTemplateEntityHelper.create(prison = prison2)
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
 
