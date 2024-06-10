@@ -86,7 +86,7 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `When booking a visit a capacity exception roles back to uncompleted booking`() {
+  fun `When booking a visit a capacity exception rolls back to incomplete`() {
     // Given
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 0)
     val reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
