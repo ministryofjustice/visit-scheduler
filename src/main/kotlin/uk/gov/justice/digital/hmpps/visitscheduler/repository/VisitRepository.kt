@@ -212,7 +212,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   )
   fun getVisitsExcludingPrison(
     @Param("prisonerId") prisonerId: String,
-    @Param("prisonCode") excludedPrisonCode: String,
+    @Param("excludedPrisonCode") excludedPrisonCode: String,
   ): List<Visit>
 
   @Query(
