@@ -132,6 +132,7 @@ class VisitNotificationEventService(
     if (PrisonerReceivedReasonType.TRANSFERRED == notificationDto.reason) {
       val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
       prisonerDetails?.let {
+        LOG.debug("PrisonerDetails received back from getPrisoner: {{}}", prisonerDetails)
         // First flag visits from previous prison as prisoner has moved if they have any
         prisonerDetails.lastPrisonCode?.let {
           val previousPrisonAffectedVisits = visitService.getFutureVisitsBy(prisonerDetails.prisonerId, prisonerDetails.lastPrisonCode)
@@ -139,11 +140,14 @@ class VisitNotificationEventService(
             processVisitsWithNotifications(previousPrisonAffectedVisits, PRISONER_RECEIVED_EVENT)
           }
         }
+
         // Second un-flag visits from current prison if prisoner has transferred back to somewhere they've previously been
         prisonerDetails.prisonCode?.let {
           val affectedNotifications = visitNotificationEventRepository.getEventsBy(prisonerDetails.prisonerId, prisonerDetails.prisonCode!!, PRISONER_RECEIVED_EVENT)
           deleteNotificationsThatAreNoLongerValid(affectedNotifications, PRISONER_RECEIVED_EVENT, UnFlagEventReason.PRISONER_RETURNED_TO_PRISON)
         }
+      } ?: run {
+        LOG.debug("PrisonerDetailed received are null from getPrisoner call -- skipping flagging / unflagging of visits")
       }
     }
   }
