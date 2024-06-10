@@ -206,13 +206,13 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "LEFT JOIN session_slot sl ON v.session_slot_id = sl.id " +
       "WHERE v.prisoner_id = :prisonerId AND " +
       "v.visit_status = 'BOOKED' AND " +
-      "p.code != :prisonCode AND " +
+      "p.code != :excludedPrisonCode AND " +
       "sl.slot_start >= NOW()",
     nativeQuery = true
   )
   fun getVisitsExcludingPrison(
     @Param("prisonerId") prisonerId: String,
-    @Param("prisonCode") prisonCode: String,
+    @Param("prisonCode") excludedPrisonCode: String,
   ): List<Visit>
 
   @Query(
