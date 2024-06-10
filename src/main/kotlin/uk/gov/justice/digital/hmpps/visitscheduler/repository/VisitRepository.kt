@@ -201,17 +201,18 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<Visit>
 
   @Query(
-    "SELECT v  FROM Visit v " +
-      "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
-      "v.prisonerId = :prisonerId AND " +
-      "v.prison.code != :prisonCode AND " +
-      "(cast(:endDateTime as date) is null OR v.sessionSlot.slotEnd < :endDateTime) ORDER BY v.sessionSlot.slotStart,v.id",
+    "SELECT v.* FROM visit v " +
+      "LEFT JOIN prison p ON v.prison_id = p.id " +
+      "LEFT JOIN session_slot sl ON v.session_slot_id = sl.id " +
+      "WHERE v.prisoner_id = :prisonerId AND " +
+      "v.visit_status = 'BOOKED' AND " +
+      "p.code != :prisonCode AND " +
+      "sl.slot_start >= NOW()",
+    nativeQuery = true
   )
   fun getVisitsExcludingPrison(
     @Param("prisonerId") prisonerId: String,
     @Param("prisonCode") prisonCode: String,
-    @Param("startDateTime") startDateTime: LocalDateTime,
-    @Param("endDateTime") endDateTime: LocalDateTime? = null,
   ): List<Visit>
 
   @Query(
