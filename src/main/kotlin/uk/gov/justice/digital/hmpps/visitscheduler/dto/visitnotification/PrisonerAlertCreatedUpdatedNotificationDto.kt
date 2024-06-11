@@ -7,7 +7,7 @@ data class PrisonerAlertCreatedUpdatedNotificationDto(
   @NotBlank
   val prisonerNumber: String,
 
-  @NotNull
+  @NotBlank
   val description: String,
 
   @NotNull

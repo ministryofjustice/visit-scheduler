@@ -19,6 +19,6 @@ data class PrisonerDto(
   @Schema(description = "prison code", example = "BHI", required = true)
   var prisonCode: String? = null,
 
-  @Schema(description = "Prisoner Alerts", required = true)
-  val alerts: List<PrisonerAlertDto>? = emptyList(),
+  @Schema(description = "Prisoner Alerts", required = false)
+  val alerts: List<PrisonerAlertDto> = emptyList(),
 )

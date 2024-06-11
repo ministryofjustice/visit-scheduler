@@ -17,5 +17,5 @@ data class PrisonerSearchResultDto(
   val category: String? = null,
 
   @Schema(description = "Prisoner Alerts", required = false)
-  val alerts: List<PrisonerAlertDto>? = emptyList(),
+  val alerts: List<PrisonerAlertDto> = emptyList(),
 )
