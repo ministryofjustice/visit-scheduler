@@ -81,10 +81,7 @@ class VisitNotificationEventService(
   @Transactional
   fun handleAddPrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
     LOG.debug("PrisonVisitBlockDate notification received : $prisonDateBlockedDto")
-    val affectedVisits = visitService.getBookedVisitsForDate(
-      prisonCode = prisonDateBlockedDto.prisonCode,
-      date = prisonDateBlockedDto.visitDate,
-    )
+    val affectedVisits = visitService.getBookedVisitsForDate(prisonCode = prisonDateBlockedDto.prisonCode, date = prisonDateBlockedDto.visitDate)
 
     processVisitsWithNotifications(affectedVisits, PRISON_VISITS_BLOCKED_FOR_DATE, null)
   }
@@ -100,6 +97,7 @@ class VisitNotificationEventService(
     deleteNotificationsThatAreNoLongerValid(affectedNotifications, PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.PRISON_EXCLUDE_DATE_REMOVED)
   }
 
+  @Transactional
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     LOG.debug("PrisonerReleasedNotification notification received : $notificationDto")
     if (RELEASED == notificationDto.reasonType) {
@@ -109,6 +107,7 @@ class VisitNotificationEventService(
     }
   }
 
+  @Transactional
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     LOG.debug("PrisonerRestrictionChange notification received")
     if (isNotificationDatesValid(notificationDto.validToDate)) {
@@ -122,17 +121,47 @@ class VisitNotificationEventService(
     }
   }
 
+  @Transactional
   fun handlePrisonerAlertCreatedUpdatedNotification(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.debug("handlePrisonerAlertCreatedUpdated notification received")
 
-    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
-    val prisonerAlerts = notificationDto.alertsAdded.filter { code -> code in prisonerSupportedAlertCodes }
+    if (notificationDto.alertsAdded.isNotEmpty()) {
+      processAlertsAdded(notificationDto)
+    }
+    if (notificationDto.alertsRemoved.isNotEmpty()) {
+      processAlertsRemoved(notificationDto)
+    }
+  }
 
-    if (prisonerAlerts.isNotEmpty()) {
+  private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
+    LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
+
+    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
+
+    val prisonerSupportedAlertsAdded = notificationDto.alertsAdded.filter { code -> code in prisonerSupportedAlertCodes }
+    if (prisonerSupportedAlertsAdded.isNotEmpty()) {
       val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
 
       processVisitsWithNotifications(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, notificationDto.description)
+    }
+  }
+
+  private fun processAlertsRemoved(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
+    LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsRemoved")
+
+    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
+
+    val prisonerSupportedAlertsRemoved = notificationDto.alertsRemoved.filter { it in prisonerSupportedAlertCodes }
+    if (prisonerSupportedAlertsRemoved.isNotEmpty()) {
+      val prisonerActiveAlertCodes = prisonerService.getPrisonerActiveAlertCodes(notificationDto)
+      if (!prisonerActiveAlertCodes.any { it in prisonerSupportedAlertCodes }) {
+        val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+        prisonCode?.let {
+          val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, prisonCode, PRISONER_ALERTS_UPDATED_EVENT)
+          deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_ALERTS_UPDATED_EVENT, UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED)
+        }
+      }
     }
   }
 
@@ -148,6 +177,7 @@ class VisitNotificationEventService(
     }
   }
 
+  @Transactional
   fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
     LOG.debug("PrisonerReceivedNotification notification received : {}", notificationDto)
     if (PrisonerReceivedReasonType.TRANSFERRED == notificationDto.reason) {
@@ -193,7 +223,7 @@ class VisitNotificationEventService(
    *  Becomes : AB, AC, AD, BC, BD, CD
    *  Ignores : AA, BB ,CC
    */
-  fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
+  private fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
     val result: MutableList<Pair<VisitDto, VisitDto>> = mutableListOf()
     affectedVisits.forEachIndexed { index, visitDto ->
       for (secondIndex in index + 1..<affectedVisits.size) {

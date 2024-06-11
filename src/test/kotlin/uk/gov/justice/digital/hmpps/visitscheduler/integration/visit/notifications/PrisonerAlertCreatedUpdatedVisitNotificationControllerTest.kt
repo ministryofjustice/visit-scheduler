@@ -19,9 +19,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonPrisonCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerAlertDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -55,6 +57,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId,
       description,
       listOf(PrisonerSupportedAlertCodeType.C1.name),
+      emptyList(),
     )
 
     val visit1 = createApplicationAndVisit(
@@ -102,7 +105,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    assertThat(visitNotifications[0].event_description).isEqualTo(description)
+    assertThat(visitNotifications[0].eventDescription).isEqualTo(description)
 
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERTS_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(1)
@@ -125,6 +128,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId,
       description,
       listOf(PrisonerSupportedAlertCodeType.C1.name),
+      emptyList(),
     )
 
     val visit1 = createApplicationAndVisit(
@@ -168,9 +172,9 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     assertThat(visitNotifications).hasSize(3)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
-    assertThat(visitNotifications[0].event_description).isEqualTo(description)
+    assertThat(visitNotifications[0].eventDescription).isEqualTo(description)
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    assertThat(visitNotifications[1].event_description).isEqualTo(description)
+    assertThat(visitNotifications[1].eventDescription).isEqualTo(description)
     assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
     assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
     assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
@@ -185,6 +189,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId,
       description,
       listOf("UNSUPPORTED"),
+      emptyList(),
     )
 
     val visit1 = createApplicationAndVisit(
@@ -210,47 +215,6 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
   }
 
   @Test
-  fun `when prisoner has had an alert created or updated and prison location cannot be found then the all visits in all prisons are flagged and saved`() {
-    // Given
-    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
-      prisonerId,
-      description,
-      listOf(PrisonerSupportedAlertCodeType.C1.name),
-    )
-
-    val visit1 = createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplateDefault,
-    )
-    eventAuditEntityHelper.create(visit1)
-
-    val visit2 = createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplateDefault,
-    )
-    eventAuditEntityHelper.create(visit2)
-
-    // When
-    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT)
-    verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
-
-    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(2)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    assertThat(testEventAuditRepository.getAuditCount(PRISONER_ALERTS_UPDATED_EVENT)).isEqualTo(2)
-  }
-
-  @Test
   fun `when prisoner has had an alert created or updated and prisoner has a non prison code then the all visits in all prisons are flagged and saved`() {
     // Given
     val nonPrisonCode = NonPrisonCodeType.ADM.name
@@ -258,6 +222,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId,
       description,
       listOf(PrisonerSupportedAlertCodeType.C1.name),
+      emptyList(),
     )
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, nonPrisonCode, IncentiveLevel.ENHANCED)
 
@@ -311,5 +276,96 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(userType).isEqualTo(STAFF)
     }
+  }
+
+  @Test
+  fun `when prisoner has had a supported alert removed and has no other supported alerts on profile then all visits are un-flagged`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      alertCodes = listOf(PrisonerAlertDto(active = true, alertCode = "UNSUPPORTED")),
+    )
+
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      emptyList(),
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+    )
+
+    val visit = visitEntityHelper.create(
+      prisonerId = prisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
+    )
+    eventAuditEntityHelper.create(visit)
+
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT))
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(0)
+    verify(telemetryClient).trackEvent(
+      eq("unflagged-visit-event"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visit.reference)
+        assertThat(it["reviewType"]).isEqualTo(NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT.reviewType)
+        assertThat(it["reason"]).isEqualTo(UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED.desc)
+      },
+      isNull(),
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+  }
+
+  @Test
+  fun `when prisoner has had a supported alert removed and but still has other supported alerts on profile then no visits are un-flagged`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      alertCodes = listOf(PrisonerAlertDto(active = true, alertCode = PrisonerSupportedAlertCodeType.C2.name)),
+    )
+
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      emptyList(),
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+    )
+
+    val visit = visitEntityHelper.create(
+      prisonerId = prisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
+    )
+    eventAuditEntityHelper.create(visit)
+
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT))
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertThat(testEventAuditRepository.getAuditCount(PRISONER_ALERTS_UPDATED_EVENT)).isEqualTo(0)
   }
 }

@@ -26,7 +26,7 @@ class VisitNotificationEvent(
   val type: NotificationEventType,
 
   @Column(nullable = true)
-  val event_description: String? = null,
+  val eventDescription: String? = null,
 
   @Transient
   private val _reference: String = "",
