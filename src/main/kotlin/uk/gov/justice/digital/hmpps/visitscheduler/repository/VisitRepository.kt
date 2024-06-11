@@ -201,6 +201,21 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<Visit>
 
   @Query(
+    "SELECT v.* FROM visit v " +
+      "LEFT JOIN prison p ON v.prison_id = p.id " +
+      "LEFT JOIN session_slot sl ON v.session_slot_id = sl.id " +
+      "WHERE v.prisoner_id = :prisonerId AND " +
+      "v.visit_status = 'BOOKED' AND " +
+      "p.code != :excludedPrisonCode AND " +
+      "sl.slot_start >= NOW()",
+    nativeQuery = true,
+  )
+  fun getFutureBookedVisitsExcludingPrison(
+    @Param("prisonerId") prisonerId: String,
+    @Param("excludedPrisonCode") excludedPrisonCode: String,
+  ): List<Visit>
+
+  @Query(
     "SELECT v FROM Visit v WHERE " +
       " (v.sessionSlot.sessionTemplateReference = :sessionTemplateReference)  AND " +
       "(:#{#visitStatusList} is null OR v.visitStatus in :visitStatusList) AND " +

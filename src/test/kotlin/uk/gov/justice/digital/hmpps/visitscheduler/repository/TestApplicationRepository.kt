@@ -21,6 +21,12 @@ interface TestApplicationRepository : JpaRepository<Application, Long>, JpaSpeci
   fun findVisitByApplicationReference(applicationReference: String): Visit?
 
   @Query(
+    "SELECT a  FROM Application a" +
+      "  WHERE a.reference = :applicationReference",
+  )
+  fun findByApplicationReference(applicationReference: String): Application?
+
+  @Query(
     "select count(*)>0 from application_visitor av where av.application_id=:applicationId",
     nativeQuery = true,
   )

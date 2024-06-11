@@ -480,6 +480,13 @@ class VisitService(
     return this.visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
+  fun getFutureBookedVisitsExcludingPrison(
+    prisonerNumber: String,
+    excludedPrisonCode: String,
+  ): List<VisitDto> {
+    return this.visitRepository.getFutureBookedVisitsExcludingPrison(prisonerNumber, excludedPrisonCode).map { visitDtoBuilder.build(it) }
+  }
+
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
