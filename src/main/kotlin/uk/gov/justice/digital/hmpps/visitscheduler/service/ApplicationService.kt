@@ -16,10 +16,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplica
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.ApplicationDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CHANGED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_CHANGED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
@@ -72,34 +68,95 @@ class ApplicationService(
   }
 
   fun createInitialApplication(createApplicationDto: CreateApplicationDto): ApplicationDto {
-    val applicationDto = createApplication(createApplicationDto)
-
-    visitEventAuditService.saveEventAudit(
-      createApplicationDto.actionedBy,
-      applicationDto,
-      applicationMethodType = NOT_KNOWN,
-    )
-
-    return applicationDto
+    val application = createApplication(createApplicationDto)
+    return processInitialApplicationEvents(application, createApplicationDto)
   }
 
-  fun createApplicationForAnExistingVisit(bookingReference: String, createApplicationDto: CreateApplicationDto): ApplicationDto {
-    val visit = visitRepo.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
-    validateBookingChange(visit, createApplicationDto, bookingReference)
+  fun createApplicationForAnExistingVisit(
+    bookingReference: String,
+    createApplicationDto: CreateApplicationDto,
+  ): ApplicationDto {
+    val existingVisit =
+      visitRepo.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
+    validateBookingChange(existingVisit, createApplicationDto, bookingReference)
 
-    val applicationDto = createApplication(createApplicationDto, visit)
+    val application = createApplication(createApplicationDto, existingVisit)
 
-    visitEventAuditService.saveEventAudit(
-      createApplicationDto.actionedBy,
-      applicationDto,
-      visit = visit,
-      NOT_KNOWN,
-    )
-
-    return applicationDto
+    return processApplicationEventsForExistingVisit(application, createApplicationDto, existingVisit)
   }
 
-  private fun createApplication(createApplicationDto: CreateApplicationDto, existingVisit: Visit? = null): ApplicationDto {
+  fun changeIncompleteApplication(
+    applicationReference: String,
+    changeApplicationDto: ChangeApplicationDto,
+  ): ApplicationDto {
+    val sessionTemplate = getSessionTemplate(changeApplicationDto.sessionTemplateReference)
+    val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
+
+    validate(changeApplicationDto, prison)
+
+    val application = getApplicationEntity(applicationReference)
+
+    val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
+
+    val visitRestriction =
+      changeApplicationDto.applicationRestriction?.getVisitRestriction() ?: run { application.restriction }
+    val isReservedSlot = isReservationRequired(application, sessionSlot, visitRestriction)
+    if (isReservedSlot && !changeApplicationDto.allowOverBooking) {
+      slotCapacityService.checkCapacityForApplicationReservation(
+        sessionSlot.reference,
+        visitRestriction,
+        true,
+      )
+    }
+
+    application.sessionSlotId = sessionSlot.id
+    application.sessionSlot = sessionSlot
+
+    changeApplicationDto.applicationRestriction?.let { restriction ->
+      application.restriction = restriction.getVisitRestriction()
+    }
+    changeApplicationDto.visitContact?.let { visitContactUpdate ->
+      application.visitContact?.let { visitContact ->
+        visitContact.name = visitContactUpdate.name
+        visitContact.telephone = visitContactUpdate.telephone
+      } ?: run {
+        application.visitContact =
+          createApplicationContact(application, visitContactUpdate.name, visitContactUpdate.telephone)
+      }
+    }
+
+    changeApplicationDto.visitors?.let { visitorsUpdate ->
+      application.visitors.clear()
+      applicationRepo.saveAndFlush(application)
+      visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
+        application.visitors.add(createApplicationVisitor(application, it.nomisPersonId, it.visitContact))
+      }
+    }
+
+    changeApplicationDto.visitorSupport?.let { visitSupportUpdate ->
+      val deleteSupport = visitSupportUpdate.description.trim().isEmpty()
+      if (deleteSupport) {
+        application.support = null
+      } else {
+        application.support?.let {
+          it.description = visitSupportUpdate.description
+        } ?: run {
+          application.support = createApplicationSupport(application, visitSupportUpdate.description)
+        }
+      }
+    }
+
+    application.visit?.let {
+      application.reservedSlot = isReservationRequired(it, application.sessionSlot, application.restriction)
+    }
+
+    return processChangeIncompleteApplicationEvents(application)
+  }
+
+  private fun createApplication(
+    createApplicationDto: CreateApplicationDto,
+    existingVisit: Visit? = null,
+  ): Application {
     val sessionTemplate = getSessionTemplate(createApplicationDto.sessionTemplateReference)
     val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
 
@@ -108,7 +165,11 @@ class ApplicationService(
     val sessionSlot = sessionSlotService.getSessionSlot(createApplicationDto.sessionDate, sessionTemplate, prison)
 
     val isReservedSlot = existingVisit?.let {
-      isReservationRequired(existingVisit, sessionSlot, createApplicationDto.applicationRestriction.getVisitRestriction())
+      isReservationRequired(
+        existingVisit,
+        sessionSlot,
+        createApplicationDto.applicationRestriction.getVisitRestriction(),
+      )
     } ?: true
 
     if (isReservedSlot && !createApplicationDto.allowOverBooking) {
@@ -153,93 +214,83 @@ class ApplicationService(
       existingVisit.addApplication(applicationEntity)
     }
 
-    val applicationDto = applicationDtoBuilder.build(applicationEntity)
+    return applicationEntity
+  }
 
-    val eventName = if (isReservedSlot) VISIT_SLOT_RESERVED_EVENT else VISIT_CHANGED_EVENT
-    telemetryClientService.trackEvent(eventName, telemetryClientService.createApplicationVisitTrackEventFromVisitEntity(applicationDto, existingVisit))
-    return applicationDto
+  @Transactional(propagation = REQUIRES_NEW)
+  fun deleteAllExpiredApplications() {
+    LOG.debug("Entered deleteExpiredApplication")
+    val applicationsToBeDeleted =
+      applicationRepo.findApplicationByModifyTimes(getExpiredApplicationToDeleteDateAndTime())
+    applicationsToBeDeleted.forEach { applicationToBeDeleted ->
+      applicationRepo.delete(applicationToBeDeleted)
+      processDeleteApplicationEvents(applicationToBeDeleted)
+      LOG.debug("Expired Application ${applicationToBeDeleted.reference} has been deleted")
+    }
   }
 
   private fun getSessionTemplate(sessionTemplateReference: String): SessionTemplateDto {
     return sessionTemplateService.getSessionTemplates(sessionTemplateReference)
   }
 
-  fun changeIncompleteApplication(applicationReference: String, changeApplicationDto: ChangeApplicationDto): ApplicationDto {
-    val sessionTemplate = getSessionTemplate(changeApplicationDto.sessionTemplateReference)
-    val prison = prisonsService.findPrisonByCode(sessionTemplate.prisonCode)
-
-    validate(changeApplicationDto, prison)
-
-    val application = getApplicationEntity(applicationReference)
-
-    val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
-
-    val visitRestriction = changeApplicationDto.applicationRestriction?.getVisitRestriction() ?: run { application.restriction }
-    val isReservedSlot = isReservationRequired(application, sessionSlot, visitRestriction)
-    if (isReservedSlot && !changeApplicationDto.allowOverBooking) {
-      slotCapacityService.checkCapacityForApplicationReservation(
-        sessionSlot.reference,
-        visitRestriction,
-        true,
-      )
-    }
-
-    application.sessionSlotId = sessionSlot.id
-    application.sessionSlot = sessionSlot
-
-    changeApplicationDto.applicationRestriction?.let { restriction -> application.restriction = restriction.getVisitRestriction() }
-    changeApplicationDto.visitContact?.let { visitContactUpdate ->
-      application.visitContact?.let { visitContact ->
-        visitContact.name = visitContactUpdate.name
-        visitContact.telephone = visitContactUpdate.telephone
-      } ?: run {
-        application.visitContact = createApplicationContact(application, visitContactUpdate.name, visitContactUpdate.telephone)
-      }
-    }
-
-    changeApplicationDto.visitors?.let { visitorsUpdate ->
-      application.visitors.clear()
-      applicationRepo.saveAndFlush(application)
-      visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
-        application.visitors.add(createApplicationVisitor(application, it.nomisPersonId, it.visitContact))
-      }
-    }
-
-    changeApplicationDto.visitorSupport?.let { visitSupportUpdate ->
-      val deleteSupport = visitSupportUpdate.description.trim().isEmpty()
-      if (deleteSupport) {
-        application.support = null
-      } else {
-        application.support?.let {
-          it.description = visitSupportUpdate.description
-        } ?: run {
-          application.support = createApplicationSupport(application, visitSupportUpdate.description)
-        }
-      }
-    }
-
-    val visit = this.visitRepo.findVisitByApplicationReference(applicationReference)
-    visit?.let {
-      application.reservedSlot = isReservationRequired(visit, application.sessionSlot, application.restriction)
-    }
-
-    val telemetryData = HashMap<String, String>()
-    telemetryData["applicationReference"] = application.reference
-    visit?.let {
-      telemetryData["bookingReference"] = it.reference
-    }
-    telemetryData["reservedSlot"] = application.reservedSlot.toString()
-
-    telemetryClientService.trackEvent(
-      VISIT_SLOT_CHANGED_EVENT,
-      telemetryData,
-    )
-
-    return applicationDtoBuilder.build(application)
-  }
-
   fun isExpiredApplication(modifyTimestamp: LocalDateTime): Boolean {
     return modifyTimestamp.isBefore(getExpiredApplicationDateAndTime())
+  }
+
+  private fun processInitialApplicationEvents(
+    application: Application,
+    createApplicationDto: CreateApplicationDto,
+  ): ApplicationDto {
+    val applicationDto = applicationDtoBuilder.build(application)
+    val eventAudit = visitEventAuditService.saveApplicationEventAudit(
+      createApplicationDto.actionedBy,
+      applicationDto,
+      applicationMethodType = NOT_KNOWN,
+    )
+
+    telemetryClientService.trackEventApplicationReserved(
+      applicationDto,
+      eventAudit,
+    )
+    return applicationDto
+  }
+
+  private fun processApplicationEventsForExistingVisit(
+    application: Application,
+    createApplicationDto: CreateApplicationDto,
+    existingVisit: Visit,
+  ): ApplicationDto {
+    val applicationDto = applicationDtoBuilder.build(application)
+
+    val eventAudit = visitEventAuditService.saveApplicationEventAudit(
+      createApplicationDto.actionedBy,
+      applicationDto,
+      visit = existingVisit,
+      NOT_KNOWN,
+    )
+
+    telemetryClientService.trackEventVisitChanged(
+      applicationDto,
+      existingVisit.reference,
+      eventAudit,
+    )
+
+    return applicationDto
+  }
+
+  private fun processChangeIncompleteApplicationEvents(
+    application: Application,
+  ): ApplicationDto {
+    val applicationDto = applicationDtoBuilder.build(application)
+    telemetryClientService.trackEventApplicationSlotChanged(applicationDto, application.visit?.reference)
+    return applicationDto
+  }
+
+  private fun processDeleteApplicationEvents(
+    application: Application,
+  ) {
+    val dto = applicationDtoBuilder.build(application)
+    telemetryClientService.trackEventApplicationDeleted(dto)
   }
 
   private fun isReservationRequired(
@@ -268,23 +319,12 @@ class ApplicationService(
   }
 
   private fun getExpiredApplicationToDeleteDateAndTime(): LocalDateTime {
-    return LocalDateTime.now().minusMinutes(expiredApplicationTaskConfiguration.deleteExpiredApplicationsAfterMinutes.toLong())
+    return LocalDateTime.now()
+      .minusMinutes(expiredApplicationTaskConfiguration.deleteExpiredApplicationsAfterMinutes.toLong())
   }
 
   fun getExpiredApplicationDateAndTime(): LocalDateTime {
     return LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
-  }
-
-  @Transactional(propagation = REQUIRES_NEW)
-  fun deleteAllExpiredApplications() {
-    LOG.debug("Entered deleteExpiredApplication")
-    val applicationsToBeDeleted = applicationRepo.findApplicationByModifyTimes(getExpiredApplicationToDeleteDateAndTime())
-    applicationsToBeDeleted.forEach { applicationToBeDeleted ->
-      applicationRepo.delete(applicationToBeDeleted)
-      val applicationEvent = telemetryClientService.createApplicationTrackEventFromVisitEntity(applicationToBeDeleted)
-      telemetryClientService.trackEvent(VISIT_SLOT_RELEASED_EVENT, applicationEvent)
-      LOG.debug("Expired Application ${applicationToBeDeleted.reference} has been deleted")
-    }
   }
 
   fun isApplicationCompleted(reference: String): Boolean {
