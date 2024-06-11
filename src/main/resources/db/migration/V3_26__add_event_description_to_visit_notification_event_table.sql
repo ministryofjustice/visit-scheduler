@@ -1,0 +1,1 @@
+ALTER TABLE visit_notification_event ADD description TEXT;

@@ -58,7 +58,6 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
     // Given
     val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, TRANSFERRED)
 
-    // Prison 1 visits
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
