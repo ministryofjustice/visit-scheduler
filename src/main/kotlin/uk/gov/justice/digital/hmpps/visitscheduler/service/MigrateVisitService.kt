@@ -109,7 +109,7 @@ class MigrateVisitService(
 
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
-    visitEventAuditService.saveEventAudit(migrateVisitRequest, visitEntity)
+    visitEventAuditService.saveMigratedVisitEventAudit(migrateVisitRequest, visitEntity)
 
     return visitEntity.reference
   }
@@ -268,17 +268,16 @@ class MigrateVisitService(
     visitEntity.visitStatus = CANCELLED
     visitEntity.outcomeStatus = cancelOutcome.outcomeStatus
 
-    visitEventAuditService.saveEventAudit(cancelVisitDto, visitEntity)
-
     cancelOutcome.text?.let {
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
     }
 
+    val visitDto = visitDtoBuilder.build(visitEntity)
+    visitEventAuditService.saveCancelledMigratedEventAudit(cancelVisitDto, visitDto)
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
 
-    val visit = visitDtoBuilder.build(visitEntity)
-    snsService.sendVisitCancelledEvent(visit)
-    return visit
+    snsService.sendVisitCancelledEvent(visitDto)
+    return visitDto
   }
 
   private fun sendMigratedTrackEvent(visitEntity: Visit, type: TelemetryVisitEvents) {
