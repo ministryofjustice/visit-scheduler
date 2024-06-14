@@ -142,7 +142,7 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     // Then
     responseSpec.expectStatus().isOk
 
-    assertFlaggedVisitEvent(listOf(primaryVisit, secondaryVisit), NotificationEventType.NON_ASSOCIATION_EVENT)
+    assertFlaggedVisitEvent(listOf(primaryVisit, primaryVisit2, secondaryVisit), NotificationEventType.NON_ASSOCIATION_EVENT)
     verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
 
     verify(visitNotificationEventRepository, times(4)).saveAndFlush(any<VisitNotificationEvent>())
