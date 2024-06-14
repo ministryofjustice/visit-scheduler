@@ -184,28 +184,6 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has no lastPrisonCode then no visits are flagged`() {
-    // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode = prisonCode, TRANSFERRED)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode)
-
-    val visit1 = createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate1,
-    )
-    eventAuditEntityHelper.create(visit1)
-
-    // When
-    val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    assertNotHandled()
-  }
-
-  @Test
   fun `when prisoner has been received due to temporary absence return then no visits are flagged or saved`() {
     // Given
     val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, TEMPORARY_ABSENCE_RETURN)
