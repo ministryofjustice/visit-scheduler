@@ -750,6 +750,9 @@ class BookVisitTest : IntegrationTestBase() {
         assertThat(it["hasPhoneNumber"]).isEqualTo((visit.visitContact.telephone != null).toString())
         assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
         assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
+        assertThat(it["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
+        val commaDelimitedVisitorIds = visit.visitors.map { it.nomisPersonId }.joinToString(",")
+        assertThat(it["visitors"]).isEqualTo(commaDelimitedVisitorIds)
         eventAudit.actionedBy.userName?.let { value ->
           assertThat(it["actionedBy"]).isEqualTo(value)
         }
