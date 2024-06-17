@@ -14,21 +14,16 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_BOOKED_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitAssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import java.time.LocalDate
 
 @DisplayName("GET $GET_BOOKED_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE")
-class PublicVisitsTest : IntegrationTestBase() {
+class FuturePublicVisitsTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var visitAssertHelper: VisitAssertHelper
@@ -38,7 +33,8 @@ class PublicVisitsTest : IntegrationTestBase() {
 
   private lateinit var otherSessionTemplate: SessionTemplate
 
-  private lateinit var visit: Visit
+  private lateinit var nearestVisit: Visit
+  private lateinit var visitFarInTheFuture: Visit
   private lateinit var visitInDifferentPrison: Visit
   private lateinit var visitWithOtherBooker: Visit
 
@@ -46,40 +42,23 @@ class PublicVisitsTest : IntegrationTestBase() {
   internal fun createVisits() {
     otherSessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "AWE")
 
-    visitInDifferentPrison = createApplicationAndVisit(prisonerId = "AA0000A", slotDate = startDate.plusWeeks(1), sessionTemplate = otherSessionTemplate, userType = PUBLIC)
-    visitInDifferentPrison = visitEntityHelper.save(visitInDifferentPrison)
+    visitFarInTheFuture = createVisit(prisonId = "visit far away", actionedByValue = "aTestRef", VisitStatus.BOOKED, sessionTemplateDefault, PUBLIC, 6)
 
-    eventAuditEntityHelper.createForVisitAndApplication(visitInDifferentPrison, actionedByValue = "aTestRef", type = listOf(RESERVED_VISIT, BOOKED_VISIT))
+    visitInDifferentPrison = createVisit(prisonId = "visit different prison", actionedByValue = "aTestRef", VisitStatus.BOOKED, otherSessionTemplate, PUBLIC, 4)
 
-    visit = createApplicationAndVisit(prisonerId = "FF0000CC", slotDate = startDate.plusDays(2), sessionTemplate = sessionTemplateDefault, userType = PUBLIC)
-    visit = visitEntityHelper.save(visit)
+    nearestVisit = createVisit(prisonId = "nearest visit", actionedByValue = "aTestRef", VisitStatus.BOOKED, sessionTemplateDefault, PUBLIC, 1)
 
-    eventAuditEntityHelper.createForVisitAndApplication(visit, actionedByValue = "aTestRef", type = listOf(RESERVED_VISIT, BOOKED_VISIT))
+    var visitInPast = createVisit(prisonId = "visit", actionedByValue = "aTestRef", VisitStatus.BOOKED, sessionTemplateDefault, PUBLIC, -1)
 
-    var visitInPast = createApplicationAndVisit(prisonerId = "FF0000CC", slotDate = LocalDate.now().minusDays(1), sessionTemplate = sessionTemplateDefault, userType = PUBLIC)
-    visitInPast = visitEntityHelper.save(visitInPast)
+    var visitBookerByStaff = createVisit(prisonId = "visit", actionedByValue = "aTestRef", VisitStatus.BOOKED, sessionTemplateDefault, STAFF, 1)
 
-    eventAuditEntityHelper.createForVisitAndApplication(visitInPast, actionedByValue = "aTestRef", type = listOf(RESERVED_VISIT, BOOKED_VISIT))
+    var visitCancelled = createVisit(prisonId = "visit", actionedByValue = "aTestRef", VisitStatus.CANCELLED, sessionTemplateDefault, PUBLIC, 1)
 
-    var visitBookerByStaff = createApplicationAndVisit(prisonerId = "FF0000CC", slotDate = LocalDate.now().minusDays(1), sessionTemplate = sessionTemplateDefault, userType = STAFF)
-    visitBookerByStaff = visitEntityHelper.save(visitBookerByStaff)
-
-    eventAuditEntityHelper.createForVisitAndApplication(visitBookerByStaff, actionedByValue = "aTestRef", type = listOf(RESERVED_VISIT, BOOKED_VISIT))
-
-    var visitCancelled = createApplicationAndVisit(prisonerId = "FF0000CC", slotDate = startDate.plusDays(3), sessionTemplate = sessionTemplateDefault, visitStatus = CANCELLED, userType = PUBLIC)
-    visitCancelled.outcomeStatus = OutcomeStatus.CANCELLATION
-    visitCancelled = visitEntityHelper.save(visitCancelled)
-
-    eventAuditEntityHelper.createForVisitAndApplication(visitCancelled, actionedByValue = "aTestRef", type = listOf(RESERVED_VISIT, BOOKED_VISIT, CANCELLED_VISIT))
-
-    visitWithOtherBooker = createApplicationAndVisit(prisonerId = "AA0000A", slotDate = startDate.plusWeeks(1), sessionTemplate = otherSessionTemplate, userType = PUBLIC)
-    visitWithOtherBooker = visitEntityHelper.save(visitWithOtherBooker)
-
-    eventAuditEntityHelper.createForVisitAndApplication(visitWithOtherBooker, actionedByValue = "aOtherTestRef", type = listOf(RESERVED_VISIT, BOOKED_VISIT))
+    visitWithOtherBooker = createVisit(prisonId = "visit with other broker", actionedByValue = "aOtherTestRef", VisitStatus.BOOKED, sessionTemplateDefault, PUBLIC, 2)
   }
 
   @Test
-  fun `when booked public visits requested by booker reference aTestRef then associated visits are returned`() {
+  fun `when booked public visits requested by booker reference aTestRef then associated visits are returned in the correct order`() {
     // Given
     val bookerReference = "aTestRef"
 
@@ -90,9 +69,10 @@ class PublicVisitsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     val visitList = parseVisitsResponse(responseSpec)
 
-    Assertions.assertThat(visitList.size).isEqualTo(2)
-    visitAssertHelper.assertVisitDto(visitList[0], visitInDifferentPrison)
-    visitAssertHelper.assertVisitDto(visitList[1], visit)
+    Assertions.assertThat(visitList.size).isEqualTo(3)
+    visitAssertHelper.assertVisitDto(visitList[0], nearestVisit)
+    visitAssertHelper.assertVisitDto(visitList[1], visitInDifferentPrison)
+    visitAssertHelper.assertVisitDto(visitList[2], visitFarInTheFuture)
   }
 
   @Test
