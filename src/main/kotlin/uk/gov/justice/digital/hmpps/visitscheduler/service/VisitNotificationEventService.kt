@@ -8,24 +8,25 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_DELETED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RECEIVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -60,7 +61,8 @@ class VisitNotificationEventService(
       val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
       prisonCode?.let {
         val affectedVisits = getOverLappingVisits(notificationDto, prisonCode)
-        processVisitsWithNotifications(affectedVisits, NON_ASSOCIATION_EVENT)
+
+        processVisitsWithNotifications(affectedVisits, NON_ASSOCIATION_EVENT, null)
       }
     } else if (notificationDto.type in arrayOf(NON_ASSOCIATION_DELETED, NON_ASSOCIATION_CLOSED)) {
       if (!prisonerService.hasPrisonerGotANonAssociationWith(notificationDto.prisonerNumber, notificationDto.nonAssociationPrisonerNumber)) {
@@ -76,11 +78,9 @@ class VisitNotificationEventService(
   @Transactional
   fun handleAddPrisonVisitBlockDate(prisonDateBlockedDto: PrisonDateBlockedDto) {
     LOG.debug("PrisonVisitBlockDate notification received : $prisonDateBlockedDto")
-    val affectedVisits = visitService.getBookedVisitsForDate(
-      prisonCode = prisonDateBlockedDto.prisonCode,
-      date = prisonDateBlockedDto.visitDate,
-    )
-    processVisitsWithNotifications(affectedVisits, PRISON_VISITS_BLOCKED_FOR_DATE)
+    val affectedVisits = visitService.getBookedVisitsForDate(prisonCode = prisonDateBlockedDto.prisonCode, date = prisonDateBlockedDto.visitDate)
+
+    processVisitsWithNotifications(affectedVisits, PRISON_VISITS_BLOCKED_FOR_DATE, null)
   }
 
   @Transactional
@@ -94,14 +94,17 @@ class VisitNotificationEventService(
     deleteNotificationsThatAreNoLongerValid(affectedNotifications, PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.PRISON_EXCLUDE_DATE_REMOVED)
   }
 
+  @Transactional
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     LOG.debug("PrisonerReleasedNotification notification received : $notificationDto")
     if (RELEASED == notificationDto.reasonType) {
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, notificationDto.prisonCode)
-      processVisitsWithNotifications(affectedVisits, PRISONER_RELEASED_EVENT)
+
+      processVisitsWithNotifications(affectedVisits, PRISONER_RELEASED_EVENT, null)
     }
   }
 
+  @Transactional
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     LOG.debug("PrisonerRestrictionChange notification received")
     if (isNotificationDatesValid(notificationDto.validToDate)) {
@@ -110,7 +113,54 @@ class VisitNotificationEventService(
       val startDateTime = (if (LocalDate.now() > notificationDto.validFromDate) LocalDate.now() else notificationDto.validFromDate).atStartOfDay()
       val endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode, startDateTime, endDateTime)
-      processVisitsWithNotifications(affectedVisits, PRISONER_RESTRICTION_CHANGE_EVENT)
+
+      processVisitsWithNotifications(affectedVisits, PRISONER_RESTRICTION_CHANGE_EVENT, null)
+    }
+  }
+
+  @Transactional
+  fun handlePrisonerAlertCreatedUpdatedNotification(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
+    LOG.debug("handlePrisonerAlertCreatedUpdated notification received")
+
+    if (notificationDto.alertsAdded.isNotEmpty()) {
+      processAlertsAdded(notificationDto)
+    }
+    if (notificationDto.alertsRemoved.isNotEmpty()) {
+      processAlertsRemoved(notificationDto)
+    }
+  }
+
+  private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
+    LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
+
+    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
+
+    val prisonerSupportedAlertsAdded = notificationDto.alertsAdded.filter { code -> code in prisonerSupportedAlertCodes }
+    if (prisonerSupportedAlertsAdded.isNotEmpty()) {
+      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+      val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
+
+      processVisitsWithNotifications(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, notificationDto.description)
+    }
+  }
+
+  private fun processAlertsRemoved(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
+    LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsRemoved")
+
+    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
+
+    val prisonerSupportedAlertsRemoved = notificationDto.alertsRemoved.filter { it in prisonerSupportedAlertCodes }
+    if (prisonerSupportedAlertsRemoved.isNotEmpty()) {
+      val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
+      prisonerDetails?.let { prisoner ->
+        val prisonerActiveAlertCodes = prisoner.alerts.filter { it.active }.map { it.alertCode }
+        if (!prisonerActiveAlertCodes.any { it in prisonerSupportedAlertCodes }) {
+          prisoner.prisonCode?.let {
+            val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, prisoner.prisonCode!!, PRISONER_ALERTS_UPDATED_EVENT)
+            deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_ALERTS_UPDATED_EVENT, UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED)
+          }
+        }
+      }
     }
   }
 
@@ -126,22 +176,23 @@ class VisitNotificationEventService(
     }
   }
 
+  @Transactional
   fun handlePrisonerReceivedNotification(notificationDto: PrisonerReceivedNotificationDto) {
     LOG.debug("PrisonerReceivedNotification notification received : {}", notificationDto)
     if (PrisonerReceivedReasonType.TRANSFERRED == notificationDto.reason) {
-      val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
-      prisonerDetails?.let {
-        prisonerDetails.lastPrisonCode?.let {
-          val affectedVisits = visitService.getFutureVisitsBy(prisonerDetails.prisonerId, prisonerDetails.lastPrisonCode)
-          if (affectedVisits.isNotEmpty()) {
-            processVisitsWithNotifications(affectedVisits, PRISONER_RECEIVED_EVENT)
-          }
-        }
+      // First flag visits from all prisons excluding the one the prisoner has moved to.
+      val allAffectedVisits = visitService.getFutureBookedVisitsExcludingPrison(notificationDto.prisonerNumber, notificationDto.prisonCode)
+      if (allAffectedVisits.isNotEmpty()) {
+        processVisitsWithNotifications(allAffectedVisits, PRISONER_RECEIVED_EVENT, null)
       }
+
+      // Second un-flag visits from current prison if any are flagged, as they are now at this prison.
+      val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, notificationDto.prisonCode, PRISONER_RECEIVED_EVENT)
+      deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_RECEIVED_EVENT, UnFlagEventReason.PRISONER_RETURNED_TO_PRISON)
     }
   }
 
-  private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType) {
+  private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType, description: String?) {
     val affectedVisitsNoDuplicate = affectedVisits.filter { !visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type) }
 
     affectedVisitsNoDuplicate.forEach {
@@ -157,7 +208,7 @@ class VisitNotificationEventService(
         }
       }
     } else {
-      saveVisitsNotification(affectedVisitsNoDuplicate, type)
+      saveVisitsNotification(affectedVisitsNoDuplicate, type, description)
     }
   }
 
@@ -171,7 +222,7 @@ class VisitNotificationEventService(
    *  Becomes : AB, AC, AD, BC, BD, CD
    *  Ignores : AA, BB ,CC
    */
-  fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
+  private fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
     val result: MutableList<Pair<VisitDto, VisitDto>> = mutableListOf()
     affectedVisits.forEachIndexed { index, visitDto ->
       for (secondIndex in index + 1..<affectedVisits.size) {
@@ -190,16 +241,17 @@ class VisitNotificationEventService(
   ) {
     var reference: String? = null
     affectedVisitsNoDuplicate.forEach {
-      reference = saveVisitNotification(it, reference, type)
+      reference = saveVisitNotification(it, reference, type, null)
     }
   }
 
   private fun saveVisitsNotification(
     affectedVisitsNoDuplicate: List<VisitDto>,
     type: NotificationEventType,
+    description: String?,
   ) {
     affectedVisitsNoDuplicate.forEach {
-      saveVisitNotification(it, null, type)
+      saveVisitNotification(it, null, type, description)
     }
   }
 
@@ -218,23 +270,26 @@ class VisitNotificationEventService(
     impactedVisit: VisitDto,
     reference: String?,
     type: NotificationEventType,
+    description: String?,
   ): String {
     val savedVisitNotificationEvent = visitNotificationEventRepository.saveAndFlush(
       if (reference == null) {
         VisitNotificationEvent(
           impactedVisit.reference,
           type,
+          description,
         )
       } else {
         VisitNotificationEvent(
           impactedVisit.reference,
           type,
+          description,
           _reference = reference,
         )
       },
     )
 
-    visitEventAuditService.saveEventAudit(type, impactedVisit)
+    visitEventAuditService.saveNotificationEventAudit(type, impactedVisit)
 
     return savedVisitNotificationEvent.reference
   }
@@ -346,7 +401,7 @@ class VisitNotificationEventService(
   @Transactional
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
     val visit = visitService.getBookedVisitByReference(visitReference)
-    visitService.addEventAudit(ignoreVisitNotification.actionedBy, visit, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE, ignoreVisitNotification.reason)
+    visitEventAuditService.saveIgnoreVisitNotificationEventAudit(ignoreVisitNotification.actionedBy, visit, ignoreVisitNotification.reason)
     deleteVisitNotificationEvents(visitReference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
     return visit
   }

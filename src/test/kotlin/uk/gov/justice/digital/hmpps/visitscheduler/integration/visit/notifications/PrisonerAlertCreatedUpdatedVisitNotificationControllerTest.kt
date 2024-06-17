@@ -12,29 +12,33 @@ import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_RESTRICTION_CHANGE_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRISONER_ALERTS_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonPrisonCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerRestrictionHasChanged
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerAlertDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST $VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH")
-class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTestBase() {
+@DisplayName("POST $VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH")
+class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   val prisonerId = "AA11BCC"
   val prisonCode = "ABC"
+  val description = "Prisoner alert codes updated"
   lateinit var prison1: Prison
   lateinit var sessionTemplate1: SessionTemplate
 
@@ -46,10 +50,15 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
   }
 
   @Test
-  fun `when prisoner has had a restriction change and has associated visits then the visits are flagged and saved`() {
+  fun `when prisoner has had an alert created or updated and has associated visits then the visits are flagged and saved`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+      emptyList(),
+    )
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -81,36 +90,47 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     )
 
     // When
-    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
 
     // Then
     responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT)
     verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[0].description).isEqualTo(description)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RESTRICTION_CHANGE_EVENT)
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERTS_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(1)
     with(auditEvents[0]) {
       assertThat(actionedBy.userName).isNull()
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
-      assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
+      assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
   }
 
   @Test
-  fun `when prisoner has had a restriction change then only visits are flagged with there own notification references`() {
+  fun `when prisoner has had an alert created or updated then only visits are flagged with there own notification references`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+      emptyList(),
+    )
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -137,11 +157,15 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     eventAuditEntityHelper.create(visit3)
 
     // When
-    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
 
     // Then
     responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1, visit2, visit3), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1, visit2, visit3), NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT)
     verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(3)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -149,121 +173,58 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     assertThat(visitNotifications).hasSize(3)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].reference).doesNotContain(visitNotifications[1].reference, visitNotifications[2].reference)
+    assertThat(visitNotifications[0].description).isEqualTo(description)
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    assertThat(visitNotifications[1].description).isEqualTo(description)
     assertThat(visitNotifications[1].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[2].reference)
     assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
     assertThat(visitNotifications[2].reference).doesNotContain(visitNotifications[0].reference, visitNotifications[1].reference)
-    assertThat(testEventAuditRepository.getAuditCount(PRISONER_RESTRICTION_CHANGE_EVENT)).isEqualTo(3)
+    assertThat(testEventAuditRepository.getAuditCount(PRISONER_ALERTS_UPDATED_EVENT)).isEqualTo(3)
   }
 
   @Test
-  fun `when restriction start date is after any visits dates then nothing is flagged`() {
+  fun `when prisoner has had an alert created or updated its not a supported code then no visits are affected`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now().plusDays(2))
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      listOf("UNSUPPORTED"),
+      emptyList(),
+    )
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
-      sessionTemplate = sessionTemplateDefault,
+      sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit1)
 
     // When
-    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
 
     // Then
     responseSpec.expectStatus().isOk
-    assertNotHandled()
+    verifyNoInteractions(telemetryClient)
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertThat(testEventAuditRepository.getAuditCount(PRISONER_ALERTS_UPDATED_EVENT)).isEqualTo(0)
   }
 
   @Test
-  fun `when restriction start date is in past visits are only return from todays date`() {
-    // Given
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now().minusDays(2))
-
-    eventAuditEntityHelper.create(
-      createApplicationAndVisit(
-        prisonerId = notificationDto.prisonerNumber,
-        slotDate = LocalDate.now().plusDays(1),
-        visitStatus = BOOKED,
-        sessionTemplate = sessionTemplateDefault,
-      ),
-    )
-
-    // When
-    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    assertNotHandled()
-  }
-
-  @Test
-  fun `when restriction end date is before any visits dates then nothing is flagged`() {
-    // Given
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now(), LocalDate.now().plusDays(2))
-    val visit1 = createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(4),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplateDefault,
-    )
-    eventAuditEntityHelper.create(visit1)
-
-    // When
-    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    assertNotHandled()
-  }
-
-  @Test
-  fun `when prisoner has had a restriction change and prison location cannot be found then the all visits in all prisons are flagged and saved`() {
-    // Given
-    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
-
-    val visit1 = createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplateDefault,
-    )
-    eventAuditEntityHelper.create(visit1)
-
-    val visit2 = createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplateDefault,
-    )
-    eventAuditEntityHelper.create(visit2)
-
-    // When
-    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
-    verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
-
-    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(2)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    assertThat(testEventAuditRepository.getAuditCount(PRISONER_RESTRICTION_CHANGE_EVENT)).isEqualTo(2)
-  }
-
-  @Test
-  fun `when prisoner has had a restriction change and prisoner has a non prison code then the all visits in all prisons are flagged and saved`() {
+  fun `when prisoner has had an alert created or updated and prisoner has a non prison code then the all visits in all prisons are flagged and saved`() {
     // Given
     val nonPrisonCode = NonPrisonCodeType.ADM.name
-    val notificationDto = PrisonerRestrictionChangeNotificationDto(prisonerId, LocalDate.now())
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+      emptyList(),
+    )
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, nonPrisonCode, IncentiveLevel.ENHANCED)
 
     val visit1 = createApplicationAndVisit(
@@ -283,11 +244,11 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     eventAuditEntityHelper.create(visit2)
 
     // When
-    val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT)
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -296,31 +257,118 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RESTRICTION_CHANGE_EVENT)
+    val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERTS_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(2)
     with(auditEvents[0]) {
       assertThat(actionedBy.userName).isNull()
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
-      assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
+      assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
     with(auditEvents[1]) {
       assertThat(actionedBy.userName).isNull()
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
       assertThat(bookingReference).isEqualTo(visit2.reference)
       assertThat(applicationReference).isEqualTo(visit2.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit2.sessionSlot.sessionTemplateReference)
-      assertThat(type).isEqualTo(PRISONER_RESTRICTION_CHANGE_EVENT)
+      assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
   }
 
-  private fun assertNotHandled() {
-    verifyNoInteractions(telemetryClient)
+  @Test
+  fun `when prisoner has had a supported alert removed and has no other supported alerts on profile then all visits are un-flagged`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      alertCodes = listOf(PrisonerAlertDto(active = true, alertCode = "UNSUPPORTED")),
+    )
+
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      emptyList(),
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+    )
+
+    val visit = visitEntityHelper.create(
+      prisonerId = prisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
+    )
+    eventAuditEntityHelper.create(visit)
+
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT))
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(0)
+    verify(telemetryClient).trackEvent(
+      eq("unflagged-visit-event"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visit.reference)
+        assertThat(it["reviewType"]).isEqualTo(NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT.reviewType)
+        assertThat(it["reason"]).isEqualTo(UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED.desc)
+      },
+      isNull(),
+    )
+    verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+  }
+
+  @Test
+  fun `when prisoner has had a supported alert removed and but still has other supported alerts on profile then no visits are un-flagged`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      alertCodes = listOf(PrisonerAlertDto(active = true, alertCode = PrisonerSupportedAlertCodeType.C2.name)),
+    )
+
+    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
+      prisonerId,
+      description,
+      emptyList(),
+      listOf(PrisonerSupportedAlertCodeType.C1.name),
+    )
+
+    val visit = visitEntityHelper.create(
+      prisonerId = prisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
+    )
+    eventAuditEntityHelper.create(visit)
+
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT))
+
+    // When
+    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
+      webTestClient,
+      roleVisitSchedulerHttpHeaders,
+      notificationDto,
+    )
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    assertThat(testEventAuditRepository.getAuditCount(PRISONER_RESTRICTION_CHANGE_EVENT)).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(PRISONER_ALERTS_UPDATED_EVENT)).isEqualTo(0)
   }
 }

@@ -6,16 +6,19 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_APPLICABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
@@ -52,12 +55,12 @@ class VisitEventAuditService {
   @Autowired
   private lateinit var eventAuditRepository: EventAuditRepository
 
-  fun saveEventAudit(
+  fun saveApplicationEventAudit(
     actionedByValue: String,
     application: ApplicationDto,
     visit: Visit? = null,
     applicationMethodType: ApplicationMethodType,
-  ) {
+  ): EventAuditDto {
     val actionedBy = createOrGetActionBy(actionedByValue, application.userType)
 
     val eventAudit = eventAuditRepository.saveAndFlush(
@@ -74,35 +77,68 @@ class VisitEventAuditService {
 
     actionedBy.eventAuditList.add(eventAudit)
     actionedByRepository.saveAndFlush(actionedBy)
+
+    return EventAuditDto(eventAudit)
   }
 
-  fun saveEventAudit(
+  fun saveBookingEventAudit(
     actionedByValue: String,
     visit: VisitDto,
     type: EventAuditType,
     applicationMethodType: ApplicationMethodType,
-    text: String? = null,
     userType: UserType,
-  ): EventAudit {
+  ): EventAuditDto {
     val actionedBy = createOrGetActionBy(actionedByValue, userType)
 
-    return eventAuditRepository.saveAndFlush(
-      EventAudit(
-        actionedBy = actionedBy,
-        bookingReference = visit.reference,
-        applicationReference = visit.applicationReference,
-        sessionTemplateReference = visit.sessionTemplateReference,
-        type = type,
-        applicationMethodType = applicationMethodType,
-        text = text,
+    return EventAuditDto(
+      eventAuditRepository.saveAndFlush(
+        EventAudit(
+          actionedBy = actionedBy,
+          bookingReference = visit.reference,
+          applicationReference = visit.applicationReference,
+          sessionTemplateReference = visit.sessionTemplateReference,
+          type = type,
+          applicationMethodType = applicationMethodType,
+          text = null,
+        ),
       ),
     )
   }
 
-  fun saveEventAudit(
+  fun saveIgnoreVisitNotificationEventAudit(
+    actionedByValue: String,
+    visit: VisitDto,
+    text: String,
+  ): EventAuditDto {
+    val actionedBy = createOrGetActionBy(actionedByValue, STAFF)
+
+    return EventAuditDto(
+      eventAuditRepository.saveAndFlush(
+        EventAudit(
+          actionedBy = actionedBy,
+          bookingReference = visit.reference,
+          applicationReference = visit.applicationReference,
+          sessionTemplateReference = visit.sessionTemplateReference,
+          type = IGNORE_VISIT_NOTIFICATIONS_EVENT,
+          applicationMethodType = NOT_APPLICABLE,
+          text = text,
+        ),
+      ),
+    )
+  }
+
+  fun saveCancelledEventAudit(cancelVisitDto: CancelVisitDto, visit: VisitDto): EventAuditDto {
+    return saveCancelledEventAudit(cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType, visit)
+  }
+
+  fun saveCancelledMigratedEventAudit(cancelVisitDto: MigratedCancelVisitDto, visit: VisitDto): EventAuditDto {
+    return saveCancelledEventAudit(cancelVisitDto.actionedBy, NOT_KNOWN, visit)
+  }
+
+  fun saveMigratedVisitEventAudit(
     migrateVisitRequest: MigrateVisitRequestDto,
     visitEntity: Visit,
-  ) {
+  ): EventAuditDto {
     val actionedBy = createOrGetActionBy(migrateVisitRequest.actionedBy, STAFF)
 
     val eventAudit = eventAuditRepository.saveAndFlush(
@@ -131,35 +167,23 @@ class VisitEventAuditService {
         eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
       }
     }
+
+    return EventAuditDto(eventAudit)
   }
 
-  fun saveEventAudit(cancelVisitDto: MigratedCancelVisitDto, visitEntity: Visit) {
-    val actionedBy = createOrGetActionBy(cancelVisitDto.actionedBy, STAFF)
-
-    eventAuditRepository.saveAndFlush(
-      EventAudit(
-        actionedBy = actionedBy,
-        bookingReference = visitEntity.reference,
-        applicationReference = visitEntity.getLastCompletedApplication()?.reference,
-        sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
-        type = CANCELLED_VISIT,
-        applicationMethodType = NOT_KNOWN,
-        text = null,
-      ),
-    )
-  }
-
-  fun saveEventAudit(type: NotificationEventType, impactedVisit: VisitDto) {
+  fun saveNotificationEventAudit(type: NotificationEventType, impactedVisit: VisitDto): EventAuditDto {
     val actionedBy = createOrGetActionBy(null, SYSTEM)
-    eventAuditRepository.saveAndFlush(
-      EventAudit(
-        actionedBy = actionedBy,
-        bookingReference = impactedVisit.reference,
-        applicationReference = impactedVisit.applicationReference,
-        sessionTemplateReference = impactedVisit.sessionTemplateReference,
-        type = EventAuditType.valueOf(type.name),
-        applicationMethodType = NOT_KNOWN,
-        text = null,
+    return EventAuditDto(
+      eventAuditRepository.saveAndFlush(
+        EventAudit(
+          actionedBy = actionedBy,
+          bookingReference = impactedVisit.reference,
+          applicationReference = impactedVisit.applicationReference,
+          sessionTemplateReference = impactedVisit.sessionTemplateReference,
+          type = EventAuditType.valueOf(type.name),
+          applicationMethodType = NOT_KNOWN,
+          text = null,
+        ),
       ),
     )
   }
@@ -180,6 +204,24 @@ class VisitEventAuditService {
       PUBLIC -> eventAuditType.bookerReference!!
       SYSTEM -> ""
     }
+  }
+
+  private fun saveCancelledEventAudit(actionedByValue: String, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
+    val actionedBy = createOrGetActionBy(actionedByValue, STAFF)
+
+    return EventAuditDto(
+      eventAuditRepository.saveAndFlush(
+        EventAudit(
+          actionedBy = actionedBy,
+          bookingReference = visit.reference,
+          applicationReference = visit.applicationReference,
+          sessionTemplateReference = visit.sessionTemplateReference,
+          type = CANCELLED_VISIT,
+          applicationMethodType = applicationMethodType,
+          text = null,
+        ),
+      ),
+    )
   }
 
   private fun createOrGetActionBy(actionedByValue: String? = null, userType: UserType): ActionedBy {

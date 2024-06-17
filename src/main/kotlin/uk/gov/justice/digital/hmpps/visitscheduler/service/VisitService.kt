@@ -17,17 +17,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_BOOKED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
@@ -37,7 +30,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -106,28 +98,12 @@ class VisitService(
     checkSlotCapacity(bookingRequestDto, application, existingBooking)
 
     val booking = createBooking(application, existingBooking)
-    val bookedVisitDto = visitDtoBuilder.build(booking)
 
-    try {
-      eventAuditRepository.updateVisitApplication(application.reference, booking.reference, bookingRequestDto.applicationMethodType)
-    } catch (e: InvocationTargetException) {
-      val message = "Audit log does not exists for $application.reference"
-      LOG.error(message)
-      throw ItemNotFoundException(message, e)
+    return existingBooking?.let {
+      processUpdateBookingEvents(booking, bookingRequestDto)
+    } ?: run {
+      processBookingEvents(booking, bookingRequestDto)
     }
-
-    val hasExistingBooking = existingBooking != null
-    visitEventAuditService.saveEventAudit(
-      bookingRequestDto.actionedBy,
-      bookedVisitDto,
-      if (hasExistingBooking) UPDATED_VISIT else BOOKED_VISIT,
-      bookingRequestDto.applicationMethodType,
-      userType = bookedVisitDto.userType,
-    )
-
-    processBookingEvents(booking, bookedVisitDto, bookingRequestDto, hasExistingBooking)
-
-    return bookedVisitDto
   }
 
   private fun checkSlotCapacity(
@@ -259,14 +235,7 @@ class VisitService(
       visitEntity.visitNotes.add(createVisitNote(visitEntity, VisitNoteType.VISIT_OUTCOMES, cancelOutcome.text))
     }
 
-    val visitDto = visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
-    processCancelEvents(visitEntity, visitDto, cancelVisitDto)
-
-    visitEventAuditService.saveEventAudit(cancelVisitDto.actionedBy, visitDto, CANCELLED_VISIT, cancelVisitDto.applicationMethodType, userType = STAFF)
-
-    // delete all visit notifications for the cancelled visit from the visit notifications table
-    visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
-    return visitDto
+    return processCancelEvents(visitRepository.saveAndFlush(visitEntity), cancelVisitDto)
   }
 
   @Transactional(readOnly = true)
@@ -338,20 +307,58 @@ class VisitService(
   }
 
   private fun processBookingEvents(
-    bookedVisit: Visit,
-    bookedVisitDto: VisitDto,
+    booking: Visit,
     bookingRequestDto: BookingRequestDto,
-    hasExistingBooking: Boolean,
-  ) {
-    val bookEvent = telemetryClientService.createVisitBookedTrackEventFromVisitEntity(bookedVisit, bookingRequestDto.actionedBy, bookingRequestDto.applicationMethodType)
-    bookEvent["isUpdated"] = hasExistingBooking.toString()
-    telemetryClientService.trackEvent(VISIT_BOOKED_EVENT, bookEvent)
+  ): VisitDto {
+    val bookedVisitDto = visitDtoBuilder.build(booking)
 
-    if (hasExistingBooking) {
-      snsService.sendChangedVisitBookedEvent(bookedVisitDto)
-    } else {
-      snsService.sendVisitBookedEvent(bookedVisitDto)
+    try {
+      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, booking.reference, bookingRequestDto.applicationMethodType)
+    } catch (e: InvocationTargetException) {
+      val message = "Audit log does not exists for ${bookedVisitDto.applicationReference}"
+      LOG.error(message)
     }
+
+    val eventAuditDto = visitEventAuditService.saveBookingEventAudit(
+      bookingRequestDto.actionedBy,
+      bookedVisitDto,
+      BOOKED_VISIT,
+      bookingRequestDto.applicationMethodType,
+      userType = bookedVisitDto.userType,
+    )
+
+    telemetryClientService.trackBookingEvent(bookingRequestDto, bookedVisitDto, eventAuditDto)
+
+    snsService.sendVisitBookedEvent(bookedVisitDto)
+
+    return bookedVisitDto
+  }
+
+  private fun processUpdateBookingEvents(
+    booking: Visit,
+    bookingRequestDto: BookingRequestDto,
+  ): VisitDto {
+    val bookedVisitDto = visitDtoBuilder.build(booking)
+
+    try {
+      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, booking.reference, bookingRequestDto.applicationMethodType)
+    } catch (e: InvocationTargetException) {
+      val message = "Audit log does not exists for ${bookedVisitDto.applicationReference}"
+      LOG.error(message)
+    }
+
+    val eventAuditDto = visitEventAuditService.saveBookingEventAudit(
+      bookingRequestDto.actionedBy,
+      bookedVisitDto,
+      UPDATED_VISIT,
+      bookingRequestDto.applicationMethodType,
+      userType = bookedVisitDto.userType,
+    )
+
+    telemetryClientService.trackUpdateBookingEvent(bookingRequestDto, bookedVisitDto, eventAuditDto)
+    snsService.sendChangedVisitBookedEvent(bookedVisitDto)
+
+    return bookedVisitDto
   }
 
   private fun validateCancelRequest(visitEntity: Visit) {
@@ -364,18 +371,19 @@ class VisitService(
 
   private fun processCancelEvents(
     visit: Visit,
-    visitDto: VisitDto,
     cancelVisitDto: CancelVisitDto,
-  ) {
-    val eventsMap = telemetryClientService.createCancelVisitTrackEventFromVisitEntity(visit, cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType)
-    visitDto.outcomeStatus?.let {
-      eventsMap.put("outcomeStatus", it.name)
-    }
-    telemetryClientService.trackEvent(
-      VISIT_CANCELLED_EVENT,
-      eventsMap,
-    )
+  ): VisitDto {
+    val visitDto = visitDtoBuilder.build(visit)
+    val eventAudit = visitEventAuditService.saveCancelledEventAudit(cancelVisitDto, visitDto)
+
+    telemetryClientService.trackCancelBookingEvent(visitDto, cancelVisitDto, eventAudit)
+
     snsService.sendVisitCancelledEvent(visitDto)
+
+    // delete all visit notifications for the cancelled visit from the visit notifications table
+    visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
+
+    return visitDto
   }
 
   fun getBookedVisitsForDate(prisonCode: String, date: LocalDate): List<VisitDto> {
@@ -449,12 +457,15 @@ class VisitService(
     return visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
-  fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
-    return getFutureVisitsBy(prisonerNumber = prisonerNumber)
+  fun getFutureBookedVisitsExcludingPrison(
+    prisonerNumber: String,
+    excludedPrisonCode: String,
+  ): List<VisitDto> {
+    return this.visitRepository.getFutureBookedVisitsExcludingPrison(prisonerNumber, excludedPrisonCode).map { visitDtoBuilder.build(it) }
   }
 
-  fun addEventAudit(actionedBy: String, visitDto: VisitDto, eventAuditType: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?, userType: UserType = STAFF) {
-    visitEventAuditService.saveEventAudit(actionedBy, visitDto, eventAuditType, applicationMethodType, text, userType)
+  fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
+    return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
 
   fun getFuturePublicBookedVisitsByBookerReference(bookerReference: String): List<VisitDto> {

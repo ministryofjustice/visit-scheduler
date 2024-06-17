@@ -565,14 +565,14 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
 
   private fun assertTelemetry(applicationDto: ApplicationDto) {
     verify(telemetryClient).trackEvent(
-      eq("visit-slot-changed"),
+      eq("application-slot-changed"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["applicationReference"]).isEqualTo(applicationDto.reference)
         Assertions.assertThat(it["reservedSlot"]).isEqualTo(applicationDto.reserved.toString())
       },
       isNull(),
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("application-slot-changed"), any(), isNull())
   }
 
   private fun getResult(responseSpec: ResponseSpec): EntityExchangeResult<ByteArray> {

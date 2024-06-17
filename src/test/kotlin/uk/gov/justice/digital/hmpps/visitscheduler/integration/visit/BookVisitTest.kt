@@ -24,7 +24,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_OUTCOMES
@@ -735,14 +734,6 @@ class BookVisitTest : IntegrationTestBase() {
   private fun assertBookedEvent(visit: VisitDto, isUpdated: Boolean) {
     val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
 
-    val actionByValue = with(eventAudit.actionedBy) {
-      when (userType) {
-        STAFF -> userName!!
-        PUBLIC -> bookerReference!!
-        SYSTEM -> ""
-      }
-    }
-
     verify(telemetryClient).trackEvent(
       eq("visit-booked"),
       org.mockito.kotlin.check {
@@ -750,16 +741,20 @@ class BookVisitTest : IntegrationTestBase() {
         assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
-        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
-        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-        assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
-        assertThat(it["actionedBy"]).isEqualTo(actionByValue)
-        assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
-        assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
+        assertThat(it["visitEnd"]).isEqualTo(visit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["hasPhoneNumber"]).isEqualTo((visit.visitContact.telephone != null).toString())
+        assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
+        assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
+        eventAudit.actionedBy.userName?.let { value ->
+          assertThat(it["actionedBy"]).isEqualTo(value)
+        }
+        assertThat(it["source"]).isEqualTo(eventAudit.actionedBy.userType.name)
+        assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
       },
       isNull(),
     )
