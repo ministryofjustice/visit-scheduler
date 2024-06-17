@@ -83,10 +83,10 @@ class VisitEventAuditService {
     applicationMethodType: ApplicationMethodType,
     text: String? = null,
     userType: UserType,
-  ) {
+  ): EventAudit {
     val actionedBy = createOrGetActionBy(actionedByValue, userType)
 
-    eventAuditRepository.saveAndFlush(
+    return eventAuditRepository.saveAndFlush(
       EventAudit(
         actionedBy = actionedBy,
         bookingReference = visit.reference,
