@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notificati
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.extension.ExtendWith
-import java.time.temporal.ChronoUnit.MINUTES
 import org.mockito.ArgumentCaptor
 import org.mockito.Captor
 import org.mockito.Mockito
@@ -28,6 +27,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationE
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit.MINUTES
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -73,7 +73,7 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
       assertThat(data["visitRoom"]).isEqualTo(visit.visitRoom)
       assertThat(data["hasPhoneNumber"]).isEqualTo((visit.visitContact!!.telephone != null).toString())
       assertThat(data["reviewType"]).isEqualTo(type.reviewType)
-      assertThat(LocalDateTime.parse(data["visitBooked"]).truncatedTo(MINUTES) ).isEqualTo(visit.createTimestamp!!.truncatedTo(MINUTES).format(DateTimeFormatter.ISO_DATE_TIME))
+      assertThat(LocalDateTime.parse(data["visitBooked"]).truncatedTo(MINUTES)).isEqualTo(visit.createTimestamp!!.truncatedTo(MINUTES).format(DateTimeFormatter.ISO_DATE_TIME))
 
       eventAudit.actionedBy.userName?.let { value ->
         assertThat(data["actionedBy"]).isEqualTo(value)
