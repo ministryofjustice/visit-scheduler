@@ -6,7 +6,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedRea
 data class PrisonerReceivedNotificationDto(
   @NotBlank
   val prisonerNumber: String,
-
+  @NotBlank
+  val prisonCode: String,
   @NotBlank
   val reason: PrisonerReceivedReasonType,
 )

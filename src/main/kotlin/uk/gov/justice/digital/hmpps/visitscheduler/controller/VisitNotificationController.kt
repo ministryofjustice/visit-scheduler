@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAsso
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
@@ -41,6 +42,7 @@ const val VISIT_NOTIFICATION_PERSON_RESTRICTION_CHANGE_PATH: String = "$VISIT_NO
 const val VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/received"
 const val VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/released"
 const val VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/restriction/changed"
+const val VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alerts/updated"
 const val VISIT_NOTIFICATION_VISITOR_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/restriction/changed"
 const val VISIT_NOTIFICATION_COUNT_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/count"
 const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/count"
@@ -236,6 +238,42 @@ class VisitNotificationController(
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPrisonerRestrictionChanged {}", dto)
     visitNotificationEventService.handlePrisonerRestrictionChangeNotification(dto)
+    return ResponseEntity(HttpStatus.OK)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PostMapping(VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "To notify VSiP that a prisoner alert has been created or updated",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "notification has completed successfully",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to notify VSiP of alert",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to notify VSiP of alert",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun notifyVSiPThatPrisonerAlertCreatedUpdated(
+    @RequestBody @Valid
+    dto: PrisonerAlertCreatedUpdatedNotificationDto,
+  ): ResponseEntity<HttpStatus> {
+    LOG.debug("Entered notifyVSiPThatPrisonerAlertCreatedUpdated {}", dto)
+    visitNotificationEventService.handlePrisonerAlertCreatedUpdatedNotification(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 
