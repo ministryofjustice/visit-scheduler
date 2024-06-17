@@ -207,7 +207,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "WHERE v.prisoner_id = :prisonerId AND " +
       "v.visit_status = 'BOOKED' AND " +
       "p.code != :excludedPrisonCode AND " +
-      "sl.slot_start >= NOW()",
+      "sl.slot_start >= NOW() ORDER BY v.id ",
     nativeQuery = true,
   )
   fun getFutureBookedVisitsExcludingPrison(
