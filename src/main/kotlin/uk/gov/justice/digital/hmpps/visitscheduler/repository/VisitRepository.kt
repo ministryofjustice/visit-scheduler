@@ -289,6 +289,17 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun getPublicFutureBookingReferenceByBookerReference(bookerReference: String): List<String>
 
   @Query(
+    "Select v.reference FROM visit v " +
+      " LEFT JOIN event_audit ea on ea.booking_reference = v.reference and ea.type = 'CANCELLED_VISIT' " +
+      " LEFT JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
+      " LEFT JOIN session_slot ss on ss.id = v.session_slot_id " +
+      " WHERE ab.booker_reference = :bookerReference AND v.visit_status = 'CANCELLED' AND " +
+      "      v.user_type = 'PUBLIC' GROUP BY v.reference",
+    nativeQuery = true,
+  )
+  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<String>
+
+  @Query(
     "SELECT v FROM Visit v WHERE v.reference in :bookingReferences order by v.modifyTimestamp",
   )
   fun findVisitsByReferences(bookingReferences: List<String>): List<Visit>

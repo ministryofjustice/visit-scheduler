@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 
 const val GET_BOOKED_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/booked/visits/future"
+const val GET_CANCELED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/canceled/visits"
 
 @RestController
 @Validated
@@ -59,5 +60,40 @@ class PublicVisitController(
     bookerReference: String,
   ): List<VisitDto> {
     return visitService.getFuturePublicBookedVisitsByBookerReference(bookerReference)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(GET_CANCELED_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
+  @Operation(
+    summary = "Get public canceled visits by booker reference",
+    description = "Get public canceled visits by booker reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "cancelled public visits returned",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to get cancelled public visits by booker reference",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getPublicCanceledVisitsByBookerReference(
+    @Schema(description = "bookerReference", example = "asd-aed-vhj", required = true)
+    @PathVariable
+    bookerReference: String,
+  ): List<VisitDto> {
+    return visitService.getPublicCanceledVisitsByBookerReference(bookerReference)
   }
 }

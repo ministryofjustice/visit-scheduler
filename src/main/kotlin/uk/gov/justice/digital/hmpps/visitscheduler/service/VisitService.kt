@@ -472,4 +472,9 @@ class VisitService(
     val bookingReferenceList = visitRepository.getPublicFutureBookingReferenceByBookerReference(bookerReference)
     return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedBy { it.startTimestamp }
   }
+
+  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<VisitDto> {
+    val bookingReferenceList = visitRepository.getPublicCanceledVisitsByBookerReference(bookerReference)
+    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedByDescending { it.modifiedTimestamp }
+  }
 }

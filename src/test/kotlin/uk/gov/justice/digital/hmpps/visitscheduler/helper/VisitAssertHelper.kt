@@ -9,9 +9,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 class VisitAssertHelper {
 
   fun assertVisitDto(visitDto: VisitDto, visit: Visit) {
+    assertThat(visitDto.prisonerId).isEqualTo(visit.prisonerId)
     assertThat(visitDto.reference).isEqualTo(visit.reference)
     assertThat(visitDto.applicationReference).isEqualTo(visit.getLastApplication()?.reference)
-    assertThat(visitDto.prisonerId).isEqualTo(visit.prisonerId)
     assertThat(visitDto.prisonCode).isEqualTo(visit.prison.code)
     assertThat(visitDto.visitRoom).isEqualTo(visit.visitRoom)
     assertThat(visitDto.startTimestamp).isEqualTo(visit.sessionSlot.slotStart)
