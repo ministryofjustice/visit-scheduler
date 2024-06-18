@@ -424,25 +424,27 @@ class EventAuditEntityHelper(
 
   fun createForVisitAndApplication(
     visit: Visit,
-    actionedByValue: String = "ACTIONED_BY",
+    actionedByValues: List<String> = listOf("ACTIONED_BY"),
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
-    type: List<EventAuditType>,
+    types: List<EventAuditType>,
+    userTypes: List<UserType>,
     text: String? = null,
   ): List<EventAudit> {
     val application = visit.getLastApplication() ?: throw IllegalArgumentException("Must have an application")
     val eventAuditList = mutableListOf<EventAudit>()
 
-    type.forEach {
+    types.forEachIndexed { index, eventAuditType ->
+
       eventAuditList.add(
         create(
           reference = visit.reference,
           applicationReference = application.reference,
           sessionTemplateReference = application.sessionSlot.sessionTemplateReference,
-          actionedByValue = actionedByValue,
-          type = it,
+          actionedByValue = actionedByValues[index],
+          type = eventAuditType,
           applicationMethodType = applicationMethodType,
           text = text,
-          userType = visit.userType,
+          userType = userTypes[index],
         ),
       )
     }

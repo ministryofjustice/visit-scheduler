@@ -1369,7 +1369,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate,
     )
 
-    // not included as it's a canceled visit
+    // not included as it's a cancelled visit
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = prisonCode,

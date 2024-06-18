@@ -65,8 +65,8 @@ class PublicVisitController(
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_CANCELLED_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
   @Operation(
-    summary = "Get public canceled visits by booker reference",
-    description = "Get public canceled visits by booker reference",
+    summary = "Get public cancelled visits by booker reference",
+    description = "Get public cancelled visits by booker reference",
     responses = [
       ApiResponse(
         responseCode = "200",

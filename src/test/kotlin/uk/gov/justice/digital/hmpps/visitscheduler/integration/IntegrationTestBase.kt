@@ -356,8 +356,17 @@ abstract class IntegrationTestBase {
     return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitDto>::class.java).toList()
   }
 
-  fun createVisit(prisonId: String? = "testPrisonerId", actionedByValue: String, visitStatus: VisitStatus, sessionTemplate: SessionTemplate, userType: UserType, slotDateWeeks: Long): Visit {
+  fun createVisit(
+    prisonId: String? = "testPrisonerId",
+    actionedByValue: String,
+    visitStatus: VisitStatus,
+    sessionTemplate: SessionTemplate,
+    userType: UserType,
+    slotDateWeeks: Long,
+  ): Visit {
     val eventJourney = mutableListOf(RESERVED_VISIT, BOOKED_VISIT)
+    val actionedByValues = mutableListOf(actionedByValue, actionedByValue)
+    val userTypes = mutableListOf(userType, userType)
 
     var visit = createApplicationAndVisit(
       prisonerId = prisonId,
@@ -366,17 +375,21 @@ abstract class IntegrationTestBase {
       visitStatus = visitStatus,
       userType = userType,
     )
+
     if (CANCELLED == visitStatus) {
       eventJourney.add(CANCELLED_VISIT)
       visit.outcomeStatus = CANCELLATION
+      actionedByValues.add(actionedByValue + "_staff")
+      userTypes.add(STAFF)
     }
 
     visit = visitEntityHelper.save(visit)
 
     eventAuditEntityHelper.createForVisitAndApplication(
       visit,
-      actionedByValue = actionedByValue,
-      type = eventJourney,
+      actionedByValues = actionedByValues,
+      types = eventJourney,
+      userTypes = userTypes,
     )
     return visit
   }

@@ -54,7 +54,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
   companion object {
     const val RESERVED_BY_USER = "reserved_by"
-    const val CANCELLED_BY_USER = "canceled_by"
+    const val CANCELLED_BY_USER = "cancelled_by"
   }
 
   @Value("\${visit.cancel.day-limit:14}")

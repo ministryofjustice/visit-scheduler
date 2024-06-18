@@ -257,10 +257,10 @@ class MigrateVisitService(
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
     if (visitRepository.isBookingCancelled(reference)) {
-      // If already canceled then just return object and do nothing more!
-      VisitService.LOG.debug("The visit $reference has already been canceled!")
-      val canceledVisit = visitRepository.findByReference(reference)!!
-      return visitDtoBuilder.build(canceledVisit)
+      // If already cancelled then just return object and do nothing more!
+      VisitService.LOG.debug("The visit $reference has already been cancelled!")
+      val cancelledVisit = visitRepository.findByReference(reference)!!
+      return visitDtoBuilder.build(cancelledVisit)
     }
 
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Canceled migrated visit $reference not found ")
