@@ -283,7 +283,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       " LEFT JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " LEFT JOIN session_slot ss on ss.id = v.session_slot_id " +
       " WHERE ab.booker_reference = :bookerReference AND v.visit_status = 'BOOKED' AND ss.slot_date >= CURRENT_DATE AND " +
-      "      v.user_type = 'PUBLIC' AND v.visit_status = 'BOOKED' GROUP BY v.reference",
+      "      v.user_type = 'PUBLIC' GROUP BY v.reference",
     nativeQuery = true,
   )
   fun getPublicFutureBookingReferenceByBookerReference(bookerReference: String): List<String>
