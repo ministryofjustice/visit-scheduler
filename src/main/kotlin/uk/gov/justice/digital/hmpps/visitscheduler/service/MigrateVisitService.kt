@@ -258,7 +258,7 @@ class MigrateVisitService(
 
     if (visitRepository.isBookingCancelled(reference)) {
       // If already cancelled then just return object and do nothing more!
-      VisitService.LOG.debug("The visit $reference has already been cancelled!")
+      LOG.debug("The visit $reference has already been cancelled!")
       val cancelledVisit = visitRepository.findByReference(reference)!!
       return visitDtoBuilder.build(cancelledVisit)
     }
