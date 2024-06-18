@@ -42,19 +42,19 @@ class FuturePublicVisitsTest : IntegrationTestBase() {
   internal fun createVisits() {
     otherSessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "AWE")
 
-    visitFarInTheFuture = createVisit(prisonId = "visit far away", actionedByValue = "aTestRef", VisitStatus.BOOKED, sessionTemplateDefault, PUBLIC, 6)
+    visitFarInTheFuture = createVisit(prisonId = "visit far away", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 6)
 
-    visitInDifferentPrison = createVisit(prisonId = "visit different prison", actionedByValue = "aTestRef", VisitStatus.BOOKED, otherSessionTemplate, PUBLIC, 4)
+    visitInDifferentPrison = createVisit(prisonId = "visit different prison", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = otherSessionTemplate, userType = PUBLIC, slotDateWeeks = 4)
 
-    nearestVisit = createVisit(prisonId = "nearest visit", actionedByValue = "aTestRef", VisitStatus.BOOKED, sessionTemplateDefault, PUBLIC, 1)
+    nearestVisit = createVisit(prisonId = "nearest visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
 
-    var visitInPast = createVisit(prisonId = "visit", actionedByValue = "aTestRef", VisitStatus.BOOKED, sessionTemplateDefault, PUBLIC, -1)
+    var visitInPast = createVisit(prisonId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
 
-    var visitBookerByStaff = createVisit(prisonId = "visit", actionedByValue = "aTestRef", VisitStatus.BOOKED, sessionTemplateDefault, STAFF, 1)
+    var visitBookerByStaff = createVisit(prisonId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = STAFF, slotDateWeeks = 1)
 
-    var visitCancelled = createVisit(prisonId = "visit", actionedByValue = "aTestRef", VisitStatus.CANCELLED, sessionTemplateDefault, PUBLIC, 1)
+    var visitCancelled = createVisit(prisonId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
 
-    visitWithOtherBooker = createVisit(prisonId = "visit with other broker", actionedByValue = "aOtherTestRef", VisitStatus.BOOKED, sessionTemplateDefault, PUBLIC, 2)
+    visitWithOtherBooker = createVisit(prisonId = "visit with other broker", actionedByValue = "aOtherTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 2)
   }
 
   @Test

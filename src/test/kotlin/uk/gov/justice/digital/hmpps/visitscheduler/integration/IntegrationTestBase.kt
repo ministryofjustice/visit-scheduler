@@ -356,12 +356,12 @@ abstract class IntegrationTestBase {
     return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitDto>::class.java).toList()
   }
 
-  fun createVisit(prisonId: String? = "testPrisonerId", actionedByValue: String, visitStatus: VisitStatus, sessionTemplate: SessionTemplate, userType: UserType, weeks: Long): Visit {
+  fun createVisit(prisonId: String? = "testPrisonerId", actionedByValue: String, visitStatus: VisitStatus, sessionTemplate: SessionTemplate, userType: UserType, slotDateWeeks: Long): Visit {
     val eventJourney = mutableListOf(RESERVED_VISIT, BOOKED_VISIT)
 
     var visit = createApplicationAndVisit(
       prisonerId = prisonId,
-      slotDate = startDate.plusWeeks(weeks),
+      slotDate = startDate.plusWeeks(slotDateWeeks),
       sessionTemplate = sessionTemplate,
       visitStatus = visitStatus,
       userType = userType,
