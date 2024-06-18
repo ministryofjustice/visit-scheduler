@@ -13,7 +13,7 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_CANCELED_PUBLIC_VISITS_BY_BOOKER_REFERENCE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_CANCELLED_PUBLIC_VISITS_BY_BOOKER_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 
-@DisplayName("GET $GET_CANCELED_PUBLIC_VISITS_BY_BOOKER_REFERENCE")
+@DisplayName("GET $GET_CANCELLED_PUBLIC_VISITS_BY_BOOKER_REFERENCE")
 class FindCancelledPublicVisitsTest : IntegrationTestBase() {
 
   @Autowired
@@ -123,7 +123,7 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
     bookerReference: String,
     roles: List<String> = listOf("ROLE_VISIT_SCHEDULER"),
   ): ResponseSpec {
-    val uri = GET_CANCELED_PUBLIC_VISITS_BY_BOOKER_REFERENCE.replace("{bookerReference}", bookerReference)
+    val uri = GET_CANCELLED_PUBLIC_VISITS_BY_BOOKER_REFERENCE.replace("{bookerReference}", bookerReference)
     return webTestClient.get().uri(uri)
       .headers(setAuthorisation(roles = roles))
       .exchange()
