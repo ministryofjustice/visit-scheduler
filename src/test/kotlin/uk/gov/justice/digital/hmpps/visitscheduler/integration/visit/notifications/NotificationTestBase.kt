@@ -31,7 +31,7 @@ import java.time.temporal.ChronoUnit
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
 @ExtendWith(HmppsAuthExtension::class)
-abstract class NotificationTestBase() : IntegrationTestBase() {
+abstract class NotificationTestBase : IntegrationTestBase() {
 
   @SpyBean
   lateinit var telemetryClient: TelemetryClient
@@ -59,7 +59,7 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
     visits.forEachIndexed { index, visit ->
       val eventAudit = eventAuditRepository.findLastBookedVisitEventByBookingReference(visit.reference)
 
-      val data = allData.get(index)
+      val data = allData[index]
       assertThat(data["reference"]).isEqualTo(visit.reference)
       assertThat(data["applicationReference"]).isEqualTo(visit.getLastApplication()!!.reference)
       assertThat(data["prisonerId"]).isEqualTo(visit.prisonerId)
@@ -71,6 +71,8 @@ abstract class NotificationTestBase() : IntegrationTestBase() {
       assertThat(data["visitType"]).isEqualTo(visit.visitType.name)
       assertThat(data["visitRoom"]).isEqualTo(visit.visitRoom)
       assertThat(data["hasPhoneNumber"]).isEqualTo((visit.visitContact!!.telephone != null).toString())
+      assertThat(data["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
+      assertThat(data["visitors"]).isEqualTo(visit.visitors.map { it.nomisPersonId }.joinToString(","))
       assertThat(data["reviewType"]).isEqualTo(type.reviewType)
       assertThat(data["visitBooked"]).isEqualTo(visit.createTimestamp!!.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME))
 
