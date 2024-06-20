@@ -228,12 +228,13 @@ workflows:
               ignore:
                 - main
           requires:
-            - validate
-            - build_docker
-            - helm_lint
             - request-dev-approval
       - request-dev-approval:
           type: approval
+          requires:
+            - validate
+            - build_docker
+            - helm_lint
           filters:
             branches:
               ignore:
@@ -250,12 +251,13 @@ workflows:
               ignore:
                 - main
           requires:
-            - validate
-            - build_docker
-            - helm_lint
             - request-staging-approval
       - request-staging-approval:
           type: approval
+          requires:
+            - validate
+            - build_docker
+            - helm_lint
           filters:
             branches:
               ignore:
