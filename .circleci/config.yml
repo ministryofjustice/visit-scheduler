@@ -296,6 +296,7 @@ workflows:
     jobs:
       - hmpps/veracode_policy_scan:
           slack_channel: << pipeline.parameters.alerts-slack-channel >>
+          jdk_tag: "21.0"
           context:
             - veracode-credentials
             - hmpps-common-vars
