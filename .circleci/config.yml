@@ -271,6 +271,8 @@ workflows:
     jobs:
       - hmpps/gradle_owasp_dependency_check:
           slack_channel: << pipeline.parameters.alerts-slack-channel >>
+          jdk_tag: "21.0"
+          cache_key: "v2_0"
           context:
             - hmpps-common-vars
       - hmpps/trivy_latest_scan:
@@ -279,6 +281,7 @@ workflows:
             - hmpps-common-vars
       - hmpps/veracode_pipeline_scan:
           slack_channel: << pipeline.parameters.alerts-slack-channel >>
+          jdk_tag: "21.0"
           context:
             - veracode-credentials
             - hmpps-common-vars
