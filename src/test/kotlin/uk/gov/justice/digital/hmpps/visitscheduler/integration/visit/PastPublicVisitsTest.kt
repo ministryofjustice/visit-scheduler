@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_FUTURE_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_PAST_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -23,7 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 
 @DisplayName("GET $GET_FUTURE_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE")
-class FuturePublicVisitsTest : IntegrationTestBase() {
+class PastPublicVisitsTest : IntegrationTestBase() {
 
   @Autowired
   private lateinit var visitAssertHelper: VisitAssertHelper
@@ -33,55 +34,59 @@ class FuturePublicVisitsTest : IntegrationTestBase() {
 
   private lateinit var otherSessionTemplate: SessionTemplate
 
-  private lateinit var nearestVisit: Visit
-  private lateinit var visitFarInTheFuture: Visit
+  private lateinit var visitFarInThePast: Visit
+  private lateinit var nearestPastVisit: Visit
   private lateinit var visitInDifferentPrison: Visit
   private lateinit var visitWithOtherBooker: Visit
+
+  private val defaultBookerReference: String = "aTestRef"
 
   @BeforeEach
   internal fun createVisits() {
     otherSessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "AWE")
 
-    visitFarInTheFuture = createVisit(prisonId = "visit far away", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 6)
+    visitFarInThePast = createVisit(prisonId = "visit far in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -6)
 
-    visitInDifferentPrison = createVisit(prisonId = "visit different prison", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = otherSessionTemplate, userType = PUBLIC, slotDateWeeks = 4)
+    visitInDifferentPrison = createVisit(prisonId = "visit different prison", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = otherSessionTemplate, userType = PUBLIC, slotDateWeeks = -4)
 
-    nearestVisit = createVisit(prisonId = "nearest visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 0)
+    nearestPastVisit = createVisit(prisonId = "nearest visit in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
 
-    var visitInPast = createVisit(prisonId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
+    val visitToday = createVisit(prisonId = "nearest visit in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 0)
 
-    var visitBookerByStaff = createVisit(prisonId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = STAFF, slotDateWeeks = 1)
+    var visitInFuture = createVisit(prisonId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
 
-    var visitCancelled = createVisit(prisonId = "visit", actionedByValue = "aTestRef", visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
+    var visitBookerByStaff = createVisit(prisonId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = STAFF, slotDateWeeks = -1)
 
-    visitWithOtherBooker = createVisit(prisonId = "visit with other broker", actionedByValue = "aOtherTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 2)
+    var visitCancelled = createVisit(prisonId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
+
+    visitWithOtherBooker = createVisit(prisonId = "visit with other broker", actionedByValue = "aOtherTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -2)
   }
 
   @Test
-  fun `when booked public visits requested by booker reference aTestRef then associated visits are returned in the correct order`() {
+  fun `when past booked public visits requested by booker reference aTestRef then associated visits are returned in the correct order`() {
     // Given
     val bookerReference = "aTestRef"
 
     // When
-    val responseSpec = callPublicFutureVisitsEndPoint(bookerReference = bookerReference)
+    val responseSpec = callPublicPastVisitsEndPoint(bookerReference = bookerReference)
 
     // Then
     responseSpec.expectStatus().isOk
     val visitList = parseVisitsResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(3)
-    visitAssertHelper.assertVisitDto(visitList[0], nearestVisit)
+    visitAssertHelper.assertVisitDto(visitList[0], nearestPastVisit)
     visitAssertHelper.assertVisitDto(visitList[1], visitInDifferentPrison)
-    visitAssertHelper.assertVisitDto(visitList[2], visitFarInTheFuture)
+    visitAssertHelper.assertVisitDto(visitList[2], visitFarInThePast)
   }
 
   @Test
-  fun `when booked public visits requested by booker reference aOtherTestRef then associated visits are returned`() {
+  fun `when past booked public visits requested by booker reference aOtherTestRef then associated visits are returned`() {
     // Given
     val bookerReference = "aOtherTestRef"
 
     // When
-    val responseSpec = callPublicFutureVisitsEndPoint(bookerReference = bookerReference)
+    val responseSpec = callPublicPastVisitsEndPoint(bookerReference = bookerReference)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -97,7 +102,7 @@ class FuturePublicVisitsTest : IntegrationTestBase() {
     val noRoles = listOf<String>()
 
     // When
-    val responseSpec = callPublicFutureVisitsEndPoint(bookerReference = "aTestRole", roles = noRoles)
+    val responseSpec = callPublicPastVisitsEndPoint(bookerReference = "aTestRole", roles = noRoles)
 
     // Then
     responseSpec.expectStatus().isForbidden
@@ -110,18 +115,18 @@ class FuturePublicVisitsTest : IntegrationTestBase() {
     val noRoles = listOf<String>("SOME_OTHER_ROLE_VISIT_SCHEDULER")
 
     // When
-    val responseSpec = callPublicFutureVisitsEndPoint(bookerReference = "aTestRole", roles = noRoles)
+    val responseSpec = callPublicPastVisitsEndPoint(bookerReference = "aTestRole", roles = noRoles)
 
     // Then
     responseSpec.expectStatus().isForbidden
     verify(telemetryClient, times(1)).trackEvent(eq("visit-access-denied-error"), any(), isNull())
   }
 
-  fun callPublicFutureVisitsEndPoint(
+  fun callPublicPastVisitsEndPoint(
     bookerReference: String,
     roles: List<String> = listOf("ROLE_VISIT_SCHEDULER"),
   ): ResponseSpec {
-    val uri = GET_FUTURE_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE.replace("{bookerReference}", bookerReference)
+    val uri = GET_PAST_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE.replace("{bookerReference}", bookerReference)
     return webTestClient.get().uri(uri)
       .headers(setAuthorisation(roles = roles))
       .exchange()
