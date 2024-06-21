@@ -16,9 +16,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 
-const val GET_BOOKED_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/booked/future"
+const val GET_FUTURE_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/booked/future"
 const val GET_CANCELLED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/cancelled"
-const val GET_BOOKED_PAST_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/booked/past"
+const val GET_PAST_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/booked/past"
 
 @RestController
 @Validated
@@ -29,7 +29,7 @@ class PublicVisitController(
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(GET_BOOKED_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
+  @GetMapping(GET_FUTURE_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
   @Operation(
     summary = "Get future public booked visits by booker reference",
     description = "Get future public booked visits by booker reference",
@@ -99,7 +99,7 @@ class PublicVisitController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(GET_BOOKED_PAST_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
+  @GetMapping(GET_PAST_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
   @Operation(
     summary = "Get public past visits by booker reference",
     description = "Get public past visits by booker reference",
