@@ -15,7 +15,7 @@ import org.springframework.boot.test.mock.mockito.MockBean
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RELEASED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_DELETED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
@@ -87,7 +87,7 @@ class CleanUpApplicationsScheduleTest : IntegrationTestBase() {
 
   private fun assertDeleteEvent(application: Application) {
     verify(telemetryClient, times(1)).trackEvent(
-      eq(VISIT_SLOT_RELEASED_EVENT.eventName),
+      eq(APPLICATION_DELETED_EVENT.eventName),
       org.mockito.kotlin.check {
         assertThat(it["applicationReference"]).isEqualTo(application.reference)
         assertThat(it["prisonerId"]).isEqualTo(application.prisonerId)

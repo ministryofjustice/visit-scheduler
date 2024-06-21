@@ -162,7 +162,7 @@ Available custom events
 - `session-template-deleted` - a session template was deleted. It will contain the template id
 
 - `visit-slot-reserved` - a visit slot was reserved. It will contain the visit's application reference and basic information about the visit
-- `visit-slot-changed` - a visit change was started. It will contain the visit's application reference, reference and status
+- `application-slot-changed` - a visit change was started. It will contain the visit's application reference, reference and status
 - `visit-changed` - a booked visit was being changed. It will contain the visit's application reference, reference and basic information about the visit
 - `visit-booked` - a visit was booked. It will contain the visit's application reference, reference, status and an isUpdated flag to denote if it's a new or an updated visit
 - `visit-expired-visits-deleted` - expired visits were deleted. It will contain the list of expired application references that were deleted

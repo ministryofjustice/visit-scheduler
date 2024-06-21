@@ -561,7 +561,7 @@ class SessionServiceTest {
 
       val expectedAssociations = listOf(associationId)
 
-      val slots = mockSessionSlots(singleSession)
+      mockSessionSlots(singleSession)
       val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       val slotDate = saturdayAfter.toLocalDate()
       whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotDate, prison.id))

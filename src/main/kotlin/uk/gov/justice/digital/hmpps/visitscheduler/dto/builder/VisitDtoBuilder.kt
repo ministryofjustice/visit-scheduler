@@ -47,9 +47,7 @@ class VisitDtoBuilder {
     visitEntity: Visit,
   ): String {
     val application = visitEntity.getLastCompletedApplication()
-    return application?.let {
-      it.reference
-    } ?: run {
+    return application?.reference ?: run {
       // This catches an issues when two requests from the booking occur at the same time see bookVisit method in visit service
       // This happens when a double booking happens at the same time it is an edge case.
       LOG.error("Visit ${visitEntity.reference} should have a completed application")

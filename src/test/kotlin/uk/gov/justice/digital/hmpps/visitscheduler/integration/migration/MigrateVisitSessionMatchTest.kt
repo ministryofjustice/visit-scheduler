@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_HIGH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.A_PROVISIONAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType.FEMALE_CLOSED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.UNKNOWN
@@ -81,7 +82,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
 
       val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
       assertThat(eventAudit.type).isEqualTo(EventAuditType.MIGRATED_VISIT)
-      assertThat(eventAudit.actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userName).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userType).isEqualTo(STAFF)
       assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
       assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
@@ -1093,7 +1095,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
 
       val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
       assertThat(eventAudit.type).isEqualTo(EventAuditType.MIGRATED_VISIT)
-      assertThat(eventAudit.actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userName).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userType).isEqualTo(STAFF)
       assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
       assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
@@ -1163,7 +1166,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
 
       val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
       assertThat(eventAudit.type).isEqualTo(EventAuditType.MIGRATED_VISIT)
-      assertThat(eventAudit.actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userName).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userType).isEqualTo(STAFF)
       assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
       assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
@@ -1211,7 +1215,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
 
       val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
       assertThat(eventAudit.type).isEqualTo(EventAuditType.MIGRATED_VISIT)
-      assertThat(eventAudit.actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userName).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userType).isEqualTo(STAFF)
       assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
       assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
@@ -1269,7 +1274,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
 
       val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
       assertThat(eventAudit.type).isEqualTo(EventAuditType.MIGRATED_VISIT)
-      assertThat(eventAudit.actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userName).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userType).isEqualTo(STAFF)
       assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
       assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
@@ -1327,7 +1333,8 @@ class MigrateVisitSessionMatchTest : MigrationIntegrationTestBase() {
 
       val eventAudit = eventAuditRepository.findLastEventByBookingReference(visit.reference)
       assertThat(eventAudit.type).isEqualTo(EventAuditType.MIGRATED_VISIT)
-      assertThat(eventAudit.actionedBy).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userName).isEqualTo("Aled Evans")
+      assertThat(eventAudit.actionedBy.userType).isEqualTo(STAFF)
       assertThat(eventAudit.applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(eventAudit.bookingReference).isEqualTo(visit.reference)
       assertThat(eventAudit.sessionTemplateReference).isEqualTo(visit.sessionSlot.sessionTemplateReference)
