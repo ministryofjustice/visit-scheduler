@@ -18,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 
 const val GET_BOOKED_FUTURE_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/booked/visits/future"
 const val GET_CANCELLED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/cancelled/visits"
+const val GET_BOOKED_PAST_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/past/visits"
 
 @RestController
 @Validated
@@ -95,5 +96,40 @@ class PublicVisitController(
     bookerReference: String,
   ): List<VisitDto> {
     return visitService.getPublicCanceledVisitsByBookerReference(bookerReference)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(GET_BOOKED_PAST_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
+  @Operation(
+    summary = "Get public past visits by booker reference",
+    description = "Get public past visits by booker reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "past public visits returned",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to get past public visits by booker reference",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getPublicPastVisitsByBookerReference(
+    @Schema(description = "bookerReference", example = "asd-aed-vhj", required = true)
+    @PathVariable
+    bookerReference: String,
+  ): List<VisitDto> {
+    return visitService.getPublicPastVisitsByBookerReference(bookerReference)
   }
 }

@@ -370,7 +370,7 @@ abstract class IntegrationTestBase {
 
     var visit = createApplicationAndVisit(
       prisonerId = prisonId,
-      slotDate = startDate.plusWeeks(slotDateWeeks),
+      slotDate = LocalDate.now().plusWeeks(slotDateWeeks),
       sessionTemplate = sessionTemplate,
       visitStatus = visitStatus,
       userType = userType,
