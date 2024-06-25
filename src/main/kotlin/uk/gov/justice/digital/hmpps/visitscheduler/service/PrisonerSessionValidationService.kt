@@ -15,37 +15,61 @@ class PrisonerSessionValidationService(
   private val sessionCategoryValidator: SessionCategoryValidator,
 ) {
   fun isSessionAvailableToPrisoner(
+    sessionTemplates: List<SessionTemplate>? = null,
     sessionTemplate: SessionTemplate,
     prisoner: PrisonerDto,
     prisonerHousingLevels: Map<PrisonerHousingLevels, String?>?,
   ): Boolean {
-    return isSessionAvailableToPrisonerLocation(sessionTemplate, prisonerHousingLevels) &&
-      isSessionAvailableToPrisonerCategory(sessionTemplate, prisoner) &&
-      isSessionAvailableToPrisonerIncentiveLevel(sessionTemplate, prisoner)
+    return isSessionAvailableToPrisonerLocation(sessionTemplates, sessionTemplate, prisonerHousingLevels) &&
+      isSessionAvailableToPrisonerCategory(sessionTemplates, sessionTemplate, prisoner) &&
+      isSessionAvailableToPrisonerIncentiveLevel(sessionTemplates, sessionTemplate, prisoner)
   }
 
   private fun isSessionAvailableToPrisonerLocation(
+    sessionTemplates: List<SessionTemplate>?,
     sessionTemplate: SessionTemplate,
     prisonerHousingLevels: Map<PrisonerHousingLevels, String?>?,
   ): Boolean {
-    return if (prisonerHousingLevels != null) {
-      sessionLocationValidator.isAvailableToPrisoner(sessionTemplate, prisonerHousingLevels)
+    val hasSessionsWithLocationGroups = sessionTemplates?.any { it.permittedSessionLocationGroups.isNotEmpty() } ?: true
+
+    // if there are sessions with location groups, check if the session is available to prisoner else return true as this is available to all
+    return if (hasSessionsWithLocationGroups) {
+      if (prisonerHousingLevels != null) {
+        sessionLocationValidator.isAvailableToPrisoner(sessionTemplate, prisonerHousingLevels)
+      } else {
+        true
+      }
     } else {
       true
     }
   }
 
   private fun isSessionAvailableToPrisonerCategory(
+    sessionTemplates: List<SessionTemplate>?,
     sessionTemplate: SessionTemplate,
     prisoner: PrisonerDto,
   ): Boolean {
-    return sessionCategoryValidator.isAvailableToPrisoner(sessionTemplate, prisoner)
+    // if there are sessions with category groups, check if the session is available to prisoner else return true as this is available to all
+    val hasSessionsWithCategoryGroups = sessionTemplates?.any { it.permittedSessionCategoryGroups.isNotEmpty() } ?: true
+
+    return if (hasSessionsWithCategoryGroups) {
+      sessionCategoryValidator.isAvailableToPrisoner(sessionTemplate, prisoner)
+    } else {
+      true
+    }
   }
 
   private fun isSessionAvailableToPrisonerIncentiveLevel(
+    sessionTemplates: List<SessionTemplate>?,
     sessionTemplate: SessionTemplate,
     prisoner: PrisonerDto,
   ): Boolean {
-    return sessionIncentiveValidator.isAvailableToPrisoner(sessionTemplate, prisoner)
+    // if there are sessions with incentive levels, check if the session is available to prisoner else return true as this is available to all
+    val hasSessionsWithIncentiveGroups = sessionTemplates?.any { it.permittedSessionIncentiveLevelGroups.isNotEmpty() } ?: true
+    return if (hasSessionsWithIncentiveGroups) {
+      return sessionIncentiveValidator.isAvailableToPrisoner(sessionTemplate, prisoner)
+    } else {
+      true
+    }
   }
 }

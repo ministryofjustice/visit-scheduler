@@ -99,9 +99,9 @@ class SessionService(
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
     val prisonerHousingLevels = getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
 
-    sessionTemplates = sessionTemplates.filter {
+    sessionTemplates = sessionTemplates.filter { sessionTemplate ->
       // checks for location, incentive and category
-      prisonerSessionValidationService.isSessionAvailableToPrisoner(it, prisoner, prisonerHousingLevels)
+      prisonerSessionValidationService.isSessionAvailableToPrisoner(sessionTemplates, sessionTemplate, prisoner, prisonerHousingLevels)
     }
 
     val visitSessions = sessionTemplates.map {
