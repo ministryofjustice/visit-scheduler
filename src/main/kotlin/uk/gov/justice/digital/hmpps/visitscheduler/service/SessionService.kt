@@ -10,7 +10,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOU
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -97,7 +96,7 @@ class SessionService(
     }!!
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
-    val prisonerHousingLevels = getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
+    val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
 
     sessionTemplates = sessionTemplates.filter { sessionTemplate ->
       // checks for location, incentive and category
@@ -137,14 +136,6 @@ class SessionService(
     return visitSessions.filter {
       hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
     }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList()
-  }
-
-  private fun getPrisonerHousingLevels(prisonerId: String, prisonCode: String, sessionTemplates: List<SessionTemplate>): Map<PrisonerHousingLevels, String?>? {
-    val prisonerHousingLocation = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
-
-    return prisonerHousingLocation?.let {
-      prisonerService.getLevelsMapForPrisoner(it, sessionTemplates)
-    }
   }
 
   private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean {
