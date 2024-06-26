@@ -3,8 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.utils
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.validators.SessionCategoryValidator
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.validators.SessionIncentiveValidator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.validators.SessionLocationValidator
 
 const val LOCATION_NOT_PERMITTED = -10
@@ -13,15 +11,14 @@ const val LOCATION_NOT_PERMITTED = -10
 class PrisonerSessionValidator(
   private val levelMatcher: PrisonerLevelMatcher,
   private val sessionLocationValidator: SessionLocationValidator,
-  private val sessionCategoryValidator: SessionCategoryValidator,
-  private val sessionIncentiveValidator: SessionIncentiveValidator,
 ) {
   fun getLocationScore(
     prisonerLevels: Map<PrisonerHousingLevels, String?>,
     sessionTemplate: SessionTemplate,
   ): Int {
-    if (sessionLocationValidator.isAvailableToPrisoner(sessionTemplate, prisonerLevels)) {
-      return if (sessionLocationValidator.isSessionForAllPrisonerLocations(sessionTemplate) || !sessionTemplate.includeLocationGroupType) {
+    if (sessionLocationValidator.isValid(sessionTemplate, prisonerLevels)) {
+      val isSessionForAllPrisonerLocations = sessionTemplate.permittedSessionLocationGroups.isEmpty()
+      return if (isSessionForAllPrisonerLocations || !sessionTemplate.includeLocationGroupType) {
         0
       } else {
         getHighestLevelScore(sessionTemplate, prisonerLevels)
@@ -49,17 +46,5 @@ class PrisonerSessionValidator(
       }
     }
     return highestScore
-  }
-
-  fun isSessionForAllCategories(
-    sessionTemplate: SessionTemplate,
-  ): Boolean {
-    return sessionCategoryValidator.isSessionForAllCategoryLevels(sessionTemplate)
-  }
-
-  fun isSessionForAllIncentiveLevels(
-    sessionTemplate: SessionTemplate,
-  ): Boolean {
-    return sessionIncentiveValidator.isSessionForAllIncentiveLevels(sessionTemplate)
   }
 }

@@ -34,11 +34,7 @@ class PrisonerSessionValidationService(
 
     // if there are sessions with location groups, check if the session is available to prisoner else return true as this is available to all
     return if (hasSessionsWithLocationGroups) {
-      if (prisonerHousingLevels != null) {
-        sessionLocationValidator.isAvailableToPrisoner(sessionTemplate, prisonerHousingLevels)
-      } else {
-        true
-      }
+      sessionLocationValidator.isValid(sessionTemplate, prisonerHousingLevels)
     } else {
       true
     }
@@ -53,7 +49,7 @@ class PrisonerSessionValidationService(
     val hasSessionsWithCategoryGroups = sessionTemplates?.any { it.permittedSessionCategoryGroups.isNotEmpty() } ?: true
 
     return if (hasSessionsWithCategoryGroups) {
-      sessionCategoryValidator.isAvailableToPrisoner(sessionTemplate, prisoner)
+      sessionCategoryValidator.isValid(sessionTemplate, prisoner)
     } else {
       true
     }
@@ -67,7 +63,7 @@ class PrisonerSessionValidationService(
     // if there are sessions with incentive levels, check if the session is available to prisoner else return true as this is available to all
     val hasSessionsWithIncentiveGroups = sessionTemplates?.any { it.permittedSessionIncentiveLevelGroups.isNotEmpty() } ?: true
     return if (hasSessionsWithIncentiveGroups) {
-      return sessionIncentiveValidator.isAvailableToPrisoner(sessionTemplate, prisoner)
+      sessionIncentiveValidator.isValid(sessionTemplate, prisoner)
     } else {
       true
     }
