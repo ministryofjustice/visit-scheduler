@@ -86,7 +86,7 @@ class VisitSessionController(
     )
     max: Int?,
   ): List<VisitSessionDto> {
-    return sessionService.getVisitSessions(prisonCode, prisonerId, min, max)
+    return sessionService.getVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -142,8 +142,14 @@ class VisitSessionController(
       example = "2024-12-20",
     )
     toDate: LocalDate,
+    @RequestParam(value = "excludedApplicationReference", required = false)
+    @Parameter(
+      description = "The current application reference to be excluded from capacity count and double booking",
+      example = "dfs-wjs-eqr",
+    )
+    excludedApplicationReference: String? = null,
   ): List<AvailableVisitSessionDto> {
-    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate))
+    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

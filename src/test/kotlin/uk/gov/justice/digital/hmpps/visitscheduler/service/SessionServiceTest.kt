@@ -561,7 +561,7 @@ class SessionServiceTest {
 
       val expectedAssociations = listOf(associationId)
 
-      val slots = mockSessionSlots(singleSession)
+      mockSessionSlots(singleSession)
       val saturdayAfter = currentDate.with(TemporalAdjusters.next(singleSession.dayOfWeek)).atTime(singleSession.startTime)
       val slotDate = saturdayAfter.toLocalDate()
       whenever(visitRepository.hasActiveVisitsForDate(expectedAssociations, slotDate, prison.id))
@@ -614,7 +614,7 @@ class SessionServiceTest {
       assertThat(sessions).size().isEqualTo(1)
       assertDate(sessions[0].startTimestamp, saturdayAfter.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME), dayOfWeek)
       assertThat(sessions[0].sessionConflicts).size().isEqualTo(1)
-      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.DOUBLE_BOOKED)
+      assertThat(sessions[0].sessionConflicts.first()).isEqualTo(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
       Mockito.verify(prisonerService, times(1)).getPrisonerNonAssociationList(prisonerId)
     }
 
