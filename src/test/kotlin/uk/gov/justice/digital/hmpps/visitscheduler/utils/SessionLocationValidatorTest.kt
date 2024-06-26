@@ -25,6 +25,29 @@ class SessionLocationValidatorTest {
   private val sessionLocationValidator = SessionLocationValidator(PrisonerLevelMatcher())
   private val prisonerService = PrisonerService(mock(), mock(), mock(), mock())
 
+  @Test
+  fun `when prisoner's housing level is null sessions available to all prisoners will be available to this prisoner`() {
+    // Given
+    val sessionTemplate = createSessionTemplate()
+    // When
+    val result = sessionLocationValidator.isValid(prisonerHousingLevels = null, sessionTemplate = sessionTemplate)
+    // Then
+    assertThat(result).isTrue()
+  }
+
+  @Test
+  fun `when prisoner's housing level is null sessions available to location based prisoners will be available to this prisoner`() {
+    // Given
+    val sessionTemplate = createSessionTemplate()
+    val allowed = AllowedSessionLocationHierarchy("C", null, null, null)
+    val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed), prison = sessionTemplate.prison)
+    sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
+    // When
+    val result = sessionLocationValidator.isValid(prisonerHousingLevels = null, sessionTemplate = sessionTemplate)
+    // Then
+    assertThat(result).isFalse
+  }
+
   @Nested
   @DisplayName("Tests when a prisoner exists in a prison which has 3 levels")
   inner class Level3PrisonTest {
@@ -45,7 +68,7 @@ class SessionLocationValidatorTest {
       val sessionTemplate = createSessionTemplate()
 
       // Then
-      assertThat(sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)).isTrue
+      assertThat(sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)).isTrue
     }
 
     @Test
@@ -60,7 +83,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
 
       // Then
       assertThat(result).isTrue
@@ -82,7 +105,7 @@ class SessionLocationValidatorTest {
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
 
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
 
       // Then
       assertThat(result).isTrue
@@ -102,7 +125,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed1, allowed2, allowed3, allowed4), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
 
       // Then
       assertThat(result).isFalse
@@ -118,7 +141,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
 
       // Then
       assertThat(result).isTrue
@@ -138,7 +161,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed1, allowed2, allowed3, allowed4), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
 
       // Then
       assertThat(result).isTrue
@@ -158,7 +181,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed1, allowed2, allowed3, allowed4), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
 
       // Then
       assertThat(result).isFalse
@@ -190,7 +213,7 @@ class SessionLocationValidatorTest {
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
 
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isTrue
     }
@@ -211,7 +234,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed1, allowed2, allowed3, allowed4, allowed5), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail3LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isFalse
     }
@@ -234,7 +257,7 @@ class SessionLocationValidatorTest {
       // Given
       val sessionTemplate = createSessionTemplate()
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isTrue
     }
@@ -250,7 +273,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isTrue
     }
@@ -269,7 +292,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed1, allowed2, allowed3, allowed4), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isTrue
     }
@@ -288,7 +311,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed1, allowed2, allowed3, allowed4), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isFalse
     }
@@ -304,7 +327,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isTrue
     }
@@ -324,7 +347,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed1, allowed2, allowed3, allowed4), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isTrue
     }
@@ -345,7 +368,7 @@ class SessionLocationValidatorTest {
       val sessionLocationGroup = createSessionLocationGroup(levelsList = listOf(allowed1, allowed2, allowed3, allowed4), prison = sessionTemplate.prison)
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isFalse
     }
@@ -378,7 +401,7 @@ class SessionLocationValidatorTest {
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
 
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isTrue
     }
@@ -404,7 +427,7 @@ class SessionLocationValidatorTest {
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
 
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isFalse
     }
@@ -439,7 +462,7 @@ class SessionLocationValidatorTest {
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
 
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isTrue
     }
@@ -477,7 +500,7 @@ class SessionLocationValidatorTest {
       sessionTemplate.permittedSessionLocationGroups.add(sessionLocationGroup)
 
       // When
-      val result = sessionLocationValidator.isAvailableToPrisoner(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
+      val result = sessionLocationValidator.isValid(prisonerHousingLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetail4LevelPrison, emptyList()), sessionTemplate = sessionTemplate)
       // Then
       assertThat(result).isTrue
     }

@@ -8,7 +8,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerLevelMatcher
 
 @Component
-@SessionValidator(name = "Session location validator", description = "Validates if a session is available to a prisoner based on their location")
 class SessionLocationValidator(
   private val prisonerLevelMatcher: PrisonerLevelMatcher,
 ) {
@@ -16,31 +15,31 @@ class SessionLocationValidator(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun isAvailableToPrisoner(
+  fun isValid(
     sessionTemplate: SessionTemplate,
-    prisonerHousingLevels: Map<PrisonerHousingLevels, String?>,
+    prisonerHousingLevels: Map<PrisonerHousingLevels, String?>?,
   ): Boolean {
     return isSessionAvailableToPrisonerLocation(prisonerHousingLevels, sessionTemplate)
   }
 
   private fun isSessionAvailableToPrisonerLocation(
-    prisonerLevels: Map<PrisonerHousingLevels, String?>,
+    prisonerLevels: Map<PrisonerHousingLevels, String?>?,
     sessionTemplate: SessionTemplate,
   ): Boolean {
-    if (isSessionForAllPrisonerLocations(sessionTemplate)) {
+    val isSessionForAllPrisonerLocations = sessionTemplate.permittedSessionLocationGroups.isEmpty()
+    if (isSessionForAllPrisonerLocations) {
       return true
     }
 
-    return if (sessionTemplate.includeLocationGroupType) {
-      sessionTemplate.permittedSessionLocationGroups.any { prisonerLevelMatcher.test(it, prisonerLevels) }
+    // if prisoner levels not passed - location restricted sessions will not be returned
+    return if (prisonerLevels == null) {
+      false
     } else {
-      sessionTemplate.permittedSessionLocationGroups.none { prisonerLevelMatcher.test(it, prisonerLevels) }
+      if (sessionTemplate.includeLocationGroupType) {
+        sessionTemplate.permittedSessionLocationGroups.any { prisonerLevelMatcher.test(it, prisonerLevels) }
+      } else {
+        sessionTemplate.permittedSessionLocationGroups.none { prisonerLevelMatcher.test(it, prisonerLevels) }
+      }
     }
-  }
-
-  fun isSessionForAllPrisonerLocations(
-    sessionTemplate: SessionTemplate,
-  ): Boolean {
-    return sessionTemplate.permittedSessionLocationGroups.isEmpty()
   }
 }

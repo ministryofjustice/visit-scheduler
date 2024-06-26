@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerIncentiveLevelMatcher
 
 @Component
-@SessionValidator(name = "Session incentive validator", description = "Validates if a session is available to a prisoner based on prisoner's incentive levels")
 class SessionIncentiveValidator(
   private val incentiveLevelMatcher: PrisonerIncentiveLevelMatcher,
 ) {
@@ -17,24 +16,19 @@ class SessionIncentiveValidator(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun isAvailableToPrisoner(
+  fun isValid(
     sessionTemplate: SessionTemplate,
     prisoner: PrisonerDto?,
   ): Boolean {
     return isSessionAvailableToIncentiveLevel(prisoner?.incentiveLevel, sessionTemplate)
   }
 
-  fun isSessionForAllIncentiveLevels(
-    sessionTemplate: SessionTemplate,
-  ): Boolean {
-    return sessionTemplate.permittedSessionIncentiveLevelGroups.isEmpty()
-  }
-
   private fun isSessionAvailableToIncentiveLevel(
     prisonerIncentiveLevel: IncentiveLevel?,
     sessionTemplate: SessionTemplate,
   ): Boolean {
-    if (!isSessionForAllIncentiveLevels(sessionTemplate)) {
+    val isSessionForAllIncentiveLevels = sessionTemplate.permittedSessionIncentiveLevelGroups.isEmpty()
+    if (!isSessionForAllIncentiveLevels) {
       return incentiveLevelMatcher.test(prisonerIncentiveLevel, sessionTemplate)
     }
     return true
