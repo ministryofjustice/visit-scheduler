@@ -24,6 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
@@ -87,13 +88,13 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     val auditEvents = testEventAuditRepository.getAuditByType(PRISON_VISITS_BLOCKED_FOR_DATE)
     assertThat(auditEvents).hasSize(1)
     with(auditEvents[0]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
       assertThat(bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
       assertThat(applicationReference).isEqualTo(bookedVisitForSamePrison.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(bookedVisitForSamePrison.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISON_VISITS_BLOCKED_FOR_DATE)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(STAFF)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
     }
   }
 

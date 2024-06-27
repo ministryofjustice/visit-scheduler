@@ -3,6 +3,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.helper
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
@@ -62,6 +63,7 @@ class ApplicationEntityHelper(
     visitType: VisitType = sessionTemplate.visitType,
     reservedSlot: Boolean = true,
     completed: Boolean = true,
+    userType: UserType = STAFF,
   ): Application {
     val slotDateLocal = slotDate ?: run {
       sessionTemplate.validFromDate.with(sessionTemplate.dayOfWeek).plusWeeks(1)
@@ -82,7 +84,7 @@ class ApplicationEntityHelper(
         createdBy = "",
         reservedSlot = reservedSlot,
         completed = completed,
-        userType = STAFF,
+        userType = userType,
       ),
     )
   }

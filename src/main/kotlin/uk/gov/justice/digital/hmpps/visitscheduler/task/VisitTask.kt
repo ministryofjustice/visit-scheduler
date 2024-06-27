@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.task
 
-import com.microsoft.applicationinsights.TelemetryClient
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -8,7 +7,6 @@ import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfiguration
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
@@ -22,7 +20,6 @@ class VisitTask(
   private val visitService: VisitService,
   private val sessionService: SessionService,
   private val prisonsService: PrisonsService,
-  private val telemetryClient: TelemetryClient,
   private val flagVisitTaskConfiguration: FlagVisitTaskConfiguration,
   private val telemetryClientService: TelemetryClientService,
 ) {
@@ -76,23 +73,23 @@ class VisitTask(
 
     log.debug("Started check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
     var sessions = emptyList<VisitSessionDto>()
-    var visitTrackEvent = getFlaggedVisitTrackEvent(visit)
 
+    var exception: Exception? = null
     try {
       sessions = sessionService.getVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays)
     } catch (e: PrisonerNotInSuppliedPrisonException) {
-      visitTrackEvent = handleException(visit, visitTrackEvent, e)
+      exception = e
     } catch (e: Exception) {
       // only log this if the visit is being retried
       if (isRetry) {
-        visitTrackEvent = handleException(visit, visitTrackEvent, e)
+        exception = e
       } else {
         retry = true
       }
     }
 
     if (sessions.isEmpty() && !retry) {
-      trackEvent(visitTrackEvent)
+      trackEvent(visit, exception)
       log.info("Flagged Visit: Visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check.", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
     }
 
@@ -107,44 +104,11 @@ class VisitTask(
     return retry
   }
 
-  private fun handleException(visit: VisitDto, visitTrackEvent: MutableMap<String, String>, e: Exception): MutableMap<String, String> {
-    visitTrackEvent["hasException"] = "true"
-    if (e is PrisonerNotInSuppliedPrisonException) {
-      visitTrackEvent["hasPrisonerMoved"] = "true"
-      visitTrackEvent["additionalInformation"] = e.message ?: "Prisoner has moved"
-    } else {
-      visitTrackEvent["additionalInformation"] = e.message ?: "An exception occurred"
-    }
-    log.info("Flagged Visit: $e raised for Visit with reference - ${visit.reference} ,prisoner id - ${visit.prisonerId}, prison code - ${visit.prisonCode}, start time - ${visit.startTimestamp}, end time - ${visit.endTimestamp}, error message - ${e.message}")
-    return visitTrackEvent
-  }
-
-  private fun trackEvent(properties: Map<String, String>) {
+  private fun trackEvent(visit: VisitDto, exception: Exception?) {
     try {
-      telemetryClient.trackEvent(TelemetryVisitEvents.FLAGGED_VISIT_EVENT.eventName, properties, null)
+      telemetryClientService.trackFlaggedVisitEvent(visit, exception)
     } catch (e: RuntimeException) {
       VisitService.LOG.error("Error occurred in call to telemetry client to log event - $e.toString()")
     }
-  }
-
-  private fun getFlaggedVisitTrackEvent(visit: VisitDto): MutableMap<String, String> {
-    val eventAudit = this.visitService.getLastEventForBooking(visit.reference)
-
-    val flagVisitMap = mutableMapOf(
-      "reference" to visit.reference,
-      "prisonerId" to visit.prisonerId,
-      "prisonId" to visit.prisonCode,
-      "visitType" to visit.visitType.name,
-      "visitRestriction" to visit.visitRestriction.name,
-      "visitStart" to telemetryClientService.formatDateTimeToString(visit.startTimestamp),
-      "visitEnd" to telemetryClientService.formatDateTimeToString(visit.endTimestamp),
-      "visitStatus" to visit.visitStatus.name,
-    )
-
-    eventAudit?.let {
-      flagVisitMap["createdBy"] = it.actionedBy
-    }
-
-    return flagVisitMap
   }
 }

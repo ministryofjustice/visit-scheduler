@@ -11,15 +11,16 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_SEARCH_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitAssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
@@ -31,6 +32,9 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
+
+  @Autowired
+  private lateinit var visitAssertHelper: VisitAssertHelper
 
   private lateinit var visit: Visit
   private lateinit var otherSessionTemplate: SessionTemplate
@@ -72,8 +76,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     Assertions.assertThat(visit.prisonerId).isEqualTo(visit.prisonerId)
     Assertions.assertThat(visitList.size).isEqualTo(2)
-    assertVisitDto(visitList[0], visitCancelled)
-    assertVisitDto(visitList[1], visit)
+    visitAssertHelper.assertVisitDto(visitList[0], visitCancelled)
+    visitAssertHelper.assertVisitDto(visitList[1], visit)
   }
 
   @Test
@@ -89,7 +93,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val visitList = parseVisitsPageResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(1)
-    assertVisitDto(visitList[0], visitInDifferentPrison)
+    visitAssertHelper.assertVisitDto(visitList[0], visitInDifferentPrison)
   }
 
   @Test
@@ -105,7 +109,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val visitList = parseVisitsPageResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(1)
-    assertVisitDto(visitList[0], visitCancelled)
+    visitAssertHelper.assertVisitDto(visitList[0], visitCancelled)
   }
 
   @Test
@@ -123,7 +127,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val visitList = parseVisitsPageResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(1)
-    assertVisitDto(visitList[0], visitCancelled)
+    visitAssertHelper.assertVisitDto(visitList[0], visitCancelled)
   }
 
   @Test
@@ -140,8 +144,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val visitList = parseVisitsPageResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(2)
-    assertVisitDto(visitList[0], visitCancelled)
-    assertVisitDto(visitList[1], visit)
+    visitAssertHelper.assertVisitDto(visitList[0], visitCancelled)
+    visitAssertHelper.assertVisitDto(visitList[1], visit)
   }
 
   @Test
@@ -159,8 +163,8 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val visitList = parseVisitsPageResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(2)
-    assertVisitDto(visitList[0], visitCancelled)
-    assertVisitDto(visitList[1], visit)
+    visitAssertHelper.assertVisitDto(visitList[0], visitCancelled)
+    visitAssertHelper.assertVisitDto(visitList[1], visit)
   }
 
   @Test
@@ -176,7 +180,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val visitList = parseVisitsPageResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(1)
-    assertVisitDto(visitList[0], visit)
+    visitAssertHelper.assertVisitDto(visitList[0], visit)
   }
 
   @Test
@@ -192,7 +196,7 @@ class VisitsByFilterTest : IntegrationTestBase() {
     val visitList = parseVisitsPageResponse(responseSpec)
 
     Assertions.assertThat(visitList.size).isEqualTo(1)
-    assertVisitDto(visitList[0], visitCancelled)
+    visitAssertHelper.assertVisitDto(visitList[0], visitCancelled)
   }
 
   @Test
@@ -210,13 +214,13 @@ class VisitsByFilterTest : IntegrationTestBase() {
     responsePageOne.expectStatus().isOk
     val visitListPageOne = parseVisitsPageResponse(responsePageOne)
     Assertions.assertThat(visitListPageOne.size).isEqualTo(1)
-    assertVisitDto(visitListPageOne[0], visitCancelled)
+    visitAssertHelper.assertVisitDto(visitListPageOne[0], visitCancelled)
 
     // And - Page 1
     responsePageTwo.expectStatus().isOk
     val visitListPageTwo = parseVisitsPageResponse(responsePageTwo)
     Assertions.assertThat(visitListPageTwo.size).isEqualTo(1)
-    assertVisitDto(visitListPageTwo[0], visit)
+    visitAssertHelper.assertVisitDto(visitListPageTwo[0], visit)
   }
 
   @Test
@@ -287,45 +291,6 @@ class VisitsByFilterTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isUnauthorized
-  }
-
-  private fun assertVisitDto(visitDto: VisitDto, visit: Visit) {
-    Assertions.assertThat(visitDto.reference).isEqualTo(visit.reference)
-    Assertions.assertThat(visitDto.applicationReference).isEqualTo(visit.getLastApplication()?.reference)
-    Assertions.assertThat(visitDto.prisonerId).isEqualTo(visit.prisonerId)
-    Assertions.assertThat(visitDto.prisonCode).isEqualTo(visit.prison.code)
-    Assertions.assertThat(visitDto.visitRoom).isEqualTo(visit.visitRoom)
-    Assertions.assertThat(visitDto.startTimestamp).isEqualTo(visit.sessionSlot.slotStart)
-    Assertions.assertThat(visitDto.endTimestamp).isEqualTo(visit.sessionSlot.slotEnd)
-    Assertions.assertThat(visitDto.visitType).isEqualTo(visit.visitType)
-    Assertions.assertThat(visitDto.visitStatus).isEqualTo(visit.visitStatus)
-    Assertions.assertThat(visitDto.visitRestriction).isEqualTo(visit.visitRestriction)
-
-    Assertions.assertThat(visitDto.visitContact?.name).isEqualTo(visit.visitContact!!.name)
-    Assertions.assertThat(visitDto.visitContact?.telephone).isEqualTo(visit.visitContact!!.telephone)
-
-    Assertions.assertThat(visitDto.visitors.size).isEqualTo(visit.visitors.size)
-    visit.visitors.forEachIndexed { index, visitVisitor ->
-      Assertions.assertThat(visitDto.visitors[index].nomisPersonId).isEqualTo(visitVisitor.nomisPersonId)
-      Assertions.assertThat(visitDto.visitors[index].visitContact).isEqualTo(visitVisitor.visitContact)
-    }
-
-    visit.support?.let {
-      Assertions.assertThat(visitDto.visitorSupport?.description).isEqualTo(it.description)
-    }
-
-    Assertions.assertThat(visitDto.visitNotes.size).isEqualTo(visit.visitNotes.size)
-    visit.visitNotes.forEachIndexed { index, visitNote ->
-      Assertions.assertThat(visitDto.visitNotes[index].type).isEqualTo(visitNote.type)
-      Assertions.assertThat(visitDto.visitNotes[index].text).isEqualTo(visitNote.text)
-    }
-
-    visit.outcomeStatus?.let {
-      Assertions.assertThat(visitDto.outcomeStatus).isEqualTo(visit.outcomeStatus)
-    }
-
-    Assertions.assertThat(visitDto.createdTimestamp).isEqualTo(visit.createTimestamp)
-    Assertions.assertThat(visitDto.modifiedTimestamp).isNotNull()
   }
 
   fun callSearchVisitEndPoint(

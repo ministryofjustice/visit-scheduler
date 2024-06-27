@@ -21,8 +21,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedRea
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType.TEMPORARY_ABSENCE_RETURN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType.TRANSFERRED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerHadBeenReceived
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -38,25 +39,30 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
   val prisonerId = "AA11BCC"
   val prisonCode = "ABC"
   val otherPrisonCode = "DEF"
+
   lateinit var prison1: Prison
   lateinit var prison2: Prison
   lateinit var sessionTemplate1: SessionTemplate
   lateinit var otherSessionTemplate: SessionTemplate
+  lateinit var otherPrisonSessionTemplate: SessionTemplate
 
   @BeforeEach
   internal fun setUp() {
     prison1 = prisonEntityHelper.create(prisonCode = prisonCode)
-    sessionTemplate1 = sessionTemplateEntityHelper.create(prison = prison1)
-
     prison2 = prisonEntityHelper.create(prisonCode = otherPrisonCode)
-    otherSessionTemplate = sessionTemplateEntityHelper.create(prison = prison2)
+
+    sessionTemplate1 = sessionTemplateEntityHelper.create(prison = prison1)
+    otherSessionTemplate = sessionTemplateEntityHelper.create(prison = prison1)
+    otherPrisonSessionTemplate = sessionTemplateEntityHelper.create(prison = prison2)
+
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
 
   @Test
   fun `when prisoner has received with reason transfer then only valid visits are flagged and saved`() {
     // Given
-    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, prisonCode, TRANSFERRED)
+    val notificationDto = PrisonerReceivedNotificationDto(prisonerId, otherPrisonCode, TRANSFERRED)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode)
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -66,10 +72,34 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
     )
     eventAuditEntityHelper.create(visit1)
 
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      sessionTemplate = otherSessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit2)
+
+    val visit3 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      sessionTemplate = otherPrisonSessionTemplate,
+    )
+
+    eventAuditEntityHelper.create(visit3)
+
     createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
       slotDate = LocalDate.now().minusDays(1),
       visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().minusDays(1),
+      visitStatus = CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 
@@ -80,37 +110,41 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
 
-    val visit2 = createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = otherSessionTemplate,
-    )
-    eventAuditEntityHelper.create(visit2)
-
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReceived(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit2), NotificationEventType.PRISONER_RECEIVED_EVENT)
-    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
+    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PRISONER_RECEIVED_EVENT)
+
+    verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(1)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit2.reference)
+    assertThat(visitNotifications).hasSize(2)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
 
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_RECEIVED_EVENT)
-    assertThat(auditEvents).hasSize(1)
+    assertThat(auditEvents).hasSize(2)
     with(auditEvents[0]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(bookingReference).isEqualTo(visit1.reference)
+      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(PRISONER_RECEIVED_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userName).isNull()
+    }
+    with(auditEvents[1]) {
       assertThat(bookingReference).isEqualTo(visit2.reference)
       assertThat(applicationReference).isEqualTo(visit2.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit2.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_RECEIVED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(UserType.STAFF)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userName).isNull()
     }
   }
 

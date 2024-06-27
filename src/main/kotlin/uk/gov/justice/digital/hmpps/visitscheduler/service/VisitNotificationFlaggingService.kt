@@ -6,8 +6,6 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.UNFLAGGED_VISIT_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 
 @Service
@@ -24,8 +22,7 @@ class VisitNotificationFlaggingService(
     type: NotificationEventType,
   ) {
     LOG.info("Flagging visit with reference {} for ${type.reviewType}", visit.reference)
-    val data = telemetryClientService.createFlagEventFromVisitDto(visit, bookingEventAudit, type)
-    telemetryClientService.trackEvent(FLAGGED_VISIT_EVENT, data)
+    telemetryClientService.trackFlagNotificationEvent(visit, bookingEventAudit, type)
   }
 
   fun unFlagTrackEvents(
@@ -35,7 +32,6 @@ class VisitNotificationFlaggingService(
     reasonText: String?,
   ) {
     LOG.info("Unflagging visit with reference {} , review type(s) - {}, reason - {} ", visitReference, type?.reviewType ?: "ALL", reason.desc)
-    val data = telemetryClientService.createUnFlagEventForVisit(visitReference, type, reason, reasonText)
-    telemetryClientService.trackEvent(UNFLAGGED_VISIT_EVENT, data)
+    telemetryClientService.trackUnFlagVisitNotificationEvent(visitReference, type, reason, reasonText)
   }
 }
