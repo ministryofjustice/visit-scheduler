@@ -132,7 +132,6 @@ SELECT pg_cancel_backend(24544);
 
 https://user-guide.cloud-platform.service.justice.gov.uk/documentation/other-topics/rds-snapshots.html
 
-
 ## Swagger v3
 Visit Scheduler
 ```

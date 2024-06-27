@@ -57,7 +57,11 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -95,13 +99,240 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.CLOSED,
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
     assertSession(visitSessionResults[0], nextAllowedDay, closedSessionTemplate, SessionRestriction.CLOSED)
+  }
+
+  @Test
+  fun `when exclude current application reference is given for an existing open application, then capacity count is not affected`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      openCapacity = 1,
+      closedCapacity = 0,
+    )
+
+    val reservedApplication = this.applicationEntityHelper.create(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      slotDate = nextAllowedDay,
+      sessionTemplate = sessionTemplate1,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = VisitRestriction.OPEN,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, 2, 28, excludedApplicationReference = reservedApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate1, SessionRestriction.OPEN)
+  }
+
+  @Test
+  fun `when exclude current application reference is given for an existing open reservation, then double reservations conflict does not occur`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      openCapacity = 2,
+      closedCapacity = 0,
+    )
+
+    val reservedApplication = this.applicationEntityHelper.create(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      slotDate = nextAllowedDay,
+      sessionTemplate = sessionTemplate1,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = VisitRestriction.OPEN,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, 1, 7, excludedApplicationReference = reservedApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate1, SessionRestriction.OPEN)
+  }
+
+  @Test
+  fun `when existing open application for slot, then double reservations conflict occurs`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      openCapacity = 2,
+      closedCapacity = 0,
+    )
+
+    this.applicationEntityHelper.create(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      slotDate = nextAllowedDay,
+      sessionTemplate = sessionTemplate1,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = VisitRestriction.OPEN,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, 1, 7)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(0)
+  }
+
+  @Test
+  fun `when exclude current application reference is given for an existing closed application, then capacity count is not affected `() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      openCapacity = 0,
+      closedCapacity = 1,
+    )
+
+    val reservedApplication = this.applicationEntityHelper.create(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      slotDate = nextAllowedDay,
+      sessionTemplate = sessionTemplate1,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = VisitRestriction.CLOSED,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 2, 28, excludedApplicationReference = reservedApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate1, SessionRestriction.CLOSED)
+  }
+
+  @Test
+  fun `when exclude current application reference is given for an existing closed application, then double reservations conflict does not occur`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      openCapacity = 0,
+      closedCapacity = 2,
+    )
+
+    val reservedApplication = this.applicationEntityHelper.create(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      slotDate = nextAllowedDay,
+      sessionTemplate = sessionTemplate1,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = VisitRestriction.CLOSED,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 1, 7, excludedApplicationReference = reservedApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate1, SessionRestriction.CLOSED)
+  }
+
+  @Test
+  fun `when existing closed application for slot, then double reservations conflict occurs`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      openCapacity = 0,
+      closedCapacity = 2,
+    )
+
+    this.applicationEntityHelper.create(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      slotDate = nextAllowedDay,
+      sessionTemplate = sessionTemplate1,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = VisitRestriction.CLOSED,
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 1, 7)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val returnResult = responseSpec.expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(0)
   }
 
   @Test
@@ -138,7 +369,13 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 2, 28)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.CLOSED,
+      2,
+      28,
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -190,7 +427,13 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 2, 28)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.CLOSED,
+      2,
+      28,
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -244,7 +487,13 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.CLOSED, 2, 28)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.CLOSED,
+      2,
+      28,
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -289,7 +538,13 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, 2, 28)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+      2,
+      28,
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -335,7 +590,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -399,7 +659,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -466,7 +731,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -497,7 +767,13 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode = prisonCode, prisonerId, SessionRestriction.OPEN, policyNoticeDaysMin = policyNoticeDaysMin, policyNoticeDaysMax = policyNoticeDaysMax)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode = prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -527,7 +803,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode = "AWE", prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode = "AWE",
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -584,7 +865,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -622,7 +908,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -654,7 +945,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -685,7 +981,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -720,7 +1021,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -755,7 +1061,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -794,7 +1105,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -833,7 +1149,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -861,7 +1182,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
@@ -906,7 +1232,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -951,7 +1282,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -984,7 +1320,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -1017,7 +1358,13 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, 0, 28)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+      0,
+      28,
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1050,7 +1397,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -1078,7 +1430,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     assertNoResponse(responseSpec)
@@ -1098,7 +1455,13 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
 
     // When
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, policyNoticeDaysMin, policyNoticeDaysMax)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+      policyNoticeDaysMin,
+      policyNoticeDaysMax,
+    )
 
     // Then
     assertNoResponse(responseSpec)
@@ -1116,7 +1479,13 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
 
     // When
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, policyNoticeDaysMin, policyNoticeDaysMax)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+      policyNoticeDaysMin,
+      policyNoticeDaysMax,
+    )
 
     // Then
     assertNoResponse(responseSpec)
@@ -1133,7 +1502,13 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     sessionTemplateEntityHelper.create(validFromDate = nextAllowedDay, validToDate = nextAllowedDay)
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN, policyNoticeDaysMin, policyNoticeDaysMax)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+      policyNoticeDaysMin,
+      policyNoticeDaysMax,
+    )
 
     // Then
     assertNoResponse(responseSpec)
@@ -1148,7 +1523,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     assertNoResponse(responseSpec)
@@ -1163,7 +1543,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     assertNoResponse(responseSpec)
@@ -1240,7 +1625,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1290,7 +1680,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1384,7 +1779,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1527,7 +1927,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1548,7 +1953,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
     // Then
     assertResponseLength(responseSpec, 4)
   }
@@ -1570,7 +1980,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1606,7 +2021,11 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -1677,7 +2096,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1717,7 +2141,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     assertResponseLength(responseSpec, 3)
@@ -1754,7 +2183,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1790,7 +2224,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1825,7 +2264,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1842,7 +2286,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     // When
     // get sessions call is being made with the incorrect prison Code
-    val responseSpec = callGetAvailableSessions(incorrectPrisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      incorrectPrisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
 
@@ -1877,7 +2326,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isNotFound.expectBody()
@@ -1911,7 +2365,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     val returnResult = responseSpec.expectStatus().isNotFound.expectBody()
@@ -1945,7 +2404,11 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+    )
 
     // Then
     responseSpec.expectStatus().isOk
@@ -1977,7 +2440,12 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, SessionRestriction.OPEN)
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.OPEN,
+
+    )
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -1989,13 +2457,16 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     sessionRestriction: SessionRestriction,
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
+    excludedApplicationReference: String? = null,
   ): ResponseSpec {
     val today = LocalDate.now()
     val fromDate = today.plusDays(policyNoticeDaysMin.toLong())
     val toDate = today.plusDays(policyNoticeDaysMax.toLong())
     val dateRange = DateRange(fromDate, toDate)
 
-    return webTestClient.get().uri("/visit-sessions/available?prisonId=$prisonCode&prisonerId=$prisonerId&sessionRestriction=$sessionRestriction&fromDate=${dateRange.fromDate}&toDate=${dateRange.toDate}")
+    val uri = "/visit-sessions/available?prisonId=$prisonCode&prisonerId=$prisonerId&sessionRestriction=$sessionRestriction&fromDate=${dateRange.fromDate}&toDate=${dateRange.toDate}&excludedApplicationReference=$excludedApplicationReference"
+
+    return webTestClient.get().uri(uri)
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }

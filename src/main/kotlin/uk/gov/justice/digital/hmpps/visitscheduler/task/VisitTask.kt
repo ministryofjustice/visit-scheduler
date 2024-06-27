@@ -76,7 +76,7 @@ class VisitTask(
 
     var exception: Exception? = null
     try {
-      sessions = sessionService.getVisitSessions(visit.prisonCode, visit.prisonerId, noticeDays, noticeDays)
+      sessions = sessionService.getVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays)
     } catch (e: PrisonerNotInSuppliedPrisonException) {
       exception = e
     } catch (e: Exception) {
