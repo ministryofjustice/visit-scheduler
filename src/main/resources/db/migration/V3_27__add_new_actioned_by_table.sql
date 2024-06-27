@@ -22,7 +22,7 @@
     -- It is faster to create a new table and insert the data and then add indexes at the end.
 
     CREATE TABLE tmp_event_audit_no_order (
-                        id serial NOT NULL PRIMARY KEY,
+                        id integer NOT NULL PRIMARY KEY,
                         booking_reference text NULL,
                         application_reference text NULL,
                         session_template_reference text NULL,
@@ -89,8 +89,7 @@
     );
 
 
-    INSERT INTO tmp_event_audit(id,
-                                         booking_reference,
+    INSERT INTO tmp_event_audit(         booking_reference,
                                          application_reference,
                                          session_template_reference,
                                          type,
@@ -98,8 +97,7 @@
                                          create_timestamp,
                                          text,
                                          actioned_by_id)
-                    SELECT id,
-                           booking_reference,
+                    SELECT booking_reference,
                            application_reference,
                            session_template_reference,
                            type,
