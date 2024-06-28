@@ -66,8 +66,8 @@ class ApplicationValidationService(
       prisonId = application.prisonId,
     )
 
-    // check if any double bookings for the same prisoner
-    checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot)
+    // check if any existing bookings for the same prisoner
+    checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot, visitReference = application.visit?.reference)
 
     // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
     checkVOLimits(application.prisonerId)
@@ -83,6 +83,16 @@ class ApplicationValidationService(
   ) {
     // check capacity for slot
     checkSlotCapacity(bookingRequestDto, application, existingBooking)
+
+    // check if there are non-association visits that have been booked in after the application was created
+    checkNonAssociationVisits(
+      prisonerId = application.prisonerId,
+      sessionDate = application.sessionSlot.slotDate,
+      prisonId = application.prisonId,
+    )
+
+    // check if any existing bookings for the same prisoner for the same slot
+    checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot, visitReference = application.visit?.reference)
   }
 
   private fun checkSessionSlot(application: Application, prisoner: PrisonerDto, prison: Prison) {
@@ -128,12 +138,14 @@ class ApplicationValidationService(
     }
   }
 
-  private fun checkDoubleBookedVisits(prisonerId: String, sessionSlot: SessionSlot) {
-    if (visitRepository.hasActiveVisitForDate(
-        prisonerId,
-        sessionSlot.id,
-      )
-    ) {
+  private fun checkDoubleBookedVisits(prisonerId: String, sessionSlot: SessionSlot, visitReference: String?) {
+    val hasExistingVisits = visitRepository.hasActiveVisitForSessionSlot(
+      prisonerId,
+      sessionSlot.id,
+      excludeVisitReference = visitReference,
+    )
+
+    if (hasExistingVisits) {
       throw ValidationException("There is already a visit booked for prisoner - $prisonerId on session slot - ${sessionSlot.reference}.")
     }
   }
