@@ -9,9 +9,12 @@ import org.springframework.http.HttpStatus.NOT_FOUND
 import org.springframework.stereotype.Component
 import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import org.springframework.web.reactive.function.client.bodyToMono
 import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import java.time.Duration
+import java.util.*
 
 @Component
 class PrisonApiClient(
@@ -41,6 +44,25 @@ class PrisonApiClient(
         }
       }
       .block(apiTimeout)
+  }
+
+  fun getVisitBalances(prisonerId: String): Optional<VisitBalancesDto>? {
+    return getVisitBalancesAsMono(prisonerId).block(apiTimeout)
+  }
+
+  fun getVisitBalancesAsMono(prisonerId: String): Mono<Optional<VisitBalancesDto>> {
+    return webClient.get()
+      .uri("/api/bookings/offenderNo/$prisonerId/visit/balances")
+      .retrieve()
+      .bodyToMono<Optional<VisitBalancesDto>>()
+      .onErrorResume { e ->
+        if (e is WebClientResponseException && isNotFoundError(e)) {
+          // return an Optional.empty element if 404 is thrown
+          return@onErrorResume Mono.just(Optional.empty())
+        } else {
+          Mono.error(e)
+        }
+      }
   }
 }
 

@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import kotlin.jvm.optionals.getOrNull
 
 @Service
 class PrisonerService(
@@ -73,13 +74,17 @@ class PrisonerService(
     }
   }
 
-
   fun getPrisonerHousingLevels(prisonerId: String, prisonCode: String, sessionTemplates: List<SessionTemplate>?): Map<PrisonerHousingLevels, String?>? {
     val prisonerHousingLocation = getPrisonerHousingLocation(prisonerId, prisonCode)
 
     return prisonerHousingLocation?.let {
       getLevelsMapForPrisoner(it, sessionTemplates)
     }
+  }
+
+  fun getVisitBalance(prisonerId: String): Int {
+    val visitBalance = prisonApiClient.getVisitBalances(prisonerId)?.getOrNull()
+    return ((visitBalance?.remainingPvo ?: 0) + (visitBalance?.remainingVo ?: 0))
   }
 
   private fun getHousingLevelForTransitionalPrisoner(transitionalLocation: String, lastPermanentLevels: List<PrisonerHousingLevelDto>, sessionTemplates: List<SessionTemplate>): List<PrisonerHousingLevelDto> {
