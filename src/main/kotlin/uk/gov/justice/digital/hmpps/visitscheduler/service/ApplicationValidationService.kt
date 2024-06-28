@@ -7,7 +7,8 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -31,15 +32,15 @@ class ApplicationValidationService(
   }
 
   fun isApplicationValid(
-    bookingRequestDto: BookingRequestDto?,
+    bookingRequestDto: BookingRequestDto? = null,
     application: Application,
-    existingBooking: Visit?,
+    existingBooking: Visit? = null,
   ) {
     try {
       when (application.userType) {
-        UserType.PUBLIC -> isPublicApplicationValid(bookingRequestDto, application, existingBooking)
+        PUBLIC -> isPublicApplicationValid(bookingRequestDto, application, existingBooking)
 
-        UserType.STAFF -> isStaffApplicationValid(bookingRequestDto, application, existingBooking)
+        STAFF -> isStaffApplicationValid(bookingRequestDto, application, existingBooking)
       }
     } catch (ve: ValidationException) {
       LOG.error("Validation failed for application reference - ${application.reference} with msg - ${ve.message}")
@@ -65,7 +66,7 @@ class ApplicationValidationService(
       prisonId = application.prisonId,
     )
 
-    // check if any double bookings
+    // check if any double bookings for the same prisoner
     checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot)
 
     // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
@@ -172,8 +173,8 @@ class ApplicationValidationService(
 
   private fun includeReservedApplications(application: Application): Boolean {
     return when (application.userType) {
-      UserType.STAFF -> applicationService.isExpiredApplication(application.modifyTimestamp!!)
-      UserType.PUBLIC -> false
+      STAFF -> applicationService.isExpiredApplication(application.modifyTimestamp!!)
+      PUBLIC -> false
     }
   }
 }

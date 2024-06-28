@@ -20,7 +20,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import kotlin.jvm.optionals.getOrNull
 
 @Service
 class PrisonerService(
@@ -83,7 +82,7 @@ class PrisonerService(
   }
 
   fun getVisitBalance(prisonerId: String): Int {
-    val visitBalance = prisonApiClient.getVisitBalances(prisonerId)?.getOrNull()
+    val visitBalance = prisonApiClient.getVisitBalances(prisonerId)
     return ((visitBalance?.remainingPvo ?: 0) + (visitBalance?.remainingVo ?: 0))
   }
 

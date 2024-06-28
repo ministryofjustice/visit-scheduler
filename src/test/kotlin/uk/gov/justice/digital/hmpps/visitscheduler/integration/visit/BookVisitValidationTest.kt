@@ -466,6 +466,25 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when call to visit balances returns 404 a validation exception is thrown citing no availble VOs`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    // call to visit balances returns 404
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, null)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("not enough VO balance for prisoner - $prisonerId")
+  }
+
+  @Test
   fun `when application has pending VOs visit is booked successfully`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 0)

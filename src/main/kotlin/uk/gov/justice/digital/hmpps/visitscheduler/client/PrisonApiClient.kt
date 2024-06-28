@@ -14,14 +14,12 @@ import reactor.core.publisher.Mono
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import java.time.Duration
-import java.util.*
 
 @Component
 class PrisonApiClient(
   @Qualifier("prisonApiWebClient") private val webClient: WebClient,
   @Value("\${prison.api.timeout:60s}") private val apiTimeout: Duration,
 ) {
-
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     private val TYPE_FOR_PRISONER_HOUSING_LOCATIONS = object : ParameterizedTypeReference<PrisonerHousingLocationsDto>() {}
@@ -46,23 +44,23 @@ class PrisonApiClient(
       .block(apiTimeout)
   }
 
-  fun getVisitBalances(prisonerId: String): Optional<VisitBalancesDto>? {
-    return getVisitBalancesAsMono(prisonerId).block(apiTimeout)
-  }
-
-  fun getVisitBalancesAsMono(prisonerId: String): Mono<Optional<VisitBalancesDto>> {
+  fun getVisitBalances(prisonerId: String): VisitBalancesDto? {
+    LOG.debug("Entered getVisitBalances $prisonerId")
+    val uri = "/api/bookings/offenderNo/$prisonerId/visit/balances"
     return webClient.get()
-      .uri("/api/bookings/offenderNo/$prisonerId/visit/balances")
+      .uri(uri)
       .retrieve()
-      .bodyToMono<Optional<VisitBalancesDto>>()
+      .bodyToMono<VisitBalancesDto>()
       .onErrorResume { e ->
-        if (e is WebClientResponseException && isNotFoundError(e)) {
-          // return an Optional.empty element if 404 is thrown
-          return@onErrorResume Mono.just(Optional.empty())
-        } else {
+        if (!isNotFoundError(e)) {
+          LOG.error("getVisitBalances Failed get request $uri")
           Mono.error(e)
+        } else {
+          LOG.debug("getVisitBalances Not Found get request $uri")
+          return@onErrorResume Mono.justOrEmpty(null)
         }
       }
+      .block(apiTimeout)
   }
 }
 
