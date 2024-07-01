@@ -59,21 +59,30 @@ class ApplicationValidationService(
     checkPrison(prison.code, prisoner.prisonCode)
     checkSessionSlot(application, prisoner, prison)
 
-    // check if there are non-association visits that have been booked in after the application was created
-    checkNonAssociationVisits(
-      prisonerId = application.prisonerId,
-      sessionDate = application.sessionSlot.slotDate,
-      prisonId = application.prisonId,
-    )
+    // TODO - revisit checkValidity once update is allowed for PUBLIC till then set checkValidity is always true
+    val checkValidity = true
 
-    // check if any existing bookings for the same prisoner
-    checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot, visitReference = application.visit?.reference)
+    if (checkValidity) {
+      // check if there are non-association visits that have been booked in after the application was created
+      checkNonAssociationVisits(
+        prisonerId = application.prisonerId,
+        sessionDate = application.sessionSlot.slotDate,
+        prisonId = application.prisonId,
+      )
 
-    // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
-    checkVOLimits(application.prisonerId)
+      // check if any existing bookings for the same prisoner
+      checkDoubleBookedVisits(
+        prisonerId = application.prisonerId,
+        sessionSlot = application.sessionSlot,
+        visitReference = application.visit?.reference,
+      )
 
-    // check capacity for slot
-    checkSlotCapacity(bookingRequestDto, application, existingBooking)
+      // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
+      checkVOLimits(application.prisonerId)
+
+      // check capacity for slot
+      checkSlotCapacity(bookingRequestDto, application, existingBooking)
+    }
   }
 
   private fun isStaffApplicationValid(
@@ -81,18 +90,44 @@ class ApplicationValidationService(
     application: Application,
     existingBooking: Visit?,
   ) {
-    // check capacity for slot
-    checkSlotCapacity(bookingRequestDto, application, existingBooking)
+    val checkValidity = checkValidity(application, existingBooking)
 
-    // check if there are non-association visits that have been booked in after the application was created
-    checkNonAssociationVisits(
-      prisonerId = application.prisonerId,
-      sessionDate = application.sessionSlot.slotDate,
-      prisonId = application.prisonId,
-    )
+    if (checkValidity) {
+      // check capacity for slot
+      checkSlotCapacity(bookingRequestDto, application, existingBooking)
 
-    // check if any existing bookings for the same prisoner for the same slot
-    checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot, visitReference = application.visit?.reference)
+      // check if there are non-association visits that have been booked in after the application was created
+      checkNonAssociationVisits(
+        prisonerId = application.prisonerId,
+        sessionDate = application.sessionSlot.slotDate,
+        prisonId = application.prisonId,
+      )
+
+      // check if any existing bookings for the same prisoner for the same slot
+      checkDoubleBookedVisits(
+        prisonerId = application.prisonerId,
+        sessionSlot = application.sessionSlot,
+        visitReference = application.visit?.reference,
+      )
+    }
+  }
+
+  private fun checkValidity(
+    application: Application,
+    existingBooking: Visit?,
+  ): Boolean {
+    // check validity only if it's a new request or the existing slot is being updated or a restriction is changed on an existing slot.
+    val newVisitRequest = (existingBooking == null)
+    val slotUpdate = (existingBooking != null && (application.sessionSlot.id != existingBooking.sessionSlot.id))
+    val existingSlotRestrictionUpdate = (
+      (existingBooking != null) &&
+        (
+          application.sessionSlot.id == existingBooking.sessionSlot.id &&
+            application.restriction != existingBooking.visitRestriction
+          )
+      )
+
+    return (newVisitRequest || slotUpdate || existingSlotRestrictionUpdate)
   }
 
   private fun checkSessionSlot(application: Application, prisoner: PrisonerDto, prison: Prison) {
