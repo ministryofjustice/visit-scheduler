@@ -6,11 +6,11 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -26,7 +26,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -43,14 +42,14 @@ class SessionService(
   private val visitRepository: VisitRepository,
   private val sessionSlotRepository: SessionSlotRepository,
   private val prisonerService: PrisonerService,
+  private val prisonerValidationService: PrisonerValidationService,
+  private val prisonsService: PrisonsService,
+  private val applicationService: ApplicationService,
+  private val prisonerSessionValidationService: PrisonerSessionValidationService,
   @Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,
   @Value("\${policy.session.non-association.filter:false}")
   private val policyFilterNonAssociation: Boolean,
-  private val sessionValidator: PrisonerSessionValidator,
-  private val prisonerValidationService: PrisonerValidationService,
-  private val prisonsService: PrisonsService,
-  private val applicationService: ApplicationService,
 ) {
 
   companion object {
@@ -98,10 +97,11 @@ class SessionService(
     }!!
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
-    sessionTemplates = sessionTemplates.filter {
-      isAvailableToLocation(it, sessionTemplates, prisonerId, prisonCode)
-        .and(isAvailableToCategory(it, sessionTemplates, prisoner.category))
-        .and(isAvailableToIncentiveLevel(it, sessionTemplates, prisoner.incentiveLevel))
+    val prisonerHousingLevels = getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
+
+    sessionTemplates = sessionTemplates.filter { sessionTemplate ->
+      // checks for location, incentive and category
+      prisonerSessionValidationService.isSessionAvailableToPrisoner(sessionTemplates, sessionTemplate, prisoner, prisonerHousingLevels)
     }
 
     val visitSessions = sessionTemplates.map {
@@ -137,6 +137,14 @@ class SessionService(
     return visitSessions.filter {
       hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
     }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList()
+  }
+
+  private fun getPrisonerHousingLevels(prisonerId: String, prisonCode: String, sessionTemplates: List<SessionTemplate>): Map<PrisonerHousingLevels, String?>? {
+    val prisonerHousingLocation = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
+
+    return prisonerHousingLocation?.let {
+      prisonerService.getLevelsMapForPrisoner(it, sessionTemplates)
+    }
   }
 
   private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean {
@@ -213,53 +221,6 @@ class SessionService(
       rangeStartDate = dateRange.fromDate,
       rangeEndDate = dateRange.toDate,
     )
-  }
-
-  fun isAvailableToLocation(
-    sessionTemplate: SessionTemplate,
-    sessionTemplates: List<SessionTemplate>,
-    prisonerId: String,
-    prisonCode: String,
-  ): Boolean {
-    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
-    return if (hasSessionsWithLocationGroups) {
-      val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
-      prisonerDetailDto?.let {
-        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto, sessionTemplates)
-        val keep = sessionValidator.isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)
-        LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference} Keep:$keep")
-        keep
-      } ?: true
-    } else {
-      true
-    }
-  }
-
-  private fun isAvailableToCategory(
-    sessionTemplate: SessionTemplate,
-    sessionTemplates: List<SessionTemplate>,
-    prisonerCategory: String?,
-  ): Boolean {
-    val hasSessionsWithCategoryGroups = sessionTemplates.any { sessionTemplate.permittedSessionCategoryGroups.isNotEmpty() }
-    return if (hasSessionsWithCategoryGroups) {
-      sessionValidator.isSessionAvailableToPrisonerCategory(prisonerCategory, sessionTemplate)
-    } else {
-      true
-    }
-  }
-
-  private fun isAvailableToIncentiveLevel(
-    sessionTemplate: SessionTemplate,
-    sessionTemplates: List<SessionTemplate>,
-    prisonerIncentiveLevel: IncentiveLevel?,
-  ): Boolean {
-    val hasSessionsWithIncentiveLevelGroups =
-      sessionTemplates.any { it.permittedSessionIncentiveLevelGroups.isNotEmpty() }
-    return if (hasSessionsWithIncentiveLevelGroups) {
-      sessionValidator.isSessionAvailableToIncentiveLevel(prisonerIncentiveLevel, sessionTemplate)
-    } else {
-      true
-    }
   }
 
   private fun buildVisitSessionsUsingTemplate(
