@@ -59,7 +59,7 @@ class ApplicationValidationService(
     checkPrison(prison.code, prisoner.prisonCode)
     checkSessionSlot(application, prisoner, prison)
 
-    // TODO - revisit checkValidity once update is allowed for PUBLIC till then set checkValidity is always true
+    // TODO - revisit checkValidity once update is allowed for PUBLIC till then checkValidity is always true
     val checkValidity = true
 
     if (checkValidity) {
