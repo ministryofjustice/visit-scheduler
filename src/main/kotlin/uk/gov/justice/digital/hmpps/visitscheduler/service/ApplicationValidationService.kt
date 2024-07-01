@@ -118,16 +118,8 @@ class ApplicationValidationService(
   ): Boolean {
     // check validity only if it's a new request or the existing slot is being updated or a restriction is changed on an existing slot.
     val newVisitRequest = (existingBooking == null)
-    val slotUpdate = (existingBooking != null && (application.sessionSlot.id != existingBooking.sessionSlot.id))
-    val existingSlotRestrictionUpdate = (
-      (existingBooking != null) &&
-        (
-          application.sessionSlot.id == existingBooking.sessionSlot.id &&
-            application.restriction != existingBooking.visitRestriction
-          )
-      )
-
-    return (newVisitRequest || slotUpdate || existingSlotRestrictionUpdate)
+    val hasSlotChangedSinceLastBooking = hasSlotChangedSinceLastBooking(existingBooking, application)
+    return (newVisitRequest || hasSlotChangedSinceLastBooking)
   }
 
   private fun checkSessionSlot(application: Application, prisoner: PrisonerDto, prison: Prison) {
