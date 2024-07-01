@@ -147,11 +147,13 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     "SELECT CASE WHEN (COUNT(v) > 0) THEN TRUE ELSE FALSE END FROM Visit v " +
       "WHERE v.visitStatus = 'BOOKED'  AND " +
       "(v.prisonerId = :prisonerId) AND " +
-      "(v.sessionSlotId = :sessionSlotId)",
+      "(v.sessionSlotId = :sessionSlotId) AND " +
+      "(:#{#excludeVisitReference} is null OR v.reference != :excludeVisitReference)",
   )
-  fun hasActiveVisitForDate(
+  fun hasActiveVisitForSessionSlot(
     @Param("prisonerId") prisonerId: String,
     @Param("sessionSlotId") sessionSlotId: Long,
+    @Param("excludeVisitReference") excludeVisitReference: String? = null,
   ): Boolean
 
   @Query(

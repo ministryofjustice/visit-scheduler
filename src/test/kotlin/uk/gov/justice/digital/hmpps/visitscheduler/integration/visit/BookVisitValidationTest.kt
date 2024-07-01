@@ -25,7 +25,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
-  private lateinit var reservedApplication: Application
+  private lateinit var reservedPublicApplication: Application
+  private lateinit var reservedStaffApplication: Application
 
   private final val prisonerId = "ABC123QQ"
   private final val prisonCode = "ABC"
@@ -34,7 +35,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedApplication = applicationEntityHelper.create(
+    reservedPublicApplication = applicationEntityHelper.create(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
       sessionTemplate = sessionTemplateDefault,
@@ -42,16 +43,29 @@ class BookVisitValidationTest : IntegrationTestBase() {
       userType = UserType.PUBLIC,
     )
 
-    applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765")
-    applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = reservedApplication, description = "Some Text")
-    reservedApplication = applicationEntityHelper.save(reservedApplication)
+    reservedStaffApplication = applicationEntityHelper.create(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
+      completed = false,
+      userType = UserType.STAFF,
+    )
+
+    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
+    reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
+
+    applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = reservedStaffApplication, description = "Some Text")
+    reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
   }
 
   @Test
-  fun `when application does not match prisoner prison code an exception is thrown`() {
+  fun `when public application does not match prisoner prison code an exception is thrown`() {
     // Given
-    val applicationReference = reservedApplication.reference
+    val applicationReference = reservedPublicApplication.reference
     // application's prison code is different to prisoner's prison code
     val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, prisonId = "SWI")
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
@@ -64,15 +78,15 @@ class BookVisitValidationTest : IntegrationTestBase() {
     responseSpec
       .expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("application's prison code - ${reservedApplication.prison.code} is different to prison code for prisoner - ${prisonerDto.prisonId}")
+      .jsonPath("$.developerMessage").isEqualTo("application's prison code - ${reservedPublicApplication.prison.code} is different to prison code for prisoner - ${prisonerDto.prisonId}")
   }
 
   @Test
-  fun `when application matches prisoner prison code visit is booked successfully`() {
+  fun `when public application matches prisoner prison code visit is booked successfully`() {
     // Given
-    val applicationReference = reservedApplication.reference
+    val applicationReference = reservedPublicApplication.reference
     // application's prison code is different to prisoner's prison code
-    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, prisonId = reservedApplication.prison.code)
+    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, prisonId = reservedPublicApplication.prison.code)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
@@ -86,7 +100,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when application is not eligible for session due to incentive mismatch an exception is thrown`() {
+  fun `when public application is not eligible for session due to incentive mismatch an exception is thrown`() {
     // Given
     // prisoner has incentive level as STANDARD
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD)
@@ -152,7 +166,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when application is not eligible for session due to category mismatch an exception is thrown`() {
+  fun `when public application is not eligible for session due to category mismatch an exception is thrown`() {
     // Given
     // prisoner has category B
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, category = PrisonerCategoryType.B.code)
@@ -218,7 +232,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when application is not eligible for session due to location mismatch an exception is thrown`() {
+  fun `when public application is not eligible for session due to location mismatch an exception is thrown`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
@@ -253,7 +267,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when application location matches session template location visit is booked successfully`() {
+  fun `when public application location matches session template location visit is booked successfully`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
@@ -288,7 +302,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when application clashes with existing non association visits an exception is thrown`() {
+  fun `when public application clashes with existing non association visits an exception is thrown`() {
     // Given
     val nonAssociationPrisonerId = "SS11ABC"
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
@@ -301,23 +315,50 @@ class BookVisitValidationTest : IntegrationTestBase() {
     visitEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       prisonerId = nonAssociationPrisonerId,
-      slotDate = reservedApplication.sessionSlot.slotDate,
+      slotDate = reservedPublicApplication.sessionSlot.slotDate,
       visitStatus = VisitStatus.BOOKED,
-      prisonCode = reservedApplication.prison.code,
+      prisonCode = reservedPublicApplication.prison.code,
     )
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec
       .expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("non-associations for prisoner - $prisonerId have booked visits on ${reservedApplication.sessionSlot.slotDate} at the same prison.")
+      .jsonPath("$.developerMessage").isEqualTo("non-associations for prisoner - $prisonerId have booked visits on ${reservedPublicApplication.sessionSlot.slotDate} at the same prison.")
   }
 
   @Test
-  fun `when application clashes with existing non association application that is not booked then visit is booked successfully`() {
+  fun `when staff application clashes with existing non association visits an exception is thrown`() {
+    // Given
+    val nonAssociationPrisonerId = "SS11ABC"
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerId, nonAssociationPrisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // visit for non-association has been added on the same date as reserved application
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = nonAssociationPrisonerId,
+      slotDate = reservedStaffApplication.sessionSlot.slotDate,
+      visitStatus = VisitStatus.BOOKED,
+      prisonCode = reservedStaffApplication.prison.code,
+    )
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedStaffApplication.reference)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("non-associations for prisoner - $prisonerId have booked visits on ${reservedStaffApplication.sessionSlot.slotDate} at the same prison.")
+  }
+
+  @Test
+  fun `when public application clashes with existing non association application that is not booked then visit is booked successfully`() {
     // Given
     val nonAssociationPrisonerId = "SS11ABC"
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
@@ -336,14 +377,38 @@ class BookVisitValidationTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
   }
 
   @Test
-  fun `when non association visit is for a different prison a visit is booked successfully`() {
+  fun `when staff application clashes with existing non association application that is not booked then visit is booked successfully`() {
+    // Given
+    val nonAssociationPrisonerId = "SS11ABC"
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerId, nonAssociationPrisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // application for non-association has been added on the same date
+    applicationEntityHelper.create(
+      prisonerId = nonAssociationPrisonerId,
+      prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
+      completed = false,
+      userType = UserType.STAFF,
+    )
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedStaffApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when non association visit is for a different prison a public visit is booked successfully`() {
     // Given
     val nonAssociationPrisonerId = "SS11ABC"
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
@@ -356,20 +421,44 @@ class BookVisitValidationTest : IntegrationTestBase() {
     visitEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       prisonerId = nonAssociationPrisonerId,
-      slotDate = reservedApplication.sessionSlot.slotDate,
+      slotDate = reservedPublicApplication.sessionSlot.slotDate,
       visitStatus = VisitStatus.BOOKED,
       prisonCode = "TST",
     )
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
   }
 
   @Test
-  fun `when application is being booked on an already booked visit on same session for same prisoner an exception is thrown`() {
+  fun `when non association visit is for a different prison a staff visit is booked successfully`() {
+    // Given
+    val nonAssociationPrisonerId = "SS11ABC"
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerId, nonAssociationPrisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // visit for non-association has been added on the same date but is for a different prison
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = nonAssociationPrisonerId,
+      slotDate = reservedStaffApplication.sessionSlot.slotDate,
+      visitStatus = VisitStatus.BOOKED,
+      prisonCode = "TST",
+    )
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedStaffApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when public application is being booked on an already booked visit on same session for same prisoner an exception is thrown`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
@@ -381,23 +470,49 @@ class BookVisitValidationTest : IntegrationTestBase() {
     visitEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       prisonerId = prisonerId,
-      slotDate = reservedApplication.sessionSlot.slotDate,
+      slotDate = reservedPublicApplication.sessionSlot.slotDate,
       visitStatus = VisitStatus.BOOKED,
-      prisonCode = reservedApplication.prison.code,
+      prisonCode = reservedPublicApplication.prison.code,
     )
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec
       .expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("There is already a visit booked for prisoner - $prisonerId on session slot - ${reservedApplication.sessionSlot.reference}.")
+      .jsonPath("$.developerMessage").isEqualTo("There is already a visit booked for prisoner - $prisonerId on session slot - ${reservedPublicApplication.sessionSlot.reference}.")
   }
 
   @Test
-  fun `when application is being booked on a cancelled visit on same session for same prisoner visit is booked successfully`() {
+  fun `when staff application is being booked on an already booked visit on same session for same prisoner an exception is thrown`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // visit for prisoner has already been booked on same session
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = prisonerId,
+      slotDate = reservedStaffApplication.sessionSlot.slotDate,
+      visitStatus = VisitStatus.BOOKED,
+      prisonCode = reservedStaffApplication.prison.code,
+    )
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedStaffApplication.reference)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("There is already a visit booked for prisoner - $prisonerId on session slot - ${reservedStaffApplication.sessionSlot.reference}.")
+  }
+
+  @Test
+  fun `when public application is being booked on a cancelled visit on same session for same prisoner visit is booked successfully`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
@@ -409,20 +524,45 @@ class BookVisitValidationTest : IntegrationTestBase() {
     visitEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       prisonerId = prisonerId,
-      slotDate = reservedApplication.sessionSlot.slotDate,
+      slotDate = reservedPublicApplication.sessionSlot.slotDate,
       visitStatus = VisitStatus.CANCELLED,
-      prisonCode = reservedApplication.prison.code,
+      prisonCode = reservedPublicApplication.prison.code,
     )
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
   }
 
   @Test
-  fun `when application is being booked on a application on same session for same prisoner visit is booked successfully`() {
+  fun `when staff application is being booked on a cancelled visit on same session for same prisoner visit is booked successfully`() {
+    // Given
+    val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // visit for prisoner on same session has been cancelled
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = prisonerId,
+      slotDate = reservedStaffApplication.sessionSlot.slotDate,
+      visitStatus = VisitStatus.CANCELLED,
+      prisonCode = reservedStaffApplication.prison.code,
+    )
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedStaffApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when public application is being booked on an application on same session for same prisoner visit is booked successfully`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
@@ -440,14 +580,114 @@ class BookVisitValidationTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
   }
 
   @Test
-  fun `when application has no pending VOs an exception is thrown`() {
+  fun `when staff application is being booked on an application on same session for same prisoner visit is booked successfully`() {
+    // Given
+    val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 5)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // application for same prisoner already exists
+    applicationEntityHelper.create(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      sessionTemplate = sessionTemplateDefault,
+      completed = false,
+      userType = UserType.STAFF,
+    )
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedStaffApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when application is being updated for the same date the prisoner visit is booked successfully`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // visit for prisoner already exists
+    var visit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = prisonerId,
+      slotDate = startDate,
+      visitStatus = VisitStatus.BOOKED,
+    )
+    visitEntityHelper.createContact(visit = visit, name = "Jane Doe", phone = "01234 098765")
+    visit = visitEntityHelper.save(visit)
+
+    var updateVisitApplication = applicationEntityHelper.create(visit)
+    updateVisitApplication.completed = false
+    updateVisitApplication.visitId = visit.id
+
+    // change to only add a visitor
+    applicationEntityHelper.createVisitor(application = updateVisitApplication, nomisPersonId = 331L, visitContact = false)
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when application is being updated to a date where prisoners visit exist an exception is thrown`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // 2 visits for prisoner already exists
+    var visit1 = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = prisonerId,
+      slotDate = startDate,
+      visitStatus = VisitStatus.BOOKED,
+    )
+    visitEntityHelper.createContact(visit = visit1, name = "Jane Doe", phone = "01234 098765")
+    visit1 = visitEntityHelper.save(visit1)
+
+    var visit2 = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      prisonerId = prisonerId,
+      slotDate = startDate.plusWeeks(1),
+      visitStatus = VisitStatus.BOOKED,
+    )
+    visitEntityHelper.createContact(visit = visit2, name = "Jane Doe", phone = "01234 098765")
+    visit2 = visitEntityHelper.save(visit2)
+
+    // create application to update visit 1
+    var updateVisitApplication = applicationEntityHelper.create(visit1)
+    updateVisitApplication.visitId = visit1.id
+    // update visit to change application slot to existing slot
+    updateVisitApplication.sessionSlotId = visit2.sessionSlotId
+    updateVisitApplication.completed = false
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+      .expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("There is already a visit booked for prisoner - $prisonerId on session slot - ${visit2.sessionSlot.reference}.")
+  }
+
+  @Test
+  fun `when public application has no pending VOs an exception is thrown`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = -2, remainingPvo = 0)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
@@ -456,7 +696,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec
@@ -466,7 +706,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when call to visit balances returns 404 a validation exception is thrown citing no availble VOs`() {
+  fun `when call to visit balances returns 404 a validation exception is thrown citing no available VOs`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
@@ -475,7 +715,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec
@@ -485,7 +725,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when application has pending VOs visit is booked successfully`() {
+  fun `when public application has pending VOs visit is booked successfully`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 0)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
@@ -494,14 +734,14 @@ class BookVisitValidationTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk
   }
 
   @Test
-  fun `when application has pending PVOs visit is booked successfully`() {
+  fun `when public application has pending PVOs visit is booked successfully`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = 0, remainingPvo = 5)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
@@ -510,7 +750,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
 
     // Then
     responseSpec.expectStatus().isOk

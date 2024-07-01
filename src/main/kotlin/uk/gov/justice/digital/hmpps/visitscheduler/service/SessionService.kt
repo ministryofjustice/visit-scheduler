@@ -379,7 +379,7 @@ class SessionService(
     prisonerId: String,
     excludedApplicationReference: String?,
   ): Boolean {
-    if (visitRepository.hasActiveVisitForDate(
+    if (visitRepository.hasActiveVisitForSessionSlot(
         prisonerId = prisonerId,
         sessionSlotId = sessionSlot.id,
       )

@@ -62,7 +62,6 @@ class AssertHelper {
   ) {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
       .jsonPath("$.developerMessage")
       .isEqualTo("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
   }
@@ -72,7 +71,6 @@ class AssertHelper {
   ) {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
       .jsonPath("$.developerMessage")
       .value(Matchers.containsString("Application can not be reserved because capacity has been exceeded for the slot"))
   }

@@ -59,21 +59,30 @@ class ApplicationValidationService(
     checkPrison(prison.code, prisoner.prisonCode)
     checkSessionSlot(application, prisoner, prison)
 
-    // check if there are non-association visits that have been booked in after the application was created
-    checkNonAssociationVisits(
-      prisonerId = application.prisonerId,
-      sessionDate = application.sessionSlot.slotDate,
-      prisonId = application.prisonId,
-    )
+    // TODO - revisit checkValidity once update is allowed for PUBLIC till then checkValidity is always true
+    val checkValidity = true
 
-    // check if any double bookings for the same prisoner
-    checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot)
+    if (checkValidity) {
+      // check if there are non-association visits that have been booked in after the application was created
+      checkNonAssociationVisits(
+        prisonerId = application.prisonerId,
+        sessionDate = application.sessionSlot.slotDate,
+        prisonId = application.prisonId,
+      )
 
-    // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
-    checkVOLimits(application.prisonerId)
+      // check if any existing bookings for the same prisoner
+      checkDoubleBookedVisits(
+        prisonerId = application.prisonerId,
+        sessionSlot = application.sessionSlot,
+        visitReference = application.visit?.reference,
+      )
 
-    // check capacity for slot
-    checkSlotCapacity(bookingRequestDto, application, existingBooking)
+      // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
+      checkVOLimits(application.prisonerId)
+
+      // check capacity for slot
+      checkSlotCapacity(bookingRequestDto, application, existingBooking)
+    }
   }
 
   private fun isStaffApplicationValid(
@@ -81,8 +90,36 @@ class ApplicationValidationService(
     application: Application,
     existingBooking: Visit?,
   ) {
-    // check capacity for slot
-    checkSlotCapacity(bookingRequestDto, application, existingBooking)
+    val checkValidity = checkValidity(application, existingBooking)
+
+    if (checkValidity) {
+      // check capacity for slot
+      checkSlotCapacity(bookingRequestDto, application, existingBooking)
+
+      // check if there are non-association visits that have been booked in after the application was created
+      checkNonAssociationVisits(
+        prisonerId = application.prisonerId,
+        sessionDate = application.sessionSlot.slotDate,
+        prisonId = application.prisonId,
+      )
+
+      // check if any existing bookings for the same prisoner for the same slot
+      checkDoubleBookedVisits(
+        prisonerId = application.prisonerId,
+        sessionSlot = application.sessionSlot,
+        visitReference = application.visit?.reference,
+      )
+    }
+  }
+
+  private fun checkValidity(
+    application: Application,
+    existingBooking: Visit?,
+  ): Boolean {
+    // check validity only if it's a new request or the existing slot is being updated or a restriction is changed on an existing slot.
+    val newVisitRequest = (existingBooking == null)
+    val hasSlotChangedSinceLastBooking = hasSlotChangedSinceLastBooking(existingBooking, application)
+    return (newVisitRequest || hasSlotChangedSinceLastBooking)
   }
 
   private fun checkSessionSlot(application: Application, prisoner: PrisonerDto, prison: Prison) {
@@ -128,12 +165,14 @@ class ApplicationValidationService(
     }
   }
 
-  private fun checkDoubleBookedVisits(prisonerId: String, sessionSlot: SessionSlot) {
-    if (visitRepository.hasActiveVisitForDate(
-        prisonerId,
-        sessionSlot.id,
-      )
-    ) {
+  private fun checkDoubleBookedVisits(prisonerId: String, sessionSlot: SessionSlot, visitReference: String?) {
+    val hasExistingVisits = visitRepository.hasActiveVisitForSessionSlot(
+      prisonerId,
+      sessionSlot.id,
+      excludeVisitReference = visitReference,
+    )
+
+    if (hasExistingVisits) {
       throw ValidationException("There is already a visit booked for prisoner - $prisonerId on session slot - ${sessionSlot.reference}.")
     }
   }
