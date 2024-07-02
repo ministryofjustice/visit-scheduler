@@ -23,7 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("PUT $VISIT_BOOK")
+@DisplayName("test validations on PUT $VISIT_BOOK API call.")
 class BookVisitValidationTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -571,6 +571,48 @@ class BookVisitValidationTest : IntegrationTestBase() {
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
     assertThat(validationErrorResponse.validationMessages).contains("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
+  }
+
+  @Test
+  fun `when session has no pending capacity and no VO balance an exception is thrown with multiple error messages`() {
+    // Given
+    val visitBalance = VisitBalancesDto(remainingVo = 0, remainingPvo = 0)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // sessionTemplate has open capacity of 1
+    val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 0)
+
+    val application = applicationEntityHelper.create(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
+      completed = false,
+      userType = UserType.PUBLIC,
+    )
+
+    // visit added and capacity filled
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplate,
+      prisonerId = "QW1",
+      slotDate = application.sessionSlot.slotDate,
+      visitStatus = VisitStatus.BOOKED,
+      prisonCode = application.prison.code,
+    )
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, application.reference)
+
+    // Then
+    responseSpec
+      .expectStatus().isBadRequest
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationMessages.size).isEqualTo(2)
+    assertThat(validationErrorResponse.validationMessages).contains("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
+    assertThat(validationErrorResponse.validationMessages).contains("not enough VO balance for prisoner - $prisonerId")
   }
 
   @Test
