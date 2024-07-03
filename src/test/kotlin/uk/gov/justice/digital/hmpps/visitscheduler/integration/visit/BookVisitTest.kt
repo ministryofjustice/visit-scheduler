@@ -21,6 +21,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_OUTCOMES
@@ -53,23 +56,31 @@ class BookVisitTest : IntegrationTestBase() {
   @SpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  private lateinit var reservedApplication: Application
+  private lateinit var reservedStaffApplication: Application
+
+  private lateinit var reservedPublicApplication: Application
 
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
-    reservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
-    applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765")
-    applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
-    applicationEntityHelper.createSupport(application = reservedApplication, description = "Some Text")
-    reservedApplication = applicationEntityHelper.save(reservedApplication)
+    reservedStaffApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
+    applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = reservedStaffApplication, description = "Some Text")
+    reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
+
+    reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, userType = PUBLIC)
+    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
+    applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
+    reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
   }
 
   @Test
   fun `Book visit by application Reference`() {
     // Given
-    val applicationReference = reservedApplication.reference
+    val applicationReference = reservedStaffApplication.reference
 
     // When
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
@@ -80,7 +91,7 @@ class BookVisitTest : IntegrationTestBase() {
     val visitDto = getVisitDto(responseSpec)
 
     // Then
-    assertVisitMatchesApplication(visitDto, reservedApplication)
+    assertVisitMatchesApplication(visitDto, reservedStaffApplication)
     val visitEntity = testVisitRepository.findByReference(visitDto.reference)
     assertAuditEvent(visitDto, visitEntity)
     assertThat(visitEntity.getApplications().size).isEqualTo(1)
@@ -88,6 +99,29 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitEntity.getLastApplication()?.completed).isTrue()
 
     // And
+    assertBookedEvent(visitDto, false)
+  }
+
+  @Test
+  fun `Book visit by public application`() {
+    // Given
+    val applicationReference = reservedPublicApplication.reference
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val visitDto = getVisitDto(responseSpec)
+
+    assertVisitMatchesApplication(visitDto, reservedPublicApplication)
+    val visitEntity = testVisitRepository.findByReference(visitDto.reference)
+    assertAuditEvent(visitDto, visitEntity, PUBLIC)
+    assertThat(visitEntity.getApplications().size).isEqualTo(1)
+    assertThat(visitEntity.getLastApplication()?.reference).isEqualTo(applicationReference)
+    assertThat(visitEntity.getLastApplication()?.completed).isTrue()
+
     assertBookedEvent(visitDto, false)
   }
 
@@ -331,7 +365,7 @@ class BookVisitTest : IntegrationTestBase() {
   @Test
   fun `Booked visit twice by application reference - has one event and one visit`() {
     // Given
-    val applicationReference = reservedApplication.reference
+    val applicationReference = reservedStaffApplication.reference
 
     // When
     val responseSpec1 = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
@@ -354,7 +388,7 @@ class BookVisitTest : IntegrationTestBase() {
   fun `Book visit visit by application Reference - access forbidden when no role`() {
     // Given
     val authHttpHeaders = setAuthorisation(roles = listOf())
-    val applicationReference = reservedApplication.reference
+    val applicationReference = reservedStaffApplication.reference
 
     // When
     val responseSpec = callVisitBook(webTestClient, authHttpHeaders, applicationReference)
@@ -585,7 +619,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = completedApplication, description = "Some Text")
-    reservedApplication = applicationEntityHelper.save(reservedApplication)
+    reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
 
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, createApplication = false)
     visit.addApplication(completedApplication)
@@ -620,7 +654,7 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createContact(application = expiredApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = expiredApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredApplication, description = "Some Text")
-    applicationEntityHelper.save(reservedApplication)
+    applicationEntityHelper.save(reservedStaffApplication)
 
     val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault)
     expiredVisit.addApplication(expiredApplication)
@@ -647,10 +681,21 @@ class BookVisitTest : IntegrationTestBase() {
       .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be changed")
   }
 
-  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit) {
+  private fun assertAuditEvent(visitDto: VisitDto, visitEntity: Visit, userType: UserType = STAFF) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(visitDto.reference)
     assertThat(eventAudit.type).isEqualTo(EventAuditType.BOOKED_VISIT)
-    assertThat(eventAudit.actionedBy).isEqualTo("booking_guy")
+    assertThat(eventAudit.actionedBy).isNotNull()
+    assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
+
+    if (STAFF == eventAudit.actionedBy.userType) {
+      assertThat(eventAudit.actionedBy.userName).isEqualTo("booking_guy")
+      assertThat(eventAudit.actionedBy.bookerReference).isNull()
+    }
+    if (PUBLIC == eventAudit.actionedBy.userType) {
+      assertThat(eventAudit.actionedBy.userName).isNull()
+      assertThat(eventAudit.actionedBy.bookerReference).isEqualTo("booking_guy")
+    }
+
     assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.PHONE)
     assertThat(eventAudit.bookingReference).isEqualTo(visitEntity.reference)
     assertThat(eventAudit.sessionTemplateReference).isEqualTo(visitEntity.sessionSlot.sessionTemplateReference)
@@ -696,16 +741,20 @@ class BookVisitTest : IntegrationTestBase() {
         assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
         assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
-        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
+        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
         assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         assertThat(it["visitStart"]).isEqualTo(visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
-        assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-        assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
-        assertThat(it["actionedBy"]).isEqualTo(eventAudit.actionedBy)
-        assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
-        assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
+        assertThat(it["visitEnd"]).isEqualTo(visit.endTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+        assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["hasPhoneNumber"]).isEqualTo((visit.visitContact.telephone != null).toString())
+        assertThat(it["isUpdated"]).isEqualTo(isUpdated.toString())
+        assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
+        eventAudit.actionedBy.userName?.let { value ->
+          assertThat(it["actionedBy"]).isEqualTo(value)
+        }
+        assertThat(it["source"]).isEqualTo(eventAudit.actionedBy.userType.name)
+        assertThat(it["applicationMethodType"]).isEqualTo(eventAudit.applicationMethodType.name)
       },
       isNull(),
     )

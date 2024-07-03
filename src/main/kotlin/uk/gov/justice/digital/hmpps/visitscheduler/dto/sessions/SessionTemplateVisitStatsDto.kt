@@ -14,7 +14,7 @@ data class SessionTemplateVisitStatsDto(
   @field:Min(0)
   val visitCount: Int,
 
-  @Schema(description = "canceled visit counts", example = "10", required = true)
+  @Schema(description = "cancelled visit counts", example = "10", required = true)
   @field:Min(0)
   val cancelCount: Int,
 

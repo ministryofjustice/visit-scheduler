@@ -18,6 +18,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
@@ -187,8 +189,8 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
     verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(reference))
   }
 
-  fun assertIgnoredVisit(visit: VisitDto, ignoreVisitNotification: IgnoreVisitNotificationsDto) {
-    assertHelper.assertIgnoredVisit(visit, ignoreVisitNotification.actionedBy, ignoreVisitNotification.reason)
+  fun assertIgnoredVisit(visit: VisitDto, ignoreVisitNotification: IgnoreVisitNotificationsDto, userType: UserType = STAFF) {
+    assertHelper.assertIgnoredVisit(visit, ignoreVisitNotification.actionedBy, userType, ignoreVisitNotification.reason)
     Assertions.assertThat(visit.visitNotes.size).isEqualTo(0)
 
     val visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
