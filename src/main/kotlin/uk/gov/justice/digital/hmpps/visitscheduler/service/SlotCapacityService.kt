@@ -53,7 +53,7 @@ class SlotCapacityService {
   ) {
     val sessionSlot = sessionSlotRepository.findByReference(sessionSlotReference)
 
-    if (hasExceededMaxCapacity(sessionSlot, visitRestriction, true, excludedApplicationReference = excludedApplicationReference)) {
+    if (hasExceededMaxCapacity(sessionSlot, visitRestriction, incReservedApplications, excludedApplicationReference = excludedApplicationReference)) {
       val messages = "Application can not be reserved because capacity has been exceeded for the slot $sessionSlotReference"
       LOG.debug(messages)
       throw OverCapacityException(messages)

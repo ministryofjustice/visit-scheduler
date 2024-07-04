@@ -83,6 +83,11 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     visitEntityHelper.createSupport(visit = visit, description = "Some Text")
 
     bookedVisit = visitEntityHelper.save(visit)
+
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = bookedVisit.prisonerId,
+      prisonCode = bookedVisit.prison.code,
+    )
   }
 
   @Test

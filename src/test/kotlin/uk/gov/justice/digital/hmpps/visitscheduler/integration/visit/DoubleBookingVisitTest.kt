@@ -35,6 +35,11 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createContact(application = reservedApplication, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
     reservedApplication = applicationEntityHelper.save(reservedApplication)
+
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = reservedApplication.prisonerId,
+      prisonCode = reservedApplication.prison.code,
+    )
   }
 
   @Test
@@ -96,7 +101,7 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, reservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec, reservedApplication)
 
     val application = testApplicationRepository.findByApplicationReference(applicationReference)
     assertThat(application).isNotNull

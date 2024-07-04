@@ -99,7 +99,13 @@ class VisitService(
     val existingBooking = visitRepository.findVisitByApplicationReference(application.reference)
 
     // application validity checks
-    applicationValidationService.isApplicationValid(bookingRequestDto, application, existingBooking)
+    applicationValidationService.isApplicationValid(
+      application = application,
+      existingBooking = existingBooking,
+      applicationValidationEvent = ApplicationValidationService.ApplicationValidationEvent.BOOKING,
+      isReservedSlot = application.reservedSlot,
+      allowOverBooking = bookingRequestDto.allowOverBooking,
+    )
 
     val booking = createBooking(application, existingBooking)
     val bookedVisitDto = visitDtoBuilder.build(booking)

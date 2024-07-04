@@ -97,6 +97,10 @@ class ReserveSlotTest : IntegrationTestBase() {
     // Given
     val sessionTemplate = sessionTemplateEntityHelper.create(startTime = visitTime.toLocalTime(), endTime = visitTime.plusHours(1).toLocalTime())
     val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate)
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = reserveVisitSlotDto.prisonerId,
+      prisonCode = sessionTemplate.prison.code,
+    )
 
     // When
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)

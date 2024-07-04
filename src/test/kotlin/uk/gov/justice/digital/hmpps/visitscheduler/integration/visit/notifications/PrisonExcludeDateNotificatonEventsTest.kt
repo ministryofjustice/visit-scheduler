@@ -135,6 +135,10 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     // existing visit for excludeDate in same prison
     val visit = createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, slotDate = excludeDate)
 
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = visit.prisonerId,
+      prisonCode = visit.prison.code,
+    )
     val newSessionSlot = sessionSlotEntityHelper.create(sessionTemplateDefault.reference, prison.id, LocalDate.now().plusDays(5), sessionTemplateDefault.startTime, sessionTemplateDefault.endTime)
 
     // call add exclude dates first
@@ -186,6 +190,10 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     // existing visit for excludeDate in same prison
     val application = createApplicationAndSave(sessionTemplate = sessionTemplateXYZ, prisonCode = prisonXYZ.code, completed = true, slotDate = excludeDate)
     val bookedVisit = createVisitAndSave(VisitStatus.BOOKED, application, sessionTemplateXYZ)
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = application.prisonerId,
+      prisonCode = application.prison.code,
+    )
 
     // When
     // call add exclude dates first

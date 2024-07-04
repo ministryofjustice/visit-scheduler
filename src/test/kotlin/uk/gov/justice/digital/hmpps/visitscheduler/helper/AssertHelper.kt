@@ -1,10 +1,11 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import org.assertj.core.api.Assertions
-import org.hamcrest.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
@@ -15,6 +16,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepo
 
 @Component
 class AssertHelper {
+  @Autowired
+  protected lateinit var objectMapper: ObjectMapper
 
   @Autowired
   protected lateinit var eventAuditRepository: TestEventAuditRepository
@@ -56,24 +59,38 @@ class AssertHelper {
     Assertions.assertThat(visit.visitStatus).isEqualTo(VisitStatus.BOOKED)
   }
 
-  fun assertCapacityError(
+  fun assertBookingCapacityError(
     responseSpec: ResponseSpec,
     application: Application,
   ) {
     responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage")
-      .isEqualTo("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    Assertions.assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
+    Assertions.assertThat(validationErrorResponse.validationMessages).contains("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
+  }
+
+  fun assertCapacityError(
+    responseSpec: ResponseSpec,
+    sessionSlotReference: String,
+  ) {
+    responseSpec.expectStatus().isBadRequest
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    Assertions.assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
+    Assertions.assertThat(validationErrorResponse.validationMessages[0]).contains("Application can not be reserved because capacity has been exceeded for the slot $sessionSlotReference")
   }
 
   fun assertCapacityError(
     responseSpec: ResponseSpec,
   ) {
     responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage")
-      .value(Matchers.containsString("Application can not be reserved because capacity has been exceeded for the slot"))
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    Assertions.assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
+    Assertions.assertThat(validationErrorResponse.validationMessages[0]).startsWith("Application can not be reserved because capacity has been exceeded for the slot")
   }
+
+  private fun getValidationErrorResponse(responseSpec: ResponseSpec): ValidationErrorResponse =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ValidationErrorResponse::class.java)
 }

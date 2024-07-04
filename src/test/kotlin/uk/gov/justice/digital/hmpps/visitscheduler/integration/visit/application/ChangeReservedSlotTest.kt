@@ -67,6 +67,11 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     applicationEntityHelper.createVisitor(application = applicationFull, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = applicationFull, description = "Some Text")
     applicationEntityHelper.save(applicationFull)
+
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = applicationFull.prisonerId,
+      prisonCode = applicationFull.prison.code,
+    )
   }
 
   @Test
