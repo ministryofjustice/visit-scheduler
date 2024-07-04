@@ -66,6 +66,11 @@ class SendDomainEventTest : IntegrationTestBase() {
     fun `send visit booked event on update`() {
       // Given
       val applicationEntity = createApplicationAndSave(completed = false)
+      stubApplicationCreationHappyPathCalls(
+        prisonerId = applicationEntity.prisonerId,
+        prisonCode = applicationEntity.prison.code,
+      )
+
       eventAuditEntityHelper.create(applicationEntity)
 
       val applicationReference = applicationEntity.reference
@@ -101,7 +106,7 @@ class SendDomainEventTest : IntegrationTestBase() {
         org.mockito.kotlin.check {
           assertThat(it["reference"]).isEqualTo(visit.reference)
           assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
-          assertThat(it["visitStatus"]).isEqualTo(VisitStatus.BOOKED.name)
+          assertThat(it["visitStatus"]).isEqualTo(BOOKED.name)
           assertThat(it["isUpdated"]).isEqualTo("false")
         },
         isNull(),

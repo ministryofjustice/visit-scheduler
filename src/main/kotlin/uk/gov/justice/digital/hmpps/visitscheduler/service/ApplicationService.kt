@@ -48,16 +48,15 @@ import java.time.LocalDateTime
 class ApplicationService(
   private val applicationRepo: ApplicationRepository,
   private val visitRepo: VisitRepository,
+  private val eventAuditRepository: EventAuditRepository,
   private val telemetryClientService: TelemetryClientService,
   private val sessionTemplateService: SessionTemplateService,
-  private val eventAuditRepository: EventAuditRepository,
   private val prisonsService: PrisonsService,
   @Value("\${expired.applications.validity-minutes:10}") private val expiredPeriodMinutes: Int,
 ) {
-
   @Lazy
   @Autowired
-  private lateinit var slotCapacityService: SlotCapacityService
+  private lateinit var applicationValidationService: ApplicationValidationService
 
   @Autowired
   private lateinit var expiredApplicationTaskConfiguration: ExpiredApplicationTaskConfiguration
@@ -113,27 +112,30 @@ class ApplicationService(
       isReservationRequired(existingVisit, sessionSlot, createApplicationDto.applicationRestriction.getVisitRestriction())
     } ?: true
 
-    if (isReservedSlot && !createApplicationDto.allowOverBooking) {
-      slotCapacityService.checkCapacityForApplicationReservation(
-        sessionSlot.reference,
-        createApplicationDto.applicationRestriction.getVisitRestriction(),
-        true,
-      )
-    }
+    val application = Application(
+      prisonerId = createApplicationDto.prisonerId,
+      prison = prison,
+      prisonId = prison.id,
+      sessionSlot = sessionSlot,
+      sessionSlotId = sessionSlot.id,
+      reservedSlot = isReservedSlot,
+      visitType = sessionTemplate.visitType,
+      restriction = createApplicationDto.applicationRestriction.getVisitRestriction(),
+      userType = createApplicationDto.userType,
+      completed = false,
+      createdBy = createApplicationDto.actionedBy,
+    )
+
+    applicationValidationService.isApplicationValid(
+      application = application,
+      existingBooking = existingVisit,
+      applicationValidationEvent = ApplicationValidationService.ApplicationValidationEvent.CREATE_APPLICATION,
+      isReservedSlot = isReservedSlot,
+      allowOverBooking = createApplicationDto.allowOverBooking,
+    )
+
     val applicationEntity = applicationRepo.saveAndFlush(
-      Application(
-        prisonerId = createApplicationDto.prisonerId,
-        prison = prison,
-        prisonId = prison.id,
-        sessionSlot = sessionSlot,
-        sessionSlotId = sessionSlot.id,
-        reservedSlot = isReservedSlot,
-        visitType = sessionTemplate.visitType,
-        restriction = createApplicationDto.applicationRestriction.getVisitRestriction(),
-        userType = createApplicationDto.userType,
-        completed = false,
-        createdBy = createApplicationDto.actionedBy,
-      ),
+      application,
     )
 
     createApplicationDto.visitContact?.let {
@@ -176,15 +178,15 @@ class ApplicationService(
 
     val sessionSlot = sessionSlotService.getSessionSlot(changeApplicationDto.sessionDate, sessionTemplate, prison)
 
-    val restriction = changeApplicationDto.applicationRestriction?.getVisitRestriction() ?: run { application.restriction }
-    val isReservedSlot = isReservationRequired(application, sessionSlot, restriction)
-    if (isReservedSlot && !changeApplicationDto.allowOverBooking) {
-      slotCapacityService.checkCapacityForApplicationReservation(
-        sessionSlot.reference,
-        restriction,
-        true,
-      )
-    }
+    val visitRestriction = changeApplicationDto.applicationRestriction?.getVisitRestriction() ?: run { application.restriction }
+    val isReservedSlot = isReservationRequired(application, sessionSlot, visitRestriction)
+    applicationValidationService.isApplicationValid(
+      application = application,
+      existingBooking = application.visit,
+      applicationValidationEvent = ApplicationValidationService.ApplicationValidationEvent.CREATE_APPLICATION,
+      isReservedSlot = isReservedSlot,
+      allowOverBooking = changeApplicationDto.allowOverBooking,
+    )
 
     application.sessionSlotId = sessionSlot.id
     application.sessionSlot = sessionSlot

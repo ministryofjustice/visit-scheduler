@@ -217,6 +217,11 @@ class CancelVisitTest : IntegrationTestBase() {
       userType = STAFF,
     )
 
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = bookedVisit.prisonerId,
+      prisonCode = bookedVisit.prison.code,
+    )
+
     // call visit change and then book the visit
     val applicationDto = sendApplicationToUpdateExistingBooking(roles, createApplicationDto, bookedVisit)
     val responseForBookingResponse = callVisitBook(webTestClient, roles, applicationDto.reference)

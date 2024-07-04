@@ -57,6 +57,11 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate,
     )
 
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = reserveVisitSlotDto.prisonerId,
+      prisonCode = sessionTemplate.prison.code,
+    )
+
     val reservedDto = submitApplication(reserveVisitSlotDto)
     val bookedDto = bookVisit(reservedDto.reference, PHONE)
     val changingVisitDto1 = submitApplicationToUpdateBooking(sessionTemplate, bookedDto.reference)
@@ -132,6 +137,10 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     val reserveVisitSlotDto = createReserveVisitSlotDto(
       actionedBy = "reserve_guy",
       sessionTemplate = sessionTemplateDefault,
+    )
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = reserveVisitSlotDto.prisonerId,
+      prisonCode = sessionTemplateDefault.prison.code,
     )
 
     val applicationDto = submitApplication(reserveVisitSlotDto)

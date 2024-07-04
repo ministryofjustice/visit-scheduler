@@ -4,7 +4,6 @@ import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
@@ -33,14 +32,28 @@ class ApplicationValidationService(
   }
 
   fun isApplicationValid(
-    bookingRequestDto: BookingRequestDto? = null,
     application: Application,
     existingBooking: Visit? = null,
+    applicationValidationEvent: ApplicationValidationEvent,
+    isReservedSlot: Boolean,
+    allowOverBooking: Boolean,
   ) {
     val errorMessages = when (application.userType) {
-      PUBLIC -> isPublicApplicationValid(bookingRequestDto, application, existingBooking)
+      PUBLIC -> isPublicApplicationValid(
+        application = application,
+        existingBooking = existingBooking,
+        applicationValidationEvent = applicationValidationEvent,
+        allowOverBooking = allowOverBooking,
+        isReservedSlot = isReservedSlot,
+      )
 
-      STAFF -> isStaffApplicationValid(bookingRequestDto, application, existingBooking)
+      STAFF -> isStaffApplicationValid(
+        application = application,
+        existingBooking = existingBooking,
+        applicationValidationEvent = applicationValidationEvent,
+        allowOverBooking = allowOverBooking,
+        isReservedSlot = isReservedSlot,
+      )
     }
 
     if (errorMessages.isNotEmpty()) {
@@ -49,9 +62,11 @@ class ApplicationValidationService(
   }
 
   private fun isPublicApplicationValid(
-    bookingRequestDto: BookingRequestDto?,
     application: Application,
     existingBooking: Visit?,
+    applicationValidationEvent: ApplicationValidationEvent,
+    allowOverBooking: Boolean,
+    isReservedSlot: Boolean,
   ): List<String> {
     val errorMessages = mutableListOf<String>()
     val prison = application.prison
@@ -62,27 +77,34 @@ class ApplicationValidationService(
       errorMessages.add(it)
     }
 
-    // check if there are non-association visits that have been booked in after the application was created
-    checkNonAssociationVisits(
-      prisonerId = application.prisonerId,
-      sessionDate = application.sessionSlot.slotDate,
-      prisonId = application.prisonId,
-    )?.also {
-      errorMessages.add(it)
-    }
+    // TODO - enable this for application creation at a later stage
+    if (applicationValidationEvent == ApplicationValidationEvent.BOOKING) {
+      // check if there are non-association visits that have been booked in after the application was created
+      checkNonAssociationVisits(
+        prisonerId = application.prisonerId,
+        sessionDate = application.sessionSlot.slotDate,
+        prisonId = application.prisonId,
+      )?.also {
+        errorMessages.add(it)
+      }
 
-    // check if any double bookings for the same prisoner
-    checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot, visitReference = application.visit?.reference)?.also {
-      errorMessages.add(it)
-    }
+      // check if any double bookings for the same prisoner
+      checkDoubleBookedVisits(
+        prisonerId = application.prisonerId,
+        sessionSlot = application.sessionSlot,
+        visitReference = application.visit?.reference,
+      )?.also {
+        errorMessages.add(it)
+      }
 
-    // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
-    checkVOLimits(application.prisonerId)?.also {
-      errorMessages.add(it)
+      // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
+      checkVOLimits(application.prisonerId)?.also {
+        errorMessages.add(it)
+      }
     }
 
     // check capacity for slot
-    checkSlotCapacity(bookingRequestDto, application, existingBooking)?.also {
+    checkSlotCapacity(application, existingBooking, allowOverBooking = allowOverBooking, applicationValidationEvent = applicationValidationEvent, isReservedSlot = isReservedSlot)?.also {
       errorMessages.add(it)
     }
 
@@ -90,13 +112,15 @@ class ApplicationValidationService(
   }
 
   private fun isStaffApplicationValid(
-    bookingRequestDto: BookingRequestDto?,
     application: Application,
     existingBooking: Visit?,
+    applicationValidationEvent: ApplicationValidationEvent,
+    allowOverBooking: Boolean,
+    isReservedSlot: Boolean,
   ): List<String> {
     val errorMessages = mutableListOf<String>()
     // check capacity for slot
-    checkSlotCapacity(bookingRequestDto, application, existingBooking)?.also {
+    checkSlotCapacity(application, existingBooking, allowOverBooking = allowOverBooking, applicationValidationEvent = applicationValidationEvent, isReservedSlot = isReservedSlot)?.also {
       errorMessages.add(it)
     }
 
@@ -173,22 +197,36 @@ class ApplicationValidationService(
   }
 
   fun checkSlotCapacity(
-    bookingRequestDto: BookingRequestDto?,
     application: Application,
     existingBooking: Visit?,
+    applicationValidationEvent: ApplicationValidationEvent,
+    allowOverBooking: Boolean,
+    isReservedSlot: Boolean,
   ): String? {
-    val allowOverBooking = bookingRequestDto?.allowOverBooking ?: false
+    try {
+      when (applicationValidationEvent) {
+        ApplicationValidationEvent.CREATE_APPLICATION -> {
+          if (isReservedSlot && !allowOverBooking) {
+            slotCapacityService.checkCapacityForApplicationReservation(
+              application.sessionSlot.reference,
+              application.restriction,
+              incReservedApplications = true,
+            )
+          }
+        }
 
-    if (!allowOverBooking && hasSlotChangedSinceLastBooking(existingBooking, application)) {
-      try {
-        slotCapacityService.checkCapacityForBooking(
-          application.sessionSlot.reference,
-          application.restriction,
-          includeReservedApplications(application),
-        )
-      } catch (overCapacityException: OverCapacityException) {
-        return overCapacityException.message
+        ApplicationValidationEvent.BOOKING -> {
+          if (!allowOverBooking && hasSlotChangedSinceLastBooking(existingBooking, application)) {
+            slotCapacityService.checkCapacityForBooking(
+              application.sessionSlot.reference,
+              application.restriction,
+              (isReservedSlot) && includeReservedApplications(application),
+            )
+          }
+        }
       }
+    } catch (overCapacityException: OverCapacityException) {
+      return overCapacityException.message
     }
 
     return null
@@ -208,5 +246,10 @@ class ApplicationValidationService(
       STAFF -> applicationService.isExpiredApplication(application.modifyTimestamp!!)
       PUBLIC -> false
     }
+  }
+
+  enum class ApplicationValidationEvent {
+    CREATE_APPLICATION,
+    BOOKING,
   }
 }

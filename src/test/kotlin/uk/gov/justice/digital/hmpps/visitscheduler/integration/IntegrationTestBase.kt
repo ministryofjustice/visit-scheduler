@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
@@ -343,5 +344,12 @@ abstract class IntegrationTestBase {
 
   fun parseVisitsResponse(responseSpec: ResponseSpec): List<VisitDto> {
     return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitDto>::class.java).toList()
+  }
+
+  protected fun stubApplicationCreationHappyPathCalls(prisonerId: String, prisonCode: String) {
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(5, 5))
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
   }
 }

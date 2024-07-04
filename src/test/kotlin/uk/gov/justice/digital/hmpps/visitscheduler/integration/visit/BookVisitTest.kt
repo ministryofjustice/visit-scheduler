@@ -64,6 +64,10 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createVisitor(application = reservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedApplication, description = "Some Text")
     reservedApplication = applicationEntityHelper.save(reservedApplication)
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = reservedApplication.prisonerId,
+      prisonCode = reservedApplication.prison.code,
+    )
   }
 
   @Test
@@ -141,14 +145,17 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
 
     expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
-
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = expiredReservedApplication.prisonerId,
+      prisonCode = expiredReservedApplication.prison.code,
+    )
     val applicationReference = expiredReservedApplication.reference
 
     // When
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -167,13 +174,18 @@ class BookVisitTest : IntegrationTestBase() {
 
     expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
 
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = expiredReservedApplication.prisonerId,
+      prisonCode = expiredReservedApplication.prison.code,
+    )
+
     val applicationReference = expiredReservedApplication.reference
 
     // When
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -191,7 +203,10 @@ class BookVisitTest : IntegrationTestBase() {
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
 
     expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
-
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = expiredReservedApplication.prisonerId,
+      prisonCode = expiredReservedApplication.prison.code,
+    )
     val applicationReference = expiredReservedApplication.reference
     testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
 
@@ -199,7 +214,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -218,6 +233,11 @@ class BookVisitTest : IntegrationTestBase() {
 
     expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
 
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = expiredReservedApplication.prisonerId,
+      prisonCode = expiredReservedApplication.prison.code,
+    )
+
     val applicationReference = expiredReservedApplication.reference
     testApplicationRepository.updateTimestamp(LocalDateTime.now().minusDays(1), applicationReference)
 
@@ -225,7 +245,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -271,12 +291,15 @@ class BookVisitTest : IntegrationTestBase() {
     expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
 
     val applicationReference = expiredReservedApplication.reference
-
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = expiredReservedApplication.prisonerId,
+      prisonCode = expiredReservedApplication.prison.code,
+    )
     // When
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test
@@ -296,6 +319,10 @@ class BookVisitTest : IntegrationTestBase() {
     expiredReservedApplication.visitId = bookingToUpdate.id
 
     expiredReservedApplication = applicationEntityHelper.save(expiredReservedApplication)
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = expiredReservedApplication.prisonerId,
+      prisonCode = expiredReservedApplication.prison.code,
+    )
 
     val applicationReference = expiredReservedApplication.reference
 
@@ -303,7 +330,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec, expiredReservedApplication)
   }
 
   @Test

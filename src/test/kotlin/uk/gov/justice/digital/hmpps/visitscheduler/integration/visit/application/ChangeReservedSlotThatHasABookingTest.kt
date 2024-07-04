@@ -70,6 +70,11 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
     oldBooking.addApplication(initialChangeApplication)
     visitEntityHelper.save(oldBooking)
+
+    stubApplicationCreationHappyPathCalls(
+      prisonerId = initialChangeApplication.prisonerId,
+      prisonCode = initialChangeApplication.prison.code,
+    )
   }
 
   @Test
@@ -144,7 +149,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec)
+    assertHelper.assertCapacityError(responseSpec, applicationThatNeedChanging.sessionSlot.reference)
   }
 
   @Test
@@ -168,7 +173,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec)
+    assertHelper.assertCapacityError(responseSpec, applicationThatNeedChanging.sessionSlot.reference)
   }
 
   @Test
