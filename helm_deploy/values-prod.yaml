@@ -2,7 +2,17 @@
 # Per environment values which override defaults in visit-scheduler/values.yaml
 
 generic-service:
-  replicaCount: 4
+  replicaCount: 1
+
+  livenessProbe:
+    initialDelaySeconds: 780
+    periodSeconds: 30
+    failureThreshold: 1
+
+  readinessProbe:
+    initialDelaySeconds: 780
+    periodSeconds: 30
+    failureThreshold: 1
 
   ingress:
     host: visit-scheduler.prison.service.justice.gov.uk
