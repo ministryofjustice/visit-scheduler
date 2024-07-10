@@ -6,10 +6,19 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_INADEQUATE_VO_BALANCE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NON_ASSOCIATION_VISITS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISONER_NOT_FOUND
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_NOT_MATCHING
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_NOT_AVAILABLE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_TEMPLATE_NOT_FOUND
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ApplicationValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -37,14 +46,14 @@ class ApplicationValidationService(
     application: Application,
     existingBooking: Visit? = null,
   ) {
-    val errorMessages = when (application.userType) {
+    val errorCodes = when (application.userType) {
       PUBLIC -> isPublicApplicationValid(bookingRequestDto, application, existingBooking)
 
       STAFF -> isStaffApplicationValid(bookingRequestDto, application, existingBooking)
     }
 
-    if (errorMessages.isNotEmpty()) {
-      throw VSiPValidationException(errorMessages.toTypedArray())
+    if (errorCodes.isNotEmpty()) {
+      throw ApplicationValidationException(errorCodes.toTypedArray())
     }
   }
 
@@ -52,14 +61,19 @@ class ApplicationValidationService(
     bookingRequestDto: BookingRequestDto?,
     application: Application,
     existingBooking: Visit?,
-  ): List<String> {
-    val errorMessages = mutableListOf<String>()
+  ): List<ApplicationValidationErrorCodes> {
+    val errorCodes = mutableListOf<ApplicationValidationErrorCodes>()
     val prison = application.prison
-    val prisoner = prisonerService.getPrisoner(application.prisonerId) ?: throw VSiPValidationException("prisoner not found")
+    val prisoner = prisonerService.getPrisoner(application.prisonerId) ?: run {
+      LOG.info("Prisoner with id - ${application.prisonerId} not found.")
+      throw ApplicationValidationException(
+        APPLICATION_INVALID_PRISONER_NOT_FOUND,
+      )
+    }
 
     checkPrison(prison.code, prisoner.prisonCode)
     checkSessionSlot(application, prisoner, prison)?.also {
-      errorMessages.add(it)
+      errorCodes.add(it)
     }
 
     // check if there are non-association visits that have been booked in after the application was created
@@ -68,47 +82,47 @@ class ApplicationValidationService(
       sessionDate = application.sessionSlot.slotDate,
       prisonId = application.prisonId,
     )?.also {
-      errorMessages.add(it)
+      errorCodes.add(it)
     }
 
     // check if any double bookings for the same prisoner
     checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot, visitReference = application.visit?.reference)?.also {
-      errorMessages.add(it)
+      errorCodes.add(it)
     }
 
     // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
     checkVOLimits(application.prisonerId)?.also {
-      errorMessages.add(it)
+      errorCodes.add(it)
     }
 
     // check capacity for slot
     checkSlotCapacity(bookingRequestDto, application, existingBooking)?.also {
-      errorMessages.add(it)
+      errorCodes.add(it)
     }
 
-    return errorMessages.toList()
+    return errorCodes.toList()
   }
 
   private fun isStaffApplicationValid(
     bookingRequestDto: BookingRequestDto?,
     application: Application,
     existingBooking: Visit?,
-  ): List<String> {
-    val errorMessages = mutableListOf<String>()
+  ): List<ApplicationValidationErrorCodes> {
+    val errorCodes = mutableListOf<ApplicationValidationErrorCodes>()
     // check capacity for slot
     checkSlotCapacity(bookingRequestDto, application, existingBooking)?.also {
-      errorMessages.add(it)
+      errorCodes.add(it)
     }
 
-    return errorMessages
+    return errorCodes
   }
 
-  private fun checkSessionSlot(application: Application, prisoner: PrisonerDto, prison: Prison): String? {
+  private fun checkSessionSlot(application: Application, prisoner: PrisonerDto, prison: Prison): ApplicationValidationErrorCodes? {
     val sessionSlot = application.sessionSlot
 
     sessionSlot.sessionTemplateReference?.let {
       val sessionTemplate = sessionTemplateRepository.findByReference(it)
-      sessionTemplate?.let {
+      if (sessionTemplate != null) {
         val prisonerHousingLevels =
           prisonerService.getPrisonerHousingLevels(application.prisonerId, prison.code, listOf(sessionTemplate))
         val isSessionAvailableToPrisoner = prisonerSessionValidationService.isSessionAvailableToPrisoner(
@@ -117,9 +131,13 @@ class ApplicationValidationService(
           prisonerHousingLevels = prisonerHousingLevels,
         )
         if (!isSessionAvailableToPrisoner) {
-          return "session slot with reference - ${sessionSlot.reference} is unavailable to prisoner"
+          LOG.info("session slot with reference - ${sessionSlot.reference} is unavailable to prisoner")
+          return APPLICATION_INVALID_SESSION_NOT_AVAILABLE
         }
-      } ?: return "session template with reference - ${sessionSlot.sessionTemplateReference} not found"
+      } else {
+        LOG.info("session template with reference - ${sessionSlot.sessionTemplateReference} not found")
+        return APPLICATION_INVALID_SESSION_TEMPLATE_NOT_FOUND
+      }
     }
 
     return null
@@ -127,11 +145,12 @@ class ApplicationValidationService(
 
   private fun checkPrison(applicationPrisonCode: String, prisonerPrisonCode: String?) {
     if (applicationPrisonCode != prisonerPrisonCode) {
-      throw VSiPValidationException("application's prison code - $applicationPrisonCode is different to prison code for prisoner - $prisonerPrisonCode")
+      LOG.info("application's prison code - $applicationPrisonCode is different to prison code for prisoner - $prisonerPrisonCode")
+      throw ApplicationValidationException(APPLICATION_INVALID_PRISON_NOT_MATCHING)
     }
   }
 
-  private fun checkNonAssociationVisits(prisonerId: String, sessionDate: LocalDate, prisonId: Long): String? {
+  private fun checkNonAssociationVisits(prisonerId: String, sessionDate: LocalDate, prisonId: Long): ApplicationValidationErrorCodes? {
     // check non association visits
     val nonAssociationPrisonerIds =
       prisonerService.getPrisonerNonAssociationList(prisonerId).map { it.otherPrisonerDetails.prisonerNumber }
@@ -142,31 +161,34 @@ class ApplicationValidationService(
           prisonId,
         )
       ) {
-        return "non-associations for prisoner - $prisonerId have booked visits on $sessionDate at the same prison."
+        LOG.info("non-associations for prisoner - $prisonerId have booked visits on $sessionDate at the same prison.")
+        return APPLICATION_INVALID_NON_ASSOCIATION_VISITS
       }
     }
 
     return null
   }
 
-  private fun checkDoubleBookedVisits(prisonerId: String, sessionSlot: SessionSlot, visitReference: String?): String? {
+  private fun checkDoubleBookedVisits(prisonerId: String, sessionSlot: SessionSlot, visitReference: String?): ApplicationValidationErrorCodes? {
     if (visitRepository.hasActiveVisitForSessionSlot(
         prisonerId = prisonerId,
         sessionSlotId = sessionSlot.id,
         excludeVisitReference = visitReference,
       )
     ) {
-      return "There is already a visit booked for prisoner - $prisonerId on session slot - ${sessionSlot.reference}."
+      LOG.info("There is already a visit booked for prisoner - $prisonerId on session slot - ${sessionSlot.reference}.")
+      return APPLICATION_INVALID_VISIT_ALREADY_BOOKED
     }
 
     return null
   }
 
-  private fun checkVOLimits(prisonerId: String): String? {
+  private fun checkVOLimits(prisonerId: String): ApplicationValidationErrorCodes? {
     // check VO limits
     val remainingVisitBalance = prisonerService.getVisitBalance(prisonerId = prisonerId)
     if (remainingVisitBalance <= 0) {
-      return "not enough VO balance for prisoner - $prisonerId"
+      LOG.info("not enough VO balance for prisoner - $prisonerId to book visit")
+      return APPLICATION_INVALID_INADEQUATE_VO_BALANCE
     }
 
     return null
@@ -176,7 +198,7 @@ class ApplicationValidationService(
     bookingRequestDto: BookingRequestDto?,
     application: Application,
     existingBooking: Visit?,
-  ): String? {
+  ): ApplicationValidationErrorCodes? {
     val allowOverBooking = bookingRequestDto?.allowOverBooking ?: false
 
     if (!allowOverBooking && hasSlotChangedSinceLastBooking(existingBooking, application)) {
@@ -187,7 +209,8 @@ class ApplicationValidationService(
           includeReservedApplications(application),
         )
       } catch (overCapacityException: OverCapacityException) {
-        return overCapacityException.message
+        LOG.info(overCapacityException.message)
+        return APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY
       }
     }
 

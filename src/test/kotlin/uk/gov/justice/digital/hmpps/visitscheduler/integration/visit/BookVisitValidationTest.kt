@@ -10,6 +10,12 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_INADEQUATE_VO_BALANCE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NON_ASSOCIATION_VISITS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_NOT_MATCHING
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_NOT_AVAILABLE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -69,7 +75,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains("application's prison code - ${reservedApplication.prison.code} is different to prison code for prisoner - ${prisonerDto.prisonId}")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_PRISON_NOT_MATCHING.toString())
   }
 
   @Test
@@ -121,7 +127,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains("session slot with reference - ${application.sessionSlot.reference} is unavailable to prisoner")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE.toString())
   }
 
   @Test
@@ -189,7 +195,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains("session slot with reference - ${application.sessionSlot.reference} is unavailable to prisoner")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE.toString())
   }
 
   @Test
@@ -260,7 +266,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains("session slot with reference - ${application.sessionSlot.reference} is unavailable to prisoner")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE.toString())
   }
 
   @Test
@@ -326,7 +332,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains("non-associations for prisoner - $prisonerId have booked visits on ${reservedApplication.sessionSlot.slotDate} at the same prison.")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_NON_ASSOCIATION_VISITS.toString())
   }
 
   @Test
@@ -405,7 +411,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // Then
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains("There is already a visit booked for prisoner - $prisonerId on session slot - ${reservedApplication.sessionSlot.reference}.")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_VISIT_ALREADY_BOOKED.toString())
   }
 
   @Test
@@ -476,7 +482,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains("not enough VO balance for prisoner - $prisonerId")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_VO_BALANCE.toString())
   }
 
   @Test
@@ -497,7 +503,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains("not enough VO balance for prisoner - $prisonerId")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_VO_BALANCE.toString())
   }
 
   @Test
@@ -570,7 +576,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY.toString())
   }
 
   @Test
@@ -611,8 +617,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(2)
-    assertThat(validationErrorResponse.validationMessages).contains("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
-    assertThat(validationErrorResponse.validationMessages).contains("not enough VO balance for prisoner - $prisonerId")
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY.toString())
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_VO_BALANCE.toString())
   }
 
   @Test

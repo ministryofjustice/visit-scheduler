@@ -16,6 +16,7 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ApplicationValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
@@ -255,6 +256,18 @@ class VisitSchedulerExceptionHandler(
       .body(
         ValidationErrorResponse(
           validationMessages = e.messages.asList(),
+        ),
+      )
+  }
+
+  @ExceptionHandler(ApplicationValidationException::class)
+  fun handleApplicationValidationException(e: ApplicationValidationException): ResponseEntity<ValidationErrorResponse?>? {
+    log.error("Validation exception", e)
+    return ResponseEntity
+      .status(HttpStatus.BAD_REQUEST)
+      .body(
+        ValidationErrorResponse(
+          validationMessages = e.errorCodes.map { it.toString() }.toList(),
         ),
       )
   }
