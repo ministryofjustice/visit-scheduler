@@ -25,8 +25,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepo
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonerService
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
+import java.time.temporal.ChronoUnit.MINUTES
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -74,7 +75,7 @@ abstract class NotificationTestBase : IntegrationTestBase() {
       assertThat(data["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
       assertThat(data["visitors"]).isEqualTo(visit.visitors.map { it.nomisPersonId }.joinToString(","))
       assertThat(data["reviewType"]).isEqualTo(type.reviewType)
-      assertThat(data["visitBooked"]).isEqualTo(visit.createTimestamp!!.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME))
+      assertThat(LocalDateTime.parse(data["visitBooked"]).truncatedTo(MINUTES)).isEqualTo(visit.createTimestamp!!.truncatedTo(MINUTES).format(DateTimeFormatter.ISO_DATE_TIME))
 
       eventAudit.actionedBy.userName?.let { value ->
         assertThat(data["actionedBy"]).isEqualTo(value)

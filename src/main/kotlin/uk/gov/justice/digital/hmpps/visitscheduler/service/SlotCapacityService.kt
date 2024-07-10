@@ -33,17 +33,27 @@ class SlotCapacityService {
   fun checkCapacityForBooking(sessionSlotReference: String, visitRestriction: VisitRestriction, incReservedApplications: Boolean) {
     val sessionSlot = sessionSlotRepository.findByReference(sessionSlotReference)
 
-    if (hasExceededMaxCapacity(sessionSlot, visitRestriction, incReservedApplications)) {
+    if (hasExceededMaxCapacity(
+        sessionSlot,
+        visitRestriction,
+        incReservedApplications,
+      )
+    ) {
       val messages = "Booking can not be made because capacity has been exceeded for the slot $sessionSlotReference"
       LOG.debug(messages)
       throw OverCapacityException(messages)
     }
   }
 
-  fun checkCapacityForApplicationReservation(sessionSlotReference: String, visitRestriction: VisitRestriction, incReservedApplications: Boolean) {
+  fun checkCapacityForApplicationReservation(
+    sessionSlotReference: String,
+    visitRestriction: VisitRestriction,
+    incReservedApplications: Boolean,
+    excludedApplicationReference: String? = null,
+  ) {
     val sessionSlot = sessionSlotRepository.findByReference(sessionSlotReference)
 
-    if (hasExceededMaxCapacity(sessionSlot, visitRestriction, true)) {
+    if (hasExceededMaxCapacity(sessionSlot, visitRestriction, true, excludedApplicationReference = excludedApplicationReference)) {
       val messages = "Application can not be reserved because capacity has been exceeded for the slot $sessionSlotReference"
       LOG.debug(messages)
       throw OverCapacityException(messages)
@@ -54,11 +64,12 @@ class SlotCapacityService {
     sessionSlot: SessionSlot,
     visitRestriction: VisitRestriction,
     incReservedApplications: Boolean,
+    excludedApplicationReference: String? = null,
   ): Boolean {
     var slotTakenCount = visitService.getBookCountForSlot(sessionSlot.id, visitRestriction)
 
     if (incReservedApplications) {
-      slotTakenCount += applicationService.getReservedApplicationsCountForSlot(sessionSlot.id, visitRestriction)
+      slotTakenCount += applicationService.getReservedApplicationsCountForSlot(sessionSlot.id, visitRestriction, excludedApplicationReference = excludedApplicationReference)
     }
 
     val maxBookings = sessionTemplateService.getSessionTemplatesCapacity(

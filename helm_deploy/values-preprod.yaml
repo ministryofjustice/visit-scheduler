@@ -4,6 +4,20 @@
 generic-service:
   replicaCount: 4
 
+  # With big flyway migrations if we change the replicaCount as below we find that the migration does not lock.
+  # You still may find the deployment will register a fail but the migration has happen and once you change the settings back and deploy it works.
+  # replicaCount: 1
+  #
+  # livenessProbe:
+  #  initialDelaySeconds: 780
+  #  periodSeconds: 30
+  #  failureThreshold: 1
+  #
+  # readinessProbe:
+  #  initialDelaySeconds: 780
+  #  periodSeconds: 30
+  #  failureThreshold: 1
+
   ingress:
     host: visit-scheduler-preprod.prison.service.justice.gov.uk
 

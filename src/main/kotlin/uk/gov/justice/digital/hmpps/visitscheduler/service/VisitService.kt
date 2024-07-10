@@ -217,10 +217,10 @@ class VisitService(
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
     if (visitRepository.isBookingCancelled(reference)) {
-      // If already canceled then just return object and do nothing more!
-      LOG.debug("The visit $reference has already been canceled!")
-      val canceledVisit = visitRepository.findByReference(reference)!!
-      return visitDtoBuilder.build(canceledVisit)
+      // If already cancelled then just return object and do nothing more!
+      LOG.debug("The visit $reference has already been cancelled!")
+      val cancelledVisit = visitRepository.findByReference(reference)!!
+      return visitDtoBuilder.build(cancelledVisit)
     }
 
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
@@ -315,7 +315,7 @@ class VisitService(
     try {
       eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, booking.reference, bookingRequestDto.applicationMethodType)
     } catch (e: InvocationTargetException) {
-      val message = "Audit log does not exists for ${bookedVisitDto.applicationReference}"
+      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
       LOG.error(message)
     }
 
@@ -343,7 +343,7 @@ class VisitService(
     try {
       eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, booking.reference, bookingRequestDto.applicationMethodType)
     } catch (e: InvocationTargetException) {
-      val message = "Audit log does not exists for ${bookedVisitDto.applicationReference}"
+      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
       LOG.error(message)
     }
 
@@ -454,7 +454,7 @@ class VisitService(
     startDateTime: LocalDateTime = LocalDateTime.now(),
     endDateTime: LocalDateTime? = null,
   ): List<VisitDto> {
-    return this.visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
+    return visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
   fun getFutureBookedVisitsExcludingPrison(
@@ -466,5 +466,20 @@ class VisitService(
 
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
+  }
+
+  fun getFuturePublicBookedVisitsByBookerReference(bookerReference: String): List<VisitDto> {
+    val bookingReferenceList = visitRepository.getPublicFutureBookingsByBookerReference(bookerReference)
+    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedBy { it.startTimestamp }
+  }
+
+  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<VisitDto> {
+    val bookingReferenceList = visitRepository.getPublicCanceledVisitsByBookerReference(bookerReference)
+    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedByDescending { it.modifiedTimestamp }
+  }
+
+  fun getPublicPastVisitsByBookerReference(bookerReference: String): List<VisitDto> {
+    val bookingReferenceList = visitRepository.getPublicPastBookingsByBookerReference(bookerReference)
+    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedByDescending { it.startTimestamp }
   }
 }

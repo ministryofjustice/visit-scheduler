@@ -1084,7 +1084,7 @@ class GetSessionsTest : IntegrationTestBase() {
       sessionTemplate = sessionTemplate,
     )
 
-    // not included as it's a canceled visit
+    // not included as it's a cancelled visit
     this.visitEntityHelper.create(
       prisonerId = "AF12345G",
       prisonCode = prisonCode,
@@ -1334,7 +1334,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     assertThat(visitSessionDtos).hasSize(4)
     assertThat(visitSessionDtos[0].sessionConflicts).hasSize(1)
-    assertThat(visitSessionDtos[0].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKED)
+    assertThat(visitSessionDtos[0].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[1].sessionConflicts).isEmpty()
     assertThat(visitSessionDtos[2].sessionConflicts).isEmpty()
     assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
@@ -1410,11 +1410,11 @@ class GetSessionsTest : IntegrationTestBase() {
 
     assertThat(visitSessionDtos).hasSize(4)
     assertThat(visitSessionDtos[0].sessionConflicts).hasSize(1)
-    assertThat(visitSessionDtos[0].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKED)
+    assertThat(visitSessionDtos[0].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[1].sessionConflicts).hasSize(1)
-    assertThat(visitSessionDtos[1].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKED)
+    assertThat(visitSessionDtos[1].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[2].sessionConflicts).hasSize(1)
-    assertThat(visitSessionDtos[2].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKED)
+    assertThat(visitSessionDtos[2].sessionConflicts).contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION)
     assertThat(visitSessionDtos[3].sessionConflicts).isEmpty()
   }
 
