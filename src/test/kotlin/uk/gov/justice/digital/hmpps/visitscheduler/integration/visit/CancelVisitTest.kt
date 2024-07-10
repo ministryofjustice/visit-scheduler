@@ -485,6 +485,9 @@ class CancelVisitTest : IntegrationTestBase() {
         assertThat(it["visitType"]).isEqualTo(cancelledVisit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(cancelledVisit.visitRoom)
         assertThat(it["hasPhoneNumber"]).isEqualTo(((cancelledVisit.visitContact.telephone != null).toString()))
+        assertThat(it["totalVisitors"]).isEqualTo(cancelledVisit.visitors.size.toString())
+        val commaDelimitedVisitorIds = cancelledVisit.visitors.map { it.nomisPersonId }.joinToString(",")
+        assertThat(it["visitors"]).isEqualTo(commaDelimitedVisitorIds)
         eventAudit.actionedBy.userName?.let { value ->
           assertThat(it["actionedBy"]).isEqualTo(value)
         }
@@ -507,6 +510,8 @@ class CancelVisitTest : IntegrationTestBase() {
       "visitType" to cancelledVisit.visitType.name,
       "visitRoom" to cancelledVisit.visitRoom,
       "hasPhoneNumber" to ((cancelledVisit.visitContact.telephone != null).toString()),
+      "totalVisitors" to (cancelledVisit.visitors.size.toString()),
+      "visitors" to (cancelledVisit.visitors.map { it.nomisPersonId }.joinToString(",")),
       "actionedBy" to eventAudit.actionedBy.userName,
       "source" to eventAudit.actionedBy.userType.name,
       "applicationMethodType" to eventAudit.applicationMethodType.name,

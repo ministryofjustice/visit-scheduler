@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
@@ -292,7 +293,7 @@ class TelemetryClientService(
   private fun createDefaultVisitData(
     visitDto: VisitDto,
   ): MutableMap<String, String> {
-    val data = mutableMapOf(
+    return mutableMapOf(
       "reference" to visitDto.reference,
       "applicationReference" to visitDto.applicationReference,
       "prisonerId" to visitDto.prisonerId,
@@ -304,9 +305,9 @@ class TelemetryClientService(
       "visitType" to visitDto.visitType.name,
       "visitRoom" to visitDto.visitRoom,
       "hasPhoneNumber" to (visitDto.visitContact.telephone != null).toString(),
+      "totalVisitors" to visitDto.visitors.size.toString(),
+      "visitors" to getVisitorIdsAsString(visitDto.visitors),
     )
-
-    return data
   }
 
   private fun createUnFlagData(
@@ -354,5 +355,9 @@ class TelemetryClientService(
 
   private fun formatDateToString(date: LocalDate): String {
     return date.format(DateTimeFormatter.ISO_DATE)
+  }
+
+  private fun getVisitorIdsAsString(visitors: List<VisitorDto>): String {
+    return visitors.map { it.nomisPersonId }.joinToString(",")
   }
 }
