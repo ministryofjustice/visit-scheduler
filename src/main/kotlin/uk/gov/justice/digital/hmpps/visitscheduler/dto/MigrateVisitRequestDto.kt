@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
+import uk.gov.justice.digital.hmpps.visitscheduler.service.NOT_KNOWN_NOMIS
 import java.time.LocalDateTime
 
 @Schema(description = "Migrate visit request")
@@ -54,5 +55,5 @@ data class MigrateVisitRequestDto(
   @Schema(description = "Visit notes", required = false)
   val visitNotes: Set<@Valid VisitNoteDto>? = setOf(),
   @Schema(description = "Username for user who actioned this request", required = false)
-  val actionedBy: String? = null,
+  val actionedBy: String? = NOT_KNOWN_NOMIS,
 )

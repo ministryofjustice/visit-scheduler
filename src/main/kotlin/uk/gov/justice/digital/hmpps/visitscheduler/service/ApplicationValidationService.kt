@@ -9,6 +9,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -41,6 +42,8 @@ class ApplicationValidationService(
         PUBLIC -> isPublicApplicationValid(bookingRequestDto, application, existingBooking)
 
         STAFF -> isStaffApplicationValid(bookingRequestDto, application, existingBooking)
+
+        SYSTEM -> {}
       }
     } catch (ve: ValidationException) {
       LOG.error("Validation failed for application reference - ${application.reference} with msg - ${ve.message}")
@@ -175,6 +178,7 @@ class ApplicationValidationService(
     return when (application.userType) {
       STAFF -> applicationService.isExpiredApplication(application.modifyTimestamp!!)
       PUBLIC -> false
+      SYSTEM -> false
     }
   }
 }

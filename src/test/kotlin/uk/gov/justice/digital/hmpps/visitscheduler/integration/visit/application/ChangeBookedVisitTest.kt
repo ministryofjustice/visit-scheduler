@@ -31,6 +31,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
@@ -91,6 +93,24 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val reference = bookedVisit.reference
     val createApplicationRequest =
       createApplicationRequest(sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!)
+
+    // When
+    val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
+
+    // Then
+    val returnResult = getResult(responseSpec)
+
+    val applicationDto = getApplicationDto(returnResult)
+    assertApplicationDetails(bookedVisit, applicationDto, createApplicationRequest, false, eventAuditType = CHANGING_VISIT)
+    assertTelemetryData(applicationDto)
+  }
+
+  @Test
+  fun `public application to change visit is added but not completed`() {
+    // Given
+    val reference = bookedVisit.reference
+    val createApplicationRequest =
+      createApplicationRequest(sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!, userType = PUBLIC)
 
     // When
     val responseSpec = callApplicationForVisitChange(webTestClient, roleVisitSchedulerHttpHeaders, createApplicationRequest, reference)
@@ -385,6 +405,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     visitRestriction: SessionRestriction = SessionRestriction.OPEN,
     sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
     support: String = "Some Text",
+    userType: UserType = STAFF,
   ): CreateApplicationDto {
     return CreateApplicationDto(
       prisonerId = prisonerId,
@@ -395,7 +416,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       visitorSupport = ApplicationSupportDto(support),
       actionedBy = ACTIONED_BY_USER_NAME,
       sessionTemplateReference = sessionTemplateReference,
-      userType = STAFF,
+      userType = userType,
     )
   }
 
@@ -466,7 +487,13 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
 
     val eventAudit = this.eventAuditRepository.findLastEventByApplicationReference(returnedApplication.reference, eventAuditType)
     assertThat(eventAudit.type).isEqualTo(eventAuditType)
-    assertThat(eventAudit.actionedBy).isEqualTo(createApplicationRequest.actionedBy)
+    if (STAFF == eventAudit.actionedBy.userType) {
+      assertThat(eventAudit.actionedBy.userName).isEqualTo(createApplicationRequest.actionedBy)
+    }
+    if (PUBLIC == eventAudit.actionedBy.userType) {
+      assertThat(eventAudit.actionedBy.bookerReference).isEqualTo(createApplicationRequest.actionedBy)
+    }
+
     assertThat(eventAudit.applicationMethodType).isEqualTo(ApplicationMethodType.NOT_KNOWN)
     assertThat(eventAudit.bookingReference).isEqualTo(lastBooking.reference)
     assertThat(eventAudit.sessionTemplateReference).isEqualTo(sessionTemplate.reference)

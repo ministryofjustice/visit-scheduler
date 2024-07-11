@@ -1,24 +1,27 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
+import jakarta.persistence.CascadeType.REFRESH
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
 import jakarta.persistence.Enumerated
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
+import jakarta.persistence.JoinColumn
+import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import java.time.LocalDateTime
 
 @Entity
 @Table(
   name = "event_audit",
 )
-class EventAudit(
+class EventAudit private constructor(
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -26,33 +29,44 @@ class EventAudit(
   val id: Long = 0,
 
   @Column
-  var bookingReference: String? = null,
+  val bookingReference: String? = null,
 
   @Column
-  var applicationReference: String? = null,
+  val applicationReference: String? = null,
 
   @Column
-  var sessionTemplateReference: String? = null,
+  val sessionTemplateReference: String? = null,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
-  var type: EventAuditType,
+  val type: EventAuditType,
 
   @Column(nullable = false)
   @Enumerated(EnumType.STRING)
-  var applicationMethodType: ApplicationMethodType,
+  val applicationMethodType: ApplicationMethodType,
 
-  @Column(nullable = false)
-  var actionedBy: String,
+  @Column(name = "ACTIONED_BY_ID", nullable = false)
+  private val actionedById: Long,
 
-  @Enumerated(EnumType.STRING)
-  @Column(name = "user_type", nullable = false)
-  val userType: UserType,
+  @ManyToOne(fetch = FetchType.LAZY, cascade = [REFRESH])
+  @JoinColumn(name = "ACTIONED_BY_ID", updatable = false, insertable = false)
+  val actionedBy: ActionedBy,
 
   @Column(nullable = true)
-  var text: String?,
+  val text: String? = null,
 
   @CreationTimestamp
   @Column
   val createTimestamp: LocalDateTime = LocalDateTime.now(),
-)
+) {
+  constructor(actionedBy: ActionedBy, bookingReference: String?, applicationReference: String?, sessionTemplateReference: String?, type: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?) : this(
+    actionedById = actionedBy.id,
+    actionedBy = actionedBy,
+    bookingReference = bookingReference,
+    applicationReference = applicationReference,
+    sessionTemplateReference = sessionTemplateReference,
+    type = EventAuditType.valueOf(type.name),
+    applicationMethodType = applicationMethodType,
+    text = text,
+  )
+}
