@@ -10,10 +10,10 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_INADEQUATE_VO_BALANCE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NON_ASSOCIATION_VISITS
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_NOT_MATCHING
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_SLOT_CAPACITY
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_VO_BALANCE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_PRISONER_MISMATCH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_NOT_AVAILABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
@@ -75,7 +75,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_PRISON_NOT_MATCHING.toString())
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_PRISON_PRISONER_MISMATCH.toString())
   }
 
   @Test
@@ -482,7 +482,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_VO_BALANCE.toString())
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_NO_VO_BALANCE.toString())
   }
 
   @Test
@@ -503,7 +503,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_VO_BALANCE.toString())
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_NO_VO_BALANCE.toString())
   }
 
   @Test
@@ -576,7 +576,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY.toString())
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_NO_SLOT_CAPACITY.toString())
   }
 
   @Test
@@ -617,8 +617,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationMessages.size).isEqualTo(2)
-    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY.toString())
-    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_INADEQUATE_VO_BALANCE.toString())
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_NO_SLOT_CAPACITY.toString())
+    assertThat(validationErrorResponse.validationMessages).contains(APPLICATION_INVALID_NO_VO_BALANCE.toString())
   }
 
   @Test

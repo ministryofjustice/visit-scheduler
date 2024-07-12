@@ -9,7 +9,7 @@ import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_SLOT_CAPACITY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -70,7 +70,7 @@ class AssertHelper {
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     Assertions.assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
     Assertions.assertThat(validationErrorResponse.validationMessages).contains(
-      APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY.toString(),
+      APPLICATION_INVALID_NO_SLOT_CAPACITY.toString(),
     )
   }
 

@@ -7,11 +7,11 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonerDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_INADEQUATE_VO_BALANCE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NON_ASSOCIATION_VISITS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_SLOT_CAPACITY
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_VO_BALANCE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISONER_NOT_FOUND
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_NOT_MATCHING
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_PRISONER_MISMATCH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_NOT_AVAILABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_TEMPLATE_NOT_FOUND
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
@@ -146,7 +146,7 @@ class ApplicationValidationService(
   private fun checkPrison(applicationPrisonCode: String, prisonerPrisonCode: String?) {
     if (applicationPrisonCode != prisonerPrisonCode) {
       LOG.info("application's prison code - $applicationPrisonCode is different to prison code for prisoner - $prisonerPrisonCode")
-      throw ApplicationValidationException(APPLICATION_INVALID_PRISON_NOT_MATCHING)
+      throw ApplicationValidationException(APPLICATION_INVALID_PRISON_PRISONER_MISMATCH)
     }
   }
 
@@ -188,7 +188,7 @@ class ApplicationValidationService(
     val remainingVisitBalance = prisonerService.getVisitBalance(prisonerId = prisonerId)
     if (remainingVisitBalance <= 0) {
       LOG.info("not enough VO balance for prisoner - $prisonerId to book visit")
-      return APPLICATION_INVALID_INADEQUATE_VO_BALANCE
+      return APPLICATION_INVALID_NO_VO_BALANCE
     }
 
     return null
@@ -210,7 +210,7 @@ class ApplicationValidationService(
         )
       } catch (overCapacityException: OverCapacityException) {
         LOG.info(overCapacityException.message)
-        return APPLICATION_INVALID_INADEQUATE_SLOT_CAPACITY
+        return APPLICATION_INVALID_NO_SLOT_CAPACITY
       }
     }
 
