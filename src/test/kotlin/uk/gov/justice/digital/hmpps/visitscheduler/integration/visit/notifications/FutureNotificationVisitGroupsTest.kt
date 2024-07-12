@@ -46,8 +46,8 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visitPrimary, type = BOOKED_VISIT)
-    eventAuditEntityHelper.create(visitPrimary, type = UPDATED_VISIT, actionedBy = "IUpdatedIT")
-    eventAuditEntityHelper.create(visitPrimary, type = CHANGING_VISIT, actionedBy = "IChangeSomething")
+    eventAuditEntityHelper.create(visitPrimary, type = UPDATED_VISIT, actionedByValue = "IUpdatedIT")
+    eventAuditEntityHelper.create(visitPrimary, type = CHANGING_VISIT, actionedByValue = "IChangeSomething")
 
     val visitSecondary = createApplicationAndVisit(
       prisonerId = secondaryPrisonerId,

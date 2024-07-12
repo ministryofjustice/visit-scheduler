@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ReportingTaskConfiguration
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
@@ -76,45 +75,8 @@ class ReportingTask(
   }
 
   private fun sendTelemetryEvent(sessionReports: List<SessionVisitCountsDto>) {
-    sessionReports.forEach { sessionReport ->
-      val event = createVisitCountTelemetryEventMap(sessionReport)
-      telemetryClientService.trackEvent(TelemetryVisitEvents.VISIT_COUNTS_REPORT, event)
+    sessionReports.forEach {
+      telemetryClientService.trackVisitCountsEvent(it)
     }
-  }
-
-  fun createVisitCountTelemetryEventMap(
-    sessionReport: SessionVisitCountsDto,
-  ): Map<String, String> {
-    val reportEvent = mutableMapOf<String, String>()
-    reportEvent["reportDate"] = telemetryClientService.formatDateToString(sessionReport.reportDate)
-    reportEvent["prisonCode"] = sessionReport.prisonCode
-    reportEvent["blockedDate"] = sessionReport.isBlockedDate.toString()
-    reportEvent["hasSessions"] = sessionReport.hasSessionsOnDate.toString()
-
-    sessionReport.sessionTimeSlot?.let {
-      reportEvent["sessionStart"] = telemetryClientService.formatTimeToString(it.startTime)
-      reportEvent["sessionEnd"] = telemetryClientService.formatTimeToString(it.endTime)
-    }
-    sessionReport.sessionCapacity?.let {
-      reportEvent["openCapacity"] = it.open.toString()
-      reportEvent["closedCapacity"] = it.closed.toString()
-    }
-    sessionReport.visitType?.let {
-      reportEvent["visitType"] = it.toString()
-    }
-    sessionReport.openBookedCount?.let {
-      reportEvent["openBooked"] = it.toString()
-    }
-    sessionReport.closedBookedCount?.let {
-      reportEvent["closedBooked"] = it.toString()
-    }
-    sessionReport.openCancelledCount?.let {
-      reportEvent["openCancelled"] = it.toString()
-    }
-    sessionReport.closedCancelledCount?.let {
-      reportEvent["closedCancelled"] = it.toString()
-    }
-
-    return reportEvent.toMap()
   }
 }

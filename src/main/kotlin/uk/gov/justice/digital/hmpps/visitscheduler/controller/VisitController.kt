@@ -189,7 +189,7 @@ class VisitController(
   @GetMapping(GET_VISIT_BY_REFERENCE)
   @Operation(
     summary = "Get a visit",
-    description = "Retrieve visit by visit reference (excludes Reserved and CHANGING)",
+    description = "Retrieve visit by visit reference",
     responses = [
       ApiResponse(
         responseCode = "200",
