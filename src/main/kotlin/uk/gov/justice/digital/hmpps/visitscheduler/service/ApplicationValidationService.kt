@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidati
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ApplicationValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -50,6 +51,8 @@ class ApplicationValidationService(
       PUBLIC -> isPublicApplicationValid(bookingRequestDto, application, existingBooking)
 
       STAFF -> isStaffApplicationValid(bookingRequestDto, application, existingBooking)
+
+      SYSTEM -> isSystemApplicationValid()
     }
 
     if (errorCodes.isNotEmpty()) {
@@ -115,6 +118,11 @@ class ApplicationValidationService(
     }
 
     return errorCodes
+  }
+
+  private fun isSystemApplicationValid(): List<ApplicationValidationErrorCodes> {
+    // no validations
+    return emptyList()
   }
 
   private fun checkSessionSlot(application: Application, prisoner: PrisonerDto, prison: Prison): ApplicationValidationErrorCodes? {
@@ -230,6 +238,7 @@ class ApplicationValidationService(
     return when (application.userType) {
       STAFF -> applicationService.isExpiredApplication(application.modifyTimestamp!!)
       PUBLIC -> false
+      SYSTEM -> false
     }
   }
 }

@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonPrisonCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerAlertDto
@@ -110,13 +110,14 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERTS_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(1)
     with(auditEvents[0]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(STAFF)
     }
   }
 
@@ -247,7 +248,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
 
     // Then
     responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT)
     verify(telemetryClient, times(2)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -259,22 +260,24 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     val auditEvents = testEventAuditRepository.getAuditByType(PRISONER_ALERTS_UPDATED_EVENT)
     assertThat(auditEvents).hasSize(2)
     with(auditEvents[0]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(STAFF)
     }
     with(auditEvents[1]) {
-      assertThat(actionedBy).isEqualTo("NOT_KNOWN")
+      assertThat(actionedBy.userName).isNull()
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
       assertThat(bookingReference).isEqualTo(visit2.reference)
       assertThat(applicationReference).isEqualTo(visit2.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit2.sessionSlot.sessionTemplateReference)
       assertThat(type).isEqualTo(PRISONER_ALERTS_UPDATED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
-      assertThat(userType).isEqualTo(STAFF)
     }
   }
 

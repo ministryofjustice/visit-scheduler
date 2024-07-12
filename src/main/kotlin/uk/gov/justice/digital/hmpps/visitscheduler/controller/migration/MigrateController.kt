@@ -80,7 +80,7 @@ class MigrateController(
   @PutMapping(MIGRATE_CANCEL)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
-    summary = "Migrate a canceled booked visit",
+    summary = "Migrate a cancelled booked visit",
     requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
       content = [
         Content(
