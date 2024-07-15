@@ -42,17 +42,17 @@ class ApplicationValidationService(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun isApplicationValid(
+  fun validateApplication(
     bookingRequestDto: BookingRequestDto? = null,
     application: Application,
     existingBooking: Visit? = null,
   ) {
     val errorCodes = when (application.userType) {
-      PUBLIC -> isPublicApplicationValid(bookingRequestDto, application, existingBooking)
+      PUBLIC -> getPublicApplicationValidationErrors(bookingRequestDto, application, existingBooking)
 
-      STAFF -> isStaffApplicationValid(bookingRequestDto, application, existingBooking)
+      STAFF -> getStaffApplicationValidationErrors(bookingRequestDto, application, existingBooking)
 
-      SYSTEM -> isSystemApplicationValid()
+      SYSTEM -> getSystemApplicationValidationErrors()
     }
 
     if (errorCodes.isNotEmpty()) {
@@ -60,7 +60,7 @@ class ApplicationValidationService(
     }
   }
 
-  private fun isPublicApplicationValid(
+  private fun getPublicApplicationValidationErrors(
     bookingRequestDto: BookingRequestDto?,
     application: Application,
     existingBooking: Visit?,
@@ -106,7 +106,7 @@ class ApplicationValidationService(
     return errorCodes.toList()
   }
 
-  private fun isStaffApplicationValid(
+  private fun getStaffApplicationValidationErrors(
     bookingRequestDto: BookingRequestDto?,
     application: Application,
     existingBooking: Visit?,
@@ -120,7 +120,7 @@ class ApplicationValidationService(
     return errorCodes
   }
 
-  private fun isSystemApplicationValid(): List<ApplicationValidationErrorCodes> {
+  private fun getSystemApplicationValidationErrors(): List<ApplicationValidationErrorCodes> {
     // no validations
     return emptyList()
   }
