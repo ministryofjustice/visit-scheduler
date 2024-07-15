@@ -74,8 +74,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_PRISON_PRISONER_MISMATCH.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_PRISON_PRISONER_MISMATCH.toString())
   }
 
   @Test
@@ -126,8 +126,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE.toString())
   }
 
   @Test
@@ -194,8 +194,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE.toString())
   }
 
   @Test
@@ -265,8 +265,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE.toString())
   }
 
   @Test
@@ -331,8 +331,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_NON_ASSOCIATION_VISITS.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NON_ASSOCIATION_VISITS.toString())
   }
 
   @Test
@@ -410,8 +410,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_VISIT_ALREADY_BOOKED.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_VISIT_ALREADY_BOOKED.toString())
   }
 
   @Test
@@ -481,8 +481,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_NO_VO_BALANCE.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_VO_BALANCE.toString())
   }
 
   @Test
@@ -502,8 +502,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_NO_VO_BALANCE.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_VO_BALANCE.toString())
   }
 
   @Test
@@ -575,8 +575,8 @@ class BookVisitValidationTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(1)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_NO_SLOT_CAPACITY.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_SLOT_CAPACITY.toString())
   }
 
   @Test
@@ -616,9 +616,9 @@ class BookVisitValidationTest : IntegrationTestBase() {
       .expectStatus().isBadRequest
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    assertThat(validationErrorResponse.validationErrorCodes.size).isEqualTo(2)
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_NO_SLOT_CAPACITY.toString())
-    assertThat(validationErrorResponse.validationErrorCodes).contains(APPLICATION_INVALID_NO_VO_BALANCE.toString())
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(2)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_SLOT_CAPACITY.toString())
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_VO_BALANCE.toString())
   }
 
   @Test

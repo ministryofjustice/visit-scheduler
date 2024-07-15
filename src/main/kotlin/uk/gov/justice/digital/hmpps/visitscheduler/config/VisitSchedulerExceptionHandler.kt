@@ -267,7 +267,7 @@ class VisitSchedulerExceptionHandler(
       .status(HttpStatus.BAD_REQUEST)
       .body(
         ApplicationValidationErrorResponse(
-          validationErrorCodes = e.errorCodes.map { it.toString() }.toList(),
+          validationErrors = e.errorCodes.map { it.toString() }.toList(),
         ),
       )
   }
@@ -321,5 +321,5 @@ data class ValidationErrorResponse(
 )
 
 data class ApplicationValidationErrorResponse(
-  val validationErrorCodes: List<String>,
+  val validationErrors: List<String>,
 )
