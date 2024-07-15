@@ -71,7 +71,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // Then
 
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -123,7 +123,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, application.reference)
 
     // Then
-    responseSpec.expectStatus().isBadRequest
+    responseSpec.expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -191,7 +191,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -262,7 +262,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -328,7 +328,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -478,7 +478,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -499,7 +499,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -572,7 +572,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -613,7 +613,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(2)

@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 
 @Component
@@ -66,11 +65,10 @@ class AssertHelper {
     Assertions.assertThat(visit.visitStatus).isEqualTo(VisitStatus.BOOKED)
   }
 
-  fun assertCapacityError(
+  fun assertBookingCapacityError(
     responseSpec: ResponseSpec,
-    application: Application,
   ) {
-    responseSpec.expectStatus().isBadRequest
+    responseSpec.expectStatus().isEqualTo(422)
 
     val validationErrorResponse = getApplicationValidationErrorResponse(responseSpec)
     Assertions.assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
