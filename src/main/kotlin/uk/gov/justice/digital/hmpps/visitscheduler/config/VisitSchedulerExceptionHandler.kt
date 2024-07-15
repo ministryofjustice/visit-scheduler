@@ -323,4 +323,4 @@ data class ValidationErrorResponse(
 
 data class ApplicationValidationErrorResponse(
   val validationErrors: List<ApplicationValidationErrorCodes>,
-) : ErrorResponse(status = 422)
+) : ErrorResponse(status = HttpStatus.UNPROCESSABLE_ENTITY)
