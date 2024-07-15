@@ -6,7 +6,7 @@ import org.hamcrest.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.config.ValidationErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ApplicationValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_SLOT_CAPACITY
@@ -72,9 +72,9 @@ class AssertHelper {
   ) {
     responseSpec.expectStatus().isBadRequest
 
-    val validationErrorResponse = getValidationErrorResponse(responseSpec)
-    Assertions.assertThat(validationErrorResponse.validationMessages.size).isEqualTo(1)
-    Assertions.assertThat(validationErrorResponse.validationMessages).contains(
+    val validationErrorResponse = getApplicationValidationErrorResponse(responseSpec)
+    Assertions.assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    Assertions.assertThat(validationErrorResponse.validationErrors).contains(
       APPLICATION_INVALID_NO_SLOT_CAPACITY.toString(),
     )
   }
@@ -88,6 +88,6 @@ class AssertHelper {
       .value(Matchers.containsString("Application can not be reserved because capacity has been exceeded for the slot"))
   }
 
-  private fun getValidationErrorResponse(responseSpec: ResponseSpec): ValidationErrorResponse =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ValidationErrorResponse::class.java)
+  private fun getApplicationValidationErrorResponse(responseSpec: ResponseSpec): ApplicationValidationErrorResponse =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationValidationErrorResponse::class.java)
 }

@@ -261,13 +261,13 @@ class VisitSchedulerExceptionHandler(
   }
 
   @ExceptionHandler(ApplicationValidationException::class)
-  fun handleApplicationValidationException(e: ApplicationValidationException): ResponseEntity<ValidationErrorResponse?>? {
+  fun handleApplicationValidationException(e: ApplicationValidationException): ResponseEntity<ApplicationValidationErrorResponse?>? {
     log.error("Validation exception", e)
     return ResponseEntity
       .status(HttpStatus.BAD_REQUEST)
       .body(
-        ValidationErrorResponse(
-          validationMessages = e.errorCodes.map { it.toString() }.toList(),
+        ApplicationValidationErrorResponse(
+          validationErrors = e.errorCodes.map { it.toString() }.toList(),
         ),
       )
   }
@@ -318,4 +318,8 @@ data class ErrorResponse(
 
 data class ValidationErrorResponse(
   val validationMessages: List<String>,
+)
+
+data class ApplicationValidationErrorResponse(
+  val validationErrors: List<String>,
 )
