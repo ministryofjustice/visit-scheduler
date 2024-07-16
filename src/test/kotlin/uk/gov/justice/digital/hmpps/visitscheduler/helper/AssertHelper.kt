@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.netty.handler.codec.http.HttpResponseStatus.UNPROCESSABLE_ENTITY
 import org.assertj.core.api.Assertions
 import org.hamcrest.Matchers
 import org.springframework.beans.factory.annotation.Autowired
@@ -68,7 +69,7 @@ class AssertHelper {
   fun assertBookingCapacityError(
     responseSpec: ResponseSpec,
   ) {
-    responseSpec.expectStatus().isEqualTo(422)
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getApplicationValidationErrorResponse(responseSpec)
     Assertions.assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)

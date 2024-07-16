@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
+import io.netty.handler.codec.http.HttpResponseStatus.UNPROCESSABLE_ENTITY
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -71,7 +72,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // Then
 
     responseSpec
-      .expectStatus().isEqualTo(422)
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -123,7 +124,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, application.reference)
 
     // Then
-    responseSpec.expectStatus().isEqualTo(422)
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -191,7 +192,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isEqualTo(422)
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -262,7 +263,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isEqualTo(422)
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -328,7 +329,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isEqualTo(422)
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -478,7 +479,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isEqualTo(422)
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -499,7 +500,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isEqualTo(422)
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -572,7 +573,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isEqualTo(422)
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
@@ -613,7 +614,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isEqualTo(422)
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getValidationErrorResponse(responseSpec)
     assertThat(validationErrorResponse.validationErrors.size).isEqualTo(2)
