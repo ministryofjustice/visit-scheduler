@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ApplicationValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
@@ -264,10 +265,10 @@ class VisitSchedulerExceptionHandler(
   fun handleApplicationValidationException(e: ApplicationValidationException): ResponseEntity<ApplicationValidationErrorResponse?>? {
     log.error("Validation exception", e)
     return ResponseEntity
-      .status(HttpStatus.BAD_REQUEST)
+      .status(HttpStatus.UNPROCESSABLE_ENTITY)
       .body(
         ApplicationValidationErrorResponse(
-          validationErrors = e.errorCodes.map { it.toString() }.toList(),
+          validationErrors = e.errorCodes.toList(),
         ),
       )
   }
@@ -301,7 +302,7 @@ class VisitSchedulerExceptionHandler(
   }
 }
 
-data class ErrorResponse(
+open class ErrorResponse(
   val status: Int,
   val errorCode: Int? = null,
   val userMessage: String? = null,
@@ -321,5 +322,5 @@ data class ValidationErrorResponse(
 )
 
 data class ApplicationValidationErrorResponse(
-  val validationErrors: List<String>,
-)
+  val validationErrors: List<ApplicationValidationErrorCodes>,
+) : ErrorResponse(status = HttpStatus.UNPROCESSABLE_ENTITY)

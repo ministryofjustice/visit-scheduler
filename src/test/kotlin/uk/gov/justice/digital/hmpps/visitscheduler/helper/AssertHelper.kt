@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import io.netty.handler.codec.http.HttpResponseStatus.UNPROCESSABLE_ENTITY
 import org.assertj.core.api.Assertions
 import org.hamcrest.Matchers
 import org.springframework.beans.factory.annotation.Autowired
@@ -15,7 +16,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 
 @Component
@@ -66,16 +66,15 @@ class AssertHelper {
     Assertions.assertThat(visit.visitStatus).isEqualTo(VisitStatus.BOOKED)
   }
 
-  fun assertCapacityError(
+  fun assertBookingCapacityError(
     responseSpec: ResponseSpec,
-    application: Application,
   ) {
-    responseSpec.expectStatus().isBadRequest
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getApplicationValidationErrorResponse(responseSpec)
     Assertions.assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
     Assertions.assertThat(validationErrorResponse.validationErrors).contains(
-      APPLICATION_INVALID_NO_SLOT_CAPACITY.toString(),
+      APPLICATION_INVALID_NO_SLOT_CAPACITY,
     )
   }
 

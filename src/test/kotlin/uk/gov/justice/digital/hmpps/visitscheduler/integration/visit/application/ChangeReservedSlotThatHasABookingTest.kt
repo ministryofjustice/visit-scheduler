@@ -144,6 +144,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 
@@ -168,6 +169,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 

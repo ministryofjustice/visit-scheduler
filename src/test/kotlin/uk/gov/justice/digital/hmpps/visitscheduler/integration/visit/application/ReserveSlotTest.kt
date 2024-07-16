@@ -149,6 +149,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 
@@ -188,6 +189,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 
@@ -220,6 +222,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 
