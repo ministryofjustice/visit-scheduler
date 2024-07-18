@@ -440,7 +440,7 @@ class ApplicationService(
     )
   }
 
-  fun hasReservations(prisonerId: String, sessionSlotId: Long, excludedApplicationReference: String?, excludeReservedApplicationsForUser: String?): Boolean {
+  fun hasReservations(prisonerId: String, sessionSlotId: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): Boolean {
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
 
     return applicationRepo.hasReservations(
@@ -448,7 +448,7 @@ class ApplicationService(
       sessionSlotId = sessionSlotId,
       expiredDateAndTime,
       excludedApplicationReference = excludedApplicationReference,
-      excludeReservedApplicationsForUser = excludeReservedApplicationsForUser,
+      usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
     )
   }
 

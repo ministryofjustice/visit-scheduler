@@ -91,14 +91,14 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
       "a.modifyTimestamp >= :expiredDateAndTime AND " +
       "a.sessionSlotId = :sessionSlotId AND " +
       "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference) AND " +
-      "(:excludeReservedApplicationsForUser is null OR a.createdBy != :excludeReservedApplicationsForUser)",
+      "(:usernameToExcludeFromReservedApplications is null OR a.createdBy != :usernameToExcludeFromReservedApplications)",
   )
   fun hasReservations(
     @Param("prisonerId") prisonerId: String,
     @Param("sessionSlotId") sessionSlotId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
     @Param("excludedApplicationReference") excludedApplicationReference: String?,
-    @Param("excludeReservedApplicationsForUser") excludeReservedApplicationsForUser: String?,
+    @Param("usernameToExcludeFromReservedApplications") usernameToExcludeFromReservedApplications: String?,
   ): Boolean
 
   @Query(

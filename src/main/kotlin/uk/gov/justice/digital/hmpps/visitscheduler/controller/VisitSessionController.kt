@@ -155,7 +155,7 @@ class VisitSessionController(
     )
     currentUser: String? = null,
   ): List<AvailableVisitSessionDto> {
-    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, excludeReservedApplicationsForUser = currentUser)
+    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = currentUser)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
