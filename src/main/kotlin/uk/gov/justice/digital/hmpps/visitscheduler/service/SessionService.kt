@@ -133,7 +133,15 @@ class SessionService(
     excludedApplicationReference: String?,
     excludeReservedApplicationsForUser: String?,
   ): List<AvailableVisitSessionDto> {
-    LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {} ", prisonCode, prisonerId, sessionRestriction)
+    LOG.debug(
+      "Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {}, dateRange - {}, excludedApplicationReference - {}, excludeReservedApplicationsForUser - {} ",
+      prisonCode,
+      prisonerId,
+      sessionRestriction,
+      dateRange,
+      excludedApplicationReference,
+      excludeReservedApplicationsForUser,
+    )
 
     val visitSessions = getVisitSessions(prisonCode = prisonCode, prisonerId = prisonerId, dateRange = dateRange, excludedApplicationReference = excludedApplicationReference, excludeReservedApplicationsForUser = excludeReservedApplicationsForUser)
 
