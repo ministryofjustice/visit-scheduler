@@ -77,9 +77,10 @@ class SessionService(
     prisonerId: String,
     dateRange: DateRange,
     excludedApplicationReference: String? = null,
+    excludeReservedApplicationsForUser: String? = null,
   ): List<VisitSessionDto> {
     val prison = prisonsService.findPrisonByCode(prisonCode)
-    return getVisitSessions(prison, prisonerId, dateRange, excludedApplicationReference)
+    return getVisitSessions(prison, prisonerId, dateRange, excludedApplicationReference, excludeReservedApplicationsForUser)
   }
 
   fun getVisitSessions(
@@ -87,6 +88,7 @@ class SessionService(
     prisonerId: String,
     dateRange: DateRange,
     excludedApplicationReference: String? = null,
+    excludeReservedApplicationsForUser: String? = null,
   ): List<VisitSessionDto> {
     val prisonCode = prison.code
     LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId ")
@@ -110,7 +112,7 @@ class SessionService(
 
     val sessionSlots = getSessionSlots(visitSessions)
     val nonAssociationConflictSessions = getNonAssociationSessions(visitSessions, prisonerId, prison)
-    val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference)
+    val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, excludeReservedApplicationsForUser)
 
     return visitSessions.filterNot {
       hasNonAssociationConflict(nonAssociationConflictSessions, it) && policyFilterNonAssociation
@@ -129,10 +131,11 @@ class SessionService(
     sessionRestriction: SessionRestriction,
     dateRange: DateRange,
     excludedApplicationReference: String?,
+    excludeReservedApplicationsForUser: String?,
   ): List<AvailableVisitSessionDto> {
     LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {} ", prisonCode, prisonerId, sessionRestriction)
 
-    val visitSessions = getVisitSessions(prisonCode = prisonCode, prisonerId = prisonerId, dateRange = dateRange, excludedApplicationReference = excludedApplicationReference)
+    val visitSessions = getVisitSessions(prisonCode = prisonCode, prisonerId = prisonerId, dateRange = dateRange, excludedApplicationReference = excludedApplicationReference, excludeReservedApplicationsForUser = excludeReservedApplicationsForUser)
 
     return visitSessions.filter {
       hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
@@ -177,11 +180,12 @@ class SessionService(
     sessionSlots: List<SessionSlot>,
     prisonerId: String,
     excludedApplicationReference: String?,
+    excludeReservedApplicationsForUser: String?,
   ): List<VisitSessionDto> {
     val sessionSlotsByKey = sessionSlots.associateBy { it.slotDate.toString() + it.sessionTemplateReference }
     return visitSessions.filter {
       val key = it.startTimestamp.toLocalDate().toString() + it.sessionTemplateReference
-      sessionSlotsByKey.containsKey(key) && sessionHasBookingOrApplications(sessionSlotsByKey[key]!!, prisonerId, excludedApplicationReference)
+      sessionSlotsByKey.containsKey(key) && sessionHasBookingOrApplications(sessionSlotsByKey[key]!!, prisonerId, excludedApplicationReference, excludeReservedApplicationsForUser)
     }
   }
 
@@ -426,6 +430,7 @@ class SessionService(
     sessionSlot: SessionSlot,
     prisonerId: String,
     excludedApplicationReference: String?,
+    excludeReservedApplicationsForUser: String?,
   ): Boolean {
     if (visitRepository.hasActiveVisitForDate(
         prisonerId = prisonerId,
@@ -439,6 +444,7 @@ class SessionService(
       prisonerId = prisonerId,
       sessionSlotId = sessionSlot.id,
       excludedApplicationReference = excludedApplicationReference,
+      excludeReservedApplicationsForUser = excludeReservedApplicationsForUser,
     )
   }
 

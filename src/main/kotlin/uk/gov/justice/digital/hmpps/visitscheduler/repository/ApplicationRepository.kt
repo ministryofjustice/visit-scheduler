@@ -90,14 +90,15 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
       "a.prisonerId = :prisonerId AND " +
       "a.modifyTimestamp >= :expiredDateAndTime AND " +
       "a.sessionSlotId = :sessionSlotId AND " +
-      "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference)",
-
+      "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference) AND " +
+      "(:excludeReservedApplicationsForUser is null OR a.createdBy != :excludeReservedApplicationsForUser)",
   )
   fun hasReservations(
     @Param("prisonerId") prisonerId: String,
     @Param("sessionSlotId") sessionSlotId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
     @Param("excludedApplicationReference") excludedApplicationReference: String?,
+    @Param("excludeReservedApplicationsForUser") excludeReservedApplicationsForUser: String?,
   ): Boolean
 
   @Query(
