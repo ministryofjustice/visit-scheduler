@@ -208,7 +208,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       "v.visitStatus = 'BOOKED' AND " +
       "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId) AND " +
       "(cast(:endDateTime as date) is null OR v.sessionSlot.slotEnd < :endDateTime) ORDER BY v.sessionSlot.slotStart,v.id",
-    )
+  )
   fun getFutureVisitsByVisitorId(
     @Param("visitorId") visitorId: String,
     @Param("prisonerId") prisonerId: String?,

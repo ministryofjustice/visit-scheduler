@@ -89,7 +89,7 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
         visitId = visit2.id,
         visit = visit2,
         visitContact = true,
-      )
+      ),
     )
     visitEntityHelper.save(visit2)
     eventAuditEntityHelper.create(visit2)
@@ -106,7 +106,7 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
         visitId = visit3.id,
         visit = visit3,
         visitContact = true,
-      )
+      ),
     )
     visitEntityHelper.save(visit3)
     eventAuditEntityHelper.create(visit3)
@@ -150,13 +150,14 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
   }
 
   @Test
-  fun `when prisoner has been received due to temporary absence return then no visits are flagged or saved`() {
+  fun `when visitor is given an unsupported restriction then no visits are flagged or saved`() {
     // Given
     val notificationDto = PersonRestrictionChangeNotificationDto(
       prisonerNumber = prisonerId,
       visitorId = visitorId,
       validFromDate = LocalDate.now().minusDays(1),
-      restrictionType = "UNSUPPORTED")
+      restrictionType = "UNSUPPORTED",
+    )
 
     // When
     val responseSpec = callNotifyVSiPThatPersonRestrictionChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
