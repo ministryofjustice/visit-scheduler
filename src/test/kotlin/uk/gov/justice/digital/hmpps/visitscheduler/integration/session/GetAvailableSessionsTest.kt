@@ -2269,7 +2269,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       sessionRestriction = SessionRestriction.OPEN,
-      currentUser = createdByUser,
+      username = createdByUser,
     )
 
     // Then
@@ -2302,7 +2302,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode = prisonCode,
       prisonerId = prisonerId,
       sessionRestriction = SessionRestriction.OPEN,
-      currentUser = "other-user",
+      username = "other-user",
     )
 
     // Then
@@ -2524,7 +2524,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
     excludedApplicationReference: String? = null,
-    currentUser: String? = null,
+    username: String? = null,
   ): ResponseSpec {
     val today = LocalDate.now()
     val fromDate = today.plusDays(policyNoticeDaysMin.toLong())
@@ -2540,7 +2540,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       policyNoticeDaysMin = policyNoticeDaysMin,
       policyNoticeDaysMax = policyNoticeDaysMax,
       excludedApplicationReference = excludedApplicationReference,
-      currentUser = currentUser,
+      username = username,
     ).joinToString("&")
 
     return webTestClient.get().uri("$uri?$uriQueryParams")
@@ -2556,7 +2556,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     policyNoticeDaysMin: Int,
     policyNoticeDaysMax: Int,
     excludedApplicationReference: String?,
-    currentUser: String?,
+    username: String?,
   ): List<String> {
     val queryParams = ArrayList<String>()
     queryParams.add("prisonId=$prisonCode")
@@ -2571,8 +2571,8 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       queryParams.add("excludedApplicationReference=$excludedApplicationReference")
     }
 
-    currentUser?.let {
-      queryParams.add("currentUser=$currentUser")
+    username?.let {
+      queryParams.add("username=$username")
     }
     return queryParams
   }

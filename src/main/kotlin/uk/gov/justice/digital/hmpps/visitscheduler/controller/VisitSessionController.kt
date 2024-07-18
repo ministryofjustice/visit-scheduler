@@ -148,14 +148,14 @@ class VisitSessionController(
       example = "dfs-wjs-eqr",
     )
     excludedApplicationReference: String? = null,
-    @RequestParam(value = "currentUser", required = false)
+    @RequestParam(value = "username", required = false)
     @Parameter(
       description = "Username for the user making the request. Optional, ignored if not passed in.",
       example = "user-1",
     )
-    currentUser: String? = null,
+    username: String? = null,
   ): List<AvailableVisitSessionDto> {
-    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = currentUser)
+    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
