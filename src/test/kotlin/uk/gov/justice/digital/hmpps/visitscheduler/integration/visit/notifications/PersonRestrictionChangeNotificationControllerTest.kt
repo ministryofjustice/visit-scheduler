@@ -175,4 +175,25 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
     assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)).isEqualTo(0)
   }
+
+  @Test
+  fun `when visitor is given a restriction with a date in the past then no visits are flagged or saved`() {
+    // Given
+    val notificationDto = PersonRestrictionChangeNotificationDto(
+      prisonerNumber = prisonerId,
+      visitorId = visitorId,
+      validFromDate = LocalDate.now().minusDays(2),
+      validToDate = LocalDate.now().minusDays(1),
+      restrictionType = VisitorSupportedRestrictionType.CLOSED.name,
+    )
+
+    // When
+    val responseSpec = callNotifyVSiPThatPersonRestrictionChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
+    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)).isEqualTo(0)
+  }
 }
