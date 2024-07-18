@@ -176,7 +176,8 @@ class VisitNotificationEventService(
       // Hence, the need for the prisonerId, to only flag visits between the given visitor and prisoner.
       val allAffectedVisits = visitService.getFutureVisitsByVisitorId(notificationDto.visitorId, prisonerId = notificationDto.prisonerNumber)
       if (allAffectedVisits.isNotEmpty()) {
-        processVisitsWithNotifications(allAffectedVisits, PERSON_RESTRICTION_CHANGED_EVENT, null)
+        val description = "visitor ${notificationDto.visitorId} has restriction change - ${notificationDto.restrictionType} for prisoner ${notificationDto.prisonerNumber}"
+        processVisitsWithNotifications(allAffectedVisits, PERSON_RESTRICTION_CHANGED_EVENT, description)
       }
     }
   }
