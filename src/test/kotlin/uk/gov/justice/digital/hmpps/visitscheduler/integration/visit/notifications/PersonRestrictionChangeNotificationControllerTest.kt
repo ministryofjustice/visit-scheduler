@@ -58,7 +58,8 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
       prisonerNumber = prisonerId,
       visitorId = visitorId,
       validFromDate = LocalDate.now().minusDays(1),
-      restrictionType = VisitorSupportedRestrictionType.BAN.name)
+      restrictionType = VisitorSupportedRestrictionType.BAN.name,
+    )
 
     val visit1 = createApplicationAndVisit(
       prisonerId = notificationDto.prisonerNumber,
@@ -66,14 +67,16 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate1,
     )
+
     visit1.visitors.add(
       VisitVisitor(
         nomisPersonId = visitorId.toLong(),
         visitId = visit1.id,
         visit = visit1,
         visitContact = true,
-      )
+      ),
     )
+
     visitEntityHelper.save(visit1)
     eventAuditEntityHelper.create(visit1)
 
@@ -83,6 +86,7 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
       visitStatus = BOOKED,
       sessionTemplate = otherSessionTemplate,
     )
+
     visit2.visitors.add(
       VisitVisitor(
         nomisPersonId = visitorId.toLong(),
@@ -91,6 +95,7 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
         visitContact = true,
       ),
     )
+
     visitEntityHelper.save(visit2)
     eventAuditEntityHelper.create(visit2)
 
@@ -100,6 +105,7 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
       visitStatus = CANCELLED,
       sessionTemplate = otherSessionTemplate,
     )
+
     visit3.visitors.add(
       VisitVisitor(
         nomisPersonId = visitorId.toLong(),
@@ -108,6 +114,7 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
         visitContact = true,
       ),
     )
+
     visitEntityHelper.save(visit3)
     eventAuditEntityHelper.create(visit3)
 
