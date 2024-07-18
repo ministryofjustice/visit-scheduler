@@ -19,7 +19,7 @@ BEGIN;
         SELECT a.id, a.reference  from application a
                                            join visit v on a.visit_id = v.id
                                            join legacy_data ld on ld.visit_id = v.id
-                                           join prison p on p.id=v.prison_id and p.code = 'PVI'
+                                           join prison p on p.id=v.prison_id
         where p.code = 'PVI' AND ld.id is not null
     );
 
@@ -34,7 +34,7 @@ BEGIN;
     INSERT INTO tmp_visit_ids_to_be_deleted (visit_id,booking_reference) (
         SELECT v.id, v.reference  from visit v
                               join legacy_data ld on ld.visit_id = v.id
-                              join prison p on p.id=v.prison_id and p.code = 'PVI'
+                              join prison p on p.id=v.prison_id
         where p.code = 'PVI' AND ld.id is not null
     );
 
