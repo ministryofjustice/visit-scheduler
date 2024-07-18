@@ -196,4 +196,80 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
     assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)).isEqualTo(0)
   }
+
+  @Test
+  fun `when visitor is given a restriction with expiry date then no visits are flagged or saved after expiry`() {
+    // Given
+    val notificationDto = PersonRestrictionChangeNotificationDto(
+      prisonerNumber = prisonerId,
+      visitorId = visitorId,
+      validFromDate = LocalDate.now().minusDays(2),
+      validToDate = LocalDate.now().plusDays(5),
+      restrictionType = VisitorSupportedRestrictionType.CLOSED.name,
+    )
+
+    val visit1 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    visit1.visitors.add(
+      VisitVisitor(
+        nomisPersonId = visitorId.toLong(),
+        visitId = visit1.id,
+        visit = visit1,
+        visitContact = true,
+      ),
+    )
+
+    visitEntityHelper.save(visit1)
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(10),
+      visitStatus = BOOKED,
+      sessionTemplate = otherSessionTemplate,
+    )
+
+    visit2.visitors.add(
+      VisitVisitor(
+        nomisPersonId = visitorId.toLong(),
+        visitId = visit2.id,
+        visit = visit2,
+        visitContact = true,
+      ),
+    )
+
+    visitEntityHelper.save(visit2)
+    eventAuditEntityHelper.create(visit2)
+
+    // When
+    val responseSpec = callNotifyVSiPThatPersonRestrictionChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PERSON_RESTRICTION_CHANGED_EVENT)
+
+    verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(1)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)
+    assertThat(auditEvents).hasSize(1)
+    with(auditEvents[0]) {
+      assertThat(bookingReference).isEqualTo(visit1.reference)
+      assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
+      assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
+      assertThat(type).isEqualTo(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)
+      assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
+      assertThat(actionedBy.userType).isEqualTo(SYSTEM)
+      assertThat(actionedBy.bookerReference).isNull()
+      assertThat(actionedBy.userName).isNull()
+    }
+  }
 }

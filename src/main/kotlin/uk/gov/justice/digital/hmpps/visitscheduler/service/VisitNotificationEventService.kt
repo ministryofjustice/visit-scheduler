@@ -174,7 +174,11 @@ class VisitNotificationEventService(
     if (isNotificationDatesValid(notificationDto.validToDate) && visitorSupportedRestrictionTypes.contains(notificationDto.restrictionType)) {
       // PersonRestrictionChangeNotification is a local version of the global VisitorRestrictionChangeNotification event.
       // Hence, the need for the prisonerId, to only flag visits between the given visitor and prisoner.
-      val allAffectedVisits = visitService.getFutureVisitsByVisitorId(notificationDto.visitorId, prisonerId = notificationDto.prisonerNumber)
+      val allAffectedVisits = visitService.getFutureVisitsByVisitorId(
+        visitorId = notificationDto.visitorId,
+        prisonerId = notificationDto.prisonerNumber,
+        endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX),
+      )
       if (allAffectedVisits.isNotEmpty()) {
         val description = "visitor ${notificationDto.visitorId} has restriction change - ${notificationDto.restrictionType} for prisoner ${notificationDto.prisonerNumber}"
         processVisitsWithNotifications(allAffectedVisits, PERSON_RESTRICTION_CHANGED_EVENT, description)
