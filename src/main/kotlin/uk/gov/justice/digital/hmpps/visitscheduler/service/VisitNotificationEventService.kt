@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomai
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_DELETED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PERSON_RESTRICTION_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RECEIVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
@@ -22,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedRea
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
@@ -164,12 +166,22 @@ class VisitNotificationEventService(
     }
   }
 
+  @Transactional
   fun handlePersonRestrictionChangeNotification(notificationDto: PersonRestrictionChangeNotificationDto) {
-    if (isNotificationDatesValid(notificationDto.validToDate)) {
-      // TODO not yet implemented
+    LOG.debug("PersonRestrictionChangeNotificationDto notification received : {}", notificationDto)
+
+    val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
+    if (isNotificationDatesValid(notificationDto.validToDate) && visitorSupportedRestrictionTypes.contains(notificationDto.restrictionType)) {
+      // PersonRestrictionChangeNotification is a local version of the global VisitorRestrictionChangeNotification event.
+      // Hence, the need for the prisonerId, to only flag visits between the given visitor and prisoner.
+      val allAffectedVisits = visitService.getFutureVisitsByVisitorId(notificationDto.visitorId, prisonerId = notificationDto.prisonerNumber)
+      if (allAffectedVisits.isNotEmpty()) {
+        processVisitsWithNotifications(allAffectedVisits, PERSON_RESTRICTION_CHANGED_EVENT, null)
+      }
     }
   }
 
+  @Transactional
   fun handleVisitorRestrictionChangeNotification(notificationDto: VisitorRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
       // TODO not yet implemented

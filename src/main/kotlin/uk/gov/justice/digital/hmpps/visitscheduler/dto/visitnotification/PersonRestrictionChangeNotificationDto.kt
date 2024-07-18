@@ -15,4 +15,6 @@ data class PersonRestrictionChangeNotificationDto(
   val validFromDate: LocalDate,
   @JsonInclude(Include.NON_NULL)
   val validToDate: LocalDate? = null,
+  @NotBlank
+  val restrictionType: String,
 )
