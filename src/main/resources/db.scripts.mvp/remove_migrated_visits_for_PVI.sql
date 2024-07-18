@@ -48,6 +48,7 @@ BEGIN;
     DELETE FROM event_audit ev where booking_reference in (select booking_reference FROM tmp_visit_ids_to_be_deleted);
 
     -- Drop temporary tables
+    DROP TABLE tmp_application_ids_to_be_deleted;
     DROP TABLE tmp_visit_ids_to_be_deleted;
 
 END;
