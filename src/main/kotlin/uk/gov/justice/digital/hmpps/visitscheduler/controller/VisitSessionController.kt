@@ -153,9 +153,9 @@ class VisitSessionController(
       description = "Username for the user making the request. Optional, ignored if not passed in.",
       example = "user-1",
     )
-    userName: String? = null,
+    currentUser: String? = null,
   ): List<AvailableVisitSessionDto> {
-    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, excludeReservedApplicationsForUser = userName)
+    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, excludeReservedApplicationsForUser = currentUser)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
