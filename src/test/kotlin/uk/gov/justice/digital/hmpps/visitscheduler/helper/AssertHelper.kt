@@ -1,22 +1,27 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
+import com.fasterxml.jackson.databind.ObjectMapper
+import io.netty.handler.codec.http.HttpResponseStatus.UNPROCESSABLE_ENTITY
 import org.assertj.core.api.Assertions
 import org.hamcrest.Matchers
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Component
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ApplicationValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_SLOT_CAPACITY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
 
 @Component
 class AssertHelper {
+  @Autowired
+  protected lateinit var objectMapper: ObjectMapper
 
   @Autowired
   protected lateinit var eventAuditRepository: TestEventAuditRepository
@@ -61,15 +66,16 @@ class AssertHelper {
     Assertions.assertThat(visit.visitStatus).isEqualTo(VisitStatus.BOOKED)
   }
 
-  fun assertCapacityError(
+  fun assertBookingCapacityError(
     responseSpec: ResponseSpec,
-    application: Application,
   ) {
-    responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
-      .jsonPath("$.developerMessage")
-      .isEqualTo("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getApplicationValidationErrorResponse(responseSpec)
+    Assertions.assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    Assertions.assertThat(validationErrorResponse.validationErrors).contains(
+      APPLICATION_INVALID_NO_SLOT_CAPACITY,
+    )
   }
 
   fun assertCapacityError(
@@ -77,8 +83,10 @@ class AssertHelper {
   ) {
     responseSpec.expectStatus().isBadRequest
       .expectBody()
-      .jsonPath("$.userMessage").isEqualTo("Over capacity for time slot")
       .jsonPath("$.developerMessage")
       .value(Matchers.containsString("Application can not be reserved because capacity has been exceeded for the slot"))
   }
+
+  private fun getApplicationValidationErrorResponse(responseSpec: ResponseSpec): ApplicationValidationErrorResponse =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationValidationErrorResponse::class.java)
 }

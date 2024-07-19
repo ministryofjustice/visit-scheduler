@@ -1,12 +1,22 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
+import io.netty.handler.codec.http.HttpResponseStatus.UNPROCESSABLE_ENTITY
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.http.HttpHeaders
+import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ApplicationValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NON_ASSOCIATION_VISITS
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_SLOT_CAPACITY
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_NO_VO_BALANCE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_PRISONER_MISMATCH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_NOT_AVAILABLE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -20,7 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBa
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("PUT $VISIT_BOOK")
+@DisplayName("test validations on PUT $VISIT_BOOK API call.")
 class BookVisitValidationTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -62,9 +72,11 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // Then
 
     responseSpec
-      .expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("application's prison code - ${reservedApplication.prison.code} is different to prison code for prisoner - ${prisonerDto.prisonId}")
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_PRISON_PRISONER_MISMATCH)
   }
 
   @Test
@@ -90,14 +102,14 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // Given
     // prisoner has incentive level as STANDARD
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.STANDARD)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // session is available for Enhanced scope
     val sessionTemplate = sessionTemplateEntityHelper.create(
       permittedIncentiveLevels = mutableListOf(sessionPrisonerIncentiveLevelHelper.create("Enhanced", prisonCode, incentiveLevelList = listOf(IncentiveLevel.ENHANCED))),
     )
-
-    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
 
     // application has been created with session for ENHANCED scope
     val application = applicationEntityHelper.create(
@@ -112,10 +124,11 @@ class BookVisitValidationTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, application.reference)
 
     // Then
-    responseSpec
-      .expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("session slot with reference - ${application.sessionSlot.reference} is unavailable to prisoner")
+    responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE)
   }
 
   @Test
@@ -156,14 +169,14 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // Given
     // prisoner has category B
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, category = PrisonerCategoryType.B.code)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // session is available for Category C
     val sessionTemplate = sessionTemplateEntityHelper.create(
       permittedCategories = mutableListOf(sessionPrisonerCategoryHelper.create("Enhanced", prisonCode, prisonerCategories = listOf(PrisonerCategoryType.C))),
     )
-
-    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
-    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
 
     // application has been created with session for ENHANCED scope
     val application = applicationEntityHelper.create(
@@ -179,9 +192,11 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("session slot with reference - ${application.sessionSlot.reference} is unavailable to prisoner")
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE)
   }
 
   @Test
@@ -232,6 +247,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     // prisoner is in location C
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // application has been created with session for location B
     val application = applicationEntityHelper.create(
@@ -247,9 +263,11 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("session slot with reference - ${application.sessionSlot.reference} is unavailable to prisoner")
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_SESSION_NOT_AVAILABLE)
   }
 
   @Test
@@ -311,9 +329,11 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("non-associations for prisoner - $prisonerId have booked visits on ${reservedApplication.sessionSlot.slotDate} at the same prison.")
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NON_ASSOCIATION_VISITS)
   }
 
   @Test
@@ -390,10 +410,9 @@ class BookVisitValidationTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedApplication.reference)
 
     // Then
-    responseSpec
-      .expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("There is already a visit booked for prisoner - $prisonerId on session slot - ${reservedApplication.sessionSlot.reference}.")
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_VISIT_ALREADY_BOOKED)
   }
 
   @Test
@@ -460,13 +479,15 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("not enough VO balance for prisoner - $prisonerId")
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_VO_BALANCE)
   }
 
   @Test
-  fun `when call to visit balances returns 404 a validation exception is thrown citing no availble VOs`() {
+  fun `when call to visit balances returns 404 a validation exception is thrown citing no available VOs`() {
     // Given
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
@@ -479,9 +500,11 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("not enough VO balance for prisoner - $prisonerId")
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_VO_BALANCE)
   }
 
   @Test
@@ -550,9 +573,53 @@ class BookVisitValidationTest : IntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("Booking can not be made because capacity has been exceeded for the slot ${application.sessionSlot.reference}")
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_SLOT_CAPACITY)
+  }
+
+  @Test
+  fun `when session has no pending capacity and no VO balance an exception is thrown with multiple error messages`() {
+    // Given
+    val visitBalance = VisitBalancesDto(remainingVo = 0, remainingPvo = 0)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // sessionTemplate has open capacity of 1
+    val sessionTemplate = sessionTemplateEntityHelper.create(openCapacity = 1, closedCapacity = 0)
+
+    val application = applicationEntityHelper.create(
+      prisonerId = prisonerId,
+      prisonCode = prisonCode,
+      sessionTemplate = sessionTemplate,
+      completed = false,
+      userType = UserType.PUBLIC,
+    )
+
+    // visit added and capacity filled
+    visitEntityHelper.create(
+      sessionTemplate = sessionTemplate,
+      prisonerId = "QW1",
+      slotDate = application.sessionSlot.slotDate,
+      visitStatus = VisitStatus.BOOKED,
+      prisonCode = application.prison.code,
+    )
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, application.reference)
+
+    // Then
+    responseSpec
+      .expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
+
+    val validationErrorResponse = getValidationErrorResponse(responseSpec)
+    assertThat(validationErrorResponse.validationErrors.size).isEqualTo(2)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_SLOT_CAPACITY)
+    assertThat(validationErrorResponse.validationErrors).contains(APPLICATION_INVALID_NO_VO_BALANCE)
   }
 
   @Test
@@ -634,4 +701,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isOk
   }
+
+  fun getValidationErrorResponse(responseSpec: WebTestClient.ResponseSpec): ApplicationValidationErrorResponse =
+    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationValidationErrorResponse::class.java)
 }

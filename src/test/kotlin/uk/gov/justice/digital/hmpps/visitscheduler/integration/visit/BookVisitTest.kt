@@ -188,7 +188,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -213,7 +213,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -239,7 +239,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -265,7 +265,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -316,7 +316,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -343,7 +343,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
