@@ -11,11 +11,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.service.DateRange
@@ -594,7 +596,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -663,7 +664,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -735,7 +735,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -807,7 +806,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode = "AWE",
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -869,7 +867,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -912,7 +909,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -949,7 +945,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -985,7 +980,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1025,7 +1019,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1065,7 +1058,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1109,7 +1101,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1153,7 +1144,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1186,7 +1176,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -1236,7 +1225,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1286,7 +1274,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1324,7 +1311,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1401,7 +1387,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1434,7 +1419,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1527,7 +1511,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1547,7 +1530,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1629,7 +1611,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1684,7 +1665,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1783,7 +1763,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1931,7 +1910,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -1957,7 +1935,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
     // Then
     assertResponseLength(responseSpec, 4)
@@ -1984,7 +1961,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -2100,7 +2076,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -2145,7 +2120,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -2187,7 +2161,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -2228,7 +2201,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -2268,11 +2240,109 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
     assertResponseLength(responseSpec, 4)
+  }
+
+  @Test
+  fun `visit sessions are returned for a prisoner when an abandoned application for the prisoner by the same user exists`() {
+    // Given
+    val prisonerId = "A1234AA"
+    val validFromDate = this.getNextAllowedDay()
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, validToDate = null, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
+    val createdByUser = "test-user"
+
+    // an application for the prisoner created by the current user exists
+    val reserveVisitSlotDto = createReserveVisitSlotDto(actionedBy = createdByUser, prisonerId = prisonerId, sessionTemplate = sessionTemplate, slotDate = validFromDate, userType = UserType.PUBLIC)
+    submitApplication(webTestClient, setAuthorisation(roles = requiredRole), reserveVisitSlotDto)
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prison.code)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
+
+    // When
+
+    // excludeApplicationsForUser is passed as the same user who reserved an application for the prisoner against the same slot
+    val responseSpec = callGetAvailableSessions(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      sessionRestriction = SessionRestriction.OPEN,
+      username = createdByUser,
+    )
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val sessions = getResults(returnResult)
+    assertThat(sessions.size).isEqualTo(4)
+    val sessionDates = sessions.map { it.sessionDate }
+    assertThat(sessionDates).contains(validFromDate)
+  }
+
+  @Test
+  fun `visit sessions are not returned for a prisoner when an abandoned application for the prisoner by a different user exists`() {
+    // Given
+    val prisonerId = "A1234AA"
+    val validFromDate = this.getNextAllowedDay()
+    val createdByUser = "test-user"
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, validToDate = null, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
+
+    // an application for the prisoner created by the current user exists
+    val reserveVisitSlotDto = createReserveVisitSlotDto(actionedBy = createdByUser, prisonerId = prisonerId, sessionTemplate = sessionTemplate, slotDate = validFromDate, userType = UserType.PUBLIC)
+    submitApplication(webTestClient, setAuthorisation(roles = requiredRole), reserveVisitSlotDto)
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prison.code)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
+
+    // When
+    // excludeApplicationsForUser is not the same as the user who reserved an application for the prisoner against the same slot
+    val responseSpec = callGetAvailableSessions(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      sessionRestriction = SessionRestriction.OPEN,
+      username = "other-user",
+    )
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val sessions = getResults(returnResult)
+    assertThat(sessions.size).isEqualTo(3)
+    val sessionDates = sessions.map { it.sessionDate }
+    assertThat(sessionDates).doesNotContain(validFromDate)
+  }
+
+  @Test
+  fun `visit sessions are not returned for a prisoner when excludeApplicationsForUser is not passed in`() {
+    // Given
+    val prisonerId = "A1234AA"
+    val validFromDate = this.getNextAllowedDay()
+    val createdByUser = "test-user"
+    val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, validToDate = null, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
+
+    // an application for the prisoner created by the current user exists
+    val reserveVisitSlotDto = createReserveVisitSlotDto(actionedBy = createdByUser, prisonerId = prisonerId, sessionTemplate = sessionTemplate, slotDate = validFromDate, userType = UserType.PUBLIC)
+    submitApplication(webTestClient, setAuthorisation(roles = requiredRole), reserveVisitSlotDto)
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prison.code)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
+
+    // When
+    // excludeApplicationsForUser is not the same as the user who reserved an application for the prisoner against the same slot
+    val responseSpec = callGetAvailableSessions(
+      prisonCode = prisonCode,
+      prisonerId = prisonerId,
+      sessionRestriction = SessionRestriction.OPEN,
+    )
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val sessions = getResults(returnResult)
+    assertThat(sessions.size).isEqualTo(3)
+    val sessionDates = sessions.map { it.sessionDate }
+    assertThat(sessionDates).doesNotContain(validFromDate)
   }
 
   @Test
@@ -2290,7 +2360,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       incorrectPrisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -2330,7 +2399,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -2369,7 +2437,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -2444,7 +2511,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       SessionRestriction.OPEN,
-
     )
 
     // Then
@@ -2458,19 +2524,58 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
     excludedApplicationReference: String? = null,
+    username: String? = null,
   ): ResponseSpec {
     val today = LocalDate.now()
     val fromDate = today.plusDays(policyNoticeDaysMin.toLong())
     val toDate = today.plusDays(policyNoticeDaysMax.toLong())
     val dateRange = DateRange(fromDate, toDate)
 
-    val uri = "/visit-sessions/available?prisonId=$prisonCode&prisonerId=$prisonerId&sessionRestriction=$sessionRestriction&fromDate=${dateRange.fromDate}&toDate=${dateRange.toDate}&excludedApplicationReference=$excludedApplicationReference"
+    val uri = "/visit-sessions/available"
+    val uriQueryParams = getAvailableSessionsQueryParams(
+      prisonCode = prisonCode!!,
+      prisonerId = prisonerId,
+      sessionRestriction = sessionRestriction,
+      dateRange = dateRange,
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
+      excludedApplicationReference = excludedApplicationReference,
+      username = username,
+    ).joinToString("&")
 
-    return webTestClient.get().uri(uri)
+    return webTestClient.get().uri("$uri?$uriQueryParams")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
   }
 
+  private fun getAvailableSessionsQueryParams(
+    prisonCode: String,
+    prisonerId: String,
+    sessionRestriction: SessionRestriction,
+    dateRange: DateRange,
+    policyNoticeDaysMin: Int,
+    policyNoticeDaysMax: Int,
+    excludedApplicationReference: String?,
+    username: String?,
+  ): List<String> {
+    val queryParams = ArrayList<String>()
+    queryParams.add("prisonId=$prisonCode")
+    queryParams.add("prisonerId=$prisonerId")
+    queryParams.add("sessionRestriction=$sessionRestriction")
+    queryParams.add("fromDate=${dateRange.fromDate}")
+    queryParams.add("toDate=${dateRange.toDate}")
+    queryParams.add("policyNoticeDaysMin=$policyNoticeDaysMin")
+    queryParams.add("policyNoticeDaysMax=$policyNoticeDaysMax")
+
+    excludedApplicationReference?.let {
+      queryParams.add("excludedApplicationReference=$excludedApplicationReference")
+    }
+
+    username?.let {
+      queryParams.add("username=$username")
+    }
+    return queryParams
+  }
   private fun getNextAllowedDay(): LocalDate {
     // The 3 days is based on the default SessionService.policyNoticeDaysMin
     return LocalDate.now().plusDays(3)
