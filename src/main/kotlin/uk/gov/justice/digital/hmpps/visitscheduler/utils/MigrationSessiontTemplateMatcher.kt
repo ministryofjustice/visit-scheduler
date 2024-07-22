@@ -224,8 +224,8 @@ class MigrationSessionTemplateMatcher(
   ): Boolean {
     with(migrateMatch) {
       val isAllowed = locationScore != LOCATION_NOT_PERMITTED &&
-        (category || sessionValidator.isSessionForAllCategories(template)) &&
-        (enhanced || sessionValidator.isSessionForAllIncentiveLevels(template)) &&
+        (category || isSessionForAllCategories(template)) &&
+        (enhanced || isSessionForAllIncentiveLevels(template)) &&
         timeProximity <= maxProximityMinutes &&
         migrateMatch.validFromDateProximityDays != FROM_DATE_IN_FUTURE
       return isAllowed
@@ -255,5 +255,17 @@ class MigrationSessionTemplateMatcher(
       return FROM_DATE_IN_FUTURE
     }
     return DAYS.between(migratedVisitDate, template.validFromDate).toInt()
+  }
+
+  private fun isSessionForAllCategories(
+    sessionTemplate: SessionTemplate,
+  ): Boolean {
+    return sessionTemplate.permittedSessionCategoryGroups.isEmpty()
+  }
+
+  private fun isSessionForAllIncentiveLevels(
+    sessionTemplate: SessionTemplate,
+  ): Boolean {
+    return sessionTemplate.permittedSessionIncentiveLevelGroups.isEmpty()
   }
 }

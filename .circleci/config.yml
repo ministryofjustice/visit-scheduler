@@ -6,10 +6,10 @@ orbs:
 parameters:
   alerts-slack-channel:
     type: string
-    default: prison-visit-booking-alerts
+    default: visits-alerts
   releases-slack-channel:
     type: string
-    default: prison-visit-booking-alerts
+    default: visits-alerts
 
 jobs:
   acceptance_tests_main:

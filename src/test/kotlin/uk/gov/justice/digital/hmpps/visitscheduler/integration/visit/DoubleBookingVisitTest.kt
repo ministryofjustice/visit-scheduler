@@ -96,7 +96,7 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, reservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
 
     val application = testApplicationRepository.findByApplicationReference(applicationReference)
     assertThat(application).isNotNull
