@@ -52,6 +52,7 @@ class VisitService(
   private val telemetryClientService: TelemetryClientService,
   private val eventAuditRepository: EventAuditRepository,
   private val snsService: SnsService,
+  private val applicationValidationService: ApplicationValidationService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
@@ -62,10 +63,6 @@ class VisitService(
   @Lazy
   @Autowired
   private lateinit var visitNotificationEventService: VisitNotificationEventService
-
-  @Lazy
-  @Autowired
-  private lateinit var slotCapacityService: SlotCapacityService
 
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
@@ -95,7 +92,9 @@ class VisitService(
     val application = applicationService.getApplicationEntity(applicationReference)
 
     val existingBooking = visitRepository.findVisitByApplicationReference(application.reference)
-    checkSlotCapacity(bookingRequestDto, application, existingBooking)
+
+    // application validity checks
+    applicationValidationService.validateApplication(bookingRequestDto, application, existingBooking)
 
     val booking = createBooking(application, existingBooking)
 
@@ -104,29 +103,6 @@ class VisitService(
     } ?: run {
       processBookingEvents(booking, bookingRequestDto)
     }
-  }
-
-  private fun checkSlotCapacity(
-    bookingRequestDto: BookingRequestDto,
-    application: Application,
-    existingBooking: Visit?,
-  ) {
-    if (!bookingRequestDto.allowOverBooking && hasSlotChangedSinceLastBooking(existingBooking, application)) {
-      slotCapacityService.checkCapacityForBooking(
-        application.sessionSlot.reference,
-        application.restriction,
-        applicationService.isExpiredApplication(application.modifyTimestamp!!),
-      )
-    }
-  }
-
-  private fun hasSlotChangedSinceLastBooking(
-    existingBooking: Visit?,
-    application: Application,
-  ): Boolean {
-    return existingBooking?.let {
-      it.visitRestriction != application.restriction || it.sessionSlot.id != application.sessionSlotId
-    } ?: run { true }
   }
 
   fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {

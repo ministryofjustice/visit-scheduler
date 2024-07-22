@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevelDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.dto.PrisonerCellHistoryNativeDto
 
 class PrisonApiMockServer : WireMockServer(8092) {
@@ -64,6 +65,25 @@ class PrisonApiMockServer : WireMockServer(8092) {
     }
 
     return housingLevels.toList()
+  }
+
+  fun stubGetVisitBalances(prisonerId: String, visitBalances: VisitBalancesDto?) {
+    val responseBuilder = aResponse()
+      .withHeader("Content-Type", MediaType.APPLICATION_JSON_VALUE)
+
+    stubFor(
+      get("/api/bookings/offenderNo/$prisonerId/visit/balances")
+        .willReturn(
+          if (visitBalances == null) {
+            responseBuilder
+              .withStatus(HttpStatus.NOT_FOUND.value())
+          } else {
+            responseBuilder
+              .withStatus(HttpStatus.OK.value())
+              .withBody(getJsonString(visitBalances))
+          },
+        ),
+    )
   }
 
   private fun getHousingLevel(level: Int, code: String): PrisonerHousingLevelDto {

@@ -15,7 +15,9 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
 import org.springframework.web.reactive.function.client.WebClientException
 import org.springframework.web.reactive.function.client.WebClientResponseException
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.ApplicationValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
@@ -259,6 +261,18 @@ class VisitSchedulerExceptionHandler(
       )
   }
 
+  @ExceptionHandler(ApplicationValidationException::class)
+  fun handleApplicationValidationException(e: ApplicationValidationException): ResponseEntity<ApplicationValidationErrorResponse?>? {
+    log.error("Validation exception", e)
+    return ResponseEntity
+      .status(HttpStatus.UNPROCESSABLE_ENTITY)
+      .body(
+        ApplicationValidationErrorResponse(
+          validationErrors = e.errorCodes.toList(),
+        ),
+      )
+  }
+
   @ExceptionHandler(java.lang.Exception::class)
   fun handleException(e: java.lang.Exception): ResponseEntity<ErrorResponse?>? {
     log.error("Unexpected exception", e)
@@ -288,7 +302,7 @@ class VisitSchedulerExceptionHandler(
   }
 }
 
-data class ErrorResponse(
+open class ErrorResponse(
   val status: Int,
   val errorCode: Int? = null,
   val userMessage: String? = null,
@@ -306,3 +320,7 @@ data class ErrorResponse(
 data class ValidationErrorResponse(
   val validationMessages: List<String>,
 )
+
+data class ApplicationValidationErrorResponse(
+  val validationErrors: List<ApplicationValidationErrorCodes>,
+) : ErrorResponse(status = HttpStatus.UNPROCESSABLE_ENTITY)
