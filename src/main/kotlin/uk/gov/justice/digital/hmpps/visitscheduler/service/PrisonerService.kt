@@ -54,19 +54,9 @@ class PrisonerService(
     return prisonApiClient.getPrisonerHousingLocation(prisonerId)
   }
 
-  private fun getHousingLevelForTransitionalPrisoner(transitionalLocation: String, lastPermanentLevels: List<PrisonerHousingLevelDto>, sessionTemplates: List<SessionTemplate>): List<PrisonerHousingLevelDto> {
-    // if there are sessions for the prisoners temporary location - level one code needs to be that transitional location
-    // else return the prisoner's last permanent levels
-    return if (sessionTemplates.isNotEmpty() && hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates, transitionalLocation)) {
-      getHousingLevelForPrisonerInTemporaryLocation(transitionalLocation)
-    } else {
-      lastPermanentLevels
-    }
-  }
-
-  fun getLevelsMapForPrisoner(prisonerHousingLocation: PrisonerHousingLocationsDto, sessionTemplates: List<SessionTemplate>): Map<PrisonerHousingLevels, String?> {
+  fun getLevelsMapForPrisoner(prisonerHousingLocation: PrisonerHousingLocationsDto, sessionTemplates: List<SessionTemplate>?): Map<PrisonerHousingLevels, String?> {
     with(prisonerHousingLocation) {
-      val housingLevel = if (isPrisonerInTemporaryLocation(levels)) {
+      val housingLevel = if (sessionTemplates != null && isPrisonerInTemporaryLocation(levels)) {
         getHousingLevelForTransitionalPrisoner(levels[0].code, lastPermanentLevels, sessionTemplates)
       } else {
         levels
@@ -80,6 +70,29 @@ class PrisonerService(
       levelsMap[LEVEL_FOUR] = getHousingLevelByLevelNumber(housingLevel, LEVEL_FOUR)?.code
 
       return levelsMap.toMap()
+    }
+  }
+
+  fun getPrisonerHousingLevels(prisonerId: String, prisonCode: String, sessionTemplates: List<SessionTemplate>?): Map<PrisonerHousingLevels, String?>? {
+    val prisonerHousingLocation = getPrisonerHousingLocation(prisonerId, prisonCode)
+
+    return prisonerHousingLocation?.let {
+      getLevelsMapForPrisoner(it, sessionTemplates)
+    }
+  }
+
+  fun getVisitBalance(prisonerId: String): Int {
+    val visitBalance = prisonApiClient.getVisitBalances(prisonerId)
+    return ((visitBalance?.remainingPvo ?: 0) + (visitBalance?.remainingVo ?: 0))
+  }
+
+  private fun getHousingLevelForTransitionalPrisoner(transitionalLocation: String, lastPermanentLevels: List<PrisonerHousingLevelDto>, sessionTemplates: List<SessionTemplate>): List<PrisonerHousingLevelDto> {
+    // if there are sessions for the prisoners temporary location - level one code needs to be that transitional location
+    // else return the prisoner's last permanent levels
+    return if (sessionTemplates.isNotEmpty() && hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates, transitionalLocation)) {
+      getHousingLevelForPrisonerInTemporaryLocation(transitionalLocation)
+    } else {
+      lastPermanentLevels
     }
   }
 
