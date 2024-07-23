@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 import java.time.LocalDate
 
-data class PersonRestrictionChangeNotificationDto(
+data class PersonRestrictionUpsertedNotificationDto(
   @NotBlank
   val prisonerNumber: String,
   @NotBlank

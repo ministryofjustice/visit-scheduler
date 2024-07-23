@@ -12,7 +12,7 @@ import org.mockito.kotlin.verify
 import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PERSON_RESTRICTION_CHANGE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
@@ -20,8 +20,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPersonRestrictionChanged
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPersonRestrictionUpserted
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
@@ -29,8 +29,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("POST $VISIT_NOTIFICATION_PERSON_RESTRICTION_CHANGE_PATH")
-class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase() {
+@DisplayName("POST $VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH")
+class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   val prisonerId = "A1234AA"
@@ -52,9 +52,9 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
   }
 
   @Test
-  fun `when visitor has restriction changed then visits at a given prison flagged and saved`() {
+  fun `when visitor has restriction upserted then visits at a given prison flagged and saved`() {
     // Given
-    val notificationDto = PersonRestrictionChangeNotificationDto(
+    val notificationDto = PersonRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       visitorId = visitorId,
       validFromDate = LocalDate.now().minusDays(1),
@@ -119,11 +119,11 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
     eventAuditEntityHelper.create(visit3)
 
     // When
-    val responseSpec = callNotifyVSiPThatPersonRestrictionChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatPersonRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PERSON_RESTRICTION_CHANGED_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1, visit2), NotificationEventType.PERSON_RESTRICTION_UPSERTED_EVENT)
 
     verify(visitNotificationEventRepository, times(2)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -132,13 +132,13 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)
     assertThat(auditEvents).hasSize(2)
     with(auditEvents[0]) {
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
-      assertThat(type).isEqualTo(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)
+      assertThat(type).isEqualTo(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(actionedBy.userType).isEqualTo(SYSTEM)
       assertThat(actionedBy.bookerReference).isNull()
@@ -148,7 +148,7 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
       assertThat(bookingReference).isEqualTo(visit2.reference)
       assertThat(applicationReference).isEqualTo(visit2.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit2.sessionSlot.sessionTemplateReference)
-      assertThat(type).isEqualTo(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)
+      assertThat(type).isEqualTo(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(actionedBy.userType).isEqualTo(SYSTEM)
       assertThat(actionedBy.bookerReference).isNull()
@@ -159,7 +159,7 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
   @Test
   fun `when visitor is given an unsupported restriction then no visits are flagged or saved`() {
     // Given
-    val notificationDto = PersonRestrictionChangeNotificationDto(
+    val notificationDto = PersonRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       visitorId = visitorId,
       validFromDate = LocalDate.now().minusDays(1),
@@ -167,19 +167,19 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
     )
 
     // When
-    val responseSpec = callNotifyVSiPThatPersonRestrictionChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatPersonRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
   }
 
   @Test
   fun `when visitor is given a restriction with a date in the past then no visits are flagged or saved`() {
     // Given
-    val notificationDto = PersonRestrictionChangeNotificationDto(
+    val notificationDto = PersonRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       visitorId = visitorId,
       validFromDate = LocalDate.now().minusDays(2),
@@ -188,19 +188,19 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
     )
 
     // When
-    val responseSpec = callNotifyVSiPThatPersonRestrictionChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatPersonRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
     verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)).isEqualTo(0)
+    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
   }
 
   @Test
   fun `when visitor is given a restriction with expiry date then no visits are flagged or saved after expiry`() {
     // Given
-    val notificationDto = PersonRestrictionChangeNotificationDto(
+    val notificationDto = PersonRestrictionUpsertedNotificationDto(
       prisonerNumber = prisonerId,
       visitorId = visitorId,
       validFromDate = LocalDate.now().minusDays(2),
@@ -247,11 +247,11 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
     eventAuditEntityHelper.create(visit2)
 
     // When
-    val responseSpec = callNotifyVSiPThatPersonRestrictionChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+    val responseSpec = callNotifyVSiPThatPersonRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
     // Then
     responseSpec.expectStatus().isOk
-    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PERSON_RESTRICTION_CHANGED_EVENT)
+    assertFlaggedVisitEvent(listOf(visit1), NotificationEventType.PERSON_RESTRICTION_UPSERTED_EVENT)
 
     verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
 
@@ -259,13 +259,13 @@ class PersonRestrictionChangeNotificationControllerTest : NotificationTestBase()
     assertThat(visitNotifications).hasSize(1)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
 
-    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)
     assertThat(auditEvents).hasSize(1)
     with(auditEvents[0]) {
       assertThat(bookingReference).isEqualTo(visit1.reference)
       assertThat(applicationReference).isEqualTo(visit1.getLastApplication()?.reference)
       assertThat(sessionTemplateReference).isEqualTo(visit1.sessionSlot.sessionTemplateReference)
-      assertThat(type).isEqualTo(EventAuditType.PERSON_RESTRICTION_CHANGED_EVENT)
+      assertThat(type).isEqualTo(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)
       assertThat(applicationMethodType).isEqualTo(NOT_KNOWN)
       assertThat(actionedBy.userType).isEqualTo(SYSTEM)
       assertThat(actionedBy.bookerReference).isNull()
