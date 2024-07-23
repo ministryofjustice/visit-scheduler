@@ -85,8 +85,13 @@ class VisitSessionController(
       example = "28",
     )
     max: Int?,
+    @Parameter(
+      description = "Username for the user making the request. Optional, ignored if not passed in.",
+      example = "user-1",
+    )
+    username: String? = null,
   ): List<VisitSessionDto> {
-    return sessionService.getVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max)
+    return sessionService.getVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
