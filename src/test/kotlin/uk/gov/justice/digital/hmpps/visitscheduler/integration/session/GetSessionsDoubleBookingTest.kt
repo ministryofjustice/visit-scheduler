@@ -6,14 +6,14 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 
-@DisplayName("Get /visit-sessions")
+@DisplayName("Get /visit-sessions - Tests to check for DOUBLE_BOOKING_OR_RESERVATION flag.")
 class GetSessionsDoubleBookingTest : IntegrationTestBase() {
 
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
@@ -60,7 +60,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts.contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION))
+    assertThat(visitSessionResults[0].sessionConflicts.contains(DOUBLE_BOOKING_OR_RESERVATION))
   }
 
   @Test
@@ -83,7 +83,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts.contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION))
+    assertThat(visitSessionResults[0].sessionConflicts.contains(DOUBLE_BOOKING_OR_RESERVATION))
   }
 
   @Test
@@ -108,7 +108,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(1)
-    assertThat(visitSessionResults[0].sessionConflicts.contains(SessionConflict.DOUBLE_BOOKING_OR_RESERVATION))
+    assertThat(visitSessionResults[0].sessionConflicts.contains(DOUBLE_BOOKING_OR_RESERVATION))
   }
 
   @Test

@@ -86,7 +86,7 @@ class VisitSessionController(
     )
     max: Int?,
     @Parameter(
-      description = "Username for the user making the request. Optional, ignored if not passed in.",
+      description = "Username for the user making the request. Used to exclude user's pending applications from session capacity count. Optional, ignored if not passed in.",
       example = "user-1",
     )
     username: String? = null,
@@ -155,7 +155,7 @@ class VisitSessionController(
     excludedApplicationReference: String? = null,
     @RequestParam(value = "username", required = false)
     @Parameter(
-      description = "Username for the user making the request. Optional, ignored if not passed in.",
+      description = "Username for the user making the request. Used to exclude user's pending applications from session capacity count. Optional, ignored if not passed in.",
       example = "user-1",
     )
     username: String? = null,

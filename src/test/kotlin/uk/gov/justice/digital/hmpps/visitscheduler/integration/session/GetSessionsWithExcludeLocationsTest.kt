@@ -14,7 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location
 import java.time.LocalDate
 import java.time.LocalTime
 
-@DisplayName("Get /visit-sessions")
+@DisplayName("Get /visit-sessions - tests for exclude locations")
 class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
