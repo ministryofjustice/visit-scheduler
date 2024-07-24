@@ -182,18 +182,18 @@ workflows:
       - acceptance_tests_public_ui_main:
           requires:
             - request-acceptance-tests-public-approval
-          filters:
-            branches:
-              only:
-                - main
+#          filters:
+#            branches:
+#              only:
+#                - main
       - request-acceptance-tests-public-approval:
           type: approval
           requires:
             - deploy_staging
-          filters:
-            branches:
-              only:
-                - main
+#          filters:
+#            branches:
+#              only:
+#                - main
 
       - hmpps/deploy_env:
           name: deploy_preprod
