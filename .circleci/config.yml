@@ -13,14 +13,12 @@ parameters:
 
 jobs:
   acceptance_tests_staff_ui_main:
-    executor:
-      name: "default executor"
-      docker:
-        - image: maven:3.9.5-eclipse-temurin-21
-        - image: seleniarm/standalone-chromium
-          environment:
-            CHROME_HEADLESS: 1
-      circleci_ip_ranges: true
+    docker:
+      - image: maven:3.9.5-eclipse-temurin-21
+      - image: seleniarm/standalone-chromium
+        environment:
+          CHROME_HEADLESS: 1
+    circleci_ip_ranges: true
 
     steps:
       - run:
@@ -45,11 +43,9 @@ jobs:
             mvn test -Dbrowser=remote-chrome -Dspring.profiles.active="staging" -Dtest=uk.gov.justice.digital.hmpps.vsip.suites.RunSuite
             
   acceptance_tests_public_ui_main:
-    executor:
-      name: "default node executor"
-      docker:
-        - image: mcr.microsoft.com/playwright:v1.44.1-jammy
-      circleci_ip_ranges: true
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.44.1-jammy
+    circleci_ip_ranges: true
 
     steps:
       - checkout
