@@ -48,14 +48,25 @@ jobs:
     circleci_ip_ranges: true
 
     steps:
-      - checkout
+      - run:
+          name: Checkout VSIP Public UI Tests
+          command: git clone https://github.com/ministryofjustice/hmpps-book-a-prison-visit-ui-tests
+      - run:
+          name: get git status
+          command: |
+            cd hmpps-book-a-prison-visit-ui-tests
+            git checkout main
+            git pull
+            git status
       - attach_workspace:
           at: ~/app
       - restore_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
       - run:
           name: Install Dependencies
-          command: npm ci --no-audit
+          command: |
+            cd hmpps-book-a-prison-visit-ui-tests
+            npm ci --no-audit
       - save_cache:
           key: dependency-cache-{{ checksum "package-lock.json" }}
           paths:
@@ -63,7 +74,9 @@ jobs:
             - ~/.cache
       - run:
           name: Run Playwright Tests
-          command: npm run test:ci
+          command: |
+          cd hmpps-book-a-prison-visit-ui-tests
+          npm run test:ci
       - store_test_results:
           path: results.xml
       - store_artifacts:
