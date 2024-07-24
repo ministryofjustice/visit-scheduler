@@ -60,18 +60,11 @@ jobs:
             git status
       - attach_workspace:
           at: ~/app
-      - restore_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
       - run:
           name: Install Dependencies
           command: |
             cd hmpps-book-a-prison-visit-ui-tests
             npm ci --no-audit
-      - save_cache:
-          key: dependency-cache-{{ checksum "package-lock.json" }}
-          paths:
-            - node_modules
-            - ~/.cache
       - run:
           name: Run Playwright Tests
           command: |
