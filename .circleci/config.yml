@@ -75,8 +75,8 @@ jobs:
       - run:
           name: Run Playwright Tests
           command: |
-          cd hmpps-book-a-prison-visit-ui-tests
-          npm run test:ci
+            cd hmpps-book-a-prison-visit-ui-tests
+            npm run test:ci
       - store_test_results:
           path: results.xml
       - store_artifacts:
