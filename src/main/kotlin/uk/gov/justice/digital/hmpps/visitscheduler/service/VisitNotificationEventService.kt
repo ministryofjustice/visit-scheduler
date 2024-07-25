@@ -198,7 +198,7 @@ class VisitNotificationEventService(
     if (visitorSupportedRestrictionTypes.contains(notificationDto.restrictionType)) {
       val personActiveRestrictionsDto = prisonerContactRegistryClient.getVisitorActiveRestrictions(notificationDto.prisonerNumber, notificationDto.visitorId)
       if (!personActiveRestrictionsDto.activeRestrictions.any { it in visitorSupportedRestrictionTypes }) {
-        val currentFlaggedNotifications = visitNotificationEventRepository.getEventsByVisitorId(notificationDto.prisonerNumber, notificationDto.visitorId.toLong(), PERSON_RESTRICTION_UPSERTED_EVENT)
+        val currentFlaggedNotifications = visitNotificationEventRepository.getEventsByVisitorId(notificationDto.prisonerNumber, notificationDto.visitorId, PERSON_RESTRICTION_UPSERTED_EVENT)
         deleteNotificationsThatAreNoLongerValid(currentFlaggedNotifications, PERSON_RESTRICTION_UPSERTED_EVENT, UnFlagEventReason.VISITOR_RESTRICTION_REMOVED)
       }
     }

@@ -10,7 +10,7 @@ data class PersonRestrictionDeletedNotificationDto(
   @NotBlank
   val prisonerNumber: String,
   @NotBlank
-  val visitorId: String,
+  val visitorId: Long,
   @NotNull
   val validFromDate: LocalDate,
   @JsonInclude(Include.NON_NULL)

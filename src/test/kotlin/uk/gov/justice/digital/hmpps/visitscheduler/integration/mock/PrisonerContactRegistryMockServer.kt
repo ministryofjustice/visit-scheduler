@@ -20,7 +20,7 @@ class PrisonerContactRegistryMockServer : WireMockServer(8095) {
 
   fun stubGetVisitorActiveRestrictions(
     prisonerId: String,
-    visitorId: String,
+    visitorId: Long,
     visitorActiveRestrictionsDto: VisitorActiveRestrictionsDto?,
   ) {
     stubFor(

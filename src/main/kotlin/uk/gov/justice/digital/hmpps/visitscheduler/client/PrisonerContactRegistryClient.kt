@@ -21,7 +21,7 @@ class PrisonerContactRegistryClient(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  fun getVisitorActiveRestrictions(prisonerId: String, visitorId: String): VisitorActiveRestrictionsDto {
+  fun getVisitorActiveRestrictions(prisonerId: String, visitorId: Long): VisitorActiveRestrictionsDto {
     val uri = "/prisoners/$prisonerId/contacts/social/approved/$visitorId/restrictions/active"
 
     return webClient.get()

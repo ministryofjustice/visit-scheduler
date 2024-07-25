@@ -32,7 +32,7 @@ class PersonRestrictionDeletedVisitNotificationControllerTest : NotificationTest
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   val prisonerId = "AA11BCC"
-  val visitorId = "4427942"
+  val visitorId = 4427942L
   val prisonCode = "ABC"
 
   lateinit var prison1: Prison
