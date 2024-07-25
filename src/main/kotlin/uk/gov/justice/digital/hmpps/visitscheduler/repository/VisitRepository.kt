@@ -203,6 +203,22 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<Visit>
 
   @Query(
+    "SELECT v FROM Visit v " +
+      "LEFT JOIN VisitVisitor vv ON v.id = vv.visitId " +
+      "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
+      "vv.nomisPersonId = :visitorId AND " +
+      "v.visitStatus = 'BOOKED' AND " +
+      "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId) AND " +
+      "(cast(:endDateTime as date) is null OR v.sessionSlot.slotEnd < :endDateTime) ORDER BY v.sessionSlot.slotStart,v.id",
+  )
+  fun getFutureVisitsByVisitorId(
+    @Param("visitorId") visitorId: String,
+    @Param("prisonerId") prisonerId: String?,
+    @Param("startDateTime") startDateTime: LocalDateTime,
+    @Param("endDateTime") endDateTime: LocalDateTime? = null,
+  ): List<Visit>
+
+  @Query(
     "SELECT v.* FROM visit v " +
       "LEFT JOIN prison p ON v.prison_id = p.id " +
       "LEFT JOIN session_slot sl ON v.session_slot_id = sl.id " +

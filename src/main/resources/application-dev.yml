@@ -22,6 +22,8 @@ prison:
     url: https://prison-api-dev.prison.service.justice.gov.uk
     timeout: 10s
 
+prisoner-contact.registry.url: https://prisoner-contact-registry-dev.prison.service.justice.gov.uk
+
 prisoner:
   offender:
     search:

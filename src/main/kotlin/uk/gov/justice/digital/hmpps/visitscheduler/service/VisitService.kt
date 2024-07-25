@@ -433,6 +433,15 @@ class VisitService(
     return visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
+  fun getFutureVisitsByVisitorId(
+    visitorId: String,
+    prisonerId: String? = null,
+    startDateTime: LocalDateTime = LocalDateTime.now(),
+    endDateTime: LocalDateTime? = null,
+  ): List<VisitDto> {
+    return visitRepository.getFutureVisitsByVisitorId(visitorId, prisonerId, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
+  }
+
   fun getFutureBookedVisitsExcludingPrison(
     prisonerNumber: String,
     excludedPrisonCode: String,
