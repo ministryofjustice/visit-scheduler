@@ -20,11 +20,15 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.CANCELLATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -52,6 +56,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExt
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociationsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonerContactRegistryMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application.ReserveSlotTest
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -199,6 +205,7 @@ abstract class IntegrationTestBase {
     internal val prisonApiMockServer = PrisonApiMockServer()
     internal val nonAssociationsApiMockServer = NonAssociationsApiMockServer()
     internal val prisonOffenderSearchMockServer = PrisonOffenderSearchMockServer()
+    internal val prisonerContactRegistryMockServer = PrisonerContactRegistryMockServer()
 
     @BeforeAll
     @JvmStatic
@@ -206,6 +213,7 @@ abstract class IntegrationTestBase {
       prisonApiMockServer.start()
       nonAssociationsApiMockServer.start()
       prisonOffenderSearchMockServer.start()
+      prisonerContactRegistryMockServer.start()
     }
 
     @AfterAll
@@ -214,6 +222,7 @@ abstract class IntegrationTestBase {
       nonAssociationsApiMockServer.stop()
       prisonApiMockServer.stop()
       prisonOffenderSearchMockServer.stop()
+      prisonerContactRegistryMockServer.stop()
     }
 
     private val pgContainer = PostgresContainer.instance
@@ -392,5 +401,29 @@ abstract class IntegrationTestBase {
       userTypes = userTypes,
     )
     return visit
+  }
+
+  fun createReserveVisitSlotDto(
+    actionedBy: String = ReserveSlotTest.ACTIONED_BY_USER_NAME,
+    prisonerId: String = "FF0000FF",
+    sessionTemplate: SessionTemplate? = null,
+    slotDate: LocalDate? = null,
+    support: String = "Some Text",
+    sessionRestriction: SessionRestriction = SessionRestriction.OPEN,
+    allowOverBooking: Boolean = false,
+    userType: UserType = STAFF,
+  ): CreateApplicationDto {
+    return CreateApplicationDto(
+      prisonerId,
+      sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
+      sessionDate = slotDate ?: sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
+      applicationRestriction = sessionRestriction,
+      visitContact = ContactDto("John Smith", "013448811538"),
+      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
+      visitorSupport = ApplicationSupportDto(support),
+      actionedBy = actionedBy,
+      userType = userType,
+      allowOverBooking = allowOverBooking,
+    )
   }
 }

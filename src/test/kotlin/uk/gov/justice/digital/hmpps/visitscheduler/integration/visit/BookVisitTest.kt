@@ -30,6 +30,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.VisitBalancesDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerSearchResultDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getVisitBookUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -105,7 +107,11 @@ class BookVisitTest : IntegrationTestBase() {
   @Test
   fun `Book visit by public application`() {
     // Given
+    val prisonerId = reservedPublicApplication.prisonerId
     val applicationReference = reservedPublicApplication.reference
+    val prisonerDto = PrisonerSearchResultDto(prisonerNumber = prisonerId, prisonId = reservedPublicApplication.prison.code)
+    prisonOffenderSearchMockServer.stubGetPrisoner(prisonerId, prisonerDto)
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, VisitBalancesDto(remainingVo = 5, remainingPvo = 5))
 
     // When
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
@@ -182,7 +188,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -207,7 +213,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -233,7 +239,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -259,7 +265,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -310,7 +316,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test
@@ -337,7 +343,7 @@ class BookVisitTest : IntegrationTestBase() {
     val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference)
 
     // Then
-    assertHelper.assertCapacityError(responseSpec, expiredReservedApplication)
+    assertHelper.assertBookingCapacityError(responseSpec)
   }
 
   @Test

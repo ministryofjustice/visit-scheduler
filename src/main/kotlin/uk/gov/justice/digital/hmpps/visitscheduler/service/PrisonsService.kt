@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import java.time.LocalDate
+import kotlin.jvm.optionals.getOrElse
 
 @Service
 @Transactional
@@ -19,6 +20,11 @@ class PrisonsService(
   @Transactional(readOnly = true)
   fun findPrisonByCode(prisonCode: String): Prison {
     return prisonRepository.findByCode(prisonCode) ?: throw ValidationException(messageService.getMessage("validation.prison.notfound", prisonCode))
+  }
+
+  @Transactional(readOnly = true)
+  fun findPrisonById(prisonId: Long): Prison {
+    return prisonRepository.findById(prisonId).getOrElse { throw ValidationException("Prison not found") }
   }
 
   @Transactional(readOnly = true)

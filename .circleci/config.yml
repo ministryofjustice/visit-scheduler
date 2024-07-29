@@ -1,15 +1,15 @@
 version: 2.1
 
 orbs:
-  hmpps: ministryofjustice/hmpps@9
+  hmpps: ministryofjustice/hmpps@9.4.0
 
 parameters:
   alerts-slack-channel:
     type: string
-    default: prison-visit-booking-alerts
+    default: visits-alerts
   releases-slack-channel:
     type: string
-    default: prison-visit-booking-alerts
+    default: visits-alerts
 
 jobs:
   acceptance_tests_main:

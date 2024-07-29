@@ -65,6 +65,24 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
     "SELECT vne.* FROM visit_notification_event vne " +
       " JOIN visit v on v.reference  = vne.booking_reference  " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
+      " JOIN visit_visitor vv on vv.visit_id  = v.id " +
+      " WHERE ss.slot_date >= NOW() " +
+      " AND v.prisoner_id = :prisonerNumber " +
+      " AND vv.nomis_person_id = :visitorId " +
+      " AND vne.type=:#{#notificationEvent.name()}" +
+      " ORDER BY vne.reference, vne.id",
+    nativeQuery = true,
+  )
+  fun getEventsByVisitorId(
+    prisonerNumber: String,
+    visitorId: Long,
+    notificationEvent: NotificationEventType,
+  ): List<VisitNotificationEvent>
+
+  @Query(
+    "SELECT vne.* FROM visit_notification_event vne " +
+      " JOIN visit v on v.reference  = vne.booking_reference  " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
       " WHERE ss.slot_date >= :slotDate" +
       " AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))" +
