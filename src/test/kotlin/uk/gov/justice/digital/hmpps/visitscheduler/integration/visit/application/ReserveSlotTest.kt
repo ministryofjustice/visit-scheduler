@@ -30,7 +30,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.OPEN
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -38,7 +37,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.getSubmitApplicationUr
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplateRepository
 import java.time.LocalDate
@@ -69,30 +67,6 @@ class ReserveSlotTest : IntegrationTestBase() {
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
     prisonEntityHelper.create("MDI", true)
-  }
-
-  private fun createReserveVisitSlotDto(
-    actionedBy: String = ACTIONED_BY_USER_NAME,
-    prisonerId: String = "FF0000FF",
-    sessionTemplate: SessionTemplate? = null,
-    slotDate: LocalDate? = null,
-    support: String = "Some Text",
-    sessionRestriction: SessionRestriction = OPEN,
-    allowOverBooking: Boolean = false,
-    userType: UserType = STAFF,
-  ): CreateApplicationDto {
-    return CreateApplicationDto(
-      prisonerId,
-      sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
-      sessionDate = slotDate ?: sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
-      applicationRestriction = sessionRestriction,
-      visitContact = ContactDto("John Smith", "013448811538"),
-      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = ApplicationSupportDto(support),
-      actionedBy = actionedBy,
-      userType = userType,
-      allowOverBooking = allowOverBooking,
-    )
   }
 
   @Test
@@ -149,6 +123,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 
@@ -188,6 +163,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 
@@ -220,6 +196,7 @@ class ReserveSlotTest : IntegrationTestBase() {
     val responseSpec = submitApplication(webTestClient, roleVisitSchedulerHttpHeaders, reserveVisitSlotDto)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 

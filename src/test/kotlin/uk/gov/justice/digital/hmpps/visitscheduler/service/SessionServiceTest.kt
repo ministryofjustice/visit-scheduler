@@ -47,7 +47,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.DayOfWeek.FRIDAY
@@ -67,10 +66,10 @@ class SessionServiceTest {
   private val sessionSlotRepository = mock<SessionSlotRepository>()
   private val prisonerService = mock<PrisonerService>()
   private val prisonerValidationService = mock<PrisonerValidationService>()
-  private val prisonerSessionValidator = mock<PrisonerSessionValidator>()
   private val sessionDatesUtil = SessionDatesUtil()
   private val prisonsService = mock<PrisonsService>()
   private val applicationService = mock<ApplicationService>()
+  private val sessionValidationService = mock<PrisonerSessionValidationService>()
 
   private lateinit var sessionService: SessionService
 
@@ -93,7 +92,7 @@ class SessionServiceTest {
     )
 
     whenever(prisonerService.getLevelsMapForPrisoner(any(), any())).thenReturn(mutableMapOf<PrisonerHousingLevels, String?>())
-    whenever(prisonerSessionValidator.isSessionAvailableToPrisonerLocation(any(), any())).thenReturn(true)
+    whenever(sessionValidationService.isSessionAvailableToPrisoner(any(), any(), any(), any())).thenReturn(true)
   }
 
   private fun mockSessionTemplateRepositoryResponse(response: List<SessionTemplate>, incentiveLevel: IncentiveLevel? = null, category: String? = null) {
@@ -168,17 +167,17 @@ class SessionServiceTest {
     @BeforeEach
     fun setUp() {
       sessionService = SessionService(
-        sessionDatesUtil,
-        sessionTemplateRepository,
-        visitRepository,
-        sessionSlotRepository,
-        prisonerService,
+        sessionDatesUtil = sessionDatesUtil,
+        sessionTemplateRepository = sessionTemplateRepository,
+        visitRepository = visitRepository,
+        sessionSlotRepository = sessionSlotRepository,
+        prisonerService = prisonerService,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
-        sessionValidator = prisonerSessionValidator,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
         applicationService = applicationService,
+        prisonerSessionValidationService = sessionValidationService,
       )
     }
 
@@ -463,14 +462,14 @@ class SessionServiceTest {
     @BeforeEach
     fun setUp() {
       sessionService = SessionService(
-        sessionDatesUtil,
-        sessionTemplateRepository,
-        visitRepository,
-        sessionSlotRepository,
-        prisonerService,
+        sessionDatesUtil = sessionDatesUtil,
+        sessionTemplateRepository = sessionTemplateRepository,
+        visitRepository = visitRepository,
+        sessionSlotRepository = sessionSlotRepository,
+        prisonerService = prisonerService,
         policyFilterDoubleBooking = false,
         policyFilterNonAssociation = false,
-        sessionValidator = prisonerSessionValidator,
+        prisonerSessionValidationService = sessionValidationService,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
         applicationService = applicationService,
@@ -604,7 +603,7 @@ class SessionServiceTest {
         prisonerService.getPrisonerNonAssociationList(prisonerId),
       ).thenReturn(PrisonerNonAssociationDetailsDto().nonAssociations)
 
-      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -707,17 +706,17 @@ class SessionServiceTest {
     @BeforeEach
     fun setUp() {
       sessionService = SessionService(
-        sessionDatesUtil,
-        sessionTemplateRepository,
-        visitRepository,
-        sessionSlotRepository,
-        prisonerService,
+        sessionDatesUtil = sessionDatesUtil,
+        sessionTemplateRepository = sessionTemplateRepository,
+        visitRepository = visitRepository,
+        sessionSlotRepository = sessionSlotRepository,
+        prisonerService = prisonerService,
         policyFilterDoubleBooking = true,
         policyFilterNonAssociation = true,
-        sessionValidator = prisonerSessionValidator,
+        prisonerSessionValidationService = sessionValidationService,
         prisonerValidationService = prisonerValidationService,
         prisonsService = prisonsService,
-        applicationService,
+        applicationService = applicationService,
       )
     }
 
@@ -764,7 +763,7 @@ class SessionServiceTest {
 
       mockGetPrisonerNonAssociation(prisonerId, associationId)
 
-      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull())).thenReturn(false)
+      whenever(visitRepository.hasActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(false)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -801,7 +800,7 @@ class SessionServiceTest {
 
       mockSessionSlotRepositoryResponse(sessionSlot)
 
-      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)
@@ -836,7 +835,7 @@ class SessionServiceTest {
       )
       mockSessionSlotRepositoryResponse(sessionSlot)
 
-      whenever(visitRepository.hasActiveVisitForDate(anyOrNull(), anyOrNull())).thenReturn(true)
+      whenever(visitRepository.hasActiveVisitForSessionSlot(anyOrNull(), anyOrNull(), anyOrNull())).thenReturn(true)
 
       // When
       val sessions = sessionService.getVisitSessions(prisonCode, prisonerId)

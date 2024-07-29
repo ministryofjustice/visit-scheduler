@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.NON_ASSOCIATION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
@@ -26,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionT
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.utils.PrisonerSessionValidator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -43,14 +41,14 @@ class SessionService(
   private val visitRepository: VisitRepository,
   private val sessionSlotRepository: SessionSlotRepository,
   private val prisonerService: PrisonerService,
+  private val prisonerValidationService: PrisonerValidationService,
+  private val prisonsService: PrisonsService,
+  private val applicationService: ApplicationService,
+  private val prisonerSessionValidationService: PrisonerSessionValidationService,
   @Value("\${policy.session.double-booking.filter:false}")
   private val policyFilterDoubleBooking: Boolean,
   @Value("\${policy.session.non-association.filter:false}")
   private val policyFilterNonAssociation: Boolean,
-  private val sessionValidator: PrisonerSessionValidator,
-  private val prisonerValidationService: PrisonerValidationService,
-  private val prisonsService: PrisonsService,
-  private val applicationService: ApplicationService,
 ) {
 
   companion object {
@@ -77,9 +75,10 @@ class SessionService(
     prisonerId: String,
     dateRange: DateRange,
     excludedApplicationReference: String? = null,
+    usernameToExcludeFromReservedApplications: String? = null,
   ): List<VisitSessionDto> {
     val prison = prisonsService.findPrisonByCode(prisonCode)
-    return getVisitSessions(prison, prisonerId, dateRange, excludedApplicationReference)
+    return getVisitSessions(prison, prisonerId, dateRange, excludedApplicationReference, usernameToExcludeFromReservedApplications)
   }
 
   fun getVisitSessions(
@@ -87,6 +86,7 @@ class SessionService(
     prisonerId: String,
     dateRange: DateRange,
     excludedApplicationReference: String? = null,
+    usernameToExcludeFromReservedApplications: String? = null,
   ): List<VisitSessionDto> {
     val prisonCode = prison.code
     LOG.debug("Enter getVisitSessions prisonCode:${prison.code}, prisonerId : $prisonerId ")
@@ -98,10 +98,11 @@ class SessionService(
     }!!
 
     var sessionTemplates = getAllSessionTemplatesForDateRange(prisonCode, dateRange)
-    sessionTemplates = sessionTemplates.filter {
-      isAvailableToLocation(it, sessionTemplates, prisonerId, prisonCode)
-        .and(isAvailableToCategory(it, sessionTemplates, prisoner.category))
-        .and(isAvailableToIncentiveLevel(it, sessionTemplates, prisoner.incentiveLevel))
+    val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = prisonCode, sessionTemplates = sessionTemplates)
+
+    sessionTemplates = sessionTemplates.filter { sessionTemplate ->
+      // checks for location, incentive and category
+      prisonerSessionValidationService.isSessionAvailableToPrisoner(sessionTemplates, sessionTemplate, prisoner, prisonerHousingLevels)
     }
 
     val visitSessions = sessionTemplates.map {
@@ -110,7 +111,7 @@ class SessionService(
 
     val sessionSlots = getSessionSlots(visitSessions)
     val nonAssociationConflictSessions = getNonAssociationSessions(visitSessions, prisonerId, prison)
-    val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference)
+    val doubleBookingOrReservationSessions = getDoubleBookingOrReservationSessions(visitSessions, sessionSlots, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
 
     return visitSessions.filterNot {
       hasNonAssociationConflict(nonAssociationConflictSessions, it) && policyFilterNonAssociation
@@ -129,10 +130,19 @@ class SessionService(
     sessionRestriction: SessionRestriction,
     dateRange: DateRange,
     excludedApplicationReference: String?,
+    usernameToExcludeFromReservedApplications: String?,
   ): List<AvailableVisitSessionDto> {
-    LOG.debug("Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {} ", prisonCode, prisonerId, sessionRestriction)
+    LOG.debug(
+      "Enter getAvailableVisitSessions prisonCode:{}, prisonerId : {}, sessionRestriction: {}, dateRange - {}, excludedApplicationReference - {}, excludeReservedApplicationsForUser - {} ",
+      prisonCode,
+      prisonerId,
+      sessionRestriction,
+      dateRange,
+      excludedApplicationReference,
+      usernameToExcludeFromReservedApplications,
+    )
 
-    val visitSessions = getVisitSessions(prisonCode = prisonCode, prisonerId = prisonerId, dateRange = dateRange, excludedApplicationReference = excludedApplicationReference)
+    val visitSessions = getVisitSessions(prisonCode = prisonCode, prisonerId = prisonerId, dateRange = dateRange, excludedApplicationReference = excludedApplicationReference, usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications)
 
     return visitSessions.filter {
       hasSessionGotCapacity(it, sessionRestriction).and(it.sessionConflicts.isEmpty())
@@ -177,11 +187,12 @@ class SessionService(
     sessionSlots: List<SessionSlot>,
     prisonerId: String,
     excludedApplicationReference: String?,
+    usernameToExcludeFromReservedApplications: String?,
   ): List<VisitSessionDto> {
     val sessionSlotsByKey = sessionSlots.associateBy { it.slotDate.toString() + it.sessionTemplateReference }
     return visitSessions.filter {
       val key = it.startTimestamp.toLocalDate().toString() + it.sessionTemplateReference
-      sessionSlotsByKey.containsKey(key) && sessionHasBookingOrApplications(sessionSlotsByKey[key]!!, prisonerId, excludedApplicationReference)
+      sessionSlotsByKey.containsKey(key) && sessionHasBookingOrApplications(sessionSlotsByKey[key]!!, prisonerId, excludedApplicationReference, usernameToExcludeFromReservedApplications)
     }
   }
 
@@ -213,53 +224,6 @@ class SessionService(
       rangeStartDate = dateRange.fromDate,
       rangeEndDate = dateRange.toDate,
     )
-  }
-
-  fun isAvailableToLocation(
-    sessionTemplate: SessionTemplate,
-    sessionTemplates: List<SessionTemplate>,
-    prisonerId: String,
-    prisonCode: String,
-  ): Boolean {
-    val hasSessionsWithLocationGroups = sessionTemplates.any { it.permittedSessionLocationGroups.isNotEmpty() }
-    return if (hasSessionsWithLocationGroups) {
-      val prisonerDetailDto = prisonerService.getPrisonerHousingLocation(prisonerId, prisonCode)
-      prisonerDetailDto?.let {
-        val prisonerLevels = prisonerService.getLevelsMapForPrisoner(prisonerDetailDto, sessionTemplates)
-        val keep = sessionValidator.isSessionAvailableToPrisonerLocation(prisonerLevels, sessionTemplate)
-        LOG.debug("filterSessionsTemplatesForLocation prisonerId:$prisonerId template ref ${sessionTemplate.reference} Keep:$keep")
-        keep
-      } ?: true
-    } else {
-      true
-    }
-  }
-
-  private fun isAvailableToCategory(
-    sessionTemplate: SessionTemplate,
-    sessionTemplates: List<SessionTemplate>,
-    prisonerCategory: String?,
-  ): Boolean {
-    val hasSessionsWithCategoryGroups = sessionTemplates.any { sessionTemplate.permittedSessionCategoryGroups.isNotEmpty() }
-    return if (hasSessionsWithCategoryGroups) {
-      sessionValidator.isSessionAvailableToPrisonerCategory(prisonerCategory, sessionTemplate)
-    } else {
-      true
-    }
-  }
-
-  private fun isAvailableToIncentiveLevel(
-    sessionTemplate: SessionTemplate,
-    sessionTemplates: List<SessionTemplate>,
-    prisonerIncentiveLevel: IncentiveLevel?,
-  ): Boolean {
-    val hasSessionsWithIncentiveLevelGroups =
-      sessionTemplates.any { it.permittedSessionIncentiveLevelGroups.isNotEmpty() }
-    return if (hasSessionsWithIncentiveLevelGroups) {
-      sessionValidator.isSessionAvailableToIncentiveLevel(prisonerIncentiveLevel, sessionTemplate)
-    } else {
-      true
-    }
   }
 
   private fun buildVisitSessionsUsingTemplate(
@@ -426,8 +390,9 @@ class SessionService(
     sessionSlot: SessionSlot,
     prisonerId: String,
     excludedApplicationReference: String?,
+    usernameToExcludeFromReservedApplications: String?,
   ): Boolean {
-    if (visitRepository.hasActiveVisitForDate(
+    if (visitRepository.hasActiveVisitForSessionSlot(
         prisonerId = prisonerId,
         sessionSlotId = sessionSlot.id,
       )
@@ -439,6 +404,7 @@ class SessionService(
       prisonerId = prisonerId,
       sessionSlotId = sessionSlot.id,
       excludedApplicationReference = excludedApplicationReference,
+      usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
     )
   }
 
