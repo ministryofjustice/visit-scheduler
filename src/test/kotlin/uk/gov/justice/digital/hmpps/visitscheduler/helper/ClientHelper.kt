@@ -14,7 +14,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PERSON_RESTRICTION_DELETED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH
