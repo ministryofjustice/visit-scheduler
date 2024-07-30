@@ -65,7 +65,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.Update
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionDeletedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
@@ -727,19 +726,6 @@ fun callNotifyVSiPThatPersonRestrictionUpserted(
     webTestClient,
     authHttpHeaders,
     VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH,
-    dto,
-  )
-}
-
-fun callNotifyVSiPThatPersonRestrictionDeleted(
-  webTestClient: WebTestClient,
-  authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: PersonRestrictionDeletedNotificationDto? = null,
-): ResponseSpec {
-  return callNotifyVSiPOfAEvent(
-    webTestClient,
-    authHttpHeaders,
-    VISIT_NOTIFICATION_PERSON_RESTRICTION_DELETED_PATH,
     dto,
   )
 }

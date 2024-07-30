@@ -31,12 +31,6 @@ spring:
             client-secret: ${system.client.secret}
             authorization-grant-type: client_credentials
             scope: read
-          other-hmpps-apis:
-            provider: hmpps-auth
-            client-id: ${system.client.id}
-            client-secret: ${system.client.secret}
-            authorization-grant-type: client_credentials
-            scope: read
         provider:
           hmpps-auth:
             token-uri: ${hmpps.auth.url}/oauth/token
@@ -112,10 +106,6 @@ prisoner:
 non-associations:
   api:
     timeout: 10s
-
-prisoner-contact:
-  registry:
-    url: 10s
 
 policy:
   session:

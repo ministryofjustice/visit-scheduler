@@ -13,7 +13,6 @@ generic-service:
     PRISON_API_URL: https://prison-api-dev.prison.service.justice.gov.uk
     NON_ASSOCIATIONS_API_URL: https://non-associations-api-dev.hmpps.service.justice.gov.uk
     PRISONER_OFFENDER_SEARCH_URL: https://prisoner-search-dev.prison.service.justice.gov.uk
-    PRISONER-CONTACT_REGISTRY_URL: https://prisoner-contact-registry-dev.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 50
     TASK_VISIT_COUNTS_REPORT_CRON: "0 0 0/1 * * ?" #every hour on dev

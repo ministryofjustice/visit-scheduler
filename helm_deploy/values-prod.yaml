@@ -27,7 +27,6 @@ generic-service:
     PRISON_API_URL: https://prison-api.prison.service.justice.gov.uk
     NON_ASSOCIATIONS_API_URL: https://non-associations-api.hmpps.service.justice.gov.uk
     PRISONER_OFFENDER_SEARCH_URL: https://prisoner-search.prison.service.justice.gov.uk
-    PRISONER-CONTACT_REGISTRY_URL: https://prisoner-contact-registry.prison.service.justice.gov.uk
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     FEATURE_EVENTS_SNS_ENABLED: true
 

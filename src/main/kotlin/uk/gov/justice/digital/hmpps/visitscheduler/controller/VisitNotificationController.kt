@@ -28,7 +28,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionDeletedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
@@ -40,7 +39,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEven
 const val VISIT_NOTIFICATION_CONTROLLER_PATH: String = "/visits/notification"
 const val VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/non-association/changed"
 const val VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/person/restriction/upserted"
-const val VISIT_NOTIFICATION_PERSON_RESTRICTION_DELETED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/person/restriction/deleted"
 const val VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/received"
 const val VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/released"
 const val VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/restriction/changed"
@@ -132,42 +130,6 @@ class VisitNotificationController(
   ): ResponseEntity<HttpStatus> {
     LOG.debug("Entered notifyVSiPThatPersonRestrictionUpserted {}", dto)
     visitNotificationEventService.handlePersonRestrictionUpsertedNotification(dto)
-    return ResponseEntity(HttpStatus.OK)
-  }
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PostMapping(VISIT_NOTIFICATION_PERSON_RESTRICTION_DELETED_PATH)
-  @ResponseStatus(HttpStatus.OK)
-  @Operation(
-    summary = "To notify VSiP that a deletion for a person/visitor restriction has taken place",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "notification has completed successfully",
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "Incorrect request to notify VSiP of change",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to notify VSiP of change",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun notifyVSiPThatPersonRestrictionDeleted(
-    @RequestBody @Valid
-    dto: PersonRestrictionDeletedNotificationDto,
-  ): ResponseEntity<HttpStatus> {
-    LOG.debug("Entered notifyVSiPThatPersonRestrictionDeleted {}", dto)
-    visitNotificationEventService.handlePersonRestrictionDeletedNotification(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 
