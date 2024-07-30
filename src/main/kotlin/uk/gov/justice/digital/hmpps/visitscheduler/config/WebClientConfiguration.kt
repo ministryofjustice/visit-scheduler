@@ -18,11 +18,9 @@ class WebClientConfiguration(
   @Value("\${prison.api.url}") private val prisonApiBaseUrl: String,
   @Value("\${non-associations.api.url}") private val nonAssociationsApiBaseUrl: String,
   @Value("\${prisoner.offender.search.url}") private val prisonOffenderSearchBaseUrl: String,
-  @Value("\${prisoner-contact.registry.url}") private val prisonerContactRegistryBaseUrl: String,
 ) {
   companion object {
     const val CLIENT_REGISTRATION_ID = "hmpps-apis"
-    const val OTHER_CLIENT_REGISTRATION_ID = "other-hmpps-apis"
   }
 
   @Bean
@@ -46,12 +44,6 @@ class WebClientConfiguration(
   @Bean
   fun prisonApiHealthWebClient(): WebClient {
     return WebClient.builder().baseUrl(prisonApiBaseUrl).build()
-  }
-
-  @Bean
-  fun prisonerContactRegistryWebClient(authorizedClientManager: OAuth2AuthorizedClientManager): WebClient {
-    val oauth2Client = getOauth2Client(authorizedClientManager, OTHER_CLIENT_REGISTRATION_ID)
-    return getWebClient(prisonerContactRegistryBaseUrl, oauth2Client)
   }
 
   @Bean
