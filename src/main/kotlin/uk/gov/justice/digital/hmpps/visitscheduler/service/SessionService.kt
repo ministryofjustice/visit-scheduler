@@ -62,11 +62,18 @@ class SessionService(
     currentApplicationReference: String? = null,
     minOverride: Int? = null,
     maxOverride: Int? = null,
+    usernameToExcludeFromReservedApplications: String? = null,
   ): List<VisitSessionDto> {
     val prison = prisonsService.findPrisonByCode(prisonCode)
     val dateRange = getDateRange(prison, minOverride, maxOverride)
 
-    return getVisitSessions(prison, prisonerId, dateRange, currentApplicationReference)
+    return getVisitSessions(
+      prison = prison,
+      prisonerId = prisonerId,
+      dateRange = dateRange,
+      excludedApplicationReference = currentApplicationReference,
+      usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+    )
   }
 
   @Transactional(readOnly = true)
