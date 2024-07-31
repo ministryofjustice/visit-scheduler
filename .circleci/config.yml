@@ -70,12 +70,6 @@ jobs:
           command: |
             cd hmpps-book-a-prison-visit-ui-tests
             npm run test:ci
-      - store_test_results:
-          path: results.xml
-      - store_artifacts:
-          path: playwright-report/index.html
-      - store_artifacts:
-          path: test-results
 
   validate:
     executor:
