@@ -646,6 +646,7 @@
     -- Category group names are only descriptions they need to be updated when the group categories change
 
     INSERT INTO prison_user_client (prison_id,user_type, active) SELECT id,'STAFF',true FROM prison;
+    INSERT INTO prison_user_client (prison_id,user_type, active) SELECT id,'PUBLIC',true FROM prison;
 
     -- Drop temporary tables
         DROP TABLE tmp_session_template;

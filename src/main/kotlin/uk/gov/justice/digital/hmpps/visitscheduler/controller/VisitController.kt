@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
+import uk.gov.justice.digital.hmpps.visitscheduler.config.ApplicationValidationErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
@@ -82,6 +83,11 @@ class VisitController(
         responseCode = "404",
         description = "Visit not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "422",
+        description = "Application validation failed",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ApplicationValidationErrorResponse::class))],
       ),
     ],
   )
@@ -189,7 +195,7 @@ class VisitController(
   @GetMapping(GET_VISIT_BY_REFERENCE)
   @Operation(
     summary = "Get a visit",
-    description = "Retrieve visit by visit reference (excludes Reserved and CHANGING)",
+    description = "Retrieve visit by visit reference",
     responses = [
       ApiResponse(
         responseCode = "200",

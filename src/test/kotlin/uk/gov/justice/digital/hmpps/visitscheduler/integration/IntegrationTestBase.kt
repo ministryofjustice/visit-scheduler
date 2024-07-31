@@ -20,9 +20,20 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.CANCELLATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
@@ -45,6 +56,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExt
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.NonAssociationsApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonApiMockServer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.PrisonOffenderSearchMockServer
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application.ReserveSlotTest
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -263,8 +275,9 @@ abstract class IntegrationTestBase {
     slotDate: LocalDate? = null,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
+    userType: UserType = STAFF,
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction, visitContact = visitContact)
+    val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application, sessionTemplateLocal = sessionTemplate)
   }
 
@@ -274,8 +287,9 @@ abstract class IntegrationTestBase {
     slotDate: LocalDate,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     prisonCode: String? = null,
+    userType: UserType = STAFF,
   ): Visit {
-    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, visitRestriction = visitRestriction, prisonCode = prisonCode)
+    val application = createApplicationAndSave(prisonerId = prisonerId, slotDate = slotDate, completed = true, visitRestriction = visitRestriction, prisonCode = prisonCode, userType = userType)
     return createVisitAndSave(visitStatus = visitStatus!!, applicationEntity = application)
   }
 
@@ -299,6 +313,7 @@ abstract class IntegrationTestBase {
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
     visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
+    userType: UserType = STAFF,
   ): Application {
     val sessionTemplateLocal = sessionTemplate ?: sessionTemplateDefault
     val slotDateLocal = slotDate ?: run {
@@ -313,6 +328,7 @@ abstract class IntegrationTestBase {
       prisonCode = prisonCode,
       slotDate = slotDateLocal,
       visitRestriction = visitRestriction,
+      userType = userType,
     )
     applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
@@ -343,5 +359,67 @@ abstract class IntegrationTestBase {
 
   fun parseVisitsResponse(responseSpec: ResponseSpec): List<VisitDto> {
     return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitDto>::class.java).toList()
+  }
+
+  fun createVisit(
+    prisonId: String? = "testPrisonerId",
+    actionedByValue: String,
+    visitStatus: VisitStatus,
+    sessionTemplate: SessionTemplate,
+    userType: UserType,
+    slotDateWeeks: Long,
+  ): Visit {
+    val eventJourney = mutableListOf(RESERVED_VISIT, BOOKED_VISIT)
+    val actionedByValues = mutableListOf(actionedByValue, actionedByValue)
+    val userTypes = mutableListOf(userType, userType)
+
+    var visit = createApplicationAndVisit(
+      prisonerId = prisonId,
+      slotDate = LocalDate.now().plusWeeks(slotDateWeeks),
+      sessionTemplate = sessionTemplate,
+      visitStatus = visitStatus,
+      userType = userType,
+    )
+
+    if (CANCELLED == visitStatus) {
+      eventJourney.add(CANCELLED_VISIT)
+      visit.outcomeStatus = CANCELLATION
+      actionedByValues.add(actionedByValue + "_staff")
+      userTypes.add(STAFF)
+    }
+
+    visit = visitEntityHelper.save(visit)
+
+    eventAuditEntityHelper.createForVisitAndApplication(
+      visit,
+      actionedByValues = actionedByValues,
+      types = eventJourney,
+      userTypes = userTypes,
+    )
+    return visit
+  }
+
+  fun createReserveVisitSlotDto(
+    actionedBy: String = ReserveSlotTest.ACTIONED_BY_USER_NAME,
+    prisonerId: String = "FF0000FF",
+    sessionTemplate: SessionTemplate? = null,
+    slotDate: LocalDate? = null,
+    support: String = "Some Text",
+    sessionRestriction: SessionRestriction = SessionRestriction.OPEN,
+    allowOverBooking: Boolean = false,
+    userType: UserType = STAFF,
+  ): CreateApplicationDto {
+    return CreateApplicationDto(
+      prisonerId,
+      sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
+      sessionDate = slotDate ?: sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
+      applicationRestriction = sessionRestriction,
+      visitContact = ContactDto("John Smith", "013448811538"),
+      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
+      visitorSupport = ApplicationSupportDto(support),
+      actionedBy = actionedBy,
+      userType = userType,
+      allowOverBooking = allowOverBooking,
+    )
   }
 }

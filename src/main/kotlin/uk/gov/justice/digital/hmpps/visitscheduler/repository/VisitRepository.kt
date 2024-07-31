@@ -203,13 +203,29 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   ): List<Visit>
 
   @Query(
+    "SELECT v FROM Visit v " +
+      "LEFT JOIN VisitVisitor vv ON v.id = vv.visitId " +
+      "WHERE v.sessionSlot.slotStart >= :startDateTime AND " +
+      "vv.nomisPersonId = :visitorId AND " +
+      "v.visitStatus = 'BOOKED' AND " +
+      "(:#{#prisonerId} is null OR v.prisonerId = :prisonerId) AND " +
+      "(cast(:endDateTime as date) is null OR v.sessionSlot.slotEnd < :endDateTime) ORDER BY v.sessionSlot.slotStart,v.id",
+  )
+  fun getFutureVisitsByVisitorId(
+    @Param("visitorId") visitorId: String,
+    @Param("prisonerId") prisonerId: String?,
+    @Param("startDateTime") startDateTime: LocalDateTime,
+    @Param("endDateTime") endDateTime: LocalDateTime? = null,
+  ): List<Visit>
+
+  @Query(
     "SELECT v.* FROM visit v " +
       "LEFT JOIN prison p ON v.prison_id = p.id " +
       "LEFT JOIN session_slot sl ON v.session_slot_id = sl.id " +
       "WHERE v.prisoner_id = :prisonerId AND " +
       "v.visit_status = 'BOOKED' AND " +
       "p.code != :excludedPrisonCode AND " +
-      "sl.slot_start >= NOW()",
+      "sl.slot_start >= NOW() ORDER BY v.id ",
     nativeQuery = true,
   )
   fun getFutureBookedVisitsExcludingPrison(
@@ -278,4 +294,42 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       " ORDER BY v.sessionSlot.slotStart,v.id",
   )
   fun findBookedVisitsForDate(prisonCode: String, date: LocalDate): List<Visit>
+
+  @Query(
+    "Select v.reference FROM visit v " +
+      " LEFT JOIN event_audit ea on ea.booking_reference = v.reference and ea.type = 'BOOKED_VISIT' " +
+      " LEFT JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
+      " LEFT JOIN session_slot ss on ss.id = v.session_slot_id " +
+      " WHERE ab.booker_reference = :bookerReference AND v.visit_status = 'BOOKED' AND ss.slot_date >= CURRENT_DATE AND " +
+      "      v.user_type = 'PUBLIC' GROUP BY v.reference",
+    nativeQuery = true,
+  )
+  fun getPublicFutureBookingsByBookerReference(bookerReference: String): List<String>
+
+  @Query(
+    "Select v.reference FROM visit v " +
+      " LEFT JOIN event_audit ea on ea.booking_reference = v.reference and ea.type = 'BOOKED_VISIT' " +
+      " LEFT JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
+      " LEFT JOIN session_slot ss on ss.id = v.session_slot_id " +
+      " WHERE ab.booker_reference = :bookerReference AND v.visit_status = 'BOOKED' AND ss.slot_date < CURRENT_DATE AND " +
+      "      v.user_type = 'PUBLIC' GROUP BY v.reference",
+    nativeQuery = true,
+  )
+  fun getPublicPastBookingsByBookerReference(bookerReference: String): List<String>
+
+  @Query(
+    "Select v.reference FROM visit v " +
+      " LEFT JOIN event_audit ea on ea.booking_reference = v.reference and ea.type = 'BOOKED_VISIT' " +
+      " LEFT JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
+      " LEFT JOIN session_slot ss on ss.id = v.session_slot_id " +
+      " WHERE ab.booker_reference = :bookerReference AND v.visit_status = 'CANCELLED' AND " +
+      "      v.user_type = 'PUBLIC' GROUP BY v.reference",
+    nativeQuery = true,
+  )
+  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<String>
+
+  @Query(
+    "SELECT v FROM Visit v WHERE v.reference in :bookingReferences order by v.modifyTimestamp",
+  )
+  fun findVisitsByReferences(bookingReferences: List<String>): List<Visit>
 }

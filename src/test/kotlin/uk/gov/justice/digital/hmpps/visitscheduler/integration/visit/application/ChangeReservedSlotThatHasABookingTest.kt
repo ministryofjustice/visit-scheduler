@@ -144,6 +144,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 
@@ -168,6 +169,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
     val responseSpec = callVisitReserveSlotChange(webTestClient, roleVisitSchedulerHttpHeaders, updateRequest, applicationReference)
 
     // Then
+    responseSpec.expectStatus().isBadRequest
     assertHelper.assertCapacityError(responseSpec)
   }
 
@@ -306,6 +308,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
   ) {
     val sessionTemplate = testSessionTemplateRepository.findByReference(changeApplicationRequest.sessionTemplateReference)
 
+    Assertions.assertThat(initialApplication.visit?.reference).isEqualTo(bookingReference)
     Assertions.assertThat(applicationDto.reference).isEqualTo(initialApplication.reference)
     Assertions.assertThat(applicationDto.prisonerId).isEqualTo(initialApplication.prisonerId)
     Assertions.assertThat(applicationDto.prisonCode).isEqualTo(sessionTemplate.prison.code)
@@ -358,7 +361,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
   private fun assertTelemetry(applicationDto: ApplicationDto, visit: Visit) {
     verify(telemetryClient).trackEvent(
-      eq("visit-slot-changed"),
+      eq("application-slot-changed"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["bookingReference"]).isEqualTo(visit.reference)
         Assertions.assertThat(it["applicationReference"]).isEqualTo(applicationDto.reference)
@@ -366,7 +369,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
       },
       isNull(),
     )
-    verify(telemetryClient, times(1)).trackEvent(eq("visit-slot-changed"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("application-slot-changed"), any(), isNull())
   }
 
   private fun getResult(responseSpec: ResponseSpec): EntityExchangeResult<ByteArray> {

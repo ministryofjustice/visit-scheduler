@@ -3,18 +3,17 @@ package uk.gov.justice.digital.hmpps.visitscheduler.service
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_DELETED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PERSON_RESTRICTION_UPSERTED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RECEIVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
@@ -24,9 +23,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedRea
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
@@ -34,9 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -50,8 +48,9 @@ class VisitNotificationEventService(
   private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
 ) {
 
+  @Lazy
   @Autowired
-  private lateinit var eventAuditRepository: EventAuditRepository
+  private lateinit var visitEventAuditService: VisitEventAuditService
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -167,12 +166,27 @@ class VisitNotificationEventService(
     }
   }
 
-  fun handlePersonRestrictionChangeNotification(notificationDto: PersonRestrictionChangeNotificationDto) {
-    if (isNotificationDatesValid(notificationDto.validToDate)) {
-      // TODO not yet implemented
+  @Transactional
+  fun handlePersonRestrictionUpsertedNotification(notificationDto: PersonRestrictionUpsertedNotificationDto) {
+    LOG.debug("PersonRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
+
+    val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
+    if (isNotificationDatesValid(notificationDto.validToDate) && visitorSupportedRestrictionTypes.contains(notificationDto.restrictionType)) {
+      // PersonRestrictionUpsertedNotification is a local version of the global VisitorRestrictionChangeNotification event.
+      // Hence, the need for the prisonerId, to only flag visits between the given visitor and prisoner.
+      val allAffectedVisits = visitService.getFutureVisitsByVisitorId(
+        visitorId = notificationDto.visitorId,
+        prisonerId = notificationDto.prisonerNumber,
+        endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX),
+      )
+      if (allAffectedVisits.isNotEmpty()) {
+        val description = "visitor ${notificationDto.visitorId} has restriction upserted - ${notificationDto.restrictionType} for prisoner ${notificationDto.prisonerNumber}"
+        processVisitsWithNotifications(allAffectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT, description)
+      }
     }
   }
 
+  @Transactional
   fun handleVisitorRestrictionChangeNotification(notificationDto: VisitorRestrictionChangeNotificationDto) {
     if (isNotificationDatesValid(notificationDto.validToDate)) {
       // TODO not yet implemented
@@ -199,7 +213,7 @@ class VisitNotificationEventService(
     val affectedVisitsNoDuplicate = affectedVisits.filter { !visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type) }
 
     affectedVisitsNoDuplicate.forEach {
-      val bookingEventAudit = visitService.getLastEventForBooking(it.reference)
+      val bookingEventAudit = visitEventAuditService.getLastEventForBooking(it.reference)
       visitNotificationFlaggingService.flagTrackEvents(it, bookingEventAudit, type)
     }
 
@@ -292,18 +306,7 @@ class VisitNotificationEventService(
       },
     )
 
-    eventAuditRepository.saveAndFlush(
-      EventAudit(
-        actionedBy = "NOT_KNOWN",
-        bookingReference = impactedVisit.reference,
-        applicationReference = impactedVisit.applicationReference,
-        sessionTemplateReference = impactedVisit.sessionTemplateReference,
-        type = EventAuditType.valueOf(type.name),
-        applicationMethodType = NOT_KNOWN,
-        text = null,
-        userType = impactedVisit.userType,
-      ),
-    )
+    visitEventAuditService.saveNotificationEventAudit(type, impactedVisit)
 
     return savedVisitNotificationEvent.reference
   }
@@ -397,7 +400,7 @@ class VisitNotificationEventService(
   private fun createPrisonerVisitsNotificationDto(events: MutableList<VisitNotificationEvent>): List<PrisonerVisitsNotificationDto> {
     return events.map {
       val visit = this.visitService.getVisitByReference(it.bookingReference)
-      val bookedByUserName = this.visitService.getLastUserNameToUpdateToSlotByReference(it.bookingReference)
+      val bookedByUserName = this.visitEventAuditService.getLastUserToUpdateSlotByReference(it.bookingReference)
 
       PrisonerVisitsNotificationDto(
         prisonerNumber = visit.prisonerId,
@@ -415,7 +418,7 @@ class VisitNotificationEventService(
   @Transactional
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
     val visit = visitService.getBookedVisitByReference(visitReference)
-    visitService.addEventAudit(ignoreVisitNotification.actionedBy, visit, EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT, ApplicationMethodType.NOT_APPLICABLE, ignoreVisitNotification.reason)
+    visitEventAuditService.saveIgnoreVisitNotificationEventAudit(ignoreVisitNotification.actionedBy, visit, ignoreVisitNotification.reason)
     deleteVisitNotificationEvents(visitReference, null, UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
     return visit
   }

@@ -7,7 +7,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerAl
 @Schema(description = "Prisoner information")
 data class PrisonerDto(
 
-  @Schema(description = "Prisoner Category", example = "C")
+  @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   val prisonerId: String,
 
   @Schema(description = "Prisoner Category", example = "C")

@@ -9,4 +9,6 @@ class VSiPValidationException(val messages: Array<String>) :
     val messages = message?.split(",")?.toTypedArray() ?: arrayOf()
     return VSiPValidationException(messages)
   }
+
+  constructor(message: String) : this(arrayOf(message))
 }
