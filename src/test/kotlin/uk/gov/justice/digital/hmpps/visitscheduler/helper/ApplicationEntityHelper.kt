@@ -64,6 +64,7 @@ class ApplicationEntityHelper(
     reservedSlot: Boolean = true,
     completed: Boolean = true,
     userType: UserType = STAFF,
+    createdBy: String = "",
   ): Application {
     val slotDateLocal = slotDate ?: run {
       sessionTemplate.validFromDate.with(sessionTemplate.dayOfWeek).plusWeeks(1)
@@ -81,7 +82,7 @@ class ApplicationEntityHelper(
         sessionSlot = sessionSlot,
         visitType = visitType,
         restriction = visitRestriction,
-        createdBy = "",
+        createdBy = createdBy,
         reservedSlot = reservedSlot,
         completed = completed,
         userType = userType,
