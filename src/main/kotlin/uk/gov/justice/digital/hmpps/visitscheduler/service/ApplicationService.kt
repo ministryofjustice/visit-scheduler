@@ -443,13 +443,22 @@ class ApplicationService(
   fun hasReservations(prisonerId: String, sessionSlotId: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): Boolean {
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
 
-    return applicationRepo.hasReservations(
-      prisonerId = prisonerId,
-      sessionSlotId = sessionSlotId,
-      expiredDateAndTime,
-      excludedApplicationReference = excludedApplicationReference,
-      usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
-    )
+    return if (usernameToExcludeFromReservedApplications != null) {
+      applicationRepo.hasReservations(
+        prisonerId = prisonerId,
+        sessionSlotId = sessionSlotId,
+        expiredDateAndTime,
+        excludedApplicationReference = excludedApplicationReference,
+        usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
+      )
+    } else {
+      applicationRepo.hasReservations(
+        prisonerId = prisonerId,
+        sessionSlotId = sessionSlotId,
+        expiredDateAndTime,
+        excludedApplicationReference = excludedApplicationReference,
+      )
+    }
   }
 
   fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?): List<VisitRestrictionStats> {

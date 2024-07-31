@@ -90,15 +90,33 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
       "a.prisonerId = :prisonerId AND " +
       "a.modifyTimestamp >= :expiredDateAndTime AND " +
       "a.sessionSlotId = :sessionSlotId AND " +
-      "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference) AND " +
-      "(:usernameToExcludeFromReservedApplications is null OR a.createdBy != :usernameToExcludeFromReservedApplications)",
+      "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference) ",
   )
   fun hasReservations(
     @Param("prisonerId") prisonerId: String,
     @Param("sessionSlotId") sessionSlotId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
     @Param("excludedApplicationReference") excludedApplicationReference: String?,
-    @Param("usernameToExcludeFromReservedApplications") usernameToExcludeFromReservedApplications: String?,
+  ): Boolean
+
+  @Query(
+    "SELECT COUNT(a) > 0 FROM Application a " +
+      "inner join EventAudit ea on a.reference = ea.applicationReference " +
+      "inner join ActionedBy ab on ea.actionedById = ab.id " +
+      "WHERE a.completed = false AND a.reservedSlot = true AND " +
+      "a.prisonerId = :prisonerId AND " +
+      "a.modifyTimestamp >= :expiredDateAndTime AND " +
+      "a.sessionSlotId = :sessionSlotId AND " +
+      "(:excludedApplicationReference is null OR a.reference != :excludedApplicationReference)  AND " +
+      "(ea.type = 'RESERVED_VISIT' AND " +
+      "(ab.userName != :usernameToExcludeFromReservedApplications OR ab.bookerReference != :usernameToExcludeFromReservedApplications))",
+  )
+  fun hasReservations(
+    @Param("prisonerId") prisonerId: String,
+    @Param("sessionSlotId") sessionSlotId: Long,
+    @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
+    @Param("excludedApplicationReference") excludedApplicationReference: String?,
+    @Param("usernameToExcludeFromReservedApplications") usernameToExcludeFromReservedApplications: String,
   ): Boolean
 
   @Query(
