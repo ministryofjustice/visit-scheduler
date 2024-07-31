@@ -35,6 +35,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitorRestrictionVisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -181,7 +182,7 @@ class VisitNotificationEventService(
       )
       if (allAffectedVisits.isNotEmpty()) {
         val description = "visitor ${notificationDto.visitorId} has restriction upserted - ${notificationDto.restrictionType} for prisoner ${notificationDto.prisonerNumber}"
-        processVisitsWithNotifications(allAffectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT, description)
+        processVisitorRestrictionVisitsWithNotifications(allAffectedVisits, notificationDto, description)
       }
     }
   }
@@ -210,13 +211,9 @@ class VisitNotificationEventService(
   }
 
   private fun processVisitsWithNotifications(affectedVisits: List<VisitDto>, type: NotificationEventType, description: String?) {
-    val affectedVisitsNoDuplicate = affectedVisits.filter { !visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type) }
+    val affectedVisitsNoDuplicate = processVisitEvents(affectedVisits, type)
 
-    affectedVisitsNoDuplicate.forEach {
-      val bookingEventAudit = visitEventAuditService.getLastEventForBooking(it.reference)
-      visitNotificationFlaggingService.flagTrackEvents(it, bookingEventAudit, type)
-    }
-
+    // Handle non-association grouping
     if (isPairGroupRequired(type)) {
       val affectedPairedVisits = pairWithEachOther(affectedVisits)
       affectedPairedVisits.forEach {
@@ -227,6 +224,34 @@ class VisitNotificationEventService(
     } else {
       saveVisitsNotification(affectedVisitsNoDuplicate, type, description)
     }
+  }
+
+  private fun processVisitorRestrictionVisitsWithNotifications(affectedVisits: List<VisitDto>, notification: PersonRestrictionUpsertedNotificationDto, description: String?) {
+    val affectedVisitsNoDuplicate = processVisitEvents(affectedVisits, PERSON_RESTRICTION_UPSERTED_EVENT)
+
+    affectedVisitsNoDuplicate.forEach { impactedVisit ->
+      visitNotificationEventRepository.saveAndFlush(
+        VisitorRestrictionVisitNotificationEvent(
+          impactedVisit.reference,
+          description,
+          notification.visitorId.toLong(),
+          VisitorSupportedRestrictionType.valueOf(notification.restrictionType),
+        )
+      )
+
+      visitEventAuditService.saveNotificationEventAudit(PERSON_RESTRICTION_UPSERTED_EVENT, impactedVisit)
+    }
+  }
+
+  private fun processVisitEvents(affectedVisits: List<VisitDto>, type: NotificationEventType): List<VisitDto> {
+    val affectedVisitsNoDuplicate =
+      affectedVisits.filter { !visitNotificationEventRepository.isEventARecentDuplicate(it.reference, type) }
+
+    affectedVisitsNoDuplicate.forEach {
+      val bookingEventAudit = visitEventAuditService.getLastEventForBooking(it.reference)
+      visitNotificationFlaggingService.flagTrackEvents(it, bookingEventAudit, type)
+      }
+    return affectedVisitsNoDuplicate
   }
 
   private fun isPairGroupRequired(
