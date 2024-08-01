@@ -38,7 +38,6 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
   val prisonCode = "ABC"
   val otherPrisonCode = "DEF"
 
-
   lateinit var prison1: Prison
   lateinit var prison2: Prison
   lateinit var sessionTemplate1: SessionTemplate
