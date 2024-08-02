@@ -182,6 +182,7 @@ workflows:
       - acceptance_tests_public_ui_main:
           requires:
             - request-acceptance-tests-public-approval
+          context: visits-public-e2e-tests
           filters:
             branches:
               only:
