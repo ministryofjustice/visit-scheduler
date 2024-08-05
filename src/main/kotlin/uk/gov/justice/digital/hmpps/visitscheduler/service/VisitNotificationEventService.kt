@@ -399,6 +399,7 @@ class VisitNotificationEventService(
 
   private fun createPrisonerVisitsNotificationDto(events: MutableList<VisitNotificationEvent>): List<PrisonerVisitsNotificationDto> {
     return events.map {
+      LOG.info("createPrisonerVisitsNotificationDto Entered - created visit notification for visit with booking reference: {}", it.bookingReference)
       val visit = this.visitService.getVisitByReference(it.bookingReference)
       val bookedByUserName = this.visitEventAuditService.getLastUserToUpdateSlotByReference(it.bookingReference)
 
