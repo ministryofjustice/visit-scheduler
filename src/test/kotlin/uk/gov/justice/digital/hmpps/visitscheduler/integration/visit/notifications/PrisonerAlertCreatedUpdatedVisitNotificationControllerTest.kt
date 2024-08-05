@@ -23,7 +23,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerAlertDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -57,6 +56,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId,
       description,
       listOf(PrisonerSupportedAlertCodeType.C1.name),
+      emptyList(),
       emptyList(),
     )
 
@@ -130,6 +130,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       description,
       listOf(PrisonerSupportedAlertCodeType.C1.name),
       emptyList(),
+      emptyList(),
     )
 
     val visit1 = createApplicationAndVisit(
@@ -191,6 +192,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       description,
       listOf("UNSUPPORTED"),
       emptyList(),
+      emptyList(),
     )
 
     val visit1 = createApplicationAndVisit(
@@ -223,6 +225,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId,
       description,
       listOf(PrisonerSupportedAlertCodeType.C1.name),
+      emptyList(),
       emptyList(),
     )
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, nonPrisonCode, IncentiveLevel.ENHANCED)
@@ -287,7 +290,6 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     prisonOffenderSearchMockServer.stubGetPrisonerByString(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
-      alertCodes = listOf(PrisonerAlertDto(active = true, alertCode = "UNSUPPORTED")),
     )
 
     val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
@@ -295,6 +297,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       description,
       emptyList(),
       listOf(PrisonerSupportedAlertCodeType.C1.name),
+      emptyList(),
     )
 
     val visit = visitEntityHelper.create(
@@ -337,7 +340,6 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     prisonOffenderSearchMockServer.stubGetPrisonerByString(
       prisonerId = prisonerId,
       prisonCode = prisonCode,
-      alertCodes = listOf(PrisonerAlertDto(active = true, alertCode = PrisonerSupportedAlertCodeType.C2.name)),
     )
 
     val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
@@ -345,6 +347,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       description,
       emptyList(),
       listOf(PrisonerSupportedAlertCodeType.C1.name),
+      listOf(PrisonerSupportedAlertCodeType.C2.name),
     )
 
     val visit = visitEntityHelper.create(
