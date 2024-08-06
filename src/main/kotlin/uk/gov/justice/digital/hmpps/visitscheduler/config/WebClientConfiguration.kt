@@ -1,8 +1,10 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.config
 
+import io.netty.resolver.DefaultAddressResolverGroup
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
+import org.springframework.http.client.reactive.ReactorClientHttpConnector
 import org.springframework.http.codec.ClientCodecConfigurer
 import org.springframework.security.oauth2.client.AuthorizedClientServiceOAuth2AuthorizedClientManager
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientManager
@@ -12,6 +14,9 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.web.reactive.function.client.ServletOAuth2AuthorizedClientExchangeFilterFunction
 import org.springframework.web.reactive.function.client.ExchangeStrategies
 import org.springframework.web.reactive.function.client.WebClient
+import reactor.netty.http.client.HttpClient
+import reactor.netty.resources.ConnectionProvider
+import java.time.Duration.ofSeconds
 
 @Configuration
 class WebClientConfiguration(
@@ -76,8 +81,24 @@ class WebClientConfiguration(
   }
 
   private fun getWebClient(baseUrl: String, oauth2Client: ServletOAuth2AuthorizedClientExchangeFilterFunction): WebClient {
+    val provider = ConnectionProvider.builder("custom")
+      .maxConnections(500)
+      .maxIdleTime(ofSeconds(20))
+      .maxLifeTime(ofSeconds(60))
+      .pendingAcquireTimeout(ofSeconds(60))
+      .evictInBackground(ofSeconds(120))
+      .build()
+
     return WebClient.builder()
       .baseUrl(baseUrl)
+      .clientConnector(
+        ReactorClientHttpConnector(
+          HttpClient.create(provider)
+            .resolver(DefaultAddressResolverGroup.INSTANCE)
+            .compress(true)
+            .responseTimeout(ofSeconds(30)),
+        ),
+      )
       .apply(oauth2Client.oauth2Configuration())
       .exchangeStrategies(getExchangeStrategies())
       .build()
