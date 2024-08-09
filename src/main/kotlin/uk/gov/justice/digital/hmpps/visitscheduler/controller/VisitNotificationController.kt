@@ -33,7 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 
 const val VISIT_NOTIFICATION_CONTROLLER_PATH: String = "/visits/notification"
@@ -43,7 +43,7 @@ const val VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH: String = "$VISIT_NOT
 const val VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/released"
 const val VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/restriction/changed"
 const val VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/prisoner/alerts/updated"
-const val VISIT_NOTIFICATION_VISITOR_RESTRICTION_CHANGE_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/restriction/changed"
+const val VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/restriction/upserted"
 const val VISIT_NOTIFICATION_COUNT_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/count"
 const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/count"
 const val FUTURE_NOTIFICATION_VISIT_GROUPS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/groups"
@@ -278,7 +278,7 @@ class VisitNotificationController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PostMapping(VISIT_NOTIFICATION_VISITOR_RESTRICTION_CHANGE_PATH)
+  @PostMapping(VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "To notify VSiP that a change to a visitor restriction has taken place",
@@ -304,12 +304,12 @@ class VisitNotificationController(
       ),
     ],
   )
-  fun notifyVSiPThatVisitorRestrictionChanged(
+  fun notifyVSiPThatVisitorRestrictionUpserted(
     @RequestBody @Valid
-    dto: VisitorRestrictionChangeNotificationDto,
+    dto: VisitorRestrictionUpsertedNotificationDto,
   ): ResponseEntity<HttpStatus> {
-    LOG.debug("Entered notifyVSiPThatVisitorRestrictionChanged {}", dto)
-    visitNotificationEventService.handleVisitorRestrictionChangeNotification(dto)
+    LOG.debug("Entered notifyVSiPThatVisitorRestrictionUpserted {}", dto)
+    visitNotificationEventService.handleVisitorRestrictionUpsertedNotification(dto)
     return ResponseEntity(HttpStatus.OK)
   }
 
