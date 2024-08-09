@@ -45,12 +45,30 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
+// TODO: VB-4368
+/**
+ *
+ * We need to do a rework of a few services, to make sure only certain methods are transactional to avoid race conditions.
+ *
+ * 1. Find all use of the EventAuditRepository, and move it into the VisitEventAuditService. From here we can then import the
+ * VisitEventAuditService and call through there.
+ *
+ * 1.b Find all usage of event processing code within the VisitService and move it into the VisitEventAuditService. Then call
+ * those methods within the VisitService.
+ *
+ * 2. Create a new class VisitStoreService, and move all logic which creates / reads / updates / deletes into this service.
+ *
+ * 3. Rework the VisitService to not require any transactional annotations. It will simply make calls to the new
+ * VisitStoreService and VisitEventAuditService, which handles the transactions within those service.
+ *
+ **/
+
 @Service
-@Transactional
 class VisitService(
   private val visitRepository: VisitRepository,
   private val telemetryClientService: TelemetryClientService,
   private val eventAuditRepository: EventAuditRepository,
+  private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
   private val applicationValidationService: ApplicationValidationService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
@@ -79,6 +97,7 @@ class VisitService(
     const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
   }
 
+  @Transactional
   fun bookVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
     if (applicationService.isApplicationCompleted(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
@@ -105,6 +124,7 @@ class VisitService(
     }
   }
 
+  @Transactional
   fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
     return when (restriction) {
       OPEN -> visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
@@ -191,6 +211,7 @@ class VisitService(
     return if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }
   }
 
+  @Transactional
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
     if (visitRepository.isBookingCancelled(reference)) {
       // If already cancelled then just return object and do nothing more!
@@ -362,10 +383,12 @@ class VisitService(
     return visitDto
   }
 
+  @Transactional
   fun getBookedVisitsForDate(prisonCode: String, date: LocalDate): List<VisitDto> {
     return visitRepository.findBookedVisitsForDate(prisonCode, date).map { visitDtoBuilder.build(it) }
   }
 
+  @Transactional
   fun getBookedVisits(
     prisonerNumber: String,
     prisonCode: String,
@@ -424,6 +447,7 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
+  @Transactional
   fun getFutureVisitsBy(
     prisonerNumber: String,
     prisonCode: String? = null,
@@ -433,6 +457,7 @@ class VisitService(
     return visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
+  @Transactional
   fun getFutureVisitsByVisitorId(
     visitorId: String,
     prisonerId: String? = null,
@@ -442,6 +467,7 @@ class VisitService(
     return visitRepository.getFutureVisitsByVisitorId(visitorId, prisonerId, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
+  @Transactional
   fun getFutureBookedVisitsExcludingPrison(
     prisonerNumber: String,
     excludedPrisonCode: String,
@@ -449,22 +475,8 @@ class VisitService(
     return this.visitRepository.getFutureBookedVisitsExcludingPrison(prisonerNumber, excludedPrisonCode).map { visitDtoBuilder.build(it) }
   }
 
+  @Transactional
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
-  }
-
-  fun getFuturePublicBookedVisitsByBookerReference(bookerReference: String): List<VisitDto> {
-    val bookingReferenceList = visitRepository.getPublicFutureBookingsByBookerReference(bookerReference)
-    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedBy { it.startTimestamp }
-  }
-
-  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<VisitDto> {
-    val bookingReferenceList = visitRepository.getPublicCanceledVisitsByBookerReference(bookerReference)
-    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedByDescending { it.modifiedTimestamp }
-  }
-
-  fun getPublicPastVisitsByBookerReference(bookerReference: String): List<VisitDto> {
-    val bookingReferenceList = visitRepository.getPublicPastBookingsByBookerReference(bookerReference)
-    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedByDescending { it.startTimestamp }
   }
 }

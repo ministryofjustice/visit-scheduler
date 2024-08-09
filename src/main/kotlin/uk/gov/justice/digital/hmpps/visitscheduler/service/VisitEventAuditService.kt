@@ -26,14 +26,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ActionedByRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.time.LocalDateTime
 
 @Service
 @Transactional
@@ -42,10 +40,6 @@ class VisitEventAuditService {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
-
-  @Lazy
-  @Autowired
-  private lateinit var visitRepository: VisitRepository
 
   @Lazy
   @Autowired
@@ -138,7 +132,7 @@ class VisitEventAuditService {
   fun saveMigratedVisitEventAudit(
     migrateVisitRequest: MigrateVisitRequestDto,
     visitEntity: Visit,
-  ): EventAuditDto {
+  ): EventAudit {
     val actionedBy = createOrGetActionBy(migrateVisitRequest.actionedBy, STAFF)
 
     val eventAudit = eventAuditRepository.saveAndFlush(
@@ -153,21 +147,11 @@ class VisitEventAuditService {
       ),
     )
 
-    migrateVisitRequest.createDateTime?.let {
-      visitRepository.updateCreateTimestamp(it, visitEntity.id)
-      if (migrateVisitRequest.visitStatus == BOOKED) {
-        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
-      }
-    }
+    return eventAudit
+  }
 
-    // Do this at end of this method, otherwise modify date would be overridden
-    migrateVisitRequest.modifyDateTime?.let {
-      visitRepository.updateModifyTimestamp(it, visitEntity.id)
-      if (migrateVisitRequest.visitStatus == CANCELLED) {
-        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
-      }
-    }
-
+  fun updateCreateTimestamp(time: LocalDateTime, eventAudit: EventAudit): EventAuditDto {
+    eventAuditRepository.updateCreateTimestamp(time, eventAudit.id)
     return EventAuditDto(eventAudit)
   }
 

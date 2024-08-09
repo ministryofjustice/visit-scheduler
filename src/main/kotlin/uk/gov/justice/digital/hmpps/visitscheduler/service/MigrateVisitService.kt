@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitToMigrateException
@@ -27,17 +28,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.CapitaliseUtil
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.MigrationSessionTemplateMatcher
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.Locale
 
 const val NOT_KNOWN_NOMIS = "NOT_KNOWN_NOMIS"
 
@@ -46,6 +45,7 @@ const val NOT_KNOWN_NOMIS = "NOT_KNOWN_NOMIS"
 class MigrateVisitService(
   private val legacyDataRepository: LegacyDataRepository,
   private val visitRepository: VisitRepository,
+  private val applicationService: ApplicationService,
   private val prisonsService: PrisonsService,
   private val snsService: SnsService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
@@ -72,6 +72,9 @@ class MigrateVisitService(
 
   @Autowired
   private lateinit var applicationRepository: ApplicationRepository
+
+  @Autowired
+  private lateinit var capitaliseUtil: CapitaliseUtil
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
     if (isVisitTooFarInTheFuture(migrateVisitRequest.startTimestamp)) {
@@ -109,7 +112,22 @@ class MigrateVisitService(
 
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
-    visitEventAuditService.saveMigratedVisitEventAudit(migrateVisitRequest, visitEntity)
+    val eventAudit = visitEventAuditService.saveMigratedVisitEventAudit(migrateVisitRequest, visitEntity)
+
+    migrateVisitRequest.createDateTime?.let {
+      visitRepository.updateCreateTimestamp(it, visitEntity.id)
+      if (migrateVisitRequest.visitStatus == BOOKED) {
+        visitEventAuditService.updateCreateTimestamp(it, eventAudit)
+      }
+    }
+
+    // Do this at end of this method, otherwise modify date would be overridden
+    migrateVisitRequest.modifyDateTime?.let {
+      visitRepository.updateModifyTimestamp(it, visitEntity.id)
+      if (migrateVisitRequest.visitStatus == CANCELLED) {
+        visitEventAuditService.updateCreateTimestamp(it, eventAudit)
+      }
+    }
 
     return visitEntity.reference
   }
@@ -153,41 +171,20 @@ class MigrateVisitService(
     sessionSlot: SessionSlot,
     actionedBy: String,
   ): Application {
-    val applicationEntity = applicationRepository.saveAndFlush(
-      Application(
-        prisonerId = migrateVisitRequest.prisonerId,
-        prison = prison,
-        prisonId = prison.id,
-        sessionSlot = sessionSlot,
-        sessionSlotId = sessionSlot.id,
-        visitType = migrateVisitRequest.visitType,
-        restriction = migrateVisitRequest.visitRestriction,
-        reservedSlot = true,
-        completed = true,
-        createdBy = actionedBy,
-        userType = STAFF,
-      ),
+    val applicationFromMigration = Application(
+      prisonerId = migrateVisitRequest.prisonerId,
+      prison = prison,
+      prisonId = prison.id,
+      sessionSlot = sessionSlot,
+      sessionSlotId = sessionSlot.id,
+      visitType = migrateVisitRequest.visitType,
+      restriction = migrateVisitRequest.visitRestriction,
+      reservedSlot = true,
+      completed = true,
+      createdBy = actionedBy,
+      userType = STAFF,
     )
-
-    migrateVisitRequest.visitContact?.let { contact ->
-      applicationEntity.visitContact = createApplicationContact(
-        applicationEntity,
-        if (UNKNOWN_TOKEN == contact.name || contact.name.partition { it.isLowerCase() }.first.isNotEmpty()) {
-          contact.name
-        } else {
-          capitalise(contact.name)
-        },
-        contact.telephone,
-      )
-    }
-
-    migrateVisitRequest.visitors?.let { contactList ->
-      contactList.forEach {
-        applicationEntity.visitors.add(createApplicationVisitor(applicationEntity, it.nomisPersonId))
-      }
-    }
-
-    return applicationRepository.saveAndFlush(applicationEntity)
+    return applicationService.createApplicationFromMigration(migrateVisitRequest, applicationFromMigration)
   }
 
   private fun createVisit(
@@ -220,7 +217,7 @@ class MigrateVisitService(
         if (UNKNOWN_TOKEN == contact.name || contact.name.partition { it.isLowerCase() }.first.isNotEmpty()) {
           contact.name
         } else {
-          capitalise(contact.name)
+          capitaliseUtil.capitalise(contact.name)
         },
         contact.telephone,
       )
@@ -314,22 +311,6 @@ class MigrateVisitService(
     }
   }
 
-  private fun capitalise(sentence: String): String =
-    sentence.lowercase(Locale.getDefault()).split(" ").joinToString(" ") { word ->
-      var index = 0
-      for (ch in word) {
-        if (ch in 'a'..'z') {
-          break
-        }
-        index++
-      }
-      if (index < word.length) {
-        word.replaceRange(index, index + 1, word[index].titlecase(Locale.getDefault()))
-      } else {
-        word
-      }
-    }
-
   private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
     return VisitNote(
       visitId = visit.id,
@@ -363,24 +344,6 @@ class MigrateVisitService(
       visitId = visit.id,
       visit = visit,
       visitContact = null,
-    )
-  }
-
-  private fun createApplicationVisitor(application: Application, personId: Long): ApplicationVisitor {
-    return ApplicationVisitor(
-      nomisPersonId = personId,
-      applicationId = application.id,
-      application = application,
-      contact = null,
-    )
-  }
-
-  private fun createApplicationContact(application: Application, name: String, telephone: String?): ApplicationContact {
-    return ApplicationContact(
-      applicationId = application.id,
-      application = application,
-      name = name,
-      telephone = telephone,
     )
   }
 }
