@@ -153,13 +153,21 @@ class VisitNotificationEventService(
 
     val prisonerSupportedAlertsRemoved = notificationDto.alertsRemoved.filter { it in prisonerSupportedAlertCodes }
     if (prisonerSupportedAlertsRemoved.isNotEmpty()) {
-      val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
-      prisonerDetails?.let { prisoner ->
-        val prisonerActiveAlertCodes = prisoner.alerts.filter { it.active }.map { it.alertCode }
-        if (!prisonerActiveAlertCodes.any { it in prisonerSupportedAlertCodes }) {
+      if (!notificationDto.activeAlerts.any { it in prisonerSupportedAlertCodes }) {
+        val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
+        prisonerDetails?.let { prisoner ->
           prisoner.prisonCode?.let {
-            val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, prisoner.prisonCode!!, PRISONER_ALERTS_UPDATED_EVENT)
-            deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_ALERTS_UPDATED_EVENT, UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED)
+            val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(
+              notificationDto.prisonerNumber,
+              prisoner.prisonCode!!,
+              PRISONER_ALERTS_UPDATED_EVENT,
+            )
+
+            deleteNotificationsThatAreNoLongerValid(
+              currentPrisonNotifications,
+              PRISONER_ALERTS_UPDATED_EVENT,
+              UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED,
+            )
           }
         }
       }

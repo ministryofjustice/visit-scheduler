@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.prisonersearch.PrisonerAlertDto
 
 @Schema(description = "Prisoner information")
 data class PrisonerDto(
@@ -18,7 +17,4 @@ data class PrisonerDto(
 
   @Schema(description = "prison code", example = "BHI", required = true)
   var prisonCode: String? = null,
-
-  @Schema(description = "Prisoner Alerts", required = false)
-  val alerts: List<PrisonerAlertDto> = emptyList(),
 )
