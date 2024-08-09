@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PublicVisitService
 
 const val GET_FUTURE_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/booked/future"
 const val GET_CANCELLED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/booker/{bookerReference}/visits/cancelled"
@@ -25,7 +25,7 @@ const val GET_PAST_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE: String = "/public/b
 @Tag(name = " Public visit rest controller")
 @RequestMapping(name = "Public visit Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PublicVisitController(
-  private val visitService: VisitService,
+  private val publicVisitService: PublicVisitService,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -60,7 +60,7 @@ class PublicVisitController(
     @PathVariable
     bookerReference: String,
   ): List<VisitDto> {
-    return visitService.getFuturePublicBookedVisitsByBookerReference(bookerReference)
+    return publicVisitService.getFuturePublicBookedVisitsByBookerReference(bookerReference)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -95,7 +95,7 @@ class PublicVisitController(
     @PathVariable
     bookerReference: String,
   ): List<VisitDto> {
-    return visitService.getPublicCanceledVisitsByBookerReference(bookerReference)
+    return publicVisitService.getPublicCanceledVisitsByBookerReference(bookerReference)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -130,6 +130,6 @@ class PublicVisitController(
     @PathVariable
     bookerReference: String,
   ): List<VisitDto> {
-    return visitService.getPublicPastVisitsByBookerReference(bookerReference)
+    return publicVisitService.getPublicPastVisitsByBookerReference(bookerReference)
   }
 }
