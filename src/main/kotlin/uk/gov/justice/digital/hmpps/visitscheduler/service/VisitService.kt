@@ -41,8 +41,8 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-@Transactional
 @Service
+@Transactional
 class VisitService(
   private val visitRepository: VisitRepository,
   private val telemetryClientService: TelemetryClientService,
