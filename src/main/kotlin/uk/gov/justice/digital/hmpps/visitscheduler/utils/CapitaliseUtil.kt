@@ -1,7 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Service
-import java.util.*
+import java.util.Locale
 
 @Service
 class CapitaliseUtil {
