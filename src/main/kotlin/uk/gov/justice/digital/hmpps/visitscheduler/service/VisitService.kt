@@ -17,8 +17,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
@@ -38,9 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import java.lang.reflect.InvocationTargetException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -50,7 +46,7 @@ import java.time.temporal.ChronoUnit
 class VisitService(
   private val visitRepository: VisitRepository,
   private val telemetryClientService: TelemetryClientService,
-  private val eventAuditRepository: EventAuditRepository,
+  private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
   private val applicationValidationService: ApplicationValidationService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
@@ -288,22 +284,9 @@ class VisitService(
   ): VisitDto {
     val bookedVisitDto = visitDtoBuilder.build(booking)
 
-    try {
-      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, booking.reference, bookingRequestDto.applicationMethodType)
-    } catch (e: InvocationTargetException) {
-      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
-      LOG.error(message)
-    }
+    val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveBookingEvent(bookedVisitDto, bookingRequestDto)
 
-    val eventAuditDto = visitEventAuditService.saveBookingEventAudit(
-      bookingRequestDto.actionedBy,
-      bookedVisitDto,
-      BOOKED_VISIT,
-      bookingRequestDto.applicationMethodType,
-      userType = bookedVisitDto.userType,
-    )
-
-    telemetryClientService.trackBookingEvent(bookingRequestDto, bookedVisitDto, eventAuditDto)
+    telemetryClientService.trackBookingEvent(bookingRequestDto, bookedVisitDto, bookingEventAuditDto)
 
     snsService.sendVisitBookedEvent(bookedVisitDto)
 
@@ -316,22 +299,10 @@ class VisitService(
   ): VisitDto {
     val bookedVisitDto = visitDtoBuilder.build(booking)
 
-    try {
-      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, booking.reference, bookingRequestDto.applicationMethodType)
-    } catch (e: InvocationTargetException) {
-      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
-      LOG.error(message)
-    }
+    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveUpdatedEvent(bookedVisitDto, bookingRequestDto)
 
-    val eventAuditDto = visitEventAuditService.saveBookingEventAudit(
-      bookingRequestDto.actionedBy,
-      bookedVisitDto,
-      UPDATED_VISIT,
-      bookingRequestDto.applicationMethodType,
-      userType = bookedVisitDto.userType,
-    )
+    telemetryClientService.trackUpdateBookingEvent(bookingRequestDto, bookedVisitDto, updatedEventAuditDto)
 
-    telemetryClientService.trackUpdateBookingEvent(bookingRequestDto, bookedVisitDto, eventAuditDto)
     snsService.sendChangedVisitBookedEvent(bookedVisitDto)
 
     return bookedVisitDto
@@ -350,9 +321,10 @@ class VisitService(
     cancelVisitDto: CancelVisitDto,
   ): VisitDto {
     val visitDto = visitDtoBuilder.build(visit)
-    val eventAudit = visitEventAuditService.saveCancelledEventAudit(cancelVisitDto, visitDto)
 
-    telemetryClientService.trackCancelBookingEvent(visitDto, cancelVisitDto, eventAudit)
+    val cancelledEventAuditDto = visitEventAuditService.saveCancelledEventAudit(cancelVisitDto, visitDto)
+
+    telemetryClientService.trackCancelBookingEvent(visitDto, cancelVisitDto, cancelledEventAuditDto)
 
     snsService.sendVisitCancelledEvent(visitDto)
 
@@ -392,7 +364,7 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun getHistoryByReference(bookingReference: String): List<EventAuditDto> {
-    return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
+    return eventAuditService.findByBookingReferenceOrderById(bookingReference)
   }
 
   private fun validateVisitStartDate(
@@ -451,20 +423,5 @@ class VisitService(
 
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
-  }
-
-  fun getFuturePublicBookedVisitsByBookerReference(bookerReference: String): List<VisitDto> {
-    val bookingReferenceList = visitRepository.getPublicFutureBookingsByBookerReference(bookerReference)
-    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedBy { it.startTimestamp }
-  }
-
-  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<VisitDto> {
-    val bookingReferenceList = visitRepository.getPublicCanceledVisitsByBookerReference(bookerReference)
-    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedByDescending { it.modifiedTimestamp }
-  }
-
-  fun getPublicPastVisitsByBookerReference(bookerReference: String): List<VisitDto> {
-    val bookingReferenceList = visitRepository.getPublicPastBookingsByBookerReference(bookerReference)
-    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedByDescending { it.startTimestamp }
   }
 }
