@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
@@ -31,6 +32,8 @@ import java.time.temporal.ChronoUnit
 @Transactional
 class VisitStoreService(
   private val visitRepository: VisitRepository,
+  private val applicationValidationService: ApplicationValidationService,
+  private val applicationService: ApplicationService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
@@ -49,7 +52,39 @@ class VisitStoreService(
     const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
   }
 
-  fun createOrUpdateBooking(application: Application, existingBooking: Visit?): Visit {
+  fun checkBookingAlreadyCancelled(reference: String): VisitDto? {
+    if (visitRepository.isBookingCancelled(reference)) {
+      // If already cancelled then just return object and do nothing more!
+      LOG.debug("The visit $reference has already been cancelled!")
+      val cancelledVisit = visitRepository.findByReference(reference)!!
+      return visitDtoBuilder.build(cancelledVisit)
+    }
+
+    return null
+  }
+
+  fun checkBookingAlreadyMade(applicationReference: String): VisitDto? {
+    if (applicationService.isApplicationCompleted(applicationReference)) {
+      LOG.debug("The application $applicationReference has already been booked!")
+      // If already booked then just return object and do nothing more!
+      val visit = visitRepository.findVisitByApplicationReference(applicationReference)!!
+      return visitDtoBuilder.build(visit)
+    }
+
+    return null
+  }
+
+  fun createOrUpdateBooking(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
+    // Need to set application complete at earliest opportunity to prevent two bookings from being created, Edge case.
+    applicationService.completeApplication(applicationReference)
+
+    val application = applicationService.getApplicationEntity(applicationReference)
+
+    val existingBooking = visitRepository.findVisitByApplicationReference(application.reference)
+
+    // application validity checks
+    applicationValidationService.validateApplication(bookingRequestDto, application, existingBooking)
+
     val visitRoom = sessionTemplateService.getVisitRoom(application.sessionSlot.sessionTemplateReference!!)
 
     val notSavedBooking = existingBooking?.let {
@@ -120,7 +155,8 @@ class VisitStoreService(
       }
     }
 
-    return visitRepository.saveAndFlush(booking)
+    val savedBooking = visitRepository.saveAndFlush(booking)
+    return visitDtoBuilder.build(savedBooking)
   }
 
   private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
@@ -147,13 +183,6 @@ class VisitStoreService(
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
-    if (visitRepository.isBookingCancelled(reference)) {
-      // If already cancelled then just return object and do nothing more!
-      VisitService.LOG.debug("The visit $reference has already been cancelled!")
-      val cancelledVisit = visitRepository.findByReference(reference)!!
-      return visitDtoBuilder.build(cancelledVisit)
-    }
-
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
     validateCancelRequest(visitEntity)
 
@@ -190,8 +219,7 @@ class VisitStoreService(
     var visitCancellationDateAllowed = currentDateTime
     // check if the visit being cancelled is in the past
     if (visitCancellationDayLimit > 0) {
-      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit.toLong()).truncatedTo(
-        ChronoUnit.DAYS)
+      visitCancellationDateAllowed = visitCancellationDateAllowed.minusDays(visitCancellationDayLimit.toLong()).truncatedTo(ChronoUnit.DAYS)
     }
 
     return visitCancellationDateAllowed

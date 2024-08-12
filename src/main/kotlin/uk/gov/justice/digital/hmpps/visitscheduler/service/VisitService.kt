@@ -36,7 +36,6 @@ class VisitService(
   private val telemetryClientService: TelemetryClientService,
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
-  private val applicationValidationService: ApplicationValidationService,
 ) {
 
   @Lazy
@@ -50,38 +49,37 @@ class VisitService(
   @Autowired
   private lateinit var visitDtoBuilder: VisitDtoBuilder
 
-  @Autowired
-  private lateinit var applicationService: ApplicationService
-
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
     const val MAX_RECORDS = 10000
   }
 
   fun bookVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
-    if (applicationService.isApplicationCompleted(applicationReference)) {
-      LOG.debug("The application $applicationReference has already been booked!")
-      // If already booked then just return object and do nothing more!
-      val visit = visitRepository.findVisitByApplicationReference(applicationReference)!!
+    val alreadyBookedVisit = visitStoreService.checkBookingAlreadyMade(applicationReference)
+    alreadyBookedVisit?.let {
+      return alreadyBookedVisit
+    }
+
+    val booking = visitStoreService.createOrUpdateBooking(applicationReference, bookingRequestDto)
+    return processBookingEvents(booking, bookingRequestDto)
+  }
+
+  fun updateBookedVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
+    val alreadyBookedVisit = visitStoreService.checkBookingAlreadyMade(applicationReference)
+    alreadyBookedVisit?.let {
+      return alreadyBookedVisit
+    }
+
+    val booking = visitStoreService.createOrUpdateBooking(applicationReference, bookingRequestDto)
+    return processUpdateBookingEvents(booking, bookingRequestDto)
+  }
+
+  @Transactional
+  fun getBookedVisitByApplicationReference(applicationReference: String): VisitDto {
+    val visit = visitRepository.findVisitByApplicationReference(applicationReference)
+    visit?.let {
       return visitDtoBuilder.build(visit)
-    }
-    // Need to set application complete at earliest opportunity to prevent two bookings from being created, Edge case.
-    applicationService.completeApplication(applicationReference)
-
-    val application = applicationService.getApplicationEntity(applicationReference)
-
-    val existingBooking = visitRepository.findVisitByApplicationReference(application.reference)
-
-    // application validity checks
-    applicationValidationService.validateApplication(bookingRequestDto, application, existingBooking)
-
-    val booking = visitStoreService.createOrUpdateBooking(application, existingBooking)
-
-    return existingBooking?.let {
-      processUpdateBookingEvents(booking, bookingRequestDto)
-    } ?: run {
-      processBookingEvents(booking, bookingRequestDto)
-    }
+    } ?: throw VisitNotFoundException("Visit not found for application reference")
   }
 
   @Transactional
@@ -94,6 +92,11 @@ class VisitService(
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
+    val alreadyCancelledVisit = visitStoreService.checkBookingAlreadyCancelled(reference)
+    alreadyCancelledVisit?.let {
+      return alreadyCancelledVisit
+    }
+
     val cancelledVisit = visitStoreService.cancelVisit(reference, cancelVisitDto)
     return processCancelEvents(cancelledVisit, cancelVisitDto)
   }
@@ -158,11 +161,9 @@ class VisitService(
   }
 
   private fun processBookingEvents(
-    booking: Visit,
+    bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
-    val bookedVisitDto = visitDtoBuilder.build(booking)
-
     val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveBookingEvent(bookedVisitDto, bookingRequestDto)
 
     telemetryClientService.trackBookingEvent(bookingRequestDto, bookedVisitDto, bookingEventAuditDto)
@@ -173,11 +174,9 @@ class VisitService(
   }
 
   private fun processUpdateBookingEvents(
-    booking: Visit,
+    bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
-    val bookedVisitDto = visitDtoBuilder.build(booking)
-
     val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveUpdatedEvent(bookedVisitDto, bookingRequestDto)
 
     telemetryClientService.trackUpdateBookingEvent(bookingRequestDto, bookedVisitDto, updatedEventAuditDto)
@@ -191,7 +190,6 @@ class VisitService(
     visitDto: VisitDto,
     cancelVisitDto: CancelVisitDto,
   ): VisitDto {
-
     val cancelledEventAuditDto = visitEventAuditService.saveCancelledEventAudit(cancelVisitDto, visitDto)
 
     telemetryClientService.trackCancelBookingEvent(visitDto, cancelVisitDto, cancelledEventAuditDto)
