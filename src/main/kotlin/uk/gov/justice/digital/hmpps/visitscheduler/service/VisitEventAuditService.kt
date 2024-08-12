@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
@@ -16,11 +17,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_APPLICABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
@@ -31,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ActionedByRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
+import java.lang.reflect.InvocationTargetException
 import java.time.LocalDateTime
 
 @Service
@@ -188,6 +192,44 @@ class VisitEventAuditService {
       PUBLIC -> eventAuditType.bookerReference!!
       SYSTEM -> ""
     }
+  }
+
+  fun updateVisitApplicationAndSaveBookingEvent(bookedVisitDto: VisitDto, bookingRequestDto: BookingRequestDto): EventAuditDto {
+    try {
+      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
+    } catch (e: InvocationTargetException) {
+      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
+      VisitService.LOG.error(message)
+    }
+
+    return saveBookingEventAudit(
+      bookingRequestDto.actionedBy,
+      bookedVisitDto,
+      BOOKED_VISIT,
+      bookingRequestDto.applicationMethodType,
+      userType = bookedVisitDto.userType,
+    )
+  }
+
+  fun updateVisitApplicationAndSaveUpdatedEvent(bookedVisitDto: VisitDto, bookingRequestDto: BookingRequestDto): EventAuditDto {
+    try {
+      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
+    } catch (e: InvocationTargetException) {
+      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
+      VisitService.LOG.error(message)
+    }
+
+    return saveBookingEventAudit(
+      bookingRequestDto.actionedBy,
+      bookedVisitDto,
+      UPDATED_VISIT,
+      bookingRequestDto.applicationMethodType,
+      userType = bookedVisitDto.userType,
+    )
+  }
+
+  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> {
+    return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
   }
 
   private fun saveCancelledEventAudit(actionedByValue: String, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {

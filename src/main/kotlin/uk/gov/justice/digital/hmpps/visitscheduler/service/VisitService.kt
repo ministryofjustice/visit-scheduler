@@ -17,8 +17,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
@@ -38,36 +36,16 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import java.lang.reflect.InvocationTargetException
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-// TODO: VB-4368
-/**
- *
- * We need to do a rework of a few services, to make sure only certain methods are transactional to avoid race conditions.
- *
- * 1. Find all use of the EventAuditRepository, and move it into the VisitEventAuditService. From here we can then import the
- * VisitEventAuditService and call through there.
- *
- * 1.b Find all usage of event processing code within the VisitService and move it into the VisitEventAuditService. Then call
- * those methods within the VisitService.
- *
- * 2. Create a new class VisitStoreService, and move all logic which creates / reads / updates / deletes into this service.
- *
- * 3. Rework the VisitService to not require any transactional annotations. It will simply make calls to the new
- * VisitStoreService and VisitEventAuditService, which handles the transactions within those service.
- *
- **/
-
+@Transactional
 @Service
 class VisitService(
   private val visitRepository: VisitRepository,
   private val telemetryClientService: TelemetryClientService,
-  private val eventAuditRepository: EventAuditRepository,
   private val eventAuditService: VisitEventAuditService,
   private val snsService: SnsService,
   private val applicationValidationService: ApplicationValidationService,
@@ -97,7 +75,6 @@ class VisitService(
     const val AMEND_EXPIRED_ERROR_MESSAGE = "Visit with booking reference - %s is in the past, it cannot be %s"
   }
 
-  @Transactional
   fun bookVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
     if (applicationService.isApplicationCompleted(applicationReference)) {
       LOG.debug("The application $applicationReference has already been booked!")
@@ -124,7 +101,6 @@ class VisitService(
     }
   }
 
-  @Transactional
   fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
     return when (restriction) {
       OPEN -> visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
@@ -211,7 +187,6 @@ class VisitService(
     return if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }
   }
 
-  @Transactional
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
     if (visitRepository.isBookingCancelled(reference)) {
       // If already cancelled then just return object and do nothing more!
@@ -309,22 +284,9 @@ class VisitService(
   ): VisitDto {
     val bookedVisitDto = visitDtoBuilder.build(booking)
 
-    try {
-      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, booking.reference, bookingRequestDto.applicationMethodType)
-    } catch (e: InvocationTargetException) {
-      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
-      LOG.error(message)
-    }
+    val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveBookingEvent(bookedVisitDto, bookingRequestDto)
 
-    val eventAuditDto = visitEventAuditService.saveBookingEventAudit(
-      bookingRequestDto.actionedBy,
-      bookedVisitDto,
-      BOOKED_VISIT,
-      bookingRequestDto.applicationMethodType,
-      userType = bookedVisitDto.userType,
-    )
-
-    telemetryClientService.trackBookingEvent(bookingRequestDto, bookedVisitDto, eventAuditDto)
+    telemetryClientService.trackBookingEvent(bookingRequestDto, bookedVisitDto, bookingEventAuditDto)
 
     snsService.sendVisitBookedEvent(bookedVisitDto)
 
@@ -337,22 +299,10 @@ class VisitService(
   ): VisitDto {
     val bookedVisitDto = visitDtoBuilder.build(booking)
 
-    try {
-      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, booking.reference, bookingRequestDto.applicationMethodType)
-    } catch (e: InvocationTargetException) {
-      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
-      LOG.error(message)
-    }
+    val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveUpdatedEvent(bookedVisitDto, bookingRequestDto)
 
-    val eventAuditDto = visitEventAuditService.saveBookingEventAudit(
-      bookingRequestDto.actionedBy,
-      bookedVisitDto,
-      UPDATED_VISIT,
-      bookingRequestDto.applicationMethodType,
-      userType = bookedVisitDto.userType,
-    )
+    telemetryClientService.trackUpdateBookingEvent(bookingRequestDto, bookedVisitDto, updatedEventAuditDto)
 
-    telemetryClientService.trackUpdateBookingEvent(bookingRequestDto, bookedVisitDto, eventAuditDto)
     snsService.sendChangedVisitBookedEvent(bookedVisitDto)
 
     return bookedVisitDto
@@ -371,9 +321,10 @@ class VisitService(
     cancelVisitDto: CancelVisitDto,
   ): VisitDto {
     val visitDto = visitDtoBuilder.build(visit)
-    val eventAudit = visitEventAuditService.saveCancelledEventAudit(cancelVisitDto, visitDto)
 
-    telemetryClientService.trackCancelBookingEvent(visitDto, cancelVisitDto, eventAudit)
+    val cancelledEventAuditDto = visitEventAuditService.saveCancelledEventAudit(cancelVisitDto, visitDto)
+
+    telemetryClientService.trackCancelBookingEvent(visitDto, cancelVisitDto, cancelledEventAuditDto)
 
     snsService.sendVisitCancelledEvent(visitDto)
 
@@ -383,12 +334,10 @@ class VisitService(
     return visitDto
   }
 
-  @Transactional
   fun getBookedVisitsForDate(prisonCode: String, date: LocalDate): List<VisitDto> {
     return visitRepository.findBookedVisitsForDate(prisonCode, date).map { visitDtoBuilder.build(it) }
   }
 
-  @Transactional
   fun getBookedVisits(
     prisonerNumber: String,
     prisonCode: String,
@@ -415,7 +364,7 @@ class VisitService(
 
   @Transactional(readOnly = true)
   fun getHistoryByReference(bookingReference: String): List<EventAuditDto> {
-    return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
+    return eventAuditService.findByBookingReferenceOrderById(bookingReference)
   }
 
   private fun validateVisitStartDate(
@@ -447,7 +396,6 @@ class VisitService(
     return visitCancellationDateAllowed
   }
 
-  @Transactional
   fun getFutureVisitsBy(
     prisonerNumber: String,
     prisonCode: String? = null,
@@ -457,7 +405,6 @@ class VisitService(
     return visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
-  @Transactional
   fun getFutureVisitsByVisitorId(
     visitorId: String,
     prisonerId: String? = null,
@@ -467,7 +414,6 @@ class VisitService(
     return visitRepository.getFutureVisitsByVisitorId(visitorId, prisonerId, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
-  @Transactional
   fun getFutureBookedVisitsExcludingPrison(
     prisonerNumber: String,
     excludedPrisonCode: String,
@@ -475,7 +421,6 @@ class VisitService(
     return this.visitRepository.getFutureBookedVisitsExcludingPrison(prisonerNumber, excludedPrisonCode).map { visitDtoBuilder.build(it) }
   }
 
-  @Transactional
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }

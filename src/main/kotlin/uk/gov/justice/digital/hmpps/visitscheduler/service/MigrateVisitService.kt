@@ -30,7 +30,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.LegacyDataRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.CapitaliseUtil
@@ -69,9 +68,6 @@ class MigrateVisitService(
 
   @Autowired
   private lateinit var sessionSlotService: SessionSlotService
-
-  @Autowired
-  private lateinit var applicationRepository: ApplicationRepository
 
   @Autowired
   private lateinit var capitaliseUtil: CapitaliseUtil
