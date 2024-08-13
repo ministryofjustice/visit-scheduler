@@ -32,6 +32,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisi
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitHistoryByReference
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitUpdate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.submitApplication
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.application.ReserveSlotTest
@@ -60,9 +61,9 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     val reservedDto = submitApplication(reserveVisitSlotDto)
     val bookedDto = bookVisit(reservedDto.reference, PHONE)
     val changingVisitDto1 = submitApplicationToUpdateBooking(sessionTemplate, bookedDto.reference)
-    bookVisit(changingVisitDto1.reference, EMAIL)
+    updateVisit(changingVisitDto1.reference, EMAIL)
     val changingVisitDto2 = submitApplicationToUpdateBooking(sessionTemplate, bookedDto.reference)
-    bookVisit(changingVisitDto2.reference, EMAIL)
+    updateVisit(changingVisitDto2.reference, EMAIL)
     cancelVisit(bookedDto)
 
     // When
@@ -144,7 +145,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     val applicationDto = submitApplication(reserveVisitSlotDto)
     val bookedDto = bookVisit(applicationDto.reference, PHONE)
     val changingVisitDto = submitApplicationToUpdateBooking(sessionTemplateToChangeTo, bookedDto.reference)
-    bookVisit(changingVisitDto.reference, EMAIL)
+    updateVisit(changingVisitDto.reference, EMAIL)
 
     // When
     val responseSpec = callVisitHistoryByReference(webTestClient, bookedDto.reference, roleVisitSchedulerHttpHeaders)
@@ -197,6 +198,12 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
 
   private fun bookVisit(applicationReference: String, applicationMethodType: ApplicationMethodType): VisitDto {
     val bookedResponse = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, applicationMethodType)
+    bookedResponse.expectStatus().isOk
+    return getVisitFromRestResponse(bookedResponse)
+  }
+
+  private fun updateVisit(applicationReference: String, applicationMethodType: ApplicationMethodType): VisitDto {
+    val bookedResponse = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, applicationReference, applicationMethodType)
     bookedResponse.expectStatus().isOk
     return getVisitFromRestResponse(bookedResponse)
   }

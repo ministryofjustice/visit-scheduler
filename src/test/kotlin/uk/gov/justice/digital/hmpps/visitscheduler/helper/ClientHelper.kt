@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERV
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_APPLICATION_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
@@ -178,8 +179,28 @@ fun callVisitBook(
   )
 }
 
+fun callVisitUpdate(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  applicationReference: String,
+  applicationMethodType: ApplicationMethodType = PHONE,
+  allowOverBooking: Boolean = false,
+  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking),
+): ResponseSpec {
+  return callPut(
+    bodyValue = bookingRequestDto,
+    webTestClient,
+    getVisitUpdateUrl(applicationReference),
+    authHttpHeaders,
+  )
+}
+
 fun getVisitBookUrl(applicationReference: String): String {
   return VISIT_BOOK.replace("{applicationReference}", applicationReference)
+}
+
+fun getVisitUpdateUrl(applicationReference: String): String {
+  return UPDATE_VISIT_BY_APPLICATION_REFERENCE.replace("{applicationReference}", applicationReference)
 }
 
 fun callIgnoreVisitNotifications(

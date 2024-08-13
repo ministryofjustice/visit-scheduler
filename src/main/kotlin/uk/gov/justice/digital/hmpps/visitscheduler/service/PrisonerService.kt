@@ -17,7 +17,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousin
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLevels.LEVEL_TWO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerHousingLocationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAssociationDetailDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 
@@ -121,7 +120,7 @@ class PrisonerService(
         }
       }
 
-      PrisonerDto(prisonerId, prisonerSearchResultDto.category, incentiveLevel, prisonCode = prisonerSearchResultDto.prisonId, alerts = prisonerSearchResultDto.alerts)
+      PrisonerDto(prisonerId, prisonerSearchResultDto.category, incentiveLevel, prisonCode = prisonerSearchResultDto.prisonId)
     }
   }
 
@@ -141,10 +140,5 @@ class PrisonerService(
       }
     } catch (_: ItemNotFoundException) {}
     return null
-  }
-
-  fun getPrisonerActiveAlertCodes(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto): List<String> {
-    return prisonerOffenderSearchClient.getPrisoner(notificationDto.prisonerNumber)?.alerts?.filter { it.active }?.map { it.alertCode }
-      ?: emptyList()
   }
 }

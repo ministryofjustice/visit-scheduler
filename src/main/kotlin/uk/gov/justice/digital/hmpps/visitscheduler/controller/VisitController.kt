@@ -41,10 +41,12 @@ const val VISIT_CONTROLLER_PATH: String = "/visits"
 const val GET_VISIT_HISTORY_CONTROLLER_PATH: String = "$VISIT_CONTROLLER_PATH/{reference}/history"
 const val VISIT_CONTROLLER_SEARCH_PATH: String = "$VISIT_CONTROLLER_PATH/search"
 const val VISIT_CONTROLLER_SEARCH_FUTURE_VISITS_PATH: String = "$VISIT_CONTROLLER_PATH/search/future/{prisonerNumber}"
+const val GET_VISIT_BY_APPLICATION_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/visit"
+const val UPDATE_VISIT_BY_APPLICATION_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/visit/update"
 const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/book"
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
-const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 const val GET_VISITS_BY: String = "$VISIT_CONTROLLER_PATH/session-template"
+const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
 
 @RestController
 @Validated
@@ -53,6 +55,93 @@ const val GET_VISITS_BY: String = "$VISIT_CONTROLLER_PATH/session-template"
 class VisitController(
   private val visitService: VisitService,
 ) {
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(GET_VISIT_BY_APPLICATION_REFERENCE)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Get visit from given application reference",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit returned",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to get a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Visit not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getVisitByApplicationReference(
+    @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
+    @PathVariable
+    applicationReference: String,
+  ): VisitDto {
+    return visitService.getBookedVisitByApplicationReference(applicationReference.trim())
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PutMapping(UPDATE_VISIT_BY_APPLICATION_REFERENCE)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Update a visit",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit updated",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to update a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to update a visit",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Visit not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "422",
+        description = "Application validation failed",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ApplicationValidationErrorResponse::class))],
+      ),
+    ],
+  )
+  fun updateVisit(
+    @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
+    @PathVariable
+    applicationReference: String,
+    @RequestBody @Valid
+    bookingRequestDto: BookingRequestDto,
+  ): VisitDto {
+    return visitService.updateBookedVisit(applicationReference.trim(), bookingRequestDto)
+  }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(VISIT_BOOK)
