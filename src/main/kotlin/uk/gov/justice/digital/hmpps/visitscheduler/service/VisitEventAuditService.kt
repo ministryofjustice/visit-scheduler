@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
@@ -16,24 +17,25 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_APPLICABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.ActionedBy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ActionedByRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.EventAuditRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import java.lang.reflect.InvocationTargetException
+import java.time.LocalDateTime
 
 @Service
 @Transactional
@@ -42,10 +44,6 @@ class VisitEventAuditService {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
-
-  @Lazy
-  @Autowired
-  private lateinit var visitRepository: VisitRepository
 
   @Lazy
   @Autowired
@@ -138,7 +136,7 @@ class VisitEventAuditService {
   fun saveMigratedVisitEventAudit(
     migrateVisitRequest: MigrateVisitRequestDto,
     visitEntity: Visit,
-  ): EventAuditDto {
+  ): EventAudit {
     val actionedBy = createOrGetActionBy(migrateVisitRequest.actionedBy, STAFF)
 
     val eventAudit = eventAuditRepository.saveAndFlush(
@@ -153,21 +151,11 @@ class VisitEventAuditService {
       ),
     )
 
-    migrateVisitRequest.createDateTime?.let {
-      visitRepository.updateCreateTimestamp(it, visitEntity.id)
-      if (migrateVisitRequest.visitStatus == BOOKED) {
-        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
-      }
-    }
+    return eventAudit
+  }
 
-    // Do this at end of this method, otherwise modify date would be overridden
-    migrateVisitRequest.modifyDateTime?.let {
-      visitRepository.updateModifyTimestamp(it, visitEntity.id)
-      if (migrateVisitRequest.visitStatus == CANCELLED) {
-        eventAuditRepository.updateCreateTimestamp(it, eventAudit.id)
-      }
-    }
-
+  fun updateCreateTimestamp(time: LocalDateTime, eventAudit: EventAudit): EventAuditDto {
+    eventAuditRepository.updateCreateTimestamp(time, eventAudit.id)
     return EventAuditDto(eventAudit)
   }
 
@@ -204,6 +192,44 @@ class VisitEventAuditService {
       PUBLIC -> eventAuditType.bookerReference!!
       SYSTEM -> ""
     }
+  }
+
+  fun updateVisitApplicationAndSaveBookingEvent(bookedVisitDto: VisitDto, bookingRequestDto: BookingRequestDto): EventAuditDto {
+    try {
+      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
+    } catch (e: InvocationTargetException) {
+      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
+      VisitService.LOG.error(message)
+    }
+
+    return saveBookingEventAudit(
+      bookingRequestDto.actionedBy,
+      bookedVisitDto,
+      BOOKED_VISIT,
+      bookingRequestDto.applicationMethodType,
+      userType = bookedVisitDto.userType,
+    )
+  }
+
+  fun updateVisitApplicationAndSaveUpdatedEvent(bookedVisitDto: VisitDto, bookingRequestDto: BookingRequestDto): EventAuditDto {
+    try {
+      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
+    } catch (e: InvocationTargetException) {
+      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
+      VisitService.LOG.error(message)
+    }
+
+    return saveBookingEventAudit(
+      bookingRequestDto.actionedBy,
+      bookedVisitDto,
+      UPDATED_VISIT,
+      bookingRequestDto.applicationMethodType,
+      userType = bookedVisitDto.userType,
+    )
+  }
+
+  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> {
+    return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
   }
 
   private fun saveCancelledEventAudit(actionedByValue: String, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {

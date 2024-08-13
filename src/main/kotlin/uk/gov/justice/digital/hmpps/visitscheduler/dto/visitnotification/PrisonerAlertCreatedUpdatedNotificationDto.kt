@@ -15,4 +15,7 @@ data class PrisonerAlertCreatedUpdatedNotificationDto(
 
   @NotNull
   val alertsRemoved: List<String>,
+
+  @NotNull
+  val activeAlerts: List<String>,
 )
