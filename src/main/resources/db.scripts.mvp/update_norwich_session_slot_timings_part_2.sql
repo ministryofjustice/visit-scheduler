@@ -16,6 +16,6 @@ UPDATE session_slot set session_template_reference = 'ywl.hol.sng' where session
 
 UPDATE session_slot set session_template_reference = 'xwl.crb.esg' where session_template_reference = 'kvl.uax.rdz' and slot_date >= '2024-08-12' and prison_id = (select id from prison where code = 'NWI');
 
-UPDATE session_slot set session_template_reference = 'awl.fqy.bbs' where session_template_reference = 'mwl.ueq.ndj' and slot_date >= '2024-08-12' and prison_id = (select id from prison where code = 'NWI');
+UPDATE session_slot set session_template_reference = 'mwl.ueq.ndj' where session_template_reference = 'awl.fqy.bbs' and slot_date >= '2024-08-12' and prison_id = (select id from prison where code = 'NWI');
 
 END;
