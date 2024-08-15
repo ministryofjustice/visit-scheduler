@@ -61,6 +61,7 @@ dependencies {
   testImplementation("org.testcontainers:localstack:1.20.1")
   testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.768")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
+  testImplementation("org.junit-pioneer:junit-pioneer:2.2.0")
 }
 
 java {
