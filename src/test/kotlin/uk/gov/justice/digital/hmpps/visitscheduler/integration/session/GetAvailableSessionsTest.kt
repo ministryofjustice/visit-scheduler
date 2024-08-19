@@ -446,6 +446,74 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when reserved (excluding username) and booked sessions is less than max capacity these sessions are returned`() {
+    // Given
+    val nextAllowedDay = getNextAllowedDay()
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      openCapacity = 0,
+      closedCapacity = 2,
+    )
+
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("12:00"),
+      endTime = LocalTime.parse("13:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      openCapacity = 0,
+      closedCapacity = 1,
+    )
+
+    this.visitEntityHelper.create(
+      prisonerId = "AF12345G",
+      sessionTemplate = sessionTemplate1,
+      visitRestriction = VisitRestriction.CLOSED,
+    )
+
+    this.applicationEntityHelper.create(
+      prisonerId = "ABC2345D",
+      sessionTemplate = sessionTemplate1,
+      visitRestriction = VisitRestriction.CLOSED,
+      slotDate = nextAllowedDay,
+      completed = false,
+      createdBy = "username",
+    )
+
+    this.applicationEntityHelper.create(
+      prisonerId = "ABC2345D",
+      sessionTemplate = sessionTemplate1,
+      visitRestriction = VisitRestriction.CLOSED,
+      slotDate = nextAllowedDay,
+      completed = false,
+      createdBy = "username",
+    )
+
+    // When
+    val responseSpec = callGetAvailableSessions(
+      prisonCode,
+      prisonerId,
+      SessionRestriction.CLOSED,
+      2,
+      28,
+      username = "username",
+    )
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(2)
+  }
+
+  @Test
   fun `when reserved and booked sessions is over max capacity these sessions are not returned`() {
     // Given
     val nextAllowedDay = getNextAllowedDay()
