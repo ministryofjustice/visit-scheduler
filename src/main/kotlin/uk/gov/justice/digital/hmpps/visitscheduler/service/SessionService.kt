@@ -127,7 +127,7 @@ class SessionService(
     }.also {
       addConflicts(it, nonAssociationConflictSessions, doubleBookingOrReservationSessions)
     }.also {
-      populateBookedCount(sessionSlots, it, excludedApplicationReference)
+      populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications)
     }.sortedWith(compareBy { it.startTimestamp })
   }
 
@@ -310,11 +310,12 @@ class SessionService(
     sessionSlotIds: List<SessionSlot>,
     sessions: List<VisitSessionDto>,
     excludedApplicationReference: String?,
+    usernameToExcludeFromReservedApplications: String?,
   ) {
     val sessionSlotIdsByKey = sessionSlotIds.associateBy { it.sessionTemplateReference + it.slotDate.toString() }
 
     sessions.forEach {
-      val visitRestrictionStatsList: List<VisitRestrictionStats> = getVisitRestrictionStats(it, sessionSlotIdsByKey, excludedApplicationReference = excludedApplicationReference)
+      val visitRestrictionStatsList: List<VisitRestrictionStats> = getVisitRestrictionStats(it, sessionSlotIdsByKey, excludedApplicationReference = excludedApplicationReference, usernameToExcludeFromReservedApplications)
       it.openVisitBookedCount = getCountsByVisitRestriction(VisitRestriction.OPEN, visitRestrictionStatsList)
       it.closedVisitBookedCount = getCountsByVisitRestriction(VisitRestriction.CLOSED, visitRestrictionStatsList)
     }
@@ -419,12 +420,13 @@ class SessionService(
     session: VisitSessionDto,
     sessionSlotIdsByKey: Map<String, SessionSlot>,
     excludedApplicationReference: String?,
+    usernameToExcludeFromReservedApplications: String?,
   ): List<VisitRestrictionStats> {
     val slotDate = session.startTimestamp.toLocalDate()
     val sessionSlot = sessionSlotIdsByKey.get(session.sessionTemplateReference + slotDate)
     sessionSlot?.let {
       val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(it.id)
-      val restrictionReservedApplicationStats = applicationService.getCountOfReservedSessionForOpenOrClosedRestriction(it.id, excludedApplicationReference = excludedApplicationReference)
+      val restrictionReservedApplicationStats = applicationService.getCountOfReservedSessionForOpenOrClosedRestriction(it.id, excludedApplicationReference = excludedApplicationReference, usernameToExcludeFromReservedApplications)
 
       return restrictionBookedStats + restrictionReservedApplicationStats
     }
