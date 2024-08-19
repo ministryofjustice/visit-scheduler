@@ -469,11 +469,12 @@ class ApplicationService(
     }
   }
 
-  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?): List<VisitRestrictionStats> {
+  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): List<VisitRestrictionStats> {
     return applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
       id,
       getExpiredApplicationDateAndTime(),
-      excludedApplicationReference = excludedApplicationReference,
+      excludedApplicationReference,
+      usernameToExcludeFromReservedApplications,
     )
   }
 
