@@ -104,6 +104,8 @@ class VisitNotificationEventService(
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, notificationDto.prisonCode)
       LOG.trace("PrisonerReleasedNotification RELEASED event found, search complete with {} visits found", affectedVisits.size)
       processVisitsWithNotifications(affectedVisits, PRISONER_RELEASED_EVENT, null)
+    } else {
+      LOG.trace("PrisonerReleasedNotification NOT RELEASE event found, skipping visit search")
     }
   }
 
