@@ -100,8 +100,9 @@ class VisitNotificationEventService(
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     LOG.debug("PrisonerReleasedNotification notification received : $notificationDto")
     if (RELEASED == notificationDto.reasonType) {
+      LOG.trace("PrisonerReleasedNotification RELEASED event found, searching for visits to flag")
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, notificationDto.prisonCode)
-
+      LOG.trace("PrisonerReleasedNotification RELEASED event found, search complete with {} visits found", affectedVisits.size)
       processVisitsWithNotifications(affectedVisits, PRISONER_RELEASED_EVENT, null)
     }
   }
