@@ -20,7 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitToMigrateException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigrateVisitInFutureException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.LegacyData
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -74,7 +74,7 @@ class MigrateVisitService(
 
   fun migrateVisit(migrateVisitRequest: MigrateVisitRequestDto): String {
     if (isVisitTooFarInTheFuture(migrateVisitRequest.startTimestamp)) {
-      throw VisitToMigrateException("Visit more than $migrateMaxMonthsInFuture months in future, will not be migrated!")
+      throw MigrateVisitInFutureException("Visit more than $migrateMaxMonthsInFuture months in future, will not be migrated!")
     }
 
     // Deserialization kotlin data class issue when OutcomeStatus = json type of null defaults do not get set hence below code

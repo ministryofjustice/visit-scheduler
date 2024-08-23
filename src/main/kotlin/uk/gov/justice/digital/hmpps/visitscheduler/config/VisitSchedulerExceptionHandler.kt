@@ -25,7 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitToMigrateException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigrateVisitInFutureException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TemplateNotFoundException
 
@@ -91,7 +91,7 @@ class VisitSchedulerExceptionHandler(
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
-  @ExceptionHandler(VisitToMigrateException::class)
+  @ExceptionHandler(MigrateVisitInFutureException::class)
   fun handleVisitToMigrateException(e: Exception): ResponseEntity<ErrorResponse> {
     log.error("Migration exception: {}", e.message)
     val error = ErrorResponse(
