@@ -95,12 +95,12 @@ class VisitSchedulerExceptionHandler(
   fun handleVisitToMigrateException(e: Exception): ResponseEntity<ErrorResponse> {
     log.error("Migration exception: {}", e.message)
     val error = ErrorResponse(
-      status = HttpStatus.BAD_REQUEST,
+      status = HttpStatus.UNPROCESSABLE_ENTITY,
       userMessage = "Migration failure: Could not migrate visit",
       developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error)
   }
 
   @ExceptionHandler(MissingServletRequestParameterException::class)
