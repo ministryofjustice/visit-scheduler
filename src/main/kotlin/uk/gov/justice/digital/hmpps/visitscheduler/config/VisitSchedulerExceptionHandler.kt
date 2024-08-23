@@ -21,11 +21,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.ApplicationValidati
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigrateVisitInFutureException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigrateVisitInFutureException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TemplateNotFoundException
 
