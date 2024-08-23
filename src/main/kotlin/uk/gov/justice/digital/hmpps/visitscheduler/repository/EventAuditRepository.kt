@@ -24,7 +24,7 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
 
   @Query(
     "SELECT ea.actionedBy FROM EventAudit ea " +
-      " WHERE ea.bookingReference = :bookingReference AND ea.type in (uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT,uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT) " +
+      " WHERE ea.bookingReference = :bookingReference AND ea.type in (uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT,uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT, EventAuditType.UPDATED_VISIT,uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT) " +
       "ORDER BY ea.id DESC LIMIT 1 ",
   )
   fun getLastUserToUpdateBookingByReference(bookingReference: String): ActionedBy
