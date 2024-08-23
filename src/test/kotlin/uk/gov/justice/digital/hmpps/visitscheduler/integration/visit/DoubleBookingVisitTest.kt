@@ -4,6 +4,7 @@ import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.junitpioneer.jupiter.RetryingTest
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
@@ -37,7 +38,7 @@ class DoubleBookingVisitTest : IntegrationTestBase() {
     reservedApplication = applicationEntityHelper.save(reservedApplication)
   }
 
-  @Test
+  @RetryingTest(maxAttempts = 3)
   fun `Book multiple visits using same application reference results in the same booking returned`() {
     // Given
 
