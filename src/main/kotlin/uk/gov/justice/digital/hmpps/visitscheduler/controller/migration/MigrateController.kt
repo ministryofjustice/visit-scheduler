@@ -67,6 +67,11 @@ class MigrateController(
         description = "Incorrect permissions to migrate a visit",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
+      ApiResponse(
+        responseCode = "422",
+        description = "Request to migrate a visit too far in the future",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
     ],
   )
   fun migrateVisit(

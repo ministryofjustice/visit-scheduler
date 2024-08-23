@@ -21,11 +21,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.ApplicationValidati
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.CapacityNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigrateVisitInFutureException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitToMigrateException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PublishEventException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TemplateNotFoundException
 
@@ -91,16 +91,16 @@ class VisitSchedulerExceptionHandler(
     return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
   }
 
-  @ExceptionHandler(VisitToMigrateException::class)
+  @ExceptionHandler(MigrateVisitInFutureException::class)
   fun handleVisitToMigrateException(e: Exception): ResponseEntity<ErrorResponse> {
     log.error("Migration exception: {}", e.message)
     val error = ErrorResponse(
-      status = HttpStatus.BAD_REQUEST,
+      status = HttpStatus.UNPROCESSABLE_ENTITY,
       userMessage = "Migration failure: Could not migrate visit",
       developerMessage = e.message,
     )
     sendErrorTelemetry(TelemetryVisitEvents.BAD_REQUEST_ERROR_EVENT.eventName, error)
-    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error)
+    return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error)
   }
 
   @ExceptionHandler(MissingServletRequestParameterException::class)
