@@ -36,7 +36,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.CapitaliseUtil
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.*
 import kotlin.collections.ArrayList
 
 @Service
@@ -470,12 +469,20 @@ class ApplicationService(
   }
 
   fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): List<VisitRestrictionStats> {
-    return applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
-      id,
-      getExpiredApplicationDateAndTime(),
-      excludedApplicationReference,
-      usernameToExcludeFromReservedApplications,
-    )
+    return if (usernameToExcludeFromReservedApplications == null) {
+      applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
+        id,
+        getExpiredApplicationDateAndTime(),
+        excludedApplicationReference,
+      )
+    } else {
+      applicationRepository.getCountOfReservedSessionForOpenOrClosedRestrictionExcludingUser(
+        id,
+        getExpiredApplicationDateAndTime(),
+        excludedApplicationReference,
+        usernameToExcludeFromReservedApplications,
+      )
+    }
   }
 
   fun getReservedApplicationsCountForSlot(
