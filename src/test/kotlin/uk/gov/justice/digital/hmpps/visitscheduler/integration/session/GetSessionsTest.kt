@@ -1538,7 +1538,7 @@ class GetSessionsTest : IntegrationTestBase() {
     // Given
     val prisonerId = "A1234AA"
     val associationPrisonerId = "B1234BB"
-    val validFromDate = this.getNextAllowedDay().minusMonths(6)
+    val validFromDate = this.getNextAllowedDay().minusWeeks(6)
     val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = validFromDate, dayOfWeek = validFromDate.dayOfWeek, prisonCode = prisonCode)
 
     this.visitEntityHelper.create(
