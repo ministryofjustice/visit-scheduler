@@ -365,7 +365,7 @@ class PrisonAdminController(
     @RequestBody @Valid
     prisonExcludeDateDto: PrisonExcludeDateDto,
   ): PrisonDto {
-    return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate)
+    return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate, prisonExcludeDateDto.actionedBy)
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")

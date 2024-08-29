@@ -7,4 +7,7 @@ import java.time.LocalDate
 data class PrisonExcludeDateDto(
   @Schema(description = "exclude date", required = true)
   var excludeDate: LocalDate,
+
+  @Schema(description = "actioned by", required = true)
+  var actionedBy: String,
 )

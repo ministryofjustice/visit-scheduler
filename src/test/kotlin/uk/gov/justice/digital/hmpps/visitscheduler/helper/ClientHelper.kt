@@ -640,9 +640,10 @@ fun callAddPrisonExcludeDate(
   authHttpHeaders: (HttpHeaders) -> Unit,
   prisonCode: String,
   excludeDate: LocalDate,
+  actionedBy: String,
 ): ResponseSpec {
   return callPut(
-    PrisonExcludeDateDto(excludeDate),
+    PrisonExcludeDateDto(excludeDate, actionedBy),
     webTestClient,
     getAddPrisonExcludeDateUrl(prisonCode),
     authHttpHeaders,
@@ -654,9 +655,10 @@ fun callRemovePrisonExcludeDate(
   authHttpHeaders: (HttpHeaders) -> Unit,
   prisonCode: String,
   excludeDate: LocalDate,
+  actionedBy: String,
 ): ResponseSpec {
   return callPut(
-    PrisonExcludeDateDto(excludeDate),
+    PrisonExcludeDateDto(excludeDate, actionedBy),
     webTestClient,
     getRemovePrisonExcludeDateUrl(prisonCode),
     authHttpHeaders,
