@@ -289,23 +289,23 @@ class SessionService(
     sessionDayOfWeek: DayOfWeek,
     sessionFrequency: Int,
   ): LocalDate {
-  // Step 1: Adjust the session start date to the correct day of the week.
-  val firstDayMatchingDate = adjustDateByDayOfWeek(sessionDayOfWeek, sessionStartDate)
+    // Step 1: Adjust the session start date to the correct day of the week.
+    val firstDayMatchingDate = adjustDateByDayOfWeek(sessionDayOfWeek, sessionStartDate)
 
-  // Step 2: Calculate the difference in days between this date and the bookable period start date.
-  val daysDifference = ChronoUnit.DAYS.between(firstDayMatchingDate, bookablePeriodStartDate)
+    // Step 2: Calculate the difference in days between this date and the bookable period start date.
+    val daysDifference = ChronoUnit.DAYS.between(firstDayMatchingDate, bookablePeriodStartDate)
 
-  // Step 3: Calculate the number of weeks to add to get the firstDayMatchingDate past the bookablePeriodStartDate.
-  // If daysDifference is positive, we calculate the number of weeks required.
-  // Else we're already on or past the bookablePeriodStartDate so don't add any weeks.
-  val weeksToAdd = if (daysDifference > 0) {
-    (daysDifference / (sessionFrequency * 7)) + if (daysDifference % (sessionFrequency * 7) > 0) 1 else 0
-  } else {
-    0
-  }
+    // Step 3: Calculate the number of weeks to add to get the firstDayMatchingDate past the bookablePeriodStartDate.
+    // If daysDifference is positive, we calculate the number of weeks required.
+    // Else we're already on or past the bookablePeriodStartDate so don't add any weeks.
+    val weeksToAdd = if (daysDifference > 0) {
+      (daysDifference / (sessionFrequency * 7)) + if (daysDifference % (sessionFrequency * 7) > 0) 1 else 0
+    } else {
+      0
+    }
 
-  // Step 4: Return the date after adding the correct number of intervals.
-  return firstDayMatchingDate.plusWeeks((weeksToAdd * sessionFrequency).toLong())
+    // Step 4: Return the date after adding the correct number of intervals.
+    return firstDayMatchingDate.plusWeeks((weeksToAdd * sessionFrequency))
   }
 
   private fun getLastBookableSession(
