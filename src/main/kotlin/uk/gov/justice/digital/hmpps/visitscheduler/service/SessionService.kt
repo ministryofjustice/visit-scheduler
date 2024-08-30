@@ -30,6 +30,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import java.util.stream.Stream
 
@@ -239,7 +240,7 @@ class SessionService(
     requestedBookableEndDate: LocalDate,
   ): List<VisitSessionDto> {
     val firstBookableSessionDay =
-      getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek)
+      getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek, sessionTemplate.weeklyFrequency)
     val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.validToDate)
     val excludeDates = getExcludeDates(sessionTemplate.prison)
 
@@ -286,13 +287,25 @@ class SessionService(
     bookablePeriodStartDate: LocalDate,
     sessionStartDate: LocalDate,
     sessionDayOfWeek: DayOfWeek,
+    sessionFrequency: Int,
   ): LocalDate {
-    var firstBookableSessionDate = sessionStartDate
-    if (bookablePeriodStartDate.isAfter(firstBookableSessionDate)) {
-      firstBookableSessionDate = bookablePeriodStartDate
+    // Step 1: Adjust the session start date to the correct day of the week.
+    val firstDayMatchingDate = adjustDateByDayOfWeek(sessionDayOfWeek, sessionStartDate)
+
+    // Step 2: Calculate the difference in days between this date and the bookable period start date.
+    val daysDifference = ChronoUnit.DAYS.between(firstDayMatchingDate, bookablePeriodStartDate)
+
+    // Step 3: Calculate the number of weeks to add to get the firstDayMatchingDate past the bookablePeriodStartDate.
+    // If daysDifference is positive, we calculate the number of weeks required.
+    // Else we're already on or past the bookablePeriodStartDate so don't add any weeks.
+    val weeksToAdd = if (daysDifference > 0) {
+      (daysDifference / (sessionFrequency * 7)) + if (daysDifference % (sessionFrequency * 7) > 0) 1 else 0
+    } else {
+      0
     }
 
-    return adjustDateByDayOfWeek(sessionDayOfWeek, firstBookableSessionDate)
+    // Step 4: Return the date after adding the correct number of intervals.
+    return firstDayMatchingDate.plusWeeks((weeksToAdd * sessionFrequency))
   }
 
   private fun getLastBookableSession(
