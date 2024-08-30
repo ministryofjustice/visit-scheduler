@@ -16,4 +16,11 @@ interface PrisonExcludeDateRepository : JpaRepository<PrisonExcludeDate, Long> {
       " AND ped.excludeDate = :excludeDate",
   )
   fun deleteByPrisonIdAndExcludeDate(prisonId: Long, excludeDate: LocalDate)
+
+  @Query(
+    "select ped FROM PrisonExcludeDate ped " +
+      "WHERE ped.prison.code = :prisonCode " +
+      " ORDER BY ped.excludeDate desc ",
+  )
+  fun getExcludeDatesByPrisonCode(prisonCode: String): List<PrisonExcludeDate>
 }

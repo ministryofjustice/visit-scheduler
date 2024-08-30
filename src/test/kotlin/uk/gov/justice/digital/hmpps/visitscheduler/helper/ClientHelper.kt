@@ -28,6 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GRO
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_PRISON_EXCLUDE_DATES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.MOVE_VISITS
@@ -596,6 +597,10 @@ fun getRemovePrisonExcludeDateUrl(prisonCode: String): String {
   return getPrisonIdUrl(REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
 }
 
+fun getGetPrisonExcludeDatesUrl(prisonCode: String): String {
+  return getPrisonIdUrl(GET_PRISON_EXCLUDE_DATES, prisonCode)
+}
+
 fun callCreatePrison(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -661,6 +666,18 @@ fun callRemovePrisonExcludeDate(
     PrisonExcludeDateDto(excludeDate, actionedBy),
     webTestClient,
     getRemovePrisonExcludeDateUrl(prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callGetPrisonsExcludeDates(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getGetPrisonExcludeDatesUrl(prisonCode),
     authHttpHeaders,
   )
 }

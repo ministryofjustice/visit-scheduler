@@ -5,6 +5,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -136,6 +137,9 @@ class PrisonConfigService(
   @Throws(ValidationException::class)
   @Transactional
   fun addExcludeDate(prisonCode: String, excludeDate: LocalDate, actionedBy: String): PrisonDto {
+    if (isExcludeDateInPast(excludeDate)) {
+      throw ValidationException(messageService.getMessage("validation.add.prison.excludedate.inpast", prisonCode, excludeDate.toString()))
+    }
     val prison = prisonsService.findPrisonByCode(prisonCode)
     val existingExcludeDates = getExistingExcludeDates(prison)
 
@@ -198,5 +202,15 @@ class PrisonConfigService(
         ),
       )
     }
+  }
+
+  fun getPrisonExcludeDates(prisonCode: String): List<PrisonExcludeDateDto> {
+    return prisonExcludeDateRepository.getExcludeDatesByPrisonCode(prisonCode).map {
+      PrisonExcludeDateDto(it.excludeDate, it.actionedBy)
+    }
+  }
+
+  private fun isExcludeDateInPast(excludeDate: LocalDate): Boolean {
+    return (excludeDate < LocalDate.now())
   }
 }

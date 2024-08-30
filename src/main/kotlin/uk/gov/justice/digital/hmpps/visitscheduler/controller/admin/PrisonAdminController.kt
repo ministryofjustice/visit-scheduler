@@ -36,6 +36,7 @@ const val DEACTIVATE_PRISON_CLIENT: String = "$PRISON/client/{type}/deactivate"
 
 const val ADD_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-date/add"
 const val REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-date/remove"
+const val GET_PRISON_EXCLUDE_DATES: String = "$PRISON/exclude-dates"
 
 @RestController
 @Validated
@@ -362,7 +363,8 @@ class PrisonAdminController(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
-    @RequestBody @Valid
+    @RequestBody
+    @Valid
     prisonExcludeDateDto: PrisonExcludeDateDto,
   ): PrisonDto {
     return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate, prisonExcludeDateDto.actionedBy)
@@ -403,5 +405,35 @@ class PrisonAdminController(
     prisonExcludeDateDto: PrisonExcludeDateDto,
   ) {
     return prisonConfigService.removeExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
+  @GetMapping(GET_PRISON_EXCLUDE_DATES)
+  @Operation(
+    summary = "Get exclude dates for a prison.",
+    description = "Get exclude dates for a prison.",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "prison's exclude dates returned",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to get prison",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getPrisonExcludeDates(
+    @Schema(description = "prison id", example = "BHI", required = true)
+    @PathVariable
+    prisonCode: String,
+  ): List<PrisonExcludeDateDto> {
+    return prisonConfigService.getPrisonExcludeDates(prisonCode)
   }
 }

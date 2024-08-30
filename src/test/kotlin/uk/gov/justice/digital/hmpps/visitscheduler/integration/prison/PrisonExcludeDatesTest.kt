@@ -9,17 +9,17 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
-import org.springframework.test.web.reactive.server.WebTestClient
+import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAddPrisonExcludeDate
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetPrison
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetPrisonsExcludeDates
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callRemovePrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
@@ -68,11 +68,12 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     verify(prisonExcludeDateRepositorySpy, times(1)).saveAndFlush(any())
 
-    val getResponseSpec = callGetPrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
+    val getResponseSpec = callGetPrisonsExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val updatedPrison = getPrison(result)
-    Assertions.assertThat(updatedPrison.code).isEqualTo(prison.code)
-    Assertions.assertThat(updatedPrison.excludeDates).contains(excludeDate)
+    val excludeDates = getPrisonExcludeDates(result)
+    Assertions.assertThat(excludeDates.size).isEqualTo(1)
+    Assertions.assertThat(excludeDates[0].excludeDate).isEqualTo(excludeDate)
+    Assertions.assertThat(excludeDates[0].actionedBy).isEqualTo(TEST_USER)
   }
 
   @Test
@@ -105,17 +106,35 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     verify(prisonExcludeDateRepositorySpy, times(1)).saveAndFlush(any())
     verify(visitNotificationEventServiceSpy, times(1)).handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prison.code, excludeDate))
 
-    val getResponseSpec = callGetPrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
+    val getResponseSpec = callGetPrisonsExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val updatedPrison = getPrison(result)
-    Assertions.assertThat(updatedPrison.code).isEqualTo(prison.code)
-    Assertions.assertThat(updatedPrison.excludeDates).contains(excludeDate)
+    val excludeDates = getPrisonExcludeDates(result)
+    Assertions.assertThat(excludeDates.size).isEqualTo(1)
+    Assertions.assertThat(excludeDates[0].excludeDate).isEqualTo(excludeDate)
+    Assertions.assertThat(excludeDates[0].actionedBy).isEqualTo(TEST_USER)
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
 
     // only 1 visit for the same date with status of BOOKED will be flagged.
     Assertions.assertThat(visitNotifications).hasSize(1)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+  }
+
+  @Test
+  fun `when add exclude date called with a past date then exclude date is not added and BAD_REQUEST is returned`() {
+    // Given
+    val prison = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ")
+
+    val createdPrison = prisonEntityHelper.create(prison.code, prison.active, prison.excludeDates.toList())
+    val excludeDate = LocalDate.now().minusDays(1)
+
+    // When
+    val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, actionedBy = TEST_USER)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to prison - ${prison.code} as it is in the past")
+    verify(prisonExcludeDateRepositorySpy, times(0)).save(PrisonExcludeDate(createdPrison.id, createdPrison, excludeDate, actionedBy = TEST_USER))
   }
 
   @Test
@@ -153,11 +172,10 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     verify(prisonExcludeDateRepositorySpy, times(1)).deleteByPrisonIdAndExcludeDate(createdPrison.id, excludeDate)
 
-    val getResponseSpec = callGetPrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
+    val getResponseSpec = callGetPrisonsExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val updatedPrison = getPrison(result)
-    Assertions.assertThat(updatedPrison.code).isEqualTo(prison.code)
-    Assertions.assertThat(updatedPrison.excludeDates).doesNotContain(excludeDate)
+    val excludeDates = getPrisonExcludeDates(result).map { it.excludeDate }
+    Assertions.assertThat(excludeDates).doesNotContain(excludeDate)
   }
 
   @Test
@@ -181,11 +199,10 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     verify(prisonExcludeDateRepositorySpy, times(1)).deleteByPrisonIdAndExcludeDate(createdPrison.id, excludeDate)
     verify(visitNotificationEventServiceSpy, times(1)).handleRemovePrisonVisitBlockDate(PrisonDateBlockedDto(createdPrison.code, excludeDate))
 
-    val getResponseSpec = callGetPrison(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
+    val getResponseSpec = callGetPrisonsExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
-    val updatedPrison = getPrison(result)
-    Assertions.assertThat(updatedPrison.code).isEqualTo(prison.code)
-    Assertions.assertThat(updatedPrison.excludeDates).doesNotContain(excludeDate)
+    val excludeDates = getPrisonExcludeDates(result).map { it.excludeDate }
+    Assertions.assertThat(excludeDates).doesNotContain(excludeDate)
   }
 
   @Test
@@ -203,6 +220,11 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest.expectBody()
       .jsonPath("$.developerMessage").isEqualTo("Cannot remove exclude date $excludeDate from prison - ${prison.code} as it does not exist")
     verify(prisonExcludeDateRepositorySpy, times(0)).deleteByPrisonIdAndExcludeDate(createdPrison.id, excludeDate)
+
+    val getResponseSpec = callGetPrisonsExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
+    val result = getResponseSpec.expectStatus().isOk.expectBody()
+    val excludeDates = getPrisonExcludeDates(result)
+    Assertions.assertThat(excludeDates).isEmpty()
   }
 
   @Test
@@ -237,7 +259,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     verify(prisonExcludeDateRepositorySpy, times(0)).deleteByPrisonIdAndExcludeDate(any(), any())
   }
 
-  private fun getPrison(returnResult: WebTestClient.BodyContentSpec): PrisonDto {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, PrisonDto::class.java)
+  private fun getPrisonExcludeDates(returnResult: BodyContentSpec): Array<PrisonExcludeDateDto> {
+    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<PrisonExcludeDateDto>::class.java)
   }
 }
