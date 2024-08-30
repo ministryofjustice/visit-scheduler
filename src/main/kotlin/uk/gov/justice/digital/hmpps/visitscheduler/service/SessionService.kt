@@ -239,7 +239,7 @@ class SessionService(
     requestedBookableEndDate: LocalDate,
   ): List<VisitSessionDto> {
     val firstBookableSessionDay =
-      getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek)
+      getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek, sessionTemplate.weeklyFrequency)
     val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.validToDate)
     val excludeDates = getExcludeDates(sessionTemplate.prison)
 
@@ -286,13 +286,15 @@ class SessionService(
     bookablePeriodStartDate: LocalDate,
     sessionStartDate: LocalDate,
     sessionDayOfWeek: DayOfWeek,
+    sessionFrequency: Int,
   ): LocalDate {
-    var firstBookableSessionDate = sessionStartDate
-    if (bookablePeriodStartDate.isAfter(firstBookableSessionDate)) {
-      firstBookableSessionDate = bookablePeriodStartDate
+    var firstDayMatchingDate = adjustDateByDayOfWeek(sessionDayOfWeek, sessionStartDate)
+
+    while (firstDayMatchingDate < bookablePeriodStartDate) {
+      firstDayMatchingDate = firstDayMatchingDate.plusWeeks(sessionFrequency.toLong())
     }
 
-    return adjustDateByDayOfWeek(sessionDayOfWeek, firstBookableSessionDate)
+    return firstDayMatchingDate
   }
 
   private fun getLastBookableSession(
