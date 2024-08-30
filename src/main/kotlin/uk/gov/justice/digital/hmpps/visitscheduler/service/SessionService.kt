@@ -30,6 +30,7 @@ import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAdjusters
 import java.util.stream.Stream
 
@@ -288,13 +289,21 @@ class SessionService(
     sessionDayOfWeek: DayOfWeek,
     sessionFrequency: Int,
   ): LocalDate {
-    var firstDayMatchingDate = adjustDateByDayOfWeek(sessionDayOfWeek, sessionStartDate)
+    // Get the first matching session day in the future based on the sessionStartDate
+    val firstDayMatchingDate = adjustDateByDayOfWeek(sessionDayOfWeek, sessionStartDate)
 
-    while (firstDayMatchingDate < bookablePeriodStartDate) {
-      firstDayMatchingDate = firstDayMatchingDate.plusWeeks(sessionFrequency.toLong())
-    }
+    // Calculate the difference in days between the first matching session day and the bookable period start date
+    val daysDifference = ChronoUnit.DAYS.between(firstDayMatchingDate, bookablePeriodStartDate)
 
-    return firstDayMatchingDate
+    // Calculate the number of weeks to add to get the firstDayMatchingDate paste the bookablePeriodStartDate.
+    // If daysDifference is positive, we calculate the number of weeks required.
+    // Else we're already on or past the bookablePeriodStartDate so don't add any weeks.
+    val weeksToAdd = if (daysDifference > 0) {
+      (daysDifference + (sessionFrequency * 7) - 1) / (sessionFrequency * 7)
+    } else 0
+
+    // Return the first bookable session day, keeping it on the same day, that is on or after the bookablePeriodStartDate date.
+    return firstDayMatchingDate.plusWeeks(weeksToAdd * sessionFrequency)
   }
 
   private fun getLastBookableSession(
