@@ -89,7 +89,7 @@ class SessionDatesUtilTest {
     val validFromDate = getStartOfWeek()
     val sessionTemplate = sessionTemplate(weeklyFrequency = 2, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
-    val firstBookableSessionDay = validFromDate.with ( TemporalAdjusters.next(sessionTemplate.dayOfWeek) )
+    val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
     val lastBookableSessionDay = firstBookableSessionDay
 
     // When
@@ -131,7 +131,7 @@ class SessionDatesUtilTest {
     val validFromDate = getStartOfWeek()
     val sessionTemplate = sessionTemplate(weeklyFrequency = 2, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
-    val firstBookableSessionDay = validFromDate.with ( TemporalAdjusters.next(sessionTemplate.dayOfWeek) )
+    val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
     val lastBookableSessionDay = sessionTemplate.validFromDate.plusWeeks(10)
 
     // When
@@ -154,7 +154,7 @@ class SessionDatesUtilTest {
     val validFromDate = getStartOfWeek()
     val sessionTemplate = sessionTemplate(weeklyFrequency = 3, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
-    val firstBookableSessionDay = validFromDate.with ( TemporalAdjusters.next(sessionTemplate.dayOfWeek) )
+    val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
     val lastBookableSessionDay = firstBookableSessionDay
 
     // When
@@ -194,7 +194,7 @@ class SessionDatesUtilTest {
     val validFromDate = LocalDate.now().plusWeeks(-3).with(TemporalAdjusters.next(MONDAY))
     val sessionTemplate = sessionTemplate(weeklyFrequency = 2, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
-    val firstBookableSessionDay = validFromDate.with ( TemporalAdjusters.next(sessionTemplate.dayOfWeek) )
+    val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
     val lastBookableSessionDay = sessionTemplate.validFromDate.plusWeeks(10)
 
     // When
@@ -222,7 +222,7 @@ class SessionDatesUtilTest {
 
     val sessionTemplate = sessionTemplate(weeklyFrequency = 2, validFromDate = validFromDate, dayOfWeek = validFromDate.plusDays(1).dayOfWeek)
 
-    val firstBookableSessionDay = validFromDate.with ( TemporalAdjusters.next(sessionTemplate.dayOfWeek) )
+    val firstBookableSessionDay = validFromDate.with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
     val lastBookableSessionDay = sessionTemplate.validFromDate.plusWeeks(10)
 
     // When
