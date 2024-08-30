@@ -295,7 +295,7 @@ class SessionService(
     // Calculate the difference in days between the first matching session day and the bookable period start date
     val daysDifference = ChronoUnit.DAYS.between(firstDayMatchingDate, bookablePeriodStartDate)
 
-    // Calculate the number of weeks to add to get the firstDayMatchingDate paste the bookablePeriodStartDate.
+    // Calculate the number of weeks to add to get the firstDayMatchingDate past the bookablePeriodStartDate.
     // If daysDifference is positive, we calculate the number of weeks required.
     // Else we're already on or past the bookablePeriodStartDate so don't add any weeks.
     val weeksToAdd = if (daysDifference > 0) {
