@@ -300,7 +300,9 @@ class SessionService(
     // Else we're already on or past the bookablePeriodStartDate so don't add any weeks.
     val weeksToAdd = if (daysDifference > 0) {
       (daysDifference + (sessionFrequency * 7) - 1) / (sessionFrequency * 7)
-    } else 0
+    } else {
+      0
+    }
 
     // Return the first bookable session day, keeping it on the same day, that is on or after the bookablePeriodStartDate date.
     return firstDayMatchingDate.plusWeeks(weeksToAdd * sessionFrequency)
