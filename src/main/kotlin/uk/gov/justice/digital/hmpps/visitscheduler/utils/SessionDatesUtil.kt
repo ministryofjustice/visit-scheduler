@@ -20,12 +20,11 @@ class SessionDatesUtil {
   ): Stream<LocalDate> {
     val lastBookableSessionDayAdjusted = lastBookableSessionDay.plusDays(1)
 
-    val weeklyFirstBookableSessionDay = getFirstBookableSessionDayAdjustForFrequency(firstBookableSessionDay, sessionTemplate)
-    if (lastBookableSessionDayAdjusted.isBefore(weeklyFirstBookableSessionDay)) {
+    if (lastBookableSessionDayAdjusted.isBefore(firstBookableSessionDay)) {
       // There is no sessions because the first bookable date is after
       return Stream.empty()
     }
-    return weeklyFirstBookableSessionDay.datesUntil(
+    return firstBookableSessionDay.datesUntil(
       lastBookableSessionDayAdjusted,
       Period.ofWeeks(sessionTemplate.weeklyFrequency),
     )
