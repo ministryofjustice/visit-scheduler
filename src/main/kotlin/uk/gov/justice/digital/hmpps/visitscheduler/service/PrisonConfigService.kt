@@ -211,6 +211,7 @@ class PrisonConfigService(
     }
   }
 
+  @Transactional(readOnly = true)
   fun getPrisonExcludeDates(prisonCode: String): List<PrisonExcludeDateDto> {
     LOG.debug("getting exclude dates for prison - {}", prisonCode)
     return prisonExcludeDateRepository.getExcludeDatesByPrisonCode(prisonCode).map {

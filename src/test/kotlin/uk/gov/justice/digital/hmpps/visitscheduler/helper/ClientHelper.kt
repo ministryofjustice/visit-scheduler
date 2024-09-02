@@ -592,10 +592,12 @@ fun getGetPrisonUrl(prisonCode: String): String {
   return getPrisonIdUrl(PRISON, prisonCode)
 }
 
+@Deprecated(message = "to be removed when we remove exclude date feature from admin service")
 fun getAdminAddPrisonExcludeDateUrl(prisonCode: String): String {
   return getPrisonIdUrl(ADD_PRISON_EXCLUDE_DATE, prisonCode)
 }
 
+@Deprecated(message = "to be removed when we remove exclude date feature from admin service")
 fun getAdminRemovePrisonExcludeDateUrl(prisonCode: String): String {
   return getPrisonIdUrl(REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
 }
@@ -651,6 +653,7 @@ fun callGetPrison(
   )
 }
 
+@Deprecated(message = "to be removed when we remove exclude date feature from admin service")
 fun callAdminAddPrisonExcludeDate(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -666,6 +669,7 @@ fun callAdminAddPrisonExcludeDate(
   )
 }
 
+@Deprecated(message = "to be removed when we remove exclude date feature from admin service")
 fun callAdminRemovePrisonExcludeDate(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
