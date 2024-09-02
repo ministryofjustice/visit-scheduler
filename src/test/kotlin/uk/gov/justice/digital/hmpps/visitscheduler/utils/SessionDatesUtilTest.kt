@@ -98,7 +98,8 @@ class SessionDatesUtilTest {
     )
 
     // Then
-    assertThat(dates).hasSize(0)
+    assertThat(dates).hasSize(1)
+    assertThat(dates).contains(firstBookableSessionDay)
   }
 
   @Test
@@ -139,11 +140,12 @@ class SessionDatesUtilTest {
     )
 
     // Then
-    assertThat(dates).hasSize(4)
-    assertThat(dates[0]).isEqualTo(firstBookableSessionDay.plusWeeks(1))
+    assertThat(dates).hasSize(5)
+    assertThat(dates[0]).isEqualTo(firstBookableSessionDay)
     assertThat(dates[1]).isEqualTo(dates[0].plusWeeks(2))
     assertThat(dates[2]).isEqualTo(dates[1].plusWeeks(2))
     assertThat(dates[3]).isEqualTo(dates[2].plusWeeks(2))
+    assertThat(dates[4]).isEqualTo(dates[3].plusWeeks(2))
   }
 
   @Test
@@ -161,7 +163,8 @@ class SessionDatesUtilTest {
     )
 
     // Then
-    assertThat(dates).hasSize(0)
+    assertThat(dates).hasSize(1)
+    assertThat(dates).contains(firstBookableSessionDay)
   }
 
   @Test
@@ -180,7 +183,7 @@ class SessionDatesUtilTest {
 
     // Then
     assertThat(dates).hasSize(3)
-    assertThat(dates[0]).isEqualTo(firstBookableSessionDay.plusWeeks(2))
+    assertThat(dates[0]).isEqualTo(firstBookableSessionDay)
     assertThat(dates[1]).isEqualTo(dates[0].plusWeeks(3))
     assertThat(dates[2]).isEqualTo(dates[1].plusWeeks(3))
   }
@@ -200,15 +203,16 @@ class SessionDatesUtilTest {
     )
 
     // Then
-    assertThat(dates).hasSize(4)
-    assertThat(dates[0]).isEqualTo(firstBookableSessionDay.plusWeeks(1))
-    assertThat(dates[0].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
-    assertThat(dates[1]).isEqualTo(firstBookableSessionDay.plusWeeks(3))
+    assertThat(dates).hasSize(5)
+    assertThat(dates[0]).isEqualTo(firstBookableSessionDay)
+    assertThat(dates[1]).isEqualTo(firstBookableSessionDay.plusWeeks(2))
     assertThat(dates[1].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
-    assertThat(dates[2]).isEqualTo(firstBookableSessionDay.plusWeeks(5))
+    assertThat(dates[2]).isEqualTo(firstBookableSessionDay.plusWeeks(4))
     assertThat(dates[2].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
-    assertThat(dates[3]).isEqualTo(firstBookableSessionDay.plusWeeks(7))
+    assertThat(dates[3]).isEqualTo(firstBookableSessionDay.plusWeeks(6))
     assertThat(dates[3].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
+    assertThat(dates[4]).isEqualTo(firstBookableSessionDay.plusWeeks(8))
+    assertThat(dates[4].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
   }
 
   @Test
@@ -227,15 +231,16 @@ class SessionDatesUtilTest {
     )
 
     // Then
-    assertThat(dates).hasSize(4)
-    assertThat(dates[0]).isEqualTo(firstBookableSessionDay.plusWeeks(1))
-    assertThat(dates[0].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
-    assertThat(dates[1]).isEqualTo(firstBookableSessionDay.plusWeeks(3))
+    assertThat(dates).hasSize(5)
+    assertThat(dates[0]).isEqualTo(firstBookableSessionDay)
+    assertThat(dates[1]).isEqualTo(firstBookableSessionDay.plusWeeks(2))
     assertThat(dates[1].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
-    assertThat(dates[2]).isEqualTo(firstBookableSessionDay.plusWeeks(5))
+    assertThat(dates[2]).isEqualTo(firstBookableSessionDay.plusWeeks(4))
     assertThat(dates[2].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
-    assertThat(dates[3]).isEqualTo(firstBookableSessionDay.plusWeeks(7))
+    assertThat(dates[3]).isEqualTo(firstBookableSessionDay.plusWeeks(6))
     assertThat(dates[3].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
+    assertThat(dates[4]).isEqualTo(firstBookableSessionDay.plusWeeks(8))
+    assertThat(dates[4].dayOfWeek).isEqualTo(sessionTemplate.dayOfWeek)
   }
 
   @Test
