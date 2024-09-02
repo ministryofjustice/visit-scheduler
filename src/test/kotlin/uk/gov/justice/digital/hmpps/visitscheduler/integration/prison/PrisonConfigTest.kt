@@ -488,7 +488,7 @@ class PrisonConfigTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when we get a prison, data is return as exspected `() {
+  fun `when we get a prison, data is returned as expected `() {
     // Given
     val prison = prisonEntityHelper.create()
 
