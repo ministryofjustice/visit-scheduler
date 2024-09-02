@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.prison
 
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
 import org.mockito.kotlin.times
@@ -10,8 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
-import org.springframework.transaction.annotation.Propagation.SUPPORTS
-import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_PRISONS_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
@@ -28,7 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificat
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import java.time.LocalDate
 
-@Transactional(propagation = SUPPORTS)
+@DisplayName("Admin $ADMIN_PRISONS_PATH")
 class PrisonExcludeDatesTest : IntegrationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -47,11 +47,61 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
 
   @BeforeEach
   internal fun setUp() {
-    roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER_CONFIG"))
+    roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
   }
 
   companion object {
     private const val TEST_USER = "TEST_USER"
+  }
+
+  @Test
+  fun `when get exclude dates called for prison with no exclude dates empty list is returned`() {
+    // Given
+    val prison = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ")
+    prisonEntityHelper.create(prison.code, prison.active)
+    val getResponseSpec = callGetPrisonsExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
+    val result = getResponseSpec.expectStatus().isOk.expectBody()
+    val excludeDates = getPrisonExcludeDates(result)
+    Assertions.assertThat(excludeDates).isEmpty()
+  }
+
+  @Test
+  fun `when get exclude dates called for prison with multiple exclude dates list is returned sorted by date desc`() {
+    // Given
+    val excludeDate1 = LocalDate.of(2021, 1, 21)
+    val excludeDate2 = LocalDate.of(2024, 1, 21)
+    val excludeDate3 = LocalDate.of(2023, 1, 21)
+    val excludeDate4 = LocalDate.of(2024, 12, 21)
+    val prison = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ", excludeDates = setOf(excludeDate1, excludeDate2, excludeDate3, excludeDate4))
+    prisonEntityHelper.create(prison.code, prison.active, excludeDates = prison.excludeDates.toList())
+    val getResponseSpec = callGetPrisonsExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
+    val result = getResponseSpec.expectStatus().isOk.expectBody()
+    val excludeDates = getPrisonExcludeDates(result)
+    Assertions.assertThat(excludeDates.size).isEqualTo(4)
+
+    // check results are returned sorted by date desc
+    Assertions.assertThat(excludeDates[0].excludeDate).isEqualTo(excludeDate4)
+    Assertions.assertThat(excludeDates[1].excludeDate).isEqualTo(excludeDate2)
+    Assertions.assertThat(excludeDates[2].excludeDate).isEqualTo(excludeDate3)
+    Assertions.assertThat(excludeDates[3].excludeDate).isEqualTo(excludeDate1)
+  }
+
+  @Test
+  fun `access forbidden when no role`() {
+    // When
+    val responseSpec = callGetPrisonsExcludeDates(webTestClient, setAuthorisation(roles = listOf()), prisonCode = "TST")
+
+    // Then
+    responseSpec.expectStatus().isForbidden
+  }
+
+  @Test
+  fun `unauthorised when no token`() {
+    // When
+    val responseSpec = webTestClient.get().uri("/prisons/prison/TST/exclude-date").exchange()
+
+    // Then
+    responseSpec.expectStatus().isUnauthorized
   }
 
   @Test

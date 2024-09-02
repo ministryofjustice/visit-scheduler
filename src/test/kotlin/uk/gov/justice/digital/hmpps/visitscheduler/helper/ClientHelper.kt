@@ -44,6 +44,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.STAFF_ADD_PRISON_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.STAFF_REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
@@ -589,12 +591,21 @@ fun getCreatePrisonUrl(): String {
 fun getGetPrisonUrl(prisonCode: String): String {
   return getPrisonIdUrl(PRISON, prisonCode)
 }
-fun getAddPrisonExcludeDateUrl(prisonCode: String): String {
+
+fun getAdminAddPrisonExcludeDateUrl(prisonCode: String): String {
   return getPrisonIdUrl(ADD_PRISON_EXCLUDE_DATE, prisonCode)
 }
 
-fun getRemovePrisonExcludeDateUrl(prisonCode: String): String {
+fun getAdminRemovePrisonExcludeDateUrl(prisonCode: String): String {
   return getPrisonIdUrl(REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
+}
+
+fun getAddPrisonExcludeDateUrl(prisonCode: String): String {
+  return getPrisonIdUrl(STAFF_ADD_PRISON_EXCLUDE_DATE, prisonCode)
+}
+
+fun getRemovePrisonExcludeDateUrl(prisonCode: String): String {
+  return getPrisonIdUrl(STAFF_REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
 }
 
 fun getGetPrisonExcludeDatesUrl(prisonCode: String): String {
@@ -636,6 +647,36 @@ fun callGetPrison(
   return callGet(
     webTestClient,
     getGetPrisonUrl(prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callAdminAddPrisonExcludeDate(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+  excludeDate: LocalDate,
+  actionedBy: String,
+): ResponseSpec {
+  return callPut(
+    PrisonExcludeDateDto(excludeDate, actionedBy),
+    webTestClient,
+    getAdminAddPrisonExcludeDateUrl(prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callAdminRemovePrisonExcludeDate(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+  excludeDate: LocalDate,
+  actionedBy: String,
+): ResponseSpec {
+  return callPut(
+    PrisonExcludeDateDto(excludeDate, actionedBy),
+    webTestClient,
+    getAdminRemovePrisonExcludeDateUrl(prisonCode),
     authHttpHeaders,
   )
 }
