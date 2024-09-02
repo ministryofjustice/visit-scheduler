@@ -27,6 +27,9 @@ class PrisonConfigService(
   private val prisonsService: PrisonsService,
   private val visitNotificationEventService: VisitNotificationEventService,
 ) {
+  companion object {
+    const val ACTIONED_BY_NOT_KNOWN = "NOT_KNOWN"
+  }
 
   @Autowired
   private lateinit var prisonUserClientRepository: PrisonUserClientRepository
@@ -48,7 +51,15 @@ class PrisonConfigService(
     val newPrison = Prison(prisonDto)
     val savedPrison = prisonRepository.saveAndFlush(newPrison)
 
-    val excludeDates = prisonDto.excludeDates.map { PrisonExcludeDate(prisonId = savedPrison.id, prison = savedPrison, it) }
+    val excludeDates = prisonDto.excludeDates.map {
+      PrisonExcludeDate(
+        prisonId = savedPrison.id,
+        prison = savedPrison,
+        excludeDate = it,
+        // TODO - temporarily set the actioned_by as NOT_KNOWN - will remove exclude dates from Prison Dto later.
+        actionedBy = ACTIONED_BY_NOT_KNOWN,
+      )
+    }
     savedPrison.excludeDates.addAll(excludeDates)
 
     val clients = prisonDto.clients.map { PrisonUserClient(prisonId = savedPrison.id, prison = savedPrison, userType = it.userType, active = it.active) }
@@ -124,14 +135,14 @@ class PrisonConfigService(
 
   @Throws(ValidationException::class)
   @Transactional
-  fun addExcludeDate(prisonCode: String, excludeDate: LocalDate): PrisonDto {
+  fun addExcludeDate(prisonCode: String, excludeDate: LocalDate, actionedBy: String): PrisonDto {
     val prison = prisonsService.findPrisonByCode(prisonCode)
     val existingExcludeDates = getExistingExcludeDates(prison)
 
     if (existingExcludeDates.contains(excludeDate)) {
       throw ValidationException(messageService.getMessage("validation.add.prison.excludedate.alreadyexists", prisonCode, excludeDate.toString()))
     } else {
-      prisonExcludeDateRepository.saveAndFlush(PrisonExcludeDate(prison.id, prison, excludeDate))
+      prisonExcludeDateRepository.saveAndFlush(PrisonExcludeDate(prison.id, prison, excludeDate, actionedBy))
 
       // add any visits for the date for review
       visitNotificationEventService.handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prisonCode, excludeDate))

@@ -159,7 +159,7 @@ class PrisonEntityHelper(
       prison.active = activePrison
     }
     prison?.let {
-      prison.excludeDates.addAll(excludeDates.map { PrisonExcludeDate(prisonId = prison.id, prison = prison, it) })
+      prison.excludeDates.addAll(excludeDates.map { PrisonExcludeDate(prisonId = prison.id, prison = prison, excludeDate = it, actionedBy = "TEST_USER") })
     }
     return prison!!
   }
