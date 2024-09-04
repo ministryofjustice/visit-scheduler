@@ -137,9 +137,9 @@ class PrisonConfigService(
     return prisonsService.mapEntityToDto(prisonToUpdate)
   }
 
+  // TODO - replace PrisonDto with all exclude dates for a prison or void
   @Throws(ValidationException::class)
   @Transactional
-  // TODO - replace PrisonDto with all exclude dates for a prison or void
   fun addExcludeDate(prisonCode: String, excludeDate: LocalDate, actionedBy: String): PrisonDto {
     LOG.info("adding exclude date - {} for prison - {} by user - {}", excludeDate, prisonCode, actionedBy)
     if (isExcludeDateInPast(excludeDate)) {

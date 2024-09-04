@@ -16,7 +16,6 @@ import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
@@ -40,7 +39,7 @@ class PrisonExcludeDatesController(
   private val prisonConfigService: PrisonConfigService,
   private val prisonsService: PrisonsService,
 ) {
-
+  // TODO - change return to list of exclude dates or void?
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(STAFF_ADD_PRISON_EXCLUDE_DATE)
   @Operation(
@@ -68,7 +67,6 @@ class PrisonExcludeDatesController(
       ),
     ],
   )
-  // TODO - change return to list of exclude dates or void?
   fun addPrisonExcludeDate(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
