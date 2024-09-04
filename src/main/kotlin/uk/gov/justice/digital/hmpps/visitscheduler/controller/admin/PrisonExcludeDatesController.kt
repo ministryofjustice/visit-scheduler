@@ -19,6 +19,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
+import java.time.LocalDate
 
 const val PRISONS_PATH: String = "/prisons"
 const val PRISON_EXCLUDE_DATE_PATH: String = "$PRISONS_PATH/prison/{prisonCode}/exclude-date"
@@ -36,6 +38,7 @@ const val GET_PRISON_EXCLUDE_DATES: String = PRISON_EXCLUDE_DATE_PATH
 @RequestMapping(name = "Prison Exclude Dates Configuration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonExcludeDatesController(
   private val prisonConfigService: PrisonConfigService,
+  private val prisonsService: PrisonsService,
 ) {
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -65,6 +68,7 @@ class PrisonExcludeDatesController(
       ),
     ],
   )
+  // TODO - change return to list of exclude dates or void?
   fun addPrisonExcludeDate(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
@@ -72,8 +76,9 @@ class PrisonExcludeDatesController(
     @RequestBody
     @Valid
     prisonExcludeDateDto: PrisonExcludeDateDto,
-  ): PrisonDto {
-    return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate, prisonExcludeDateDto.actionedBy)
+  ): Set<LocalDate> {
+    prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate, prisonExcludeDateDto.actionedBy)
+    return prisonsService.getPrison(prisonCode).excludeDates
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -109,8 +114,9 @@ class PrisonExcludeDatesController(
     prisonCode: String,
     @RequestBody @Valid
     prisonExcludeDateDto: PrisonExcludeDateDto,
-  ) {
-    return prisonConfigService.removeExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate)
+  ): Set<LocalDate> {
+    prisonConfigService.removeExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate)
+    return prisonsService.getPrison(prisonCode).excludeDates
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

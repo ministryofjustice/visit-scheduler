@@ -87,6 +87,19 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when get exclude dates called for non existent prison then BAD_REQUEST error code is returned `() {
+    // Given
+    val nonExistentPrisonCode = "QUI"
+
+    // When
+    val responseSpec = callGetPrisonsExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, nonExistentPrisonCode)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest.expectBody()
+      .jsonPath("$.developerMessage").isEqualTo("Prison code $nonExistentPrisonCode not found!")
+  }
+
+  @Test
   fun `access forbidden when no role`() {
     // When
     val responseSpec = callGetPrisonsExcludeDates(webTestClient, setAuthorisation(roles = listOf()), prisonCode = "TST")

@@ -139,6 +139,7 @@ class PrisonConfigService(
 
   @Throws(ValidationException::class)
   @Transactional
+  // TODO - replace PrisonDto with all exclude dates for a prison or void
   fun addExcludeDate(prisonCode: String, excludeDate: LocalDate, actionedBy: String): PrisonDto {
     LOG.info("adding exclude date - {} for prison - {} by user - {}", excludeDate, prisonCode, actionedBy)
     if (isExcludeDateInPast(excludeDate)) {
@@ -214,6 +215,9 @@ class PrisonConfigService(
   @Transactional(readOnly = true)
   fun getPrisonExcludeDates(prisonCode: String): List<PrisonExcludeDateDto> {
     LOG.debug("getting exclude dates for prison - {}", prisonCode)
+    // ensure the prison is enabled
+    prisonsService.findPrisonByCode(prisonCode)
+
     return prisonExcludeDateRepository.getExcludeDatesByPrisonCode(prisonCode).map {
       PrisonExcludeDateDto(it.excludeDate, it.actionedBy)
     }
