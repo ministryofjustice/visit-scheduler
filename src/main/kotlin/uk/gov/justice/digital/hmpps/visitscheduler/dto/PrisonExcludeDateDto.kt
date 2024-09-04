@@ -12,6 +12,7 @@ data class PrisonExcludeDateDto(
   @FutureOrPresent
   val excludeDate: LocalDate,
 
+  // TODO - setting actionedBy as a nullable value for now to ensure the existing admin calls still work.
   @Schema(description = "actioned by", required = true)
-  val actionedBy: String,
+  val actionedBy: String? = "NOT_KNOWN",
 )
