@@ -1,10 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import jakarta.validation.ValidationException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -29,6 +32,7 @@ class PrisonConfigService(
 ) {
   companion object {
     const val ACTIONED_BY_NOT_KNOWN = "NOT_KNOWN"
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
   @Autowired
@@ -133,19 +137,27 @@ class PrisonConfigService(
     return prisonsService.mapEntityToDto(prisonToUpdate)
   }
 
+  // TODO - replace PrisonDto with all exclude dates for a prison or void
   @Throws(ValidationException::class)
   @Transactional
   fun addExcludeDate(prisonCode: String, excludeDate: LocalDate, actionedBy: String): PrisonDto {
+    LOG.info("adding exclude date - {} for prison - {} by user - {}", excludeDate, prisonCode, actionedBy)
+    if (isExcludeDateInPast(excludeDate)) {
+      LOG.info("failed to add exclude date - {} for prison - {} as exclude date is in the past", excludeDate, prisonCode)
+      throw ValidationException(messageService.getMessage("validation.add.prison.excludedate.inpast", prisonCode, excludeDate.toString()))
+    }
     val prison = prisonsService.findPrisonByCode(prisonCode)
     val existingExcludeDates = getExistingExcludeDates(prison)
 
     if (existingExcludeDates.contains(excludeDate)) {
+      LOG.info("failed to add exclude date - {} for prison - {} as exclude date already exists", excludeDate, prisonCode)
       throw ValidationException(messageService.getMessage("validation.add.prison.excludedate.alreadyexists", prisonCode, excludeDate.toString()))
     } else {
       prisonExcludeDateRepository.saveAndFlush(PrisonExcludeDate(prison.id, prison, excludeDate, actionedBy))
 
       // add any visits for the date for review
       visitNotificationEventService.handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prisonCode, excludeDate))
+      LOG.info("successfully added exclude date - {} for prison - {}, by user - {}", excludeDate, prisonCode, actionedBy)
     }
     return PrisonDto(prisonsService.findPrisonByCode(prisonCode))
   }
@@ -198,5 +210,20 @@ class PrisonConfigService(
         ),
       )
     }
+  }
+
+  @Transactional(readOnly = true)
+  fun getPrisonExcludeDates(prisonCode: String): List<PrisonExcludeDateDto> {
+    LOG.debug("getting exclude dates for prison - {}", prisonCode)
+    // ensure the prison is enabled
+    prisonsService.findPrisonByCode(prisonCode)
+
+    return prisonExcludeDateRepository.getExcludeDatesByPrisonCode(prisonCode).map {
+      PrisonExcludeDateDto(it.excludeDate, it.actionedBy)
+    }
+  }
+
+  private fun isExcludeDateInPast(excludeDate: LocalDate): Boolean {
+    return (excludeDate < LocalDate.now())
   }
 }
