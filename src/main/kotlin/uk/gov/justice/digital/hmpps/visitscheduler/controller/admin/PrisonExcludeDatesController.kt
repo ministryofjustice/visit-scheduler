@@ -75,7 +75,12 @@ class PrisonExcludeDatesController(
     @Valid
     prisonExcludeDateDto: PrisonExcludeDateDto,
   ): Set<LocalDate> {
-    prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate, prisonExcludeDateDto.actionedBy)
+    prisonConfigService.addExcludeDate(
+      prisonCode,
+      prisonExcludeDateDto.excludeDate,
+      // TODO - remove !! later
+      actionedBy = prisonExcludeDateDto.actionedBy!!,
+    )
     return prisonsService.getPrison(prisonCode).excludeDates
   }
 

@@ -367,7 +367,8 @@ class PrisonAdminController(
     @Valid
     prisonExcludeDateDto: PrisonExcludeDateDto,
   ): PrisonDto {
-    return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate, prisonExcludeDateDto.actionedBy)
+    // TODO - remove ?: "NOT_KNOWN" when we remove the admin functionality of adding exclude date
+    return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate, prisonExcludeDateDto.actionedBy ?: "NOT_KNOWN")
   }
 
   @Deprecated("to be moved out of prison admin")
