@@ -367,7 +367,7 @@ class TelemetryClientService(
   }
 
   private fun formatDateToString(date: LocalDate): String {
-    return date.format(DateTimeFormatter.ISO_DATE)
+    return date.format(DateTimeFormatter.ISO_LOCAL_DATE)
   }
 
   private fun getVisitorIdsAsString(visitors: List<VisitorDto>): String {
