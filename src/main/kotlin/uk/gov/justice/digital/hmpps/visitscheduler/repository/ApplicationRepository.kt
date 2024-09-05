@@ -38,19 +38,37 @@ interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecifica
   )
   fun isApplicationCompleted(applicationReference: String): Boolean
 
-  // TODO: Move to use event audit table actioned by instead of created_by column on Application table.
   @Query(
     "SELECT a.restriction AS visitRestriction, COUNT(*) AS count  FROM application a " +
       "WHERE a.session_slot_id = :sessionSlotId AND " +
       " a.restriction IN ('OPEN','CLOSED') AND " +
       " a.reserved_slot = true AND a.completed = false AND" +
       " a.modify_timestamp >= :expiredDateAndTime AND " +
-      " (:excludedApplicationReference is null OR a.reference != :excludedApplicationReference ) AND " +
-      " (:usernameToExcludeFromReservedApplications is null OR a.created_by != :usernameToExcludeFromReservedApplications) " +
+      " (:excludedApplicationReference is null OR a.reference != :excludedApplicationReference ) " +
       " GROUP BY a.restriction",
     nativeQuery = true,
   )
   fun getCountOfReservedSessionForOpenOrClosedRestriction(
+    sessionSlotId: Long,
+    @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
+    @Param("excludedApplicationReference") excludedApplicationReference: String?,
+  ): List<VisitRestrictionStats>
+
+  @Query(
+    "SELECT a.restriction AS visitRestriction, COUNT(*) AS count FROM application a " +
+      "inner join event_audit ea on a.reference = ea.application_reference " +
+      "inner join actioned_by ab on ea.actioned_by_id = ab.id " +
+      "WHERE a.session_slot_id = :sessionSlotId AND " +
+      " a.restriction IN ('OPEN','CLOSED') AND " +
+      " a.reserved_slot = true AND a.completed = false AND" +
+      " a.modify_timestamp >= :expiredDateAndTime AND " +
+      " (:excludedApplicationReference is null OR a.reference != :excludedApplicationReference ) AND " +
+      " (ea.type = 'RESERVED_VISIT' AND " +
+      " (ab.user_name != :usernameToExcludeFromReservedApplications OR ab.booker_reference != :usernameToExcludeFromReservedApplications)) " +
+      " GROUP BY a.restriction",
+    nativeQuery = true,
+  )
+  fun getCountOfReservedSessionForOpenOrClosedRestrictionExcludingUser(
     sessionSlotId: Long,
     @Param("expiredDateAndTime") expiredDateAndTime: LocalDateTime,
     @Param("excludedApplicationReference") excludedApplicationReference: String?,
