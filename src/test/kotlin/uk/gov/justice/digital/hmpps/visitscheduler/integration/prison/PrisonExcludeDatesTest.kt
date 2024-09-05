@@ -1,10 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.prison
 
+import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.any
+import org.mockito.kotlin.eq
+import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
@@ -38,6 +41,9 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
 
   @SpyBean
   lateinit var prisonExcludeDateRepositorySpy: PrisonExcludeDateRepository
+
+  @SpyBean
+  lateinit var telemetryClient: TelemetryClient
 
   @Autowired
   lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
@@ -137,6 +143,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     Assertions.assertThat(excludeDates.size).isEqualTo(1)
     Assertions.assertThat(excludeDates[0].excludeDate).isEqualTo(excludeDate)
     Assertions.assertThat(excludeDates[0].actionedBy).isEqualTo(TEST_USER)
+    verify(telemetryClient, times(1)).trackEvent(eq("add-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -181,6 +188,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     // only 1 visit for the same date with status of BOOKED will be flagged.
     Assertions.assertThat(visitNotifications).hasSize(1)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
+    verify(telemetryClient, times(1)).trackEvent(eq("add-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -198,6 +206,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest.expectBody()
       .jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to prison - ${prison.code} as it is in the past")
     verify(prisonExcludeDateRepositorySpy, times(0)).save(PrisonExcludeDate(createdPrison.id, createdPrison, excludeDate, actionedBy = TEST_USER))
+    verify(telemetryClient, times(0)).trackEvent(eq("add-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -217,6 +226,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     responseSpec.expectStatus().isBadRequest.expectBody()
       .jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to prison - ${prison.code} as it already exists")
     verify(prisonExcludeDateRepositorySpy, times(0)).save(PrisonExcludeDate(createdPrison.id, createdPrison, excludeDate, actionedBy = TEST_USER))
+    verify(telemetryClient, times(0)).trackEvent(eq("add-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -239,6 +249,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     val result = getResponseSpec.expectStatus().isOk.expectBody()
     val excludeDates = getPrisonExcludeDates(result).map { it.excludeDate }
     Assertions.assertThat(excludeDates).doesNotContain(excludeDate)
+    verify(telemetryClient, times(1)).trackEvent(eq("remove-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -266,6 +277,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     val result = getResponseSpec.expectStatus().isOk.expectBody()
     val excludeDates = getPrisonExcludeDates(result).map { it.excludeDate }
     Assertions.assertThat(excludeDates).doesNotContain(excludeDate)
+    verify(telemetryClient, times(1)).trackEvent(eq("remove-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -288,6 +300,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     val result = getResponseSpec.expectStatus().isOk.expectBody()
     val excludeDates = getPrisonExcludeDates(result)
     Assertions.assertThat(excludeDates).isEmpty()
+    verify(telemetryClient, times(0)).trackEvent(eq("remove-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -304,6 +317,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
       .jsonPath("$.developerMessage").isEqualTo("Prison code $nonExistentPrisonCode not found!")
     verify(prisonExcludeDateRepositorySpy, times(0)).save(any())
     verify(prisonExcludeDateRepositorySpy, times(0)).deleteByPrisonIdAndExcludeDate(any(), any())
+    verify(telemetryClient, times(0)).trackEvent(eq("add-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -320,6 +334,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
       .jsonPath("$.developerMessage").isEqualTo("Prison code $nonExistentPrisonCode not found!")
     verify(prisonExcludeDateRepositorySpy, times(0)).save(any())
     verify(prisonExcludeDateRepositorySpy, times(0)).deleteByPrisonIdAndExcludeDate(any(), any())
+    verify(telemetryClient, times(0)).trackEvent(eq("remove-exclude-date"), any(), isNull())
   }
 
   private fun getPrisonExcludeDates(returnResult: BodyContentSpec): Array<PrisonExcludeDateDto> {
