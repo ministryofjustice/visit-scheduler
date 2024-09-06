@@ -37,8 +37,8 @@ dependencies {
   implementation("org.springdoc:springdoc-openapi-starter-common:2.6.0")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:5.15.0")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.15.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:5.16.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:5.16.0")
   implementation("org.apache.commons:commons-csv:1.11.0")
   implementation("org.freemarker:freemarker:2.3.33")
 
@@ -59,7 +59,7 @@ dependencies {
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.testcontainers:postgresql:1.20.1")
   testImplementation("org.testcontainers:localstack:1.20.1")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.770")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.771")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
   testImplementation("org.junit-pioneer:junit-pioneer:2.2.0")
 }
