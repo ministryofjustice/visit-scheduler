@@ -72,7 +72,6 @@ class AssertHelper {
     responseSpec.expectStatus().isEqualTo(UNPROCESSABLE_ENTITY.code())
 
     val validationErrorResponse = getApplicationValidationErrorResponse(responseSpec)
-    Assertions.assertThat(validationErrorResponse.validationErrors.size).isEqualTo(1)
     Assertions.assertThat(validationErrorResponse.validationErrors).contains(
       APPLICATION_INVALID_NO_SLOT_CAPACITY,
     )

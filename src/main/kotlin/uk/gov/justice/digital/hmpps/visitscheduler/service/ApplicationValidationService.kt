@@ -117,7 +117,21 @@ class ApplicationValidationService(
       errorCodes.add(it)
     }
 
-    return errorCodes
+    // check if there are non-association visits that have been booked in after the application was created
+    checkNonAssociationVisits(
+      prisonerId = application.prisonerId,
+      sessionDate = application.sessionSlot.slotDate,
+      prisonId = application.prisonId,
+    )?.also {
+      errorCodes.add(it)
+    }
+
+    // check if any double bookings for the same prisoner
+    checkDoubleBookedVisits(prisonerId = application.prisonerId, sessionSlot = application.sessionSlot, visitReference = application.visit?.reference)?.also {
+      errorCodes.add(it)
+    }
+
+    return errorCodes.toList()
   }
 
   private fun getSystemApplicationValidationErrors(): List<ApplicationValidationErrorCodes> {
