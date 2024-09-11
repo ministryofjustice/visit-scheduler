@@ -26,6 +26,7 @@ The visit-scheduler uses the deployed dev environment to connect to most of the 
 with an exception of the scheduler-db and local-stack.
 
 To run the visit-scheduler, first start the required local services using docker-compose.
+
 ```
 docker-compose up -d
 ```

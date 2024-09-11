@@ -11,6 +11,7 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import org.springframework.http.HttpStatus
 import org.springframework.test.context.TestPropertySource
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
@@ -647,7 +648,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
       .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))
@@ -663,7 +664,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     // Then
     responseSpec
-      .expectStatus().isBadRequest
+      .expectStatus().isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY)
       .expectBody()
       .jsonPath("$.userMessage").isEqualTo("Migration failure: Could not migrate visit")
       .jsonPath("$.developerMessage").value(Matchers.startsWith("Visit more than 6 months in future, will not be migrated!"))

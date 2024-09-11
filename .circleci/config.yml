@@ -12,7 +12,7 @@ parameters:
     default: visits-alerts
 
 jobs:
-  acceptance_tests_main:
+  acceptance_tests_staff_ui_main:
     docker:
       - image: maven:3.9.5-eclipse-temurin-21
       - image: seleniarm/standalone-chromium
@@ -40,7 +40,36 @@ jobs:
           name: Change to project directory and run tests
           command: |
             cd hmpps-vsip-ui-tests
-            mvn test -Dbrowser=remote-chrome -Dspring.profiles.active="staging" -Dtest=uk.gov.justice.digital.hmpps.vsip.suites.RunSuite 
+            mvn test -Dbrowser=remote-chrome -Dspring.profiles.active="staging" -Dtest=uk.gov.justice.digital.hmpps.vsip.suites.RunSuite
+            
+  acceptance_tests_public_ui_main:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.44.1-jammy
+    circleci_ip_ranges: true
+
+    steps:
+      - run:
+          name: Checkout VSIP Public UI Tests
+          command: git clone https://github.com/ministryofjustice/hmpps-book-a-prison-visit-ui-tests
+      - run:
+          name: get git status
+          command: |
+            cd hmpps-book-a-prison-visit-ui-tests
+            git checkout main
+            git pull
+            git status
+      - attach_workspace:
+          at: ~/app
+      - run:
+          name: Install Dependencies
+          command: |
+            cd hmpps-book-a-prison-visit-ui-tests
+            npm ci --no-audit
+      - run:
+          name: Run Playwright Tests
+          command: |
+            cd hmpps-book-a-prison-visit-ui-tests
+            npm run test:ci
 
   validate:
     executor:
@@ -134,14 +163,31 @@ workflows:
           requires:
             - deploy_dev
 
-      - acceptance_tests_main:
+      - acceptance_tests_staff_ui_main:
           requires:
-            - request-acceptance-tests-approval
+            - request-acceptance-tests-staff-approval
           filters:
             branches:
               only:
                 - main
-      - request-acceptance-tests-approval:
+      - request-acceptance-tests-staff-approval:
+          type: approval
+          requires:
+            - deploy_staging
+          filters:
+            branches:
+              only:
+                - main
+
+      - acceptance_tests_public_ui_main:
+          requires:
+            - request-acceptance-tests-public-approval
+          context: visits-public-e2e-tests
+          filters:
+            branches:
+              only:
+                - main
+      - request-acceptance-tests-public-approval:
           type: approval
           requires:
             - deploy_staging

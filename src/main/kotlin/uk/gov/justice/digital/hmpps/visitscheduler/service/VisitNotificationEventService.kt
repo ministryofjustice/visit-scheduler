@@ -19,6 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_RESTRICTION_UPSERTED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
@@ -33,7 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 import java.time.LocalDate
@@ -153,13 +154,21 @@ class VisitNotificationEventService(
 
     val prisonerSupportedAlertsRemoved = notificationDto.alertsRemoved.filter { it in prisonerSupportedAlertCodes }
     if (prisonerSupportedAlertsRemoved.isNotEmpty()) {
-      val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
-      prisonerDetails?.let { prisoner ->
-        val prisonerActiveAlertCodes = prisoner.alerts.filter { it.active }.map { it.alertCode }
-        if (!prisonerActiveAlertCodes.any { it in prisonerSupportedAlertCodes }) {
+      if (!notificationDto.activeAlerts.any { it in prisonerSupportedAlertCodes }) {
+        val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
+        prisonerDetails?.let { prisoner ->
           prisoner.prisonCode?.let {
-            val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, prisoner.prisonCode!!, PRISONER_ALERTS_UPDATED_EVENT)
-            deleteNotificationsThatAreNoLongerValid(currentPrisonNotifications, PRISONER_ALERTS_UPDATED_EVENT, UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED)
+            val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(
+              notificationDto.prisonerNumber,
+              prisoner.prisonCode!!,
+              PRISONER_ALERTS_UPDATED_EVENT,
+            )
+
+            deleteNotificationsThatAreNoLongerValid(
+              currentPrisonNotifications,
+              PRISONER_ALERTS_UPDATED_EVENT,
+              UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED,
+            )
           }
         }
       }
@@ -187,9 +196,21 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun handleVisitorRestrictionChangeNotification(notificationDto: VisitorRestrictionChangeNotificationDto) {
-    if (isNotificationDatesValid(notificationDto.validToDate)) {
-      // TODO not yet implemented
+  fun handleVisitorRestrictionUpsertedNotification(notificationDto: VisitorRestrictionUpsertedNotificationDto) {
+    LOG.debug("VisitorRestrictionUpsertedNotificationDto notification received : {}", notificationDto)
+
+    val visitorSupportedRestrictionTypes = VisitorSupportedRestrictionType.entries.map { it.name }.toSet()
+    if (isNotificationDatesValid(notificationDto.validToDate) && visitorSupportedRestrictionTypes.contains(notificationDto.restrictionType)) {
+      // VisitorRestrictionUpsertedNotificationDto is the global version of the local PersonRestrictionUpsertedNotificationDto event.
+      // Hence, no prisonerId is given, so we flag every visit they have.
+      val allAffectedVisits = visitService.getFutureVisitsByVisitorId(
+        visitorId = notificationDto.visitorId,
+        endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX),
+      )
+      if (allAffectedVisits.isNotEmpty()) {
+        val description = "visitor ${notificationDto.visitorId} has a new restriction - ${notificationDto.restrictionType}"
+        processVisitsWithNotifications(allAffectedVisits, VISITOR_RESTRICTION_UPSERTED_EVENT, description)
+      }
     }
   }
 
@@ -399,6 +420,7 @@ class VisitNotificationEventService(
 
   private fun createPrisonerVisitsNotificationDto(events: MutableList<VisitNotificationEvent>): List<PrisonerVisitsNotificationDto> {
     return events.map {
+      LOG.info("createPrisonerVisitsNotificationDto Entered - created visit notification for visit with booking reference: {}", it.bookingReference)
       val visit = this.visitService.getVisitByReference(it.bookingReference)
       val bookedByUserName = this.visitEventAuditService.getLastUserToUpdateSlotByReference(it.bookingReference)
 

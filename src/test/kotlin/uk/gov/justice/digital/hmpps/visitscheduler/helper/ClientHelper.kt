@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERV
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_APPLICATION_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
@@ -20,6 +21,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_TYPES
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
@@ -69,6 +71,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import java.time.LocalDate
 
 fun callCancelVisit(
@@ -176,8 +179,28 @@ fun callVisitBook(
   )
 }
 
+fun callVisitUpdate(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  applicationReference: String,
+  applicationMethodType: ApplicationMethodType = PHONE,
+  allowOverBooking: Boolean = false,
+  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking),
+): ResponseSpec {
+  return callPut(
+    bodyValue = bookingRequestDto,
+    webTestClient,
+    getVisitUpdateUrl(applicationReference),
+    authHttpHeaders,
+  )
+}
+
 fun getVisitBookUrl(applicationReference: String): String {
   return VISIT_BOOK.replace("{applicationReference}", applicationReference)
+}
+
+fun getVisitUpdateUrl(applicationReference: String): String {
+  return UPDATE_VISIT_BY_APPLICATION_REFERENCE.replace("{applicationReference}", applicationReference)
 }
 
 fun callIgnoreVisitNotifications(
@@ -725,6 +748,19 @@ fun callNotifyVSiPThatPersonRestrictionUpserted(
     webTestClient,
     authHttpHeaders,
     VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH,
+    dto,
+  )
+}
+
+fun callNotifyVSiPThatVisitorRestrictionUpserted(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: VisitorRestrictionUpsertedNotificationDto? = null,
+): ResponseSpec {
+  return callNotifyVSiPOfAEvent(
+    webTestClient,
+    authHttpHeaders,
+    VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH,
     dto,
   )
 }

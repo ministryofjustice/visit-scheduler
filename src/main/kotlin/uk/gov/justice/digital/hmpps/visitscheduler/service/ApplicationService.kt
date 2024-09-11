@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ExpiredApplicationTaskConfiguration
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
@@ -31,13 +33,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.Visi
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.CapitaliseUtil
 import java.time.LocalDate
 import java.time.LocalDateTime
+import kotlin.collections.ArrayList
 
 @Service
 @Transactional
 class ApplicationService(
-  private val applicationRepo: ApplicationRepository,
+  private val applicationRepository: ApplicationRepository,
   private val visitRepo: VisitRepository,
   private val telemetryClientService: TelemetryClientService,
   private val sessionTemplateService: SessionTemplateService,
@@ -61,6 +65,9 @@ class ApplicationService(
 
   @Autowired
   private lateinit var sessionSlotService: SessionSlotService
+
+  @Autowired
+  private lateinit var capitaliseUtil: CapitaliseUtil
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -127,7 +134,7 @@ class ApplicationService(
 
     changeApplicationDto.visitors?.let { visitorsUpdate ->
       application.visitors.clear()
-      applicationRepo.saveAndFlush(application)
+      applicationRepository.saveAndFlush(application)
       visitorsUpdate.distinctBy { it.nomisPersonId }.forEach {
         application.visitors.add(createApplicationVisitor(application, it.nomisPersonId, it.visitContact))
       }
@@ -179,7 +186,7 @@ class ApplicationService(
         true,
       )
     }
-    val applicationEntity = applicationRepo.saveAndFlush(
+    val applicationEntity = applicationRepository.saveAndFlush(
       Application(
         prisonerId = createApplicationDto.prisonerId,
         prison = prison,
@@ -221,9 +228,9 @@ class ApplicationService(
   fun deleteAllExpiredApplications() {
     LOG.debug("Entered deleteExpiredApplication")
     val applicationsToBeDeleted =
-      applicationRepo.findApplicationByModifyTimes(getExpiredApplicationToDeleteDateAndTime())
+      applicationRepository.findApplicationByModifyTimes(getExpiredApplicationToDeleteDateAndTime())
     applicationsToBeDeleted.forEach { applicationToBeDeleted ->
-      applicationRepo.delete(applicationToBeDeleted)
+      applicationRepository.delete(applicationToBeDeleted)
       processDeleteApplicationEvents(applicationToBeDeleted)
       LOG.debug("Expired Application ${applicationToBeDeleted.reference} has been deleted")
     }
@@ -328,16 +335,16 @@ class ApplicationService(
   }
 
   fun isApplicationCompleted(reference: String): Boolean {
-    return applicationRepo.isApplicationCompleted(reference)
+    return applicationRepository.isApplicationCompleted(reference)
   }
 
   fun getApplicationEntity(applicationReference: String): Application {
-    return applicationRepo.findApplication(applicationReference)
+    return applicationRepository.findApplication(applicationReference)
       ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
   }
 
   fun completeApplication(applicationReference: String) {
-    applicationRepo.completeApplication(applicationReference)
+    applicationRepository.completeApplication(applicationReference)
   }
 
   private fun createApplicationContact(application: Application, name: String, telephone: String?): ApplicationContact {
@@ -432,7 +439,7 @@ class ApplicationService(
   }
 
   fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate, prisonId: Long): Boolean {
-    return applicationRepo.hasActiveApplicationsForDate(
+    return applicationRepository.hasActiveApplicationsForDate(
       nonAssociationPrisonerIds,
       sessionSlotDate,
       prisonId,
@@ -444,7 +451,7 @@ class ApplicationService(
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
 
     return if (usernameToExcludeFromReservedApplications != null) {
-      applicationRepo.hasReservations(
+      applicationRepository.hasReservations(
         prisonerId = prisonerId,
         sessionSlotId = sessionSlotId,
         expiredDateAndTime,
@@ -452,7 +459,7 @@ class ApplicationService(
         usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       )
     } else {
-      applicationRepo.hasReservations(
+      applicationRepository.hasReservations(
         prisonerId = prisonerId,
         sessionSlotId = sessionSlotId,
         expiredDateAndTime,
@@ -461,12 +468,21 @@ class ApplicationService(
     }
   }
 
-  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?): List<VisitRestrictionStats> {
-    return applicationRepo.getCountOfReservedSessionForOpenOrClosedRestriction(
-      id,
-      getExpiredApplicationDateAndTime(),
-      excludedApplicationReference = excludedApplicationReference,
-    )
+  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): List<VisitRestrictionStats> {
+    return if (usernameToExcludeFromReservedApplications == null) {
+      applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
+        id,
+        getExpiredApplicationDateAndTime(),
+        excludedApplicationReference,
+      )
+    } else {
+      applicationRepository.getCountOfReservedSessionForOpenOrClosedRestrictionExcludingUser(
+        id,
+        getExpiredApplicationDateAndTime(),
+        excludedApplicationReference,
+        usernameToExcludeFromReservedApplications,
+      )
+    }
   }
 
   fun getReservedApplicationsCountForSlot(
@@ -475,9 +491,33 @@ class ApplicationService(
     excludedApplicationReference: String? = null,
   ): Long {
     return if (VisitRestriction.OPEN == restriction) {
-      applicationRepo.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
+      applicationRepository.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
     } else {
-      applicationRepo.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
+      applicationRepository.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
     }
+  }
+
+  fun createApplicationFromMigration(migrateVisitRequest: MigrateVisitRequestDto, applicationFromMigration: Application): Application {
+    val applicationEntity = applicationRepository.saveAndFlush(applicationFromMigration)
+
+    migrateVisitRequest.visitContact?.let { contact ->
+      applicationEntity.visitContact = createApplicationContact(
+        applicationEntity,
+        if (UNKNOWN_TOKEN == contact.name || contact.name.partition { it.isLowerCase() }.first.isNotEmpty()) {
+          contact.name
+        } else {
+          capitaliseUtil.capitalise(contact.name)
+        },
+        contact.telephone,
+      )
+    }
+
+    migrateVisitRequest.visitors?.let { contactList ->
+      contactList.forEach {
+        applicationEntity.visitors.add(createApplicationVisitor(applicationEntity, it.nomisPersonId, null))
+      }
+    }
+
+    return applicationEntity
   }
 }
