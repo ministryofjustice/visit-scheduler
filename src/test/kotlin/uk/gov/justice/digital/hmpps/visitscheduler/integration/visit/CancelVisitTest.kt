@@ -31,7 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
@@ -42,6 +42,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.getCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
@@ -65,6 +66,9 @@ class CancelVisitTest : IntegrationTestBase() {
 
   @SpyBean
   private lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
+
+  @SpyBean
+  private lateinit var visitNotificationEventServiceSpy: VisitNotificationEventService
 
   @Test
   fun `cancel visit by reference -  with outcome and outcome text`() {
@@ -107,7 +111,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -139,7 +143,7 @@ class CancelVisitTest : IntegrationTestBase() {
 
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -174,7 +178,8 @@ class CancelVisitTest : IntegrationTestBase() {
     // just one event thrown
     assertTelemetryClientEvents(visit1, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visit1)
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
+
   }
 
   @Test
@@ -247,7 +252,7 @@ class CancelVisitTest : IntegrationTestBase() {
     assertTelemetryClientEvents(visitCancelled, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visitCancelled)
 
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   private fun sendApplicationToUpdateExistingBooking(
@@ -406,7 +411,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visitCancelled.reference))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitNotificationEvents(eq(visitCancelled.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -435,7 +440,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   @Test
@@ -462,7 +467,7 @@ class CancelVisitTest : IntegrationTestBase() {
     // And
     val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
     assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, cancelVisitDto.actionedBy, NOT_KNOWN)
-    verify(visitNotificationEventRepository, times(1)).deleteByBookingReference(eq(visit.reference))
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   fun assertTelemetryClientEvents(
@@ -581,7 +586,7 @@ class CancelVisitTest : IntegrationTestBase() {
       eq("unflagged-visit-event"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
-        assertThat(it["reason"]).isEqualTo(UnFlagEventReason.VISIT_CANCELLED.desc)
+        assertThat(it["reason"]).isEqualTo(VISIT_CANCELLED.desc)
       },
       isNull(),
     )

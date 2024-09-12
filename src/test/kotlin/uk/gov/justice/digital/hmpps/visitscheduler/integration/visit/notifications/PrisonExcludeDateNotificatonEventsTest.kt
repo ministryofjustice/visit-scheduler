@@ -235,7 +235,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
       eq("unflagged-visit-event"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visitReference)
-        assertThat(it["reviewType"]).isEqualTo(NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE.reviewType)
+        assertThat(it["reviewTypes"]).isEqualTo(NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE.reviewType)
         assertThat(it["reason"]).isEqualTo(unFlagEventReason.desc)
       },
       isNull(),

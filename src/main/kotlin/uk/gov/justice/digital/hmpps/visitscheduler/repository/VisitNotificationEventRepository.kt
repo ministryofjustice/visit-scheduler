@@ -119,7 +119,16 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   )
   fun getNotificationsTypesForBookingReference(@Param("bookingReference") bookingReference: String): List<NotificationEventType>
 
+  fun getVisitNotificationEventsByBookingReference(
+    bookingReference: String,
+  ): List<VisitNotificationEvent>
+
+  fun getVisitNotificationEventsByBookingReferenceAndTypeNotIn(
+    bookingReference: String,
+    type: List<NotificationEventType>,
+  ): List<VisitNotificationEvent>
+
   fun deleteByBookingReference(@Param("bookingReference") bookingReference: String): Int
 
-  fun deleteByBookingReferenceAndType(@Param("bookingReference") bookingReference: String, @Param("type") type: NotificationEventType): Int
+  fun deleteByBookingReferenceAndTypeNotIn(@Param("bookingReference") bookingReference: String, @Param("types") types: List<NotificationEventType>): Int
 }

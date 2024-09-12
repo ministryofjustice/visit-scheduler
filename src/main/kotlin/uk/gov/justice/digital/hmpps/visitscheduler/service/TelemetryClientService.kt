@@ -130,11 +130,11 @@ class TelemetryClientService(
 
   fun trackUnFlagVisitNotificationEvent(
     visitReference: String,
-    type: NotificationEventType?,
+    notificationEventTypesUnflagged: String,
     reason: UnFlagEventReason,
     reasonText: String?,
   ) {
-    val data = createUnFlagData(visitReference, type, reason, reasonText)
+    val data = createUnFlagData(visitReference, notificationEventTypesUnflagged, reason, reasonText)
     trackEvent(UNFLAGGED_VISIT_EVENT, data)
   }
 
@@ -312,18 +312,15 @@ class TelemetryClientService(
 
   private fun createUnFlagData(
     visitReference: String,
-    notificationEventType: NotificationEventType?,
+    notificationEventTypesUnflagged: String,
     reason: UnFlagEventReason,
     reasonText: String? = null,
   ): MutableMap<String, String> {
     val unFlagEventDataMap = mutableMapOf(
       "reference" to visitReference,
       "reason" to reason.desc,
+      "reviewTypes" to notificationEventTypesUnflagged,
     )
-
-    notificationEventType?.let {
-      unFlagEventDataMap["reviewType"] = it.reviewType
-    }
 
     reasonText?.let {
       unFlagEventDataMap["text"] = it

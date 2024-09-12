@@ -275,7 +275,7 @@ class DeleteNonAssociationVisitNotificationControllerTest : NotificationTestBase
       eq("unflagged-visit-event"),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visitReference)
-        Assertions.assertThat(it["reviewType"]).isEqualTo(NON_ASSOCIATION_EVENT.reviewType)
+        Assertions.assertThat(it["reviewTypes"]).isEqualTo(NON_ASSOCIATION_EVENT.reviewType)
         Assertions.assertThat(it["reason"]).isEqualTo(UnFlagEventReason.NON_ASSOCIATION_REMOVED.desc)
       },
       isNull(),
