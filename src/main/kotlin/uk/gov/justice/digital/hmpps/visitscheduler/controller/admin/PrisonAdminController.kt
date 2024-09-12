@@ -331,6 +331,7 @@ class PrisonAdminController(
     return prisonConfigService.deActivatePrisonClient(prisonCode, type)
   }
 
+  @Deprecated("to be moved out of prison admin")
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(ADD_PRISON_EXCLUDE_DATE)
   @Operation(
@@ -362,12 +363,14 @@ class PrisonAdminController(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
-    @RequestBody @Valid
+    @RequestBody
+    @Valid
     prisonExcludeDateDto: PrisonExcludeDateDto,
   ): PrisonDto {
-    return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate)
+    return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto)
   }
 
+  @Deprecated("to be moved out of prison admin")
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(REMOVE_PRISON_EXCLUDE_DATE)
   @Operation(
@@ -402,6 +405,6 @@ class PrisonAdminController(
     @RequestBody @Valid
     prisonExcludeDateDto: PrisonExcludeDateDto,
   ) {
-    return prisonConfigService.removeExcludeDate(prisonCode, prisonExcludeDateDto.excludeDate)
+    return prisonConfigService.removeExcludeDate(prisonCode, prisonExcludeDateDto)
   }
 }
