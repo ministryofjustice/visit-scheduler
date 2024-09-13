@@ -456,14 +456,4 @@ class VisitNotificationEventService(
       visitNotificationFlaggingService.unFlagTrackEvents(visitReference, visitNotificationEvents.map { it.type }, reason, text)
     }
   }
-
-  fun deleteAllVisitNotificationEventsExceptTypes(visitReference: String, notToBeDeletedNotificationTypes: List<NotificationEventType>, reason: UnFlagEventReason, text: String? = null) {
-    val visitNotificationEvents = visitNotificationEventRepository.getVisitNotificationEventsByBookingReferenceAndTypeNotIn(visitReference, notToBeDeletedNotificationTypes)
-    visitNotificationEventRepository.deleteByBookingReferenceAndTypeNotIn(visitReference, notToBeDeletedNotificationTypes)
-
-    if (visitNotificationEvents.isNotEmpty()) {
-      // after deleting the visit notifications - update application insights
-      visitNotificationFlaggingService.unFlagTrackEvents(visitReference, visitNotificationEvents.map { it.type }, reason, text)
-    }
-  }
 }

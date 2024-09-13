@@ -179,7 +179,6 @@ class CancelVisitTest : IntegrationTestBase() {
     assertTelemetryClientEvents(visit1, VISIT_CANCELLED_EVENT)
     assertCancelledDomainEvent(visit1)
     verify(visitNotificationEventServiceSpy, times(1)).deleteVisitNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
-
   }
 
   @Test

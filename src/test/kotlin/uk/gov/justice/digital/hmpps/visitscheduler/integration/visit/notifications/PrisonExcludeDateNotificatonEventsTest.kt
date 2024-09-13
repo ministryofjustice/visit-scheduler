@@ -178,7 +178,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when excluded date visit is updated but date not changed then visit flag is not removed`() {
+  fun `when excluded date visit is updated and date changed then all visit flags are removed`() {
     // Given
     val prisonXYZ = prisonEntityHelper.create("XYZ")
     val excludeDate = LocalDate.now().plusDays(10)
@@ -202,7 +202,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     val reserveVisitSlotDto = CreateApplicationDto(
       prisonerId = bookedVisit.prisonerId,
       sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!,
-      sessionDate = excludeDate,
+      sessionDate = excludeDate.plusWeeks(1),
       applicationRestriction = SessionRestriction.OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
@@ -223,8 +223,8 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     responseSpec.expectStatus().isCreated
 
     visitNotifications = testVisitNotificationEventRepository.findAll()
-    assertThat(visitNotifications).hasSize(1)
-    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+    assertThat(visitNotifications).hasSize(0)
+    verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
   fun assertPrisonExcludeDateRemovalUnFlagEvent(
