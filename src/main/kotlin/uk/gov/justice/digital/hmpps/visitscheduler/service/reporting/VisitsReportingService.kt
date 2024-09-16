@@ -29,7 +29,6 @@ class VisitsReportingService(
     } else {
       LOG.info("No report date configured for {} report", VSIPReport.VISIT_COUNTS_BY_DAY)
     }
-7
     return sessionsReports
   }
 
