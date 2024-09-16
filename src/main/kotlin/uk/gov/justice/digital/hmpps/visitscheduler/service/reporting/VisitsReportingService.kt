@@ -13,28 +13,24 @@ import kotlin.jvm.optionals.getOrNull
 class VisitsReportingService(
   private val visitCountsByDateReportService: VisitCountsByDateReportService,
   private val vsipReportingRepository: VSIPReportingRepository,
-
-  ) {
+) {
   fun getVisitCountsReportByDay(): Map<LocalDate, List<SessionVisitCountsDto>> {
+    val sessionsReports = mutableMapOf<LocalDate, List<SessionVisitCountsDto>>()
+
     val reportDate = getNextReportDate()
     if (reportDate != null) {
       val maxReportDate = LocalDate.now()
       reportDate.datesUntil(maxReportDate).forEach { forDate ->
-        val sessionReport = getVisitCountsReportForDate(forDate)
+        val sessionReport = visitCountsByDateReportService.getVisitCountsReportForDate(forDate)
         sessionsReports[reportDate] = sessionReport
-        sendTelemetryEvent(sessionReport)
+        visitCountsByDateReportService.sendTelemetryEvent(sessionReport)
         updateLastRunReportDate(forDate)
       }
-
-      if (reportDate != null) {
-
-      }
-      return visitCountsByDateReportService.getVisitCountsReportByDay(reportDate)
     } else {
       LOG.info("No report date configured for {} report", VSIPReport.VISIT_COUNTS_BY_DAY)
     }
-
-    return emptyMap()
+7
+    return sessionsReports
   }
 
   private fun getNextReportDate(): LocalDate? {
