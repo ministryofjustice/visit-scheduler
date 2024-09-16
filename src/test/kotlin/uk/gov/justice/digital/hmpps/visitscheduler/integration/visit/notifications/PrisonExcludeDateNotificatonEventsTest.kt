@@ -174,7 +174,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     responseSpec.expectStatus().isCreated
 
     assertThat(testVisitNotificationEventRepository.findAll()).isEmpty()
-    assertPrisonExcludeDateRemovalUnFlagEvent(visit.reference, UnFlagEventReason.VISIT_DATE_UPDATED)
+    assertPrisonExcludeDateRemovalUnFlagEvent(visit.reference, UnFlagEventReason.VISIT_UPDATED)
   }
 
   @Test

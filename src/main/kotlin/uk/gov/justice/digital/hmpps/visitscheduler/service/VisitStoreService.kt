@@ -11,7 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_DATE_UPDATED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
@@ -176,7 +176,7 @@ class VisitStoreService(
   }
 
   private fun handleVisitUpdateEvents(existingBooking: Visit) {
-    visitNotificationEventService.deleteVisitNotificationEvents(existingBooking.reference, VISIT_DATE_UPDATED)
+    visitNotificationEventService.deleteVisitNotificationEvents(existingBooking.reference, VISIT_UPDATED)
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
