@@ -1,10 +1,13 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
 import jakarta.validation.ValidationException
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -26,7 +29,12 @@ class PrisonConfigService(
   private val messageService: MessageService,
   private val prisonsService: PrisonsService,
   private val visitNotificationEventService: VisitNotificationEventService,
+  private val telemetryClientService: TelemetryClientService,
 ) {
+  companion object {
+    const val ACTIONED_BY_NOT_KNOWN = "NOT_KNOWN"
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
 
   @Autowired
   private lateinit var prisonUserClientRepository: PrisonUserClientRepository
@@ -48,7 +56,15 @@ class PrisonConfigService(
     val newPrison = Prison(prisonDto)
     val savedPrison = prisonRepository.saveAndFlush(newPrison)
 
-    val excludeDates = prisonDto.excludeDates.map { PrisonExcludeDate(prisonId = savedPrison.id, prison = savedPrison, it) }
+    val excludeDates = prisonDto.excludeDates.map {
+      PrisonExcludeDate(
+        prisonId = savedPrison.id,
+        prison = savedPrison,
+        excludeDate = it,
+        // TODO - temporarily set the actioned_by as NOT_KNOWN - will remove exclude dates from Prison Dto later.
+        actionedBy = ACTIONED_BY_NOT_KNOWN,
+      )
+    }
     savedPrison.excludeDates.addAll(excludeDates)
 
     val clients = prisonDto.clients.map { PrisonUserClient(prisonId = savedPrison.id, prison = savedPrison, userType = it.userType, active = it.active) }
@@ -122,34 +138,56 @@ class PrisonConfigService(
     return prisonsService.mapEntityToDto(prisonToUpdate)
   }
 
+  // TODO - replace PrisonDto with all exclude dates for a prison or void
   @Throws(ValidationException::class)
   @Transactional
-  fun addExcludeDate(prisonCode: String, excludeDate: LocalDate): PrisonDto {
+  fun addExcludeDate(prisonCode: String, prisonExcludeDateDto: PrisonExcludeDateDto): PrisonDto {
+    val excludeDate = prisonExcludeDateDto.excludeDate
+    // TODO - remove ?: "NOT_KNOWN" when we remove the admin functionality of adding exclude date
+    val actionedBy = prisonExcludeDateDto.actionedBy ?: "NOT_KNOWN"
+
+    LOG.info("adding exclude date - {} for prison - {} by user - {}", excludeDate, prisonCode, actionedBy)
+    if (isExcludeDateInPast(excludeDate)) {
+      LOG.info("failed to add exclude date - {} for prison - {} as exclude date is in the past", excludeDate, prisonCode)
+      throw ValidationException(messageService.getMessage("validation.add.prison.excludedate.inpast", prisonCode, excludeDate.toString()))
+    }
     val prison = prisonsService.findPrisonByCode(prisonCode)
     val existingExcludeDates = getExistingExcludeDates(prison)
 
     if (existingExcludeDates.contains(excludeDate)) {
+      LOG.info("failed to add exclude date - {} for prison - {} as exclude date already exists", excludeDate, prisonCode)
       throw ValidationException(messageService.getMessage("validation.add.prison.excludedate.alreadyexists", prisonCode, excludeDate.toString()))
     } else {
-      prisonExcludeDateRepository.saveAndFlush(PrisonExcludeDate(prison.id, prison, excludeDate))
-
+      prisonExcludeDateRepository.saveAndFlush(PrisonExcludeDate(prison.id, prison, excludeDate, actionedBy))
+      telemetryClientService.trackAddExcludeDateEvent(prisonCode, prisonExcludeDateDto)
       // add any visits for the date for review
       visitNotificationEventService.handleAddPrisonVisitBlockDate(PrisonDateBlockedDto(prisonCode, excludeDate))
+      LOG.info("successfully added exclude date - {} for prison - {}, by user - {}", excludeDate, prisonCode, actionedBy)
     }
     return PrisonDto(prisonsService.findPrisonByCode(prisonCode))
   }
 
   @Throws(ValidationException::class)
   @Transactional
-  fun removeExcludeDate(prisonCode: String, excludeDate: LocalDate) {
+  fun removeExcludeDate(prisonCode: String, prisonExcludeDateDto: PrisonExcludeDateDto) {
+    val excludeDate = prisonExcludeDateDto.excludeDate
+    // TODO - remove ?: "NOT_KNOWN" when we remove the admin functionality of adding exclude date
+    val actionedBy = prisonExcludeDateDto.actionedBy ?: "NOT_KNOWN"
+
+    LOG.info("removing exclude date - {} for prison - {} by user - {}", excludeDate, prisonCode, actionedBy)
+
     val prison = prisonsService.findPrisonByCode(prisonCode)
     val existingExcludeDates = getExistingExcludeDates(prison)
 
     if (!existingExcludeDates.contains(excludeDate)) {
+      LOG.info("failed to remove exclude date - {} for prison - {} as exclude date does not exist", excludeDate, prisonCode)
       throw ValidationException(messageService.getMessage("validation.remove.prison.excludedate.doesnotexist", prisonCode, excludeDate.toString()))
     } else {
       prisonExcludeDateRepository.deleteByPrisonIdAndExcludeDate(prison.id, excludeDate)
+      telemetryClientService.trackRemoveExcludeDateEvent(prisonCode, prisonExcludeDateDto)
+
       visitNotificationEventService.handleRemovePrisonVisitBlockDate(PrisonDateBlockedDto(prisonCode, excludeDate))
+      LOG.info("successfully removed exclude date - {} for prison - {}, by user - {}", excludeDate, prisonCode, actionedBy)
     }
   }
 
@@ -187,5 +225,20 @@ class PrisonConfigService(
         ),
       )
     }
+  }
+
+  @Transactional(readOnly = true)
+  fun getPrisonExcludeDates(prisonCode: String): List<PrisonExcludeDateDto> {
+    LOG.debug("getting exclude dates for prison - {}", prisonCode)
+    // ensure the prison is enabled
+    prisonsService.findPrisonByCode(prisonCode)
+
+    return prisonExcludeDateRepository.getExcludeDatesByPrisonCode(prisonCode).map {
+      PrisonExcludeDateDto(it.excludeDate, it.actionedBy)
+    }
+  }
+
+  private fun isExcludeDateInPast(excludeDate: LocalDate): Boolean {
+    return (excludeDate < LocalDate.now())
   }
 }
