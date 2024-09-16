@@ -25,4 +25,6 @@ class PrisonExcludeDate(
   @Column
   val excludeDate: LocalDate,
 
+  @Column(name = "actioned_by", nullable = false)
+  val actionedBy: String,
 ) : AbstractIdEntity()

@@ -18,10 +18,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAddPrisonExcludeDate
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAdminAddPrisonExcludeDate
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAdminRemovePrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreatePrison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetPrison
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callRemovePrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdatePrison
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonExcludeDate
@@ -54,6 +54,10 @@ class PrisonConfigTest : IntegrationTestBase() {
 
   @Autowired
   protected lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
+
+  companion object {
+    private const val TEST_USER = "TEST_USER"
+  }
 
   @BeforeEach
   internal fun setUp() {
@@ -308,7 +312,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     val excludeDate = LocalDate.now().plusDays(10)
 
     // When
-    val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+    val responseSpec = callAdminAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, "NOT_KNOWN")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -344,7 +348,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate.plusDays(1))
 
     // When
-    val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+    val responseSpec = callAdminAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, actionedBy = TEST_USER)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -375,12 +379,12 @@ class PrisonConfigTest : IntegrationTestBase() {
     val excludeDate = LocalDate.now().plusDays(7)
 
     // When
-    val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+    val responseSpec = callAdminAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, actionedBy = TEST_USER)
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody()
       .jsonPath("$.developerMessage").isEqualTo("Cannot add exclude date $excludeDate to prison - ${prison.code} as it already exists")
-    verify(prisonExcludeDateRepositorySpy, times(0)).save(PrisonExcludeDate(createdPrison.id, createdPrison, excludeDate))
+    verify(prisonExcludeDateRepositorySpy, times(0)).save(PrisonExcludeDate(createdPrison.id, createdPrison, excludeDate, actionedBy = TEST_USER))
   }
 
   @Test
@@ -393,7 +397,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     val excludeDate = LocalDate.now().plusDays(7)
 
     // When
-    val responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+    val responseSpec = callAdminRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, actionedBy = TEST_USER)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -420,7 +424,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     visitNotificationEventHelper.create(bookedVisitForSamePrison.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE)
 
     // When
-    val responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+    val responseSpec = callAdminRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, actionedBy = TEST_USER)
 
     // Then
     responseSpec.expectStatus().isOk
@@ -443,7 +447,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     val excludeDate = LocalDate.now().plusDays(7)
 
     // When
-    val responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+    val responseSpec = callAdminRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, actionedBy = TEST_USER)
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody()
@@ -458,7 +462,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     val excludeDate = LocalDate.now().plusDays(7)
 
     // When
-    val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, nonExistentPrisonCode, excludeDate)
+    val responseSpec = callAdminAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, nonExistentPrisonCode, excludeDate, actionedBy = TEST_USER)
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody()
@@ -474,7 +478,7 @@ class PrisonConfigTest : IntegrationTestBase() {
     val excludeDate = LocalDate.now().plusDays(7)
 
     // When
-    val responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, nonExistentPrisonCode, excludeDate)
+    val responseSpec = callAdminRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, nonExistentPrisonCode, excludeDate, actionedBy = TEST_USER)
 
     // Then
     responseSpec.expectStatus().isBadRequest.expectBody()
@@ -484,7 +488,7 @@ class PrisonConfigTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when we get a prison, data is return as exspected `() {
+  fun `when we get a prison, data is returned as expected `() {
     // Given
     val prison = prisonEntityHelper.create()
 

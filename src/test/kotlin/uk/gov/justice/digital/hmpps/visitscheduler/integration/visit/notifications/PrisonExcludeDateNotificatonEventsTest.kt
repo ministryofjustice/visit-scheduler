@@ -28,9 +28,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionSlotEntityHelper
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAddPrisonExcludeDate
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAdminAddPrisonExcludeDate
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAdminRemovePrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callApplicationForVisitChange
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callRemovePrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitBook
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotificationEventService
 import java.time.LocalDate
@@ -73,7 +73,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate.plusDays(1))
 
     // When
-    val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
+    val responseSpec = callAdminAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate, actionedBy = "TEST_USER")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -110,7 +110,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
 
     // When
     // call add exclude dates first
-    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
+    var responseSpec = callAdminAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate, actionedBy = "TEST_USER")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -119,7 +119,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
 
     // call remove exclude dates next
-    responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
+    responseSpec = callAdminRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate, actionedBy = "TEST_USER")
     responseSpec.expectStatus().isOk
     verify(visitNotificationEventServiceSpy, times(1)).handleRemovePrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
     visitNotifications = testVisitNotificationEventRepository.findAll()
@@ -139,7 +139,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     val newSessionSlot = sessionSlotEntityHelper.create(sessionTemplateDefault.reference, prison.id, LocalDate.now().plusDays(5), sessionTemplateDefault.startTime, sessionTemplateDefault.endTime)
 
     // call add exclude dates first
-    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+    var responseSpec = callAdminAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, actionedBy = "TEST_USER")
     responseSpec.expectStatus().isOk
 
     val visitNotifications = testVisitNotificationEventRepository.findAll()
@@ -190,7 +190,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
 
     // When
     // call add exclude dates first
-    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
+    var responseSpec = callAdminAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate, actionedBy = "TEST_USER")
 
     // Then
     responseSpec.expectStatus().isOk
