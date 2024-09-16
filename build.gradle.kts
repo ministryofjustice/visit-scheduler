@@ -23,7 +23,7 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-security")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:4.3.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:4.4.1")
 
   implementation("com.fasterxml.jackson.module:jackson-module-kotlin:2.17.2")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
@@ -59,7 +59,7 @@ dependencies {
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.testcontainers:postgresql:1.20.1")
   testImplementation("org.testcontainers:localstack:1.20.1")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.771")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.772")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.17.2")
   testImplementation("org.junit-pioneer:junit-pioneer:2.2.0")
 }
