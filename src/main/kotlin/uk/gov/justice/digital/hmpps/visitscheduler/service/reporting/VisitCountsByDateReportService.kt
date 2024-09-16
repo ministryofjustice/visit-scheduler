@@ -7,10 +7,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionSlotService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
 import uk.gov.justice.digital.hmpps.visitscheduler.task.ReportingTask.Companion.LOG
 import java.time.LocalDate
@@ -20,8 +20,8 @@ class VisitCountsByDateReportService(
   private val prisonsService: PrisonsService,
   private val sessionService: SessionService,
   private val telemetryClientService: TelemetryClientService,
+  private val sessionSlotService: SessionSlotService,
   private val visitRepository: VisitRepository,
-  private val sessionSlotRepository: SessionSlotRepository,
 ) {
   fun getVisitCountsReportForDate(reportDate: LocalDate): List<SessionVisitCountsDto> {
     val today = LocalDate.now()
@@ -129,7 +129,7 @@ class VisitCountsByDateReportService(
   }
 
   private fun getVisitCountsBySession(sessionTemplateReference: String, visitStatus: VisitStatus, visitDate: LocalDate): List<VisitRestrictionStats> {
-    val sessionSlotId = sessionSlotRepository.findSessionSlotId(sessionTemplateReference, visitDate)
+    val sessionSlotId = sessionSlotService.getSessionSlot(sessionTemplateReference, visitDate)?.id
     sessionSlotId?.let {
       return when (visitStatus) {
         VisitStatus.BOOKED -> {
