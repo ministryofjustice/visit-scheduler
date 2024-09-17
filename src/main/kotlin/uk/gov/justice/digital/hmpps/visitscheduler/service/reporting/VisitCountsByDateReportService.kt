@@ -33,7 +33,7 @@ class VisitCountsByDateReportService(
     }
   }
 
-  private fun getVisitCountsBySession(reportDate: LocalDate): List<SessionVisitCountsDto> {
+  fun getVisitCountsBySession(reportDate: LocalDate): List<SessionVisitCountsDto> {
     return getSessionsReport(reportDate)
   }
 
