@@ -233,8 +233,8 @@ class TelemetryClientService(
       reportEvent["sessionEnd"] = formatTimeToString(sessionTimeSlot.endTime)
       reportEvent["openCapacity"] = sessionCapacity.open.toString()
       reportEvent["closedCapacity"] = sessionCapacity.closed.toString()
-      reportEvent["openBooked"] = openCount.toString()
-      reportEvent["closedBooked"] = closedCount.toString()
+      reportEvent["openVisits"] = openCount.toString()
+      reportEvent["closedVisits"] = closedCount.toString()
     }
 
     return reportEvent.toMap()
