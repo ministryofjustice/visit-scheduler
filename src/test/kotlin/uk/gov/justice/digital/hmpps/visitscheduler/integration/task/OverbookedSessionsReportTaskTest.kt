@@ -53,7 +53,7 @@ class OverbookedSessionsReportTaskTest : IntegrationTestBase() {
       validToDate = null,
       dayOfWeek = dayOfWeek,
       openCapacity = 1,
-      closedCapacity = 1
+      closedCapacity = 1,
     )
   }
 
@@ -62,7 +62,7 @@ class OverbookedSessionsReportTaskTest : IntegrationTestBase() {
       prisonCode = prison1.code,
       visitStatus = BOOKED,
       sessionTemplate = sessionTemplate,
-      slotDate = slotDate?: getNextSlotDate(sessionTemplate),
+      slotDate = slotDate ?: getNextSlotDate(sessionTemplate),
       visitRestriction = visitRestriction,
     )
   }
@@ -74,6 +74,7 @@ class OverbookedSessionsReportTaskTest : IntegrationTestBase() {
       LocalDate.now().with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
     }
   }
+
   @BeforeEach
   fun setupData() {
     deleteEntityHelper.deleteAll()
