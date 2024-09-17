@@ -48,10 +48,6 @@ class SessionSlotService {
     return getSessionSlot(sessionTemplateReference, slotDate, slotTime, slotEndTime, prison)
   }
 
-  fun getSessionTimeAndDate(date: LocalDate, time: LocalTime): LocalDateTime {
-    return date.atTime(time)
-  }
-
   fun getSessionTimeAndDateString(slotDateTime: LocalDateTime): String {
     return slotDateTime.format(DateTimeFormatter.ISO_DATE_TIME)
   }
@@ -111,5 +107,9 @@ class SessionSlotService {
         }
       }
     }
+  }
+
+  fun getSessionSlot(sessionTemplateReference: String, slotDate: LocalDate): SessionSlot? {
+    return sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate)
   }
 }
