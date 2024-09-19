@@ -228,7 +228,7 @@ class TelemetryClientService(
     val reportEvent = mutableMapOf<String, String>()
     with(overbookedSession) {
       reportEvent["sessionDate"] = formatDateToString(sessionDate)
-      reportEvent["prisonCode"] = prisonCode
+      reportEvent["prisonId"] = prisonCode
       reportEvent["sessionStart"] = formatTimeToString(sessionTimeSlot.startTime)
       reportEvent["sessionEnd"] = formatTimeToString(sessionTimeSlot.endTime)
       reportEvent["openCapacity"] = sessionCapacity.open.toString()
@@ -403,8 +403,8 @@ class TelemetryClientService(
     excludeDateDto: PrisonExcludeDateDto,
   ): Map<String, String> {
     val excludeDateEvent = mutableMapOf<String, String>()
-    excludeDateEvent["prison"] = prisonCode
-    excludeDateEvent["date"] = formatDateToString(excludeDateDto.excludeDate)
+    excludeDateEvent["prisonId"] = prisonCode
+    excludeDateEvent["excludedDate"] = formatDateToString(excludeDateDto.excludeDate)
 
     // TODO - remove the ?: "NOT_KNOWN" later
     excludeDateEvent["actionedBy"] = excludeDateDto.actionedBy ?: "NOT_KNOWN"
