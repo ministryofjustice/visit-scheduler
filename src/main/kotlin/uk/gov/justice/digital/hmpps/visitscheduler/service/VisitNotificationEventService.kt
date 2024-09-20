@@ -455,6 +455,9 @@ class VisitNotificationEventService(
         bookedByUserName = bookedByUserName,
         visitDate = visit.startTimestamp.toLocalDate(),
         bookingReference = it.bookingReference,
+        description = it.description,
+        visitorId = it.visitorId,
+        visitorRestrictionType = it.visitorRestrictionType,
       )
     }
   }
