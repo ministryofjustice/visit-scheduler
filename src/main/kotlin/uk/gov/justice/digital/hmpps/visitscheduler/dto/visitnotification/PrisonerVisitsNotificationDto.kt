@@ -20,7 +20,7 @@ class PrisonerVisitsNotificationDto(
   @Schema(description = "Description of the flagged event", example = "Visitor with id <id> has had restriction <restriction> added", required = false)
   @field:NotBlank
   val description: String? = null,
-  @Schema(description = "For visitor specific events, the id of the affected visitor", example = "1234567L", required = false)
+  @Schema(description = "For visitor specific events, the id of the affected visitor", example = "1234567", required = false)
   val visitorId: Long? = null,
   @Schema(description = "For visitor specific events, the restriction type of the affected visitor", example = "BAN", required = false)
   val visitorRestrictionType: VisitorSupportedRestrictionType? = null,
