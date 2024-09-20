@@ -93,9 +93,11 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
 
     // And
     val ignoredVisit = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    assertHelper.assertIgnoredVisit(ignoredVisit, ignoreVisitNotification.actionedBy, STAFF, ignoreVisitNotification.reason)
 
-    assertIgnoredVisit(ignoredVisit, ignoreVisitNotification)
-    assertUnFlagEvent(ignoredVisit, ignoreVisitNotification.reason)
+    // if there are no notifications deleteByBookingReference should not be called
+    verify(visitNotificationEventRepository, times(0)).deleteByBookingReference(eq(visit.reference))
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
   @Test

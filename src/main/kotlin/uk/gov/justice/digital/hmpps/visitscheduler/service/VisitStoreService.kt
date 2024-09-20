@@ -11,8 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
@@ -89,7 +88,7 @@ class VisitStoreService(
 
     val notSavedBooking = existingBooking?.let {
       validateVisitStartDate(it, "changed")
-      handleVisitUpdateEvents(it, application)
+      handleVisitUpdateEvents(it)
 
       // Update existing booking
       it.sessionSlotId = application.sessionSlotId
@@ -176,10 +175,8 @@ class VisitStoreService(
     }
   }
 
-  private fun handleVisitUpdateEvents(existingBooking: Visit, application: Application) {
-    if (existingBooking.sessionSlot.slotDate != application.sessionSlot.slotDate) {
-      visitNotificationEventService.deleteVisitNotificationEvents(existingBooking.reference, NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE, UnFlagEventReason.VISIT_DATE_UPDATED)
-    }
+  private fun handleVisitUpdateEvents(existingBooking: Visit) {
+    visitNotificationEventService.deleteVisitNotificationEvents(existingBooking.reference, VISIT_UPDATED)
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
