@@ -8,6 +8,7 @@ import jakarta.persistence.PostPersist
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.QuotableEncoder
 import java.time.LocalDateTime
@@ -27,6 +28,13 @@ class VisitNotificationEvent(
 
   @Column(nullable = true)
   val description: String? = null,
+
+  @Column(nullable = true)
+  val visitorId: Long? = null,
+
+  @Column(nullable = true)
+  @Enumerated(EnumType.STRING)
+  val visitorRestrictionType: VisitorSupportedRestrictionType? = null,
 
   @Transient
   private val _reference: String = "",
