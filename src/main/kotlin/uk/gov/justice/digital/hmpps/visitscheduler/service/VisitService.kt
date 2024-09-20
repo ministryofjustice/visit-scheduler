@@ -197,7 +197,7 @@ class VisitService(
     snsService.sendVisitCancelledEvent(visitDto)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
-    visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, null, UnFlagEventReason.VISIT_CANCELLED)
+    visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED)
 
     return visitDto
   }

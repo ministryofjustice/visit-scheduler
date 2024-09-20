@@ -326,7 +326,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       eq("unflagged-visit-event"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visit.reference)
-        assertThat(it["reviewType"]).isEqualTo(NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT.reviewType)
+        assertThat(it["reviewTypes"]).isEqualTo(NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT.reviewType)
         assertThat(it["reason"]).isEqualTo(UnFlagEventReason.PRISONER_ALERT_CODE_REMOVED.desc)
       },
       isNull(),
