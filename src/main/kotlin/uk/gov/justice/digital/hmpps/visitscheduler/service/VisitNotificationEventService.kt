@@ -20,6 +20,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_RESTRICTION_UPSERTED_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
@@ -36,6 +37,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerVisitsNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.ProcessVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SaveVisitNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
@@ -225,6 +227,42 @@ class VisitNotificationEventService(
         processVisitsWithNotifications(processVisitNotificationDto)
       }
     }
+  }
+
+  @Transactional
+  fun handleVisitorUnapprovedNotification(notificationDto: VisitorApprovedUnapprovedNotificationDto) {
+    LOG.debug("handleVisitorUnapprovedNotification notification received : {}", notificationDto)
+
+    val affectedVisits = visitService.getFutureVisitsByVisitorId(
+      visitorId = notificationDto.visitorId,
+      prisonerId = notificationDto.prisonerNumber,
+    )
+
+    if (affectedVisits.isNotEmpty()) {
+      val description = "visitor ${notificationDto.visitorId} has been unapproved for prisoner ${notificationDto.prisonerNumber}"
+      val visitorId = notificationDto.visitorId.toLong()
+      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, VISITOR_UNAPPROVED_EVENT, description, visitorId, null)
+      processVisitsWithNotifications(processVisitNotificationDto)
+    }
+  }
+
+  @Transactional
+  fun handleVisitorApprovedNotification(notificationDto: VisitorApprovedUnapprovedNotificationDto) {
+    LOG.debug("handleVisitorApprovedNotification notification received : {}", notificationDto)
+
+    val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+    val currentVisitorUnApprovedNotifications = visitNotificationEventRepository.getEventsByVisitor(
+      prisonerNumber = notificationDto.prisonerNumber,
+      prisonCode = prisonCode!!,
+      visitorId = notificationDto.visitorId.toLong(),
+      notificationEvent = VISITOR_UNAPPROVED_EVENT,
+    )
+
+    deleteNotificationsThatAreNoLongerValid(
+      currentVisitorUnApprovedNotifications,
+      VISITOR_UNAPPROVED_EVENT,
+      UnFlagEventReason.VISITOR_APPROVED,
+    )
   }
 
   @Transactional
