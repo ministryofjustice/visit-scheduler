@@ -21,7 +21,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_TYPES
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_APPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
@@ -74,6 +76,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import java.time.LocalDate
 
@@ -825,6 +828,32 @@ fun callNotifyVSiPThatVisitorRestrictionUpserted(
     webTestClient,
     authHttpHeaders,
     VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH,
+    dto,
+  )
+}
+
+fun callNotifyVSiPThatVisitorUnapproved(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: VisitorApprovedUnapprovedNotificationDto? = null,
+): ResponseSpec {
+  return callNotifyVSiPOfAEvent(
+    webTestClient,
+    authHttpHeaders,
+    VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH,
+    dto,
+  )
+}
+
+fun callNotifyVSiPThatVisitorApproved(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: VisitorApprovedUnapprovedNotificationDto? = null,
+): ResponseSpec {
+  return callNotifyVSiPOfAEvent(
+    webTestClient,
+    authHttpHeaders,
+    VISIT_NOTIFICATION_VISITOR_APPROVED_PATH,
     dto,
   )
 }
