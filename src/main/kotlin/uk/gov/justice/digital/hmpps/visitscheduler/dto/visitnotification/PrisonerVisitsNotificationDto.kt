@@ -2,6 +2,7 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification
 
 import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.NotBlank
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.ActionedByDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
 import java.time.LocalDate
 
@@ -11,7 +12,7 @@ class PrisonerVisitsNotificationDto(
   val prisonerNumber: String,
   @Schema(description = "Booked by user name ", example = "SMITH1", required = true)
   @field:NotBlank
-  val bookedByUserName: String,
+  val actionedBy: ActionedByDto,
   @Schema(description = "The date of the visit", example = "2023-11-08", required = true)
   @field:NotBlank
   val visitDate: LocalDate,
