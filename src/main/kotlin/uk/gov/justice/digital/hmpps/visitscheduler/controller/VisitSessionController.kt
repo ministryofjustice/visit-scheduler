@@ -26,6 +26,7 @@ import java.time.LocalDate
 import java.time.LocalTime
 
 const val VISIT_SESSION_CONTROLLER_PATH: String = "/visit-sessions"
+const val GET_VISIT_SESSION: String = "$VISIT_SESSION_CONTROLLER_PATH/session"
 const val VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH: String = "$VISIT_SESSION_CONTROLLER_PATH/available"
 const val GET_SESSION_SCHEDULE: String = "$VISIT_SESSION_CONTROLLER_PATH/schedule"
 const val GET_SESSION_CAPACITY: String = "$VISIT_SESSION_CONTROLLER_PATH/capacity"
@@ -260,5 +261,56 @@ class VisitSessionController(
     sessionEndTime: LocalTime,
   ): SessionCapacityDto {
     return sessionService.getSessionCapacity(prisonCode, sessionDate, sessionStartTime, sessionEndTime)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @GetMapping(GET_VISIT_SESSION)
+  @Operation(
+    summary = "Returns a single VSIP session",
+    description = "Returns a single VSIP session",
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "the session was found and returned",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Capacity not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun getVisitSession(
+    @RequestParam(value = "prisonCode", required = true)
+    @Parameter(
+      description = "Prison code",
+      example = "MDI",
+    )
+    prisonCode: String,
+    @RequestParam(value = "sessionDate", required = true)
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
+    @Parameter(
+      description = "Session date",
+      example = "2020-11-01",
+    )
+    sessionDate: LocalDate,
+    @RequestParam(value = "sessionTemplateReference", required = true)
+    @Parameter(
+      description = "Session template reference",
+      example = "xye-fjc-abc",
+    )
+    sessionTemplateReference: String,
+  ): VisitSessionDto {
+    return sessionService.getVisitSession(prisonCode, sessionDate, sessionTemplateReference)
   }
 }
