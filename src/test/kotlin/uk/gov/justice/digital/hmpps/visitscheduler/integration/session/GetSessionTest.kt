@@ -62,7 +62,6 @@ class GetSessionTest : IntegrationTestBase() {
     val sessionDate = LocalDate.of(2023, 1, 26)
     val wrongSessionDate = LocalDate.of(2022, 2, 3)
 
-
     val sessionTemplate = sessionTemplateEntityHelper.create(
       prisonCode = prisonCode,
       validFromDate = sessionDate,
