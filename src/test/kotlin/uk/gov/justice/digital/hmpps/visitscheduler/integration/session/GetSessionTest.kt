@@ -25,7 +25,7 @@ class GetSessionTest : IntegrationTestBase() {
   fun `get session from provided information`() {
     // Given
     val prisonCode = "MDI"
-    val sessionDate = LocalDate.of(2023,1, 26)
+    val sessionDate = LocalDate.of(2023, 1, 26)
 
     val sessionTemplate = sessionTemplateEntityHelper.create(
       prisonCode = prisonCode,
