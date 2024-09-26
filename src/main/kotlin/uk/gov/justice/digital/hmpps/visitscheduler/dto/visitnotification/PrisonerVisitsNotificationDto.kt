@@ -10,9 +10,9 @@ class PrisonerVisitsNotificationDto(
   @Schema(description = "Prisoner Number", example = "AF34567G", required = true)
   @field:NotBlank
   val prisonerNumber: String,
-  @Schema(description = "Booked by user name ", example = "SMITH1", required = true)
+  @Schema(description = "username of the last user to action the visit booking (E.g. book, update)", example = "SMITH1", required = true)
   @field:NotBlank
-  val actionedBy: ActionedByDto,
+  val lastActionedBy: ActionedByDto,
   @Schema(description = "The date of the visit", example = "2023-11-08", required = true)
   @field:NotBlank
   val visitDate: LocalDate,

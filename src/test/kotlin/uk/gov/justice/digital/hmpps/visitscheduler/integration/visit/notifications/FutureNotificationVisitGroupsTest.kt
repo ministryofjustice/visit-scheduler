@@ -84,7 +84,7 @@ class FutureNotificationVisitGroupsTest : NotificationTestBase() {
         Assertions.assertThat(prisonerNumber).isEqualTo(visitPrimary.prisonerId)
         Assertions.assertThat(visitDate).isEqualTo(visitPrimary.sessionSlot.slotDate)
         Assertions.assertThat(bookingReference).isEqualTo(visitPrimary.reference)
-        Assertions.assertThat(actionedBy.userName).isEqualTo("IUpdatedIT")
+        Assertions.assertThat(lastActionedBy.userName).isEqualTo("IUpdatedIT")
       }
     }
 

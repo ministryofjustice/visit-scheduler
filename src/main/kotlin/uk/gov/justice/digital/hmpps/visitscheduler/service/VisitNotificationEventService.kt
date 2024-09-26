@@ -491,7 +491,7 @@ class VisitNotificationEventService(
 
       PrisonerVisitsNotificationDto(
         prisonerNumber = visit.prisonerId,
-        actionedBy = ActionedByDto(actionedBy),
+        lastActionedBy = ActionedByDto(actionedBy),
         visitDate = visit.startTimestamp.toLocalDate(),
         bookingReference = it.bookingReference,
         description = it.description,
