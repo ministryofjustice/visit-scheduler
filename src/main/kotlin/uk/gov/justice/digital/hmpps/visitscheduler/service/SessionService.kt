@@ -64,6 +64,10 @@ class SessionService(
       sessionDate.dayOfWeek,
     ).filter { it.reference == sessionTemplateReference }
 
+    if (sessionTemplates.isEmpty()) {
+      throw TemplateNotFoundException("Template with reference: $sessionTemplateReference not found on call to getVisitSession")
+    }
+
     val visitSessions = sessionTemplates.map { sessionTemplate ->
       VisitSessionDto(
         sessionTemplateReference = sessionTemplate.reference,

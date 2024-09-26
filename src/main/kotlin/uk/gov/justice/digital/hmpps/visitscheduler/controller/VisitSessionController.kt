@@ -310,7 +310,7 @@ class VisitSessionController(
       example = "xye-fjc-abc",
     )
     sessionTemplateReference: String,
-  ): VisitSessionDto {
+  ): VisitSessionDto? {
     return sessionService.getVisitSession(prisonCode, sessionDate, sessionTemplateReference)
   }
 }

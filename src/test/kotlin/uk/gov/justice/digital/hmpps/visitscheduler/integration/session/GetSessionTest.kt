@@ -55,6 +55,36 @@ class GetSessionTest : IntegrationTestBase() {
     Assertions.assertThat(visitSession.openVisitBookedCount).isEqualTo(1)
   }
 
+  @Test
+  fun `get session failed when incorrect information provided`() {
+    // Given
+    val prisonCode = "MDI"
+    val sessionDate = LocalDate.of(2023, 1, 26)
+    val wrongSessionDate = LocalDate.of(2022, 2, 3)
+
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = prisonCode,
+      validFromDate = sessionDate,
+      validToDate = sessionDate,
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = sessionDate.dayOfWeek,
+    )
+
+    val prison = PrisonEntityHelper.createPrison(prisonCode)
+
+    testSessionSlotRepository.save(SessionSlot(sessionTemplate.reference, prison.id, sessionDate, sessionDate.atTime(9, 0), sessionDate.atTime(10, 0)))
+
+    visitEntityHelper.create(visitStatus = BOOKED, slotDate = sessionDate, sessionTemplate = sessionTemplate, visitContact = ContactDto("Jane Doe", "01111111111"), visitRestriction = VisitRestriction.OPEN)
+
+    // When
+    val responseSpec = callGetVisitSession(prisonCode, wrongSessionDate, sessionTemplate.reference)
+
+    // Then
+    responseSpec.expectStatus().isNotFound
+  }
+
   private fun callGetVisitSession(
     prisonCode: String,
     sessionDate: LocalDate,
