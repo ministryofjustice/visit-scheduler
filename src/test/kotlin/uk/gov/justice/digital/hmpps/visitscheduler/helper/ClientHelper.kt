@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE
@@ -43,7 +42,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_CA
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.STAFF_ADD_PRISON_EXCLUDE_DATE
@@ -595,16 +593,6 @@ fun getGetPrisonUrl(prisonCode: String): String {
   return getPrisonIdUrl(PRISON, prisonCode)
 }
 
-@Deprecated(message = "to be removed when we remove exclude date feature from admin service")
-fun getAdminAddPrisonExcludeDateUrl(prisonCode: String): String {
-  return getPrisonIdUrl(ADD_PRISON_EXCLUDE_DATE, prisonCode)
-}
-
-@Deprecated(message = "to be removed when we remove exclude date feature from admin service")
-fun getAdminRemovePrisonExcludeDateUrl(prisonCode: String): String {
-  return getPrisonIdUrl(REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
-}
-
 fun getAddPrisonExcludeDateUrl(prisonCode: String): String {
   return getPrisonIdUrl(STAFF_ADD_PRISON_EXCLUDE_DATE, prisonCode)
 }
@@ -652,38 +640,6 @@ fun callGetPrison(
   return callGet(
     webTestClient,
     getGetPrisonUrl(prisonCode),
-    authHttpHeaders,
-  )
-}
-
-@Deprecated(message = "to be removed when we remove exclude date feature from admin service")
-fun callAdminAddPrisonExcludeDate(
-  webTestClient: WebTestClient,
-  authHttpHeaders: (HttpHeaders) -> Unit,
-  prisonCode: String,
-  excludeDate: LocalDate,
-  actionedBy: String,
-): ResponseSpec {
-  return callPut(
-    PrisonExcludeDateDto(excludeDate, actionedBy),
-    webTestClient,
-    getAdminAddPrisonExcludeDateUrl(prisonCode),
-    authHttpHeaders,
-  )
-}
-
-@Deprecated(message = "to be removed when we remove exclude date feature from admin service")
-fun callAdminRemovePrisonExcludeDate(
-  webTestClient: WebTestClient,
-  authHttpHeaders: (HttpHeaders) -> Unit,
-  prisonCode: String,
-  excludeDate: LocalDate,
-  actionedBy: String,
-): ResponseSpec {
-  return callPut(
-    PrisonExcludeDateDto(excludeDate, actionedBy),
-    webTestClient,
-    getAdminRemovePrisonExcludeDateUrl(prisonCode),
     authHttpHeaders,
   )
 }
