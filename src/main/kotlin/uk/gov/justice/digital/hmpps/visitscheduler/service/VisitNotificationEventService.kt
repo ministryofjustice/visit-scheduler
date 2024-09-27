@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.ActionedByDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_DELETED
@@ -486,11 +487,11 @@ class VisitNotificationEventService(
     return events.map {
       LOG.info("createPrisonerVisitsNotificationDto Entered - created visit notification for visit with booking reference: {}", it.bookingReference)
       val visit = this.visitService.getVisitByReference(it.bookingReference)
-      val bookedByUserName = this.visitEventAuditService.getLastUserToUpdateSlotByReference(it.bookingReference)
+      val actionedBy = this.visitEventAuditService.getLastUserToUpdateSlotByReference(it.bookingReference)
 
       PrisonerVisitsNotificationDto(
         prisonerNumber = visit.prisonerId,
-        bookedByUserName = bookedByUserName,
+        lastActionedBy = ActionedByDto(actionedBy),
         visitDate = visit.startTimestamp.toLocalDate(),
         bookingReference = it.bookingReference,
         description = it.description,

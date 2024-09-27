@@ -184,14 +184,8 @@ class VisitEventAuditService {
   }
 
   @Transactional(readOnly = true)
-  fun getLastUserToUpdateSlotByReference(bookingReference: String): String {
-    val eventAuditType = eventAuditRepository.getLastUserToUpdateBookingByReference(bookingReference)
-
-    return when (eventAuditType.userType) {
-      STAFF -> eventAuditType.userName!!
-      PUBLIC -> eventAuditType.bookerReference!!
-      SYSTEM -> ""
-    }
+  fun getLastUserToUpdateSlotByReference(bookingReference: String): ActionedBy {
+    return eventAuditRepository.getLastUserToUpdateBookingByReference(bookingReference)
   }
 
   fun updateVisitApplicationAndSaveBookingEvent(bookedVisitDto: VisitDto, bookingRequestDto: BookingRequestDto): EventAuditDto {
