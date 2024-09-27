@@ -18,7 +18,6 @@ import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
-import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import java.time.LocalDate
 
 const val PRISONS_PATH: String = "/prisons"
@@ -37,7 +36,6 @@ const val GET_PRISON_EXCLUDE_DATES: String = PRISON_EXCLUDE_DATE_PATH
 @RequestMapping(name = "Prison Exclude Dates Configuration Resource", produces = [MediaType.APPLICATION_JSON_VALUE])
 class PrisonExcludeDatesController(
   private val prisonConfigService: PrisonConfigService,
-  private val prisonsService: PrisonsService,
 ) {
   // TODO - change return to list of exclude dates or void?
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -79,7 +77,7 @@ class PrisonExcludeDatesController(
       prisonCode,
       prisonExcludeDateDto,
     )
-    return prisonsService.getPrison(prisonCode).excludeDates
+    return prisonConfigService.getPrisonExcludeDates(prisonCode).map { it.excludeDate }.toSet()
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
@@ -117,7 +115,7 @@ class PrisonExcludeDatesController(
     prisonExcludeDateDto: PrisonExcludeDateDto,
   ): Set<LocalDate> {
     prisonConfigService.removeExcludeDate(prisonCode, prisonExcludeDateDto)
-    return prisonsService.getPrison(prisonCode).excludeDates
+    return prisonConfigService.getPrisonExcludeDates(prisonCode).map { it.excludeDate }.toSet()
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

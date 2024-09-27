@@ -91,7 +91,6 @@ class PrisonEntityHelper(
     fun createPrisonDto(
       prisonCode: String = "AWE",
       activePrison: Boolean = true,
-      excludeDates: Set<LocalDate> = sortedSetOf(),
       clients: List<PrisonUserClientDto> = mutableListOf(),
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
@@ -101,8 +100,15 @@ class PrisonEntityHelper(
       adultAgeYears: Int = 18,
     ): PrisonDto {
       return PrisonDto(
-        code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears,
-        excludeDates = excludeDates, clients = clients,
+        code = prisonCode,
+        active = activePrison,
+        policyNoticeDaysMin = policyNoticeDaysMin,
+        policyNoticeDaysMax = policyNoticeDaysMax,
+        maxTotalVisitors = maxTotalVisitors,
+        maxAdultVisitors = maxAdultVisitors,
+        maxChildVisitors = maxChildVisitors,
+        adultAgeYears = adultAgeYears,
+        clients = clients,
       )
     }
 
