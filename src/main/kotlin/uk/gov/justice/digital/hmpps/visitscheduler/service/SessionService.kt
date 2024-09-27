@@ -57,6 +57,37 @@ class SessionService(
   }
 
   @Transactional(readOnly = true)
+  fun getVisitSession(prisonCode: String, sessionDate: LocalDate, sessionTemplateReference: String): VisitSessionDto {
+    val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
+      prisonCode,
+      sessionDate,
+      sessionDate.dayOfWeek,
+    ).filter { it.reference == sessionTemplateReference }
+
+    if (sessionTemplates.isEmpty()) {
+      throw TemplateNotFoundException("Template with reference: $sessionTemplateReference not found on call to getVisitSession")
+    }
+
+    val visitSessions = sessionTemplates.map { sessionTemplate ->
+      VisitSessionDto(
+        sessionTemplateReference = sessionTemplate.reference,
+        prisonCode = sessionTemplate.prison.code,
+        startTimestamp = LocalDateTime.of(sessionDate, sessionTemplate.startTime),
+        openVisitCapacity = sessionTemplate.openCapacity,
+        closedVisitCapacity = sessionTemplate.closedCapacity,
+        endTimestamp = LocalDateTime.of(sessionDate, sessionTemplate.endTime),
+        visitRoom = sessionTemplate.visitRoom,
+        visitType = sessionTemplate.visitType,
+      )
+    }.also {
+      val sessionSlots = getSessionSlots(it)
+      populateBookedCount(sessionSlots, it, null, null)
+    }
+
+    return visitSessions.first()
+  }
+
+  @Transactional(readOnly = true)
   fun getVisitSessions(
     prisonCode: String,
     prisonerId: String,
