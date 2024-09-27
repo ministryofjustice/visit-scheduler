@@ -19,7 +19,6 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -33,9 +32,6 @@ const val ACTIVATE_PRISON: String = "$PRISON/activate"
 const val DEACTIVATE_PRISON: String = "$PRISON/deactivate"
 const val ACTIVATE_PRISON_CLIENT: String = "$PRISON/client/{type}/activate"
 const val DEACTIVATE_PRISON_CLIENT: String = "$PRISON/client/{type}/deactivate"
-
-const val ADD_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-date/add"
-const val REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON/exclude-date/remove"
 
 @RestController
 @Validated
@@ -329,82 +325,5 @@ class PrisonAdminController(
     type: UserType,
   ): PrisonUserClientDto {
     return prisonConfigService.deActivatePrisonClient(prisonCode, type)
-  }
-
-  @Deprecated("to be moved out of prison admin")
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @PutMapping(ADD_PRISON_EXCLUDE_DATE)
-  @Operation(
-    summary = "Add exclude date to a prison.",
-    description = "Add exclude date to a prison.",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "successfully added exclude date to a prison",
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "exclude date  provided already exists for prison or prison can't be found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to add exclude dates to a prison",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun addPrisonExcludeDate(
-    @Schema(description = "prison id", example = "BHI", required = true)
-    @PathVariable
-    prisonCode: String,
-    @RequestBody
-    @Valid
-    prisonExcludeDateDto: PrisonExcludeDateDto,
-  ): PrisonDto {
-    return prisonConfigService.addExcludeDate(prisonCode, prisonExcludeDateDto)
-  }
-
-  @Deprecated("to be moved out of prison admin")
-  @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
-  @PutMapping(REMOVE_PRISON_EXCLUDE_DATE)
-  @Operation(
-    summary = "Remove exclude date from a prison.",
-    description = "Remove exclude date from a prison.",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "successfully removed exclude date from a prison",
-      ),
-      ApiResponse(
-        responseCode = "400",
-        description = "exclude date does not exist for prison or prison can't be found",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to add exclude dates to a prison",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun removePrisonExcludeDate(
-    @Schema(description = "prison id", example = "BHI", required = true)
-    @PathVariable
-    prisonCode: String,
-    @RequestBody @Valid
-    prisonExcludeDateDto: PrisonExcludeDateDto,
-  ) {
-    return prisonConfigService.removeExcludeDate(prisonCode, prisonExcludeDateDto)
   }
 }

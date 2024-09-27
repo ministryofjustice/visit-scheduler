@@ -14,17 +14,13 @@ import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAdminAddPrisonExcludeDate
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callAdminRemovePrisonExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreatePrison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGetPrison
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callUpdatePrison
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonExcludeDateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
-import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
 class PrisonConfigTest : IntegrationTestBase() {
@@ -37,15 +33,8 @@ class PrisonConfigTest : IntegrationTestBase() {
   @SpyBean
   lateinit var prisonRepositorySpy: PrisonRepository
 
-  @SpyBean
-  lateinit var prisonExcludeDateRepositorySpy: PrisonExcludeDateRepository
-
   @Autowired
   lateinit var testVisitNotificationEventRepository: TestVisitNotificationEventRepository
-
-  companion object {
-    private const val TEST_USER = "TEST_USER"
-  }
 
   @BeforeEach
   internal fun setUp() {
@@ -289,38 +278,6 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxTotalVisitors': rejected value [0]")
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxAdultVisitors': rejected value [0]")
     Assertions.assertThat(errorResponse.developerMessage).contains("'maxChildVisitors': rejected value [-2]")
-  }
-
-  @Test
-  fun `when add exclude dates called for non existent prison then BAD_REQUEST error code is returned `() {
-    // Given
-    val nonExistentPrisonCode = "QUI"
-    val excludeDate = LocalDate.now().plusDays(7)
-
-    // When
-    val responseSpec = callAdminAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, nonExistentPrisonCode, excludeDate, actionedBy = TEST_USER)
-
-    // Then
-    responseSpec.expectStatus().isBadRequest.expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("Prison code $nonExistentPrisonCode not found!")
-    verify(prisonExcludeDateRepositorySpy, times(0)).save(any())
-    verify(prisonExcludeDateRepositorySpy, times(0)).deleteByPrisonIdAndExcludeDate(any(), any())
-  }
-
-  @Test
-  fun `when remove exclude dates called for non existent prison then BAD_REQUEST error code is returned `() {
-    // Given
-    val nonExistentPrisonCode = "QUI"
-    val excludeDate = LocalDate.now().plusDays(7)
-
-    // When
-    val responseSpec = callAdminRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, nonExistentPrisonCode, excludeDate, actionedBy = TEST_USER)
-
-    // Then
-    responseSpec.expectStatus().isBadRequest.expectBody()
-      .jsonPath("$.developerMessage").isEqualTo("Prison code $nonExistentPrisonCode not found!")
-    verify(prisonExcludeDateRepositorySpy, times(0)).save(any())
-    verify(prisonExcludeDateRepositorySpy, times(0)).deleteByPrisonIdAndExcludeDate(any(), any())
   }
 
   @Test
