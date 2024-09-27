@@ -4,7 +4,6 @@ import io.swagger.v3.oas.annotations.media.Schema
 import jakarta.validation.constraints.Min
 import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
-import java.time.LocalDate
 
 @Schema(description = "Prison dto")
 data class PrisonDto(
@@ -41,10 +40,6 @@ data class PrisonDto(
   @Schema(description = "Age of adults in years")
   @field:NotNull
   val adultAgeYears: Int,
-
-  @Schema(description = "exclude dates", required = false)
-  val excludeDates: Set<LocalDate> = mutableSetOf(),
-
   @Schema(description = "prison user client", required = false)
   val clients: List<PrisonUserClientDto> = mutableListOf(),
 
@@ -53,7 +48,6 @@ data class PrisonDto(
   constructor(prisonEntity: Prison) : this(
     code = prisonEntity.code,
     active = prisonEntity.active,
-    excludeDates = prisonEntity.excludeDates.map { it.excludeDate }.toSet(),
     policyNoticeDaysMin = prisonEntity.policyNoticeDaysMin,
     policyNoticeDaysMax = prisonEntity.policyNoticeDaysMax,
     maxTotalVisitors = prisonEntity.maxTotalVisitors,
