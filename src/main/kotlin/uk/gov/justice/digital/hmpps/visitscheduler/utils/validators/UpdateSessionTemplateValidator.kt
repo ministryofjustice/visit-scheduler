@@ -28,8 +28,6 @@ class UpdateSessionTemplateValidator(
     validateUpdateSessionTemplateDate(sessionTemplate, updateSessionTemplateDto, hasVisits).let { errorMessages.addAll(it) }
     validateUpdateSessionTemplateWeeklyFrequency(sessionTemplate, updateSessionTemplateDto, hasVisits)?.let { errorMessages.add(it) }
 
-    // removed session capacity validation
-
     val hasFutureBookedVisits = visitRepository.hasBookedVisitsForSessionTemplate(sessionTemplate.reference, LocalDate.now())
     val updateSessionDetails = sessionTemplateMapper.getSessionDetails(sessionTemplate.reference, updateSessionTemplateDto)
     updateSessionTemplateDto.locationGroupReferences.let {
