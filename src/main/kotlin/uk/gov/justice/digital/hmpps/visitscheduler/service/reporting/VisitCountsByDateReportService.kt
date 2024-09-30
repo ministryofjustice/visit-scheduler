@@ -8,6 +8,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCou
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionSlotService
@@ -18,6 +19,7 @@ import java.time.LocalDate
 @Service
 class VisitCountsByDateReportService(
   private val prisonsService: PrisonsService,
+  private val prisonConfigService: PrisonConfigService,
   private val sessionService: SessionService,
   private val telemetryClientService: TelemetryClientService,
   private val sessionSlotService: SessionSlotService,
@@ -91,7 +93,7 @@ class VisitCountsByDateReportService(
   }
 
   private fun isExcludedDate(prison: PrisonDto, reportDate: LocalDate): Boolean {
-    return prison.excludeDates.contains(reportDate)
+    return prisonConfigService.getPrisonExcludeDates(prison.code).map { it.excludeDate }.contains(reportDate)
   }
 
   private fun getVisitCountsForSessions(sessions: List<SessionScheduleDto>, reportDate: LocalDate): Map<SessionScheduleDto, Map<Pair<VisitStatus, VisitRestriction>, Int>> {
