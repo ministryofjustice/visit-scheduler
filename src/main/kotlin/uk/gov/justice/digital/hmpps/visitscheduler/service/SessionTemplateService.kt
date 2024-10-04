@@ -74,7 +74,7 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionTemplates(prisonCode: String, rangeType: SessionTemplateRangeType): List<SessionTemplateDto> {
+  fun getSessionTemplates(prisonCode: String, rangeType: SessionTemplateRangeType): List<SessionTemplateDto> {
     val sessionTemplates = when (rangeType) {
       ALL -> sessionTemplateRepository.findSessionTemplatesByPrisonCode(prisonCode)
       HISTORIC -> sessionTemplateRepository.findHistoricSessionTemplates(prisonCode)
@@ -84,7 +84,7 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionTemplates(reference: String): SessionTemplateDto {
+  fun getSessionTemplates(reference: String): SessionTemplateDto {
     return SessionTemplateDto(getSessionTemplate(reference))
   }
 
@@ -360,7 +360,7 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionCategoryGroup(reference: String): SessionCategoryGroupDto {
+  fun getSessionCategoryGroup(reference: String): SessionCategoryGroupDto {
     return SessionCategoryGroupDto(getSessionCategoryGroupEntityByReference(reference))
   }
 
@@ -370,17 +370,17 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionCategoryGroups(prisonCode: String): List<SessionCategoryGroupDto> {
+  fun getSessionCategoryGroups(prisonCode: String): List<SessionCategoryGroupDto> {
     return sessionCategoryGroupRepository.findByPrisonCode(prisonCode).map { SessionCategoryGroupDto(it) }
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionIncentiveGroups(prisonCode: String): List<SessionIncentiveLevelGroupDto> {
+  fun getSessionIncentiveGroups(prisonCode: String): List<SessionIncentiveLevelGroupDto> {
     return sessionIncentiveLevelGroupRepository.findByPrisonCode(prisonCode).map { SessionIncentiveLevelGroupDto(it) }
   }
 
   @Transactional(readOnly = true)
-  open fun getSessionIncentiveGroup(reference: String): SessionIncentiveLevelGroupDto {
+  fun getSessionIncentiveGroup(reference: String): SessionIncentiveLevelGroupDto {
     return SessionIncentiveLevelGroupDto(getIncentiveLevelGroupByReference(reference))
   }
 

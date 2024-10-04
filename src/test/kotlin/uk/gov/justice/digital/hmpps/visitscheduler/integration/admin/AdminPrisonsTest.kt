@@ -187,9 +187,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
   @Test
   fun `create prison`() {
     // Given
-    val excludeDate = sortedSetOf(LocalDate.now())
     val clients = listOf(PrisonUserClientDto(PUBLIC, true), PrisonUserClientDto(STAFF, false))
-    val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, excludeDates = excludeDate, clients = clients)
+    val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, clients = clients)
 
     // When
     val responseSpec = webTestClient.post().uri(PRISON_ADMIN_PATH.replace("{prisonCode}", "AWE"))
@@ -199,8 +198,8 @@ class AdminPrisonsTest : IntegrationTestBase() {
 
     // Then
     val dto = getPrisonResults(responseSpec)
-    assertPrisonDto(dto, prisonCode = "AWE", isActive = true, excludeDate = excludeDate.first, isStaffActive = false, isPublicActive = true)
-    assertPrisonEntity(prisonCode = dto.code, isActive = dto.active, isStaffActive = false, isPublicActive = true, excludeDate.first)
+    assertPrisonDto(dto, prisonCode = "AWE", isActive = true, isStaffActive = false, isPublicActive = true)
+    assertPrisonEntity(prisonCode = dto.code, isActive = dto.active, isStaffActive = false, isPublicActive = true)
   }
 
   @Test
@@ -208,8 +207,7 @@ class AdminPrisonsTest : IntegrationTestBase() {
     // Given
     prisonEntityHelper.create(prisonCode = "AWE", activePrison = true)
 
-    val excludeDate = LocalDate.now()
-    val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, excludeDates = sortedSetOf(excludeDate))
+    val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true)
 
     // When
     val responseSpec = webTestClient.post().uri(PRISON_ADMIN_PATH.replace("{prisonCode}", "AWE"))
@@ -238,7 +236,7 @@ class AdminPrisonsTest : IntegrationTestBase() {
 
     // Then
     val dto = getPrisonResults(responseSpec)
-    assertPrisonDto(dto, prisonCode = "AWE", isActive = true, isStaffActive = true, isPublicActive = true, excludeDate = excludeDate)
+    assertPrisonDto(dto, prisonCode = "AWE", isActive = true, isStaffActive = true, isPublicActive = true)
     assertPrisonEntity(prisonCode = dto.code, isActive = dto.active, isStaffActive = true, isPublicActive = true, excludeDate)
   }
 
@@ -248,7 +246,6 @@ class AdminPrisonsTest : IntegrationTestBase() {
     isActive: Boolean = true,
     isStaffActive: Boolean? = null,
     isPublicActive: Boolean? = null,
-    excludeDate: LocalDate? = null,
   ) {
     assertThat(prison.code).isEqualTo(prisonCode)
     assertThat(prison.active).isEqualTo(isActive)
@@ -274,10 +271,6 @@ class AdminPrisonsTest : IntegrationTestBase() {
     } else {
       assertThat(prison.clients.firstOrNull { it.userType == PUBLIC }).isNull()
     }
-
-    excludeDate?.let {
-      assertThat(prison.excludeDates.toList()[0]).isEqualTo(excludeDate)
-    }
   }
 
   private fun assertPrisonEntity(
@@ -288,7 +281,6 @@ class AdminPrisonsTest : IntegrationTestBase() {
     exceptedExcludeDate: LocalDate? = null,
   ) {
     val prisonEntity = testPrisonRepository.findByCode(prisonCode)
-    System.out.println(" Prison code :" + prisonCode)
     assertThat(prisonEntity).isNotNull
     prisonEntity?.let { prison ->
       assertThat(prison.code).isEqualTo(prisonCode)
