@@ -37,7 +37,6 @@ const val GET_PRISON_EXCLUDE_DATES: String = PRISON_EXCLUDE_DATE_PATH
 class PrisonExcludeDatesController(
   private val prisonConfigService: PrisonConfigService,
 ) {
-  // TODO - change return to list of exclude dates or void?
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(STAFF_ADD_PRISON_EXCLUDE_DATE)
   @Operation(
