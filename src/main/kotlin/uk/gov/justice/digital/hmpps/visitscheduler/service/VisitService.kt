@@ -202,7 +202,7 @@ class VisitService(
     return visitDto
   }
 
-   @Transactional(readOnly = true)
+  @Transactional(readOnly = true)
   fun getBookedVisitsForDate(prisonCode: String, date: LocalDate): List<VisitDto> {
     return visitRepository.findBookedVisitsForDate(prisonCode, date).map { visitDtoBuilder.build(it) }
   }
