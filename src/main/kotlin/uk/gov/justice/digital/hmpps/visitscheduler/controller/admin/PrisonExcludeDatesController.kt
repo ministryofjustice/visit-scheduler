@@ -22,12 +22,8 @@ import java.time.LocalDate
 
 const val PRISONS_PATH: String = "/prisons"
 const val PRISON_EXCLUDE_DATE_PATH: String = "$PRISONS_PATH/prison/{prisonCode}/exclude-date"
-
-// TODO - remove STAFF from var name once we take ADMIN API endpoints to add / remove exclude dates out
-const val STAFF_ADD_PRISON_EXCLUDE_DATE: String = "$PRISON_EXCLUDE_DATE_PATH/add"
-
-// TODO - remove STAFF from var name once we take ADMIN API endpoints to add / remove exclude dates out
-const val STAFF_REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON_EXCLUDE_DATE_PATH/remove"
+const val ADD_PRISON_EXCLUDE_DATE: String = "$PRISON_EXCLUDE_DATE_PATH/add"
+const val REMOVE_PRISON_EXCLUDE_DATE: String = "$PRISON_EXCLUDE_DATE_PATH/remove"
 const val GET_PRISON_EXCLUDE_DATES: String = PRISON_EXCLUDE_DATE_PATH
 
 @RestController
@@ -38,7 +34,7 @@ class PrisonExcludeDatesController(
   private val prisonConfigService: PrisonConfigService,
 ) {
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PutMapping(STAFF_ADD_PRISON_EXCLUDE_DATE)
+  @PutMapping(ADD_PRISON_EXCLUDE_DATE)
   @Operation(
     summary = "Add exclude date to a prison.",
     description = "Add exclude date to a prison.",
@@ -80,7 +76,7 @@ class PrisonExcludeDatesController(
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @PutMapping(STAFF_REMOVE_PRISON_EXCLUDE_DATE)
+  @PutMapping(REMOVE_PRISON_EXCLUDE_DATE)
   @Operation(
     summary = "Remove exclude date from a prison.",
     description = "Remove exclude date from a prison.",

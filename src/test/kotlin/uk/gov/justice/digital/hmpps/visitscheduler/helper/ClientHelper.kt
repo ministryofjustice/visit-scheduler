@@ -47,8 +47,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_SESSION_TEMPLATE_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.STAFF_ADD_PRISON_EXCLUDE_DATE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.STAFF_REMOVE_PRISON_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
@@ -597,11 +597,11 @@ fun getGetPrisonUrl(prisonCode: String): String {
 }
 
 fun getAddPrisonExcludeDateUrl(prisonCode: String): String {
-  return getPrisonIdUrl(STAFF_ADD_PRISON_EXCLUDE_DATE, prisonCode)
+  return getPrisonIdUrl(ADD_PRISON_EXCLUDE_DATE, prisonCode)
 }
 
 fun getRemovePrisonExcludeDateUrl(prisonCode: String): String {
-  return getPrisonIdUrl(STAFF_REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
+  return getPrisonIdUrl(REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
 }
 
 fun getGetPrisonExcludeDatesUrl(prisonCode: String): String {
