@@ -25,11 +25,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_SESSION_TEMPLATE_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_PRISON_EXCLUDE_DATES
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_SESSION_TEMPLATE_EXCLUDE_DATES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.MOVE_VISITS
@@ -42,6 +44,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_CA
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_SESSION_TEMPLATE_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.STAFF_ADD_PRISON_EXCLUDE_DATE
@@ -49,10 +52,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.STAFF_REMOVE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
@@ -605,6 +608,18 @@ fun getGetPrisonExcludeDatesUrl(prisonCode: String): String {
   return getPrisonIdUrl(GET_PRISON_EXCLUDE_DATES, prisonCode)
 }
 
+fun getAddSessionTemplateExcludeDateUrl(sessionTemplateReference: String): String {
+  return getReferenceUrl(ADD_SESSION_TEMPLATE_EXCLUDE_DATE, sessionTemplateReference)
+}
+
+fun getRemoveSessionTemplateExcludeDateUrl(sessionTemplateReference: String): String {
+  return getReferenceUrl(REMOVE_SESSION_TEMPLATE_EXCLUDE_DATE, sessionTemplateReference)
+}
+
+fun getGetSessionTemplateExcludeDatesUrl(sessionTemplateReference: String): String {
+  return getReferenceUrl(GET_SESSION_TEMPLATE_EXCLUDE_DATES, sessionTemplateReference)
+}
+
 fun callCreatePrison(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
@@ -652,7 +667,7 @@ fun callAddPrisonExcludeDate(
   actionedBy: String,
 ): ResponseSpec {
   return callPut(
-    PrisonExcludeDateDto(excludeDate, actionedBy),
+    ExcludeDateDto(excludeDate, actionedBy),
     webTestClient,
     getAddPrisonExcludeDateUrl(prisonCode),
     authHttpHeaders,
@@ -667,7 +682,7 @@ fun callRemovePrisonExcludeDate(
   actionedBy: String,
 ): ResponseSpec {
   return callPut(
-    PrisonExcludeDateDto(excludeDate, actionedBy),
+    ExcludeDateDto(excludeDate, actionedBy),
     webTestClient,
     getRemovePrisonExcludeDateUrl(prisonCode),
     authHttpHeaders,
@@ -682,6 +697,48 @@ fun callGetPrisonsExcludeDates(
   return callGet(
     webTestClient,
     getGetPrisonExcludeDatesUrl(prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callAddSessionTemplateExcludeDate(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  sessionTemplateReference: String,
+  excludeDate: LocalDate,
+  actionedBy: String,
+): ResponseSpec {
+  return callPut(
+    ExcludeDateDto(excludeDate, actionedBy),
+    webTestClient,
+    getAddSessionTemplateExcludeDateUrl(sessionTemplateReference),
+    authHttpHeaders,
+  )
+}
+
+fun callRemoveSessionTemplateExcludeDate(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  sessionTemplateReference: String,
+  excludeDate: LocalDate,
+  actionedBy: String,
+): ResponseSpec {
+  return callPut(
+    ExcludeDateDto(excludeDate, actionedBy),
+    webTestClient,
+    getRemoveSessionTemplateExcludeDateUrl(sessionTemplateReference),
+    authHttpHeaders,
+  )
+}
+
+fun callGetSessionTemplateExcludeDates(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  sessionTemplateReference: String,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getGetSessionTemplateExcludeDatesUrl(sessionTemplateReference),
     authHttpHeaders,
   )
 }

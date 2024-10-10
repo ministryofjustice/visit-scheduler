@@ -208,6 +208,11 @@ class VisitService(
   }
 
   @Transactional
+  fun getBookedVisitsBySessionForDate(sessionTemplateReference: String, date: LocalDate): List<VisitDto> {
+    return visitRepository.findBookedVisitsBySessionForDate(sessionTemplateReference, date).map { visitDtoBuilder.build(it) }
+  }
+
+  @Transactional
   fun getBookedVisits(
     prisonerNumber: String,
     prisonCode: String,
