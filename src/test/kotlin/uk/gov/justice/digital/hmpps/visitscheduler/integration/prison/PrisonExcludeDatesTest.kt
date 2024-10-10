@@ -15,7 +15,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_PRISONS_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonDateBlockedDto
@@ -337,7 +337,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     verify(telemetryClient, times(0)).trackEvent(eq("remove-exclude-date"), any(), isNull())
   }
 
-  private fun getPrisonExcludeDates(returnResult: BodyContentSpec): Array<PrisonExcludeDateDto> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<PrisonExcludeDateDto>::class.java)
+  private fun getPrisonExcludeDates(returnResult: BodyContentSpec): Array<ExcludeDateDto> {
+    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<ExcludeDateDto>::class.java)
   }
 }
