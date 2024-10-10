@@ -19,8 +19,6 @@ enum class TelemetryVisitEvents(val eventName: String) {
   // exclude dates
   ADD_PRISON_EXCLUDE_DATE_EVENT("add-exclude-date"),
   REMOVE_PRISON_EXCLUDE_DATE_EVENT("remove-exclude-date"),
-
-  // exclude dates
   ADD_SESSION_EXCLUDE_DATE_EVENT("add-session-exclude-date"),
   REMOVE_SESSION_EXCLUDE_DATE_EVENT("remove-session-exclude-date"),
 

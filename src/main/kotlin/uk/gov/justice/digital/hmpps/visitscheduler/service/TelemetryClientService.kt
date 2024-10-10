@@ -16,10 +16,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.ADD_PRISON_EXCLUDE_DATE_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.ADD_SESSION_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_DELETED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_SLOT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.REMOVE_PRISON_EXCLUDE_DATE_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.REMOVE_SESSION_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.UNFLAGGED_VISIT_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
@@ -169,12 +171,12 @@ class TelemetryClientService(
 
   fun trackAddSessionExcludeDateEvent(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
     val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference, excludeDateDto)
-    trackEvent(ADD_PRISON_EXCLUDE_DATE_EVENT, visitTrackEvent)
+    trackEvent(ADD_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
   fun trackRemoveSessionExcludeDateEvent(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
     val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference, excludeDateDto)
-    trackEvent(REMOVE_PRISON_EXCLUDE_DATE_EVENT, visitTrackEvent)
+    trackEvent(REMOVE_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
   private fun handleException(visit: VisitDto, visitTrackEvent: MutableMap<String, String>, e: Exception) {

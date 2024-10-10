@@ -140,7 +140,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     Assertions.assertThat(excludeDates.size).isEqualTo(1)
     Assertions.assertThat(excludeDates[0].excludeDate).isEqualTo(excludeDate)
     Assertions.assertThat(excludeDates[0].actionedBy).isEqualTo(TEST_USER)
-    verify(telemetryClient, times(1)).trackEvent(eq("add-exclude-date"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -183,7 +183,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     // only 1 visit for the same date and session with status of BOOKED will be flagged.
     Assertions.assertThat(visitNotifications).hasSize(1)
     Assertions.assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSameSession.reference)
-    verify(telemetryClient, times(1)).trackEvent(eq("add-exclude-date"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("add-session-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -239,7 +239,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     val result = getResponseSpec.expectStatus().isOk.expectBody()
     val excludeDates = getPrisonExcludeDates(result).map { it.excludeDate }
     Assertions.assertThat(excludeDates).doesNotContain(excludeDate)
-    verify(telemetryClient, times(1)).trackEvent(eq("remove-exclude-date"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("remove-session-exclude-date"), any(), isNull())
   }
 
   @Test
@@ -267,7 +267,7 @@ class SessionTemplateExcludeDatesTest : IntegrationTestBase() {
     val result = getResponseSpec.expectStatus().isOk.expectBody()
     val excludeDates = getPrisonExcludeDates(result).map { it.excludeDate }
     Assertions.assertThat(excludeDates).doesNotContain(excludeDate)
-    verify(telemetryClient, times(1)).trackEvent(eq("remove-exclude-date"), any(), isNull())
+    verify(telemetryClient, times(1)).trackEvent(eq("remove-session-exclude-date"), any(), isNull())
   }
 
   @Test
