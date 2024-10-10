@@ -159,7 +159,7 @@ class SessionService(
     }.also {
       addConflicts(it, nonAssociationConflictSessions, doubleBookingOrReservationSessions)
     }.also {
-      populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications)
+      populateBookedCount(sessionSlots, it, excludedApplicationReference, usernameToExcludeFromReservedApplications, true)
     }.sortedWith(compareBy { it.startTimestamp })
   }
 
