@@ -273,7 +273,7 @@ class SessionService(
     val firstBookableSessionDay =
       getFirstBookableSessionDay(requestedBookableStartDate, sessionTemplate.validFromDate, sessionTemplate.dayOfWeek, sessionTemplate.weeklyFrequency)
     val lastBookableSessionDay = getLastBookableSession(requestedBookableEndDate, sessionTemplate.validToDate)
-    val excludeDates = getExcludeDates(sessionTemplate.prison)
+    val excludeDates = getExcludeDates(sessionTemplate)
 
     if (firstBookableSessionDay <= lastBookableSessionDay) {
       return this.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
@@ -298,11 +298,10 @@ class SessionService(
     return listOf()
   }
 
-  private fun getExcludeDates(prison: Prison): Set<LocalDate> {
+  fun getExcludeDates(sessionTemplate: SessionTemplate): Set<LocalDate> {
     val excludeDates = mutableSetOf<LocalDate>()
-    if (prison.excludeDates.isNotEmpty()) {
-      prison.excludeDates.forEach { excludeDates.add(it.excludeDate) }
-    }
+    excludeDates.addAll(sessionTemplate.excludeDates.map { it.excludeDate })
+    excludeDates.addAll(sessionTemplate.prison.excludeDates.map { it.excludeDate })
     return excludeDates.toSet()
   }
 
@@ -467,7 +466,7 @@ class SessionService(
     usernameToExcludeFromReservedApplications: String?,
   ): List<VisitRestrictionStats> {
     val slotDate = session.startTimestamp.toLocalDate()
-    val sessionSlot = sessionSlotIdsByKey.get(session.sessionTemplateReference + slotDate)
+    val sessionSlot = sessionSlotIdsByKey[session.sessionTemplateReference + slotDate]
     sessionSlot?.let {
       val restrictionBookedStats = visitRepository.getCountOfBookedSessionVisitsForOpenOrClosedRestriction(it.id)
       val restrictionReservedApplicationStats = applicationService.getCountOfReservedSessionForOpenOrClosedRestriction(it.id, excludedApplicationReference = excludedApplicationReference, usernameToExcludeFromReservedApplications)
