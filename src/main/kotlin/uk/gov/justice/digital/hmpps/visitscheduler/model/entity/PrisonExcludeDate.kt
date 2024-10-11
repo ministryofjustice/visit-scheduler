@@ -23,8 +23,8 @@ class PrisonExcludeDate(
 
   @Temporal(TemporalType.DATE)
   @Column
-  val excludeDate: LocalDate,
+  override val excludeDate: LocalDate,
 
   @Column(name = "actioned_by", nullable = false)
-  val actionedBy: String,
-) : AbstractIdEntity()
+  override val actionedBy: String,
+) : AbstractIdEntity(), IExcludeDate

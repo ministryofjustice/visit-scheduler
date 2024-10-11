@@ -7,6 +7,7 @@ import jakarta.persistence.ManyToOne
 import jakarta.persistence.Table
 import jakarta.persistence.TemporalType
 import org.springframework.data.jpa.repository.Temporal
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.IExcludeDate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.base.AbstractIdEntity
 import java.time.LocalDate
 
@@ -23,8 +24,8 @@ class SessionTemplateExcludeDate(
 
   @Temporal(TemporalType.DATE)
   @Column
-  val excludeDate: LocalDate,
+  override val excludeDate: LocalDate,
 
   @Column(name = "actioned_by", nullable = false)
-  val actionedBy: String,
-) : AbstractIdEntity()
+  override val actionedBy: String,
+) : AbstractIdEntity(), IExcludeDate

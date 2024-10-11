@@ -296,6 +296,15 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun findBookedVisitsForDate(prisonCode: String, date: LocalDate): List<Visit>
 
   @Query(
+    "SELECT v FROM Visit v WHERE " +
+      " v.visitStatus = 'BOOKED'  AND " +
+      "(v.sessionSlot.sessionTemplateReference = :sessionTemplateReference) AND " +
+      "(v.sessionSlot.slotDate = :date) " +
+      " ORDER BY v.sessionSlot.slotStart,v.id",
+  )
+  fun findBookedVisitsBySessionForDate(sessionTemplateReference: String, date: LocalDate): List<Visit>
+
+  @Query(
     "Select v.reference FROM visit v " +
       " LEFT JOIN event_audit ea on ea.booking_reference = v.reference and ea.type = 'BOOKED_VISIT' " +
       " LEFT JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
