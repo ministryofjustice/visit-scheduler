@@ -32,7 +32,6 @@ class PrisonConfigService(
   private val telemetryClientService: TelemetryClientService,
 ) {
   companion object {
-    const val ACTIONED_BY_NOT_KNOWN = "NOT_KNOWN"
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
@@ -55,17 +54,6 @@ class PrisonConfigService(
 
     val newPrison = Prison(prisonDto)
     val savedPrison = prisonRepository.saveAndFlush(newPrison)
-
-    val excludeDates = prisonDto.excludeDates.map {
-      PrisonExcludeDate(
-        prisonId = savedPrison.id,
-        prison = savedPrison,
-        excludeDate = it,
-        // TODO - temporarily set the actioned_by as NOT_KNOWN - will remove exclude dates from Prison Dto later.
-        actionedBy = ACTIONED_BY_NOT_KNOWN,
-      )
-    }
-    savedPrison.excludeDates.addAll(excludeDates)
 
     val clients = prisonDto.clients.map { PrisonUserClient(prisonId = savedPrison.id, prison = savedPrison, userType = it.userType, active = it.active) }
     savedPrison.clients.addAll(clients)

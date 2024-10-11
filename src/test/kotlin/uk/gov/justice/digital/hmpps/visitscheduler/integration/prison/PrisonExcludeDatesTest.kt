@@ -78,8 +78,8 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     val excludeDate2 = LocalDate.of(2024, 1, 21)
     val excludeDate3 = LocalDate.of(2023, 1, 21)
     val excludeDate4 = LocalDate.of(2024, 12, 21)
-    val prison = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ", excludeDates = setOf(excludeDate1, excludeDate2, excludeDate3, excludeDate4))
-    prisonEntityHelper.create(prison.code, prison.active, excludeDates = prison.excludeDates.toList())
+    val prison = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ")
+    prisonEntityHelper.create(prison.code, prison.active, excludeDates = listOf(excludeDate1, excludeDate2, excludeDate3, excludeDate4))
     val getResponseSpec = callGetPrisonsExcludeDates(webTestClient, roleVisitSchedulerHttpHeaders, prison.code)
     val result = getResponseSpec.expectStatus().isOk.expectBody()
     val excludeDates = getPrisonExcludeDates(result)
@@ -196,7 +196,7 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     // Given
     val prison = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ")
 
-    val createdPrison = prisonEntityHelper.create(prison.code, prison.active, prison.excludeDates.toList())
+    val createdPrison = prisonEntityHelper.create(prison.code, prison.active, emptyList())
     val excludeDate = LocalDate.now().minusDays(1)
 
     // When
@@ -214,9 +214,9 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     // Given
     val existingExcludeDates = setOf(LocalDate.now(), LocalDate.now().plusDays(7))
 
-    val prison = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ", excludeDates = existingExcludeDates)
+    val prison = PrisonEntityHelper.createPrisonDto(prisonCode = "XYZ")
 
-    val createdPrison = prisonEntityHelper.create(prison.code, prison.active, prison.excludeDates.toList())
+    val createdPrison = prisonEntityHelper.create(prison.code, prison.active, existingExcludeDates.toList())
     val excludeDate = LocalDate.now().plusDays(7)
 
     // When
