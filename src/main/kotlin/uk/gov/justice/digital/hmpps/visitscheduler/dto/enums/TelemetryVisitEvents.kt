@@ -16,6 +16,11 @@ enum class TelemetryVisitEvents(val eventName: String) {
   FLAGGED_VISIT_EVENT("flagged-visit-event"),
   UNFLAGGED_VISIT_EVENT("unflagged-visit-event"),
 
+  // exclude dates
+  ADD_EXCLUDE_DATE_EVENT("add-exclude-date"),
+  REMOVE_EXCLUDE_DATE_EVENT("remove-exclude-date"),
+
   // reporting
   VISIT_COUNTS_REPORT("visit-counts-report"),
+  OVERBOOKED_SESSION_REPORT("overbooked-sessions-report"),
 }

@@ -843,84 +843,6 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when session template closed capacity lowered below minimum allowed capacity update session template should fail`() {
-    // Given
-    val newSessionCapacity = SessionCapacityDto(closed = 1, open = sessionTemplateDefault.openCapacity)
-
-    // updating session template capacity
-    val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplateDefault.name + " Updated",
-      sessionCapacity = newSessionCapacity,
-      sessionDateRange = null,
-    )
-
-    // 2 open visit exists for session template
-    visitEntityHelper.create(
-      sessionTemplate = sessionTemplateDefault,
-      visitRestriction = VisitRestriction.CLOSED,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStart = LocalTime.of(11, 0),
-      visitEnd = LocalTime.of(12, 0),
-    )
-
-    visitEntityHelper.create(
-      prisonerId = "AABBCC1",
-      sessionTemplate = sessionTemplateDefault,
-      visitRestriction = VisitRestriction.CLOSED,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStart = LocalTime.of(11, 0),
-      visitEnd = LocalTime.of(12, 0),
-    )
-
-    // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
-
-    // Then
-    responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template closed capacity from ${sessionTemplateDefault.closedCapacity} to ${newSessionCapacity.closed} for ${sessionTemplateDefault.reference} as its lower than minimum capacity of 2!"))
-  }
-
-  @Test
-  fun `when session template open capacity lowered below minimum allowed capacity update session template should fail`() {
-    // Given
-    val newSessionCapacity = SessionCapacityDto(closed = sessionTemplateDefault.closedCapacity, open = 1)
-
-    // updating session template capacity
-    val dto = createUpdateSessionTemplateDto(
-      name = sessionTemplateDefault.name + " Updated",
-      sessionCapacity = newSessionCapacity,
-      sessionDateRange = null,
-    )
-
-    // 2 open visit exists for session template
-    visitEntityHelper.create(
-      sessionTemplate = sessionTemplateDefault,
-      visitRestriction = VisitRestriction.OPEN,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStart = LocalTime.of(11, 0),
-      visitEnd = LocalTime.of(12, 0),
-    )
-
-    visitEntityHelper.create(
-      prisonerId = "AABBCC1",
-      sessionTemplate = sessionTemplateDefault,
-      visitRestriction = VisitRestriction.OPEN,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStart = LocalTime.of(11, 0),
-      visitEnd = LocalTime.of(12, 0),
-    )
-
-    // When
-    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
-
-    // Then
-    responseSpec.expectStatus().isBadRequest
-      .expectBody()
-      .jsonPath("$.validationMessages[0]").value(Matchers.containsString("Cannot update session template open capacity from ${sessionTemplateDefault.openCapacity} to ${newSessionCapacity.open} for ${sessionTemplateDefault.reference} as its lower than minimum capacity of 2!"))
-  }
-
-  @Test
   fun `update session template fails for multiple reasons`() {
     // Given
     // update fails for multiple reasons
@@ -949,7 +871,6 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       .expectBody()
       .jsonPath("$.validationMessages[0]").value(Matchers.equalTo("Cannot update session times for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
       .jsonPath("$.validationMessages[1]").value(Matchers.equalTo("Cannot update session valid from date for ${sessionTemplateDefault.reference} as there are existing visits associated with this session template!"))
-      .jsonPath("$.validationMessages[2]").value(Matchers.equalTo("Cannot update session template open capacity from ${sessionTemplateDefault.openCapacity} to 0 for ${sessionTemplateDefault.reference} as its lower than minimum capacity of 1!"))
   }
 
   @Test

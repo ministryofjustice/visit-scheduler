@@ -8,21 +8,25 @@ import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.ADD_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_DELETED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.APPLICATION_SLOT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.FLAGGED_VISIT_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.REMOVE_EXCLUDE_DATE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.UNFLAGGED_VISIT_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_BOOKED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CANCELLED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_CHANGED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents.VISIT_SLOT_RESERVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
@@ -130,11 +134,11 @@ class TelemetryClientService(
 
   fun trackUnFlagVisitNotificationEvent(
     visitReference: String,
-    type: NotificationEventType?,
+    notificationEventTypesUnflagged: String,
     reason: UnFlagEventReason,
     reasonText: String?,
   ) {
-    val data = createUnFlagData(visitReference, type, reason, reasonText)
+    val data = createUnFlagData(visitReference, notificationEventTypesUnflagged, reason, reasonText)
     trackEvent(UNFLAGGED_VISIT_EVENT, data)
   }
 
@@ -143,9 +147,24 @@ class TelemetryClientService(
     trackEvent(TelemetryVisitEvents.VISIT_COUNTS_REPORT, event)
   }
 
+  fun trackOverbookedSessionsEvent(overbookedSession: OverbookedSessionsDto) {
+    val event = createOverbookedSessionTelemetryData(overbookedSession)
+    trackEvent(TelemetryVisitEvents.OVERBOOKED_SESSION_REPORT, event)
+  }
+
   fun trackFlaggedVisitEvent(visit: VisitDto, exception: Exception?) {
     val visitTrackEvent = createFlaggedVisitTrackEvent(visit, exception)
     trackEvent(FLAGGED_VISIT_EVENT, visitTrackEvent)
+  }
+
+  fun trackAddExcludeDateEvent(prisonCode: String, prisonExcludeDateDto: PrisonExcludeDateDto) {
+    val visitTrackEvent = createExcludeDateEventData(prisonCode, prisonExcludeDateDto)
+    trackEvent(ADD_EXCLUDE_DATE_EVENT, visitTrackEvent)
+  }
+
+  fun trackRemoveExcludeDateEvent(prisonCode: String, prisonExcludeDateDto: PrisonExcludeDateDto) {
+    val visitTrackEvent = createExcludeDateEventData(prisonCode, prisonExcludeDateDto)
+    trackEvent(REMOVE_EXCLUDE_DATE_EVENT, visitTrackEvent)
   }
 
   private fun handleException(visit: VisitDto, visitTrackEvent: MutableMap<String, String>, e: Exception) {
@@ -198,6 +217,24 @@ class TelemetryClientService(
     }
     sessionReport.closedCancelledCount?.let {
       reportEvent["closedCancelled"] = it.toString()
+    }
+
+    return reportEvent.toMap()
+  }
+
+  private fun createOverbookedSessionTelemetryData(
+    overbookedSession: OverbookedSessionsDto,
+  ): Map<String, String> {
+    val reportEvent = mutableMapOf<String, String>()
+    with(overbookedSession) {
+      reportEvent["sessionDate"] = formatDateToString(sessionDate)
+      reportEvent["prisonId"] = prisonCode
+      reportEvent["sessionStart"] = formatTimeToString(sessionTimeSlot.startTime)
+      reportEvent["sessionEnd"] = formatTimeToString(sessionTimeSlot.endTime)
+      reportEvent["openCapacity"] = sessionCapacity.open.toString()
+      reportEvent["closedCapacity"] = sessionCapacity.closed.toString()
+      reportEvent["openVisits"] = openCount.toString()
+      reportEvent["closedVisits"] = closedCount.toString()
     }
 
     return reportEvent.toMap()
@@ -312,18 +349,15 @@ class TelemetryClientService(
 
   private fun createUnFlagData(
     visitReference: String,
-    notificationEventType: NotificationEventType?,
+    notificationEventTypesUnflagged: String,
     reason: UnFlagEventReason,
     reasonText: String? = null,
   ): MutableMap<String, String> {
     val unFlagEventDataMap = mutableMapOf(
       "reference" to visitReference,
       "reason" to reason.desc,
+      "reviewTypes" to notificationEventTypesUnflagged,
     )
-
-    notificationEventType?.let {
-      unFlagEventDataMap["reviewType"] = it.reviewType
-    }
 
     reasonText?.let {
       unFlagEventDataMap["text"] = it
@@ -359,5 +393,18 @@ class TelemetryClientService(
 
   private fun getVisitorIdsAsString(visitors: List<VisitorDto>): String {
     return visitors.map { it.nomisPersonId }.joinToString(",")
+  }
+
+  private fun createExcludeDateEventData(
+    prisonCode: String,
+    excludeDateDto: PrisonExcludeDateDto,
+  ): Map<String, String> {
+    val excludeDateEvent = mutableMapOf<String, String>()
+    excludeDateEvent["prisonId"] = prisonCode
+    excludeDateEvent["excludedDate"] = formatDateToString(excludeDateDto.excludeDate)
+
+    // TODO - remove the ?: "NOT_KNOWN" later
+    excludeDateEvent["actionedBy"] = excludeDateDto.actionedBy ?: "NOT_KNOWN"
+    return excludeDateEvent.toMap()
   }
 }

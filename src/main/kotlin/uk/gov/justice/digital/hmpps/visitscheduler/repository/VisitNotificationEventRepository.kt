@@ -66,6 +66,27 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN visit v on v.reference  = vne.booking_reference  " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id " +
+      " JOIN visit_visitor vv on vv.visit_id = v.id " +
+      " WHERE ss.slot_date >= NOW() " +
+      " AND v.prisoner_id = :prisonerNumber " +
+      " AND p.code = :prisonCode " +
+      " AND vv.nomis_person_id = :visitorId " +
+      " AND vne.type=:#{#notificationEvent.name()}" +
+      " ORDER BY vne.reference, vne.id",
+    nativeQuery = true,
+  )
+  fun getEventsByVisitor(
+    prisonerNumber: String,
+    prisonCode: String,
+    visitorId: Long,
+    notificationEvent: NotificationEventType,
+  ): List<VisitNotificationEvent>
+
+  @Query(
+    "SELECT vne.* FROM visit_notification_event vne " +
+      " JOIN visit v on v.reference  = vne.booking_reference  " +
+      " JOIN session_slot ss on ss.id  = v.session_slot_id " +
+      " JOIN prison p on p.id  = v.prison_id " +
       " WHERE ss.slot_date >= :slotDate" +
       " AND ss.slot_date < (CAST(:slotDate AS DATE) + CAST('1 day' AS INTERVAL))" +
       " AND p.code = :prisonCode " +
@@ -119,7 +140,9 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
   )
   fun getNotificationsTypesForBookingReference(@Param("bookingReference") bookingReference: String): List<NotificationEventType>
 
-  fun deleteByBookingReference(@Param("bookingReference") bookingReference: String): Int
+  fun getVisitNotificationEventsByBookingReference(
+    bookingReference: String,
+  ): List<VisitNotificationEvent>
 
-  fun deleteByBookingReferenceAndType(@Param("bookingReference") bookingReference: String, @Param("type") type: NotificationEventType): Int
+  fun deleteByBookingReference(@Param("bookingReference") bookingReference: String): Int
 }

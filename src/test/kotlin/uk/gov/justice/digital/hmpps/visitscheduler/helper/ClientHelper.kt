@@ -21,13 +21,15 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_TYPES
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_APPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_PRISON_EXCLUDE_DATES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.MOVE_VISITS
@@ -40,9 +42,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_CA
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_INCENTIVE_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_LOCATION_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REFERENCE_SESSION_TEMPLATE_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMPLATE_VISIT_STATS
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.STAFF_ADD_PRISON_EXCLUDE_DATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.STAFF_REMOVE_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
@@ -71,6 +74,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Prisone
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReceivedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerRestrictionChangeNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import java.time.LocalDate
 
@@ -588,12 +592,17 @@ fun getCreatePrisonUrl(): String {
 fun getGetPrisonUrl(prisonCode: String): String {
   return getPrisonIdUrl(PRISON, prisonCode)
 }
+
 fun getAddPrisonExcludeDateUrl(prisonCode: String): String {
-  return getPrisonIdUrl(ADD_PRISON_EXCLUDE_DATE, prisonCode)
+  return getPrisonIdUrl(STAFF_ADD_PRISON_EXCLUDE_DATE, prisonCode)
 }
 
 fun getRemovePrisonExcludeDateUrl(prisonCode: String): String {
-  return getPrisonIdUrl(REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
+  return getPrisonIdUrl(STAFF_REMOVE_PRISON_EXCLUDE_DATE, prisonCode)
+}
+
+fun getGetPrisonExcludeDatesUrl(prisonCode: String): String {
+  return getPrisonIdUrl(GET_PRISON_EXCLUDE_DATES, prisonCode)
 }
 
 fun callCreatePrison(
@@ -640,9 +649,10 @@ fun callAddPrisonExcludeDate(
   authHttpHeaders: (HttpHeaders) -> Unit,
   prisonCode: String,
   excludeDate: LocalDate,
+  actionedBy: String,
 ): ResponseSpec {
   return callPut(
-    PrisonExcludeDateDto(excludeDate),
+    PrisonExcludeDateDto(excludeDate, actionedBy),
     webTestClient,
     getAddPrisonExcludeDateUrl(prisonCode),
     authHttpHeaders,
@@ -654,11 +664,24 @@ fun callRemovePrisonExcludeDate(
   authHttpHeaders: (HttpHeaders) -> Unit,
   prisonCode: String,
   excludeDate: LocalDate,
+  actionedBy: String,
 ): ResponseSpec {
   return callPut(
-    PrisonExcludeDateDto(excludeDate),
+    PrisonExcludeDateDto(excludeDate, actionedBy),
     webTestClient,
     getRemovePrisonExcludeDateUrl(prisonCode),
+    authHttpHeaders,
+  )
+}
+
+fun callGetPrisonsExcludeDates(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  prisonCode: String,
+): ResponseSpec {
+  return callGet(
+    webTestClient,
+    getGetPrisonExcludeDatesUrl(prisonCode),
     authHttpHeaders,
   )
 }
@@ -761,6 +784,32 @@ fun callNotifyVSiPThatVisitorRestrictionUpserted(
     webTestClient,
     authHttpHeaders,
     VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH,
+    dto,
+  )
+}
+
+fun callNotifyVSiPThatVisitorUnapproved(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: VisitorApprovedUnapprovedNotificationDto? = null,
+): ResponseSpec {
+  return callNotifyVSiPOfAEvent(
+    webTestClient,
+    authHttpHeaders,
+    VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH,
+    dto,
+  )
+}
+
+fun callNotifyVSiPThatVisitorApproved(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: VisitorApprovedUnapprovedNotificationDto? = null,
+): ResponseSpec {
+  return callNotifyVSiPOfAEvent(
+    webTestClient,
+    authHttpHeaders,
+    VISIT_NOTIFICATION_VISITOR_APPROVED_PATH,
     dto,
   )
 }

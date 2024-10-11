@@ -73,7 +73,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     createApplicationAndVisit(sessionTemplate = sessionTemplateXYZ, visitStatus = VisitStatus.BOOKED, slotDate = excludeDate.plusDays(1))
 
     // When
-    val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
+    val responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate, actionedBy = "TEST_USER")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -110,7 +110,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
 
     // When
     // call add exclude dates first
-    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
+    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate, actionedBy = "TEST_USER")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -119,7 +119,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     assertThat(visitNotifications[0].bookingReference).isEqualTo(bookedVisitForSamePrison.reference)
 
     // call remove exclude dates next
-    responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
+    responseSpec = callRemovePrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate, actionedBy = "TEST_USER")
     responseSpec.expectStatus().isOk
     verify(visitNotificationEventServiceSpy, times(1)).handleRemovePrisonVisitBlockDate(PrisonDateBlockedDto(prisonXYZ.code, excludeDate))
     visitNotifications = testVisitNotificationEventRepository.findAll()
@@ -139,7 +139,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     val newSessionSlot = sessionSlotEntityHelper.create(sessionTemplateDefault.reference, prison.id, LocalDate.now().plusDays(5), sessionTemplateDefault.startTime, sessionTemplateDefault.endTime)
 
     // call add exclude dates first
-    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate)
+    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prison.code, excludeDate, actionedBy = "TEST_USER")
     responseSpec.expectStatus().isOk
 
     val visitNotifications = testVisitNotificationEventRepository.findAll()
@@ -174,11 +174,11 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     responseSpec.expectStatus().isCreated
 
     assertThat(testVisitNotificationEventRepository.findAll()).isEmpty()
-    assertPrisonExcludeDateRemovalUnFlagEvent(visit.reference, UnFlagEventReason.VISIT_DATE_UPDATED)
+    assertPrisonExcludeDateRemovalUnFlagEvent(visit.reference, UnFlagEventReason.VISIT_UPDATED)
   }
 
   @Test
-  fun `when excluded date visit is updated but date not changed then visit flag is not removed`() {
+  fun `when excluded date visit is updated and date changed then all visit flags are removed`() {
     // Given
     val prisonXYZ = prisonEntityHelper.create("XYZ")
     val excludeDate = LocalDate.now().plusDays(10)
@@ -190,7 +190,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
 
     // When
     // call add exclude dates first
-    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate)
+    var responseSpec = callAddPrisonExcludeDate(webTestClient, roleVisitSchedulerHttpHeaders, prisonXYZ.code, excludeDate, actionedBy = "TEST_USER")
 
     // Then
     responseSpec.expectStatus().isOk
@@ -202,7 +202,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     val reserveVisitSlotDto = CreateApplicationDto(
       prisonerId = bookedVisit.prisonerId,
       sessionTemplateReference = bookedVisit.sessionSlot.sessionTemplateReference!!,
-      sessionDate = excludeDate,
+      sessionDate = excludeDate.plusWeeks(1),
       applicationRestriction = SessionRestriction.OPEN,
       visitContact = ContactDto("John Smith", "013448811538"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
@@ -223,8 +223,8 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
     responseSpec.expectStatus().isCreated
 
     visitNotifications = testVisitNotificationEventRepository.findAll()
-    assertThat(visitNotifications).hasSize(1)
-    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+    assertThat(visitNotifications).hasSize(0)
+    verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 
   fun assertPrisonExcludeDateRemovalUnFlagEvent(
@@ -235,7 +235,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
       eq("unflagged-visit-event"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visitReference)
-        assertThat(it["reviewType"]).isEqualTo(NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE.reviewType)
+        assertThat(it["reviewTypes"]).isEqualTo(NotificationEventType.PRISON_VISITS_BLOCKED_FOR_DATE.reviewType)
         assertThat(it["reason"]).isEqualTo(unFlagEventReason.desc)
       },
       isNull(),

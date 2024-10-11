@@ -27,11 +27,12 @@ class VisitNotificationFlaggingService(
 
   fun unFlagTrackEvents(
     visitReference: String,
-    type: NotificationEventType?,
+    notificationTypes: List<NotificationEventType>,
     reason: UnFlagEventReason,
     reasonText: String?,
   ) {
-    LOG.info("Unflagging visit with reference {} , review type(s) - {}, reason - {} ", visitReference, type?.reviewType ?: "ALL", reason.desc)
-    telemetryClientService.trackUnFlagVisitNotificationEvent(visitReference, type, reason, reasonText)
+    val notificationTypesUnflagged = notificationTypes.map { it.reviewType }.joinToString(",")
+    LOG.info("Unflagging visit with reference {} , review type(s) - {}, reason - {} ", visitReference, notificationTypesUnflagged, reason.desc)
+    telemetryClientService.trackUnFlagVisitNotificationEvent(visitReference, notificationTypesUnflagged, reason, reasonText)
   }
 }

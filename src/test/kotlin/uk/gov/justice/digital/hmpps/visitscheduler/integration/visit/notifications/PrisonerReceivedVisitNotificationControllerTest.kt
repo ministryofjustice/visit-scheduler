@@ -175,7 +175,7 @@ class PrisonerReceivedVisitNotificationControllerTest : NotificationTestBase() {
       eq("unflagged-visit-event"),
       org.mockito.kotlin.check {
         assertThat(it["reference"]).isEqualTo(visit.reference)
-        assertThat(it["reviewType"]).isEqualTo(NotificationEventType.PRISONER_RECEIVED_EVENT.reviewType)
+        assertThat(it["reviewTypes"]).isEqualTo(NotificationEventType.PRISONER_RECEIVED_EVENT.reviewType)
         assertThat(it["reason"]).isEqualTo(UnFlagEventReason.PRISONER_RETURNED_TO_PRISON.desc)
       },
       isNull(),
