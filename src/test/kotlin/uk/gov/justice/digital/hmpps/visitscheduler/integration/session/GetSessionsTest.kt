@@ -128,6 +128,180 @@ class GetSessionsTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when session is excluded for date visit sessions then visit session is not returned for that day`() {
+    // Given
+
+    val nextAllowedDay = getNextAllowedDay()
+    val nextWeek = nextAllowedDay.plusDays(7)
+    val prisonCode = "AWE"
+    prisonEntityHelper.create(prisonCode = prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      excludeDates = mutableListOf(nextAllowedDay),
+    )
+
+    // When
+    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(1)
+    assertThat(visitSessionResults[0].startTimestamp.toLocalDate()).isNotEqualTo(nextAllowedDay)
+    assertThat(visitSessionResults[0].startTimestamp).isEqualTo(nextWeek.atTime(sessionTemplate.startTime))
+    assertSession(visitSessionResults[0], nextWeek, sessionTemplate)
+  }
+
+  @Test
+  fun `when multiple sessions in a day and one session is excluded for date visit sessions are returned for a session with excluded dates`() {
+    // Given
+
+    val nextAllowedDay = getNextAllowedDay()
+    val nextWeek = nextAllowedDay.plusDays(7)
+    val prisonCode = "AWE"
+    prisonEntityHelper.create(prisonCode = prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+
+    // session 1 - excluded for the date
+    val sessionTemplateWithExcludedDates = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      excludeDates = mutableListOf(nextAllowedDay),
+    )
+
+    // session 2 - not excluded for the date
+    val notExcludedSessionTemplate = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      startTime = LocalTime.parse("11:00"),
+      endTime = LocalTime.parse("12:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      excludeDates = mutableListOf(),
+    )
+
+    // When
+    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+
+    // assert that only the non excluded session is returned
+    assertThat(visitSessionResults.size).isEqualTo(3)
+    assertSession(visitSessionResults[0], nextAllowedDay, notExcludedSessionTemplate)
+    assertSession(visitSessionResults[1], nextWeek, sessionTemplateWithExcludedDates)
+    assertSession(visitSessionResults[2], nextWeek, notExcludedSessionTemplate)
+  }
+
+  @Test
+  fun `when no sessions excluded then all visit sessions are returned`() {
+    // Given
+
+    val nextAllowedDay = getNextAllowedDay()
+    val nextWeek = nextAllowedDay.plusDays(7)
+    val prisonCode = "AWE"
+    prisonEntityHelper.create(prisonCode = prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+
+    // session 1 - no dates excluded
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      excludeDates = mutableListOf(),
+    )
+
+    // session 2 - no dates excluded
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      startTime = LocalTime.parse("11:00"),
+      endTime = LocalTime.parse("12:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      excludeDates = mutableListOf(),
+    )
+
+    // When
+    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+
+    // assert that only the non excluded session is returned
+    assertThat(visitSessionResults.size).isEqualTo(4)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate1)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplate2)
+    assertSession(visitSessionResults[2], nextWeek, sessionTemplate1)
+    assertSession(visitSessionResults[3], nextWeek, sessionTemplate2)
+  }
+
+  @Test
+  fun `when prison date excluded then no visit sessions are returned for blocked date`() {
+    // Given
+
+    val nextAllowedDay = getNextAllowedDay()
+    val nextWeek = nextAllowedDay.plusDays(7)
+    val prisonCode = "AWE"
+    prisonEntityHelper.create(prisonCode = prisonCode, excludeDates = listOf(nextAllowedDay))
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+
+    // session 1 - no dates excluded
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      startTime = LocalTime.parse("09:00"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      excludeDates = mutableListOf(),
+    )
+
+    // session 2 - no dates excluded
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(
+      prisonCode = "AWE",
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay.plusDays(10),
+      startTime = LocalTime.parse("11:00"),
+      endTime = LocalTime.parse("12:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      excludeDates = mutableListOf(),
+    )
+
+    // When
+    val responseSpec = callGetSessions(prisonId = "AWE", prisonerId)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getResults(returnResult)
+
+    // assert that only the non excluded session is returned
+    assertThat(visitSessionResults.size).isEqualTo(2)
+    assertSession(visitSessionResults[0], nextWeek, sessionTemplate1)
+    assertSession(visitSessionResults[1], nextWeek, sessionTemplate2)
+  }
+
+  @Test
   fun `only active visit sessions are returned for a prison`() {
     // Given
 

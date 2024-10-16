@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service.reporting
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -8,23 +10,26 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCou
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionScheduleDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.projections.VisitRestrictionStats
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonConfigService
+import uk.gov.justice.digital.hmpps.visitscheduler.service.ExcludeDateService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionSlotService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
-import uk.gov.justice.digital.hmpps.visitscheduler.task.ReportingTask.Companion.LOG
 import java.time.LocalDate
 
 @Service
 class VisitCountsByDateReportService(
   private val prisonsService: PrisonsService,
-  private val prisonConfigService: PrisonConfigService,
   private val sessionService: SessionService,
   private val telemetryClientService: TelemetryClientService,
   private val sessionSlotService: SessionSlotService,
+  private val excludeDateService: ExcludeDateService,
   private val visitRepository: VisitRepository,
 ) {
+  companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
+
   fun getVisitCountsReportForDate(reportDate: LocalDate): List<SessionVisitCountsDto> {
     val today = LocalDate.now()
     return if (reportDate == today || reportDate.isAfter(today)) {
@@ -93,7 +98,7 @@ class VisitCountsByDateReportService(
   }
 
   private fun isExcludedDate(prison: PrisonDto, reportDate: LocalDate): Boolean {
-    return prisonConfigService.getPrisonExcludeDates(prison.code).map { it.excludeDate }.contains(reportDate)
+    return excludeDateService.getPrisonExcludeDates(prison.code).map { it.excludeDate }.contains(reportDate)
   }
 
   private fun getVisitCountsForSessions(sessions: List<SessionScheduleDto>, reportDate: LocalDate): Map<SessionScheduleDto, Map<Pair<VisitStatus, VisitRestriction>, Int>> {

@@ -10,6 +10,7 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.JoinTable
 import jakarta.persistence.ManyToMany
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
@@ -96,4 +97,7 @@ class SessionTemplate(
 
   @Column(name = "active", nullable = false)
   var active: Boolean,
+
+  @OneToMany(fetch = FetchType.LAZY, cascade = [CascadeType.ALL], mappedBy = "sessionTemplate", orphanRemoval = true)
+  var excludeDates: MutableList<SessionTemplateExcludeDate> = mutableListOf(),
 ) : AbstractReferenceEntity(delimiter = ".", chunkSize = 3)

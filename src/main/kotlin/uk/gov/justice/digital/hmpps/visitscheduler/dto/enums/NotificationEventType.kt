@@ -5,6 +5,7 @@ enum class NotificationEventType(val reviewType: String) {
   PRISONER_RELEASED_EVENT("Prisoner-released"),
   PRISONER_RESTRICTION_CHANGE_EVENT("Prisoner-restriction-change"),
   PRISON_VISITS_BLOCKED_FOR_DATE("Prison-visits-blocked-for-date"),
+  SESSION_VISITS_BLOCKED_FOR_DATE("Session-visits-blocked-for-date"),
   PRISONER_RECEIVED_EVENT("Prisoner-received"),
   PRISONER_ALERTS_UPDATED_EVENT("Prisoner-alerts-updated"),
   PERSON_RESTRICTION_UPSERTED_EVENT("Person-restriction-upserted"),
