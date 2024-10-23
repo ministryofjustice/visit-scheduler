@@ -1,1 +1,1 @@
-CREATE INDEX idx_event_audit_type ON event_audit('type');
+CREATE INDEX idx_event_audit_type ON event_audit(type);
