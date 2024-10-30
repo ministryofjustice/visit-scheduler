@@ -1,1 +1,0 @@
-CREATE INDEX idx_visit_notification_event_booking_reference ON visit_notification_event(booking_reference);
