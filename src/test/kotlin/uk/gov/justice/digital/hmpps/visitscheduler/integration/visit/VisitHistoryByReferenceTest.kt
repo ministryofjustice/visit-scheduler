@@ -233,7 +233,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
       sessionDate = startDate,
       sessionTemplateReference = sessionTemplate.reference,
       applicationRestriction = OPEN,
-      visitContact = ContactDto("John Smith", "013448811538"),
+      visitContact = ContactDto("John Smith", "013448811538", "example@email.com"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto("Some Text"),
       actionedBy = actionedBy,

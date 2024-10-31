@@ -72,6 +72,7 @@ abstract class NotificationTestBase : IntegrationTestBase() {
       assertThat(data["visitType"]).isEqualTo(visit.visitType.name)
       assertThat(data["visitRoom"]).isEqualTo(visit.visitRoom)
       assertThat(data["hasPhoneNumber"]).isEqualTo((visit.visitContact!!.telephone != null).toString())
+      assertThat(data["hasEmail"]).isEqualTo((visit.visitContact!!.email != null).toString())
       assertThat(data["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
       assertThat(data["visitors"]).isEqualTo(visit.visitors.map { it.nomisPersonId }.joinToString(","))
       assertThat(data["reviewType"]).isEqualTo(type.reviewType)

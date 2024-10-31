@@ -67,13 +67,13 @@ class BookVisitTest : IntegrationTestBase() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     reservedStaffApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
-    applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
     applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedStaffApplication, description = "Some Text")
     reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
 
     reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, userType = PUBLIC)
-    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
     applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
     reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
@@ -137,7 +137,7 @@ class BookVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", openCapacity = 1)
 
     var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = OPEN)
-    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
 
@@ -172,7 +172,7 @@ class BookVisitTest : IntegrationTestBase() {
     val sessionTemplateDefault = sessionTemplateEntityHelper.create(prisonCode = "DFT", closedCapacity = 0)
 
     var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = CLOSED)
-    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
 
@@ -249,7 +249,7 @@ class BookVisitTest : IntegrationTestBase() {
     )
 
     // contact details have name and phone number
-    val contact = ContactDto(name = "Aled Evans", telephone = "01348811539")
+    val contact = ContactDto(name = "Aled Evans", telephone = "01348811539", email = "example@email.com")
 
     applicationEntityHelper.createContact(application = applicationWithContact, contact)
     applicationEntityHelper.createVisitor(application = applicationWithContact, nomisPersonId = 123L, visitContact = true)
@@ -274,8 +274,8 @@ class BookVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when phone number is not supplied in application for a new visit then visit will be booked with no phone number for contact`() {
-    val applicationWithNoPhoneNumber = applicationEntityHelper.create(
+  fun `when phone number or email is not supplied in application for a new visit then visit will be booked with no phone number or email for contact`() {
+    val applicationWithNoPhoneNumberNoEmail = applicationEntityHelper.create(
       sessionTemplate = sessionTemplateDefault,
       completed = false,
       reservedSlot = true,
@@ -283,23 +283,23 @@ class BookVisitTest : IntegrationTestBase() {
     )
 
     // contact details has name and no phone number
-    val contact = ContactDto(name = "Aled Evans", telephone = null)
+    val contact = ContactDto(name = "Aled Evans", telephone = null, email = null)
 
-    applicationEntityHelper.createVisitor(application = applicationWithNoPhoneNumber, nomisPersonId = 123L, visitContact = true)
-    applicationEntityHelper.createVisitor(application = applicationWithNoPhoneNumber, nomisPersonId = 666L, visitContact = false)
-    applicationEntityHelper.createSupport(application = applicationWithNoPhoneNumber, description = "Some More Text")
-    applicationEntityHelper.createContact(application = applicationWithNoPhoneNumber, contact)
-    applicationEntityHelper.save(applicationWithNoPhoneNumber)
+    applicationEntityHelper.createVisitor(application = applicationWithNoPhoneNumberNoEmail, nomisPersonId = 123L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = applicationWithNoPhoneNumberNoEmail, nomisPersonId = 666L, visitContact = false)
+    applicationEntityHelper.createSupport(application = applicationWithNoPhoneNumberNoEmail, description = "Some More Text")
+    applicationEntityHelper.createContact(application = applicationWithNoPhoneNumberNoEmail, contact)
+    applicationEntityHelper.save(applicationWithNoPhoneNumberNoEmail)
 
     // When
-    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithNoPhoneNumber.reference)
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, applicationWithNoPhoneNumberNoEmail.reference)
 
     // Then
     val visitDto = createVisitDtoFromResponse(responseSpec)
     assertThat(visitDto.visitContact).isNotNull()
     assertThat(visitDto.visitContact.name).isEqualTo(contact.name)
     assertThat(visitDto.visitContact.telephone).isNull()
-    assertVisitMatchesApplication(visitDto, applicationWithNoPhoneNumber)
+    assertVisitMatchesApplication(visitDto, applicationWithNoPhoneNumberNoEmail)
 
     val application = testApplicationRepository.findByReference(visitDto.applicationReference)
     assertThat(application!!.completed).isTrue()
@@ -313,7 +313,7 @@ class BookVisitTest : IntegrationTestBase() {
     // Given
     val slotDateInThePast = LocalDate.now().plusDays(1)
     val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = true)
-    applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
     applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = completedApplication, description = "Some Text")
     reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
@@ -410,6 +410,7 @@ class BookVisitTest : IntegrationTestBase() {
         assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
         assertThat(it["hasPhoneNumber"]).isEqualTo((visit.visitContact.telephone != null).toString())
+        assertThat(it["hasEmail"]).isEqualTo((visit.visitContact.email != null).toString())
         assertThat(it["supportRequired"]).isEqualTo(visit.visitorSupport?.description)
         assertThat(it["totalVisitors"]).isEqualTo(visit.visitors.size.toString())
         val commaDelimitedVisitorIds = visit.visitors.map { it.nomisPersonId }.joinToString(",")

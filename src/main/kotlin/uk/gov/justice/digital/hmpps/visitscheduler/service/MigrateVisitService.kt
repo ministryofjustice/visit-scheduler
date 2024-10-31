@@ -331,6 +331,7 @@ class MigrateVisitService(
       name = name,
       telephone = telephone,
       visit = visit,
+      email = null,
     )
   }
 

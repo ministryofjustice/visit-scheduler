@@ -51,7 +51,7 @@ open class DataBaseTest(
     visitWithApplication = visitEntityHelper.save(visitWithApplication)
 
     applicationWithVisit = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = true)
-    applicationEntityHelper.createContact(application = applicationWithVisit, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createContact(application = applicationWithVisit, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
     applicationEntityHelper.createVisitor(application = applicationWithVisit, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = applicationWithVisit, description = "Some Text")
     applicationEntityHelper.save(applicationWithVisit)
@@ -68,7 +68,7 @@ open class DataBaseTest(
     sessionTemplateDefault = testTemplateRepository.saveAndFlush(sessionTemplateDefault)
 
     inCompleteApplication = applicationEntityHelper.create(slotDate = startDate, sessionTemplate = sessionTemplateDefault, reservedSlot = true, completed = false)
-    applicationEntityHelper.createContact(application = inCompleteApplication, name = "Jane Doe", phone = "01234 098765")
+    applicationEntityHelper.createContact(application = inCompleteApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
     applicationEntityHelper.createVisitor(application = inCompleteApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = inCompleteApplication, description = "Some Text")
     applicationEntityHelper.save(inCompleteApplication)

@@ -46,7 +46,7 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
   @Test
   fun `when ignore visit notifications raised for existing visit then all existing notifications are deleted`() {
     // Given - visit with 3 notification events
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
     visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)
@@ -75,7 +75,7 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
   @Test
   fun `when ignore visit notifications raised for existing visit without notifications then request is still successful`() {
     // Given - visit with no notification events
-    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
 
     val ignoreVisitNotification = IgnoreVisitNotificationsDto(
       "Can be ignored, to be managed by staff.",
@@ -103,7 +103,7 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
   @Test
   fun `when ignore visit notifications raised for cancelled visit then NOT_FOUND status is returned`() {
     // Given
-    val visit = visitEntityHelper.create(visitStatus = CANCELLED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
+    val visit = visitEntityHelper.create(visitStatus = CANCELLED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
     val reference = visit.reference
 
     val ignoreVisitNotification = IgnoreVisitNotificationsDto(

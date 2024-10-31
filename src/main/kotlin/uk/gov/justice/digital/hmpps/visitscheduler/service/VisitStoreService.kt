@@ -124,12 +124,14 @@ class VisitStoreService(
       booking.visitContact?.let { visitContact ->
         visitContact.name = it.name
         visitContact.telephone = it.telephone
+        visitContact.email = it.email
       } ?: run {
         booking.visitContact = VisitContact(
           visit = booking,
           visitId = booking.id,
           name = it.name,
           telephone = it.telephone,
+          email = it.email,
         )
       }
     }

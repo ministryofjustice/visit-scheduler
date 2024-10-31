@@ -193,7 +193,7 @@ class VisitEntityHelper(
     visit.addApplication(application)
 
     with(application.visitContact!!) {
-      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone)
+      visit.visitContact = VisitContact(visit = visit, visitId = visit.id, name = name, telephone = telephone, email = email)
     }
 
     application.support?.let {
@@ -297,7 +297,7 @@ class VisitEntityHelper(
 
     val savedVisit = visitRepository.saveAndFlush(notSaved)
     if (visitContact != null) {
-      createContact(visit = savedVisit, visitContact.name, visitContact.telephone)
+      createContact(visit = savedVisit, visitContact.name, visitContact.telephone, visitContact.email)
     }
 
     return if (createApplication) {
@@ -361,11 +361,13 @@ class VisitEntityHelper(
     visit: Visit,
     name: String = "bob",
     phone: String? = "0123456789",
+    email: String? = "example@email.com",
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,
       name = name,
       telephone = phone,
+      email = email,
       visit = visit,
     )
   }
