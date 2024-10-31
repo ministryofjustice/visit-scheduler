@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -37,6 +38,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
         "No longer joining.",
       ),
       CancelVisitTest.CANCELLED_BY_USER,
+      UserType.STAFF,
       NOT_KNOWN,
     )
     // Given
@@ -65,6 +67,7 @@ class CancelNegativeDayLimitConfiguredTest : IntegrationTestBase() {
         "No longer joining.",
       ),
       CancelVisitTest.CANCELLED_BY_USER,
+      UserType.STAFF,
       NOT_KNOWN,
     )
     // Given

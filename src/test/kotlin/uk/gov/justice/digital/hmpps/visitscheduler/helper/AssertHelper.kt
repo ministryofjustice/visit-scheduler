@@ -31,12 +31,18 @@ class AssertHelper {
     expectedOutcomeStatus: OutcomeStatus = OutcomeStatus.CANCELLATION,
     cancelledBy: String,
     applicationMethodType: ApplicationMethodType? = ApplicationMethodType.PHONE,
+    userType: UserType = STAFF,
   ) {
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(cancelledVisit.reference)
 
+    if (userType == STAFF) {
+      Assertions.assertThat(eventAudit.actionedBy.userName).isEqualTo(cancelledBy)
+    } else {
+      Assertions.assertThat(eventAudit.actionedBy.bookerReference).isEqualTo(cancelledBy)
+    }
+
     Assertions.assertThat(eventAudit.type).isEqualTo(EventAuditType.CANCELLED_VISIT)
-    Assertions.assertThat(eventAudit.actionedBy.userName).isEqualTo(cancelledBy)
-    Assertions.assertThat(eventAudit.actionedBy.userType).isEqualTo(STAFF)
+    Assertions.assertThat(eventAudit.actionedBy.userType).isEqualTo(userType)
     Assertions.assertThat(eventAudit.applicationMethodType).isEqualTo(applicationMethodType)
     Assertions.assertThat(eventAudit.bookingReference).isEqualTo(cancelledVisit.reference)
     Assertions.assertThat(eventAudit.sessionTemplateReference).isEqualTo(cancelledVisit.sessionTemplateReference)

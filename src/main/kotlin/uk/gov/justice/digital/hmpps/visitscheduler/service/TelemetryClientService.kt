@@ -374,6 +374,9 @@ class TelemetryClientService(
       it.actionedBy.userName?.let { userName ->
         data["actionedBy"] = userName
       }
+      it.actionedBy.bookerReference?.let { bookerReference ->
+        data["actionedBy"] = bookerReference
+      }
       data["source"] = it.actionedBy.userType.name
       data["applicationMethodType"] = it.applicationMethodType.name
     }
