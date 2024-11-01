@@ -158,7 +158,7 @@ class VisitService(
       visitDtoBuilder.build(it).also { visitDto ->
         setFirstBookedDateTime(visitDto)
       }
-    }.sortedBy { it.firstBookedDateTime }
+    }.sortedWith(compareBy(nullsLast()) { it.firstBookedDateTime })
 
     return PageImpl(visits, page, visits.size.toLong())
   }

@@ -36,10 +36,14 @@ class VisitsByDateTest : IntegrationTestBase() {
     val application2 = createApplication(sessionTemplate, prisonerId = "AB123457")
     val application3 = createApplication(sessionTemplate, prisonerId = "AB123458")
     val application4 = createApplication(sessionTemplate, prisonerId = "AB123459")
+    val application5 = createApplication(sessionTemplate, prisonerId = "AB123460")
     val visit1 = visitEntityHelper.createFromApplication(application1, sessionTemplate = sessionTemplate)
     val visit2 = visitEntityHelper.createFromApplication(application2, sessionTemplate = sessionTemplate)
     val visit3 = visitEntityHelper.createFromApplication(application3, sessionTemplate = sessionTemplate)
     val visit4 = visitEntityHelper.createFromApplication(application4, sessionTemplate = sessionTemplate)
+
+    // visit without a event audit - should be last in the results
+    val visit5 = visitEntityHelper.createFromApplication(application5, sessionTemplate = sessionTemplate)
 
     eventAuditEntityHelper.create(visit = visit4, type = EventAuditType.BOOKED_VISIT)
     Thread.sleep(1000)
@@ -58,13 +62,14 @@ class VisitsByDateTest : IntegrationTestBase() {
     // Then
     responseSpecVisitsBySession.expectStatus().isOk
     val visits = parseVisitsPageResponse(responseSpecVisitsBySession)
-    Assertions.assertThat(visits.size).isEqualTo(4)
+    Assertions.assertThat(visits.size).isEqualTo(5)
 
     // ensure the results are sorted by audit event records
     Assertions.assertThat(visits[0].reference).isEqualTo(visit4.reference)
     Assertions.assertThat(visits[1].reference).isEqualTo(visit2.reference)
     Assertions.assertThat(visits[2].reference).isEqualTo(visit3.reference)
     Assertions.assertThat(visits[3].reference).isEqualTo(visit1.reference)
+    Assertions.assertThat(visits[4].reference).isEqualTo(visit5.reference)
   }
 
   private fun createApplication(sessionTemplate: SessionTemplate, prisonerId: String): Application {
