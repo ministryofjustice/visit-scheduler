@@ -32,7 +32,7 @@ class VisitByReferenceTest : IntegrationTestBase() {
     // Given
 
     val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "example@email.com"))
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
 
     val reference = createdVisit.reference
 
@@ -70,7 +70,7 @@ class VisitByReferenceTest : IntegrationTestBase() {
   fun `Canceled visit by reference`() {
     // Given
     val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "example@email.com"))
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
 
     val reference = createdVisit.reference
 

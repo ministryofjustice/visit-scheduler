@@ -56,13 +56,13 @@ class UpdateVisitTest : IntegrationTestBase() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     reservedStaffApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false)
-    applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedStaffApplication, description = "Some Text")
     reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
 
     reservedPublicApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, userType = PUBLIC)
-    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
     reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
@@ -78,7 +78,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
 
     var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
-    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
 
@@ -103,7 +103,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
 
     var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
-    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
 
@@ -128,7 +128,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
 
     var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
-    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
 
@@ -154,7 +154,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     createApplicationAndSave(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
 
     var expiredReservedApplication = applicationEntityHelper.create(slotDate = existingVisit.sessionSlot.slotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
-    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
 
@@ -179,7 +179,7 @@ class UpdateVisitTest : IntegrationTestBase() {
 
     val newSlotDate = bookingToUpdate.sessionSlot.slotDate.plusWeeks(1)
     var expiredReservedApplication = applicationEntityHelper.create(slotDate = newSlotDate, sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction)
-    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
     expiredReservedApplication.visit = bookingToUpdate
@@ -204,7 +204,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = CLOSED)
 
     var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = CLOSED)
-    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
     expiredReservedApplication.visit = bookingToUpdate
@@ -231,7 +231,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     createApplicationAndVisit(sessionTemplate = sessionTemplateDefault, visitRestriction = visitRestriction, slotDate = otherSlotDate)
 
     var expiredReservedApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, visitRestriction = visitRestriction, slotDate = otherSlotDate)
-    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = expiredReservedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredReservedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredReservedApplication, description = "Some Text")
     expiredReservedApplication.visit = bookingToUpdate
@@ -292,7 +292,7 @@ class UpdateVisitTest : IntegrationTestBase() {
       visitRestriction = if (originalVisit.visitRestriction == OPEN) CLOSED else OPEN,
     )
 
-    applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348811539", email = "example@email.com")
+    applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348811539", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
     applicationEntityHelper.createSupport(application = newApplication, description = "Some Other Text")
@@ -380,7 +380,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     )
 
     // creating visitor and new contact with phone number and email
-    contact = ContactDto(name = "Test User", telephone = "01111111111", email = "example@email.com")
+    contact = ContactDto(name = "Test User", telephone = "01111111111", email = "email@example.com")
     applicationEntityHelper.createContact(application = newApplication, contact)
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
     applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
@@ -409,7 +409,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     // Given
     val slotDateInThePast = LocalDate.now().plusDays(1)
     val completedApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = true)
-    applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = completedApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = completedApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = completedApplication, description = "Some Text")
     reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
@@ -444,7 +444,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     // Given
     val slotDateInThePast = LocalDate.now().minusYears(1)
     val expiredApplication = applicationEntityHelper.create(slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, completed = false)
-    applicationEntityHelper.createContact(application = expiredApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = expiredApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = expiredApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = expiredApplication, description = "Some Text")
     applicationEntityHelper.save(reservedStaffApplication)

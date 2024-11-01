@@ -14,7 +14,7 @@ data class ContactDto(
   @Schema(description = "Contact Phone Number", example = "01234 567890", required = false)
   @field:NullableNotBlank
   val telephone: String?,
-  @Schema(description = "Contact Email Address", example = "example@email.com", required = false)
+  @Schema(description = "Contact Email Address", example = "email@example.com", required = false)
   @field:NullableNotBlank
   val email: String?,
 ) {

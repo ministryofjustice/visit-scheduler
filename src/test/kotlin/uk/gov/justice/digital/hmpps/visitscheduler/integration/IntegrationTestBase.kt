@@ -274,7 +274,7 @@ abstract class IntegrationTestBase {
     visitStatus: VisitStatus? = VisitStatus.BOOKED,
     slotDate: LocalDate? = null,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "example@email.com"),
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
     userType: UserType = STAFF,
   ): Visit {
     val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType)
@@ -312,7 +312,7 @@ abstract class IntegrationTestBase {
     completed: Boolean,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "example@email.com"),
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
     userType: UserType = STAFF,
   ): Application {
     val sessionTemplateLocal = sessionTemplate ?: sessionTemplateDefault

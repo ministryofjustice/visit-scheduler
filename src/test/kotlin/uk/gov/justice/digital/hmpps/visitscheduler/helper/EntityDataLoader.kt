@@ -361,7 +361,7 @@ class VisitEntityHelper(
     visit: Visit,
     name: String = "bob",
     phone: String? = "0123456789",
-    email: String? = "example@email.com",
+    email: String? = "email@example.com",
   ) {
     visit.visitContact = VisitContact(
       visitId = visit.id,

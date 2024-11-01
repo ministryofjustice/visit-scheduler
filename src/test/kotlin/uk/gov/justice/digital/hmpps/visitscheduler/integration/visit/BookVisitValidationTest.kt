@@ -53,7 +53,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       userType = UserType.PUBLIC,
     )
 
-    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = reservedPublicApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedPublicApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedPublicApplication, description = "Some Text")
     reservedPublicApplication = applicationEntityHelper.save(reservedPublicApplication)
@@ -66,7 +66,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       userType = UserType.STAFF,
     )
 
-    applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = reservedStaffApplication, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = reservedStaffApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = reservedStaffApplication, description = "Some Text")
     reservedStaffApplication = applicationEntityHelper.save(reservedStaffApplication)
@@ -168,7 +168,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       completed = false,
       userType = UserType.PUBLIC,
     )
-    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.save(application)
     // When
@@ -236,7 +236,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       completed = false,
       userType = UserType.PUBLIC,
     )
-    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.save(application)
     // When
@@ -308,7 +308,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       completed = false,
       userType = UserType.PUBLIC,
     )
-    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.save(application)
 
@@ -894,7 +894,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       visitStatus = VisitStatus.BOOKED,
       prisonCode = application.prison.code,
     )
-    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.save(application)
 
@@ -925,7 +925,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
       userType = UserType.PUBLIC,
       visitRestriction = VisitRestriction.CLOSED,
     )
-    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "example@email.com")
+    applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.save(application)
 
