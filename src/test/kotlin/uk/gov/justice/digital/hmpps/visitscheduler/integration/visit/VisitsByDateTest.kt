@@ -32,11 +32,11 @@ class VisitsByDateTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplateEntityHelper.create(validFromDate = LocalDate.now(), dayOfWeek = sessionDate.dayOfWeek)
 
     // When
-    val application1 = createApplication(sessionTemplate, prisonerId = "AB123456")
-    val application2 = createApplication(sessionTemplate, prisonerId = "AB123457")
-    val application3 = createApplication(sessionTemplate, prisonerId = "AB123458")
-    val application4 = createApplication(sessionTemplate, prisonerId = "AB123459")
-    val application5 = createApplication(sessionTemplate, prisonerId = "AB123460")
+    val application1 = createApplication(sessionTemplate, prisonerId = "AB123456", sessionDate)
+    val application2 = createApplication(sessionTemplate, prisonerId = "AB123457", sessionDate)
+    val application3 = createApplication(sessionTemplate, prisonerId = "AB123458", sessionDate)
+    val application4 = createApplication(sessionTemplate, prisonerId = "AB123459", sessionDate)
+    val application5 = createApplication(sessionTemplate, prisonerId = "AB123460", sessionDate)
     val visit1 = visitEntityHelper.createFromApplication(application1, sessionTemplate = sessionTemplate)
     val visit2 = visitEntityHelper.createFromApplication(application2, sessionTemplate = sessionTemplate)
     val visit3 = visitEntityHelper.createFromApplication(application3, sessionTemplate = sessionTemplate)
@@ -65,15 +65,15 @@ class VisitsByDateTest : IntegrationTestBase() {
     Assertions.assertThat(visits.size).isEqualTo(5)
 
     // ensure the results are sorted by audit event records
-    Assertions.assertThat(visits[0].reference).isEqualTo(visit4.reference)
-    Assertions.assertThat(visits[1].reference).isEqualTo(visit2.reference)
-    Assertions.assertThat(visits[2].reference).isEqualTo(visit3.reference)
-    Assertions.assertThat(visits[3].reference).isEqualTo(visit1.reference)
+    Assertions.assertThat(visits[0].reference).isEqualTo(visit1.reference)
+    Assertions.assertThat(visits[1].reference).isEqualTo(visit3.reference)
+    Assertions.assertThat(visits[2].reference).isEqualTo(visit2.reference)
+    Assertions.assertThat(visits[3].reference).isEqualTo(visit4.reference)
     Assertions.assertThat(visits[4].reference).isEqualTo(visit5.reference)
   }
 
-  private fun createApplication(sessionTemplate: SessionTemplate, prisonerId: String): Application {
-    var application = applicationEntityHelper.create(sessionTemplate = sessionTemplate, prisonerId = prisonerId, completed = false)
+  private fun createApplication(sessionTemplate: SessionTemplate, prisonerId: String, slotDate: LocalDate): Application {
+    var application = applicationEntityHelper.create(sessionTemplate = sessionTemplate, prisonerId = prisonerId, completed = false, slotDate = slotDate)
     applicationEntityHelper.createContact(application = application, name = "Jane Doe", phone = "01234 098765")
     applicationEntityHelper.createVisitor(application = application, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = application, description = "Some Text")
