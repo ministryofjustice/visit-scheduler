@@ -1,13 +1,16 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
+import jakarta.validation.ValidationException
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
+import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.ALL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.CURRENT_OR_FUTURE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.HISTORIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
@@ -67,10 +70,11 @@ class SessionTemplateService(
   private val sessionTemplateUtil: SessionTemplateUtil,
   private val visitMoveValidator: SessionTemplateVisitMoveValidator,
   private val sessionSlotService: SessionSlotService,
+  @Lazy
+  private val excludeDateService: ExcludeDateService,
 ) {
-
   companion object {
-    val log: Logger = LoggerFactory.getLogger(this::class.java)
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
   @Transactional(readOnly = true)
@@ -146,7 +150,7 @@ class SessionTemplateService(
   }
 
   fun createSessionTemplate(createSessionTemplateDto: CreateSessionTemplateDto): SessionTemplateDto {
-    log.info("Creating session template for prison")
+    LOG.info("Creating session template for prison")
 
     val prison = prisonsService.findPrisonByCode(createSessionTemplateDto.prisonCode)
 
@@ -565,6 +569,36 @@ class SessionTemplateService(
     } else {
       sessionTemplateRepository.getClosedCapacity(sessionTemplateReference)
     }
+  }
+
+  @Throws(ValidationException::class)
+  @Transactional
+  fun addExcludeDate(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
+    with(excludeDateDto) {
+      LOG.info("adding exclude date - {} for session template with reference - {} by user - {}", excludeDate, sessionTemplateReference, actionedBy)
+      val sessionTemplate = getSessionTemplate(sessionTemplateReference)
+      excludeDateService.addExcludeDate(sessionTemplate, excludeDateDto)
+      LOG.info("successfully  added exclude date - {} for session template with reference - {} by user - {}", excludeDate, sessionTemplateReference, actionedBy)
+    }
+  }
+
+  @Throws(ValidationException::class)
+  @Transactional
+  fun removeExcludeDate(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
+    with(excludeDateDto) {
+      val sessionTemplate = getSessionTemplate(sessionTemplateReference)
+      LOG.info("removing exclude date - {} for session template with reference - {} by user - {}", excludeDate, sessionTemplateReference, actionedBy)
+      excludeDateService.removeExcludeDate(sessionTemplate, excludeDateDto)
+      LOG.info("successfully  removed exclude date - {} for session template with reference - {} by user - {}", excludeDate, sessionTemplateReference, actionedBy)
+    }
+  }
+
+  @Transactional(readOnly = true)
+  fun getExcludeDates(sessionTemplateReference: String): List<ExcludeDateDto> {
+    LOG.debug("getting exclude dates for session template with reference - {}", sessionTemplateReference)
+    // ensure the prison is enabled
+    val sessionTemplate = getSessionTemplate(sessionTemplateReference)
+    return excludeDateService.getExcludeDates(sessionTemplate.excludeDates)
   }
 }
 
