@@ -179,6 +179,7 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
         "Prisoner got covid",
       ),
       "cancel_guy",
+      STAFF,
       WEBSITE,
     )
     val cancelResponse = callCancelVisit(
