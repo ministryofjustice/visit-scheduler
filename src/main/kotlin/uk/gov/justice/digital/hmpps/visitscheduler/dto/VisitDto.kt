@@ -58,4 +58,6 @@ data class VisitDto(
   @Schema(description = "User type", example = "STAFF", required = true)
   @field:NotNull
   val userType: UserType,
+  @Schema(description = "Date the visit was first booked or migrated", example = "2018-12-01T13:45:00", required = false)
+  var firstBookedDateTime: LocalDateTime? = null,
 )

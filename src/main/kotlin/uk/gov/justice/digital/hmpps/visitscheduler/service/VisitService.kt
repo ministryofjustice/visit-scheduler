@@ -6,9 +6,9 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.data.domain.Page
+import org.springframework.data.domain.PageImpl
 import org.springframework.data.domain.PageRequest
 import org.springframework.data.domain.Pageable
-import org.springframework.data.domain.Sort
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
@@ -133,8 +133,7 @@ class VisitService(
     pageablePage: Int? = null,
     pageableSize: Int? = null,
   ): Page<VisitDto> {
-    val page: Pageable =
-      PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS, Sort.by(Visit::createTimestamp.name).descending())
+    val page: Pageable = PageRequest.of(pageablePage ?: 0, pageableSize ?: MAX_RECORDS)
 
     val results = if (sessionTemplateReference != null) {
       visitRepository.findVisitsBySessionTemplateReference(
@@ -144,7 +143,6 @@ class VisitService(
         visitStatusList = visitStatusList.ifEmpty { null },
         visitRestrictions = visitRestrictions,
         prisonCode = prisonCode,
-        page,
       )
     } else {
       visitRepository.findVisitsWithNoSessionTemplateReference(
@@ -153,11 +151,20 @@ class VisitService(
         visitStatusList = visitStatusList.ifEmpty { null },
         visitRestrictions = visitRestrictions,
         prisonCode = prisonCode,
-        page,
       )
     }
 
-    return results.map { visitDtoBuilder.build(it) }
+    val visits = results.map {
+      visitDtoBuilder.build(it).also { visitDto ->
+        setFirstBookedDateTime(visitDto)
+      }
+    }.sortedWith(compareByDescending(nullsFirst()) { it.firstBookedDateTime })
+
+    return PageImpl(visits, page, visits.size.toLong())
+  }
+
+  private fun setFirstBookedDateTime(visitDto: VisitDto) {
+    visitDto.firstBookedDateTime = eventAuditService.getLastEventForBookingOrMigration(visitDto.reference)?.createTimestamp
   }
 
   private fun processBookingEvents(

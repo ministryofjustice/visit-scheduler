@@ -250,8 +250,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     visitStatusList: List<VisitStatus>?,
     visitRestrictions: List<VisitRestriction>?,
     prisonCode: String,
-    pageable: Pageable,
-  ): Page<Visit>
+  ): List<Visit>
 
   @Query(
     "SELECT v FROM Visit v WHERE " +
@@ -283,8 +282,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
     visitStatusList: List<VisitStatus>?,
     visitRestrictions: List<VisitRestriction>?,
     prisonCode: String,
-    pageable: Pageable,
-  ): Page<Visit>
+  ): List<Visit>
 
   @Query(
     "SELECT v FROM Visit v WHERE " +

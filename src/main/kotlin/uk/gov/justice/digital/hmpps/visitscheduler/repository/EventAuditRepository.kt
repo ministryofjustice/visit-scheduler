@@ -23,6 +23,14 @@ interface EventAuditRepository : JpaRepository<EventAudit, Long> {
   fun findLastBookedVisitEventByBookingReference(bookingReference: String): EventAudit?
 
   @Query(
+    "SELECT * FROM event_audit " +
+      "WHERE booking_reference = :bookingReference AND (type = 'BOOKED_VISIT' or type = 'MIGRATED_VISIT') " +
+      "ORDER BY create_timestamp DESC LIMIT 1 ",
+    nativeQuery = true,
+  )
+  fun findLastBookedOrMigratedVisitEventByBookingReference(bookingReference: String): EventAudit?
+
+  @Query(
     "SELECT ea.actionedBy FROM EventAudit ea " +
       " WHERE ea.bookingReference = :bookingReference AND ea.type in (uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT,uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT, uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT) " +
       "ORDER BY ea.id DESC LIMIT 1 ",
