@@ -117,6 +117,7 @@ psql \
 --password <PASSWORD>
 ```
 
+
 ***Useful psql commands***
 
 list active sqls
