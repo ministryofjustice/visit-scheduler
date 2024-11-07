@@ -1,5 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service.reporting
 
+import org.slf4j.Logger
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VSIPReport
@@ -8,7 +10,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessi
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VSIPReportingRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.task.ReportingTask.Companion.LOG
 import java.time.LocalDate
 import kotlin.jvm.optionals.getOrNull
 
@@ -19,6 +20,10 @@ class VisitsReportingService(
   private val vsipReportingRepository: VSIPReportingRepository,
   @Value("\${task.overbooked-sessions-report.futureDays:7}") private val maxDays: Long,
 ) {
+  companion object {
+    val LOG: Logger = LoggerFactory.getLogger(this::class.java)
+  }
+
   fun getVisitCountsReportByDay(): Map<LocalDate, List<SessionVisitCountsDto>> {
     val sessionsReports = mutableMapOf<LocalDate, List<SessionVisitCountsDto>>()
 

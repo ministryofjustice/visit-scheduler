@@ -17,8 +17,10 @@ enum class TelemetryVisitEvents(val eventName: String) {
   UNFLAGGED_VISIT_EVENT("unflagged-visit-event"),
 
   // exclude dates
-  ADD_EXCLUDE_DATE_EVENT("add-exclude-date"),
-  REMOVE_EXCLUDE_DATE_EVENT("remove-exclude-date"),
+  ADD_PRISON_EXCLUDE_DATE_EVENT("add-exclude-date"),
+  REMOVE_PRISON_EXCLUDE_DATE_EVENT("remove-exclude-date"),
+  ADD_SESSION_EXCLUDE_DATE_EVENT("add-session-exclude-date"),
+  REMOVE_SESSION_EXCLUDE_DATE_EVENT("remove-session-exclude-date"),
 
   // reporting
   VISIT_COUNTS_REPORT("visit-counts-report"),
