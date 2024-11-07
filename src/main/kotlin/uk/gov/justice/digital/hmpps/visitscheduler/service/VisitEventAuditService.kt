@@ -126,11 +126,11 @@ class VisitEventAuditService {
   }
 
   fun saveCancelledEventAudit(cancelVisitDto: CancelVisitDto, visit: VisitDto): EventAuditDto {
-    return saveCancelledEventAudit(cancelVisitDto.actionedBy, cancelVisitDto.applicationMethodType, visit)
+    return saveCancelledEventAudit(cancelVisitDto.actionedBy, cancelVisitDto.userType, cancelVisitDto.applicationMethodType, visit)
   }
 
   fun saveCancelledMigratedEventAudit(cancelVisitDto: MigratedCancelVisitDto, visit: VisitDto): EventAuditDto {
-    return saveCancelledEventAudit(cancelVisitDto.actionedBy, NOT_KNOWN, visit)
+    return saveCancelledEventAudit(cancelVisitDto.actionedBy, STAFF, NOT_KNOWN, visit)
   }
 
   fun saveMigratedVisitEventAudit(
@@ -233,8 +233,8 @@ class VisitEventAuditService {
     return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
   }
 
-  private fun saveCancelledEventAudit(actionedByValue: String, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
-    val actionedBy = createOrGetActionBy(actionedByValue, STAFF)
+  private fun saveCancelledEventAudit(actionedByValue: String, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
+    val actionedBy = createOrGetActionBy(actionedByValue, userType)
 
     return EventAuditDto(
       eventAuditRepository.saveAndFlush(
