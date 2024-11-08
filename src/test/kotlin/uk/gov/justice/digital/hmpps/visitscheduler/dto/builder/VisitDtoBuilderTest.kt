@@ -146,7 +146,7 @@ class VisitDtoBuilderTest {
     visit.support = VisitSupport(1, visit.id, "description", visit)
     visit.visitNotes.add(VisitNote(1, visit.id, VISIT_COMMENT, "text", visit))
     visit.visitors.add(VisitVisitor(1, visit.id, 123445, true, visit))
-    visit.visitContact = VisitContact(1, visit.id, "test", "0123456", visit)
+    visit.visitContact = VisitContact(1, visit.id, "test", "0123456", "email@example.com", visit)
 
     val spyVisit = spy(visit)
 

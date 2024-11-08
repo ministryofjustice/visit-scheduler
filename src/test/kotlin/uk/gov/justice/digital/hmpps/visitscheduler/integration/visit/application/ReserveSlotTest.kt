@@ -240,7 +240,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
       applicationRestriction = OPEN,
       visitors = setOf(),
-      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitContact = ContactDto("John Smith", "01234 567890", "email@example.com"),
       actionedBy = ACTIONED_BY_USER_NAME,
       userType = STAFF,
     )
@@ -300,7 +300,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
       applicationRestriction = OPEN,
-      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitContact = ContactDto("John Smith", "01234 567890", "email@example.com"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 123, visitContact = true),
         VisitorDto(nomisPersonId = 124, visitContact = true),
@@ -328,7 +328,7 @@ class ReserveSlotTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
       applicationRestriction = OPEN,
-      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitContact = ContactDto("John Smith", "01234 567890", "email@example.com"),
       visitors = setOf(),
       visitorSupport = ApplicationSupportDto("ANYTHINGWILLDO"),
       actionedBy = ACTIONED_BY_USER_NAME,

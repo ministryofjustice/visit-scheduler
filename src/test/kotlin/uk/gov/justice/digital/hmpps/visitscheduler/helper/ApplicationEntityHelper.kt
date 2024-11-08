@@ -126,11 +126,13 @@ class ApplicationEntityHelper(
     application: Application,
     name: String,
     phone: String?,
+    email: String?,
   ) {
     application.visitContact = ApplicationContact(
       applicationId = application.id,
       name = name,
       telephone = phone,
+      email = email,
       application = application,
     )
   }
@@ -143,6 +145,7 @@ class ApplicationEntityHelper(
       applicationId = application.id,
       name = contact.name,
       telephone = contact.telephone,
+      email = contact.email,
       application = application,
     )
   }

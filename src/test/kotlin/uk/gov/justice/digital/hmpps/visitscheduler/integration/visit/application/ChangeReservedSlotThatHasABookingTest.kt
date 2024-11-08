@@ -63,7 +63,7 @@ class ChangeReservedSlotThatHasABookingTest : IntegrationTestBase() {
 
     newRestriction = if (oldBooking.visitRestriction == OPEN) CLOSED else OPEN
     initialChangeApplication = applicationEntityHelper.create(sessionTemplate = sessionTemplateDefault, completed = false, reservedSlot = true, visitRestriction = newRestriction)
-    applicationEntityHelper.createContact(application = initialChangeApplication, name = "Aled Wyn Evans", phone = "01348 811539")
+    applicationEntityHelper.createContact(application = initialChangeApplication, name = "Aled Wyn Evans", phone = "01348 811539", email = "email@example.com")
     applicationEntityHelper.createVisitor(application = initialChangeApplication, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createSupport(application = initialChangeApplication, description = "Some Text")
     initialChangeApplication = applicationEntityHelper.save(initialChangeApplication)

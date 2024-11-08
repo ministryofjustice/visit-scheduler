@@ -274,7 +274,7 @@ abstract class IntegrationTestBase {
     visitStatus: VisitStatus? = VisitStatus.BOOKED,
     slotDate: LocalDate? = null,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
     userType: UserType = STAFF,
   ): Visit {
     val application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate, sessionTemplate.prison.code, slotDate, completed = true, visitRestriction = visitRestriction, visitContact = visitContact, userType = userType)
@@ -312,7 +312,7 @@ abstract class IntegrationTestBase {
     completed: Boolean,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765"),
+    visitContact: ContactDto = ContactDto(name = "Jane Doe", telephone = "01234 098765", email = "email@example.com"),
     userType: UserType = STAFF,
   ): Application {
     val sessionTemplateLocal = sessionTemplate ?: sessionTemplateDefault
@@ -330,7 +330,7 @@ abstract class IntegrationTestBase {
       visitRestriction = visitRestriction,
       userType = userType,
     )
-    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone)
+    applicationEntityHelper.createContact(application = applicationEntity, visitContact.name, visitContact.telephone, visitContact.email)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 321L, visitContact = true)
     applicationEntityHelper.createVisitor(application = applicationEntity, nomisPersonId = 621L, visitContact = false)
     applicationEntityHelper.createSupport(application = applicationEntity, description = "Some More Text")
@@ -414,7 +414,7 @@ abstract class IntegrationTestBase {
       sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
       sessionDate = slotDate ?: sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
       applicationRestriction = sessionRestriction,
-      visitContact = ContactDto("John Smith", "013448811538"),
+      visitContact = ContactDto("John Smith", "013448811538", "email@example.com"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto(support),
       actionedBy = actionedBy,

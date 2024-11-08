@@ -32,7 +32,7 @@ class VisitByReferenceTest : IntegrationTestBase() {
     // Given
 
     val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
 
     val reference = createdVisit.reference
 
@@ -46,11 +46,11 @@ class VisitByReferenceTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `when booked visit has no contact telephone get visit by reference returns contact phone as null`() {
+  fun `when booked visit has no contact telephone or email get visit by reference returns contact phone and email are null`() {
     // Given
 
     val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Test User", null))
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Test User", null, null))
 
     val reference = createdVisit.reference
 
@@ -63,13 +63,14 @@ class VisitByReferenceTest : IntegrationTestBase() {
     assertThat(visit.visitContact).isNotNull()
     assertThat(visit.visitContact.name).isEqualTo("Test User")
     assertThat(visit.visitContact.telephone).isNull()
+    assertThat(visit.visitContact.email).isNull()
   }
 
   @Test
   fun `Canceled visit by reference`() {
     // Given
     val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
-    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111"))
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = CANCELLED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
 
     val reference = createdVisit.reference
 

@@ -230,7 +230,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       sessionTemplateReference = sessionTemplateDefault.reference,
       sessionDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault),
       applicationRestriction = SessionRestriction.OPEN,
-      visitContact = ContactDto("John Smith", "01234 567890"),
+      visitContact = ContactDto("John Smith", "01234 567890", "email@example.com"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 123, visitContact = true),
         VisitorDto(nomisPersonId = 124, visitContact = true),
@@ -411,7 +411,7 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
       prisonerId = prisonerId,
       sessionDate = slotDate,
       applicationRestriction = visitRestriction,
-      visitContact = ContactDto("John Smith", "013448811538"),
+      visitContact = ContactDto("John Smith", "013448811538", "email@example.com"),
       visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
       visitorSupport = ApplicationSupportDto(support),
       actionedBy = ACTIONED_BY_USER_NAME,

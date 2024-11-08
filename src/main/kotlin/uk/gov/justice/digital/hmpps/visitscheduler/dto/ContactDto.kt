@@ -14,14 +14,19 @@ data class ContactDto(
   @Schema(description = "Contact Phone Number", example = "01234 567890", required = false)
   @field:NullableNotBlank
   val telephone: String?,
+  @Schema(description = "Contact Email Address", example = "email@example.com", required = false)
+  @field:NullableNotBlank
+  val email: String?,
 ) {
   constructor(entity: VisitContact) : this(
     name = entity.name,
     telephone = entity.telephone,
+    email = entity.email,
   )
 
   constructor(entity: ApplicationContact) : this(
     name = entity.name,
     telephone = entity.telephone,
+    email = entity.email,
   )
 }

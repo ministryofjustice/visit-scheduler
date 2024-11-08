@@ -28,6 +28,9 @@ class VisitContact(
   @Column(name = "CONTACT_PHONE", nullable = true)
   var telephone: String?,
 
+  @Column(name = "CONTACT_EMAIL", nullable = true)
+  var email: String?,
+
   @OneToOne
   @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
   val visit: Visit,

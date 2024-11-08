@@ -354,6 +354,7 @@ class TelemetryClientService(
       "visitType" to visitDto.visitType.name,
       "visitRoom" to visitDto.visitRoom,
       "hasPhoneNumber" to (visitDto.visitContact.telephone != null).toString(),
+      "hasEmail" to (visitDto.visitContact.email != null).toString(),
       "totalVisitors" to visitDto.visitors.size.toString(),
       "visitors" to getVisitorIdsAsString(visitDto.visitors),
     )

@@ -128,7 +128,7 @@ class ApplicationService(
         visitContact.telephone = visitContactUpdate.telephone
       } ?: run {
         application.visitContact =
-          createApplicationContact(application, visitContactUpdate.name, visitContactUpdate.telephone)
+          createApplicationContact(application, visitContactUpdate.name, visitContactUpdate.telephone, visitContactUpdate.email)
       }
     }
 
@@ -203,7 +203,7 @@ class ApplicationService(
     )
 
     createApplicationDto.visitContact?.let {
-      applicationEntity.visitContact = createApplicationContact(applicationEntity, it.name, it.telephone)
+      applicationEntity.visitContact = createApplicationContact(applicationEntity, it.name, it.telephone, it.email)
     }
 
     createApplicationDto.visitors.forEach {
@@ -347,12 +347,13 @@ class ApplicationService(
     applicationRepository.completeApplication(applicationReference)
   }
 
-  private fun createApplicationContact(application: Application, name: String, telephone: String?): ApplicationContact {
+  private fun createApplicationContact(application: Application, name: String, telephone: String?, email: String?): ApplicationContact {
     return ApplicationContact(
       applicationId = application.id,
       application = application,
       name = name,
       telephone = telephone,
+      email = email,
     )
   }
 
@@ -509,6 +510,7 @@ class ApplicationService(
           capitaliseUtil.capitalise(contact.name)
         },
         contact.telephone,
+        email = null,
       )
     }
 
