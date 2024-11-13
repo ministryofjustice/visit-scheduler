@@ -28,7 +28,7 @@ class VisitPrisonsController(
   private val prisonsService: PrisonsService,
 ) {
 
-  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG')")
+  @PreAuthorize("hasAnyRole('VISIT_SCHEDULER','VISIT_SCHEDULER_CONFIG','VISIT_SCHEDULER__VISIT_BOOKER_REGISTRY')")
   @GetMapping(PRISONS_PATH)
   @Operation(
     summary = "Get supported prisons",
