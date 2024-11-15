@@ -126,6 +126,7 @@ class ApplicationService(
       application.visitContact?.let { visitContact ->
         visitContact.name = visitContactUpdate.name
         visitContact.telephone = visitContactUpdate.telephone
+        visitContact.email = visitContactUpdate.email
       } ?: run {
         application.visitContact =
           createApplicationContact(application, visitContactUpdate.name, visitContactUpdate.telephone, visitContactUpdate.email)
