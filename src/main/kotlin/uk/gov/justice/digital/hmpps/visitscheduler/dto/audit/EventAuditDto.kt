@@ -13,6 +13,9 @@ import java.time.LocalDateTime
 @Schema(description = "Event Audit")
 class EventAuditDto(
 
+  @Schema(description = "The id of the event", required = true)
+  val id: Long,
+
   @Schema(description = "The type of event", required = true)
   @field:NotNull
   val type: EventAuditType,
@@ -38,6 +41,7 @@ class EventAuditDto(
   val createTimestamp: LocalDateTime = LocalDateTime.now(),
 ) {
   constructor(eventAuditEntity: EventAudit) : this(
+    id = eventAuditEntity.id,
     type = eventAuditEntity.type,
     applicationMethodType = eventAuditEntity.applicationMethodType,
     actionedBy = ActionedByDto(eventAuditEntity.actionedBy),

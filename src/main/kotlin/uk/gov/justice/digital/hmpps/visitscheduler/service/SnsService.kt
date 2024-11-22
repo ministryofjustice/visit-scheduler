@@ -8,7 +8,7 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import software.amazon.awssdk.services.sns.model.MessageAttributeValue
 import software.amazon.awssdk.services.sns.model.PublishRequest
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.hmpps.sqs.HmppsQueueService
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -48,7 +48,7 @@ class SnsService(
   fun LocalDateTime.toOffsetDateFormat(): String =
     atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
-  fun sendVisitBookedEvent(visit: VisitDto) {
+  fun sendVisitBookedEvent(visit: SnsDomainEventPublishDto) {
     publishToDomainEventsTopic(
       HMPPSDomainEvent(
         eventType = EVENT_PRISON_VISIT_BOOKED,
@@ -58,12 +58,13 @@ class SnsService(
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
+          eventAuditId = visit.eventAuditId,
         ),
       ),
     )
   }
 
-  fun sendVisitCancelledEvent(visit: VisitDto) {
+  fun sendVisitCancelledEvent(visit: SnsDomainEventPublishDto) {
     publishToDomainEventsTopic(
       HMPPSDomainEvent(
         eventType = EVENT_PRISON_VISIT_CANCELLED,
@@ -73,6 +74,7 @@ class SnsService(
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
+          eventAuditId = visit.eventAuditId,
         ),
       ),
     )
@@ -109,7 +111,7 @@ class SnsService(
     }
   }
 
-  fun sendChangedVisitBookedEvent(visit: VisitDto) {
+  fun sendChangedVisitBookedEvent(visit: SnsDomainEventPublishDto) {
     publishToDomainEventsTopic(
       HMPPSDomainEvent(
         eventType = EVENT_PRISON_CHANGED_VISIT,
@@ -119,6 +121,7 @@ class SnsService(
         prisonerId = visit.prisonerId,
         additionalInformation = AdditionalInformation(
           reference = visit.reference,
+          eventAuditId = visit.eventAuditId,
         ),
       ),
     )
@@ -127,6 +130,7 @@ class SnsService(
 
 internal data class AdditionalInformation(
   val reference: String,
+  val eventAuditId: Long,
 )
 
 internal data class HMPPSDomainEvent(
