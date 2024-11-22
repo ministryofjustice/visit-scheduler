@@ -95,6 +95,7 @@ class SendDomainEventTest : IntegrationTestBase() {
       assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.createdTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
       assertThat(prisonerId).isEqualTo(visit?.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+      assertThat(additionalInformation.eventAuditId).isNotNull()
 
       // And
       verify(telemetryClient).trackEvent(
@@ -159,6 +160,7 @@ class SendDomainEventTest : IntegrationTestBase() {
       assertThat(ZonedDateTime.parse(occurredAt)).isEqualTo(visit.modifiedTimestamp.atZone(ZoneId.of(EVENT_ZONE_ID)))
       assertThat(prisonerId).isEqualTo(visit.prisonerId)
       assertThat(additionalInformation.reference).isEqualTo(visit.reference)
+      assertThat(additionalInformation.eventAuditId).isNotNull()
 
       // And
       verify(telemetryClient).trackEvent(

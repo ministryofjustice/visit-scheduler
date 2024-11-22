@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
@@ -266,10 +267,17 @@ class MigrateVisitService(
     }
 
     val visitDto = visitDtoBuilder.build(visitEntity)
-    visitEventAuditService.saveCancelledMigratedEventAudit(cancelVisitDto, visitDto)
+    val eventAuditDto = visitEventAuditService.saveCancelledMigratedEventAudit(cancelVisitDto, visitDto)
     sendMigratedTrackEvent(visitEntity, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
 
-    snsService.sendVisitCancelledEvent(visitDto)
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      visitDto.reference,
+      visitDto.createdTimestamp,
+      visitDto.modifiedTimestamp,
+      visitDto.prisonerId,
+      eventAuditDto.id,
+    )
+    snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
     return visitDto
   }
 
