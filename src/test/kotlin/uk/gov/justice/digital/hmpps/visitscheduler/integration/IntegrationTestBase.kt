@@ -18,15 +18,12 @@ import org.springframework.test.web.reactive.server.WebTestClient
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CREATE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
@@ -37,8 +34,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCallbackNotificationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCreateNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.category.SessionCategoryGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
@@ -54,9 +49,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerCategor
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionPrisonerIncentiveLevelHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotifyHistoryHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VsipReportingEntityHelper
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callPut
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
@@ -78,7 +71,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
-import java.util.UUID.randomUUID
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 @ActiveProfiles("test")
@@ -142,9 +134,6 @@ abstract class IntegrationTestBase {
   @Autowired
   protected lateinit var vsipReportingEntityHelper: VsipReportingEntityHelper
 
-  @Autowired
-  protected lateinit var visitNotifyHistoryHelper: VisitNotifyHistoryHelper
-
   init {
     // Resolves an issue where Wiremock keeps previous sockets open from other tests causing connection resets
     System.setProperty("http.keepAlive", "false")
@@ -204,9 +193,6 @@ abstract class IntegrationTestBase {
 
   fun getErrorResponse(responseSpec: ResponseSpec): ErrorResponse =
     objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ErrorResponse::class.java)
-
-  fun getEventAuditList(responseSpec: ResponseSpec) =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<EventAuditDto>::class.java)
 
   internal fun setAuthorisation(
     user: String = "AUTH_ADM",
@@ -434,50 +420,6 @@ abstract class IntegrationTestBase {
       actionedBy = actionedBy,
       userType = userType,
       allowOverBooking = allowOverBooking,
-    )
-  }
-
-  fun callCreateNotifyNotification(
-    webTestClient: WebTestClient,
-    dto: NotifyCreateNotificationDto? = null,
-    authHttpHeaders: (HttpHeaders) -> Unit,
-  ): ResponseSpec {
-    return callPut(
-      dto,
-      webTestClient,
-      VISIT_NOTIFY_CONTROLLER_CREATE_PATH,
-      authHttpHeaders,
-    )
-  }
-
-  fun callNotifyCallbackNotification(
-    webTestClient: WebTestClient,
-    dto: NotifyCallbackNotificationDto? = null,
-    authHttpHeaders: (HttpHeaders) -> Unit,
-  ): ResponseSpec {
-    return callPut(
-      dto,
-      webTestClient,
-      VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH,
-      authHttpHeaders,
-    )
-  }
-
-  fun createNotifyCreateNotificationDto(
-    notificationId: String = randomUUID().toString(),
-    eventAuditReference: Long,
-    createdAt: LocalDateTime = LocalDateTime.now(),
-    notificationType: String,
-    templateID: String = "template-id",
-    templateVersion: String = "v1",
-  ): NotifyCreateNotificationDto {
-    return NotifyCreateNotificationDto(
-      notificationId = notificationId,
-      eventAuditReference = eventAuditReference.toString(),
-      createdAt = createdAt,
-      notificationType = notificationType,
-      templateId = templateID,
-      templateVersion = templateVersion,
     )
   }
 }
