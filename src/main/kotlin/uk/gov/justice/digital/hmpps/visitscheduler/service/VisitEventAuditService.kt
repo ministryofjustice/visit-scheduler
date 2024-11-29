@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.NotifyHistoryDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_APPLICABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
@@ -40,7 +39,7 @@ import java.time.LocalDateTime
 
 @Service
 @Transactional
-class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryDtoBuilder) {
+class VisitEventAuditService {
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -77,7 +76,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     actionedBy.eventAuditList.add(eventAudit)
     actionedByRepository.saveAndFlush(actionedBy)
 
-    return EventAuditDto(eventAudit, notifyHistoryDtoBuilder)
+    return EventAuditDto(eventAudit)
   }
 
   fun saveBookingEventAudit(
@@ -101,7 +100,6 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
           text = null,
         ),
       ),
-      notifyHistoryDtoBuilder,
     )
   }
 
@@ -124,7 +122,6 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
           text = text,
         ),
       ),
-      notifyHistoryDtoBuilder,
     )
   }
 
@@ -159,7 +156,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
 
   fun updateCreateTimestamp(time: LocalDateTime, eventAudit: EventAudit): EventAuditDto {
     eventAuditRepository.updateCreateTimestamp(time, eventAudit.id)
-    return EventAuditDto(eventAudit, notifyHistoryDtoBuilder)
+    return EventAuditDto(eventAudit)
   }
 
   fun saveNotificationEventAudit(type: NotificationEventType, impactedVisit: VisitDto): EventAuditDto {
@@ -176,21 +173,20 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
           text = null,
         ),
       ),
-      notifyHistoryDtoBuilder,
     )
   }
 
   @Transactional(readOnly = true)
   fun getLastEventForBooking(bookingReference: String): EventAuditDto? {
     return eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
-      EventAuditDto(it, notifyHistoryDtoBuilder)
+      EventAuditDto(it)
     }
   }
 
   @Transactional(readOnly = true)
   fun getLastEventForBookingOrMigration(bookingReference: String): EventAuditDto? {
     return eventAuditRepository.findLastBookedOrMigratedVisitEventByBookingReference(bookingReference)?.let {
-      EventAuditDto(it, notifyHistoryDtoBuilder)
+      EventAuditDto(it)
     }
   }
 
@@ -234,7 +230,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
   }
 
   fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> {
-    return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it, notifyHistoryDtoBuilder) }
+    return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it) }
   }
 
   private fun saveCancelledEventAudit(actionedByValue: String, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
@@ -252,7 +248,6 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
           text = null,
         ),
       ),
-      notifyHistoryDtoBuilder,
     )
   }
 
