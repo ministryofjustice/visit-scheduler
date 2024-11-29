@@ -15,7 +15,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.EMAIL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
@@ -168,9 +167,6 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     Assertions.assertThat(eventAuditList[3].sessionTemplateReference).isEqualTo(sessionTemplateToChangeTo.reference)
     Assertions.assertThat(eventAuditList[3].text).isNull()
   }
-
-  private fun getEventAuditList(responseSpec: ResponseSpec) =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<EventAuditDto>::class.java)
 
   private fun cancelVisit(bookedDto: VisitDto) {
     val cancelVisitDto = CancelVisitDto(

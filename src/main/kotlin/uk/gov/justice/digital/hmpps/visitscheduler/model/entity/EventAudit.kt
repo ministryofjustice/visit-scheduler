@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
+import jakarta.persistence.CascadeType.ALL
 import jakarta.persistence.CascadeType.REFRESH
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -11,6 +12,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.ManyToOne
+import jakarta.persistence.OneToMany
 import jakarta.persistence.Table
 import org.hibernate.annotations.CreationTimestamp
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
@@ -58,6 +60,9 @@ class EventAudit private constructor(
   @CreationTimestamp
   @Column
   val createTimestamp: LocalDateTime = LocalDateTime.now(),
+
+  @OneToMany(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "eventAudit", orphanRemoval = true)
+  val notifyHistory: MutableList<VisitNotifyHistory> = mutableListOf(),
 ) {
   constructor(actionedBy: ActionedBy, bookingReference: String?, applicationReference: String?, sessionTemplateReference: String?, type: EventAuditType, applicationMethodType: ApplicationMethodType, text: String?) : this(
     actionedById = actionedBy.id,
