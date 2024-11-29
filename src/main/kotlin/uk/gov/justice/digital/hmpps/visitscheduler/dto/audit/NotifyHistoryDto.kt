@@ -7,6 +7,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNotifyHisto
 import java.time.LocalDateTime
 
 data class NotifyHistoryDto(
+  @Schema(description = "The event audit id the notify event is associated with", required = true)
+  val eventAuditId: Long,
 
   @Schema(description = "The notification id for Notify action", required = true)
   val notificationId: String,
@@ -27,6 +29,7 @@ data class NotifyHistoryDto(
   val createdAt: LocalDateTime? = null,
 ) {
   constructor(visitNotifyHistory: VisitNotifyHistory) : this(
+    eventAuditId = visitNotifyHistory.eventAuditId,
     notificationId = visitNotifyHistory.notificationId,
     notificationType = visitNotifyHistory.notificationType,
     status = visitNotifyHistory.status,

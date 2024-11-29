@@ -84,7 +84,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(1)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    assertNotifyHistory(notifyHistory, notifyCallbackDto, EMAIL, DELIVERED)
+    assertNotifyHistory(notifyHistory, notifyCallbackDto, eventAudit.id, EMAIL, DELIVERED)
   }
 
   @Test
@@ -112,7 +112,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(1)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    assertNotifyHistory(notifyHistory, notifyCallbackDto, SMS, FAILED)
+    assertNotifyHistory(notifyHistory, notifyCallbackDto, eventAudit.id, SMS, FAILED)
   }
 
   @Test
@@ -139,7 +139,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(1)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    assertNotifyHistory(notifyHistory, notifyCallbackDto, EMAIL, UNKNOWN)
+    assertNotifyHistory(notifyHistory, notifyCallbackDto, eventAudit.id, EMAIL, UNKNOWN)
   }
 
   @Test
@@ -176,10 +176,10 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(2)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    assertNotifyHistory(notifyHistory, notifyCallbackSms, SMS, FAILED)
+    assertNotifyHistory(notifyHistory, notifyCallbackSms, eventAudit.id, SMS, FAILED)
 
     val notifyHistory2 = eventAuditList[0].notifyHistory[1]
-    assertNotifyHistory(notifyHistory2, notifyCallbackEmail, EMAIL, DELIVERED)
+    assertNotifyHistory(notifyHistory2, notifyCallbackEmail, eventAudit.id, EMAIL, DELIVERED)
   }
 
   @Test
@@ -322,9 +322,11 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
   private fun assertNotifyHistory(
     notifyHistory: NotifyHistoryDto,
     callbackVisitNotifyHistory: NotifyCallbackNotificationDto,
+    eventAuditId: Long,
     notificationType: NotifyNotificationType,
     notificationStatus: NotifyStatus,
   ) {
+    Assertions.assertThat(notifyHistory.eventAuditId).isEqualTo(eventAuditId)
     Assertions.assertThat(notifyHistory.notificationId).isEqualTo(callbackVisitNotifyHistory.notificationId)
     Assertions.assertThat(notifyHistory.notificationType).isEqualTo(notificationType)
     Assertions.assertThat(notifyHistory.status).isEqualTo(notificationStatus)

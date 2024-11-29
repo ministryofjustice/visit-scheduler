@@ -15,3 +15,4 @@ CREATE TABLE visit_notify_history
 );
 
 CREATE INDEX idx_notify_history_notification_id ON visit_notify_history(notification_id);
+CREATE INDEX idx_notify_history_notification_type ON visit_notify_history(notification_type);

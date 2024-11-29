@@ -24,8 +24,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCreateNotifi
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitNotifyService
 
 const val VISIT_NOTIFY_CONTROLLER_PATH: String = "/visits/notify"
-const val VISIT_NOTIFY_CONTROLLER_CREATE_PATH: String = "/visits/notify/create"
-const val VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH: String = "/visits/notify/callback"
+const val VISIT_NOTIFY_CONTROLLER_CREATE_PATH: String = "$VISIT_NOTIFY_CONTROLLER_PATH/create"
+const val VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH: String = "$VISIT_NOTIFY_CONTROLLER_PATH/callback"
 
 @RestController
 @Validated

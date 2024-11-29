@@ -10,8 +10,8 @@ class NotifyHistoryDtoBuilder {
     val notifyHistoryValues = mutableListOf<NotifyHistoryDto>()
 
     if (!notifyHistory.isNullOrEmpty()) {
-      notifyHistory.groupBy({ it.notificationId }, { it }).forEach {
-        val notificationHistory = it.value.sortedByDescending { it.status.order }.first()
+      notifyHistory.groupBy({ it.notificationId }, { it }).forEach { entry ->
+        val notificationHistory = entry.value.sortedByDescending { it.status.order }.first()
         notifyHistoryValues.add(NotifyHistoryDto(notificationHistory))
       }
     }
