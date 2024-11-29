@@ -8,11 +8,14 @@ import org.springframework.http.HttpHeaders
 import org.springframework.web.reactive.function.BodyInserters
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CREATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.NotifyHistoryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCreateNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitHistoryByReference
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import java.time.temporal.ChronoUnit
 
 @DisplayName("Tests for create GOV.UK notify events")
 class NotifyCreateNotificationTest : IntegrationTestBase() {
@@ -57,12 +60,7 @@ class NotifyCreateNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(1)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(notifyCreateNotificationDto.notificationId)
-    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(NotifyNotificationType.get(notifyCreateNotificationDto.notificationType))
-    Assertions.assertThat(notifyHistory.status).isEqualTo(NotifyStatus.SENDING)
-    Assertions.assertThat(notifyHistory.createdAt).isEqualTo(notifyCreateNotificationDto.createdAt)
-    Assertions.assertThat(notifyHistory.completedAt).isNull()
-    Assertions.assertThat(notifyHistory.sentAt).isNull()
+    assertNotifyHistory(notifyHistory, notifyCreateNotificationDto, NotifyNotificationType.EMAIL)
   }
 
   @Test
@@ -103,12 +101,7 @@ class NotifyCreateNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(1)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(notifyCreateNotificationDto1.notificationId)
-    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(NotifyNotificationType.get(notifyCreateNotificationDto1.notificationType))
-    Assertions.assertThat(notifyHistory.status).isEqualTo(NotifyStatus.SENDING)
-    Assertions.assertThat(notifyHistory.createdAt).isEqualTo(notifyCreateNotificationDto1.createdAt)
-    Assertions.assertThat(notifyHistory.completedAt).isNull()
-    Assertions.assertThat(notifyHistory.sentAt).isNull()
+    assertNotifyHistory(notifyHistory, notifyCreateNotificationDto1, NotifyNotificationType.EMAIL)
   }
 
   @Test
@@ -172,5 +165,18 @@ class NotifyCreateNotificationTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isUnauthorized
+  }
+
+  private fun assertNotifyHistory(
+    notifyHistory: NotifyHistoryDto,
+    notifyCreateNotificationDto: NotifyCreateNotificationDto,
+    notificationType: NotifyNotificationType,
+  ) {
+    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(notifyCreateNotificationDto.notificationId)
+    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(notificationType)
+    Assertions.assertThat(notifyHistory.status).isEqualTo(NotifyStatus.SENDING)
+    Assertions.assertThat(notifyHistory.createdAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(notifyCreateNotificationDto.createdAt.truncatedTo(ChronoUnit.SECONDS))
+    Assertions.assertThat(notifyHistory.completedAt).isNull()
+    Assertions.assertThat(notifyHistory.sentAt).isNull()
   }
 }

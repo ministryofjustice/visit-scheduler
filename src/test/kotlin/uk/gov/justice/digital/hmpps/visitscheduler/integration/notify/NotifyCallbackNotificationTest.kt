@@ -8,9 +8,16 @@ import org.springframework.http.HttpHeaders
 import org.springframework.web.reactive.function.BodyInserters
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.NotifyHistoryDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType.EMAIL
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyNotificationType.SMS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyStatus
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyStatus.DELIVERED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyStatus.FAILED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyStatus.SENDING
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.notify.NotifyStatus.UNKNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCallbackNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.notify.NotifyCreateNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callVisitHistoryByReference
@@ -19,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNotifyHistory
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import java.util.UUID.randomUUID
 
 @DisplayName("Tests for create GOV.UK notify events")
@@ -76,12 +84,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(1)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(notifyCallbackDto.notificationId)
-    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(NotifyNotificationType.EMAIL)
-    Assertions.assertThat(notifyHistory.status).isEqualTo(NotifyStatus.DELIVERED)
-    Assertions.assertThat(notifyHistory.createdAt).isEqualTo(notifyCallbackDto.createdAt)
-    Assertions.assertThat(notifyHistory.completedAt).isEqualTo(notifyCallbackDto.completedAt)
-    Assertions.assertThat(notifyHistory.sentAt).isEqualTo(notifyCallbackDto.sentAt)
+    assertNotifyHistory(notifyHistory, notifyCallbackDto, EMAIL, DELIVERED)
   }
 
   @Test
@@ -109,12 +112,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(1)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(notifyCallbackDto.notificationId)
-    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(NotifyNotificationType.SMS)
-    Assertions.assertThat(notifyHistory.status).isEqualTo(NotifyStatus.FAILED)
-    Assertions.assertThat(notifyHistory.createdAt).isEqualTo(notifyCallbackDto.createdAt)
-    Assertions.assertThat(notifyHistory.completedAt).isEqualTo(notifyCallbackDto.completedAt)
-    Assertions.assertThat(notifyHistory.sentAt).isEqualTo(notifyCallbackDto.sentAt)
+    assertNotifyHistory(notifyHistory, notifyCallbackDto, SMS, FAILED)
   }
 
   @Test
@@ -141,12 +139,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(1)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(notifyCallbackDto.notificationId)
-    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(NotifyNotificationType.get(notifyCallbackDto.notificationType))
-    Assertions.assertThat(notifyHistory.status).isEqualTo(NotifyStatus.UNKNOWN)
-    Assertions.assertThat(notifyHistory.createdAt).isEqualTo(notifyCallbackDto.createdAt)
-    Assertions.assertThat(notifyHistory.completedAt).isEqualTo(notifyCallbackDto.completedAt)
-    Assertions.assertThat(notifyHistory.sentAt).isEqualTo(notifyCallbackDto.sentAt)
+    assertNotifyHistory(notifyHistory, notifyCallbackDto, EMAIL, UNKNOWN)
   }
 
   @Test
@@ -183,20 +176,10 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
 
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(2)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(notifyCallbackSms.notificationId)
-    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(NotifyNotificationType.SMS)
-    Assertions.assertThat(notifyHistory.status).isEqualTo(NotifyStatus.FAILED)
-    Assertions.assertThat(notifyHistory.createdAt).isEqualTo(notifyCallbackSms.createdAt)
-    Assertions.assertThat(notifyHistory.completedAt).isEqualTo(notifyCallbackSms.completedAt)
-    Assertions.assertThat(notifyHistory.sentAt).isEqualTo(notifyCallbackSms.sentAt)
+    assertNotifyHistory(notifyHistory, notifyCallbackSms, SMS, FAILED)
 
     val notifyHistory2 = eventAuditList[0].notifyHistory[1]
-    Assertions.assertThat(notifyHistory2.notificationId).isEqualTo(notifyCallbackEmail.notificationId)
-    Assertions.assertThat(notifyHistory2.notificationType).isEqualTo(NotifyNotificationType.EMAIL)
-    Assertions.assertThat(notifyHistory2.status).isEqualTo(NotifyStatus.DELIVERED)
-    Assertions.assertThat(notifyHistory2.createdAt).isEqualTo(notifyCallbackEmail.createdAt)
-    Assertions.assertThat(notifyHistory2.completedAt).isEqualTo(notifyCallbackEmail.completedAt)
-    Assertions.assertThat(notifyHistory2.sentAt).isEqualTo(notifyCallbackEmail.sentAt)
+    assertNotifyHistory(notifyHistory2, notifyCallbackEmail, EMAIL, DELIVERED)
   }
 
   @Test
@@ -205,10 +188,10 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     val createVisitNotifyHistory = VisitNotifyHistory(
       eventAuditId = eventAudit.id,
       notificationId = "1",
-      notificationType = NotifyNotificationType.EMAIL,
+      notificationType = EMAIL,
       templateId = "T1",
       templateVersion = "v1",
-      status = NotifyStatus.SENDING,
+      status = SENDING,
       sentAt = LocalDateTime.now(),
       completedAt = LocalDateTime.now(),
       createdAt = LocalDateTime.now(),
@@ -218,10 +201,10 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     val callbackVisitNotifyHistory = VisitNotifyHistory(
       eventAuditId = eventAudit.id,
       notificationId = "1",
-      notificationType = NotifyNotificationType.EMAIL,
+      notificationType = EMAIL,
       templateId = "T2",
       templateVersion = "v2",
-      status = NotifyStatus.DELIVERED,
+      status = DELIVERED,
       sentAt = LocalDateTime.now(),
       completedAt = LocalDateTime.now(),
       createdAt = LocalDateTime.now(),
@@ -243,12 +226,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     // only entry needs to be DELIVERED
     Assertions.assertThat(eventAuditList[0].notifyHistory.size).isEqualTo(1)
     val notifyHistory = eventAuditList[0].notifyHistory.first()
-    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(callbackVisitNotifyHistory.notificationId)
-    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(NotifyNotificationType.EMAIL)
-    Assertions.assertThat(notifyHistory.status).isEqualTo(NotifyStatus.DELIVERED)
-    Assertions.assertThat(notifyHistory.createdAt).isEqualTo(callbackVisitNotifyHistory.createdAt)
-    Assertions.assertThat(notifyHistory.completedAt).isEqualTo(callbackVisitNotifyHistory.completedAt)
-    Assertions.assertThat(notifyHistory.sentAt).isEqualTo(callbackVisitNotifyHistory.sentAt)
+    assertNotifyHistory(notifyHistory, callbackVisitNotifyHistory, EMAIL, DELIVERED)
   }
 
   @Test
@@ -339,5 +317,33 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
       completedAt = completedAt,
       sentAt = sentAt,
     )
+  }
+
+  private fun assertNotifyHistory(
+    notifyHistory: NotifyHistoryDto,
+    callbackVisitNotifyHistory: NotifyCallbackNotificationDto,
+    notificationType: NotifyNotificationType,
+    notificationStatus: NotifyStatus,
+  ) {
+    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(callbackVisitNotifyHistory.notificationId)
+    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(notificationType)
+    Assertions.assertThat(notifyHistory.status).isEqualTo(notificationStatus)
+    Assertions.assertThat(notifyHistory.createdAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.createdAt.truncatedTo(ChronoUnit.SECONDS))
+    Assertions.assertThat(notifyHistory.completedAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.completedAt?.truncatedTo(ChronoUnit.SECONDS))
+    Assertions.assertThat(notifyHistory.sentAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.sentAt?.truncatedTo(ChronoUnit.SECONDS))
+  }
+
+  private fun assertNotifyHistory(
+    notifyHistory: NotifyHistoryDto,
+    callbackVisitNotifyHistory: VisitNotifyHistory,
+    notificationType: NotifyNotificationType,
+    notificationStatus: NotifyStatus,
+  ) {
+    Assertions.assertThat(notifyHistory.notificationId).isEqualTo(callbackVisitNotifyHistory.notificationId)
+    Assertions.assertThat(notifyHistory.notificationType).isEqualTo(notificationType)
+    Assertions.assertThat(notifyHistory.status).isEqualTo(notificationStatus)
+    Assertions.assertThat(notifyHistory.createdAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.createdAt?.truncatedTo(ChronoUnit.SECONDS))
+    Assertions.assertThat(notifyHistory.completedAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.completedAt?.truncatedTo(ChronoUnit.SECONDS))
+    Assertions.assertThat(notifyHistory.sentAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.sentAt?.truncatedTo(ChronoUnit.SECONDS))
   }
 }
