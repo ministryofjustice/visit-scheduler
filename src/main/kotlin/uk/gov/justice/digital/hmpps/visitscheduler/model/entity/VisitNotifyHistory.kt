@@ -38,6 +38,7 @@ class VisitNotifyHistory(
   @Column(name = "template_version", nullable = true)
   val templateVersion: String? = null,
 
+  @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)
   val status: NotifyStatus,
 
