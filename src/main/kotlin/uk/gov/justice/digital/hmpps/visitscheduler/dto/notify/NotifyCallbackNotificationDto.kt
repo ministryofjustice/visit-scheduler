@@ -9,7 +9,6 @@ import java.time.LocalDateTime
 @Schema(description = "Gov Notify Callback Notification")
 data class NotifyCallbackNotificationDto(
   @Schema(description = "The UUID of the notification", required = true)
-  @JsonProperty("id")
   val notificationId: String,
   @Schema(description = "The id of the event audit which the notification is linked to", example = "123456", required = true)
   @JsonProperty("reference")
