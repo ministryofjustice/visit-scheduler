@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
@@ -175,7 +176,14 @@ class VisitService(
 
     telemetryClientService.trackBookingEvent(bookingRequestDto, bookedVisitDto, bookingEventAuditDto)
 
-    snsService.sendVisitBookedEvent(bookedVisitDto)
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      bookedVisitDto.reference,
+      bookedVisitDto.createdTimestamp,
+      bookedVisitDto.modifiedTimestamp,
+      bookedVisitDto.prisonerId,
+      bookingEventAuditDto.id,
+    )
+    snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
 
     return bookedVisitDto
   }
@@ -188,7 +196,14 @@ class VisitService(
 
     telemetryClientService.trackUpdateBookingEvent(bookingRequestDto, bookedVisitDto, updatedEventAuditDto)
 
-    snsService.sendChangedVisitBookedEvent(bookedVisitDto)
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      bookedVisitDto.reference,
+      bookedVisitDto.createdTimestamp,
+      bookedVisitDto.modifiedTimestamp,
+      bookedVisitDto.prisonerId,
+      updatedEventAuditDto.id,
+    )
+    snsService.sendChangedVisitBookedEvent(snsDomainEventPublishDto)
 
     return bookedVisitDto
   }
@@ -201,7 +216,14 @@ class VisitService(
 
     telemetryClientService.trackCancelBookingEvent(visitDto, cancelVisitDto, cancelledEventAuditDto)
 
-    snsService.sendVisitCancelledEvent(visitDto)
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      visitDto.reference,
+      visitDto.createdTimestamp,
+      visitDto.modifiedTimestamp,
+      visitDto.prisonerId,
+      cancelledEventAuditDto.id,
+    )
+    snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
 
     // delete all visit notifications for the cancelled visit from the visit notifications table
     visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED)
