@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.dto.notify
 
 import com.fasterxml.jackson.annotation.JsonInclude
-import com.fasterxml.jackson.annotation.JsonProperty
 import io.swagger.v3.oas.annotations.media.Schema
 import java.time.LocalDateTime
 
@@ -11,7 +10,6 @@ data class NotifyCallbackNotificationDto(
   @Schema(description = "The UUID of the notification", required = true)
   val notificationId: String,
   @Schema(description = "The id of the event audit which the notification is linked to", example = "123456", required = true)
-  @JsonProperty("reference")
   val eventAuditReference: String,
   @Schema(description = "The final status of the notification", required = true)
   val status: String,
