@@ -34,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNotifyHistory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -63,6 +64,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionTemplat
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitNotificationEventRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VSIPReportingRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotifyHistoryRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -725,6 +727,7 @@ class DeleteEntityHelper(
   private val testSessionSlotRepository: TestSessionSlotRepository,
   private val testPrisonUserClientRepository: TestPrisonUserClientRepository,
   private val testActionedByRepository: TestActionedByRepository,
+  private val visitNotifyHistoryRepository: VisitNotifyHistoryRepository,
 ) {
 
   @Transactional(propagation = REQUIRES_NEW)
@@ -748,6 +751,8 @@ class DeleteEntityHelper(
     prisonExcludeDateRepository.flush()
     sessionCategoryGroupRepository.deleteAll()
     sessionCategoryGroupRepository.flush()
+    visitNotifyHistoryRepository.deleteAll()
+    visitNotifyHistoryRepository.flush()
     eventAuditRepository.deleteAll()
     eventAuditRepository.flush()
     visitNotificationEventRepository.deleteAll()
@@ -878,6 +883,16 @@ class VisitNotificationEventHelper(
   fun getVisitNotifications(
     visitBookingReference: String,
   ): List<VisitNotificationEvent> = visitNotificationEventRepository.findByBookingReference(visitBookingReference)
+}
+
+@Component
+@Transactional
+class VisitNotifyHistoryHelper(
+  private val visitNotifyHistoryRepository: VisitNotifyHistoryRepository,
+) {
+  fun create(visitNotifyHistory: VisitNotifyHistory) {
+    visitNotifyHistoryRepository.save(visitNotifyHistory)
+  }
 }
 
 class AllowedSessionLocationHierarchy(

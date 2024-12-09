@@ -74,6 +74,9 @@ components:
         visitId:
           type: string
           description: Unique identifier for this visit
+        eventAuditId:
+          type: string
+          description: Unique identifier for event audit entry related to visit
         NOMISvisitId:
           type: string
           description: NOMIS's identifier for this visit
