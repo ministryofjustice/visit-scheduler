@@ -13,8 +13,8 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
-import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
@@ -34,13 +34,13 @@ import java.time.temporal.ChronoUnit.MINUTES
 @ExtendWith(HmppsAuthExtension::class)
 abstract class NotificationTestBase : IntegrationTestBase() {
 
-  @SpyBean
+  @MockitoSpyBean
   lateinit var telemetryClient: TelemetryClient
 
-  @SpyBean
+  @MockitoSpyBean
   lateinit var prisonerService: PrisonerService
 
-  @SpyBean
+  @MockitoSpyBean
   lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
 
   @Captor

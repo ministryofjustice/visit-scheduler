@@ -11,9 +11,9 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
-import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.test.context.TestPropertySource
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
@@ -62,13 +62,13 @@ class CancelVisitTest : IntegrationTestBase() {
   @Value("\${visit.cancel.day-limit:14}")
   var visitCancellationDayLimit: Long = 14
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var visitNotificationEventServiceSpy: VisitNotificationEventService
 
   @Test

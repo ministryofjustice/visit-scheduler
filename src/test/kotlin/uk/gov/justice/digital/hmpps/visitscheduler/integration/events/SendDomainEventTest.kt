@@ -15,7 +15,7 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import software.amazon.awssdk.services.sqs.model.GetQueueAttributesRequest
 import software.amazon.awssdk.services.sqs.model.PurgeQueueRequest
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName
@@ -47,7 +47,7 @@ class SendDomainEventTest : IntegrationTestBase() {
   @Autowired
   protected lateinit var hmppsQueueService: HmppsQueueService
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   internal val testQueue by lazy { hmppsQueueService.findByQueueId("domaineventsqueue") ?: throw RuntimeException("Queue with name domaineventstestqueue doesn't exist") }

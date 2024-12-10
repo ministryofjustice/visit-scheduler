@@ -204,7 +204,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
       eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
     } catch (e: InvocationTargetException) {
       val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
-      VisitService.LOG.error(message)
+      LOG.error(message)
     }
 
     return saveBookingEventAudit(
@@ -221,7 +221,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
       eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
     } catch (e: InvocationTargetException) {
       val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
-      VisitService.LOG.error(message)
+      LOG.error(message)
     }
 
     return saveBookingEventAudit(

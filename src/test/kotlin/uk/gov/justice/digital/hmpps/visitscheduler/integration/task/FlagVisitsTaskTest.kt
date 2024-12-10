@@ -1,29 +1,41 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.task
 
 import com.microsoft.applicationinsights.TelemetryClient
-import org.assertj.core.api.Assertions
+import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
+import org.mockito.ArgumentCaptor
+import org.mockito.Captor
 import org.mockito.kotlin.any
+import org.mockito.kotlin.anyOrNull
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerReleasedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatNonAssociationHasChanged
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callNotifyVSiPThatPrisonerHadBeenReleased
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
+import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -36,8 +48,11 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
   @Autowired
   private lateinit var visitTask: VisitTask
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var telemetryClient: TelemetryClient
+
+  @MockitoSpyBean
+  private lateinit var sessionService: SessionService
 
   private val prisonerAId = "Prisoner-A"
   private val prisonerBId = "Prisoner-B"
@@ -46,6 +61,9 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
   private val visitDate = LocalDate.now().plusDays(7)
   private val startTime = LocalTime.of(9, 0)
   private val endTime = LocalTime.of(10, 0)
+
+  @Captor
+  lateinit var mapCapture: ArgumentCaptor<Map<String, String>>
 
   @BeforeEach
   internal fun setUp() {
@@ -86,12 +104,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     visitTask.flagVisits()
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent {
-      Assertions.assertThat(it["hasException"]).isNull()
-      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-      Assertions.assertThat(it["additionalInformation"]).isNull()
-    }
+    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
   }
 
   @Test
@@ -129,12 +142,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     visitTask.flagVisits()
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent {
-      Assertions.assertThat(it["hasException"]).isNull()
-      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-      Assertions.assertThat(it["additionalInformation"]).isNull()
-    }
+    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
   }
 
   @Test
@@ -170,12 +178,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     visitTask.flagVisits()
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent {
-      Assertions.assertThat(it["hasException"]).isNull()
-      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-      Assertions.assertThat(it["additionalInformation"]).isNull()
-    }
+    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
   }
 
   @Test
@@ -212,12 +215,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent {
-      Assertions.assertThat(it["hasException"]).isNull()
-      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-      Assertions.assertThat(it["additionalInformation"]).isNull()
-    }
+    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
   }
 
   @Test
@@ -253,12 +251,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent {
-      Assertions.assertThat(it["hasException"]).isEqualTo("true")
-      Assertions.assertThat(it["hasPrisonerMoved"]).isEqualTo("true")
-      Assertions.assertThat(it["additionalInformation"]).isEqualTo("Prisoner with ID - $prisonerAId is not in prison - ${prison.code} but $newPrisonCode")
-    }
+    assertFlaggedVisitEvent(prisonerAVisit, "Prisoner - $prisonerAId has moved prison")
   }
 
   @Test
@@ -290,28 +283,128 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit)
-    assertFlaggedVisitEvent {
-      Assertions.assertThat(it["hasException"]).isEqualTo("true")
-      Assertions.assertThat(it["hasPrisonerMoved"]).isNull()
-      Assertions.assertThat(it["additionalInformation"]).isNotNull()
-    }
+    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
   }
 
-  private fun assertFlaggedVisitEvent(visit: Visit) {
+  @Test
+  fun `when prisoners has notifications then visits are flagged with relevant details in additionalInformation`() {
+    // Given
+    val sessionTemplateReference = createSessionTemplate(
+      startTime = startTime,
+      endTime = endTime,
+      dayOfWeek = visitDate.dayOfWeek,
+    )
+    val roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+
+    val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerAId)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
+
+    val prisonerBVisit = createApplicationAndVisit(prisonerId = prisonerBId, sessionTemplate = sessionTemplateReference)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerBId)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
+
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(NON_ASSOCIATION_CREATED, prisonerAId, prisonerBId)
+    callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
+
+    // When
+    visitTask.flagVisits()
+    verify(telemetryClient, times(4)).trackEvent(eq("flagged-visit-event"), mapCapture.capture(), isNull())
+
+    // ignore 1st and 2nd events as they are non-association events
+    val flaggedVisitForPrisoner1 = mapCapture.allValues[2]
+    var test = getVisitAssert(prisonerAVisit, NON_ASSOCIATION_EVENT.description)
+    test.accept(flaggedVisitForPrisoner1)
+
+    val flaggedVisitForPrisoner2 = mapCapture.allValues[3]
+    test = getVisitAssert(prisonerBVisit, NON_ASSOCIATION_EVENT.description)
+    test.accept(flaggedVisitForPrisoner2)
+
+    verify(sessionService, times(0)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+  }
+
+  @Test
+  fun `when prisoners has multiple notifications then visits are flagged with relevant details in additionalInformation`() {
+    // Given
+    val sessionTemplateReference = createSessionTemplate(
+      startTime = startTime,
+      endTime = endTime,
+      dayOfWeek = visitDate.dayOfWeek,
+    )
+    val roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+
+    val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerAId)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
+
+    val prisonerBVisit = createApplicationAndVisit(prisonerId = prisonerBId, sessionTemplate = sessionTemplateReference)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerBId)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerBId, prison.code)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerBId, "${prison.code}-A")
+
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(NON_ASSOCIATION_CREATED, prisonerAId, prisonerBId)
+    callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
+
+    val prisonerReleasedNotification = PrisonerReleasedNotificationDto(prisonerAId, prison.code, RELEASED)
+    callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, prisonerReleasedNotification)
+
+    // When
+    visitTask.flagVisits()
+    verify(telemetryClient, times(5)).trackEvent(eq("flagged-visit-event"), mapCapture.capture(), isNull())
+
+    // ignore 1st 3 events as they are non-association and prisoner-release events
+    val flaggedVisitForPrisoner1 = mapCapture.allValues[3]
+    var test = getVisitAssert(prisonerAVisit, "${NON_ASSOCIATION_EVENT.description}, ${PRISONER_RELEASED_EVENT.description}")
+    test.accept(flaggedVisitForPrisoner1)
+
+    val flaggedVisitForPrisoner2 = mapCapture.allValues[4]
+    test = getVisitAssert(prisonerBVisit, NON_ASSOCIATION_EVENT.description)
+    test.accept(flaggedVisitForPrisoner2)
+
+    verify(sessionService, times(0)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+  }
+
+  @Test
+  fun `when prisoners has no notifications or invalid sessions then no visits are flagged`() {
+    // Given
+    val sessionTemplateReference = createSessionTemplate(
+      startTime = startTime,
+      endTime = endTime,
+      dayOfWeek = visitDate.dayOfWeek,
+    )
+
+    createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerAId)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerAId, prison.code)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
+
+    // When
+    visitTask.flagVisits()
+    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), mapCapture.capture(), isNull())
+    verify(sessionService, times(1)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
+  }
+
+  private fun assertFlaggedVisitEvent(visit: Visit, additionalInformation: String) {
     verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-
-    val base = Consumer<Map<String, String>> {
-      Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
-      Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-      Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
-      Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-      Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-      Assertions.assertThat(it["visitStart"]).isEqualTo(formatStartSlotDateTimeToString(visit.sessionSlot))
-      Assertions.assertThat(it["visitEnd"]).isEqualTo(formatSlotEndDateTimeToString(visit.sessionSlot))
-    }
-
+    val base = getVisitAssert(visit, additionalInformation)
     assertFlaggedVisitEvent(base)
+  }
+
+  private fun getVisitAssert(visit: Visit, additionalInformation: String): Consumer<Map<String, String>> {
+    return Consumer<Map<String, String>> {
+      assertThat(it["reference"]).isEqualTo(visit.reference)
+      assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+      assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
+      assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+      assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+      assertThat(it["visitStart"]).isEqualTo(formatStartSlotDateTimeToString(visit.sessionSlot))
+      assertThat(it["visitEnd"]).isEqualTo(formatSlotEndDateTimeToString(visit.sessionSlot))
+      assertThat(it["reviewType"]).isEqualTo("flag-visits-report")
+      assertThat(it["additionalInformation"]).isEqualTo(additionalInformation)
+    }
   }
 
   private fun assertFlaggedVisitEvent(test: Consumer<Map<String, String>>) {

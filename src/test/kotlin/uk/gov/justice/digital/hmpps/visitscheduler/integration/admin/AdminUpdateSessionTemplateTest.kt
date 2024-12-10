@@ -9,7 +9,7 @@ import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
@@ -51,7 +51,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
   private lateinit var incentiveLevelEnhanced: SessionIncentiveLevelGroup
   private lateinit var incentiveLevelNonEnhanced: SessionIncentiveLevelGroup
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var visitRepository: VisitRepository
 
   @BeforeEach

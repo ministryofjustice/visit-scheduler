@@ -10,7 +10,7 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISITS_BY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -27,7 +27,7 @@ import java.time.LocalDate
 @DisplayName("GET /visits/session-template")
 class VisitsBySessionTemplateFilterTest : IntegrationTestBase() {
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   lateinit var sessionTemplate2: SessionTemplate
