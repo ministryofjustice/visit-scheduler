@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType.TRANSFERRED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.NON_ASSOCIATION_REMOVED
@@ -172,11 +171,7 @@ class VisitNotificationEventService(
 
   private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
-
-    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
-
-    val prisonerSupportedAlertsAdded = notificationDto.alertsAdded.filter { code -> code in prisonerSupportedAlertCodes }
-    if (prisonerSupportedAlertsAdded.isNotEmpty()) {
+    if (notificationDto.alertsAdded.isNotEmpty()) {
       val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
       val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
 
@@ -188,11 +183,8 @@ class VisitNotificationEventService(
   private fun processAlertsRemoved(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsRemoved")
 
-    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
-
-    val prisonerSupportedAlertsRemoved = notificationDto.alertsRemoved.filter { it in prisonerSupportedAlertCodes }
-    if (prisonerSupportedAlertsRemoved.isNotEmpty()) {
-      if (!notificationDto.activeAlerts.any { it in prisonerSupportedAlertCodes }) {
+    if (notificationDto.alertsRemoved.isNotEmpty()) {
+      if (notificationDto.activeAlerts.isEmpty()) {
         val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
         prisonerDetails?.let { prisoner ->
           prisoner.prisonCode?.let {

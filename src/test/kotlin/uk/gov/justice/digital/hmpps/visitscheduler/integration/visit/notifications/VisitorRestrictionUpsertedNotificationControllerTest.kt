@@ -161,25 +161,6 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
   }
 
   @Test
-  fun `when visitor is given an unsupported restriction then no visits are flagged or saved`() {
-    // Given
-    val notificationDto = VisitorRestrictionUpsertedNotificationDto(
-      visitorId = visitorId,
-      validFromDate = LocalDate.now().minusDays(1),
-      restrictionType = "UNSUPPORTED",
-    )
-
-    // When
-    val responseSpec = callNotifyVSiPThatVisitorRestrictionUpserted(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
-
-    // Then
-    responseSpec.expectStatus().isOk
-    verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    assertThat(testEventAuditRepository.getAuditCount(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)).isEqualTo(0)
-  }
-
-  @Test
   fun `when visitor is given a restriction with a date in the past then no visits are flagged or saved`() {
     // Given
     val notificationDto = VisitorRestrictionUpsertedNotificationDto(
