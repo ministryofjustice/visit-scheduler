@@ -164,43 +164,41 @@ class VisitNotificationEventService(
     if (notificationDto.alertsAdded.isNotEmpty()) {
       processAlertsAdded(notificationDto)
     }
-    if (notificationDto.alertsRemoved.isNotEmpty()) {
+
+    // An additional check is made on activeAlerts being empty, because if the activeAlerts
+    // is not empty, then we wouldn't want to un-flag any visits as the visit may be flagged for those active alerts.
+    if (notificationDto.alertsRemoved.isNotEmpty() && notificationDto.activeAlerts.isEmpty()) {
       processAlertsRemoved(notificationDto)
     }
   }
 
   private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
-    if (notificationDto.alertsAdded.isNotEmpty()) {
-      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
-      val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
 
-      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, notificationDto.description, null, null)
-      processVisitsWithNotifications(processVisitNotificationDto)
-    }
+    val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+    val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
+
+    val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, notificationDto.description, null, null)
+    processVisitsWithNotifications(processVisitNotificationDto)
   }
 
   private fun processAlertsRemoved(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsRemoved")
 
-    if (notificationDto.alertsRemoved.isNotEmpty()) {
-      if (notificationDto.activeAlerts.isEmpty()) {
-        val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
-        prisonerDetails?.let { prisoner ->
-          prisoner.prisonCode?.let {
-            val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(
-              notificationDto.prisonerNumber,
-              prisoner.prisonCode!!,
-              PRISONER_ALERTS_UPDATED_EVENT,
-            )
+    val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
+    prisonerDetails?.let { prisoner ->
+      prisoner.prisonCode?.let {
+        val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(
+          notificationDto.prisonerNumber,
+          prisoner.prisonCode!!,
+          PRISONER_ALERTS_UPDATED_EVENT,
+        )
 
-            deleteNotificationsThatAreNoLongerValid(
-              currentPrisonNotifications,
-              PRISONER_ALERTS_UPDATED_EVENT,
-              PRISONER_ALERT_CODE_REMOVED,
-            )
-          }
-        }
+        deleteNotificationsThatAreNoLongerValid(
+          currentPrisonNotifications,
+          PRISONER_ALERTS_UPDATED_EVENT,
+          PRISONER_ALERT_CODE_REMOVED,
+        )
       }
     }
   }
