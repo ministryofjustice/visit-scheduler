@@ -18,7 +18,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.PRIS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonPrisonCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -55,7 +54,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
       prisonerId,
       description,
-      listOf(PrisonerSupportedAlertCodeType.C1.name),
+      listOf("C1"),
       emptyList(),
       emptyList(),
     )
@@ -128,7 +127,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
       prisonerId,
       description,
-      listOf(PrisonerSupportedAlertCodeType.C1.name),
+      listOf("C1"),
       emptyList(),
       emptyList(),
     )
@@ -184,47 +183,13 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
   }
 
   @Test
-  fun `when prisoner has had an alert created or updated its not a supported code then no visits are affected`() {
-    // Given
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode, IncentiveLevel.ENHANCED)
-    val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
-      prisonerId,
-      description,
-      listOf("UNSUPPORTED"),
-      emptyList(),
-      emptyList(),
-    )
-
-    val visit1 = createApplicationAndVisit(
-      prisonerId = notificationDto.prisonerNumber,
-      slotDate = LocalDate.now().plusDays(1),
-      visitStatus = BOOKED,
-      sessionTemplate = sessionTemplate1,
-    )
-    eventAuditEntityHelper.create(visit1)
-
-    // When
-    val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
-      webTestClient,
-      roleVisitSchedulerHttpHeaders,
-      notificationDto,
-    )
-
-    // Then
-    responseSpec.expectStatus().isOk
-    verifyNoInteractions(telemetryClient)
-    verify(visitNotificationEventRepository, times(0)).saveAndFlush(any<VisitNotificationEvent>())
-    assertThat(testEventAuditRepository.getAuditCount(PRISONER_ALERTS_UPDATED_EVENT)).isEqualTo(0)
-  }
-
-  @Test
   fun `when prisoner has had an alert created or updated and prisoner has a non prison code then the all visits in all prisons are flagged and saved`() {
     // Given
     val nonPrisonCode = NonPrisonCodeType.ADM.name
     val notificationDto = PrisonerAlertCreatedUpdatedNotificationDto(
       prisonerId,
       description,
-      listOf(PrisonerSupportedAlertCodeType.C1.name),
+      listOf("C1"),
       emptyList(),
       emptyList(),
     )
@@ -296,7 +261,7 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId,
       description,
       emptyList(),
-      listOf(PrisonerSupportedAlertCodeType.C1.name),
+      listOf("C1"),
       emptyList(),
     )
 
@@ -346,8 +311,8 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       prisonerId,
       description,
       emptyList(),
-      listOf(PrisonerSupportedAlertCodeType.C1.name),
-      listOf(PrisonerSupportedAlertCodeType.C2.name),
+      listOf("C1"),
+      listOf("C2"),
     )
 
     val visit = visitEntityHelper.create(
