@@ -39,7 +39,9 @@ class VisitTask(
     lockAtMostFor = FlagVisitTaskConfiguration.LOCK_AT_MOST_FOR,
   )
   fun flagVisits() {
+    LOG.debug("Started flagVisits task.")
     if (!flagVisitTaskConfiguration.flagVisitsEnabled) {
+      LOG.debug("flagVisits task enabled - {}", flagVisitTaskConfiguration.flagVisitsEnabled)
       return
     }
 
