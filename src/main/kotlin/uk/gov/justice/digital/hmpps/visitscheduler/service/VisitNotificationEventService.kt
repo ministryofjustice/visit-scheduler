@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReceivedReasonType.TRANSFERRED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerReleaseReasonType.RELEASED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerSupportedAlertCodeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.IGNORE_VISIT_NOTIFICATIONS
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.NON_ASSOCIATION_REMOVED
@@ -165,7 +164,10 @@ class VisitNotificationEventService(
     if (notificationDto.alertsAdded.isNotEmpty()) {
       processAlertsAdded(notificationDto)
     }
-    if (notificationDto.alertsRemoved.isNotEmpty()) {
+
+    // An additional check is made on activeAlerts being empty, because if the activeAlerts
+    // is not empty, then we wouldn't want to un-flag any visits as the visit may be flagged for those active alerts.
+    if (notificationDto.alertsRemoved.isNotEmpty() && notificationDto.activeAlerts.isEmpty()) {
       processAlertsRemoved(notificationDto)
     }
   }
@@ -173,42 +175,30 @@ class VisitNotificationEventService(
   private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
 
-    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
+    val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+    val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
 
-    val prisonerSupportedAlertsAdded = notificationDto.alertsAdded.filter { code -> code in prisonerSupportedAlertCodes }
-    if (prisonerSupportedAlertsAdded.isNotEmpty()) {
-      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
-      val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
-
-      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, notificationDto.description, null, null)
-      processVisitsWithNotifications(processVisitNotificationDto)
-    }
+    val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, notificationDto.description, null, null)
+    processVisitsWithNotifications(processVisitNotificationDto)
   }
 
   private fun processAlertsRemoved(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsRemoved")
 
-    val prisonerSupportedAlertCodes = PrisonerSupportedAlertCodeType.entries.map { it.name }.toSet()
+    val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
+    prisonerDetails?.let { prisoner ->
+      prisoner.prisonCode?.let {
+        val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(
+          notificationDto.prisonerNumber,
+          prisoner.prisonCode!!,
+          PRISONER_ALERTS_UPDATED_EVENT,
+        )
 
-    val prisonerSupportedAlertsRemoved = notificationDto.alertsRemoved.filter { it in prisonerSupportedAlertCodes }
-    if (prisonerSupportedAlertsRemoved.isNotEmpty()) {
-      if (!notificationDto.activeAlerts.any { it in prisonerSupportedAlertCodes }) {
-        val prisonerDetails = prisonerService.getPrisoner(notificationDto.prisonerNumber)
-        prisonerDetails?.let { prisoner ->
-          prisoner.prisonCode?.let {
-            val currentPrisonNotifications = visitNotificationEventRepository.getEventsBy(
-              notificationDto.prisonerNumber,
-              prisoner.prisonCode!!,
-              PRISONER_ALERTS_UPDATED_EVENT,
-            )
-
-            deleteNotificationsThatAreNoLongerValid(
-              currentPrisonNotifications,
-              PRISONER_ALERTS_UPDATED_EVENT,
-              PRISONER_ALERT_CODE_REMOVED,
-            )
-          }
-        }
+        deleteNotificationsThatAreNoLongerValid(
+          currentPrisonNotifications,
+          PRISONER_ALERTS_UPDATED_EVENT,
+          PRISONER_ALERT_CODE_REMOVED,
+        )
       }
     }
   }
