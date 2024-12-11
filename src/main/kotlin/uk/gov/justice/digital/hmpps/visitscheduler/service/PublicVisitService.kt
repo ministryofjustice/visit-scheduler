@@ -22,17 +22,18 @@ class PublicVisitService(
   }
 
   fun getFuturePublicBookedVisitsByBookerReference(bookerReference: String): List<VisitDto> {
-    val bookingReferenceList = visitRepository.getPublicFutureBookingsByBookerReference(bookerReference)
-    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedBy { it.startTimestamp }
+    val x = visitRepository.getPublicFutureBookingsByBookerReference(bookerReference)
+
+    val y = x.map { visitDtoBuilder.build(it) }.sortedBy { it.startTimestamp }
+
+    return y
   }
 
   fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<VisitDto> {
-    val bookingReferenceList = visitRepository.getPublicCanceledVisitsByBookerReference(bookerReference)
-    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedByDescending { it.modifiedTimestamp }
+    return visitRepository.getPublicCanceledVisitsByBookerReference(bookerReference).map { visitDtoBuilder.build(it) }.sortedByDescending { it.modifiedTimestamp }
   }
 
   fun getPublicPastVisitsByBookerReference(bookerReference: String): List<VisitDto> {
-    val bookingReferenceList = visitRepository.getPublicPastBookingsByBookerReference(bookerReference)
-    return visitRepository.findVisitsByReferences(bookingReferenceList).map { visitDtoBuilder.build(it) }.sortedByDescending { it.startTimestamp }
+    return visitRepository.getPublicPastBookingsByBookerReference(bookerReference).map { visitDtoBuilder.build(it) }.sortedByDescending { it.startTimestamp }
   }
 }

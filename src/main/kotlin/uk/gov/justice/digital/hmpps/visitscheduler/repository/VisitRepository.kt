@@ -303,7 +303,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
   fun findBookedVisitsBySessionForDate(sessionTemplateReference: String, date: LocalDate): List<Visit>
 
   @Query(
-    "SELECT v.reference FROM visit v " +
+    "SELECT v.* FROM visit v " +
       " INNER JOIN event_audit ea on ea.booking_reference = v.reference AND ea.type = 'BOOKED_VISIT' " +
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " INNER JOIN session_slot ss on ss.id = v.session_slot_id " +
@@ -311,10 +311,10 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       " AND v.visit_status = 'BOOKED' AND ss.slot_date >= CURRENT_DATE AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
-  fun getPublicFutureBookingsByBookerReference(bookerReference: String): List<String>
+  fun getPublicFutureBookingsByBookerReference(bookerReference: String): List<Visit>
 
   @Query(
-    "SELECT v.reference FROM visit v " +
+    "SELECT v.* FROM visit v " +
       " INNER JOIN event_audit ea on ea.booking_reference = v.reference AND ea.type = 'BOOKED_VISIT' " +
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " INNER JOIN session_slot ss on ss.id = v.session_slot_id " +
@@ -322,17 +322,17 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       " AND v.visit_status = 'BOOKED' AND ss.slot_date < CURRENT_DATE AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
-  fun getPublicPastBookingsByBookerReference(bookerReference: String): List<String>
+  fun getPublicPastBookingsByBookerReference(bookerReference: String): List<Visit>
 
   @Query(
-    "Select v.reference FROM visit v " +
+    "Select v.* FROM visit v " +
       " INNER JOIN event_audit ea on ea.booking_reference = v.reference and ea.type = 'BOOKED_VISIT' " +
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " WHERE ab.booker_reference = :bookerReference AND v.visit_status = 'CANCELLED' " +
       " AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
-  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<String>
+  fun getPublicCanceledVisitsByBookerReference(bookerReference: String): List<Visit>
 
   @Query(
     "SELECT v FROM Visit v WHERE v.reference in :bookingReferences order by v.modifyTimestamp",
