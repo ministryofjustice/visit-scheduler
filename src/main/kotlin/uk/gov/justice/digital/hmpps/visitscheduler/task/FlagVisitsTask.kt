@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
 
 @Component
-class VisitTask(
+class FlagVisitsTask(
   private val visitService: VisitService,
   private val sessionService: SessionService,
   private val prisonsService: PrisonsService,
@@ -32,7 +32,7 @@ class VisitTask(
     private const val DEFAULT_VISIT_FLAG_REASON = "possible non-association or session not suitable"
   }
 
-  @Scheduled(cron = "\${task.log-non-associations.cron:0 0 3 * * ?}")
+  @Scheduled(cron = "\${task.flag-visits.cron:0 0 3 * * ?}")
   @SchedulerLock(
     name = "flagVisitsTask",
     lockAtLeastFor = FlagVisitTaskConfiguration.LOCK_AT_LEAST_FOR,

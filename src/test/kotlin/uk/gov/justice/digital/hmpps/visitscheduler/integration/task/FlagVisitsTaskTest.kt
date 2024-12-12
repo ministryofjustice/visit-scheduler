@@ -36,7 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
-import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
+import uk.gov.justice.digital.hmpps.visitscheduler.task.FlagVisitsTask
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalTime
@@ -46,7 +46,7 @@ import java.util.function.Consumer
 @DisplayName("Flag Visits")
 class FlagVisitsTaskTest : IntegrationTestBase() {
   @Autowired
-  private lateinit var visitTask: VisitTask
+  private lateinit var flagVisitsTask: FlagVisitsTask
 
   @MockitoSpyBean
   private lateinit var telemetryClient: TelemetryClient
@@ -101,7 +101,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C-1-C001")
 
     // When
-    visitTask.flagVisits()
+    flagVisitsTask.flagVisits()
     // Then
 
     assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
@@ -139,7 +139,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-A-2")
 
     // When
-    visitTask.flagVisits()
+    flagVisitsTask.flagVisits()
     // Then
 
     assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
@@ -175,7 +175,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
 
     // When
-    visitTask.flagVisits()
+    flagVisitsTask.flagVisits()
     // Then
 
     assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
@@ -211,7 +211,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
 
     // When
-    visitTask.flagVisits()
+    flagVisitsTask.flagVisits()
 
     // Then
 
@@ -247,7 +247,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
 
     // When
-    visitTask.flagVisits()
+    flagVisitsTask.flagVisits()
 
     // Then
 
@@ -279,7 +279,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerCId, "${prison.code}-C")
 
     // When
-    visitTask.flagVisits()
+    flagVisitsTask.flagVisits()
 
     // Then
 
@@ -310,7 +310,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
 
     // When
-    visitTask.flagVisits()
+    flagVisitsTask.flagVisits()
     verify(telemetryClient, times(4)).trackEvent(eq("flagged-visit-event"), mapCapture.capture(), isNull())
 
     // ignore 1st and 2nd events as they are non-association events
@@ -352,7 +352,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, prisonerReleasedNotification)
 
     // When
-    visitTask.flagVisits()
+    flagVisitsTask.flagVisits()
     verify(telemetryClient, times(5)).trackEvent(eq("flagged-visit-event"), mapCapture.capture(), isNull())
 
     // ignore 1st 3 events as they are non-association and prisoner-release events
@@ -382,7 +382,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerAId, "${prison.code}-B")
 
     // When
-    visitTask.flagVisits()
+    flagVisitsTask.flagVisits()
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), mapCapture.capture(), isNull())
     verify(sessionService, times(1)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull())
   }
