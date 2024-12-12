@@ -16,6 +16,8 @@ generic-service:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.dev.json
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 50
     TASK_VISIT_COUNTS_REPORT_CRON: "0 0 0/1 * * ?" #every hour on dev
+    #TODO - revert later
+    TASK_FLAG_VISITS_CRON: "0 0/5 * * * ?" #every 5 minutes on dev - for testing
 
 # CloudPlatform AlertManager receiver to route promethues alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
