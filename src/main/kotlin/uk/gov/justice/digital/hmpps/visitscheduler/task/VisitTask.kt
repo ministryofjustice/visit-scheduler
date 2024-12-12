@@ -41,7 +41,7 @@ class VisitTask(
   fun flagVisits() {
     LOG.debug("Started flagVisits task.")
     if (!flagVisitTaskConfiguration.flagVisitsEnabled) {
-      LOG.debug("flagVisits task enabled - {}", flagVisitTaskConfiguration.flagVisitsEnabled)
+      LOG.debug("flagVisits task disabled, exiting task.")
       return
     }
 
@@ -90,7 +90,7 @@ class VisitTask(
         sessions = sessionService.getVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays)
       } catch (e: PrisonerNotInSuppliedPrisonException) {
         reason = "Prisoner - ${visit.prisonerId} has moved prison"
-        LOG.info("Prisoner {} has moved prison", visit.prisonerId)
+        LOG.debug("Prisoner {} has moved prison", visit.prisonerId)
       } catch (e: Exception) {
         // only log this if the visit is being retried
         LOG.info("Exception thrown when retrieving visit sessions for the following parameters - prison code - {}, prisonerId - {}, minOverride - {}, maxOverride - {}", visit.prisonCode, visit.prisonerId, noticeDays, noticeDays)
