@@ -87,7 +87,7 @@ class FlagVisitsTask(
       reason = notifications.joinToString(", ") { it.description }
     } else {
       try {
-        sessions = sessionService.getVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays)
+        sessions = sessionService.getVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays).filter { it.sessionTemplateReference == visit.sessionTemplateReference }
       } catch (e: PrisonerNotInSuppliedPrisonException) {
         reason = "Prisoner - ${visit.prisonerId} has moved prison"
         LOG.debug("Prisoner {} has moved prison", visit.prisonerId)

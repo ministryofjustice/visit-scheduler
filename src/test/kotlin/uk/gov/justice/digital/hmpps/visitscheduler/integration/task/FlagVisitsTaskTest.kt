@@ -74,7 +74,8 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
   fun `when prisoners have non associations after visit was created then visits are flagged`() {
     // Given
     val sessionTemplateReference = createSessionTemplate(startTime = startTime, endTime = endTime, dayOfWeek = visitDate.dayOfWeek)
-
+    // 2nd session
+    createSessionTemplate(startTime = startTime.plusHours(2), endTime = endTime.plusHours(2), dayOfWeek = visitDate.dayOfWeek)
     // prisoner A has non association with prisoner B who has a visit on the same day
     val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
 
@@ -120,6 +121,13 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       permittedLocations = permittedLocations,
     )
 
+    // session available to all prisoners
+    createSessionTemplate(
+      startTime = startTime.plusHours(2),
+      endTime = endTime.plusHours(2),
+      dayOfWeek = visitDate.dayOfWeek,
+    )
+
     val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
     // prisoner A has moved location since the visit was created
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerAId)
@@ -155,6 +163,9 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       dayOfWeek = visitDate.dayOfWeek,
       permittedCategories = listOf(PrisonerCategoryType.A_STANDARD),
     )
+
+    // 2nd session
+    createSessionTemplate(startTime = startTime.plusHours(2), endTime = endTime.plusHours(2), dayOfWeek = visitDate.dayOfWeek)
 
     val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplate)
     // prisoner A has changed category to B since the visit was created
@@ -228,6 +239,9 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       dayOfWeek = visitDate.dayOfWeek,
     )
 
+    // 2nd session
+    createSessionTemplate(startTime = startTime.plusHours(2), endTime = endTime.plusHours(2), dayOfWeek = visitDate.dayOfWeek)
+
     val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerAId)
     // prisoner is now in prison XYZ
@@ -263,6 +277,9 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       dayOfWeek = visitDate.dayOfWeek,
     )
 
+    // 2nd session
+    createSessionTemplate(startTime = startTime.plusHours(2), endTime = endTime.plusHours(2), dayOfWeek = visitDate.dayOfWeek)
+
     val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociation(prisonerAId)
     prisonOffenderSearchMockServer.stubGetPrisoner(prisonerAId, null)
@@ -294,6 +311,9 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       endTime = endTime,
       dayOfWeek = visitDate.dayOfWeek,
     )
+
+    // 2nd session
+    createSessionTemplate(startTime = startTime.plusHours(2), endTime = endTime.plusHours(2), dayOfWeek = visitDate.dayOfWeek)
     val roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
@@ -333,6 +353,9 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       endTime = endTime,
       dayOfWeek = visitDate.dayOfWeek,
     )
+    // 2nd session
+    createSessionTemplate(startTime = startTime.plusHours(2), endTime = endTime.plusHours(2), dayOfWeek = visitDate.dayOfWeek)
+
     val roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
 
     val prisonerAVisit = createApplicationAndVisit(prisonerId = prisonerAId, sessionTemplate = sessionTemplateReference)
