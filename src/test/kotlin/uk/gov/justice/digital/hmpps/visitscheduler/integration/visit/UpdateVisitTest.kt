@@ -11,8 +11,8 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
@@ -44,7 +44,7 @@ class UpdateVisitTest : IntegrationTestBase() {
   @Autowired
   private lateinit var testApplicationRepository: TestApplicationRepository
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var telemetryClient: TelemetryClient
 
   private lateinit var reservedStaffApplication: Application
