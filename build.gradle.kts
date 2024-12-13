@@ -1,7 +1,7 @@
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "6.1.0"
-  kotlin("plugin.spring") version "2.0.21"
-  kotlin("plugin.jpa") version "2.0.21"
+  kotlin("plugin.spring") version "2.1.0"
+  kotlin("plugin.jpa") version "2.1.0"
   idea
 }
 
@@ -23,13 +23,13 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-security")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.2.0")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.2.1")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.10.0")
 
-  implementation("org.springframework.data:spring-data-commons:3.4.0")
+  implementation("org.springframework.data:spring-data-commons:3.4.1")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.7.0")
   implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
   implementation("org.springdoc:springdoc-openapi-starter-common:2.7.0")
@@ -56,7 +56,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt:0.12.6")
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.testcontainers:postgresql:1.20.4")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.779")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.780")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2")
   testImplementation("org.junit-pioneer:junit-pioneer:2.3.0")
 }
