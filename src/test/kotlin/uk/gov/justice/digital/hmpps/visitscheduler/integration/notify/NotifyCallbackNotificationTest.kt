@@ -300,6 +300,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     eventAuditReference: Long,
     createdAt: LocalDateTime = LocalDateTime.now(),
     completedAt: LocalDateTime = LocalDateTime.now(),
+    sentTo: String = "example@example.com",
     sentAt: LocalDateTime = LocalDateTime.now(),
     notificationType: String,
     templateID: String = "template-id",
@@ -315,6 +316,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
       templateVersion = templateVersion,
       status = notificationStatus,
       completedAt = completedAt,
+      sentTo = sentTo,
       sentAt = sentAt,
     )
   }
@@ -330,6 +332,7 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     Assertions.assertThat(notifyHistory.notificationId).isEqualTo(callbackVisitNotifyHistory.notificationId)
     Assertions.assertThat(notifyHistory.notificationType).isEqualTo(notificationType)
     Assertions.assertThat(notifyHistory.status).isEqualTo(notificationStatus)
+    Assertions.assertThat(notifyHistory.sentTo).isEqualTo(callbackVisitNotifyHistory.sentTo)
     Assertions.assertThat(notifyHistory.createdAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.createdAt.truncatedTo(ChronoUnit.SECONDS))
     Assertions.assertThat(notifyHistory.completedAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.completedAt?.truncatedTo(ChronoUnit.SECONDS))
     Assertions.assertThat(notifyHistory.sentAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.sentAt?.truncatedTo(ChronoUnit.SECONDS))
@@ -347,5 +350,6 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     Assertions.assertThat(notifyHistory.createdAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.createdAt?.truncatedTo(ChronoUnit.SECONDS))
     Assertions.assertThat(notifyHistory.completedAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.completedAt?.truncatedTo(ChronoUnit.SECONDS))
     Assertions.assertThat(notifyHistory.sentAt?.truncatedTo(ChronoUnit.SECONDS)).isEqualTo(callbackVisitNotifyHistory.sentAt?.truncatedTo(ChronoUnit.SECONDS))
+    Assertions.assertThat(notifyHistory.sentTo).isEqualTo(callbackVisitNotifyHistory.sentTo)
   }
 }

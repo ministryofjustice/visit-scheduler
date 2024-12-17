@@ -13,6 +13,8 @@ data class NotifyCallbackNotificationDto(
   val eventAuditReference: String,
   @Schema(description = "The final status of the notification", required = true)
   val status: String,
+  @Schema(description = "The email or phone number the notification was sent to", required = true)
+  val sentTo: String,
   @Schema(description = "The timestamp for when the vsip notification service sent the notification to gov notify", required = true)
   val createdAt: LocalDateTime,
   @Schema(description = "The timestamp for the final update of the notification (when delivered or ultimately failed) ", required = false)

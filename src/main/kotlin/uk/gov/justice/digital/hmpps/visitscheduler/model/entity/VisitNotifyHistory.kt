@@ -42,6 +42,9 @@ class VisitNotifyHistory(
   @Column(name = "status", nullable = false)
   val status: NotifyStatus,
 
+  @Column(name = "sent_to")
+  val sentTo: String? = null,
+
   @Column(name = "sent_at")
   val sentAt: LocalDateTime? = null,
 
