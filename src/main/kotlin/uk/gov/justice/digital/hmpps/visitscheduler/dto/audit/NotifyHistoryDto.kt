@@ -19,6 +19,9 @@ data class NotifyHistoryDto(
   @Schema(description = "Notification Status", required = true)
   val status: NotifyStatus,
 
+  @Schema(description = "The email or phone number the notification was sent to", required = true)
+  val sentTo: String?,
+
   @Schema(description = "Notification Sent At", required = false)
   val sentAt: LocalDateTime? = null,
 
@@ -33,6 +36,7 @@ data class NotifyHistoryDto(
     notificationId = visitNotifyHistory.notificationId,
     notificationType = visitNotifyHistory.notificationType,
     status = visitNotifyHistory.status,
+    sentTo = visitNotifyHistory.sentTo,
     sentAt = visitNotifyHistory.sentAt,
     completedAt = visitNotifyHistory.completedAt,
     createdAt = visitNotifyHistory.createdAt,

@@ -25,6 +25,7 @@ interface VisitNotifyHistoryRepository : JpaRepository<VisitNotifyHistory, Long>
       "vnh.templateId = :templateId," +
       "vnh.templateVersion = :templateVersion," +
       "vnh.status = :status," +
+      "vnh.sentTo = :sentTo," +
       "vnh.sentAt = :sentAt," +
       "vnh.completedAt = :completedAt," +
       "vnh.createdAt = :createdAt " +
@@ -36,6 +37,7 @@ interface VisitNotifyHistoryRepository : JpaRepository<VisitNotifyHistory, Long>
     templateId: String,
     templateVersion: String,
     status: NotifyStatus,
+    sentTo: String? = null,
     sentAt: LocalDateTime? = null,
     completedAt: LocalDateTime? = null,
     createdAt: LocalDateTime,
