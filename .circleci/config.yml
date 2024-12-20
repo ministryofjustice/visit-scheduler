@@ -71,6 +71,35 @@ jobs:
             cd hmpps-book-a-prison-visit-ui-tests
             npm run test:ci
 
+  acceptance_tests_staff_playwright-e2e:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.44.1-jammy
+    circleci_ip_ranges: true
+
+    steps:
+      - run:
+          name: Checkout VSIP Staff UI Playwright Tests
+          command: git clone https://github.com/ministryofjustice/hmpps-book-a-prison-visit-staff-e2e-tests.git
+      - run:
+          name: get git status
+          command: |
+            cd hmpps-book-a-prison-visit-staff-e2e-tests
+            git checkout main
+            git pull
+            git status
+      - attach_workspace:
+          at: ~/app
+      - run:
+          name: Install Dependencies
+          command: |
+            cd hmpps-book-a-prison-visit-staff-e2e-tests
+            npm ci --no-audit
+      - run:
+          name: Run Playwright Tests
+          command: |
+            cd hmpps-book-a-prison-visit-ui-tests
+            npm run test:ci        
+
   validate:
     executor:
       name: hmpps/java_localstack_postgres
