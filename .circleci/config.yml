@@ -68,7 +68,7 @@ jobs:
       - run:
           name: Run Playwright Tests
           command: |
-            cd hmpps-book-a-prison-visit-staff-e2e-tests
+            cd hmpps-book-a-prison-visit-ui-tests
             npm run test:ci
 
   acceptance_tests_staff_playwright-e2e:
@@ -97,7 +97,7 @@ jobs:
       - run:
           name: Run Playwright Tests
           command: |
-            cd hmpps-book-a-prison-visit-ui-tests
+            cd hmpps-book-a-prison-visit-staff-e2e-tests
             npm run test:ci        
 
   validate:
