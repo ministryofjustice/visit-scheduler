@@ -337,7 +337,7 @@ workflows:
             branches:
               ignore:
                 - main
-      - acceptance_tests_staff_playwright:
+      - acceptance_tests_staff_playwright-e2e:
           requires:
             - request-acceptance-tests-staff-playwright-approval
           context: playwright-book-a-prison-visit-staff-e2e-ui-tests-staging
