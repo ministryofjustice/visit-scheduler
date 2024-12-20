@@ -56,6 +56,8 @@ hmpps.sqs:
     domaineventsqueue:
       queueName: ${random.uuid}
       subscribeTopicId: domainevents
+    prisonvisitsevents:
+      queueName: sqs_hmpps_prison_visits_event_queue
   topics:
     domainevents:
       arn: arn:aws:sns:eu-west-2:000000000000:${random.uuid}
