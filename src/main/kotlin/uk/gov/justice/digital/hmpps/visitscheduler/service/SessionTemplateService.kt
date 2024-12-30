@@ -154,7 +154,11 @@ class SessionTemplateService(
     val saveSessionLocationGroup = sessionLocationGroupRepository.saveAndFlush(sessionLocationGroup)
 
     // send SQS message to handle visit flagging asynchronously
-    sendSessionLocationGroupUpdatedMessage(prisonCode, reference, existingSessionLocations)
+    sendSessionLocationGroupUpdatedMessage(
+      prisonCode = prisonCode,
+      locationGroupReference = reference,
+      oldLocations = existingSessionLocations,
+    )
     return SessionLocationGroupDto(saveSessionLocationGroup)
   }
 
