@@ -127,9 +127,9 @@ task:
     expired-applications:
       enabled: true
       validity-minutes: 1440
-  log-non-associations:
+  flag-visits:
     enabled: true
-    cron: "0 0 3 * * ?" #every day at 3 AM
+    cron: "0 0 2 * * ?" #every day at 2 AM
     number-of-days-ahead: 30
   reporting:
     visit-counts-report:

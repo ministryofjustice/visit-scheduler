@@ -309,6 +309,28 @@ workflows:
               ignore:
                 - main
 
+      - hmpps/deploy_env:
+          name: deploy_preprod
+          env: "preprod"
+          context:
+            - hmpps-common-vars
+            - visit-someone-in-prison-backend-svc-preprod
+          filters:
+            branches:
+              ignore:
+                - main
+          requires:
+            - request-preprod-approval
+      - request-preprod-approval:
+          type: approval
+          requires:
+            - validate
+            - build_docker
+            - helm_lint
+          filters:
+            branches:
+              ignore:
+                - main
   security:
     triggers:
       - schedule:

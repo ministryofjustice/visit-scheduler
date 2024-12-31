@@ -5,12 +5,12 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class FlagVisitTaskConfiguration(
-  @Value("\${task.log-non-associations.enabled:false}") val flagVisitsEnabled: Boolean,
-  @Value("\${task.log-non-associations.number-of-days-ahead:30}") val numberOfDaysAhead: Int,
+  @Value("\${task.flag-visits.enabled:false}") val flagVisitsEnabled: Boolean,
+  @Value("\${task.flag-visits.number-of-days-ahead:30}") val numberOfDaysAhead: Int,
 ) {
   companion object {
-    const val LOCK_AT_LEAST_FOR = "PT60M"
-    const val LOCK_AT_MOST_FOR = "PT60M"
-    const val THREAD_SLEEP_TIME_IN_MILLISECONDS: Long = 500
+    const val LOCK_AT_LEAST_FOR = "PT4H"
+    const val LOCK_AT_MOST_FOR = "PT4H"
+    const val THREAD_SLEEP_TIME_IN_MILLISECONDS: Long = 100
   }
 }
