@@ -30,8 +30,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.Create
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.SessionIncentiveLevelGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.PermittedSessionLocationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.SessionLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitevents.SessionLocationGroupUpdatedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
@@ -72,6 +74,7 @@ class SessionTemplateService(
   private val sessionSlotService: SessionSlotService,
   @Lazy
   private val excludeDateService: ExcludeDateService,
+  private val sqsService: SqsService,
 ) {
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -131,6 +134,9 @@ class SessionTemplateService(
   fun updateSessionLocationGroup(reference: String, updateLocationSessionGroup: UpdateLocationGroupDto): SessionLocationGroupDto {
     val sessionLocationGroup = getLocationGroupByReference(reference)
     sessionLocationGroup.name = updateLocationSessionGroup.name
+    val existingSessionLocations = sessionLocationGroup.sessionLocations.map(::PermittedSessionLocationDto)
+    val prisonCode = sessionLocationGroup.prison.code
+
     sessionLocationGroup.sessionLocations.clear()
 
     val sessionLocations = updateLocationSessionGroup.locations.toSet().map {
@@ -146,6 +152,13 @@ class SessionTemplateService(
 
     sessionLocationGroup.sessionLocations.addAll(sessionLocations)
     val saveSessionLocationGroup = sessionLocationGroupRepository.saveAndFlush(sessionLocationGroup)
+
+    // send SQS message to handle visit flagging asynchronously
+    sendSessionLocationGroupUpdatedMessage(
+      prisonCode = prisonCode,
+      locationGroupReference = reference,
+      oldLocations = existingSessionLocations,
+    )
     return SessionLocationGroupDto(saveSessionLocationGroup)
   }
 
@@ -599,6 +612,19 @@ class SessionTemplateService(
     // ensure the prison is enabled
     val sessionTemplate = getSessionTemplate(sessionTemplateReference)
     return excludeDateService.getExcludeDates(sessionTemplate.excludeDates)
+  }
+
+  private fun sendSessionLocationGroupUpdatedMessage(
+    prisonCode: String,
+    locationGroupReference: String,
+    oldLocations: List<PermittedSessionLocationDto>,
+  ) {
+    val sessionLocationGroupUpdatedDto = SessionLocationGroupUpdatedDto(prisonCode, locationGroupReference, oldLocations)
+    try {
+      sqsService.sendVisitEventToPrisonVisitsQueue(sessionLocationGroupUpdatedDto)
+    } catch (e: Exception) {
+      LOG.error("Error while sending SQL visit event", e)
+    }
   }
 }
 

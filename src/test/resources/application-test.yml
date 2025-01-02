@@ -67,6 +67,8 @@ task:
 hmpps.sqs:
   provider: localstack
   queues:
+    prisonvisitsevents:
+      queueName: prison-visits-events-sqs-queue
     domaineventsqueue:
       queueName: ${random.uuid}
       subscribeTopicId: domainevents
