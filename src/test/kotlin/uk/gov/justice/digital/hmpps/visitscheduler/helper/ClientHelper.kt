@@ -14,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_AP
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_LOCATION_GROUP_UPDATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_ALERTS_UPDATED_PATH
@@ -71,6 +72,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.Create
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.incentive.UpdateIncentiveGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.CreateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitevents.SessionLocationGroupUpdatedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PrisonerAlertCreatedUpdatedNotificationDto
@@ -880,6 +882,19 @@ fun callNotifyVSiPThatPrisonerRestrictionHasChanged(
     webTestClient,
     authHttpHeaders,
     VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH,
+    dto,
+  )
+}
+
+fun callNotifyVSiPThatLocationGroupHasUpdated(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: SessionLocationGroupUpdatedDto? = null,
+): ResponseSpec {
+  return callNotifyVSiPOfAEvent(
+    webTestClient,
+    authHttpHeaders,
+    VISIT_NOTIFICATION_LOCATION_GROUP_UPDATE,
     dto,
   )
 }

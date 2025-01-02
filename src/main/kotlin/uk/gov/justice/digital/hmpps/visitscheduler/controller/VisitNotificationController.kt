@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitevents.SessionLocationGroupUpdatedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationCountDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
@@ -52,6 +53,7 @@ const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATIO
 const val FUTURE_NOTIFICATION_VISIT_GROUPS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/groups"
 const val VISIT_NOTIFICATION_TYPES: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/types"
 const val VISIT_NOTIFICATION_IGNORE: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/ignore"
+const val VISIT_NOTIFICATION_LOCATION_GROUP_UPDATE: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/location/update"
 
 @RestController
 @Validated
@@ -552,5 +554,47 @@ class VisitNotificationController(
     ignoreNotifications: IgnoreVisitNotificationsDto,
   ): VisitDto {
     return visitNotificationEventService.ignoreVisitNotifications(reference.trim(), ignoreNotifications)
+  }
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PostMapping(VISIT_NOTIFICATION_LOCATION_GROUP_UPDATE)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Session location group updated",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = IgnoreVisitNotificationsDto::class),
+        ),
+      ],
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Session location group updated.",
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions for location group updates.",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Session Location Group reference not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun handleLocationGroupUpdate(
+    @RequestBody @Valid
+    sessionLocationGroupUpdatedDto: SessionLocationGroupUpdatedDto,
+  ) {
+    visitNotificationEventService.handleLocationGroupUpdate(sessionLocationGroupUpdatedDto)
   }
 }

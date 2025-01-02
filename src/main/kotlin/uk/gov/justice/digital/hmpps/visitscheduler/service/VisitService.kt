@@ -303,4 +303,9 @@ class VisitService(
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
     return getFutureVisitsBy(prisonerNumber = prisonerNumber)
   }
+
+  @Transactional(readOnly = true)
+  fun getFutureBookedVisitsBySessionTemplate(sessionTemplateReference: String): List<VisitDto> {
+    return visitRepository.findBookedVisitsBySessionTemplateReference(sessionTemplateReference = sessionTemplateReference, fromDate = LocalDate.now()).map { visitDtoBuilder.build(it) }
+  }
 }

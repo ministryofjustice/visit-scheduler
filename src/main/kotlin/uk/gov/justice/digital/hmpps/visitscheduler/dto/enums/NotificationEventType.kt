@@ -11,4 +11,5 @@ enum class NotificationEventType(val reviewType: String) {
   PERSON_RESTRICTION_UPSERTED_EVENT("Person-restriction-upserted"),
   VISITOR_RESTRICTION_UPSERTED_EVENT("Visitor-restriction-upserted"),
   VISITOR_UNAPPROVED_EVENT("Visitor-unapproved"),
+  LOCATION_GROUP_UPDATED_EVENT("Location-group-updated"),
 }
