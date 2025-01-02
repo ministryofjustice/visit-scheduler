@@ -335,6 +335,84 @@ class LocationGroupUpdatedNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
+  fun `when location group has updated for include group visits are flagged`() {
+    // Given
+    // locationGroup was updated from A to B
+    val locationGroupAfterUpdate = sessionLocationGroupHelper.create(
+      prisonHierarchies = listOf(
+        AllowedSessionLocationHierarchy(levelOneCode = "B"),
+      ),
+    )
+
+    // prisoners in A-2 and A-3 are flagged
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisoner1, "$prisonCode-A-1-100")
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisoner2, "$prisonCode-A-2-100")
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisoner3, "$prisonCode-A-3-100")
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisoner4, "$prisonCode-A-4-100")
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(prison = prison1, permittedSessionGroups = mutableListOf(locationGroupAfterUpdate), includeLocationGroupType = true)
+    val sessionLocationGroupUpdatedDto = SessionLocationGroupUpdatedDto(
+      prisonCode = prisonCode,
+      locationGroupReference = locationGroupAfterUpdate.reference,
+      oldLocations = listOf(PermittedSessionLocationDto(levelOneCode = "A")),
+    )
+
+    val visit1 = createApplicationAndVisit(
+      prisonerId = prisoner1,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = prisoner2,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit2)
+
+    val visit3 = createApplicationAndVisit(
+      prisonerId = prisoner3,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit3)
+
+    val visit4 = createApplicationAndVisit(
+      prisonerId = prisoner4,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = CANCELLED,
+      sessionTemplate = sessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit4)
+
+    // When
+    val responseSpec = callNotifyVSiPThatLocationGroupHasUpdated(webTestClient, roleVisitSchedulerHttpHeaders, sessionLocationGroupUpdatedDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    assertFlaggedVisitEvent(listOf(visit1, visit2, visit3), NotificationEventType.LOCATION_GROUP_UPDATED_EVENT)
+    verify(telemetryClient, times(3)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(3)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(3)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
+    assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
+    assertThat(visitNotifications[2].bookingReference).isEqualTo(visit3.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.LOCATION_GROUP_UPDATED_EVENT)
+    assertThat(auditEvents).hasSize(3)
+    assertAuditEvent(auditEvents[0], visit1)
+    assertAuditEvent(auditEvents[1], visit2)
+    assertAuditEvent(auditEvents[2], visit3)
+  }
+
+  @Test
   fun `when location group has updated but scope has been reduced for exclude no visits are flagged`() {
     // Given
     // locationGroup was updated from A and B to A
@@ -626,6 +704,80 @@ class LocationGroupUpdatedNotificationControllerTest : NotificationTestBase() {
     assertThat(auditEvents).hasSize(2)
     assertAuditEvent(auditEvents[0], visit2)
     assertAuditEvent(auditEvents[1], visit3)
+  }
+
+  @Test
+  fun `when location group has updated for exclude group only affected visits from new location are flagged`() {
+    // Given
+    // locationGroup was updated from A to B
+    val locationGroupAfterUpdate = sessionLocationGroupHelper.create(
+      prisonHierarchies = listOf(
+        AllowedSessionLocationHierarchy(levelOneCode = "B"),
+      ),
+    )
+
+    // prisoners in A-2 and A-3 are flagged
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisoner1, "$prisonCode-A-1-100")
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisoner2, "$prisonCode-A-2-100")
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisoner3, "$prisonCode-B-3-100")
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisoner4, "$prisonCode-A-4-100")
+
+    val sessionTemplate = sessionTemplateEntityHelper.create(prison = prison1, permittedSessionGroups = mutableListOf(locationGroupAfterUpdate), includeLocationGroupType = false)
+    val sessionLocationGroupUpdatedDto = SessionLocationGroupUpdatedDto(
+      prisonCode = prisonCode,
+      locationGroupReference = locationGroupAfterUpdate.reference,
+      oldLocations = listOf(PermittedSessionLocationDto(levelOneCode = "A")),
+    )
+
+    val visit1 = createApplicationAndVisit(
+      prisonerId = prisoner1,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit1)
+
+    val visit2 = createApplicationAndVisit(
+      prisonerId = prisoner2,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit2)
+
+    val visit3 = createApplicationAndVisit(
+      prisonerId = prisoner3,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit3)
+
+    val visit4 = createApplicationAndVisit(
+      prisonerId = prisoner4,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = CANCELLED,
+      sessionTemplate = sessionTemplate,
+    )
+    eventAuditEntityHelper.create(visit4)
+
+    // When
+    val responseSpec = callNotifyVSiPThatLocationGroupHasUpdated(webTestClient, roleVisitSchedulerHttpHeaders, sessionLocationGroupUpdatedDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    assertFlaggedVisitEvent(listOf(visit3), NotificationEventType.LOCATION_GROUP_UPDATED_EVENT)
+    verify(telemetryClient, times(1)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(1)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(1)
+    assertThat(visitNotifications[0].bookingReference).isEqualTo(visit3.reference)
+
+    val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.LOCATION_GROUP_UPDATED_EVENT)
+    assertThat(auditEvents).hasSize(1)
+    assertAuditEvent(auditEvents[0], visit3)
   }
 
   @Test
