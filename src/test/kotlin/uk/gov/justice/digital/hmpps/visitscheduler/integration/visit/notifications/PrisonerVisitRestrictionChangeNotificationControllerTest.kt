@@ -80,6 +80,14 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       sessionTemplate = sessionTemplate1,
     )
 
+    // cancelled visit -should not be flagged
+    createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = CANCELLED,
+      sessionTemplate = sessionTemplate1,
+    )
+
     // When
     val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
 
@@ -135,6 +143,14 @@ class PrisonerVisitRestrictionChangeNotificationControllerTest : NotificationTes
       sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit3)
+
+    // cancelled visit -should not be flagged
+    createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = CANCELLED,
+      sessionTemplate = sessionTemplate1,
+    )
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerRestrictionHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)

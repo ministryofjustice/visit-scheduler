@@ -271,7 +271,7 @@ class VisitService(
     return eventAuditService.findByBookingReferenceOrderById(bookingReference)
   }
 
-  @Transactional
+  @Transactional(readOnly = true)
   fun getFutureVisitsBy(
     prisonerNumber: String,
     prisonCode: String? = null,
@@ -279,6 +279,16 @@ class VisitService(
     endDateTime: LocalDateTime? = null,
   ): List<VisitDto> {
     return visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
+  }
+
+  @Transactional(readOnly = true)
+  fun getFutureBookedVisits(
+    prisonerNumber: String,
+    prisonCode: String? = null,
+    startDateTime: LocalDateTime = LocalDateTime.now(),
+    endDateTime: LocalDateTime? = null,
+  ): List<VisitDto> {
+    return visitRepository.getBookedVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
   }
 
   @Transactional

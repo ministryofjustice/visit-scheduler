@@ -50,7 +50,7 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
   }
 
   @Test
-  fun `when prisoner has been released from prison then only valid visits are flagged and saved`() {
+  fun `when prisoner has been released from prison then only valid booked visits are flagged and saved`() {
     // Given
     val notificationDto = PrisonerReleasedNotificationDto(prisonerId, prisonCode, RELEASED)
 
@@ -80,6 +80,14 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
       prisonerId = "ANOTHERPRISONER",
       slotDate = LocalDate.now().plusDays(1),
       visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    // cancelled visit - should not be flagged
+    createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = CANCELLED,
       sessionTemplate = sessionTemplate1,
     )
 
@@ -137,6 +145,14 @@ class PrisonerReleasedVisitNotificationControllerTest : NotificationTestBase() {
       sessionTemplate = sessionTemplate1,
     )
     eventAuditEntityHelper.create(visit3)
+
+    // cancelled visit - should not be flagged
+    createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(3),
+      visitStatus = CANCELLED,
+      sessionTemplate = sessionTemplate1,
+    )
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerHadBeenReleased(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
