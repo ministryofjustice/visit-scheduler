@@ -135,7 +135,7 @@ class VisitNotificationEventService(
   fun handlePrisonerReleasedNotification(notificationDto: PrisonerReleasedNotificationDto) {
     LOG.debug("PrisonerReleasedNotification notification received : {}", notificationDto)
     if (RELEASED == notificationDto.reasonType) {
-      val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, notificationDto.prisonCode)
+      val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber, notificationDto.prisonCode)
       val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_RELEASED_EVENT, null, null, null)
       processVisitsWithNotifications(processVisitNotificationDto)
     }
@@ -149,7 +149,7 @@ class VisitNotificationEventService(
 
       val startDateTime = (if (LocalDate.now() > notificationDto.validFromDate) LocalDate.now() else notificationDto.validFromDate).atStartOfDay()
       val endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX)
-      val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode, startDateTime, endDateTime)
+      val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber, prisonCode, startDateTime, endDateTime)
 
       val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_RESTRICTION_CHANGE_EVENT, null, null, null)
 
@@ -176,7 +176,7 @@ class VisitNotificationEventService(
     LOG.debug("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
 
     val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
-    val affectedVisits = visitService.getFutureVisitsBy(notificationDto.prisonerNumber, prisonCode)
+    val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber, prisonCode)
 
     val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, notificationDto.description, null, null)
     processVisitsWithNotifications(processVisitNotificationDto)
