@@ -1,7 +1,7 @@
 plugins {
   id("uk.gov.justice.hmpps.gradle-spring-boot") version "6.1.2"
-  kotlin("plugin.spring") version "2.0.21"
-  kotlin("plugin.jpa") version "2.0.21"
+  kotlin("plugin.spring") version "2.1.0"
+  kotlin("plugin.jpa") version "2.1.0"
   idea
 }
 
@@ -30,9 +30,9 @@ dependencies {
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.11.0")
 
   implementation("org.springframework.data:spring-data-commons:3.4.1")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.7.0")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
-  implementation("org.springdoc:springdoc-openapi-starter-common:2.7.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.0")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.0")
+  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.0")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("net.javacrumbs.shedlock:shedlock-spring:6.0.2")
