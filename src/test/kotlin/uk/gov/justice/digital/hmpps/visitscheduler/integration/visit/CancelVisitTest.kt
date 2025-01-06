@@ -392,7 +392,7 @@ class CancelVisitTest : IntegrationTestBase() {
    * the check for cancellations does not calculate time - only dates.
    */
   @Test
-  fun `cancel expired visit on same day as allowed day does not return error`() {
+  fun `staff cancel expired visit on same day as allowed day does not return error`() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
@@ -424,7 +424,7 @@ class CancelVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `cancel expired visit on same day as today does not return error`() {
+  fun `staff cancel expired visit on same day as today does not return error`() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
@@ -454,7 +454,7 @@ class CancelVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `cancel future visit does not return error`() {
+  fun `staff cancel future visit does not return error`() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
@@ -523,7 +523,7 @@ class CancelVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `cancel visit by reference -  When public booker cancels then visit is marked as cancelled with userType of PUBLIC`() {
+  fun `public cancel visit by reference -  When public booker cancels then visit is marked as cancelled with userType of PUBLIC`() {
     // Given
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"), userType = PUBLIC)
     val reference = visit.reference
@@ -623,6 +623,94 @@ class CancelVisitTest : IntegrationTestBase() {
     )
 
     verify(telemetryClient, times(1)).trackEvent(type.eventName, eventsMap, null)
+  }
+
+  @Test
+  fun `public cancels expired visit on a previous day returns error`() {
+    val cancelVisitDto = CancelVisitDto(
+      OutcomeDto(
+        OutcomeStatus.CANCELLATION,
+        "No longer joining.",
+      ),
+      CANCELLED_BY_USER,
+      PUBLIC,
+      applicationMethodType = NOT_KNOWN,
+    )
+    // Given
+
+    val now = LocalDateTime.now().minusDays(visitCancellationDayLimit - 1).withHour(1)
+    val slotDate = now.toLocalDate()
+    val visitStart = now.toLocalTime()
+
+    // visit has started a minute back
+    val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
+
+    // When
+    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), expiredVisit.reference, cancelVisitDto)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+
+    // And
+    val errorResponse = getErrorResponse(responseSpec)
+    assertThat(errorResponse.userMessage).isEqualTo("Validation failure: trying to change / cancel an expired visit")
+    assertThat(errorResponse.developerMessage).isEqualTo("Visit with booking reference - ${expiredVisit.reference} is in the past, it cannot be cancelled")
+  }
+
+  @Test
+  fun `public cancel visit that has already started returns error`() {
+    val cancelVisitDto = CancelVisitDto(
+      OutcomeDto(
+        OutcomeStatus.CANCELLATION,
+        "No longer joining.",
+      ),
+      CANCELLED_BY_USER,
+      PUBLIC,
+      applicationMethodType = NOT_KNOWN,
+    )
+    // Given
+    val now = LocalDateTime.now().minusMinutes(1)
+    val slotDate = now.toLocalDate()
+    val visitStart = now.toLocalTime()
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
+    // When
+    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+
+    // And
+    val errorResponse = getErrorResponse(responseSpec)
+    assertThat(errorResponse.userMessage).isEqualTo("Validation failure: trying to change / cancel an expired visit")
+    assertThat(errorResponse.developerMessage).isEqualTo("Visit with booking reference - ${visit.reference} is in the past, it cannot be cancelled")
+  }
+
+  @Test
+  fun `public cancel future visit does not return error`() {
+    val cancelVisitDto = CancelVisitDto(
+      OutcomeDto(
+        OutcomeStatus.CANCELLATION,
+        "No longer joining.",
+      ),
+      CANCELLED_BY_USER,
+      PUBLIC,
+      applicationMethodType = NOT_KNOWN,
+    )
+    // Given
+    val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = startDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
+
+    // When
+    val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+      .returnResult()
+
+    // And
+    val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    assertHelper.assertVisitCancellation(visitCancelled, OutcomeStatus.CANCELLATION, CANCELLED_BY_USER, NOT_KNOWN, PUBLIC)
+    verify(visitNotificationEventServiceSpy, times(1)).deleteVisitNotificationEvents(eq(visit.reference), eq(VISIT_CANCELLED), eq(null))
   }
 
   fun assertUnFlagEvent(
