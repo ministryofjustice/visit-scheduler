@@ -636,11 +636,11 @@ class CancelVisitTest : IntegrationTestBase() {
       PUBLIC,
       applicationMethodType = NOT_KNOWN,
     )
-    // Given
 
-    val now = LocalDateTime.now().minusDays(visitCancellationDayLimit - 1).withHour(1)
-    val slotDate = now.toLocalDate()
-    val visitStart = now.toLocalTime()
+    // Given
+    val visitDateAndTime = LocalDateTime.now().minusDays(visitCancellationDayLimit - 1).withHour(1)
+    val slotDate = visitDateAndTime.toLocalDate()
+    val visitStart = visitDateAndTime.toLocalTime()
 
     // visit has started a minute back
     val expiredVisit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
@@ -658,7 +658,7 @@ class CancelVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `public cancel visit that has already started returns error`() {
+  fun `public cancels visit that has already started - returns error`() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
@@ -669,9 +669,10 @@ class CancelVisitTest : IntegrationTestBase() {
       applicationMethodType = NOT_KNOWN,
     )
     // Given
-    val now = LocalDateTime.now().minusMinutes(1)
-    val slotDate = now.toLocalDate()
-    val visitStart = now.toLocalTime()
+    // visit has started a minute back
+    val visitDateAndTime = LocalDateTime.now().minusMinutes(1)
+    val slotDate = visitDateAndTime.toLocalDate()
+    val visitStart = visitDateAndTime.toLocalTime()
     val visit = visitEntityHelper.create(visitStatus = BOOKED, slotDate = slotDate, visitStart = visitStart, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
     // When
     val responseSpec = callCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER")), visit.reference, cancelVisitDto)
@@ -686,7 +687,7 @@ class CancelVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `public cancel future visit does not return error`() {
+  fun `public cancels future visit - does not return error`() {
     val cancelVisitDto = CancelVisitDto(
       OutcomeDto(
         OutcomeStatus.CANCELLATION,
