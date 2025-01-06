@@ -88,6 +88,14 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       sessionTemplate = sessionTemplate1,
     )
 
+    // cancelled visit -should not be flagged
+    createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = CANCELLED,
+      sessionTemplate = sessionTemplate1,
+    )
+
     // When
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
       webTestClient,
@@ -156,6 +164,14 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
     )
     eventAuditEntityHelper.create(visit3)
 
+    // cancelled visit -should not be flagged
+    createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = CANCELLED,
+      sessionTemplate = sessionTemplate1,
+    )
+
     // When
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
       webTestClient,
@@ -210,6 +226,14 @@ class PrisonerAlertCreatedUpdatedVisitNotificationControllerTest : NotificationT
       sessionTemplate = sessionTemplateDefault,
     )
     eventAuditEntityHelper.create(visit2)
+
+    // cancelled visit -should not be flagged
+    createApplicationAndVisit(
+      prisonerId = notificationDto.prisonerNumber,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = CANCELLED,
+      sessionTemplate = sessionTemplate1,
+    )
 
     // When
     val responseSpec = callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
