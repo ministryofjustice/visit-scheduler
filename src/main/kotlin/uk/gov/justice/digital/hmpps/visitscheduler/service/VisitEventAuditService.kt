@@ -18,13 +18,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodTy
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_APPLICABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGRATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
@@ -199,37 +197,23 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     return eventAuditRepository.getLastUserToUpdateBookingByReference(bookingReference)
   }
 
-  fun updateVisitApplicationAndSaveBookingEvent(bookedVisitDto: VisitDto, bookingRequestDto: BookingRequestDto): EventAuditDto {
+  fun updateVisitApplicationAndSaveEvent(
+    bookedVisitDto: VisitDto,
+    bookingRequestDto: BookingRequestDto,
+    eventType: EventAuditType,
+  ): EventAuditDto {
     try {
       eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
     } catch (e: InvocationTargetException) {
-      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
-      VisitService.LOG.error(message)
+      LOG.error("Audit log does not exist for ${bookedVisitDto.applicationReference}")
     }
 
     return saveBookingEventAudit(
       bookingRequestDto.actionedBy,
       bookedVisitDto,
-      BOOKED_VISIT,
+      eventType,
       bookingRequestDto.applicationMethodType,
-      userType = bookedVisitDto.userType,
-    )
-  }
-
-  fun updateVisitApplicationAndSaveUpdatedEvent(bookedVisitDto: VisitDto, bookingRequestDto: BookingRequestDto): EventAuditDto {
-    try {
-      eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
-    } catch (e: InvocationTargetException) {
-      val message = "Audit log does not exist for ${bookedVisitDto.applicationReference}"
-      VisitService.LOG.error(message)
-    }
-
-    return saveBookingEventAudit(
-      bookingRequestDto.actionedBy,
-      bookedVisitDto,
-      UPDATED_VISIT,
-      bookingRequestDto.applicationMethodType,
-      userType = bookedVisitDto.userType,
+      userType = bookingRequestDto.userType,
     )
   }
 

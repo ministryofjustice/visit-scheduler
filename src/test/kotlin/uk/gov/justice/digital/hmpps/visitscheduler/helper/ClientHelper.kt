@@ -61,6 +61,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplica
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.RequestSessionTemplateVisitStatsDto
@@ -176,7 +177,8 @@ fun callVisitBook(
   applicationReference: String,
   applicationMethodType: ApplicationMethodType = PHONE,
   allowOverBooking: Boolean = false,
-  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking),
+  userType: UserType = UserType.STAFF,
+  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking, userType),
 ): ResponseSpec {
   return callPut(
     bodyValue = bookingRequestDto,
@@ -192,7 +194,8 @@ fun callVisitUpdate(
   applicationReference: String,
   applicationMethodType: ApplicationMethodType = PHONE,
   allowOverBooking: Boolean = false,
-  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking),
+  userType: UserType = UserType.STAFF,
+  bookingRequestDto: BookingRequestDto = BookingRequestDto("booking_guy", applicationMethodType, allowOverBooking, userType),
 ): ResponseSpec {
   return callPut(
     bodyValue = bookingRequestDto,
