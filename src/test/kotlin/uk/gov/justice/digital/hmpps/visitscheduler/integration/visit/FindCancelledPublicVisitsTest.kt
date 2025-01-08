@@ -43,19 +43,19 @@ class FindCancelledPublicVisitsTest : IntegrationTestBase() {
   internal fun createVisits() {
     otherSessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "AWE")
 
-    visitCancelledLeastRecent = createVisit(prisonId = "least recent", actionedByValue = "aTestRef", visitStatus = CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 4)
+    visitCancelledLeastRecent = createVisit(prisonerId = "least recent", actionedByValue = "aTestRef", visitStatus = CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 4)
 
-    visitCancelledInDifferentPrison = createVisit(prisonId = "diff prison", actionedByValue = "aTestRef", visitStatus = CANCELLED, sessionTemplate = otherSessionTemplate, PUBLIC, slotDateWeeks = 3)
+    visitCancelledInDifferentPrison = createVisit(prisonerId = "diff prison", actionedByValue = "aTestRef", visitStatus = CANCELLED, sessionTemplate = otherSessionTemplate, PUBLIC, slotDateWeeks = 3)
 
-    visitWithOtherBooker = createVisit(prisonId = "diff prison", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 2)
+    visitWithOtherBooker = createVisit(prisonerId = "diff prison", actionedByValue = "aOtherTestRef", visitStatus = CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = 2)
 
-    visitCancelledInPast = createVisit(prisonId = "in past", actionedByValue = "aTestRef", visitStatus = CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = -1)
+    visitCancelledInPast = createVisit(prisonerId = "in past", actionedByValue = "aTestRef", visitStatus = CANCELLED, sessionTemplate = sessionTemplateDefault, PUBLIC, slotDateWeeks = -1)
 
     createVisit(actionedByValue = "aTestRef", visitStatus = BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
 
     createVisit(actionedByValue = "aTestRef", visitStatus = BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
 
-    visitCancelledMostRecent = createVisit(prisonId = "most recent", actionedByValue = "aTestRef", CANCELLED, sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
+    visitCancelledMostRecent = createVisit(prisonerId = "most recent", actionedByValue = "aTestRef", CANCELLED, sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
   }
 
   @Test

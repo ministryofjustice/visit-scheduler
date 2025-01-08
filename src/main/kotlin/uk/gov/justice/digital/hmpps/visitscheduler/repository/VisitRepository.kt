@@ -324,7 +324,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " INNER JOIN session_slot ss on ss.id = v.session_slot_id " +
       " WHERE ab.booker_reference = :bookerReference " +
-      " AND v.visit_status = 'BOOKED' AND ss.slot_date >= CURRENT_DATE AND v.user_type = 'PUBLIC'",
+      " AND v.visit_status = 'BOOKED' AND ss.slot_start >= CURRENT_TIMESTAMP AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
   fun getPublicFutureBookingsByBookerReference(bookerReference: String): List<Visit>
@@ -335,7 +335,7 @@ interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor
       " INNER JOIN actioned_by ab on ab.id = ea.actioned_by_id" +
       " INNER JOIN session_slot ss on ss.id = v.session_slot_id " +
       " WHERE ab.booker_reference = :bookerReference " +
-      " AND v.visit_status = 'BOOKED' AND ss.slot_date < CURRENT_DATE AND v.user_type = 'PUBLIC'",
+      " AND v.visit_status = 'BOOKED' AND ss.slot_start < CURRENT_TIMESTAMP AND v.user_type = 'PUBLIC'",
     nativeQuery = true,
   )
   fun getPublicPastBookingsByBookerReference(bookerReference: String): List<Visit>
