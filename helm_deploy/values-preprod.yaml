@@ -31,7 +31,7 @@ generic-service:
     MIGRATE_SESSIONTEMPLATE_MAPPING_OFFSET_DAYS: 0
 
     # TODO - remove this after testing
-    TASK_FLAG_VISITS_CRON: "0 0 0/2 * * ?" #every 2 hours on preprod for testing
+    TASK_FLAG_VISITS_CRON: "0 0 1 * * ?" #every day at 1 AM
 
 # CloudPlatform AlertManager receiver to route promethues alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
