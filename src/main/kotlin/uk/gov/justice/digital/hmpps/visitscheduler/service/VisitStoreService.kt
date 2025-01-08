@@ -12,6 +12,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
@@ -183,7 +184,7 @@ class VisitStoreService(
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
     val visitEntity = visitRepository.findBookedVisit(reference) ?: throw VisitNotFoundException("Visit $reference not found")
-    validateCancelRequest(visitEntity)
+    validateCancelRequest(cancelVisitDto, visitEntity)
 
     val cancelOutcome = cancelVisitDto.cancelOutcome
 
@@ -197,11 +198,17 @@ class VisitStoreService(
     return visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
   }
 
-  private fun validateCancelRequest(visitEntity: Visit) {
+  private fun validateCancelRequest(cancelVisitDto: CancelVisitDto, visitEntity: Visit) {
+    // STAFF is allowed to cancel older visits but not PUBLIC
+    val allowedCancellationDate = if (cancelVisitDto.userType == UserType.STAFF) {
+      getAllowedCancellationDate(visitCancellationDayLimit = visitCancellationDayLimit)
+    } else {
+      LocalDateTime.now()
+    }
     validateVisitStartDate(
       visitEntity,
       "cancelled",
-      getAllowedCancellationDate(visitCancellationDayLimit = visitCancellationDayLimit),
+      allowedCancellationDate,
     )
   }
 
