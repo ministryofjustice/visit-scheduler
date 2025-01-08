@@ -376,7 +376,7 @@ abstract class IntegrationTestBase {
   }
 
   fun createVisit(
-    prisonId: String? = "testPrisonerId",
+    prisonerId: String? = "testPrisonerId",
     actionedByValue: String,
     visitStatus: VisitStatus,
     sessionTemplate: SessionTemplate,
@@ -388,7 +388,7 @@ abstract class IntegrationTestBase {
     val userTypes = mutableListOf(userType, userType)
 
     var visit = createApplicationAndVisit(
-      prisonerId = prisonId,
+      prisonerId = prisonerId,
       slotDate = LocalDate.now().plusWeeks(slotDateWeeks),
       sessionTemplate = sessionTemplate,
       visitStatus = visitStatus,

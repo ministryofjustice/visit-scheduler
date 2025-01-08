@@ -19,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISITOR_CONCERN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.VISIT_COMMENT
@@ -278,7 +279,7 @@ class UpdateVisitTest : IntegrationTestBase() {
   }
 
   @Test
-  fun `Amend and book visit`() {
+  fun `Amend and book visit for staff`() {
     // Given
 
     // Original application and visit
@@ -310,6 +311,48 @@ class UpdateVisitTest : IntegrationTestBase() {
     assertThat(visitDto.reference).isEqualTo(originalVisit.reference)
     assertVisitMatchesApplication(visitDto, newApplication)
 
+    val application = testApplicationRepository.findByReference(visitDto.applicationReference)
+    assertThat(application!!.completed).isTrue()
+
+    // And
+    assertBookedEvent(visitDto, true)
+  }
+
+  @Test
+  fun `Amend and book visit for when staff updates a public user visit`() {
+    // Given
+
+    // Original application and visit
+    val slotDateInThePast = LocalDate.now().plusDays(1)
+    val originalVisit = createApplicationAndVisit(visitStatus = BOOKED, slotDate = slotDateInThePast, sessionTemplate = sessionTemplateDefault, userType = PUBLIC)
+
+    var newApplication = applicationEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      completed = false,
+      reservedSlot = true,
+      visitRestriction = if (originalVisit.visitRestriction == OPEN) CLOSED else OPEN,
+    )
+
+    applicationEntityHelper.createContact(application = newApplication, name = "Aled Evans", phone = "01348811539", email = "email@example.com")
+    applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 123L, visitContact = true)
+    applicationEntityHelper.createVisitor(application = newApplication, nomisPersonId = 666L, visitContact = false)
+    applicationEntityHelper.createSupport(application = newApplication, description = "Some Other Text")
+    newApplication = applicationEntityHelper.save(newApplication)
+
+    originalVisit.addApplication(newApplication)
+
+    visitEntityHelper.save(originalVisit)
+
+    // When
+    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, newApplication.reference, userType = UserType.STAFF)
+
+    // Then
+    val visitDto = createVisitDtoFromResponse(responseSpec)
+    assertThat(visitDto.reference).isEqualTo(originalVisit.reference)
+    assertThat(visitDto).isNotNull()
+    assertThat(visitDto.userType).isNotEqualTo(newApplication.userType)
+    assertThat(visitDto.userType).isEqualTo(PUBLIC)
+    assertThat(newApplication.userType).isEqualTo(UserType.STAFF)
     val application = testApplicationRepository.findByReference(visitDto.applicationReference)
     assertThat(application!!.completed).isTrue()
 

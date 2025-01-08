@@ -22,6 +22,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitAssertHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import java.time.LocalDate
+import java.time.LocalTime
 
 @DisplayName("GET $GET_FUTURE_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE")
 class PastPublicVisitsTest : IntegrationTestBase() {
@@ -32,34 +34,48 @@ class PastPublicVisitsTest : IntegrationTestBase() {
   @MockitoSpyBean
   private lateinit var telemetryClient: TelemetryClient
 
+  private lateinit var sessionTemplate1: SessionTemplate
+  private lateinit var sessionTemplate2: SessionTemplate
+
   private lateinit var otherSessionTemplate: SessionTemplate
 
   private lateinit var visitFarInThePast: Visit
-  private lateinit var nearestPastVisit: Visit
+  private lateinit var nearestPastVisitBeforeToday: Visit
   private lateinit var visitInDifferentPrison: Visit
   private lateinit var visitWithOtherBooker: Visit
+  private lateinit var pastVisitToday: Visit
+  private lateinit var futureVisitToday: Visit
 
   private val defaultBookerReference: String = "aTestRef"
 
   @BeforeEach
   internal fun createVisits() {
+    // session template that has a start time 5 minutes in the future
+    sessionTemplate1 = sessionTemplateEntityHelper.create(prisonCode = "DFT", startTime = LocalTime.now().plusMinutes(5), endTime = LocalTime.now().plusHours(1), dayOfWeek = LocalDate.now().dayOfWeek)
+    // session template that has started 1 minute back
+    sessionTemplate2 = sessionTemplateEntityHelper.create(prisonCode = "DFT", startTime = LocalTime.now().minusMinutes(1), endTime = LocalTime.now().plusHours(1), dayOfWeek = LocalDate.now().dayOfWeek)
+
+    // session template that has a start time 5 minutes in the future
     otherSessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "AWE")
 
-    visitFarInThePast = createVisit(prisonId = "visit far in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -6)
+    visitFarInThePast = createVisit(prisonerId = "visit far in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -6)
 
-    visitInDifferentPrison = createVisit(prisonId = "visit different prison", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = otherSessionTemplate, userType = PUBLIC, slotDateWeeks = -4)
+    visitInDifferentPrison = createVisit(prisonerId = "visit different prison", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -4)
 
-    nearestPastVisit = createVisit(prisonId = "nearest visit in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
+    nearestPastVisitBeforeToday = createVisit(prisonerId = "nearest visit in past before today", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -1)
 
-    val visitToday = createVisit(prisonId = "nearest visit in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 0)
+    // this visit is for a session template that started 1 minute back
+    pastVisitToday = createVisit(prisonerId = "today's visit in past", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate2, userType = PUBLIC, slotDateWeeks = 0)
+    // this visit is for a session template that started 5 minutes after
+    futureVisitToday = createVisit(prisonerId = "today's visit in future", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 0)
 
-    var visitInFuture = createVisit(prisonId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = 1)
+    var visitInFuture = createVisit(prisonerId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = 1)
 
-    var visitBookerByStaff = createVisit(prisonId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = STAFF, slotDateWeeks = -1)
+    var visitBookerByStaff = createVisit(prisonerId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = STAFF, slotDateWeeks = -1)
 
-    var visitCancelled = createVisit(prisonId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -1)
+    var visitCancelled = createVisit(prisonerId = "visit", actionedByValue = defaultBookerReference, visitStatus = VisitStatus.CANCELLED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -1)
 
-    visitWithOtherBooker = createVisit(prisonId = "visit with other broker", actionedByValue = "aOtherTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplateDefault, userType = PUBLIC, slotDateWeeks = -2)
+    visitWithOtherBooker = createVisit(prisonerId = "visit with other broker", actionedByValue = "aOtherTestRef", visitStatus = VisitStatus.BOOKED, sessionTemplate = sessionTemplate1, userType = PUBLIC, slotDateWeeks = -2)
   }
 
   @Test
@@ -74,10 +90,11 @@ class PastPublicVisitsTest : IntegrationTestBase() {
     responseSpec.expectStatus().isOk
     val visitList = parseVisitsResponse(responseSpec)
 
-    Assertions.assertThat(visitList.size).isEqualTo(3)
-    visitAssertHelper.assertVisitDto(visitList[0], nearestPastVisit)
-    visitAssertHelper.assertVisitDto(visitList[1], visitInDifferentPrison)
-    visitAssertHelper.assertVisitDto(visitList[2], visitFarInThePast)
+    Assertions.assertThat(visitList.size).isEqualTo(4)
+    visitAssertHelper.assertVisitDto(visitList[0], pastVisitToday)
+    visitAssertHelper.assertVisitDto(visitList[1], nearestPastVisitBeforeToday)
+    visitAssertHelper.assertVisitDto(visitList[2], visitInDifferentPrison)
+    visitAssertHelper.assertVisitDto(visitList[3], visitFarInThePast)
   }
 
   @Test
@@ -112,7 +129,7 @@ class PastPublicVisitsTest : IntegrationTestBase() {
   @Test
   fun `access forbidden when unknown role`() {
     // Given
-    val noRoles = listOf<String>("SOME_OTHER_ROLE_VISIT_SCHEDULER")
+    val noRoles = listOf("SOME_OTHER_ROLE_VISIT_SCHEDULER")
 
     // When
     val responseSpec = callPublicPastVisitsEndPoint(bookerReference = "aTestRole", roles = noRoles)
