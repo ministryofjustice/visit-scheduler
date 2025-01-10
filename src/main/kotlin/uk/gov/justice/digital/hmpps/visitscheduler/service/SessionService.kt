@@ -551,6 +551,7 @@ class SessionService(
       weeklyFrequency = sessionTemplate.weeklyFrequency,
       visitType = sessionTemplate.visitType,
       sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
+      visitRoom = sessionTemplate.visitRoom,
     )
   }
 
