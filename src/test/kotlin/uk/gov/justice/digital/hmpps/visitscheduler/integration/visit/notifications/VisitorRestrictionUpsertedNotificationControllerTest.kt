@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.notifications
 
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.tuple
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -132,16 +133,21 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
     assertThat(visitNotifications).hasSize(2)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
     assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(2)
-    assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_RESTRICTION)
-    assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeValue).isEqualTo(VisitorSupportedRestrictionType.BAN.name)
-    assertThat(visitNotifications[0].visitNotificationEventAttributes[1].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
-    assertThat(visitNotifications[0].visitNotificationEventAttributes[1].attributeValue).isEqualTo(visitorId)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes)
+      .extracting({ it.attributeName }, { it.attributeValue })
+      .containsExactlyInAnyOrder(
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.BAN.name),
+        tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
+      )
+
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
     assertThat(visitNotifications[1].visitNotificationEventAttributes.size).isEqualTo(2)
-    assertThat(visitNotifications[1].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_RESTRICTION)
-    assertThat(visitNotifications[1].visitNotificationEventAttributes[0].attributeValue).isEqualTo(VisitorSupportedRestrictionType.BAN.name)
-    assertThat(visitNotifications[1].visitNotificationEventAttributes[1].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
-    assertThat(visitNotifications[1].visitNotificationEventAttributes[1].attributeValue).isEqualTo(visitorId)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes)
+      .extracting({ it.attributeName }, { it.attributeValue })
+      .containsExactlyInAnyOrder(
+        tuple(NotificationEventAttributeType.VISITOR_RESTRICTION, VisitorSupportedRestrictionType.BAN.name),
+        tuple(NotificationEventAttributeType.VISITOR_ID, visitorId),
+      )
 
     val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)
     assertThat(auditEvents).hasSize(2)
