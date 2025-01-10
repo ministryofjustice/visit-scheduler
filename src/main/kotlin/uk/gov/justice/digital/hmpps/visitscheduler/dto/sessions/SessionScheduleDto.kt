@@ -38,4 +38,7 @@ data class SessionScheduleDto(
 
   @Schema(description = "number of weeks until the weekly day is repeated", example = "1", required = true)
   val weeklyFrequency: Int,
+
+  @Schema(description = "visit room name", example = "Visits Room", required = true)
+  val visitRoom: String,
 )
