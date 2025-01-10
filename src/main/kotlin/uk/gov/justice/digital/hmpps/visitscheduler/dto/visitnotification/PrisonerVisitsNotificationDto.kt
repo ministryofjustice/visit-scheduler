@@ -17,6 +17,6 @@ class PrisonerVisitsNotificationDto(
   val visitDate: LocalDate,
   @Schema(description = "Visit Booking Reference", example = "v9-d7-ed-7u", required = true)
   val bookingReference: String,
-  @Schema(description = "A list of all notification attributes for a given visit", required = false)
+  @Schema(description = "A list of all notification attributes for a given visit", required = true)
   val notificationEventAttributes: List<VisitNotificationEventAttributeDto>,
 )
