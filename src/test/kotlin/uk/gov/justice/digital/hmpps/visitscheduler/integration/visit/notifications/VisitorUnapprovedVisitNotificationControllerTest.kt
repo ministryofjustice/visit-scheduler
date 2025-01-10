@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -101,7 +102,8 @@ class VisitorUnapprovedVisitNotificationControllerTest : NotificationTestBase() 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(1)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    assertThat(visitNotifications[0].visitorId.toString()).isEqualTo(visitorId)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(1)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
 
     val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.VISITOR_UNAPPROVED_EVENT)
     assertThat(auditEvents).hasSize(1)
