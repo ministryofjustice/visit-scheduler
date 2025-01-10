@@ -40,7 +40,6 @@ class VisitNotificationEvent(
   private val _reference: String = "",
 
 ) : AbstractIdEntity() {
-
   @CreationTimestamp
   @Column
   val createTimestamp: LocalDateTime = LocalDateTime.now()
