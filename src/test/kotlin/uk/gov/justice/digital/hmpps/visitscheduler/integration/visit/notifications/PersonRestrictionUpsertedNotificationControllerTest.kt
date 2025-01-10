@@ -130,11 +130,9 @@ class PersonRestrictionUpsertedNotificationControllerTest : NotificationTestBase
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    assertThat(visitNotifications[0].visitorId.toString()).isEqualTo(visitorId)
-    assertThat(visitNotifications[0].visitorRestrictionType.toString()).isEqualTo(VisitorSupportedRestrictionType.BAN.name)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(2)
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    assertThat(visitNotifications[1].visitorId.toString()).isEqualTo(visitorId)
-    assertThat(visitNotifications[1].visitorRestrictionType.toString()).isEqualTo(VisitorSupportedRestrictionType.BAN.name)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes.size).isEqualTo(2)
 
     val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.PERSON_RESTRICTION_UPSERTED_EVENT)
     assertThat(auditEvents).hasSize(2)

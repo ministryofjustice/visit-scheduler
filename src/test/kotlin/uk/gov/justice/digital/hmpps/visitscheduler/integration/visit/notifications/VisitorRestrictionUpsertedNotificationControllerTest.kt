@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -130,11 +131,17 @@ class VisitorRestrictionUpsertedNotificationControllerTest : NotificationTestBas
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
     assertThat(visitNotifications[0].bookingReference).isEqualTo(visit1.reference)
-    assertThat(visitNotifications[0].visitorId.toString()).isEqualTo(visitorId)
-    assertThat(visitNotifications[0].visitorRestrictionType.toString()).isEqualTo(VisitorSupportedRestrictionType.BAN.name)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes.size).isEqualTo(2)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_RESTRICTION)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes[0].attributeValue).isEqualTo(VisitorSupportedRestrictionType.BAN.name)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes[1].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
+    assertThat(visitNotifications[0].visitNotificationEventAttributes[1].attributeValue).isEqualTo(visitorId)
     assertThat(visitNotifications[1].bookingReference).isEqualTo(visit2.reference)
-    assertThat(visitNotifications[1].visitorId.toString()).isEqualTo(visitorId)
-    assertThat(visitNotifications[1].visitorRestrictionType.toString()).isEqualTo(VisitorSupportedRestrictionType.BAN.name)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes.size).isEqualTo(2)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes[0].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_RESTRICTION)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes[0].attributeValue).isEqualTo(VisitorSupportedRestrictionType.BAN.name)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes[1].attributeName).isEqualTo(NotificationEventAttributeType.VISITOR_ID)
+    assertThat(visitNotifications[1].visitNotificationEventAttributes[1].attributeValue).isEqualTo(visitorId)
 
     val auditEvents = testEventAuditRepository.getAuditByType(EventAuditType.VISITOR_RESTRICTION_UPSERTED_EVENT)
     assertThat(auditEvents).hasSize(2)
