@@ -40,6 +40,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       dayOfWeek = sessionDate.dayOfWeek,
       permittedLocationGroups = mutableListOf(sessionLocationGroup),
       permittedCategories = mutableListOf(sessionCategoryGroup),
+      visitRoom = "Visits Room",
     )
 
     // When
@@ -60,6 +61,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[0].prisonerLocationGroupNames[0]).isEqualTo(sessionLocationGroup.name)
     Assertions.assertThat(sessionScheduleResults[0].prisonerCategoryGroupNames[0]).isEqualTo(sessionCategoryGroup.name)
     Assertions.assertThat(sessionScheduleResults[0].areLocationGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[0].visitRoom).isEqualTo(sessionTemplate.visitRoom)
   }
 
   @Test
@@ -74,6 +76,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = sessionDate.dayOfWeek,
       includeLocationGroupType = false,
+      visitRoom = "Visits Room 1",
     )
 
     val sessionTemplate2 = sessionTemplateEntityHelper.create(
@@ -82,6 +85,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       startTime = LocalTime.parse("11:00"),
       endTime = LocalTime.parse("12:00"),
       dayOfWeek = sessionDate.dayOfWeek,
+      visitRoom = "Visits Room 1",
     )
 
     val sessionTemplate3 = sessionTemplateEntityHelper.create(
@@ -90,6 +94,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       startTime = LocalTime.parse("08:00"),
       endTime = LocalTime.parse("09:00"),
       dayOfWeek = sessionDate.dayOfWeek,
+      visitRoom = "Visits Room 2",
     )
 
     val sessionTemplate4 = sessionTemplateEntityHelper.create(
@@ -98,6 +103,7 @@ class GetSessionScheduleTest : IntegrationTestBase() {
       startTime = LocalTime.parse("08:00"),
       endTime = LocalTime.parse("08:30"),
       dayOfWeek = sessionDate.dayOfWeek,
+      visitRoom = "Visits Room 1",
     )
 
     // When
@@ -111,15 +117,19 @@ class GetSessionScheduleTest : IntegrationTestBase() {
     Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.startTime).isEqualTo(sessionTemplate4.startTime)
     Assertions.assertThat(sessionScheduleResults[0].sessionTimeSlot.endTime).isEqualTo(sessionTemplate4.endTime)
     Assertions.assertThat(sessionScheduleResults[0].areLocationGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[0].visitRoom).isEqualTo("Visits Room 1")
     Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.startTime).isEqualTo(sessionTemplate3.startTime)
     Assertions.assertThat(sessionScheduleResults[1].sessionTimeSlot.endTime).isEqualTo(sessionTemplate3.endTime)
     Assertions.assertThat(sessionScheduleResults[1].areLocationGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[1].visitRoom).isEqualTo("Visits Room 2")
     Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.startTime).isEqualTo(sessionTemplate1.startTime)
     Assertions.assertThat(sessionScheduleResults[2].sessionTimeSlot.endTime).isEqualTo(sessionTemplate1.endTime)
     Assertions.assertThat(sessionScheduleResults[2].areLocationGroupsInclusive).isFalse()
+    Assertions.assertThat(sessionScheduleResults[2].visitRoom).isEqualTo("Visits Room 1")
     Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.startTime).isEqualTo(sessionTemplate2.startTime)
     Assertions.assertThat(sessionScheduleResults[3].sessionTimeSlot.endTime).isEqualTo(sessionTemplate2.endTime)
     Assertions.assertThat(sessionScheduleResults[3].areLocationGroupsInclusive).isTrue()
+    Assertions.assertThat(sessionScheduleResults[3].visitRoom).isEqualTo("Visits Room 1")
   }
 
   @Test
