@@ -242,7 +242,7 @@ workflows:
           context: playwright-book-a-prison-visit-staff-e2e-ui-tests-staging
           filters:
             branches:
-              ignore:
+              only:
                 - main
       - request-acceptance-tests-staff-playwright-approval:
           type: approval
