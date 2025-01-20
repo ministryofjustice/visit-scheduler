@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.ActionedByDto
@@ -13,6 +14,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomai
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_DELETED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.LOCATION_GROUP_UPDATED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PERSON_RESTRICTION_UPSERTED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_ALERTS_UPDATED_EVENT
@@ -34,6 +36,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.P
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.SESSION_EXCLUDE_DATE_REMOVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISITOR_APPROVED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitorSupportedRestrictionType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTemplateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitevents.SessionLocationGroupUpdatedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NotificationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.PersonRestrictionUpsertedNotificationDto
@@ -49,7 +53,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Session
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.matchers.SessionLocationMatcher
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.validators.SessionLocationValidator
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -61,6 +69,18 @@ class VisitNotificationEventService(
   private val prisonerService: PrisonerService,
   private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
 ) {
+
+  @Autowired
+  private lateinit var sessionTemplateRepository: SessionTemplateRepository
+
+  @Autowired
+  private lateinit var sessionLocationValidator: SessionLocationValidator
+
+  @Autowired
+  private lateinit var sessionLocationMatcher: SessionLocationMatcher
+
+  @Autowired
+  private lateinit var sessionTemplateService: SessionTemplateService
 
   @Lazy
   @Autowired
@@ -542,5 +562,61 @@ class VisitNotificationEventService(
       // after deleting the visit notifications - update application insights
       visitNotificationFlaggingService.unFlagTrackEvents(visitReference, visitNotificationEvents.map { it.type }, reason, text)
     }
+  }
+
+  @Transactional
+  fun handleLocationGroupUpdate(sessionLocationGroupUpdatedDto: SessionLocationGroupUpdatedDto) {
+    val sessionLocationGroup = sessionTemplateService.getSessionLocationGroup(sessionLocationGroupUpdatedDto.locationGroupReference)
+    val oldLocations = sessionLocationGroupUpdatedDto.oldLocations.toSet()
+    val newLocations = sessionLocationGroup.locations.toSet()
+    val prisonCode = sessionLocationGroupUpdatedDto.prisonCode
+    val affectedVisits = mutableListOf<VisitDto>()
+    val affectedSessionTemplates = getSessionTemplatesByLocationGroupReference(prisonCode, sessionLocationGroupUpdatedDto.locationGroupReference)
+
+    affectedSessionTemplates.map { it.reference }.forEach { sessionTemplateReference ->
+      val sessionTemplate = sessionTemplateRepository.findByReference(sessionTemplateReference)!!
+      val includeLocationGroupType = sessionTemplate.includeLocationGroupType
+      val doNewSessionsAccommodateExistingLocations = if (includeLocationGroupType) {
+        sessionLocationMatcher.hasAllLowerOrEqualMatch(oldLocations, newLocations)
+      } else {
+        sessionLocationMatcher.hasAllLowerOrEqualMatch(newLocations, oldLocations)
+      }
+
+      if (!doNewSessionsAccommodateExistingLocations) {
+        affectedVisits.addAll(getVisitsAffectedByLocationGroupUpdate(sessionTemplate))
+      }
+    }
+
+    if (affectedVisits.isNotEmpty()) {
+      val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, LOCATION_GROUP_UPDATED_EVENT, null, null, null)
+      processVisitsWithNotifications(processVisitNotificationDto)
+    }
+  }
+
+  private fun getSessionTemplatesByLocationGroupReference(prisonCode: String, locationGroupReference: String): List<SessionTemplateDto> {
+    val allSessionTemplates = sessionTemplateService.getSessionTemplates(prisonCode, SessionTemplateRangeType.CURRENT_OR_FUTURE)
+
+    return allSessionTemplates.filter {
+      it.permittedLocationGroups.map { location -> location.reference }.contains(locationGroupReference)
+    }
+  }
+
+  private fun getVisitsAffectedByLocationGroupUpdate(sessionTemplate: SessionTemplate): List<VisitDto> {
+    val bookedVisits = visitService.getFutureBookedVisitsBySessionTemplate(sessionTemplate.reference)
+    // get the unique list of booked prisoners
+    val bookedPrisoners = bookedVisits.map { it.prisonerId }.toSet()
+
+    // get the unique list of prisoners affected by the location group update
+    val affectedPrisoners = mutableListOf<String>()
+
+    bookedPrisoners.forEach { prisonerId ->
+      val prisonerHousingLevels = prisonerService.getPrisonerHousingLevels(prisonerId = prisonerId, prisonCode = sessionTemplate.prison.code, null)
+      val isSessionValid = sessionLocationValidator.isValid(sessionTemplate = sessionTemplate, prisonerHousingLevels = prisonerHousingLevels)
+      if (!isSessionValid) {
+        affectedPrisoners.add(prisonerId)
+      }
+    }
+
+    return bookedVisits.filter { affectedPrisoners.contains(it.prisonerId) }
   }
 }
