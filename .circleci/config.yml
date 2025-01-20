@@ -70,6 +70,47 @@ jobs:
           command: |
             cd hmpps-book-a-prison-visit-ui-tests
             npm run test:ci
+      - store_test_results:
+          path: /root/project/hmpps-book-a-prison-visit-ui-tests/results.xml
+      - store_artifacts:
+          path: /root/project/hmpps-book-a-prison-visit-ui-tests/playwright-report/index.html
+      - store_artifacts:
+          path: /root/project/hmpps-book-a-prison-visit-ui-tests/test-results
+
+  acceptance_tests_staff_playwright-e2e:
+    docker:
+      - image: mcr.microsoft.com/playwright:v1.47.2-jammy
+    circleci_ip_ranges: true
+
+    steps:
+      - run:
+          name: Checkout VSIP Staff UI Playwright Tests
+          command: git clone https://github.com/ministryofjustice/hmpps-book-a-prison-visit-staff-e2e-tests.git
+      - run:
+          name: get git status
+          command: |
+            cd hmpps-book-a-prison-visit-staff-e2e-tests
+            git checkout main
+            git pull
+            git status
+      - attach_workspace:
+          at: ~/app
+      - run:
+          name: Install Dependencies
+          command: |
+            cd hmpps-book-a-prison-visit-staff-e2e-tests
+            npm ci --no-audit
+      - run:
+          name: Run Playwright Tests
+          command: |
+            cd hmpps-book-a-prison-visit-staff-e2e-tests
+            npm run test:ci
+      - store_test_results:
+          path: /root/project/hmpps-book-a-prison-visit-staff-e2e-tests/results.xml
+      - store_artifacts:
+          path: /root/project/hmpps-book-a-prison-visit-staff-e2e-tests/playwright-report/index.html
+      - store_artifacts:
+          path: /root/project/hmpps-book-a-prison-visit-staff-e2e-tests/test-results
 
   validate:
     executor:
@@ -195,6 +236,22 @@ workflows:
             branches:
               only:
                 - main
+      - acceptance_tests_staff_playwright-e2e:
+          requires:
+            - request-acceptance-tests-staff-playwright-approval
+          context: playwright-book-a-prison-visit-staff-e2e-ui-tests-staging
+          filters:
+            branches:
+              only:
+                - main
+      - request-acceptance-tests-staff-playwright-approval:
+          type: approval
+          requires:
+            - deploy_staging
+          filters:
+            branches:
+              only:
+                - main
 
       - hmpps/deploy_env:
           name: deploy_preprod
@@ -240,7 +297,7 @@ workflows:
               only:
                 - main
 
-
+  ### Feature Branch Workflow ###
   build-test-deploy-feature:
     jobs:
       - validate:
@@ -304,6 +361,57 @@ workflows:
             - validate
             - build_docker
             - helm_lint
+          filters:
+            branches:
+              ignore:
+                - main
+
+      - acceptance_tests_staff_ui_main:
+          requires:
+            - request-acceptance-tests-staff-approval
+          filters:
+            branches:
+              ignore:
+                - main
+      - request-acceptance-tests-staff-approval:
+          type: approval
+          requires:
+            - deploy_staging
+          filters:
+            branches:
+              ignore:
+                - main
+
+      - acceptance_tests_public_ui_main:
+          requires:
+            - request-acceptance-tests-public-approval
+          context: visits-public-e2e-tests
+          filters:
+            branches:
+              ignore:
+                - main
+
+      - request-acceptance-tests-public-approval:
+          type: approval
+          requires:
+            - deploy_staging
+          filters:
+            branches:
+              ignore:
+                - main
+
+      - acceptance_tests_staff_playwright-e2e:
+          requires:
+            - request-acceptance-tests-staff-playwright-approval
+          context: playwright-book-a-prison-visit-staff-e2e-ui-tests-staging
+          filters:
+            branches:
+              ignore:
+                - main
+      - request-acceptance-tests-staff-playwright-approval:
+          type: approval
+          requires:
+            - deploy_staging
           filters:
             branches:
               ignore:
