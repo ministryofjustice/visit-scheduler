@@ -52,13 +52,14 @@ class TelemetryClientService(
   private lateinit var visitEventAuditService: VisitEventAuditService
 
   fun trackUpdateBookingEvent(
+    visitDtoBeforeUpdate: VisitDto?,
     bookingRequestDto: BookingRequestDto,
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
   ) {
     trackEvent(
       VISIT_BOOKED_EVENT,
-      createBookedVisitTrackData(bookedVisitDto, eventAuditDto, true),
+      createBookedVisitTrackData(visitDtoBeforeUpdate, bookedVisitDto, eventAuditDto, true),
     )
   }
 
@@ -69,7 +70,7 @@ class TelemetryClientService(
   ) {
     trackEvent(
       VISIT_BOOKED_EVENT,
-      createBookedVisitTrackData(bookedVisitDto, eventAuditDto, false),
+      createBookedVisitTrackData(null, bookedVisitDto, eventAuditDto, false),
     )
   }
 
@@ -265,6 +266,7 @@ class TelemetryClientService(
   }
 
   private fun createBookedVisitTrackData(
+    visitDtoBeforeUpdate: VisitDto?,
     visitDto: VisitDto,
     eventAudit: EventAuditDto,
     isUpdate: Boolean = false,
@@ -273,6 +275,9 @@ class TelemetryClientService(
     data["isUpdated"] = isUpdate.toString()
     visitDto.visitorSupport?.let {
       data.put("supportRequired", it.description)
+    }
+    if (visitDtoBeforeUpdate != null) {
+      data.putAll(getAdditionalDataForUpdate(visitDtoBeforeUpdate, visitDto))
     }
 
     createEventAuditData(eventAudit, data)
@@ -433,5 +438,23 @@ class TelemetryClientService(
 
     excludeDateEvent["actionedBy"] = excludeDateDto.actionedBy
     return excludeDateEvent.toMap()
+  }
+
+  private fun getAdditionalDataForUpdate(
+    visitDtoBeforeUpdate: VisitDto,
+    visitAfterUpdate: VisitDto,
+  ): Map<String, String> {
+    val data: MutableMap<String, String> = mutableMapOf()
+    val isSessionChanged = visitDtoBeforeUpdate.startTimestamp != visitAfterUpdate.startTimestamp
+    data["hasSessionChanged"] = isSessionChanged.toString()
+    val isDateChanged = visitDtoBeforeUpdate.startTimestamp.toLocalDate() != visitAfterUpdate.startTimestamp.toLocalDate()
+    data["hasDateChanged"] = isDateChanged.toString()
+    data["existingVisitSession"] = formatDateTimeToString(visitDtoBeforeUpdate.startTimestamp)
+    data["newVisitSession"] = formatDateTimeToString(visitAfterUpdate.startTimestamp)
+    data["hasVisitorsChanged"] = (visitDtoBeforeUpdate.visitors != visitAfterUpdate.visitors).toString()
+    data["hasNeedsChanged"] = (visitDtoBeforeUpdate.visitorSupport != visitAfterUpdate.visitorSupport).toString()
+    data["hasContactsChanged"] = (visitDtoBeforeUpdate.visitContact != visitAfterUpdate.visitContact).toString()
+
+    return data.toMap()
   }
 }

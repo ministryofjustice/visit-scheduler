@@ -517,6 +517,337 @@ class UpdateVisitTest : IntegrationTestBase() {
       .jsonPath("$.developerMessage").isEqualTo("Visit with booking reference - $reference is in the past, it cannot be changed")
   }
 
+  @Test
+  fun `when visit session not changed check update specific visit flags sent to telemetry service`() {
+    // visit for prisoner already exists
+    var existingVisit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      slotDate = startDate,
+    )
+    visitEntityHelper.createContact(visit = existingVisit, name = "Jane Doe", phone = "01234 098765")
+    existingVisit = visitEntityHelper.save(existingVisit)
+
+    var updateVisitApplication = applicationEntityHelper.create(existingVisit)
+    updateVisitApplication.completed = false
+    updateVisitApplication.visitId = existingVisit.id
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+    responseSpec.expectStatus().isOk
+    val visitDto = getVisitDto(responseSpec)
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visitDto.reference)
+        assertThat(it["hasSessionChanged"]).isEqualTo("false")
+        assertThat(it["hasDateChanged"]).isEqualTo("false")
+        assertThat(it["existingVisitSession"]).isEqualTo(existingVisit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["newVisitSession"]).isEqualTo(visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["hasVisitorsChanged"]).isEqualTo("false")
+        assertThat(it["hasNeedsChanged"]).isEqualTo("false")
+        assertThat(it["hasContactsChanged"]).isEqualTo("false")
+      },
+      isNull(),
+    )
+  }
+
+  @Test
+  fun `when visit session changed check update specific visit flags sent to telemetry service`() {
+    // visit for prisoner already exists
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(prisonCode = "DFT", startTime = sessionTemplateDefault.startTime.plusHours(1), endTime = sessionTemplateDefault.endTime.plusHours(1))
+    var existingVisit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      slotDate = startDate,
+    )
+    visitEntityHelper.createContact(visit = existingVisit, name = "Jane Doe", phone = "01234 098765")
+    existingVisit = visitEntityHelper.save(existingVisit)
+
+    // move visit to a different session on the same day
+    var updateVisitApplication = applicationEntityHelper.create(prisonerId = existingVisit.prisonerId, sessionTemplate = sessionTemplate1, slotDate = existingVisit.sessionSlot.slotDate)
+    updateVisitApplication.completed = false
+    updateVisitApplication.visitId = existingVisit.id
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+    responseSpec.expectStatus().isOk
+    val visitDto = getVisitDto(responseSpec)
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visitDto.reference)
+        assertThat(it["hasSessionChanged"]).isEqualTo(true.toString())
+        assertThat(it["hasDateChanged"]).isEqualTo(false.toString())
+        assertThat(it["existingVisitSession"]).isEqualTo(existingVisit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["newVisitSession"]).isEqualTo(visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["hasVisitorsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasNeedsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasContactsChanged"]).isEqualTo(false.toString())
+      },
+      isNull(),
+    )
+  }
+
+  @Test
+  fun `when visit date changed check update specific visit flags sent to telemetry service`() {
+    // visit for prisoner already exists
+    var existingVisit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      slotDate = startDate,
+    )
+    visitEntityHelper.createContact(visit = existingVisit, name = "Jane Doe", phone = "01234 098765")
+    existingVisit = visitEntityHelper.save(existingVisit)
+
+    // move visit to a different session on the same day
+    var updateVisitApplication = applicationEntityHelper.create(prisonerId = existingVisit.prisonerId, sessionTemplate = sessionTemplateDefault, slotDate = existingVisit.sessionSlot.slotDate.plusWeeks(1))
+    updateVisitApplication.completed = false
+    updateVisitApplication.visitId = existingVisit.id
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+    responseSpec.expectStatus().isOk
+    val visitDto = getVisitDto(responseSpec)
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visitDto.reference)
+        assertThat(it["hasSessionChanged"]).isEqualTo(true.toString())
+        assertThat(it["hasDateChanged"]).isEqualTo(true.toString())
+        assertThat(it["existingVisitSession"]).isEqualTo(existingVisit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["newVisitSession"]).isEqualTo(visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["hasVisitorsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasNeedsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasContactsChanged"]).isEqualTo(false.toString())
+      },
+      isNull(),
+    )
+  }
+
+  @Test
+  fun `when visit date and visitors changed check update specific visit flags sent to telemetry service`() {
+    // visit for prisoner already exists
+    var existingVisit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      slotDate = startDate,
+    )
+
+    val visitor1Id: Long = 1
+    val visitor2Id: Long = 2
+    val visitor3Id: Long = 3
+    visitEntityHelper.createContact(visit = existingVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(existingVisit, visitor1Id, true)
+    visitEntityHelper.createVisitor(existingVisit, visitor2Id, false)
+    visitEntityHelper.createVisitor(existingVisit, visitor3Id, false)
+    existingVisit = visitEntityHelper.save(existingVisit)
+
+    // move visit to a different session on the same day
+    var updateVisitApplication = applicationEntityHelper.create(prisonerId = existingVisit.prisonerId, sessionTemplate = sessionTemplateDefault, slotDate = existingVisit.sessionSlot.slotDate.plusWeeks(1))
+    updateVisitApplication.completed = false
+    updateVisitApplication.visitId = existingVisit.id
+
+    // visitor 2 is now the main contact
+    applicationEntityHelper.createVisitor(updateVisitApplication, visitor1Id, false)
+    applicationEntityHelper.createVisitor(updateVisitApplication, visitor2Id, true)
+    applicationEntityHelper.createVisitor(updateVisitApplication, visitor3Id, false)
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+    responseSpec.expectStatus().isOk
+    val visitDto = getVisitDto(responseSpec)
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visitDto.reference)
+        assertThat(it["hasSessionChanged"]).isEqualTo(true.toString())
+        assertThat(it["hasDateChanged"]).isEqualTo(true.toString())
+        assertThat(it["existingVisitSession"]).isEqualTo(existingVisit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["newVisitSession"]).isEqualTo(visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["hasVisitorsChanged"]).isEqualTo(true.toString())
+        assertThat(it["hasNeedsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasContactsChanged"]).isEqualTo(false.toString())
+      },
+      isNull(),
+    )
+  }
+
+  @Test
+  fun `when a visitor is removed check update specific visit flags sent to telemetry service`() {
+    // visit for prisoner already exists
+    var existingVisit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      slotDate = startDate,
+    )
+
+    val visitor1Id: Long = 1
+    val visitor2Id: Long = 2
+    val visitor3Id: Long = 3
+    visitEntityHelper.createContact(visit = existingVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(existingVisit, visitor1Id, true)
+    visitEntityHelper.createVisitor(existingVisit, visitor2Id, false)
+    visitEntityHelper.createVisitor(existingVisit, visitor3Id, false)
+    existingVisit = visitEntityHelper.save(existingVisit)
+
+    // move visit to a different session on the same day
+    var updateVisitApplication = applicationEntityHelper.create(existingVisit)
+    updateVisitApplication.completed = false
+    updateVisitApplication.visitId = existingVisit.id
+
+    // visitor 3 removed
+    applicationEntityHelper.createVisitor(updateVisitApplication, visitor1Id, true)
+    applicationEntityHelper.createVisitor(updateVisitApplication, visitor2Id, false)
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+    responseSpec.expectStatus().isOk
+    val visitDto = getVisitDto(responseSpec)
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visitDto.reference)
+        assertThat(it["hasSessionChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasDateChanged"]).isEqualTo(false.toString())
+        assertThat(it["existingVisitSession"]).isEqualTo(existingVisit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["newVisitSession"]).isEqualTo(visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["hasVisitorsChanged"]).isEqualTo(true.toString())
+        assertThat(it["hasNeedsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasContactsChanged"]).isEqualTo(false.toString())
+      },
+      isNull(),
+    )
+  }
+
+  @Test
+  fun `when special needs are added check update specific visit flags sent to telemetry service`() {
+    // visit for prisoner already exists
+    var existingVisit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      slotDate = startDate,
+    )
+
+    val visitor1Id: Long = 1
+    visitEntityHelper.createContact(visit = existingVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(existingVisit, visitor1Id, true)
+    existingVisit = visitEntityHelper.save(existingVisit)
+
+    // update visit to add support
+    var updateVisitApplication = applicationEntityHelper.create(existingVisit)
+    updateVisitApplication.completed = false
+    updateVisitApplication.visitId = existingVisit.id
+
+    applicationEntityHelper.createVisitor(updateVisitApplication, visitor1Id, true)
+
+    // needs added
+    applicationEntityHelper.createSupport(updateVisitApplication, "Wheelchair")
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+    responseSpec.expectStatus().isOk
+    val visitDto = getVisitDto(responseSpec)
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visitDto.reference)
+        assertThat(it["hasSessionChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasDateChanged"]).isEqualTo(false.toString())
+        assertThat(it["existingVisitSession"]).isEqualTo(existingVisit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["newVisitSession"]).isEqualTo(visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["hasVisitorsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasNeedsChanged"]).isEqualTo(true.toString())
+        assertThat(it["hasContactsChanged"]).isEqualTo(false.toString())
+      },
+      isNull(),
+    )
+  }
+
+  @Test
+  fun `when special needs are removed check update specific visit flags sent to telemetry service`() {
+    // visit for prisoner already exists
+    var existingVisit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      slotDate = startDate,
+    )
+
+    val visitor1Id: Long = 1
+    visitEntityHelper.createContact(visit = existingVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(existingVisit, visitor1Id, true)
+    visitEntityHelper.createSupport(existingVisit, "Wheelchair")
+    existingVisit = visitEntityHelper.save(existingVisit)
+
+    // update visit to remove support
+    var updateVisitApplication = applicationEntityHelper.create(existingVisit)
+    updateVisitApplication.completed = false
+    updateVisitApplication.visitId = existingVisit.id
+
+    applicationEntityHelper.createVisitor(updateVisitApplication, visitor1Id, true)
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+    responseSpec.expectStatus().isOk
+    val visitDto = getVisitDto(responseSpec)
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visitDto.reference)
+        assertThat(it["hasSessionChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasDateChanged"]).isEqualTo(false.toString())
+        assertThat(it["existingVisitSession"]).isEqualTo(existingVisit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["newVisitSession"]).isEqualTo(visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["hasVisitorsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasNeedsChanged"]).isEqualTo(true.toString())
+        assertThat(it["hasContactsChanged"]).isEqualTo(false.toString())
+      },
+      isNull(),
+    )
+  }
+
+  @Test
+  fun `when contact  number is updated check update specific visit flags sent to telemetry service`() {
+    // visit for prisoner already exists
+    var existingVisit = visitEntityHelper.create(
+      sessionTemplate = sessionTemplateDefault,
+      slotDate = startDate,
+    )
+
+    val visitor1Id: Long = 1
+    visitEntityHelper.createContact(visit = existingVisit, name = "Jane Doe", phone = "01234 098765")
+    visitEntityHelper.createVisitor(existingVisit, visitor1Id, true)
+    existingVisit = visitEntityHelper.save(existingVisit)
+
+    // update visit to remove support
+    var updateVisitApplication = applicationEntityHelper.create(existingVisit)
+    updateVisitApplication.completed = false
+    updateVisitApplication.visitId = existingVisit.id
+    applicationEntityHelper.createContact(updateVisitApplication, ContactDto(name = "Jane Doe", telephone = "01234 098765", email = null))
+
+    applicationEntityHelper.createVisitor(updateVisitApplication, visitor1Id, true)
+    updateVisitApplication = applicationEntityHelper.save(updateVisitApplication)
+
+    // When
+    val responseSpec = callVisitUpdate(webTestClient, roleVisitSchedulerHttpHeaders, updateVisitApplication.reference)
+    responseSpec.expectStatus().isOk
+    val visitDto = getVisitDto(responseSpec)
+    verify(telemetryClient).trackEvent(
+      eq("visit-booked"),
+      org.mockito.kotlin.check {
+        assertThat(it["reference"]).isEqualTo(visitDto.reference)
+        assertThat(it["hasSessionChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasDateChanged"]).isEqualTo(false.toString())
+        assertThat(it["existingVisitSession"]).isEqualTo(existingVisit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["newVisitSession"]).isEqualTo(visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
+        assertThat(it["hasVisitorsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasNeedsChanged"]).isEqualTo(false.toString())
+        assertThat(it["hasContactsChanged"]).isEqualTo(true.toString())
+      },
+      isNull(),
+    )
+  }
+
   private fun assertVisitMatchesApplication(visitDto: VisitDto, application: Application) {
     assertThat(visitDto.reference).isNotEmpty()
     assertThat(visitDto.applicationReference).isEqualTo(application.reference)
