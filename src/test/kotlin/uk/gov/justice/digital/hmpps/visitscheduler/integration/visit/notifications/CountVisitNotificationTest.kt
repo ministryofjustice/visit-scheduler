@@ -11,12 +11,14 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COUNT_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RELEASED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCountVisitNotification
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import java.time.LocalDate
+import java.time.LocalTime
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH NON_ASSOCIATION_DELETED")
@@ -255,5 +257,65 @@ class CountVisitNotificationTest : NotificationTestBase() {
     responseSpec.expectStatus().isOk
     val notificationCount = this.getNotificationCountDto(responseSpec)
     Assertions.assertThat(notificationCount.count).isEqualTo(0)
+  }
+
+  @Test
+  fun `when notification count is requested for a prison and visits exist then the correct count is returned`() {
+    // Given
+    val futureSessionStartTime = LocalTime.MAX
+    val pastSessionStartTime = LocalTime.MIN
+    val prisonCode = "ABC"
+
+    val sessionTemplate1 = sessionTemplateEntityHelper.create(startTime = futureSessionStartTime, prisonCode = prisonCode)
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(startTime = pastSessionStartTime, prisonCode = prisonCode)
+
+    val futureVisitToday = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now(),
+      visitStatus = BOOKED,
+      prisonCode = sessionTemplate1.prison.code,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(futureVisitToday)
+
+    val pastVisitToday = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now(),
+      visitStatus = BOOKED,
+      prisonCode = sessionTemplate2.prison.code,
+      sessionTemplate = sessionTemplate2,
+    )
+    eventAuditEntityHelper.create(pastVisitToday)
+
+    val futureVisitTomorrow = visitEntityHelper.create(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      prisonCode = sessionTemplate1.prison.code,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(futureVisitToday)
+
+    val pastVisitYesterday = visitEntityHelper.create(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().minusDays(1),
+      visitStatus = BOOKED,
+      prisonCode = sessionTemplate2.prison.code,
+      sessionTemplate = sessionTemplate2,
+    )
+    eventAuditEntityHelper.create(pastVisitToday)
+
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisitToday.reference, PRISONER_RELEASED_EVENT))
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisitYesterday.reference, PRISONER_RELEASED_EVENT))
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(pastVisitToday.reference, PRISONER_RELEASED_EVENT))
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(futureVisitTomorrow.reference, PRISONER_RELEASED_EVENT))
+
+    // When
+    val responseSpec = callCountVisitNotification(webTestClient, VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", prisonCode), roleVisitSchedulerHttpHeaders)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    val notificationCount = this.getNotificationCountDto(responseSpec)
+    Assertions.assertThat(notificationCount.count).isEqualTo(2)
   }
 }
