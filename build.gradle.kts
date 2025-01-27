@@ -27,26 +27,26 @@ dependencies {
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
-  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.11.0")
+  implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.12.0")
 
-  implementation("org.springframework.data:spring-data-commons:3.4.1")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.7.0")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0")
-  implementation("org.springdoc:springdoc-openapi-starter-common:2.7.0")
+  implementation("org.springframework.data:spring-data-commons:3.4.2")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.4")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.4")
+  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.4")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
-  implementation("net.javacrumbs.shedlock:shedlock-spring:6.0.2")
-  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.0.2")
-  implementation("org.apache.commons:commons-csv:1.12.0")
+  implementation("net.javacrumbs.shedlock:shedlock-spring:6.2.0")
+  implementation("net.javacrumbs.shedlock:shedlock-provider-jdbc-template:6.2.0")
+  implementation("org.apache.commons:commons-csv:1.13.0")
   implementation("org.freemarker:freemarker:2.3.34")
 
-  runtimeOnly("org.postgresql:postgresql:42.7.4")
+  runtimeOnly("org.postgresql:postgresql:42.7.5")
   runtimeOnly("org.flywaydb:flyway-core")
   runtimeOnly("org.flywaydb:flyway-database-postgresql")
 
   annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
 
-  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.24")
+  testImplementation("io.swagger.parser.v3:swagger-parser:2.1.25")
   testImplementation("com.github.tomakehurst:wiremock-jre8-standalone:3.0.1")
   testImplementation("org.mockito:mockito-inline:5.2.0")
   testImplementation("org.testcontainers:localstack:1.20.4")
