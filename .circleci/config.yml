@@ -9,7 +9,7 @@ parameters:
     default: visits-alerts
   releases-slack-channel:
     type: string
-    default: visits-alerts
+    default: visits-releases
 
 jobs:
   acceptance_tests_staff_ui_main:
