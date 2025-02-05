@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
@@ -47,7 +48,6 @@ const val VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH: String = "$VISIT_
 const val VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/restriction/upserted"
 const val VISIT_NOTIFICATION_VISITOR_APPROVED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/approved"
 const val VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/unapproved"
-const val VISIT_NOTIFICATION_COUNT_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/count"
 const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/count"
 const val FUTURE_NOTIFICATION_VISIT_GROUPS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/groups"
 const val VISIT_NOTIFICATION_TYPES: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/types"
@@ -414,34 +414,11 @@ class VisitNotificationController(
     @Schema(description = "prisonCode", example = "CFI", required = true)
     @PathVariable
     prisonCode: String,
+    @Schema(description = "list of notificationEventTypes", required = false)
+    @RequestParam(value = "types", required = false)
+    notificationEventTypes: List<NotificationEventType>?,
   ): NotificationCountDto {
-    return NotificationCountDto(visitNotificationEventService.getNotificationCountForPrison(prisonCode))
-  }
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(VISIT_NOTIFICATION_COUNT_PATH)
-  @Operation(
-    summary = "Get notification count",
-    description = "Retrieve notification count by visit reference",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Retrieve notification count",
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun getNotificationCount(): NotificationCountDto {
-    return NotificationCountDto(visitNotificationEventService.getNotificationCount())
+    return NotificationCountDto(visitNotificationEventService.getNotificationCountForPrison(prisonCode, notificationEventTypes))
   }
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")

@@ -485,12 +485,16 @@ class VisitNotificationEventService(
     return validToDate?.let { LocalDateTime.of(validToDate, LocalTime.MAX) }
   }
 
-  fun getNotificationCountForPrison(prisonCode: String): Int {
-    return this.visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode) ?: 0
-  }
-
-  fun getNotificationCount(): Int {
-    return this.visitNotificationEventRepository.getNotificationGroupsCount() ?: 0
+  fun getNotificationCountForPrison(
+    prisonCode: String,
+    notificationEventTypes: List<NotificationEventType>?,
+  ): Int {
+    LOG.debug("getNotificationCountForPrison with prisonCode - {}, notificationEventTypes - {}", prisonCode, notificationEventTypes)
+    return if (notificationEventTypes == null) {
+      this.visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode) ?: 0
+    } else {
+      this.visitNotificationEventRepository.getNotificationGroupsCountByPrisonCode(prisonCode, notificationEventTypes.map { it.name }.toList()) ?: 0
+    }
   }
 
   fun getFutureNotificationVisitGroups(prisonCode: String): List<NotificationGroupDto> {
