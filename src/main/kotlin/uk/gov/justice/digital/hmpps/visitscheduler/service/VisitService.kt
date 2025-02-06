@@ -72,8 +72,9 @@ class VisitService(
       return alreadyBookedVisit
     }
 
+    val existingVisit = visitStoreService.getBookingByApplicationReference(applicationReference)
     val booking = visitStoreService.createOrUpdateBooking(applicationReference, bookingRequestDto)
-    return processUpdateBookingEvents(booking, bookingRequestDto)
+    return processUpdateBookingEvents(existingVisit, booking, bookingRequestDto)
   }
 
   @Transactional
@@ -190,12 +191,13 @@ class VisitService(
   }
 
   private fun processUpdateBookingEvents(
+    visitDtoBeforeUpdate: VisitDto?,
     bookedVisitDto: VisitDto,
     bookingRequestDto: BookingRequestDto,
   ): VisitDto {
     val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, EventAuditType.UPDATED_VISIT)
 
-    telemetryClientService.trackUpdateBookingEvent(bookingRequestDto, bookedVisitDto, updatedEventAuditDto)
+    telemetryClientService.trackUpdateBookingEvent(visitDtoBeforeUpdate, bookingRequestDto, bookedVisitDto, updatedEventAuditDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       bookedVisitDto.reference,

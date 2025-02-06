@@ -161,6 +161,13 @@ class VisitStoreService(
     return visitDtoBuilder.build(savedBooking)
   }
 
+  @Transactional(readOnly = true)
+  fun getBookingByApplicationReference(applicationReference: String): VisitDto? {
+    return visitRepository.findVisitByApplicationReference(applicationReference)?.let {
+      visitDtoBuilder.build(it)
+    }
+  }
+
   private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
     return if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }
   }

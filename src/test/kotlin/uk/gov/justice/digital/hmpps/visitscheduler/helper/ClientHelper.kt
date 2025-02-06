@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_APPLICATION_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PERSON_RESTRICTION_UPSERTED_PATH
@@ -61,6 +62,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplica
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.PHONE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.MoveVisitsDto
@@ -774,9 +776,17 @@ fun callNotifyVSiPThatPrisonerAlertHasBeenCreatedOrUpdated(
 
 fun callCountVisitNotification(
   webTestClient: WebTestClient,
-  url: String,
+  prisonCode: String,
+  notificationEventTypes: List<NotificationEventType>? = null,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec {
+  var url = VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH.replace("{prisonCode}", prisonCode)
+  url = if (notificationEventTypes != null) {
+    url + "?types=${notificationEventTypes.joinToString(",")}"
+  } else {
+    url
+  }
+
   return callGet(
     webTestClient,
     url,

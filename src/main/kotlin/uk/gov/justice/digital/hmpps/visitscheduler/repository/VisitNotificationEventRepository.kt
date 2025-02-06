@@ -124,7 +124,7 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       " JOIN visit v ON v.reference  = vne.booking_reference " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
       " JOIN prison p on p.id  = v.prison_id AND p.code = :prisonCode " +
-      " WHERE  v.visit_status = 'BOOKED' AND ss.slot_date >= NOW()   " +
+      " WHERE  v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()   " +
       " GROUP BY vne.reference) sq ",
     nativeQuery = true,
   )
@@ -135,18 +135,20 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
       "SELECT count(distinct vne.reference) as ng FROM visit_notification_event vne " +
       " JOIN visit v ON v.reference  = vne.booking_reference " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
-      " WHERE v.visit_status = 'BOOKED' AND ss.slot_date >= NOW()  " +
+      " JOIN prison p on p.id  = v.prison_id AND p.code = :prisonCode " +
+      " WHERE  v.visit_status = 'BOOKED' AND ss.slot_start >= NOW() AND " +
+      " vne.type in (:notificationEventTypes) " +
       " GROUP BY vne.reference) sq ",
     nativeQuery = true,
   )
-  fun getNotificationGroupsCount(): Int?
+  fun getNotificationGroupsCountByPrisonCode(prisonCode: String, notificationEventTypes: List<String>): Int?
 
   @Query(
     "SELECT vne.* FROM visit_notification_event vne " +
       " JOIN visit v ON v.reference  = vne.booking_reference " +
       " JOIN prison p on p.id  = v.prison_id  AND p.code= :prisonCode " +
       " JOIN session_slot ss on ss.id  = v.session_slot_id " +
-      " WHERE v.visit_status = 'BOOKED' AND ss.slot_date >= NOW()  " +
+      " WHERE v.visit_status = 'BOOKED' AND ss.slot_start >= NOW()  " +
       " ORDER BY ss.slot_date, vne.reference, v.id",
     nativeQuery = true,
   )
