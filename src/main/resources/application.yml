@@ -130,7 +130,7 @@ task:
   flag-visits:
     enabled: true
     cron: "0 0 2 * * ?" #every day at 2 AM
-    number-of-days-ahead: 30
+    number-of-days-ahead: 14
   reporting:
     visit-counts-report:
       enabled: true
