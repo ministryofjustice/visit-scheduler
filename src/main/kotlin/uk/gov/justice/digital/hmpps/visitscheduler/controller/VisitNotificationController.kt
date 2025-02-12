@@ -417,9 +417,7 @@ class VisitNotificationController(
     @Schema(description = "list of notificationEventTypes", required = false)
     @RequestParam(value = "types", required = false)
     notificationEventTypes: List<NotificationEventType>?,
-  ): NotificationCountDto {
-    return NotificationCountDto(visitNotificationEventService.getNotificationCountForPrison(prisonCode, notificationEventTypes))
-  }
+  ): NotificationCountDto = NotificationCountDto(visitNotificationEventService.getNotificationCountForPrison(prisonCode, notificationEventTypes))
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(FUTURE_NOTIFICATION_VISIT_GROUPS)
@@ -447,9 +445,7 @@ class VisitNotificationController(
     @Schema(description = "prisonCode", example = "CFI", required = true)
     @PathVariable
     prisonCode: String,
-  ): List<NotificationGroupDto> {
-    return visitNotificationEventService.getFutureNotificationVisitGroups(prisonCode)
-  }
+  ): List<NotificationGroupDto> = visitNotificationEventService.getFutureNotificationVisitGroups(prisonCode)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_NOTIFICATION_TYPES)
@@ -477,9 +473,7 @@ class VisitNotificationController(
     @Schema(description = "bookingReference", example = "v9*d7*ed*7u", required = true)
     @PathVariable
     reference: String,
-  ): List<NotificationEventType> {
-    return visitNotificationEventService.getNotificationsTypesForBookingReference(reference)
-  }
+  ): List<NotificationEventType> = visitNotificationEventService.getNotificationsTypesForBookingReference(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(VISIT_NOTIFICATION_IGNORE)
@@ -527,7 +521,5 @@ class VisitNotificationController(
     reference: String,
     @RequestBody @Valid
     ignoreNotifications: IgnoreVisitNotificationsDto,
-  ): VisitDto {
-    return visitNotificationEventService.ignoreVisitNotifications(reference.trim(), ignoreNotifications)
-  }
+  ): VisitDto = visitNotificationEventService.ignoreVisitNotifications(reference.trim(), ignoreNotifications)
 }

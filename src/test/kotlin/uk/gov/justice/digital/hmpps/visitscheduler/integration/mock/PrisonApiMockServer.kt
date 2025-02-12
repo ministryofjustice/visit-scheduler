@@ -86,7 +86,5 @@ class PrisonApiMockServer : WireMockServer(8092) {
     )
   }
 
-  private fun getHousingLevel(level: Int, code: String): PrisonerHousingLevelDto {
-    return PrisonerHousingLevelDto(code = code, level = level, description = "level $level")
-  }
+  private fun getHousingLevel(level: Int, code: String): PrisonerHousingLevelDto = PrisonerHousingLevelDto(code = code, level = level, description = "level $level")
 }

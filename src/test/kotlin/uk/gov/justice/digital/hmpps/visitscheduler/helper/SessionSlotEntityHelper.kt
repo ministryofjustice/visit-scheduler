@@ -21,15 +21,13 @@ class SessionSlotEntityHelper(
       slotDate: LocalDate = LocalDate.now().plusDays(2),
       slotTime: LocalTime = LocalTime.now().plusHours(4),
       slotEndTime: LocalTime = slotTime.plusHours(2),
-    ): SessionSlot {
-      return SessionSlot(
-        sessionTemplateReference = sessionTemplateReference,
-        prisonId = prisonId,
-        slotDate = slotDate,
-        slotStart = slotDate.atTime(slotTime),
-        slotEnd = slotDate.atTime(slotEndTime),
-      )
-    }
+    ): SessionSlot = SessionSlot(
+      sessionTemplateReference = sessionTemplateReference,
+      prisonId = prisonId,
+      slotDate = slotDate,
+      slotStart = slotDate.atTime(slotTime),
+      slotEnd = slotDate.atTime(slotEndTime),
+    )
   }
 
   fun create(
@@ -38,18 +36,16 @@ class SessionSlotEntityHelper(
     slotDate: LocalDate = LocalDate.now().plusDays(2),
     slotTime: LocalTime = LocalTime.now().plusHours(4),
     slotEndTime: LocalTime = slotTime.plusHours(2),
-  ): SessionSlot {
-    return sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate) ?: run {
-      save(
-        SessionSlot(
-          sessionTemplateReference,
-          prisonId,
-          slotDate,
-          slotStart = slotDate.atTime(slotTime),
-          slotEnd = slotDate.atTime(slotEndTime),
-        ),
-      )
-    }
+  ): SessionSlot = sessionSlotRepository.findSessionSlot(sessionTemplateReference, slotDate) ?: run {
+    save(
+      SessionSlot(
+        sessionTemplateReference,
+        prisonId,
+        slotDate,
+        slotStart = slotDate.atTime(slotTime),
+        slotEnd = slotDate.atTime(slotEndTime),
+      ),
+    )
   }
 
   fun create(
@@ -57,21 +53,17 @@ class SessionSlotEntityHelper(
     slotDate: LocalDate = LocalDate.now().plusDays(2),
     slotTime: LocalTime = LocalTime.now().plusHours(4),
     slotEndTime: LocalTime = slotTime.plusHours(2),
-  ): SessionSlot {
-    return sessionSlotRepository.findSessionSlotWithNullReference(slotDate) ?: run {
-      save(
-        SessionSlot(
-          null,
-          prisonId,
-          slotDate,
-          slotStart = slotDate.atTime(slotTime),
-          slotEnd = slotDate.atTime(slotEndTime),
-        ),
-      )
-    }
+  ): SessionSlot = sessionSlotRepository.findSessionSlotWithNullReference(slotDate) ?: run {
+    save(
+      SessionSlot(
+        null,
+        prisonId,
+        slotDate,
+        slotStart = slotDate.atTime(slotTime),
+        slotEnd = slotDate.atTime(slotEndTime),
+      ),
+    )
   }
 
-  fun save(slot: SessionSlot): SessionSlot {
-    return sessionSlotRepository.saveAndFlush(slot)
-  }
+  fun save(slot: SessionSlot): SessionSlot = sessionSlotRepository.saveAndFlush(slot)
 }

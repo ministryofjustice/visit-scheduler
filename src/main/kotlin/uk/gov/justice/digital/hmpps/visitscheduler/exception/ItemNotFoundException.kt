@@ -5,7 +5,5 @@ import java.util.function.Supplier
 class ItemNotFoundException(message: String? = null, cause: Throwable? = null) :
   RuntimeException(message, cause),
   Supplier<ItemNotFoundException> {
-  override fun get(): ItemNotFoundException {
-    return ItemNotFoundException(message, cause)
-  }
+  override fun get(): ItemNotFoundException = ItemNotFoundException(message, cause)
 }

@@ -68,9 +68,7 @@ class PrisonAdminController(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
-  ): PrisonDto {
-    return prisonsService.getPrison(prisonCode)
-  }
+  ): PrisonDto = prisonsService.getPrison(prisonCode)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(ADMIN_PRISONS_PATH)
@@ -100,9 +98,7 @@ class PrisonAdminController(
       ),
     ],
   )
-  fun getPrisons(): List<PrisonDto> {
-    return prisonsService.getPrisons()
-  }
+  fun getPrisons(): List<PrisonDto> = prisonsService.getPrisons()
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(PRISON_ADMIN_PATH)
@@ -137,9 +133,7 @@ class PrisonAdminController(
   fun createPrison(
     @RequestBody @Valid
     prisonDto: PrisonDto,
-  ): PrisonDto {
-    return prisonConfigService.createPrison(prisonDto)
-  }
+  ): PrisonDto = prisonConfigService.createPrison(prisonDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(PRISON)
@@ -177,9 +171,7 @@ class PrisonAdminController(
     prisonCode: String,
     @RequestBody @Valid
     updatePrisonDto: UpdatePrisonDto,
-  ): PrisonDto {
-    return prisonConfigService.updatePrison(prisonCode, updatePrisonDto)
-  }
+  ): PrisonDto = prisonConfigService.updatePrison(prisonCode, updatePrisonDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(ACTIVATE_PRISON)
@@ -212,9 +204,7 @@ class PrisonAdminController(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
-  ): PrisonDto {
-    return prisonConfigService.activatePrison(prisonCode)
-  }
+  ): PrisonDto = prisonConfigService.activatePrison(prisonCode)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(DEACTIVATE_PRISON)
@@ -247,9 +237,7 @@ class PrisonAdminController(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
-  ): PrisonDto {
-    return prisonConfigService.deActivatePrison(prisonCode)
-  }
+  ): PrisonDto = prisonConfigService.deActivatePrison(prisonCode)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(ACTIVATE_PRISON_CLIENT)
@@ -285,9 +273,7 @@ class PrisonAdminController(
     @Schema(description = "type", example = "STAFF", required = true)
     @PathVariable
     type: UserType,
-  ): PrisonUserClientDto {
-    return prisonConfigService.activatePrisonClient(prisonCode, type)
-  }
+  ): PrisonUserClientDto = prisonConfigService.activatePrisonClient(prisonCode, type)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(DEACTIVATE_PRISON_CLIENT)
@@ -323,7 +309,5 @@ class PrisonAdminController(
     @Schema(description = "type", example = "STAFF", required = true)
     @PathVariable
     type: UserType,
-  ): PrisonUserClientDto {
-    return prisonConfigService.deActivatePrisonClient(prisonCode, type)
-  }
+  ): PrisonUserClientDto = prisonConfigService.deActivatePrisonClient(prisonCode, type)
 }

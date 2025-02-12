@@ -28,4 +28,5 @@ class SessionTemplateExcludeDate(
 
   @Column(name = "actioned_by", nullable = false)
   override val actionedBy: String,
-) : AbstractIdEntity(), IExcludeDate
+) : AbstractIdEntity(),
+  IExcludeDate

@@ -220,18 +220,14 @@ class GetSessionCapacityTest : IntegrationTestBase() {
     sessionDate: LocalDate? = LocalDate.parse("2023-01-26"),
     sessionStartTime: LocalTime? = LocalTime.parse("13:45"),
     sessionEndTime: LocalTime? = LocalTime.parse("14:45"),
-  ): ResponseSpec {
-    return webTestClient.get().uri("$GET_SESSION_CAPACITY?prisonId=$prisonCode&sessionDate=$sessionDate&sessionStartTime=$sessionStartTime&sessionEndTime=$sessionEndTime")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
-  }
+  ): ResponseSpec = webTestClient.get().uri("$GET_SESSION_CAPACITY?prisonId=$prisonCode&sessionDate=$sessionDate&sessionStartTime=$sessionStartTime&sessionEndTime=$sessionEndTime")
+    .headers(setAuthorisation(roles = requiredRole))
+    .exchange()
 
   private fun getNextAllowedDay(): LocalDate {
     // The two days is based on the default SessionService.policyNoticeDaysMin
     return LocalDate.now().plusDays(2)
   }
 
-  private fun getResults(returnResult: BodyContentSpec): SessionCapacityDto {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, SessionCapacityDto::class.java)
-  }
+  private fun getResults(returnResult: BodyContentSpec): SessionCapacityDto = objectMapper.readValue(returnResult.returnResult().responseBody, SessionCapacityDto::class.java)
 }

@@ -60,7 +60,5 @@ class PrisonOffenderSearchMockServer : WireMockServer(8093) {
     )
   }
 
-  private fun getJsonString(obj: Any): String {
-    return MAPPER.writer().withDefaultPrettyPrinter().writeValueAsString(obj)
-  }
+  private fun getJsonString(obj: Any): String = MAPPER.writer().withDefaultPrettyPrinter().writeValueAsString(obj)
 }

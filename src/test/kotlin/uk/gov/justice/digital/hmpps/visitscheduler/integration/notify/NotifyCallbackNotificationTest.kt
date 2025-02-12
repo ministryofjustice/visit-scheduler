@@ -306,20 +306,18 @@ class NotifyCallbackNotificationTest : IntegrationTestBase() {
     templateID: String = "template-id",
     templateVersion: String = "v1",
     notificationStatus: String,
-  ): NotifyCallbackNotificationDto {
-    return NotifyCallbackNotificationDto(
-      notificationId = notificationId,
-      eventAuditReference = eventAuditReference.toString(),
-      createdAt = createdAt,
-      notificationType = notificationType,
-      templateId = templateID,
-      templateVersion = templateVersion,
-      status = notificationStatus,
-      completedAt = completedAt,
-      sentTo = sentTo,
-      sentAt = sentAt,
-    )
-  }
+  ): NotifyCallbackNotificationDto = NotifyCallbackNotificationDto(
+    notificationId = notificationId,
+    eventAuditReference = eventAuditReference.toString(),
+    createdAt = createdAt,
+    notificationType = notificationType,
+    templateId = templateID,
+    templateVersion = templateVersion,
+    status = notificationStatus,
+    completedAt = completedAt,
+    sentTo = sentTo,
+    sentAt = sentAt,
+  )
 
   private fun assertNotifyHistory(
     notifyHistory: NotifyHistoryDto,

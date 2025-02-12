@@ -18,9 +18,7 @@ class PrisonerIncentiveLevelMatcher : BiPredicate<IncentiveLevel?, SessionTempla
   override fun test(
     prisonerIncentiveLevel: IncentiveLevel?,
     sessionTemplate: SessionTemplate,
-  ): Boolean {
-    return isPrisonerIncentiveLevelAllowedOnSession(sessionTemplate, prisonerIncentiveLevel)
-  }
+  ): Boolean = isPrisonerIncentiveLevelAllowedOnSession(sessionTemplate, prisonerIncentiveLevel)
 
   fun isPrisonerIncentiveLevelAllowedOnSession(sessionTemplate: SessionTemplate, prisonerIncentiveLevel: IncentiveLevel?): Boolean {
     prisonerIncentiveLevel?.let {
@@ -35,10 +33,8 @@ class PrisonerIncentiveLevelMatcher : BiPredicate<IncentiveLevel?, SessionTempla
     return false
   }
 
-  private fun getAllowedIncentiveLevelsForSessionTemplate(sessionTemplate: SessionTemplate): Set<String> {
-    return sessionTemplate.permittedSessionIncentiveLevelGroups.stream()
-      .flatMap { it.sessionIncentiveLevels.stream() }
-      .map { it.prisonerIncentiveLevel.code }
-      .collect(Collectors.toSet())
-  }
+  private fun getAllowedIncentiveLevelsForSessionTemplate(sessionTemplate: SessionTemplate): Set<String> = sessionTemplate.permittedSessionIncentiveLevelGroups.stream()
+    .flatMap { it.sessionIncentiveLevels.stream() }
+    .map { it.prisonerIncentiveLevel.code }
+    .collect(Collectors.toSet())
 }

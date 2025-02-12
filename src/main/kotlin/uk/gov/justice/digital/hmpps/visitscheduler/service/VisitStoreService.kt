@@ -162,15 +162,11 @@ class VisitStoreService(
   }
 
   @Transactional(readOnly = true)
-  fun getBookingByApplicationReference(applicationReference: String): VisitDto? {
-    return visitRepository.findVisitByApplicationReference(applicationReference)?.let {
-      visitDtoBuilder.build(it)
-    }
+  fun getBookingByApplicationReference(applicationReference: String): VisitDto? = visitRepository.findVisitByApplicationReference(applicationReference)?.let {
+    visitDtoBuilder.build(it)
   }
 
-  private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean {
-    return if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }
-  }
+  private fun hasNotBeenAddedToBooking(booking: Visit, application: Application): Boolean = if (booking.getApplications().isEmpty()) true else booking.getApplications().any { it.id == application.id }
 
   private fun validateVisitStartDate(
     visit: Visit,
@@ -219,14 +215,12 @@ class VisitStoreService(
     )
   }
 
-  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
-    return VisitNote(
-      visitId = visit.id,
-      type = type,
-      text = text,
-      visit = visit,
-    )
-  }
+  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote = VisitNote(
+    visitId = visit.id,
+    type = type,
+    text = text,
+    visit = visit,
+  )
 
   private fun getAllowedCancellationDate(currentDateTime: LocalDateTime = LocalDateTime.now(), visitCancellationDayLimit: Int): LocalDateTime {
     var visitCancellationDateAllowed = currentDateTime

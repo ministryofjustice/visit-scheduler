@@ -63,7 +63,5 @@ class VisitPrisonsController(
     @Schema(description = "type", example = "STAFF", required = true)
     @PathVariable
     type: UserType,
-  ): List<String> {
-    return prisonsService.getSupportedPrisonCodes(type)
-  }
+  ): List<String> = prisonsService.getSupportedPrisonCodes(type)
 }

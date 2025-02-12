@@ -86,14 +86,10 @@ class PrisonConfigService(
   }
 
   @Transactional
-  fun activatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto {
-    return createOrUpdatePrisonClient(prisonCode, type, true)
-  }
+  fun activatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, true)
 
   @Transactional
-  fun deActivatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto {
-    return createOrUpdatePrisonClient(prisonCode, type, false)
-  }
+  fun deActivatePrisonClient(prisonCode: String, type: UserType): PrisonUserClientDto = createOrUpdatePrisonClient(prisonCode, type, false)
 
   @Transactional
   fun deActivatePrison(prisonCode: String): PrisonDto {

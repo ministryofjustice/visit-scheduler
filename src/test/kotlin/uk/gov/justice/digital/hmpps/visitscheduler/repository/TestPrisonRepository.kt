@@ -6,7 +6,9 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 
 @Repository
-interface TestPrisonRepository : JpaRepository<Prison, Long>, JpaSpecificationExecutor<Prison> {
+interface TestPrisonRepository :
+  JpaRepository<Prison, Long>,
+  JpaSpecificationExecutor<Prison> {
 
   fun findByCode(prisonCode: String): Prison?
 }

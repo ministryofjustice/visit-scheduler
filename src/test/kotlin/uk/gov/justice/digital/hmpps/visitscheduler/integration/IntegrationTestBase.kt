@@ -162,9 +162,7 @@ abstract class IntegrationTestBase {
     startDate = this.sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
   }
 
-  fun shouldICreateDefault(): Boolean {
-    return true
-  }
+  fun shouldICreateDefault(): Boolean = true
 
   @AfterEach
   @Transactional
@@ -172,41 +170,29 @@ abstract class IntegrationTestBase {
     deleteEntityHelper.deleteAll()
   }
 
-  fun getApplicationDto(responseSpec: ResponseSpec): ApplicationDto =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationDto::class.java)
+  fun getApplicationDto(responseSpec: ResponseSpec): ApplicationDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationDto::class.java)
 
-  fun getVisitDto(responseSpec: ResponseSpec): VisitDto =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
+  fun getVisitDto(responseSpec: ResponseSpec): VisitDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
 
-  fun getSessionTemplate(responseSpec: ResponseSpec): SessionTemplateDto =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
+  fun getSessionTemplate(responseSpec: ResponseSpec): SessionTemplateDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionTemplateDto::class.java)
 
-  fun getSessionLocationGroup(responseSpec: ResponseSpec): SessionLocationGroupDto =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionLocationGroupDto::class.java)
+  fun getSessionLocationGroup(responseSpec: ResponseSpec): SessionLocationGroupDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionLocationGroupDto::class.java)
 
-  fun getSessionLocationGroups(responseSpec: ResponseSpec): Array<SessionLocationGroupDto> =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionLocationGroupDto>::class.java)
+  fun getSessionLocationGroups(responseSpec: ResponseSpec): Array<SessionLocationGroupDto> = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionLocationGroupDto>::class.java)
 
-  fun getSessionCategoryGroups(responseSpec: ResponseSpec): Array<SessionCategoryGroupDto> =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionCategoryGroupDto>::class.java)
+  fun getSessionCategoryGroups(responseSpec: ResponseSpec): Array<SessionCategoryGroupDto> = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionCategoryGroupDto>::class.java)
 
-  fun getSessionCategoryGroup(responseSpec: ResponseSpec): SessionCategoryGroupDto =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionCategoryGroupDto::class.java)
+  fun getSessionCategoryGroup(responseSpec: ResponseSpec): SessionCategoryGroupDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionCategoryGroupDto::class.java)
 
-  fun getSessionIncentiveGroup(responseSpec: ResponseSpec): SessionIncentiveLevelGroupDto =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionIncentiveLevelGroupDto::class.java)
+  fun getSessionIncentiveGroup(responseSpec: ResponseSpec): SessionIncentiveLevelGroupDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, SessionIncentiveLevelGroupDto::class.java)
 
-  fun getSessionIncentiveGroups(responseSpec: ResponseSpec): Array<SessionIncentiveLevelGroupDto> =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionIncentiveLevelGroupDto>::class.java)
+  fun getSessionIncentiveGroups(responseSpec: ResponseSpec): Array<SessionIncentiveLevelGroupDto> = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<SessionIncentiveLevelGroupDto>::class.java)
 
-  fun getCheckingMatchingTemplatesOnCreate(responseSpec: ResponseSpec): Array<String> =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<String>::class.java)
+  fun getCheckingMatchingTemplatesOnCreate(responseSpec: ResponseSpec): Array<String> = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<String>::class.java)
 
-  fun getErrorResponse(responseSpec: ResponseSpec): ErrorResponse =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ErrorResponse::class.java)
+  fun getErrorResponse(responseSpec: ResponseSpec): ErrorResponse = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ErrorResponse::class.java)
 
-  fun getEventAuditList(responseSpec: ResponseSpec) =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<EventAuditDto>::class.java)
+  fun getEventAuditList(responseSpec: ResponseSpec) = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<EventAuditDto>::class.java)
 
   internal fun setAuthorisation(
     user: String = "AUTH_ADM",
@@ -258,29 +244,19 @@ abstract class IntegrationTestBase {
     }
   }
 
-  fun formatDateToString(dateTime: LocalDateTime): String {
-    return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
-  }
+  fun formatDateToString(dateTime: LocalDateTime): String = dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
 
-  fun formatStartSlotDateTimeToString(sessionSlot: SessionSlot): String {
-    return sessionSlot.slotStart.truncatedTo(ChronoUnit.SECONDS).format(
-      DateTimeFormatter.ISO_DATE_TIME,
-    )
-  }
+  fun formatStartSlotDateTimeToString(sessionSlot: SessionSlot): String = sessionSlot.slotStart.truncatedTo(ChronoUnit.SECONDS).format(
+    DateTimeFormatter.ISO_DATE_TIME,
+  )
 
-  fun formatSlotEndDateTimeToString(sessionSlot: SessionSlot): String {
-    return sessionSlot.slotEnd.truncatedTo(ChronoUnit.SECONDS).format(
-      DateTimeFormatter.ISO_DATE_TIME,
-    )
-  }
+  fun formatSlotEndDateTimeToString(sessionSlot: SessionSlot): String = sessionSlot.slotEnd.truncatedTo(ChronoUnit.SECONDS).format(
+    DateTimeFormatter.ISO_DATE_TIME,
+  )
 
-  fun formatDateToString(sessionSlot: SessionSlot): String {
-    return formatDateToString(sessionSlot.slotDate)
-  }
+  fun formatDateToString(sessionSlot: SessionSlot): String = formatDateToString(sessionSlot.slotDate)
 
-  fun formatDateToString(localDate: LocalDate): String {
-    return localDate.format(DateTimeFormatter.ISO_DATE)
-  }
+  fun formatDateToString(localDate: LocalDate): String = localDate.format(DateTimeFormatter.ISO_DATE)
 
   fun createApplicationAndVisit(
     prisonerId: String? = "testPrisonerId",
@@ -314,9 +290,7 @@ abstract class IntegrationTestBase {
     completed: Boolean,
     reservedSlot: Boolean = true,
     visitRestriction: VisitRestriction = VisitRestriction.OPEN,
-  ): Application {
-    return createApplicationAndSave(prisonerId = prisonerId, sessionTemplate = sessionTemplateDefault, prisonCode = prisonCode, slotDate = slotDate, completed = completed, reservedSlot = reservedSlot, visitRestriction = visitRestriction)
-  }
+  ): Application = createApplicationAndSave(prisonerId = prisonerId, sessionTemplate = sessionTemplateDefault, prisonCode = prisonCode, slotDate = slotDate, completed = completed, reservedSlot = reservedSlot, visitRestriction = visitRestriction)
 
   fun createApplicationAndSave(
     prisonerId: String? = "testPrisonerId",
@@ -352,14 +326,10 @@ abstract class IntegrationTestBase {
     return applicationEntityHelper.save(applicationEntity)
   }
 
-  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit {
-    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplateDefault, application = applicationEntity)
-  }
+  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application, sessionTemplateLocal: SessionTemplate? = null): Visit = visitEntityHelper.createFromApplication(visitStatus = visitStatus, sessionTemplate = sessionTemplateLocal ?: sessionTemplateDefault, application = applicationEntity)
 
   // creates a visit with a null session template reference
-  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application): Visit {
-    return visitEntityHelper.createFromApplication(visitStatus = visitStatus, application = applicationEntity)
-  }
+  fun createVisitAndSave(visitStatus: VisitStatus, applicationEntity: Application): Visit = visitEntityHelper.createFromApplication(visitStatus = visitStatus, application = applicationEntity)
 
   fun parseVisitsPageResponse(responseSpec: ResponseSpec): List<VisitDto> {
     class Page {
@@ -371,9 +341,7 @@ abstract class IntegrationTestBase {
     return content.content
   }
 
-  fun parseVisitsResponse(responseSpec: ResponseSpec): List<VisitDto> {
-    return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitDto>::class.java).toList()
-  }
+  fun parseVisitsResponse(responseSpec: ResponseSpec): List<VisitDto> = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<VisitDto>::class.java).toList()
 
   fun createVisit(
     prisonerId: String? = "testPrisonerId",
@@ -422,46 +390,40 @@ abstract class IntegrationTestBase {
     sessionRestriction: SessionRestriction = SessionRestriction.OPEN,
     allowOverBooking: Boolean = false,
     userType: UserType = STAFF,
-  ): CreateApplicationDto {
-    return CreateApplicationDto(
-      prisonerId,
-      sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
-      sessionDate = slotDate ?: sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
-      applicationRestriction = sessionRestriction,
-      visitContact = ContactDto("John Smith", "013448811538", "email@example.com"),
-      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = ApplicationSupportDto(support),
-      actionedBy = actionedBy,
-      userType = userType,
-      allowOverBooking = allowOverBooking,
-    )
-  }
+  ): CreateApplicationDto = CreateApplicationDto(
+    prisonerId,
+    sessionTemplateReference = sessionTemplate?.reference ?: "IDontExistSessionTemplate",
+    sessionDate = slotDate ?: sessionTemplate?.let { sessionDatesUtil.getFirstBookableSessionDay(sessionTemplate) } ?: LocalDate.now(),
+    applicationRestriction = sessionRestriction,
+    visitContact = ContactDto("John Smith", "013448811538", "email@example.com"),
+    visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
+    visitorSupport = ApplicationSupportDto(support),
+    actionedBy = actionedBy,
+    userType = userType,
+    allowOverBooking = allowOverBooking,
+  )
 
   fun callCreateNotifyNotification(
     webTestClient: WebTestClient,
     dto: NotifyCreateNotificationDto? = null,
     authHttpHeaders: (HttpHeaders) -> Unit,
-  ): ResponseSpec {
-    return callPut(
-      dto,
-      webTestClient,
-      VISIT_NOTIFY_CONTROLLER_CREATE_PATH,
-      authHttpHeaders,
-    )
-  }
+  ): ResponseSpec = callPut(
+    dto,
+    webTestClient,
+    VISIT_NOTIFY_CONTROLLER_CREATE_PATH,
+    authHttpHeaders,
+  )
 
   fun callNotifyCallbackNotification(
     webTestClient: WebTestClient,
     dto: NotifyCallbackNotificationDto? = null,
     authHttpHeaders: (HttpHeaders) -> Unit,
-  ): ResponseSpec {
-    return callPut(
-      dto,
-      webTestClient,
-      VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH,
-      authHttpHeaders,
-    )
-  }
+  ): ResponseSpec = callPut(
+    dto,
+    webTestClient,
+    VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH,
+    authHttpHeaders,
+  )
 
   fun createNotifyCreateNotificationDto(
     notificationId: String = randomUUID().toString(),
@@ -470,14 +432,12 @@ abstract class IntegrationTestBase {
     notificationType: String,
     templateID: String = "template-id",
     templateVersion: String = "v1",
-  ): NotifyCreateNotificationDto {
-    return NotifyCreateNotificationDto(
-      notificationId = notificationId,
-      eventAuditReference = eventAuditReference.toString(),
-      createdAt = createdAt,
-      notificationType = notificationType,
-      templateId = templateID,
-      templateVersion = templateVersion,
-    )
-  }
+  ): NotifyCreateNotificationDto = NotifyCreateNotificationDto(
+    notificationId = notificationId,
+    eventAuditReference = eventAuditReference.toString(),
+    createdAt = createdAt,
+    notificationType = notificationType,
+    templateId = templateID,
+    templateVersion = templateVersion,
+  )
 }

@@ -191,12 +191,10 @@ class SessionTemplateSQLGenerator {
     return groupColumns
   }
 
-  private fun getGroupColumn(groupType: GroupType, csvRecord: CSVRecord): GroupColumns {
-    return when (groupType) {
-      GroupType.LOCATION -> LocationGroupsColumns(csvRecord)
-      GroupType.PRISONER_CATEGORY -> PrisonerCategoryGroupsColumns(csvRecord)
-      GroupType.PRISONER_INCENTIVE_LEVEL -> PrisonerIncentiveLevelGroupsColumns(csvRecord)
-    }
+  private fun getGroupColumn(groupType: GroupType, csvRecord: CSVRecord): GroupColumns = when (groupType) {
+    GroupType.LOCATION -> LocationGroupsColumns(csvRecord)
+    GroupType.PRISONER_CATEGORY -> PrisonerCategoryGroupsColumns(csvRecord)
+    GroupType.PRISONER_INCENTIVE_LEVEL -> PrisonerIncentiveLevelGroupsColumns(csvRecord)
   }
 
   fun validateGroupColumns(groupColumns: List<GroupColumns>) {
@@ -319,17 +317,11 @@ class SessionTemplateSQLGenerator {
       active = sessionRecord.get(IS_ACTIVE.name).uppercase().toBoolean(),
     )
 
-    fun getLocationList(): List<String> {
-      return toList(locationKeys)
-    }
+    fun getLocationList(): List<String> = toList(locationKeys)
 
-    fun getPrisonerCategoryList(): List<String> {
-      return toList(categoryKeys)
-    }
+    fun getPrisonerCategoryList(): List<String> = toList(categoryKeys)
 
-    fun getPrisonerIncentiveLevelList(): List<String> {
-      return toList(incentiveLevelKeys)
-    }
+    fun getPrisonerIncentiveLevelList(): List<String> = toList(incentiveLevelKeys)
   }
 
   abstract class GroupColumns(

@@ -40,9 +40,7 @@ class VisitCountsByDateReportService(
     }
   }
 
-  fun getVisitCountsBySession(reportDate: LocalDate): List<SessionVisitCountsDto> {
-    return getSessionsReport(reportDate)
-  }
+  fun getVisitCountsBySession(reportDate: LocalDate): List<SessionVisitCountsDto> = getSessionsReport(reportDate)
 
   private fun getSessionsReport(reportDate: LocalDate): List<SessionVisitCountsDto> {
     val prisons = getAllActivePrisons()
@@ -97,9 +95,7 @@ class VisitCountsByDateReportService(
     return sessionDetails
   }
 
-  private fun isExcludedDate(prison: PrisonDto, reportDate: LocalDate): Boolean {
-    return excludeDateService.getPrisonExcludeDates(prison.code).map { it.excludeDate }.contains(reportDate)
-  }
+  private fun isExcludedDate(prison: PrisonDto, reportDate: LocalDate): Boolean = excludeDateService.getPrisonExcludeDates(prison.code).map { it.excludeDate }.contains(reportDate)
 
   private fun getVisitCountsForSessions(sessions: List<SessionScheduleDto>, reportDate: LocalDate): Map<SessionScheduleDto, Map<Pair<VisitStatus, VisitRestriction>, Int>> {
     val sessionDetails = mutableMapOf<SessionScheduleDto, Map<Pair<VisitStatus, VisitRestriction>, Int>>()
@@ -110,17 +106,11 @@ class VisitCountsByDateReportService(
     return sessionDetails
   }
 
-  private fun getAllActivePrisons(): List<PrisonDto> {
-    return prisonsService.getPrisons().filter { it.active }
-  }
+  private fun getAllActivePrisons(): List<PrisonDto> = prisonsService.getPrisons().filter { it.active }
 
-  private fun getVisitCountsForSession(sessionSchedule: SessionScheduleDto, reportDate: LocalDate): Map<Pair<VisitStatus, VisitRestriction>, Int> {
-    return getVisitCountsByStatusAndRestriction(sessionSchedule.sessionTemplateReference, reportDate)
-  }
+  private fun getVisitCountsForSession(sessionSchedule: SessionScheduleDto, reportDate: LocalDate): Map<Pair<VisitStatus, VisitRestriction>, Int> = getVisitCountsByStatusAndRestriction(sessionSchedule.sessionTemplateReference, reportDate)
 
-  private fun getSessionsByDateForPrison(prison: PrisonDto, reportDate: LocalDate): List<SessionScheduleDto> {
-    return sessionService.getSessionSchedule(prison.code, reportDate)
-  }
+  private fun getSessionsByDateForPrison(prison: PrisonDto, reportDate: LocalDate): List<SessionScheduleDto> = sessionService.getSessionSchedule(prison.code, reportDate)
 
   private fun getVisitCountsByStatusAndRestriction(sessionTemplateReference: String, reportDate: LocalDate): Map<Pair<VisitStatus, VisitRestriction>, Int> {
     val visitCounts = mutableMapOf<Pair<VisitStatus, VisitRestriction>, Int>()
@@ -154,9 +144,7 @@ class VisitCountsByDateReportService(
     return listOf()
   }
 
-  private fun createSessionVisitCountsDto(reportDate: LocalDate, prison: PrisonDto, sessions: Set<SessionScheduleDto>): SessionVisitCountsDto {
-    return SessionVisitCountsDto(reportDate = reportDate, prisonCode = prison.code, isBlockedDate = isExcludedDate(prison, reportDate), hasSessionsOnDate = sessions.isNotEmpty())
-  }
+  private fun createSessionVisitCountsDto(reportDate: LocalDate, prison: PrisonDto, sessions: Set<SessionScheduleDto>): SessionVisitCountsDto = SessionVisitCountsDto(reportDate = reportDate, prisonCode = prison.code, isBlockedDate = isExcludedDate(prison, reportDate), hasSessionsOnDate = sessions.isNotEmpty())
 
   private fun setSessionDetails(sessionVisitCount: SessionVisitCountsDto, session: SessionScheduleDto, visitCounts: Map<Pair<VisitStatus, VisitRestriction>, Int>) {
     sessionVisitCount.sessionReference = session.sessionTemplateReference

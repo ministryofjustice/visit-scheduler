@@ -8,13 +8,11 @@ enum class NotifyStatus(val order: Int) {
   ;
 
   companion object {
-    fun get(notificationStatus: String): NotifyStatus {
-      return when (notificationStatus) {
-        "delivered" -> DELIVERED
-        "permanent-failure", "temporary-failure", "technical-failure" -> FAILED
-        "created", "sending" -> SENDING
-        else -> UNKNOWN // used in case a new status is added on Gov Notify
-      }
+    fun get(notificationStatus: String): NotifyStatus = when (notificationStatus) {
+      "delivered" -> DELIVERED
+      "permanent-failure", "temporary-failure", "technical-failure" -> FAILED
+      "created", "sending" -> SENDING
+      else -> UNKNOWN // used in case a new status is added on Gov Notify
     }
   }
 }

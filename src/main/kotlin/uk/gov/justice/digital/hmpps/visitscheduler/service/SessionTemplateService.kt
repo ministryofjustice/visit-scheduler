@@ -88,19 +88,13 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionTemplates(reference: String): SessionTemplateDto {
-    return SessionTemplateDto(getSessionTemplate(reference))
-  }
+  fun getSessionTemplates(reference: String): SessionTemplateDto = SessionTemplateDto(getSessionTemplate(reference))
 
   @Transactional(readOnly = true)
-  fun getSessionLocationGroup(reference: String): SessionLocationGroupDto {
-    return SessionLocationGroupDto(getLocationGroupByReference(reference))
-  }
+  fun getSessionLocationGroup(reference: String): SessionLocationGroupDto = SessionLocationGroupDto(getLocationGroupByReference(reference))
 
   @Transactional(readOnly = true)
-  fun getSessionLocationGroups(prisonCode: String): List<SessionLocationGroupDto> {
-    return sessionLocationGroupRepository.findByPrisonCode(prisonCode).map { SessionLocationGroupDto(it) }
-  }
+  fun getSessionLocationGroups(prisonCode: String): List<SessionLocationGroupDto> = sessionLocationGroupRepository.findByPrisonCode(prisonCode).map { SessionLocationGroupDto(it) }
 
   fun createSessionLocationGroup(createLocationSessionGroup: CreateLocationGroupDto): SessionLocationGroupDto {
     val prison = prisonsService.findPrisonByCode(createLocationSessionGroup.prisonCode)
@@ -289,19 +283,13 @@ class SessionTemplateService(
     }
   }
 
-  private fun getPrisonerCategoryGroupByReference(reference: String): SessionCategoryGroup {
-    return sessionCategoryGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerCategory reference:$reference not found")
-  }
+  private fun getPrisonerCategoryGroupByReference(reference: String): SessionCategoryGroup = sessionCategoryGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerCategory reference:$reference not found")
 
-  private fun getLocationGroupByReference(reference: String): SessionLocationGroup {
-    return sessionLocationGroupRepository.findByReference(reference)
-      ?: throw ItemNotFoundException("SessionLocationGroup reference:$reference not found")
-  }
+  private fun getLocationGroupByReference(reference: String): SessionLocationGroup = sessionLocationGroupRepository.findByReference(reference)
+    ?: throw ItemNotFoundException("SessionLocationGroup reference:$reference not found")
 
-  private fun getSessionTemplate(reference: String): SessionTemplate {
-    return sessionTemplateRepository.findByReference(reference)
-      ?: throw TemplateNotFoundException("Template reference:$reference not found")
-  }
+  private fun getSessionTemplate(reference: String): SessionTemplate = sessionTemplateRepository.findByReference(reference)
+    ?: throw TemplateNotFoundException("Template reference:$reference not found")
 
   fun createSessionCategoryGroup(createCategorySessionGroup: CreateCategoryGroupDto): SessionCategoryGroupDto {
     val prison = prisonsService.findPrisonByCode(createCategorySessionGroup.prisonCode)
@@ -364,33 +352,21 @@ class SessionTemplateService(
   }
 
   @Transactional(readOnly = true)
-  fun getSessionCategoryGroup(reference: String): SessionCategoryGroupDto {
-    return SessionCategoryGroupDto(getSessionCategoryGroupEntityByReference(reference))
-  }
+  fun getSessionCategoryGroup(reference: String): SessionCategoryGroupDto = SessionCategoryGroupDto(getSessionCategoryGroupEntityByReference(reference))
 
-  private fun getSessionCategoryGroupEntityByReference(reference: String): SessionCategoryGroup {
-    return sessionCategoryGroupRepository.findByReference(reference)
-      ?: throw ItemNotFoundException("SessionCategoryGroupDto reference:$reference not found")
-  }
+  private fun getSessionCategoryGroupEntityByReference(reference: String): SessionCategoryGroup = sessionCategoryGroupRepository.findByReference(reference)
+    ?: throw ItemNotFoundException("SessionCategoryGroupDto reference:$reference not found")
 
   @Transactional(readOnly = true)
-  fun getSessionCategoryGroups(prisonCode: String): List<SessionCategoryGroupDto> {
-    return sessionCategoryGroupRepository.findByPrisonCode(prisonCode).map { SessionCategoryGroupDto(it) }
-  }
+  fun getSessionCategoryGroups(prisonCode: String): List<SessionCategoryGroupDto> = sessionCategoryGroupRepository.findByPrisonCode(prisonCode).map { SessionCategoryGroupDto(it) }
 
   @Transactional(readOnly = true)
-  fun getSessionIncentiveGroups(prisonCode: String): List<SessionIncentiveLevelGroupDto> {
-    return sessionIncentiveLevelGroupRepository.findByPrisonCode(prisonCode).map { SessionIncentiveLevelGroupDto(it) }
-  }
+  fun getSessionIncentiveGroups(prisonCode: String): List<SessionIncentiveLevelGroupDto> = sessionIncentiveLevelGroupRepository.findByPrisonCode(prisonCode).map { SessionIncentiveLevelGroupDto(it) }
 
   @Transactional(readOnly = true)
-  fun getSessionIncentiveGroup(reference: String): SessionIncentiveLevelGroupDto {
-    return SessionIncentiveLevelGroupDto(getIncentiveLevelGroupByReference(reference))
-  }
+  fun getSessionIncentiveGroup(reference: String): SessionIncentiveLevelGroupDto = SessionIncentiveLevelGroupDto(getIncentiveLevelGroupByReference(reference))
 
-  private fun getIncentiveLevelGroupByReference(reference: String): SessionIncentiveLevelGroup {
-    return sessionIncentiveLevelGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerIncentiveLevel reference:$reference not found")
-  }
+  private fun getIncentiveLevelGroupByReference(reference: String): SessionIncentiveLevelGroup = sessionIncentiveLevelGroupRepository.findByReference(reference) ?: throw ItemNotFoundException("SessionPrisonerIncentiveLevel reference:$reference not found")
 
   fun createSessionIncentiveGroup(createIncentiveSessionGroup: CreateIncentiveGroupDto): SessionIncentiveLevelGroupDto {
     val prison = prisonsService.findPrisonByCode(createIncentiveSessionGroup.prisonCode)
@@ -555,20 +531,14 @@ class SessionTemplateService(
     visitMoveValidator.validateMoveSessionTemplateVisits(fromSessionTemplate, fromSessionTemplateVisitStats, toSessionTemplate, toSessionTemplateVisitStats, fromDate)
   }
 
-  fun getSessionTimeSlotDto(sessionTemplateReference: String?): SessionTimeSlotDto? {
-    return sessionTemplateRepository.getSessionTimeSlot(sessionTemplateReference)
-  }
+  fun getSessionTimeSlotDto(sessionTemplateReference: String?): SessionTimeSlotDto? = sessionTemplateRepository.getSessionTimeSlot(sessionTemplateReference)
 
-  fun getVisitRoom(sessionTemplateReference: String): String {
-    return sessionTemplateRepository.getVisitRoom(sessionTemplateReference)
-  }
+  fun getVisitRoom(sessionTemplateReference: String): String = sessionTemplateRepository.getVisitRoom(sessionTemplateReference)
 
-  fun getSessionTemplatesCapacity(sessionTemplateReference: String, restriction: VisitRestriction): Int {
-    return if (VisitRestriction.OPEN == restriction) {
-      sessionTemplateRepository.getOpenCapacity(sessionTemplateReference)
-    } else {
-      sessionTemplateRepository.getClosedCapacity(sessionTemplateReference)
-    }
+  fun getSessionTemplatesCapacity(sessionTemplateReference: String, restriction: VisitRestriction): Int = if (VisitRestriction.OPEN == restriction) {
+    sessionTemplateRepository.getOpenCapacity(sessionTemplateReference)
+  } else {
+    sessionTemplateRepository.getClosedCapacity(sessionTemplateReference)
   }
 
   @Throws(ValidationException::class)
@@ -605,7 +575,5 @@ class SessionTemplateService(
 class TemplateNotFoundException(message: String? = null, cause: Throwable? = null) :
   RuntimeException(message, cause),
   Supplier<TemplateNotFoundException> {
-  override fun get(): TemplateNotFoundException {
-    return TemplateNotFoundException(message, cause)
-  }
+  override fun get(): TemplateNotFoundException = TemplateNotFoundException(message, cause)
 }

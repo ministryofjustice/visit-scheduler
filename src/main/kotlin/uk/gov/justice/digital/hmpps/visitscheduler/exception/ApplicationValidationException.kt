@@ -7,9 +7,7 @@ import java.util.function.Supplier
 class ApplicationValidationException(val errorCodes: Array<ApplicationValidationErrorCodes>) :
   ValidationException("Failed to validate application"),
   Supplier<ApplicationValidationException> {
-  override fun get(): ApplicationValidationException {
-    return ApplicationValidationException(errorCodes)
-  }
+  override fun get(): ApplicationValidationException = ApplicationValidationException(errorCodes)
 
   constructor(errorCode: ApplicationValidationErrorCodes) : this(arrayOf(errorCode))
 }

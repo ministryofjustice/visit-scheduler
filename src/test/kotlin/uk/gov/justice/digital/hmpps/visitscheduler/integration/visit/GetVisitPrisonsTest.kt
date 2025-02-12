@@ -174,12 +174,9 @@ class GetVisitPrisonsTest : IntegrationTestBase() {
     testPrisonRepository.saveAndFlush(wde)
   }
 
-  private fun requestSupportedPrisons(userType: UserType, role: (org.springframework.http.HttpHeaders) -> Unit = setAuthorisation(roles = visitRole)): ResponseSpec =
-    webTestClient.get().uri(PRISONS_PATH.replace("{type}", userType.name))
-      .headers(role)
-      .exchange()
+  private fun requestSupportedPrisons(userType: UserType, role: (org.springframework.http.HttpHeaders) -> Unit = setAuthorisation(roles = visitRole)): ResponseSpec = webTestClient.get().uri(PRISONS_PATH.replace("{type}", userType.name))
+    .headers(role)
+    .exchange()
 
-  private fun getSupportedPrisonsResults(returnResult: BodyContentSpec): Array<String> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<String>::class.java)
-  }
+  private fun getSupportedPrisonsResults(returnResult: BodyContentSpec): Array<String> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<String>::class.java)
 }

@@ -447,11 +447,9 @@ class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
     assertSession(visitSessionResults[0], nextAllowedDay, tapSessionTemplate)
   }
 
-  private fun callGetSessionsByPrisonerIdAndPrison(prisonId: String, prisonerId: String): WebTestClient.ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
-  }
+  private fun callGetSessionsByPrisonerIdAndPrison(prisonId: String, prisonerId: String): WebTestClient.ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    .headers(setAuthorisation(roles = requiredRole))
+    .exchange()
 
   private fun getNextAllowedDay(): LocalDate {
     // The two days is based on the default SessionService.policyNoticeDaysMin
@@ -471,7 +469,5 @@ class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
     Assertions.assertThat(visitSessionResult.visitRoom).isEqualTo(expectedSessionTemplate.visitRoom)
   }
 
-  private fun getResults(returnResult: WebTestClient.BodyContentSpec): Array<VisitSessionDto> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
-  }
+  private fun getResults(returnResult: WebTestClient.BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 }

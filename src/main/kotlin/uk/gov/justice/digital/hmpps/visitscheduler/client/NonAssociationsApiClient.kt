@@ -29,8 +29,7 @@ class NonAssociationsApiClient(
       .uri("/prisoner/$prisonerNumber/non-associations?includeOtherPrisons=true")
       .retrieve()
       .bodyToMono(TYPE_FOR_OFFENDER_NONASSOCIATION)
-      .onErrorResume {
-          e ->
+      .onErrorResume { e ->
         if (!isNotFoundError(e)) {
           LOG.error("getPrisonerNonAssociation Failed get request /prisoner/$prisonerNumber/non-associations")
           Mono.error(e)

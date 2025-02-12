@@ -19,11 +19,9 @@ class PrisonerSessionValidationService(
     sessionTemplate: SessionTemplate,
     prisoner: PrisonerDto,
     prisonerHousingLevels: Map<PrisonerHousingLevels, String?>?,
-  ): Boolean {
-    return isSessionAvailableToPrisonerLocation(sessionTemplates, sessionTemplate, prisonerHousingLevels) &&
-      isSessionAvailableToPrisonerCategory(sessionTemplates, sessionTemplate, prisoner) &&
-      isSessionAvailableToPrisonerIncentiveLevel(sessionTemplates, sessionTemplate, prisoner)
-  }
+  ): Boolean = isSessionAvailableToPrisonerLocation(sessionTemplates, sessionTemplate, prisonerHousingLevels) &&
+    isSessionAvailableToPrisonerCategory(sessionTemplates, sessionTemplate, prisoner) &&
+    isSessionAvailableToPrisonerIncentiveLevel(sessionTemplates, sessionTemplate, prisoner)
 
   private fun isSessionAvailableToPrisonerLocation(
     sessionTemplates: List<SessionTemplate>?,

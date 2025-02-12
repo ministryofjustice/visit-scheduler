@@ -346,24 +346,22 @@ class TelemetryClientService(
 
   private fun createDefaultVisitData(
     visitDto: VisitDto,
-  ): MutableMap<String, String> {
-    return mutableMapOf(
-      "reference" to visitDto.reference,
-      "applicationReference" to visitDto.applicationReference,
-      "prisonerId" to visitDto.prisonerId,
-      "prisonId" to visitDto.prisonCode,
-      "visitStatus" to visitDto.visitStatus.name,
-      "visitRestriction" to visitDto.visitRestriction.name,
-      "visitStart" to formatDateTimeToString(visitDto.startTimestamp),
-      "visitEnd" to formatDateTimeToString(visitDto.endTimestamp),
-      "visitType" to visitDto.visitType.name,
-      "visitRoom" to visitDto.visitRoom,
-      "hasPhoneNumber" to (visitDto.visitContact.telephone != null).toString(),
-      "hasEmail" to (visitDto.visitContact.email != null).toString(),
-      "totalVisitors" to visitDto.visitors.size.toString(),
-      "visitors" to getVisitorIdsAsString(visitDto.visitors),
-    )
-  }
+  ): MutableMap<String, String> = mutableMapOf(
+    "reference" to visitDto.reference,
+    "applicationReference" to visitDto.applicationReference,
+    "prisonerId" to visitDto.prisonerId,
+    "prisonId" to visitDto.prisonCode,
+    "visitStatus" to visitDto.visitStatus.name,
+    "visitRestriction" to visitDto.visitRestriction.name,
+    "visitStart" to formatDateTimeToString(visitDto.startTimestamp),
+    "visitEnd" to formatDateTimeToString(visitDto.endTimestamp),
+    "visitType" to visitDto.visitType.name,
+    "visitRoom" to visitDto.visitRoom,
+    "hasPhoneNumber" to (visitDto.visitContact.telephone != null).toString(),
+    "hasEmail" to (visitDto.visitContact.email != null).toString(),
+    "totalVisitors" to visitDto.visitors.size.toString(),
+    "visitors" to getVisitorIdsAsString(visitDto.visitors),
+  )
 
   private fun createUnFlagData(
     visitReference: String,
@@ -400,21 +398,13 @@ class TelemetryClientService(
     }
   }
 
-  private fun formatDateTimeToString(dateTime: LocalDateTime): String {
-    return dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
-  }
+  private fun formatDateTimeToString(dateTime: LocalDateTime): String = dateTime.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_DATE_TIME)
 
-  private fun formatTimeToString(time: LocalTime): String {
-    return time.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_TIME)
-  }
+  private fun formatTimeToString(time: LocalTime): String = time.truncatedTo(ChronoUnit.SECONDS).format(DateTimeFormatter.ISO_TIME)
 
-  private fun formatDateToString(date: LocalDate): String {
-    return date.format(DateTimeFormatter.ISO_DATE)
-  }
+  private fun formatDateToString(date: LocalDate): String = date.format(DateTimeFormatter.ISO_DATE)
 
-  private fun getVisitorIdsAsString(visitors: List<VisitorDto>): String {
-    return visitors.map { it.nomisPersonId }.joinToString(",")
-  }
+  private fun getVisitorIdsAsString(visitors: List<VisitorDto>): String = visitors.map { it.nomisPersonId }.joinToString(",")
 
   private fun createPrisonExcludeDateEventData(
     prisonCode: String,

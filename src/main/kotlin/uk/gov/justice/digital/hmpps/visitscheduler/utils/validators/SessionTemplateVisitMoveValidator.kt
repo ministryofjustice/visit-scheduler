@@ -37,17 +37,15 @@ class SessionTemplateVisitMoveValidator(
 
   private fun getErrorMessage(
     errorScenario: ErrorScenario,
-  ): String {
-    return when (errorScenario) {
-      ErrorScenario.PRISON_MISMATCH -> "From and to session templates have different prison codes"
-      ErrorScenario.DAY_OF_WEEK_MISMATCH -> "From and to session templates have different day of week"
-      ErrorScenario.SESSION_TIME_MISMATCH -> "New session time is out of the current allowed range of $allowedStartTimeRangeInMinutes minutes for a visit move"
-      ErrorScenario.WEEKLY_FREQUENCY_MISMATCH -> "New weekly frequency might not accommodate all migrated visits."
-      ErrorScenario.SESSION_DATES_NOT_VALID -> "New session template dates cannot accommodate all migrated visits."
-      ErrorScenario.LOCATION_MISMATCH -> "New session template locations cannot accommodate all locations in existing session template."
-      ErrorScenario.CATEGORY_MISMATCH -> "New session template categories cannot accommodate all categories in existing session template."
-      ErrorScenario.INCENTIVE_LEVEL_MISMATCH -> "New session template incentive levels cannot accommodate all incentive levels in existing session template."
-    }
+  ): String = when (errorScenario) {
+    ErrorScenario.PRISON_MISMATCH -> "From and to session templates have different prison codes"
+    ErrorScenario.DAY_OF_WEEK_MISMATCH -> "From and to session templates have different day of week"
+    ErrorScenario.SESSION_TIME_MISMATCH -> "New session time is out of the current allowed range of $allowedStartTimeRangeInMinutes minutes for a visit move"
+    ErrorScenario.WEEKLY_FREQUENCY_MISMATCH -> "New weekly frequency might not accommodate all migrated visits."
+    ErrorScenario.SESSION_DATES_NOT_VALID -> "New session template dates cannot accommodate all migrated visits."
+    ErrorScenario.LOCATION_MISMATCH -> "New session template locations cannot accommodate all locations in existing session template."
+    ErrorScenario.CATEGORY_MISMATCH -> "New session template categories cannot accommodate all categories in existing session template."
+    ErrorScenario.INCENTIVE_LEVEL_MISMATCH -> "New session template incentive levels cannot accommodate all incentive levels in existing session template."
   }
 
   private fun validateVisitMove(
@@ -144,15 +142,13 @@ class SessionTemplateVisitMoveValidator(
     return sessionIncentiveLevelMatcher.hasAllMatch(fromSessionIncentiveLevels, toSessionIncentiveLevels)
   }
 
-  private fun isValidSessionDate(allVisitDates: Set<LocalDate>, toSessionTemplate: SessionTemplateDto): Boolean {
-    return if (allVisitDates.isNotEmpty()) {
-      val firstVisitDate = allVisitDates.stream().min(Comparator.naturalOrder()).get()
-      val lastVisitDate = allVisitDates.stream().max(Comparator.naturalOrder()).get()
+  private fun isValidSessionDate(allVisitDates: Set<LocalDate>, toSessionTemplate: SessionTemplateDto): Boolean = if (allVisitDates.isNotEmpty()) {
+    val firstVisitDate = allVisitDates.stream().min(Comparator.naturalOrder()).get()
+    val lastVisitDate = allVisitDates.stream().max(Comparator.naturalOrder()).get()
 
-      (isDateCoveredInSession(firstVisitDate, toSessionTemplate) && isDateCoveredInSession(lastVisitDate, toSessionTemplate))
-    } else {
-      true
-    }
+    (isDateCoveredInSession(firstVisitDate, toSessionTemplate) && isDateCoveredInSession(lastVisitDate, toSessionTemplate))
+  } else {
+    true
   }
 
   private fun isValidWeeklyFrequency(fromSessionTemplate: SessionTemplateDto, toSessionTemplate: SessionTemplateDto, allVisitDates: Set<LocalDate>): Boolean {
@@ -190,11 +186,9 @@ class SessionTemplateVisitMoveValidator(
     return exceededSessionCapacityDates.toList()
   }
 
-  fun getVisitDatesAfterDate(visitStats: SessionTemplateVisitStatsDto, fromDate: LocalDate): Set<LocalDate> {
-    return visitStats.visitsByDate?.stream()
-      ?.filter { it.visitDate.isEqual(fromDate) || it.visitDate.isAfter(fromDate) }
-      ?.map { it.visitDate }?.toList()?.toSet() ?: emptySet()
-  }
+  fun getVisitDatesAfterDate(visitStats: SessionTemplateVisitStatsDto, fromDate: LocalDate): Set<LocalDate> = visitStats.visitsByDate?.stream()
+    ?.filter { it.visitDate.isEqual(fromDate) || it.visitDate.isAfter(fromDate) }
+    ?.map { it.visitDate }?.toList()?.toSet() ?: emptySet()
 
   @Throws(VSiPValidationException::class)
   fun validateMoveSessionTemplateVisits(

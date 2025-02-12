@@ -94,9 +94,7 @@ class SessionTemplateAdminController(
       example = "CURRENT_OR_FUTURE",
     )
     rangeType: SessionTemplateRangeType,
-  ): List<SessionTemplateDto> {
-    return sessionTemplateService.getSessionTemplates(prisonCode, rangeType)
-  }
+  ): List<SessionTemplateDto> = sessionTemplateService.getSessionTemplates(prisonCode, rangeType)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(REFERENCE_SESSION_TEMPLATE_PATH)
@@ -129,9 +127,7 @@ class SessionTemplateAdminController(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
     reference: String,
-  ): SessionTemplateDto {
-    return sessionTemplateService.getSessionTemplates(reference)
-  }
+  ): SessionTemplateDto = sessionTemplateService.getSessionTemplates(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(SESSION_TEMPLATE_PATH)
@@ -167,9 +163,7 @@ class SessionTemplateAdminController(
     @RequestBody
     @Valid
     createSessionTemplateDto: CreateSessionTemplateDto,
-  ): SessionTemplateDto {
-    return sessionTemplateService.createSessionTemplate(createSessionTemplateDto)
-  }
+  ): SessionTemplateDto = sessionTemplateService.createSessionTemplate(createSessionTemplateDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(REFERENCE_SESSION_TEMPLATE_PATH)
@@ -217,9 +211,7 @@ class SessionTemplateAdminController(
     reference: String,
     @RequestBody @Valid
     updateSessionTemplateDto: UpdateSessionTemplateDto,
-  ): SessionTemplateDto {
-    return sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto)
-  }
+  ): SessionTemplateDto = sessionTemplateService.updateSessionTemplate(reference, updateSessionTemplateDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @DeleteMapping(REFERENCE_SESSION_TEMPLATE_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -293,9 +285,7 @@ class SessionTemplateAdminController(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
     reference: String,
-  ): SessionTemplateDto {
-    return sessionTemplateService.activateSessionTemplate(reference)
-  }
+  ): SessionTemplateDto = sessionTemplateService.activateSessionTemplate(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(DEACTIVATE_SESSION_TEMPLATE)
@@ -328,9 +318,7 @@ class SessionTemplateAdminController(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
     reference: String,
-  ): SessionTemplateDto {
-    return sessionTemplateService.deActivateSessionTemplate(reference)
-  }
+  ): SessionTemplateDto = sessionTemplateService.deActivateSessionTemplate(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(SESSION_TEMPLATE_VISIT_STATS)
@@ -365,9 +353,7 @@ class SessionTemplateAdminController(
     reference: String,
     @RequestBody @Valid
     requestSessionTemplateVisitStatsDto: RequestSessionTemplateVisitStatsDto,
-  ): SessionTemplateVisitStatsDto {
-    return sessionTemplateService.getSessionTemplateVisitStats(reference, requestSessionTemplateVisitStatsDto)
-  }
+  ): SessionTemplateVisitStatsDto = sessionTemplateService.getSessionTemplateVisitStats(reference, requestSessionTemplateVisitStatsDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE)
@@ -399,9 +385,7 @@ class SessionTemplateAdminController(
   fun getMatchingSessionTemplatesOnCreate(
     @RequestBody @Valid
     createSessionTemplateDto: CreateSessionTemplateDto,
-  ): List<String> {
-    return sessionTemplateService.hasMatchingSessionTemplates(createSessionTemplateDto)
-  }
+  ): List<String> = sessionTemplateService.hasMatchingSessionTemplates(createSessionTemplateDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE)
@@ -436,9 +420,7 @@ class SessionTemplateAdminController(
     reference: String,
     @RequestBody @Valid
     updateSessionTemplateDto: UpdateSessionTemplateDto,
-  ): List<String> {
-    return sessionTemplateService.hasMatchingSessionTemplates(reference, updateSessionTemplateDto)
-  }
+  ): List<String> = sessionTemplateService.hasMatchingSessionTemplates(reference, updateSessionTemplateDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(MOVE_VISITS)
@@ -474,7 +456,5 @@ class SessionTemplateAdminController(
   fun moveVisits(
     @RequestBody @Valid
     moveVisitsDto: MoveVisitsDto,
-  ): Int {
-    return sessionTemplateService.moveSessionTemplateVisits(moveVisitsDto.fromSessionTemplateReference, moveVisitsDto.toSessionTemplateReference, moveVisitsDto.fromDate)
-  }
+  ): Int = sessionTemplateService.moveSessionTemplateVisits(moveVisitsDto.fromSessionTemplateReference, moveVisitsDto.toSessionTemplateReference, moveVisitsDto.fromDate)
 }

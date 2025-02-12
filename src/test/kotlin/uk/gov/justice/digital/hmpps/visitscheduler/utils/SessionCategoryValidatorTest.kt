@@ -103,11 +103,9 @@ class SessionCategoryValidatorTest {
     assertThat(result).isFalse()
   }
 
-  private fun createSessionTemplate(): SessionTemplate {
-    return sessionTemplate(
-      validFromDate = LocalDate.now(),
-    )
-  }
+  private fun createSessionTemplate(): SessionTemplate = sessionTemplate(
+    validFromDate = LocalDate.now(),
+  )
 
   private fun createSessionCategoryGroup(groupName: String = "group 1", categories: List<PrisonerCategoryType>, prison: Prison): SessionCategoryGroup {
     val group = SessionCategoryGroup(
@@ -128,11 +126,9 @@ class SessionCategoryValidatorTest {
   private fun createPermittedSessionCategory(
     prisonerCategoryType: PrisonerCategoryType,
     group: SessionCategoryGroup,
-  ): SessionPrisonerCategory {
-    return SessionPrisonerCategory(
-      sessionCategoryGroupId = group.id,
-      sessionCategoryGroup = group,
-      prisonerCategoryType = prisonerCategoryType,
-    )
-  }
+  ): SessionPrisonerCategory = SessionPrisonerCategory(
+    sessionCategoryGroupId = group.id,
+    sessionCategoryGroup = group,
+    prisonerCategoryType = prisonerCategoryType,
+  )
 }

@@ -127,9 +127,7 @@ class ReportVisitCountsTaskTest : IntegrationTestBase() {
     verify(telemetryClient, times(5)).trackEvent(eq("visit-counts-report"), any(), isNull())
   }
 
-  private fun getSessionReport(sessionReports: List<SessionVisitCountsDto>, prisonCode: String, sessionTemplateReference: String?): SessionVisitCountsDto? {
-    return sessionReports.filter { it.prisonCode == prisonCode }.firstOrNull { it.sessionReference == sessionTemplateReference }
-  }
+  private fun getSessionReport(sessionReports: List<SessionVisitCountsDto>, prisonCode: String, sessionTemplateReference: String?): SessionVisitCountsDto? = sessionReports.filter { it.prisonCode == prisonCode }.firstOrNull { it.sessionReference == sessionTemplateReference }
 
   private fun assertSessionVisitCounts(
     sessionVisitCounts: SessionVisitCountsDto,

@@ -126,13 +126,9 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     )
   }
 
-  fun saveCancelledEventAudit(cancelVisitDto: CancelVisitDto, visit: VisitDto): EventAuditDto {
-    return saveCancelledEventAudit(cancelVisitDto.actionedBy, cancelVisitDto.userType, cancelVisitDto.applicationMethodType, visit)
-  }
+  fun saveCancelledEventAudit(cancelVisitDto: CancelVisitDto, visit: VisitDto): EventAuditDto = saveCancelledEventAudit(cancelVisitDto.actionedBy, cancelVisitDto.userType, cancelVisitDto.applicationMethodType, visit)
 
-  fun saveCancelledMigratedEventAudit(cancelVisitDto: MigratedCancelVisitDto, visit: VisitDto): EventAuditDto {
-    return saveCancelledEventAudit(cancelVisitDto.actionedBy, STAFF, NOT_KNOWN, visit)
-  }
+  fun saveCancelledMigratedEventAudit(cancelVisitDto: MigratedCancelVisitDto, visit: VisitDto): EventAuditDto = saveCancelledEventAudit(cancelVisitDto.actionedBy, STAFF, NOT_KNOWN, visit)
 
   fun saveMigratedVisitEventAudit(
     migrateVisitRequest: MigrateVisitRequestDto,
@@ -179,23 +175,17 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
   }
 
   @Transactional(readOnly = true)
-  fun getLastEventForBooking(bookingReference: String): EventAuditDto? {
-    return eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
-      EventAuditDto(it, notifyHistoryDtoBuilder)
-    }
+  fun getLastEventForBooking(bookingReference: String): EventAuditDto? = eventAuditRepository.findLastBookedVisitEventByBookingReference(bookingReference)?.let {
+    EventAuditDto(it, notifyHistoryDtoBuilder)
   }
 
   @Transactional(readOnly = true)
-  fun getLastEventForBookingOrMigration(bookingReference: String): EventAuditDto? {
-    return eventAuditRepository.findLastBookedOrMigratedVisitEventByBookingReference(bookingReference)?.let {
-      EventAuditDto(it, notifyHistoryDtoBuilder)
-    }
+  fun getLastEventForBookingOrMigration(bookingReference: String): EventAuditDto? = eventAuditRepository.findLastBookedOrMigratedVisitEventByBookingReference(bookingReference)?.let {
+    EventAuditDto(it, notifyHistoryDtoBuilder)
   }
 
   @Transactional(readOnly = true)
-  fun getLastUserToUpdateSlotByReference(bookingReference: String): ActionedBy {
-    return eventAuditRepository.getLastUserToUpdateBookingByReference(bookingReference)
-  }
+  fun getLastUserToUpdateSlotByReference(bookingReference: String): ActionedBy = eventAuditRepository.getLastUserToUpdateBookingByReference(bookingReference)
 
   fun updateVisitApplicationAndSaveEvent(
     bookedVisitDto: VisitDto,
@@ -217,9 +207,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     )
   }
 
-  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> {
-    return eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it, notifyHistoryDtoBuilder) }
-  }
+  fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> = eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it, notifyHistoryDtoBuilder) }
 
   private fun saveCancelledEventAudit(actionedByValue: String, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
     val actionedBy = createOrGetActionBy(actionedByValue, userType)

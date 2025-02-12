@@ -6,4 +6,6 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.PermittedSessionLocation
 
 @Repository
-interface TestPermittedSessionLocationRepository : JpaRepository<PermittedSessionLocation, Long>, JpaSpecificationExecutor<PermittedSessionLocation>
+interface TestPermittedSessionLocationRepository :
+  JpaRepository<PermittedSessionLocation, Long>,
+  JpaSpecificationExecutor<PermittedSessionLocation>

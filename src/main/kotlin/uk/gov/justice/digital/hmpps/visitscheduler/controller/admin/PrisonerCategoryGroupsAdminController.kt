@@ -68,9 +68,7 @@ class PrisonerCategoryGroupsAdminController(
     @Schema(description = "prisonCode", example = "MDI", required = true)
     @PathVariable
     prisonCode: String,
-  ): List<SessionCategoryGroupDto> {
-    return sessionTemplateService.getSessionCategoryGroups(prisonCode)
-  }
+  ): List<SessionCategoryGroupDto> = sessionTemplateService.getSessionCategoryGroups(prisonCode)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(REFERENCE_CATEGORY_GROUP_ADMIN_PATH)
@@ -104,9 +102,7 @@ class PrisonerCategoryGroupsAdminController(
     @Schema(description = "reference", example = "afe~dcb~fc", required = true)
     @PathVariable
     reference: String,
-  ): SessionCategoryGroupDto {
-    return sessionTemplateService.getSessionCategoryGroup(reference)
-  }
+  ): SessionCategoryGroupDto = sessionTemplateService.getSessionCategoryGroup(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(CATEGORY_GROUP_ADMIN_PATH)
@@ -134,9 +130,7 @@ class PrisonerCategoryGroupsAdminController(
     @RequestBody
     @Valid
     createCategorySessionGroup: CreateCategoryGroupDto,
-  ): SessionCategoryGroupDto {
-    return sessionTemplateService.createSessionCategoryGroup(createCategorySessionGroup)
-  }
+  ): SessionCategoryGroupDto = sessionTemplateService.createSessionCategoryGroup(createCategorySessionGroup)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(REFERENCE_CATEGORY_GROUP_ADMIN_PATH)
@@ -179,9 +173,7 @@ class PrisonerCategoryGroupsAdminController(
     reference: String,
     @RequestBody @Valid
     updateCategorySessionGroup: UpdateCategoryGroupDto,
-  ): SessionCategoryGroupDto {
-    return sessionTemplateService.updateSessionCategoryGroup(reference, updateCategorySessionGroup)
-  }
+  ): SessionCategoryGroupDto = sessionTemplateService.updateSessionCategoryGroup(reference, updateCategorySessionGroup)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @DeleteMapping(REFERENCE_CATEGORY_GROUP_ADMIN_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])

@@ -18,7 +18,5 @@ import javax.sql.DataSource
 )
 class SchedulerConfiguration {
   @Bean
-  fun lockProvider(dataSource: DataSource): LockProvider {
-    return JdbcTemplateLockProvider(dataSource)
-  }
+  fun lockProvider(dataSource: DataSource): LockProvider = JdbcTemplateLockProvider(dataSource)
 }

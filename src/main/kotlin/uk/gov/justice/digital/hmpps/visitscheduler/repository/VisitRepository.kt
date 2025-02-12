@@ -17,7 +17,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Repository
-interface VisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
+interface VisitRepository :
+  JpaRepository<Visit, Long>,
+  JpaSpecificationExecutor<Visit> {
 
   @Query(
     "SELECT * FROM visit " +

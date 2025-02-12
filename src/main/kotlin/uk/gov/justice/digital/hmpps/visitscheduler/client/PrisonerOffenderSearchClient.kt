@@ -26,23 +26,20 @@ class PrisonerOffenderSearchClient(
     private val PRISONER_SEARCH_RESULT_DTO = object : ParameterizedTypeReference<PrisonerSearchResultDto>() {}
   }
 
-  fun getPrisoner(offenderNo: String): PrisonerSearchResultDto? {
-    return webClient.get()
-      .uri("/prisoner/$offenderNo")
-      .accept(MediaType.APPLICATION_JSON)
-      .retrieve()
-      .bodyToMono(PRISONER_SEARCH_RESULT_DTO)
-      .onErrorResume { e ->
-        if (isNotFoundError(e)) {
-          LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo", e)
-          Mono.error(ItemNotFoundException("Prisoner with prisonNumber - $offenderNo not found on offender search", e) as Throwable)
-        } else {
-          LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo using offender search", e)
-          Mono.error(e)
-        }
-      }.block(apiTimeout)
-  }
+  fun getPrisoner(offenderNo: String): PrisonerSearchResultDto? = webClient.get()
+    .uri("/prisoner/$offenderNo")
+    .accept(MediaType.APPLICATION_JSON)
+    .retrieve()
+    .bodyToMono(PRISONER_SEARCH_RESULT_DTO)
+    .onErrorResume { e ->
+      if (isNotFoundError(e)) {
+        LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo", e)
+        Mono.error(ItemNotFoundException("Prisoner with prisonNumber - $offenderNo not found on offender search", e) as Throwable)
+      } else {
+        LOG.error("Exception thrown on prisoner offender search call - /prisoner/$offenderNo using offender search", e)
+        Mono.error(e)
+      }
+    }.block(apiTimeout)
 
-  private fun isNotFoundError(e: Throwable?) =
-    e is WebClientResponseException && e.statusCode == NOT_FOUND
+  private fun isNotFoundError(e: Throwable?) = e is WebClientResponseException && e.statusCode == NOT_FOUND
 }

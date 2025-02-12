@@ -18,7 +18,6 @@ data class CreateLegacyContactOnVisitRequestDto(@field:NotBlank val name: String
       name: String? = null,
       @Schema(description = "Contact Phone Number", example = "01234 567890", required = false)
       telephone: String? = null,
-    ) =
-      CreateLegacyContactOnVisitRequestDto(name ?: UNKNOWN_TOKEN, telephone)
+    ) = CreateLegacyContactOnVisitRequestDto(name ?: UNKNOWN_TOKEN, telephone)
   }
 }

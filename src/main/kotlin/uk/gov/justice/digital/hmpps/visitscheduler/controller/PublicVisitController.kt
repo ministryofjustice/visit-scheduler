@@ -59,9 +59,7 @@ class PublicVisitController(
     @Schema(description = "bookerReference", example = "asd-aed-vhj", required = true)
     @PathVariable
     bookerReference: String,
-  ): List<VisitDto> {
-    return publicVisitService.getFuturePublicBookedVisitsByBookerReference(bookerReference)
-  }
+  ): List<VisitDto> = publicVisitService.getFuturePublicBookedVisitsByBookerReference(bookerReference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_CANCELLED_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
@@ -94,9 +92,7 @@ class PublicVisitController(
     @Schema(description = "bookerReference", example = "asd-aed-vhj", required = true)
     @PathVariable
     bookerReference: String,
-  ): List<VisitDto> {
-    return publicVisitService.getPublicCanceledVisitsByBookerReference(bookerReference)
-  }
+  ): List<VisitDto> = publicVisitService.getPublicCanceledVisitsByBookerReference(bookerReference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_PAST_BOOKED_PUBLIC_VISITS_BY_BOOKER_REFERENCE)
@@ -129,7 +125,5 @@ class PublicVisitController(
     @Schema(description = "bookerReference", example = "asd-aed-vhj", required = true)
     @PathVariable
     bookerReference: String,
-  ): List<VisitDto> {
-    return publicVisitService.getPublicPastVisitsByBookerReference(bookerReference)
-  }
+  ): List<VisitDto> = publicVisitService.getPublicPastVisitsByBookerReference(bookerReference)
 }

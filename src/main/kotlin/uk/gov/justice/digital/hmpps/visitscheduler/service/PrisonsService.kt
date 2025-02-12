@@ -18,14 +18,10 @@ class PrisonsService(
 ) {
 
   @Transactional(readOnly = true)
-  fun findPrisonByCode(prisonCode: String): Prison {
-    return prisonRepository.findByCode(prisonCode) ?: throw ValidationException(messageService.getMessage("validation.prison.notfound", prisonCode))
-  }
+  fun findPrisonByCode(prisonCode: String): Prison = prisonRepository.findByCode(prisonCode) ?: throw ValidationException(messageService.getMessage("validation.prison.notfound", prisonCode))
 
   @Transactional(readOnly = true)
-  fun findPrisonById(prisonId: Long): Prison {
-    return prisonRepository.findById(prisonId).getOrElse { throw ValidationException("Prison not found") }
-  }
+  fun findPrisonById(prisonId: Long): Prison = prisonRepository.findById(prisonId).getOrElse { throw ValidationException("Prison not found") }
 
   @Transactional(readOnly = true)
   fun getPrison(prisonCode: String): PrisonDto {
@@ -40,9 +36,7 @@ class PrisonsService(
     return prisons.map { mapEntityToDto(it) }
   }
 
-  fun mapEntityToDto(it: Prison): PrisonDto {
-    return PrisonDto(it)
-  }
+  fun mapEntityToDto(it: Prison): PrisonDto = PrisonDto(it)
 
   @Transactional(readOnly = true)
   fun isExcludedDate(prisonCode: String, date: LocalDate): Boolean {
@@ -51,21 +45,13 @@ class PrisonsService(
   }
 
   @Transactional(readOnly = true)
-  fun getSupportedPrisonCodes(type: UserType): List<String> {
-    return prisonRepository.getSupportedPrisons(type)
-  }
+  fun getSupportedPrisonCodes(type: UserType): List<String> = prisonRepository.getSupportedPrisons(type)
 
   @Transactional(readOnly = true)
-  fun getPrisonCodes(): List<String> {
-    return prisonRepository.getPrisonCodes()
-  }
+  fun getPrisonCodes(): List<String> = prisonRepository.getPrisonCodes()
 
   @Transactional(readOnly = true)
-  fun getPrisonCode(prisonCode: String): String? {
-    return prisonRepository.getPrisonCode(prisonCode)
-  }
+  fun getPrisonCode(prisonCode: String): String? = prisonRepository.getPrisonCode(prisonCode)
 
-  fun getPrisonId(prisonCode: String): Long {
-    return prisonRepository.getPrisonId(prisonCode) ?: throw ValidationException(messageService.getMessage("validation.prison.notfound", prisonCode))
-  }
+  fun getPrisonId(prisonCode: String): Long = prisonRepository.getPrisonId(prisonCode) ?: throw ValidationException(messageService.getMessage("validation.prison.notfound", prisonCode))
 }

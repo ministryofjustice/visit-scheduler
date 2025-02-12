@@ -135,9 +135,7 @@ class SessionServiceTest {
     }
   }
 
-  private fun getVisitRestrictionStatsList(visits: List<Visit>): List<VisitRestrictionStats> {
-    return listOf(getVisitRestrictionStats(visits, OPEN), getVisitRestrictionStats(visits, CLOSED))
-  }
+  private fun getVisitRestrictionStatsList(visits: List<Visit>): List<VisitRestrictionStats> = listOf(getVisitRestrictionStats(visits, OPEN), getVisitRestrictionStats(visits, CLOSED))
 
   private fun getVisitRestrictionStats(visits: List<Visit>, visitRestriction: VisitRestriction): VisitRestrictionStats {
     val factory: ProjectionFactory = SpelAwareProxyProjectionFactory()

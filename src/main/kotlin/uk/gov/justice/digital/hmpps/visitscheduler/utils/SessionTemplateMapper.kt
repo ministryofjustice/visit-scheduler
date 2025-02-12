@@ -24,19 +24,17 @@ class SessionTemplateMapper(
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
   private val sessionTemplateRepository: SessionTemplateRepository,
 ) {
-  fun getSessionDetails(createSessionTemplateDto: CreateSessionTemplateDto): SessionDetailsDto {
-    return SessionDetailsDto(
-      prisonCode = createSessionTemplateDto.prisonCode,
-      sessionTimeSlot = createSessionTemplateDto.sessionTimeSlot,
-      sessionDateRange = createSessionTemplateDto.sessionDateRange,
-      sessionCapacity = createSessionTemplateDto.sessionCapacity,
-      dayOfWeek = createSessionTemplateDto.dayOfWeek,
-      weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
-      permittedLocationGroups = getSessionLocationGroups(createSessionTemplateDto.locationGroupReferences ?: emptyList()),
-      prisonerCategoryGroups = getSessionCategoryGroups(createSessionTemplateDto.categoryGroupReferences ?: emptyList()),
-      prisonerIncentiveLevelGroups = getSessionIncentiveLevelGroups(createSessionTemplateDto.incentiveLevelGroupReferences ?: emptyList()),
-    )
-  }
+  fun getSessionDetails(createSessionTemplateDto: CreateSessionTemplateDto): SessionDetailsDto = SessionDetailsDto(
+    prisonCode = createSessionTemplateDto.prisonCode,
+    sessionTimeSlot = createSessionTemplateDto.sessionTimeSlot,
+    sessionDateRange = createSessionTemplateDto.sessionDateRange,
+    sessionCapacity = createSessionTemplateDto.sessionCapacity,
+    dayOfWeek = createSessionTemplateDto.dayOfWeek,
+    weeklyFrequency = createSessionTemplateDto.weeklyFrequency,
+    permittedLocationGroups = getSessionLocationGroups(createSessionTemplateDto.locationGroupReferences ?: emptyList()),
+    prisonerCategoryGroups = getSessionCategoryGroups(createSessionTemplateDto.categoryGroupReferences ?: emptyList()),
+    prisonerIncentiveLevelGroups = getSessionIncentiveLevelGroups(createSessionTemplateDto.incentiveLevelGroupReferences ?: emptyList()),
+  )
 
   fun getSessionDetails(reference: String, updateSessionTemplateDto: UpdateSessionTemplateDto): SessionDetailsDto {
     val sessionTemplate = sessionTemplateRepository.findByReference(reference)
@@ -73,12 +71,10 @@ class SessionTemplateMapper(
     return locationGroups
   }
 
-  private fun getSessionLocationGroups(locationGroupReferences: List<String>?, sessionTemplate: SessionTemplate): List<SessionLocationGroupDto> {
-    return if (locationGroupReferences != null) {
-      getSessionLocationGroups(locationGroupReferences)
-    } else {
-      sessionTemplate.permittedSessionLocationGroups.stream().map { SessionLocationGroupDto(it) }.toList()
-    }
+  private fun getSessionLocationGroups(locationGroupReferences: List<String>?, sessionTemplate: SessionTemplate): List<SessionLocationGroupDto> = if (locationGroupReferences != null) {
+    getSessionLocationGroups(locationGroupReferences)
+  } else {
+    sessionTemplate.permittedSessionLocationGroups.stream().map { SessionLocationGroupDto(it) }.toList()
   }
 
   private fun getSessionCategoryGroups(categoryGroupReferences: List<String>): List<SessionCategoryGroupDto> {
@@ -94,12 +90,10 @@ class SessionTemplateMapper(
     return categoryGroups
   }
 
-  private fun getSessionCategoryGroups(categoryGroupReferences: List<String>?, sessionTemplate: SessionTemplate): List<SessionCategoryGroupDto> {
-    return if (categoryGroupReferences != null) {
-      getSessionCategoryGroups(categoryGroupReferences)
-    } else {
-      sessionTemplate.permittedSessionCategoryGroups.stream().map { SessionCategoryGroupDto(it) }.toList()
-    }
+  private fun getSessionCategoryGroups(categoryGroupReferences: List<String>?, sessionTemplate: SessionTemplate): List<SessionCategoryGroupDto> = if (categoryGroupReferences != null) {
+    getSessionCategoryGroups(categoryGroupReferences)
+  } else {
+    sessionTemplate.permittedSessionCategoryGroups.stream().map { SessionCategoryGroupDto(it) }.toList()
   }
 
   private fun getSessionIncentiveLevelGroups(incentiveLevelGroupReferences: List<String>): List<SessionIncentiveLevelGroupDto> {
@@ -115,11 +109,9 @@ class SessionTemplateMapper(
     return incentiveLevelGroups
   }
 
-  private fun getSessionIncentiveLevelGroups(incentiveLevelGroupReferences: List<String>?, sessionTemplate: SessionTemplate): List<SessionIncentiveLevelGroupDto> {
-    return if (incentiveLevelGroupReferences != null) {
-      getSessionIncentiveLevelGroups(incentiveLevelGroupReferences)
-    } else {
-      sessionTemplate.permittedSessionIncentiveLevelGroups.stream().map { SessionIncentiveLevelGroupDto(it) }.toList()
-    }
+  private fun getSessionIncentiveLevelGroups(incentiveLevelGroupReferences: List<String>?, sessionTemplate: SessionTemplate): List<SessionIncentiveLevelGroupDto> = if (incentiveLevelGroupReferences != null) {
+    getSessionIncentiveLevelGroups(incentiveLevelGroupReferences)
+  } else {
+    sessionTemplate.permittedSessionIncentiveLevelGroups.stream().map { SessionIncentiveLevelGroupDto(it) }.toList()
   }
 }

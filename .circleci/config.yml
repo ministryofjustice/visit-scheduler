@@ -125,9 +125,6 @@ jobs:
       _JAVA_OPTIONS: -Xmx1024m -XX:ParallelGCThreads=2 -XX:ConcGCThreads=2 -Djava.util.concurrent.ForkJoinPool.common.parallelism=2 -Dorg.gradle.daemon=false -Dkotlin.compiler.execution.strategy=in-process
     steps:
       - checkout
-      - run:
-          name: Wait for Postgres to be ready
-          command: ./postgres-check.sh
       - restore_cache:
           keys:
             - gradle-{{ checksum "build.gradle.kts" }}

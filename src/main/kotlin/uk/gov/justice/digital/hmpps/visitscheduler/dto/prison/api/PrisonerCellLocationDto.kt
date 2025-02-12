@@ -27,9 +27,7 @@ data class PrisonerCellLocationDto(
       }
     }
 
-    private fun getPrisonCode(description: String): String? {
-      return description.split("-")[0]
-    }
+    private fun getPrisonCode(description: String): String? = description.split("-")[0]
   }
 
   @JsonCreator

@@ -159,11 +159,7 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
       .exchange()
   }
 
-  private fun getNextAllowedDay(): LocalDate {
-    return LocalDate.now().plusDays(3)
-  }
+  private fun getNextAllowedDay(): LocalDate = LocalDate.now().plusDays(3)
 
-  private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
-  }
+  private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 }

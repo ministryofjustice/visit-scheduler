@@ -22,7 +22,5 @@ data class SessionCapacityDto(
     open = sessionTemplates.sumOf { it.openCapacity },
   )
 
-  operator fun plus(sessionCapacityDto: SessionCapacityDto): SessionCapacityDto {
-    return SessionCapacityDto(closed = this.closed + sessionCapacityDto.closed, open = this.open + sessionCapacityDto.open)
-  }
+  operator fun plus(sessionCapacityDto: SessionCapacityDto): SessionCapacityDto = SessionCapacityDto(closed = this.closed + sessionCapacityDto.closed, open = this.open + sessionCapacityDto.open)
 }

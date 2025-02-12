@@ -103,11 +103,10 @@ class AdminSessionTemplateVisitStatsTest(
     Assertions.assertThat(visitsByDate[4]).isEqualTo(SessionTemplateVisitCountsDto(visitsFromDate.plusDays(policyNoticeDaysMax - 1), SessionCapacityDto(open = 0, closed = 1)))
   }
 
-  private fun getSessionTemplateVisitStatsDto(responseSpec: ResponseSpec) =
-    objectMapper.readValue(
-      responseSpec.expectBody().returnResult().responseBody,
-      SessionTemplateVisitStatsDto::class.java,
-    )
+  private fun getSessionTemplateVisitStatsDto(responseSpec: ResponseSpec) = objectMapper.readValue(
+    responseSpec.expectBody().returnResult().responseBody,
+    SessionTemplateVisitStatsDto::class.java,
+  )
 
   @Test
   fun `when session templates has no visits then return expected results`() {

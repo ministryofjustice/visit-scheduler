@@ -65,34 +65,30 @@ class VisitNotifyService(
     logger.debug("handleCallbackNotifyEvent call with parameters - {} completed.", notifyCallbackNotification)
   }
 
-  private fun getVisitNotifyHistory(eventAudit: EventAudit, notifyCreateNotification: NotifyCreateNotificationDto): VisitNotifyHistory {
-    return VisitNotifyHistory(
-      eventAuditId = notifyCreateNotification.eventAuditReference.toLong(),
-      notificationType = NotifyNotificationType.get(notifyCreateNotification.notificationType),
-      status = SENDING,
-      createdAt = notifyCreateNotification.createdAt,
-      notificationId = notifyCreateNotification.notificationId,
-      templateId = notifyCreateNotification.templateId,
-      templateVersion = notifyCreateNotification.templateVersion,
-      eventAudit = eventAudit,
-    )
-  }
+  private fun getVisitNotifyHistory(eventAudit: EventAudit, notifyCreateNotification: NotifyCreateNotificationDto): VisitNotifyHistory = VisitNotifyHistory(
+    eventAuditId = notifyCreateNotification.eventAuditReference.toLong(),
+    notificationType = NotifyNotificationType.get(notifyCreateNotification.notificationType),
+    status = SENDING,
+    createdAt = notifyCreateNotification.createdAt,
+    notificationId = notifyCreateNotification.notificationId,
+    templateId = notifyCreateNotification.templateId,
+    templateVersion = notifyCreateNotification.templateVersion,
+    eventAudit = eventAudit,
+  )
 
-  private fun getVisitNotifyHistory(eventAudit: EventAudit, notifyCallbackNotification: NotifyCallbackNotificationDto): VisitNotifyHistory {
-    return VisitNotifyHistory(
-      eventAuditId = notifyCallbackNotification.eventAuditReference.toLong(),
-      notificationType = NotifyNotificationType.get(notifyCallbackNotification.notificationType),
-      status = NotifyStatus.get(notifyCallbackNotification.status),
-      notificationId = notifyCallbackNotification.notificationId,
-      templateId = notifyCallbackNotification.templateId,
-      templateVersion = notifyCallbackNotification.templateVersion,
-      sentTo = notifyCallbackNotification.sentTo,
-      createdAt = notifyCallbackNotification.createdAt,
-      completedAt = notifyCallbackNotification.completedAt,
-      sentAt = notifyCallbackNotification.sentAt,
-      eventAudit = eventAudit,
-    )
-  }
+  private fun getVisitNotifyHistory(eventAudit: EventAudit, notifyCallbackNotification: NotifyCallbackNotificationDto): VisitNotifyHistory = VisitNotifyHistory(
+    eventAuditId = notifyCallbackNotification.eventAuditReference.toLong(),
+    notificationType = NotifyNotificationType.get(notifyCallbackNotification.notificationType),
+    status = NotifyStatus.get(notifyCallbackNotification.status),
+    notificationId = notifyCallbackNotification.notificationId,
+    templateId = notifyCallbackNotification.templateId,
+    templateVersion = notifyCallbackNotification.templateVersion,
+    sentTo = notifyCallbackNotification.sentTo,
+    createdAt = notifyCallbackNotification.createdAt,
+    completedAt = notifyCallbackNotification.completedAt,
+    sentAt = notifyCallbackNotification.sentAt,
+    eventAudit = eventAudit,
+  )
 
   private fun getEventAudit(eventAuditReference: String): EventAudit {
     val eventAuditId = eventAuditReference.toLong()
