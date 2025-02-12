@@ -15,13 +15,7 @@ import java.util.*
 
 @Component
 class JwtAuthHelper {
-  private val keyPair: KeyPair
-
-  init {
-    val gen = KeyPairGenerator.getInstance("RSA")
-    gen.initialize(2048)
-    keyPair = gen.generateKeyPair()
-  }
+  private val keyPair: KeyPair = KeyPairGenerator.getInstance("RSA").apply { this.initialize(2048) }.generateKeyPair()
 
   @Bean
   @Primary
