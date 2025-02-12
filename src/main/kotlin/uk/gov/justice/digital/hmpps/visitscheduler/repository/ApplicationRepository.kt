@@ -12,7 +12,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Repository
-interface ApplicationRepository : JpaRepository<Application, Long>, JpaSpecificationExecutor<Application> {
+interface ApplicationRepository :
+  JpaRepository<Application, Long>,
+  JpaSpecificationExecutor<Application> {
 
   @Query(
     "SELECT a FROM Application a " +

@@ -12,8 +12,6 @@ enum class IncentiveLevel(val code: String) {
   ;
 
   companion object {
-    fun getIncentiveLevel(code: String): IncentiveLevel? {
-      return Arrays.stream(values()).filter { it.code == code }.findFirst().getOrNull()
-    }
+    fun getIncentiveLevel(code: String): IncentiveLevel? = Arrays.stream(values()).filter { it.code == code }.findFirst().getOrNull()
   }
 }

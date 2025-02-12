@@ -7,7 +7,5 @@ class MatchSessionTemplateToMigratedVisitException(message: String? = null, caus
   ValidationException(message, cause),
   Supplier<MatchSessionTemplateToMigratedVisitException> {
 
-  override fun get(): MatchSessionTemplateToMigratedVisitException {
-    return MatchSessionTemplateToMigratedVisitException(message, cause)
-  }
+  override fun get(): MatchSessionTemplateToMigratedVisitException = MatchSessionTemplateToMigratedVisitException(message, cause)
 }

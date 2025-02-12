@@ -18,9 +18,7 @@ class SessionCategoryValidator(
   fun isValid(
     sessionTemplate: SessionTemplate,
     prisoner: PrisonerDto?,
-  ): Boolean {
-    return isSessionAvailableToCategory(prisoner?.category, sessionTemplate)
-  }
+  ): Boolean = isSessionAvailableToCategory(prisoner?.category, sessionTemplate)
 
   private fun isSessionAvailableToCategory(
     prisonerCategory: String?,

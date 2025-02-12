@@ -7,7 +7,5 @@ class ExpiredVisitAmendException(message: String? = null, cause: Throwable? = nu
   ValidationException(message, cause),
   Supplier<ExpiredVisitAmendException> {
 
-  override fun get(): ExpiredVisitAmendException {
-    return ExpiredVisitAmendException(message, cause)
-  }
+  override fun get(): ExpiredVisitAmendException = ExpiredVisitAmendException(message, cause)
 }

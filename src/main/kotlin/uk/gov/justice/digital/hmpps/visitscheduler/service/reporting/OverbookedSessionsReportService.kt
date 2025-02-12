@@ -26,25 +26,23 @@ class OverbookedSessionsReportService(
     }
   }
 
-  private fun getOverbookedSessionsDto(sessionVisitCountsDto: SessionVisitCountsDto): OverbookedSessionsDto? {
-    return if (
-      !sessionVisitCountsDto.hasSessionsOnDate ||
-      sessionVisitCountsDto.isBlockedDate ||
-      sessionVisitCountsDto.sessionTimeSlot == null ||
-      sessionVisitCountsDto.sessionCapacity == null
-    ) {
-      null
-    } else {
-      with(sessionVisitCountsDto) {
-        OverbookedSessionsDto(
-          sessionDate = reportDate,
-          prisonCode = prisonCode,
-          sessionTimeSlot = sessionTimeSlot!!,
-          sessionCapacity = sessionCapacity!!,
-          openCount = openBookedCount ?: 0,
-          closedCount = closedBookedCount ?: 0,
-        )
-      }
+  private fun getOverbookedSessionsDto(sessionVisitCountsDto: SessionVisitCountsDto): OverbookedSessionsDto? = if (
+    !sessionVisitCountsDto.hasSessionsOnDate ||
+    sessionVisitCountsDto.isBlockedDate ||
+    sessionVisitCountsDto.sessionTimeSlot == null ||
+    sessionVisitCountsDto.sessionCapacity == null
+  ) {
+    null
+  } else {
+    with(sessionVisitCountsDto) {
+      OverbookedSessionsDto(
+        sessionDate = reportDate,
+        prisonCode = prisonCode,
+        sessionTimeSlot = sessionTimeSlot!!,
+        sessionCapacity = sessionCapacity!!,
+        openCount = openBookedCount ?: 0,
+        closedCount = closedBookedCount ?: 0,
+      )
     }
   }
 }

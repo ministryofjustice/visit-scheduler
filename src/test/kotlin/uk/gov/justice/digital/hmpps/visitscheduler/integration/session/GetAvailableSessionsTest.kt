@@ -2846,7 +2846,5 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     assertResponseLength(responseSpec, 0)
   }
 
-  private fun getResults(returnResult: BodyContentSpec): Array<AvailableVisitSessionDto> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<AvailableVisitSessionDto>::class.java)
-  }
+  private fun getResults(returnResult: BodyContentSpec): Array<AvailableVisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<AvailableVisitSessionDto>::class.java)
 }

@@ -242,17 +242,13 @@ class ApplicationValidationService(
   private fun hasSlotChangedSinceLastBooking(
     existingBooking: Visit?,
     application: Application,
-  ): Boolean {
-    return existingBooking?.let {
-      it.visitRestriction != application.restriction || it.sessionSlot.id != application.sessionSlotId
-    } ?: run { true }
-  }
+  ): Boolean = existingBooking?.let {
+    it.visitRestriction != application.restriction || it.sessionSlot.id != application.sessionSlotId
+  } ?: run { true }
 
-  private fun includeReservedApplications(application: Application): Boolean {
-    return when (application.userType) {
-      STAFF -> applicationService.isExpiredApplication(application.modifyTimestamp!!)
-      PUBLIC -> false
-      SYSTEM -> false
-    }
+  private fun includeReservedApplications(application: Application): Boolean = when (application.userType) {
+    STAFF -> applicationService.isExpiredApplication(application.modifyTimestamp!!)
+    PUBLIC -> false
+    SYSTEM -> false
   }
 }

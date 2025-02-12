@@ -92,9 +92,7 @@ class VisitController(
     @Schema(description = "applicationReference", example = "dfs-wjs-eqr", required = true)
     @PathVariable
     applicationReference: String,
-  ): VisitDto {
-    return visitService.getBookedVisitByApplicationReference(applicationReference.trim())
-  }
+  ): VisitDto = visitService.getBookedVisitByApplicationReference(applicationReference.trim())
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(UPDATE_VISIT_BY_APPLICATION_REFERENCE)
@@ -139,9 +137,7 @@ class VisitController(
     applicationReference: String,
     @RequestBody @Valid
     bookingRequestDto: BookingRequestDto,
-  ): VisitDto {
-    return visitService.updateBookedVisit(applicationReference.trim(), bookingRequestDto)
-  }
+  ): VisitDto = visitService.updateBookedVisit(applicationReference.trim(), bookingRequestDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(VISIT_BOOK)
@@ -186,9 +182,7 @@ class VisitController(
     applicationReference: String,
     @RequestBody @Valid
     bookingRequestDto: BookingRequestDto,
-  ): VisitDto {
-    return visitService.bookVisit(applicationReference.trim(), bookingRequestDto)
-  }
+  ): VisitDto = visitService.bookVisit(applicationReference.trim(), bookingRequestDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(VISIT_CANCEL)
@@ -236,9 +230,7 @@ class VisitController(
     reference: String,
     @RequestBody @Valid
     cancelVisitDto: CancelVisitDto,
-  ): VisitDto {
-    return visitService.cancelVisit(reference.trim(), cancelVisitDto)
-  }
+  ): VisitDto = visitService.cancelVisit(reference.trim(), cancelVisitDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_VISIT_HISTORY_CONTROLLER_PATH)
@@ -276,9 +268,7 @@ class VisitController(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
     reference: String,
-  ): List<EventAuditDto> {
-    return visitService.getHistoryByReference(reference.trim())
-  }
+  ): List<EventAuditDto> = visitService.getHistoryByReference(reference.trim())
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_VISIT_BY_REFERENCE)
@@ -316,9 +306,7 @@ class VisitController(
     @Schema(description = "reference", example = "v9-d7-ed-7u", required = true)
     @PathVariable
     reference: String,
-  ): VisitDto {
-    return visitService.getVisitByReference(reference.trim())
-  }
+  ): VisitDto = visitService.getVisitByReference(reference.trim())
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(params = ["page", "size"], path = [VISIT_CONTROLLER_SEARCH_PATH])
@@ -392,19 +380,17 @@ class VisitController(
       example = "50",
     )
     size: Int,
-  ): Page<VisitDto> {
-    return visitService.findVisitsByFilterPageableDescending(
-      VisitFilter(
-        prisonerId = prisonerId?.trim(),
-        prisonCode = prisonCode?.trim(),
-        visitStartDate = visitStartDate,
-        visitEndDate = visitEndDate,
-        visitStatusList = visitStatusList,
-      ),
-      page,
-      size,
-    )
-  }
+  ): Page<VisitDto> = visitService.findVisitsByFilterPageableDescending(
+    VisitFilter(
+      prisonerId = prisonerId?.trim(),
+      prisonCode = prisonCode?.trim(),
+      visitStartDate = visitStartDate,
+      visitEndDate = visitEndDate,
+      visitStatusList = visitStatusList,
+    ),
+    page,
+    size,
+  )
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_VISITS_BY)
@@ -471,18 +457,16 @@ class VisitController(
       example = "50",
     )
     size: Int,
-  ): Page<VisitDto> {
-    return visitService.findVisitsBySessionTemplateFilterPageableDescending(
-      sessionTemplateReference = sessionTemplateReference,
-      fromDate = fromDate,
-      toDate = toDate,
-      visitStatusList = visitStatusList,
-      visitRestrictions = visitRestrictions,
-      prisonCode = prisonCode,
-      pageablePage = page,
-      pageableSize = size,
-    )
-  }
+  ): Page<VisitDto> = visitService.findVisitsBySessionTemplateFilterPageableDescending(
+    sessionTemplateReference = sessionTemplateReference,
+    fromDate = fromDate,
+    toDate = toDate,
+    visitStatusList = visitStatusList,
+    visitRestrictions = visitRestrictions,
+    prisonCode = prisonCode,
+    pageablePage = page,
+    pageableSize = size,
+  )
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_CONTROLLER_SEARCH_FUTURE_VISITS_PATH)
@@ -517,7 +501,5 @@ class VisitController(
     @Length(min = 3, max = 50)
     @Pattern(regexp = "^[A-Za-z0-9]+$")
     prisonerNumber: String,
-  ): List<VisitDto> {
-    return visitService.findFutureVisitsBySessionPrisoner(prisonerNumber)
-  }
+  ): List<VisitDto> = visitService.findFutureVisitsBySessionPrisoner(prisonerNumber)
 }

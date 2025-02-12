@@ -277,9 +277,12 @@ class ReserveSlotTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplateEntityHelper.create()
     val reserveVisitSlotDto = createReserveVisitSlotDto(sessionTemplate = sessionTemplate)
     reserveVisitSlotDto.visitors = setOf(
-      VisitorDto(1, true), VisitorDto(2, false),
-      VisitorDto(3, false), VisitorDto(4, false),
-      VisitorDto(5, false), VisitorDto(6, false),
+      VisitorDto(1, true),
+      VisitorDto(2, false),
+      VisitorDto(3, false),
+      VisitorDto(4, false),
+      VisitorDto(5, false),
+      VisitorDto(6, false),
       VisitorDto(7, false),
     )
 
@@ -395,19 +398,13 @@ class ReserveSlotTest : IntegrationTestBase() {
     responseSpec.expectStatus().isUnauthorized
   }
 
-  private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto {
-    return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
-  }
+  private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto = objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
 
-  private fun getResult(responseSpec: ResponseSpec): EntityExchangeResult<ByteArray> {
-    return responseSpec.expectStatus().isCreated
-      .expectBody()
-      .returnResult()
-  }
+  private fun getResult(responseSpec: ResponseSpec): EntityExchangeResult<ByteArray> = responseSpec.expectStatus().isCreated
+    .expectBody()
+    .returnResult()
 
-  private fun getApplication(dto: ApplicationDto): Application? {
-    return testApplicationRepository.findByReference(dto.reference)
-  }
+  private fun getApplication(dto: ApplicationDto): Application? = testApplicationRepository.findByReference(dto.reference)
 
   private fun assertApplicationDetails(
     persistedApplication: Application,

@@ -11,23 +11,17 @@ enum class SessionRestriction(
   ;
 
   companion object {
-    fun get(restriction: VisitRestriction): SessionRestriction {
-      return when (restriction) {
-        VisitRestriction.OPEN -> OPEN
-        VisitRestriction.CLOSED -> CLOSED
-        VisitRestriction.UNKNOWN -> throw IllegalArgumentException("UNKNOWN is not allowed for SessionRestriction")
-      }
+    fun get(restriction: VisitRestriction): SessionRestriction = when (restriction) {
+      VisitRestriction.OPEN -> OPEN
+      VisitRestriction.CLOSED -> CLOSED
+      VisitRestriction.UNKNOWN -> throw IllegalArgumentException("UNKNOWN is not allowed for SessionRestriction")
     }
   }
 
-  fun isSame(restriction: VisitRestriction): Boolean {
-    return this.name == restriction.name
-  }
+  fun isSame(restriction: VisitRestriction): Boolean = this.name == restriction.name
 
-  fun getVisitRestriction(): VisitRestriction {
-    return when (this) {
-      OPEN -> VisitRestriction.OPEN
-      CLOSED -> VisitRestriction.CLOSED
-    }
+  fun getVisitRestriction(): VisitRestriction = when (this) {
+    OPEN -> VisitRestriction.OPEN
+    CLOSED -> VisitRestriction.CLOSED
   }
 }

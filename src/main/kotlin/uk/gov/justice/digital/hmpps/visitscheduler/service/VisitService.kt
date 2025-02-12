@@ -86,12 +86,10 @@ class VisitService(
   }
 
   @Transactional
-  fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long {
-    return when (restriction) {
-      OPEN -> visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
-      CLOSED -> visitRepository.getCountOfBookedForClosedSessionSlot(sessionSlotId)
-      UNKNOWN -> throw IllegalStateException("Cant acquire a book count for an UNKNOWN restriction")
-    }
+  fun getBookCountForSlot(sessionSlotId: Long, restriction: VisitRestriction): Long = when (restriction) {
+    OPEN -> visitRepository.getCountOfBookedForOpenSessionSlot(sessionSlotId)
+    CLOSED -> visitRepository.getCountOfBookedForClosedSessionSlot(sessionSlotId)
+    UNKNOWN -> throw IllegalStateException("Cant acquire a book count for an UNKNOWN restriction")
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {
@@ -114,16 +112,14 @@ class VisitService(
     return findVisitsOrderByDateAndTime(visitFilter, pageable = page).map { visitDtoBuilder.build(it) }
   }
 
-  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable): Page<Visit> {
-    return visitRepository.findVisitsOrderByDateAndTime(
-      prisonerId = visitFilter.prisonerId,
-      prisonCode = visitFilter.prisonCode,
-      visitStatusList = visitFilter.visitStatusList.ifEmpty { null },
-      visitStartDate = visitFilter.visitStartDate,
-      visitEndDate = visitFilter.visitEndDate,
-      pageable = pageable,
-    )
-  }
+  private fun findVisitsOrderByDateAndTime(visitFilter: VisitFilter, pageable: Pageable): Page<Visit> = visitRepository.findVisitsOrderByDateAndTime(
+    prisonerId = visitFilter.prisonerId,
+    prisonCode = visitFilter.prisonCode,
+    visitStatusList = visitFilter.visitStatusList.ifEmpty { null },
+    visitStartDate = visitFilter.visitStartDate,
+    visitEndDate = visitFilter.visitEndDate,
+    pageable = pageable,
+  )
 
   @Transactional(readOnly = true)
   fun findVisitsBySessionTemplateFilterPageableDescending(
@@ -235,27 +231,21 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun getBookedVisitsForDate(prisonCode: String, date: LocalDate): List<VisitDto> {
-    return visitRepository.findBookedVisitsForDate(prisonCode, date).map { visitDtoBuilder.build(it) }
-  }
+  fun getBookedVisitsForDate(prisonCode: String, date: LocalDate): List<VisitDto> = visitRepository.findBookedVisitsForDate(prisonCode, date).map { visitDtoBuilder.build(it) }
 
   @Transactional(readOnly = true)
-  fun getBookedVisitsBySessionForDate(sessionTemplateReference: String, date: LocalDate): List<VisitDto> {
-    return visitRepository.findBookedVisitsBySessionForDate(sessionTemplateReference, date).map { visitDtoBuilder.build(it) }
-  }
+  fun getBookedVisitsBySessionForDate(sessionTemplateReference: String, date: LocalDate): List<VisitDto> = visitRepository.findBookedVisitsBySessionForDate(sessionTemplateReference, date).map { visitDtoBuilder.build(it) }
 
   @Transactional(readOnly = true)
   fun getBookedVisits(
     prisonerNumber: String,
     prisonCode: String,
     visitDate: LocalDate,
-  ): List<VisitDto> {
-    return visitRepository.findBookedVisits(
-      prisonerId = prisonerNumber,
-      prisonCode = prisonCode,
-      visitDate = visitDate,
-    ).map { visitDtoBuilder.build(it) }
-  }
+  ): List<VisitDto> = visitRepository.findBookedVisits(
+    prisonerId = prisonerNumber,
+    prisonCode = prisonCode,
+    visitDate = visitDate,
+  ).map { visitDtoBuilder.build(it) }
 
   @Transactional(readOnly = true)
   fun getVisitByReference(reference: String): VisitDto {
@@ -270,9 +260,7 @@ class VisitService(
   }
 
   @Transactional(readOnly = true)
-  fun getHistoryByReference(bookingReference: String): List<EventAuditDto> {
-    return eventAuditService.findByBookingReferenceOrderById(bookingReference)
-  }
+  fun getHistoryByReference(bookingReference: String): List<EventAuditDto> = eventAuditService.findByBookingReferenceOrderById(bookingReference)
 
   @Transactional(readOnly = true)
   fun getFutureVisitsBy(
@@ -280,9 +268,7 @@ class VisitService(
     prisonCode: String? = null,
     startDateTime: LocalDateTime = LocalDateTime.now(),
     endDateTime: LocalDateTime? = null,
-  ): List<VisitDto> {
-    return visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
-  }
+  ): List<VisitDto> = visitRepository.getVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
 
   @Transactional(readOnly = true)
   fun getFutureBookedVisits(
@@ -290,9 +276,7 @@ class VisitService(
     prisonCode: String? = null,
     startDateTime: LocalDateTime = LocalDateTime.now(),
     endDateTime: LocalDateTime? = null,
-  ): List<VisitDto> {
-    return visitRepository.getBookedVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
-  }
+  ): List<VisitDto> = visitRepository.getBookedVisits(prisonerNumber, prisonCode, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
 
   @Transactional
   fun getFutureVisitsByVisitorId(
@@ -300,20 +284,14 @@ class VisitService(
     prisonerId: String? = null,
     startDateTime: LocalDateTime = LocalDateTime.now(),
     endDateTime: LocalDateTime? = null,
-  ): List<VisitDto> {
-    return visitRepository.getFutureVisitsByVisitorId(visitorId, prisonerId, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
-  }
+  ): List<VisitDto> = visitRepository.getFutureVisitsByVisitorId(visitorId, prisonerId, startDateTime, endDateTime).map { visitDtoBuilder.build(it) }
 
   @Transactional
   fun getFutureBookedVisitsExcludingPrison(
     prisonerNumber: String,
     excludedPrisonCode: String,
-  ): List<VisitDto> {
-    return this.visitRepository.getFutureBookedVisitsExcludingPrison(prisonerNumber, excludedPrisonCode).map { visitDtoBuilder.build(it) }
-  }
+  ): List<VisitDto> = this.visitRepository.getFutureBookedVisitsExcludingPrison(prisonerNumber, excludedPrisonCode).map { visitDtoBuilder.build(it) }
 
   @Transactional
-  fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> {
-    return getFutureVisitsBy(prisonerNumber = prisonerNumber)
-  }
+  fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> = getFutureVisitsBy(prisonerNumber = prisonerNumber)
 }

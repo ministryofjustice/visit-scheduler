@@ -17,9 +17,7 @@ class PrisonerCategoryMatcher : BiPredicate<String?, SessionTemplate> {
   override fun test(
     prisonerCategory: String?,
     sessionTemplate: SessionTemplate,
-  ): Boolean {
-    return isPrisonerCategoryAllowedOnSession(sessionTemplate, prisonerCategory)
-  }
+  ): Boolean = isPrisonerCategoryAllowedOnSession(sessionTemplate, prisonerCategory)
 
   fun isPrisonerCategoryAllowedOnSession(sessionTemplate: SessionTemplate, prisonerCategory: String?): Boolean {
     prisonerCategory?.let {
@@ -34,10 +32,8 @@ class PrisonerCategoryMatcher : BiPredicate<String?, SessionTemplate> {
     return false
   }
 
-  private fun getAllowedCategoriesForSessionTemplate(sessionTemplate: SessionTemplate): Set<String> {
-    return sessionTemplate.permittedSessionCategoryGroups.stream()
-      .flatMap { it.sessionCategories.stream() }
-      .map { it.prisonerCategoryType.code }
-      .collect(Collectors.toSet())
-  }
+  private fun getAllowedCategoriesForSessionTemplate(sessionTemplate: SessionTemplate): Set<String> = sessionTemplate.permittedSessionCategoryGroups.stream()
+    .flatMap { it.sessionCategories.stream() }
+    .map { it.prisonerCategoryType.code }
+    .collect(Collectors.toSet())
 }

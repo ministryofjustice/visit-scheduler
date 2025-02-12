@@ -8,12 +8,10 @@ enum class NotifyNotificationType {
   ;
 
   companion object {
-    fun get(notificationType: String): NotifyNotificationType {
-      return when (notificationType) {
-        "email" -> EMAIL
-        "sms" -> SMS
-        else -> throw IllegalArgumentException("Not a supported Notify Notification Type $notificationType")
-      }
+    fun get(notificationType: String): NotifyNotificationType = when (notificationType) {
+      "email" -> EMAIL
+      "sms" -> SMS
+      else -> throw IllegalArgumentException("Not a supported Notify Notification Type $notificationType")
     }
   }
 }

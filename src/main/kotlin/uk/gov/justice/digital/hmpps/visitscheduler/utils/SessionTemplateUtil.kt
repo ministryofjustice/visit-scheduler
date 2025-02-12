@@ -33,25 +33,17 @@ class SessionTemplateUtil {
     return SessionCapacityDto(closed = closed, open = open)
   }
 
-  fun getPermittedSessionLocations(permittedLocationGroups: List<SessionLocationGroupDto>): Set<PermittedSessionLocationDto> {
-    return permittedLocationGroups.stream()
-      .map { it.locations }
-      .flatMap(List<PermittedSessionLocationDto>::stream).collect(Collectors.toSet())
-  }
+  fun getPermittedSessionLocations(permittedLocationGroups: List<SessionLocationGroupDto>): Set<PermittedSessionLocationDto> = permittedLocationGroups.stream()
+    .map { it.locations }
+    .flatMap(List<PermittedSessionLocationDto>::stream).collect(Collectors.toSet())
 
-  fun getPermittedPrisonerCategoryTypes(prisonerCategoryGroups: List<SessionCategoryGroupDto>): Set<PrisonerCategoryType> {
-    return prisonerCategoryGroups.stream()
-      .map { it.categories }
-      .flatMap(List<PrisonerCategoryType>::stream).collect(Collectors.toSet())
-  }
+  fun getPermittedPrisonerCategoryTypes(prisonerCategoryGroups: List<SessionCategoryGroupDto>): Set<PrisonerCategoryType> = prisonerCategoryGroups.stream()
+    .map { it.categories }
+    .flatMap(List<PrisonerCategoryType>::stream).collect(Collectors.toSet())
 
-  fun getPermittedIncentiveLevels(prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto>): Set<IncentiveLevel> {
-    return prisonerIncentiveLevelGroups.stream()
-      .map { it.incentiveLevels }
-      .flatMap(List<IncentiveLevel>::stream).collect(Collectors.toSet())
-  }
+  fun getPermittedIncentiveLevels(prisonerIncentiveLevelGroups: List<SessionIncentiveLevelGroupDto>): Set<IncentiveLevel> = prisonerIncentiveLevelGroups.stream()
+    .map { it.incentiveLevels }
+    .flatMap(List<IncentiveLevel>::stream).collect(Collectors.toSet())
 
-  fun isCapacityExceeded(allowedSessionCapacity: SessionCapacityDto, totalSessionCapacity: SessionCapacityDto): Boolean {
-    return sessionCapacityComparator.compare(allowedSessionCapacity, totalSessionCapacity) < 0
-  }
+  fun isCapacityExceeded(allowedSessionCapacity: SessionCapacityDto, totalSessionCapacity: SessionCapacityDto): Boolean = sessionCapacityComparator.compare(allowedSessionCapacity, totalSessionCapacity) < 0
 }

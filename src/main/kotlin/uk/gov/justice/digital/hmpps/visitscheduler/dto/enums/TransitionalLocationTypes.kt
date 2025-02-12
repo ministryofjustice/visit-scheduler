@@ -9,8 +9,6 @@ enum class TransitionalLocationTypes {
   CSWAP, ;
 
   companion object {
-    fun contains(value: String? = null): Boolean {
-      return entries.any { it.name == value?.let { value.uppercase() } }
-    }
+    fun contains(value: String? = null): Boolean = entries.any { it.name == value?.let { value.uppercase() } }
   }
 }

@@ -77,9 +77,7 @@ class MigrateController(
   fun migrateVisit(
     @RequestBody @Valid
     migrateVisitRequest: MigrateVisitRequestDto,
-  ): String {
-    return migrateVisitService.migrateVisit(migrateVisitRequest)
-  }
+  ): String = migrateVisitService.migrateVisit(migrateVisitRequest)
 
   @PreAuthorize("hasAnyRole('MIGRATE_VISITS', 'MIGRATION_ADMIN')")
   @PutMapping(MIGRATE_CANCEL)
@@ -127,7 +125,5 @@ class MigrateController(
     reference: String,
     @RequestBody @Valid
     cancelVisitDto: MigratedCancelVisitDto,
-  ): VisitDto {
-    return migrateVisitService.cancelVisit(reference.trim(), cancelVisitDto)
-  }
+  ): VisitDto = migrateVisitService.cancelVisit(reference.trim(), cancelVisitDto)
 }

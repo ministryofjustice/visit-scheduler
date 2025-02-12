@@ -92,6 +92,5 @@ class AssertHelper {
       .value(Matchers.containsString("Application can not be reserved because capacity has been exceeded for the slot"))
   }
 
-  private fun getApplicationValidationErrorResponse(responseSpec: ResponseSpec): ApplicationValidationErrorResponse =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationValidationErrorResponse::class.java)
+  private fun getApplicationValidationErrorResponse(responseSpec: ResponseSpec): ApplicationValidationErrorResponse = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationValidationErrorResponse::class.java)
 }

@@ -216,25 +216,19 @@ class VisitHistoryByReferenceTest : IntegrationTestBase() {
     return getApplicationFomRestResponse(changedBookingResponse)
   }
 
-  private fun getVisitFromRestResponse(responseSpec: ResponseSpec): VisitDto {
-    return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
-  }
+  private fun getVisitFromRestResponse(responseSpec: ResponseSpec): VisitDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, VisitDto::class.java)
 
-  private fun getApplicationFomRestResponse(responseSpec: ResponseSpec): ApplicationDto {
-    return objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationDto::class.java)
-  }
+  private fun getApplicationFomRestResponse(responseSpec: ResponseSpec): ApplicationDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, ApplicationDto::class.java)
 
-  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.ACTIONED_BY_USER_NAME, sessionTemplate: SessionTemplate): CreateApplicationDto {
-    return CreateApplicationDto(
-      prisonerId = "FF0000FF",
-      sessionDate = startDate,
-      sessionTemplateReference = sessionTemplate.reference,
-      applicationRestriction = OPEN,
-      visitContact = ContactDto("John Smith", "013448811538", "email@example.com"),
-      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = ApplicationSupportDto("Some Text"),
-      actionedBy = actionedBy,
-      userType = STAFF,
-    )
-  }
+  private fun createReserveVisitSlotDto(actionedBy: String = ReserveSlotTest.ACTIONED_BY_USER_NAME, sessionTemplate: SessionTemplate): CreateApplicationDto = CreateApplicationDto(
+    prisonerId = "FF0000FF",
+    sessionDate = startDate,
+    sessionTemplateReference = sessionTemplate.reference,
+    applicationRestriction = OPEN,
+    visitContact = ContactDto("John Smith", "013448811538", "email@example.com"),
+    visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
+    visitorSupport = ApplicationSupportDto("Some Text"),
+    actionedBy = actionedBy,
+    userType = STAFF,
+  )
 }

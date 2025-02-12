@@ -91,9 +91,7 @@ class VisitSessionController(
       example = "user-1",
     )
     username: String? = null,
-  ): List<VisitSessionDto> {
-    return sessionService.getVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username)
-  }
+  ): List<VisitSessionDto> = sessionService.getVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH)
@@ -160,9 +158,7 @@ class VisitSessionController(
       example = "user-1",
     )
     username: String? = null,
-  ): List<AvailableVisitSessionDto> {
-    return sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username)
-  }
+  ): List<AvailableVisitSessionDto> = sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_SESSION_SCHEDULE)
@@ -200,9 +196,7 @@ class VisitSessionController(
       example = "2020-11-01",
     )
     scheduleDate: LocalDate,
-  ): List<SessionScheduleDto> {
-    return sessionService.getSessionSchedule(prisonCode, scheduleDate)
-  }
+  ): List<SessionScheduleDto> = sessionService.getSessionSchedule(prisonCode, scheduleDate)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_SESSION_CAPACITY)
@@ -259,9 +253,7 @@ class VisitSessionController(
       example = "14:30:00",
     )
     sessionEndTime: LocalTime,
-  ): SessionCapacityDto {
-    return sessionService.getSessionCapacity(prisonCode, sessionDate, sessionStartTime, sessionEndTime)
-  }
+  ): SessionCapacityDto = sessionService.getSessionCapacity(prisonCode, sessionDate, sessionStartTime, sessionEndTime)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_VISIT_SESSION)
@@ -310,7 +302,5 @@ class VisitSessionController(
       example = "xye-fjc-abc",
     )
     sessionTemplateReference: String,
-  ): VisitSessionDto? {
-    return sessionService.getVisitSession(prisonCode, sessionDate, sessionTemplateReference)
-  }
+  ): VisitSessionDto? = sessionService.getVisitSession(prisonCode, sessionDate, sessionTemplateReference)
 }

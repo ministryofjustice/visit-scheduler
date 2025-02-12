@@ -2226,25 +2226,20 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonerId: String,
     policyNoticeDaysMin: Int,
     policyNoticeDaysMax: Int,
-  ): ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
-  }
+  ): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
+    .headers(setAuthorisation(roles = requiredRole))
+    .exchange()
 
-  private fun callGetSessions(prisonId: String? = "MDI", prisonerId: String): ResponseSpec {
-    return webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
-  }
+  private fun callGetSessions(prisonId: String? = "MDI", prisonerId: String): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+    .headers(setAuthorisation(roles = requiredRole))
+    .exchange()
 
   private fun getNextAllowedDay(): LocalDate {
     // The 3 days is based on the default SessionService.policyNoticeDaysMin
     return LocalDate.now().plusDays(3)
   }
 
-  private fun getStartOfWeek(today: LocalDate) =
-    if (MONDAY == today.dayOfWeek) today else today.with(TemporalAdjusters.previous(MONDAY))
+  private fun getStartOfWeek(today: LocalDate) = if (MONDAY == today.dayOfWeek) today else today.with(TemporalAdjusters.previous(MONDAY))
 
   private fun assertSession(
     visitSessionResult: VisitSessionDto,
@@ -2281,7 +2276,5 @@ class GetSessionsTest : IntegrationTestBase() {
     }
   }
 
-  private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
-  }
+  private fun getResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
 }

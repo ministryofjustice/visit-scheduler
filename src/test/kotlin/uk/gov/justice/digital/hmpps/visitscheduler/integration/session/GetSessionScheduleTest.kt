@@ -345,13 +345,9 @@ class GetSessionScheduleTest : IntegrationTestBase() {
   private fun callGetSessionSchedule(
     prisonCode: String = "MDI",
     scheduleDate: LocalDate,
-  ): ResponseSpec {
-    return webTestClient.get().uri("$GET_SESSION_SCHEDULE?prisonId=$prisonCode&date=$scheduleDate")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
-  }
+  ): ResponseSpec = webTestClient.get().uri("$GET_SESSION_SCHEDULE?prisonId=$prisonCode&date=$scheduleDate")
+    .headers(setAuthorisation(roles = requiredRole))
+    .exchange()
 
-  private fun getResults(returnResult: BodyContentSpec): Array<SessionScheduleDto> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<SessionScheduleDto>::class.java)
-  }
+  private fun getResults(returnResult: BodyContentSpec): Array<SessionScheduleDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<SessionScheduleDto>::class.java)
 }

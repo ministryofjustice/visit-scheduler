@@ -73,9 +73,7 @@ class ApplicationController(
   fun createInitialApplication(
     @RequestBody @Valid
     createApplicationDto: CreateApplicationDto,
-  ): ApplicationDto {
-    return applicationService.createInitialApplication(createApplicationDto = createApplicationDto)
-  }
+  ): ApplicationDto = applicationService.createInitialApplication(createApplicationDto = createApplicationDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(APPLICATION_RESERVED_SLOT_CHANGE)
@@ -123,9 +121,7 @@ class ApplicationController(
     applicationReference: String,
     @RequestBody @Valid
     changeApplicationDto: ChangeApplicationDto,
-  ): ApplicationDto {
-    return applicationService.changeIncompleteApplication(applicationReference.trim(), changeApplicationDto)
-  }
+  ): ApplicationDto = applicationService.changeIncompleteApplication(applicationReference.trim(), changeApplicationDto)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(APPLICATION_CHANGE)
@@ -168,7 +164,5 @@ class ApplicationController(
     bookingReference: String,
     @RequestBody @Valid
     createApplicationDto: CreateApplicationDto,
-  ): ApplicationDto {
-    return applicationService.createApplicationForAnExistingVisit(bookingReference.trim(), createApplicationDto)
-  }
+  ): ApplicationDto = applicationService.createApplicationForAnExistingVisit(bookingReference.trim(), createApplicationDto)
 }

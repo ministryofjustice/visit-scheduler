@@ -12,7 +12,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import java.time.LocalDateTime
 
 @Repository
-interface TestApplicationRepository : JpaRepository<Application, Long>, JpaSpecificationExecutor<Application> {
+interface TestApplicationRepository :
+  JpaRepository<Application, Long>,
+  JpaSpecificationExecutor<Application> {
 
   @Query(
     "SELECT a.visit  FROM Application a" +

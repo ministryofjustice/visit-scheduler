@@ -7,7 +7,5 @@ class PrisonerNotInSuppliedPrisonException(message: String? = null, cause: Throw
   ValidationException(message, cause),
   Supplier<PrisonerNotInSuppliedPrisonException> {
 
-  override fun get(): PrisonerNotInSuppliedPrisonException {
-    return PrisonerNotInSuppliedPrisonException(message, cause)
-  }
+  override fun get(): PrisonerNotInSuppliedPrisonException = PrisonerNotInSuppliedPrisonException(message, cause)
 }

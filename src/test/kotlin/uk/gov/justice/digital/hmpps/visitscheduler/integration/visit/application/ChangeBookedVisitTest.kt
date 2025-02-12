@@ -205,9 +205,12 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = "DFT")
     val createApplicationRequest = createApplicationRequest(sessionTemplateReference = sessionTemplate.reference)
     createApplicationRequest.visitors = setOf(
-      VisitorDto(1, true), VisitorDto(2, false),
-      VisitorDto(3, false), VisitorDto(4, false),
-      VisitorDto(5, false), VisitorDto(6, false),
+      VisitorDto(1, true),
+      VisitorDto(2, false),
+      VisitorDto(3, false),
+      VisitorDto(4, false),
+      VisitorDto(5, false),
+      VisitorDto(6, false),
       VisitorDto(7, false),
     )
 
@@ -406,33 +409,25 @@ class ChangeBookedVisitTest : IntegrationTestBase() {
     sessionTemplateReference: String = bookedVisit.sessionSlot.sessionTemplateReference!!,
     support: String = "Some Text",
     userType: UserType = STAFF,
-  ): CreateApplicationDto {
-    return CreateApplicationDto(
-      prisonerId = prisonerId,
-      sessionDate = slotDate,
-      applicationRestriction = visitRestriction,
-      visitContact = ContactDto("John Smith", "013448811538", "email@example.com"),
-      visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
-      visitorSupport = ApplicationSupportDto(support),
-      actionedBy = ACTIONED_BY_USER_NAME,
-      sessionTemplateReference = sessionTemplateReference,
-      userType = userType,
-    )
-  }
+  ): CreateApplicationDto = CreateApplicationDto(
+    prisonerId = prisonerId,
+    sessionDate = slotDate,
+    applicationRestriction = visitRestriction,
+    visitContact = ContactDto("John Smith", "013448811538", "email@example.com"),
+    visitors = setOf(VisitorDto(123, true), VisitorDto(124, false)),
+    visitorSupport = ApplicationSupportDto(support),
+    actionedBy = ACTIONED_BY_USER_NAME,
+    sessionTemplateReference = sessionTemplateReference,
+    userType = userType,
+  )
 
-  private fun getApplication(dto: ApplicationDto): Application? {
-    return testApplicationRepository.findByReference(dto.reference)
-  }
+  private fun getApplication(dto: ApplicationDto): Application? = testApplicationRepository.findByReference(dto.reference)
 
-  private fun getResult(responseSpec: ResponseSpec): EntityExchangeResult<ByteArray> {
-    return responseSpec.expectStatus().isCreated
-      .expectBody()
-      .returnResult()
-  }
+  private fun getResult(responseSpec: ResponseSpec): EntityExchangeResult<ByteArray> = responseSpec.expectStatus().isCreated
+    .expectBody()
+    .returnResult()
 
-  private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto {
-    return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
-  }
+  private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto = objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
 
   private fun assertApplicationDetails(
     lastBooking: Visit,

@@ -107,7 +107,5 @@ class Application(
     }
   }
 
-  override fun toString(): String {
-    return "Application(id=$id,reference='$reference')"
-  }
+  override fun toString(): String = "Application(id=$id,reference='$reference')"
 }

@@ -37,7 +37,7 @@ class MigrationSessionTemplateMatcher(
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
   }
 
-  private class MigrateMatch() : Comparable<MigrateMatch> {
+  private class MigrateMatch : Comparable<MigrateMatch> {
     // locationScore should always be -1 as a default as it only scores on valid locations
     var locationScore: Int = -1
     var category: Boolean = false
@@ -95,14 +95,12 @@ class MigrationSessionTemplateMatcher(
     return sessionTemplates
   }
 
-  private fun getProximityMinutes(sessionStartTime: LocalTime, startTime: LocalTime, sessionEndTime: LocalTime, endTime: LocalTime): Int {
-    return (
-      (
-        (sessionStartTime.toSecondOfDay() - startTime.toSecondOfDay()).absoluteValue +
-          (sessionEndTime.toSecondOfDay() - endTime.toSecondOfDay()).absoluteValue
-        ) / 60
-      )
-  }
+  private fun getProximityMinutes(sessionStartTime: LocalTime, startTime: LocalTime, sessionEndTime: LocalTime, endTime: LocalTime): Int = (
+    (
+      (sessionStartTime.toSecondOfDay() - startTime.toSecondOfDay()).absoluteValue +
+        (sessionEndTime.toSecondOfDay() - endTime.toSecondOfDay()).absoluteValue
+      ) / 60
+    )
 
   fun getMatchingSessionTemplate(
     migrateVisitRequest: MigrateVisitRequestDto,
@@ -214,9 +212,7 @@ class MigrationSessionTemplateMatcher(
     }
   }
 
-  private fun locationToString(prisonLevelMap: Map<PrisonerHousingLevels, String?>): String {
-    return prisonLevelMap.values.filterNotNull().toString()
-  }
+  private fun locationToString(prisonLevelMap: Map<PrisonerHousingLevels, String?>): String = prisonLevelMap.values.filterNotNull().toString()
 
   private fun isSessionPermitted(
     template: SessionTemplate,
@@ -259,13 +255,9 @@ class MigrationSessionTemplateMatcher(
 
   private fun isSessionForAllCategories(
     sessionTemplate: SessionTemplate,
-  ): Boolean {
-    return sessionTemplate.permittedSessionCategoryGroups.isEmpty()
-  }
+  ): Boolean = sessionTemplate.permittedSessionCategoryGroups.isEmpty()
 
   private fun isSessionForAllIncentiveLevels(
     sessionTemplate: SessionTemplate,
-  ): Boolean {
-    return sessionTemplate.permittedSessionIncentiveLevelGroups.isEmpty()
-  }
+  ): Boolean = sessionTemplate.permittedSessionIncentiveLevelGroups.isEmpty()
 }

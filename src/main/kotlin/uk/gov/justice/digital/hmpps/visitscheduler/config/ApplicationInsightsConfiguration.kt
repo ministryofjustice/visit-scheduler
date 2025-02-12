@@ -14,9 +14,7 @@ import org.springframework.context.annotation.Configuration
 class ApplicationInsightsConfiguration {
 
   @Bean
-  fun telemetryClient(): TelemetryClient {
-    return TelemetryClient()
-  }
+  fun telemetryClient(): TelemetryClient = TelemetryClient()
 
   companion object {
     val log: Logger = LoggerFactory.getLogger(this::class.java)

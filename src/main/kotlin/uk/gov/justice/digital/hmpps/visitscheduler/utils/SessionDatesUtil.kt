@@ -47,9 +47,7 @@ class SessionDatesUtil {
     return firstBookableSessionDay
   }
 
-  fun isActiveForDate(date: LocalDate, sessionTemplate: SessionTemplate): Boolean {
-    return isActiveForDate(date, SessionTemplateDto(sessionTemplate))
-  }
+  fun isActiveForDate(date: LocalDate, sessionTemplate: SessionTemplate): Boolean = isActiveForDate(date, SessionTemplateDto(sessionTemplate))
 
   fun isActiveForDate(date: LocalDate, sessionTemplate: SessionTemplateDto): Boolean {
     if (sessionTemplate.weeklyFrequency > 1) {

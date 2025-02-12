@@ -300,7 +300,5 @@ class PrisonConfigTest : IntegrationTestBase() {
     Assertions.assertThat(returnedPrison.policyNoticeDaysMax).isEqualTo(prison.policyNoticeDaysMax)
   }
 
-  private fun getPrison(returnResult: WebTestClient.BodyContentSpec): PrisonDto {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, PrisonDto::class.java)
-  }
+  private fun getPrison(returnResult: WebTestClient.BodyContentSpec): PrisonDto = objectMapper.readValue(returnResult.returnResult().responseBody, PrisonDto::class.java)
 }

@@ -47,14 +47,10 @@ class WebClientConfiguration(
   }
 
   @Bean
-  fun prisonApiHealthWebClient(): WebClient {
-    return WebClient.builder().baseUrl(prisonApiBaseUrl).build()
-  }
+  fun prisonApiHealthWebClient(): WebClient = WebClient.builder().baseUrl(prisonApiBaseUrl).build()
 
   @Bean
-  fun prisonOffenderSearchHealthWebClient(): WebClient {
-    return WebClient.builder().baseUrl(prisonOffenderSearchBaseUrl).build()
-  }
+  fun prisonOffenderSearchHealthWebClient(): WebClient = WebClient.builder().baseUrl(prisonOffenderSearchBaseUrl).build()
 
   @Bean
   fun authorizedClientManager(
@@ -74,11 +70,9 @@ class WebClientConfiguration(
     return oauth2Client
   }
 
-  private fun getExchangeStrategies(): ExchangeStrategies {
-    return ExchangeStrategies.builder()
-      .codecs { configurer: ClientCodecConfigurer -> configurer.defaultCodecs().maxInMemorySize(-1) }
-      .build()
-  }
+  private fun getExchangeStrategies(): ExchangeStrategies = ExchangeStrategies.builder()
+    .codecs { configurer: ClientCodecConfigurer -> configurer.defaultCodecs().maxInMemorySize(-1) }
+    .build()
 
   private fun getWebClient(baseUrl: String, oauth2Client: ServletOAuth2AuthorizedClientExchangeFilterFunction): WebClient {
     val provider = ConnectionProvider.builder("custom")

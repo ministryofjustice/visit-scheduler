@@ -237,13 +237,9 @@ class ApplicationService(
     }
   }
 
-  private fun getSessionTemplate(sessionTemplateReference: String): SessionTemplateDto {
-    return sessionTemplateService.getSessionTemplates(sessionTemplateReference)
-  }
+  private fun getSessionTemplate(sessionTemplateReference: String): SessionTemplateDto = sessionTemplateService.getSessionTemplates(sessionTemplateReference)
 
-  fun isExpiredApplication(modifyTimestamp: LocalDateTime): Boolean {
-    return modifyTimestamp.isBefore(getExpiredApplicationDateAndTime())
-  }
+  fun isExpiredApplication(modifyTimestamp: LocalDateTime): Boolean = modifyTimestamp.isBefore(getExpiredApplicationDateAndTime())
 
   private fun processInitialApplicationEvents(
     application: Application,
@@ -305,75 +301,55 @@ class ApplicationService(
     visit: Visit,
     newSessionSlot: SessionSlot,
     newRestriction: VisitRestriction,
-  ): Boolean {
-    return isReservationRequired(visit.sessionSlot, visit.visitRestriction, newSessionSlot, newRestriction)
-  }
+  ): Boolean = isReservationRequired(visit.sessionSlot, visit.visitRestriction, newSessionSlot, newRestriction)
 
   private fun isReservationRequired(
     application: Application,
     newSessionSlot: SessionSlot,
     newRestriction: VisitRestriction,
-  ): Boolean {
-    return isReservationRequired(application.sessionSlot, application.restriction, newSessionSlot, newRestriction)
-  }
+  ): Boolean = isReservationRequired(application.sessionSlot, application.restriction, newSessionSlot, newRestriction)
 
   private fun isReservationRequired(
     oldSessionSlot: SessionSlot,
     oldVisitRestriction: VisitRestriction,
     newSessionSlot: SessionSlot,
     newVisitRestriction: VisitRestriction,
-  ): Boolean {
-    return newVisitRestriction != oldVisitRestriction || newSessionSlot.id != oldSessionSlot.id
-  }
+  ): Boolean = newVisitRestriction != oldVisitRestriction || newSessionSlot.id != oldSessionSlot.id
 
-  private fun getExpiredApplicationToDeleteDateAndTime(): LocalDateTime {
-    return LocalDateTime.now()
-      .minusMinutes(expiredApplicationTaskConfiguration.deleteExpiredApplicationsAfterMinutes.toLong())
-  }
+  private fun getExpiredApplicationToDeleteDateAndTime(): LocalDateTime = LocalDateTime.now()
+    .minusMinutes(expiredApplicationTaskConfiguration.deleteExpiredApplicationsAfterMinutes.toLong())
 
-  fun getExpiredApplicationDateAndTime(): LocalDateTime {
-    return LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
-  }
+  fun getExpiredApplicationDateAndTime(): LocalDateTime = LocalDateTime.now().minusMinutes(expiredPeriodMinutes.toLong())
 
-  fun isApplicationCompleted(reference: String): Boolean {
-    return applicationRepository.isApplicationCompleted(reference)
-  }
+  fun isApplicationCompleted(reference: String): Boolean = applicationRepository.isApplicationCompleted(reference)
 
-  fun getApplicationEntity(applicationReference: String): Application {
-    return applicationRepository.findApplication(applicationReference)
-      ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
-  }
+  fun getApplicationEntity(applicationReference: String): Application = applicationRepository.findApplication(applicationReference)
+    ?: throw VisitNotFoundException("Application (reference $applicationReference) not found")
 
   fun completeApplication(applicationReference: String) {
     applicationRepository.completeApplication(applicationReference)
   }
 
-  private fun createApplicationContact(application: Application, name: String, telephone: String?, email: String?): ApplicationContact {
-    return ApplicationContact(
-      applicationId = application.id,
-      application = application,
-      name = name,
-      telephone = telephone,
-      email = email,
-    )
-  }
+  private fun createApplicationContact(application: Application, name: String, telephone: String?, email: String?): ApplicationContact = ApplicationContact(
+    applicationId = application.id,
+    application = application,
+    name = name,
+    telephone = telephone,
+    email = email,
+  )
 
-  private fun createApplicationVisitor(application: Application, personId: Long, contact: Boolean?): ApplicationVisitor {
-    return ApplicationVisitor(
-      applicationId = application.id,
-      application = application,
-      nomisPersonId = personId,
-      contact = contact,
-    )
-  }
+  private fun createApplicationVisitor(application: Application, personId: Long, contact: Boolean?): ApplicationVisitor = ApplicationVisitor(
+    applicationId = application.id,
+    application = application,
+    nomisPersonId = personId,
+    contact = contact,
+  )
 
-  private fun createApplicationSupport(application: Application, description: String): ApplicationSupport {
-    return ApplicationSupport(
-      applicationId = application.id,
-      application = application,
-      description = description,
-    )
-  }
+  private fun createApplicationSupport(application: Application, description: String): ApplicationSupport = ApplicationSupport(
+    applicationId = application.id,
+    application = application,
+    description = description,
+  )
 
   private fun validateBookingChange(
     visit: Visit,
@@ -440,14 +416,12 @@ class ApplicationService(
     }
   }
 
-  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate, prisonId: Long): Boolean {
-    return applicationRepository.hasActiveApplicationsForDate(
-      nonAssociationPrisonerIds,
-      sessionSlotDate,
-      prisonId,
-      getExpiredApplicationDateAndTime(),
-    )
-  }
+  fun hasActiveApplicationsForDate(nonAssociationPrisonerIds: List<String>, sessionSlotDate: LocalDate, prisonId: Long): Boolean = applicationRepository.hasActiveApplicationsForDate(
+    nonAssociationPrisonerIds,
+    sessionSlotDate,
+    prisonId,
+    getExpiredApplicationDateAndTime(),
+  )
 
   fun hasReservations(prisonerId: String, sessionSlotId: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): Boolean {
     val expiredDateAndTime = getExpiredApplicationDateAndTime()
@@ -470,33 +444,29 @@ class ApplicationService(
     }
   }
 
-  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): List<VisitRestrictionStats> {
-    return if (usernameToExcludeFromReservedApplications == null) {
-      applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
-        id,
-        getExpiredApplicationDateAndTime(),
-        excludedApplicationReference,
-      )
-    } else {
-      applicationRepository.getCountOfReservedSessionForOpenOrClosedRestrictionExcludingUser(
-        id,
-        getExpiredApplicationDateAndTime(),
-        excludedApplicationReference,
-        usernameToExcludeFromReservedApplications,
-      )
-    }
+  fun getCountOfReservedSessionForOpenOrClosedRestriction(id: Long, excludedApplicationReference: String?, usernameToExcludeFromReservedApplications: String?): List<VisitRestrictionStats> = if (usernameToExcludeFromReservedApplications == null) {
+    applicationRepository.getCountOfReservedSessionForOpenOrClosedRestriction(
+      id,
+      getExpiredApplicationDateAndTime(),
+      excludedApplicationReference,
+    )
+  } else {
+    applicationRepository.getCountOfReservedSessionForOpenOrClosedRestrictionExcludingUser(
+      id,
+      getExpiredApplicationDateAndTime(),
+      excludedApplicationReference,
+      usernameToExcludeFromReservedApplications,
+    )
   }
 
   fun getReservedApplicationsCountForSlot(
     sessionSlotId: Long,
     restriction: VisitRestriction,
     excludedApplicationReference: String? = null,
-  ): Long {
-    return if (VisitRestriction.OPEN == restriction) {
-      applicationRepository.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
-    } else {
-      applicationRepository.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
-    }
+  ): Long = if (VisitRestriction.OPEN == restriction) {
+    applicationRepository.getCountOfReservedApplicationsForOpenSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
+  } else {
+    applicationRepository.getCountOfReservedApplicationsForClosedSessionSlot(sessionSlotId, getExpiredApplicationDateAndTime(), excludedApplicationReference = excludedApplicationReference)
   }
 
   fun createApplicationFromMigration(migrateVisitRequest: MigrateVisitRequestDto, applicationFromMigration: Application): Application {

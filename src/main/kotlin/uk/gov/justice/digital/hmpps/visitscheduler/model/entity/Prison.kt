@@ -69,13 +69,9 @@ class Prison(
     return true
   }
 
-  override fun hashCode(): Int {
-    return id.hashCode()
-  }
+  override fun hashCode(): Int = id.hashCode()
 
-  override fun toString(): String {
-    return this::class.simpleName + "(id=$id, code= '$code')"
-  }
+  override fun toString(): String = this::class.simpleName + "(id=$id, code= '$code')"
 
   constructor(dto: PrisonDto) : this(
     code = dto.code,

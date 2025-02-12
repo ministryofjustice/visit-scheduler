@@ -68,9 +68,7 @@ class PrisonerIncentiveGroupsAdminController(
     @Schema(description = "prisonCode", example = "MDI", required = true)
     @PathVariable
     prisonCode: String,
-  ): List<SessionIncentiveLevelGroupDto> {
-    return sessionTemplateService.getSessionIncentiveGroups(prisonCode)
-  }
+  ): List<SessionIncentiveLevelGroupDto> = sessionTemplateService.getSessionIncentiveGroups(prisonCode)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH)
@@ -104,9 +102,7 @@ class PrisonerIncentiveGroupsAdminController(
     @Schema(description = "reference", example = "afe~dcb~fc", required = true)
     @PathVariable
     reference: String,
-  ): SessionIncentiveLevelGroupDto {
-    return sessionTemplateService.getSessionIncentiveGroup(reference)
-  }
+  ): SessionIncentiveLevelGroupDto = sessionTemplateService.getSessionIncentiveGroup(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(INCENTIVE_GROUP_ADMIN_PATH)
@@ -134,9 +130,7 @@ class PrisonerIncentiveGroupsAdminController(
     @RequestBody
     @Valid
     createIncentiveSessionGroup: CreateIncentiveGroupDto,
-  ): SessionIncentiveLevelGroupDto {
-    return sessionTemplateService.createSessionIncentiveGroup(createIncentiveSessionGroup)
-  }
+  ): SessionIncentiveLevelGroupDto = sessionTemplateService.createSessionIncentiveGroup(createIncentiveSessionGroup)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PutMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH)
@@ -171,9 +165,7 @@ class PrisonerIncentiveGroupsAdminController(
     reference: String,
     @RequestBody @Valid
     updateIncentiveSessionGroup: UpdateIncentiveGroupDto,
-  ): SessionIncentiveLevelGroupDto {
-    return sessionTemplateService.updateSessionIncentiveGroup(reference, updateIncentiveSessionGroup)
-  }
+  ): SessionIncentiveLevelGroupDto = sessionTemplateService.updateSessionIncentiveGroup(reference, updateIncentiveSessionGroup)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @DeleteMapping(REFERENCE_INCENTIVE_GROUP_ADMIN_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])

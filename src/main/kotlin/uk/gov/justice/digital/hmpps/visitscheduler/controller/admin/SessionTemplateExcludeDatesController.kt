@@ -137,7 +137,5 @@ class SessionTemplateExcludeDatesController(
     @Schema(description = "session template reference", example = "abc-def-ghi", required = true)
     @PathVariable
     reference: String,
-  ): List<ExcludeDateDto> {
-    return sessionTemplateService.getExcludeDates(reference)
-  }
+  ): List<ExcludeDateDto> = sessionTemplateService.getExcludeDates(reference)
 }

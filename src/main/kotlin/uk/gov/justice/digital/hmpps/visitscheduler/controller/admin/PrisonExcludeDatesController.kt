@@ -139,7 +139,5 @@ class PrisonExcludeDatesController(
     @Schema(description = "prison id", example = "BHI", required = true)
     @PathVariable
     prisonCode: String,
-  ): List<ExcludeDateDto> {
-    return prisonConfigService.getExcludeDates(prisonCode)
-  }
+  ): List<ExcludeDateDto> = prisonConfigService.getExcludeDates(prisonCode)
 }

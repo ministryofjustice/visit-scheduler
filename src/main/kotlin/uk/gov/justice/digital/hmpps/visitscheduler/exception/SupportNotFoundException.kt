@@ -5,7 +5,5 @@ import java.util.function.Supplier
 class SupportNotFoundException(message: String? = null, cause: Throwable? = null) :
   RuntimeException(message, cause),
   Supplier<SupportNotFoundException> {
-  override fun get(): SupportNotFoundException {
-    return SupportNotFoundException(message, cause)
-  }
+  override fun get(): SupportNotFoundException = SupportNotFoundException(message, cause)
 }

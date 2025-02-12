@@ -188,11 +188,9 @@ class SessionService(
     }.map { AvailableVisitSessionDto(it, sessionRestriction) }.toList()
   }
 
-  private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean {
-    return when (sessionRestriction) {
-      SessionRestriction.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
-      SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
-    }
+  private fun hasSessionGotCapacity(session: VisitSessionDto, sessionRestriction: SessionRestriction): Boolean = when (sessionRestriction) {
+    SessionRestriction.CLOSED -> (session.closedVisitCapacity > 0 && (session.closedVisitCapacity > (session.closedVisitBookedCount ?: 0)))
+    SessionRestriction.OPEN -> (session.openVisitCapacity > 0 && (session.openVisitCapacity > (session.openVisitBookedCount ?: 0)))
   }
 
   private fun addConflicts(
@@ -257,13 +255,11 @@ class SessionService(
     return DateRange(requestedBookableStartDate, requestedBookableEndDate)
   }
 
-  private fun getAllSessionTemplatesForDateRange(prisonCode: String, dateRange: DateRange): List<SessionTemplate> {
-    return sessionTemplateRepository.findSessionTemplateMinCapacityBy(
-      prisonCode = prisonCode,
-      rangeStartDate = dateRange.fromDate,
-      rangeEndDate = dateRange.toDate,
-    )
-  }
+  private fun getAllSessionTemplatesForDateRange(prisonCode: String, dateRange: DateRange): List<SessionTemplate> = sessionTemplateRepository.findSessionTemplateMinCapacityBy(
+    prisonCode = prisonCode,
+    rangeStartDate = dateRange.fromDate,
+    rangeEndDate = dateRange.toDate,
+  )
 
   private fun buildVisitSessionsUsingTemplate(
     sessionTemplate: SessionTemplate,
@@ -309,9 +305,7 @@ class SessionService(
     firstBookableSessionDay: LocalDate,
     lastBookableSessionDay: LocalDate,
     sessionTemplate: SessionTemplate,
-  ): Stream<LocalDate> {
-    return sessionDatesUtil.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
-  }
+  ): Stream<LocalDate> = sessionDatesUtil.calculateDates(firstBookableSessionDay, lastBookableSessionDay, sessionTemplate)
 
   private fun getFirstBookableSessionDay(
     bookablePeriodStartDate: LocalDate,
@@ -368,10 +362,8 @@ class SessionService(
   private fun getCountsByVisitRestriction(
     visitRestriction: VisitRestriction,
     visitRestrictionStatsList: List<VisitRestrictionStats>,
-  ): Int {
-    return visitRestrictionStatsList.stream().filter { visitRestriction == it.visitRestriction }
-      .mapToInt(VisitRestrictionStats::count).sum()
-  }
+  ): Int = visitRestrictionStatsList.stream().filter { visitRestriction == it.visitRestriction }
+    .mapToInt(VisitRestrictionStats::count).sum()
 
   private fun getNonAssociationSessions(
     sessions: List<VisitSessionDto>,
@@ -434,9 +426,7 @@ class SessionService(
 
   private fun getNonAssociationPrisonerIds(
     @NotNull prisonerNonAssociationList: List<PrisonerNonAssociationDetailDto>,
-  ): List<String> {
-    return prisonerNonAssociationList.map { it.otherPrisonerDetails.prisonerNumber }
-  }
+  ): List<String> = prisonerNonAssociationList.map { it.otherPrisonerDetails.prisonerNumber }
 
   private fun sessionHasBookingOrApplications(
     sessionSlot: SessionSlot,
@@ -515,45 +505,39 @@ class SessionService(
   private fun filterSessionsTemplatesForDate(
     date: LocalDate,
     sessionTemplates: List<SessionTemplate>,
-  ): List<SessionTemplate> {
-    return sessionTemplates.filter { sessionTemplate ->
-      sessionDatesUtil.isActiveForDate(date, sessionTemplate)
-    }.sortedWith(
-      Comparator.comparing(SessionTemplate::startTime)
-        .thenComparing(SessionTemplate::endTime),
+  ): List<SessionTemplate> = sessionTemplates.filter { sessionTemplate ->
+    sessionDatesUtil.isActiveForDate(date, sessionTemplate)
+  }.sortedWith(
+    Comparator.comparing(SessionTemplate::startTime)
+      .thenComparing(SessionTemplate::endTime),
+  )
+
+  fun getSessionSchedule(prisonCode: String, scheduleDate: LocalDate): List<SessionScheduleDto> = if (prisonsService.isExcludedDate(prisonCode, scheduleDate)) {
+    listOf()
+  } else {
+    var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
+      prisonCode,
+      scheduleDate,
+      scheduleDate.dayOfWeek,
     )
+
+    sessionTemplates = filterSessionsTemplatesForDate(scheduleDate, sessionTemplates)
+    sessionTemplates.map { sessionTemplate -> createSessionScheduleDto(sessionTemplate) }.toList()
   }
 
-  fun getSessionSchedule(prisonCode: String, scheduleDate: LocalDate): List<SessionScheduleDto> {
-    return if (prisonsService.isExcludedDate(prisonCode, scheduleDate)) {
-      listOf()
-    } else {
-      var sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
-        prisonCode,
-        scheduleDate,
-        scheduleDate.dayOfWeek,
-      )
-
-      sessionTemplates = filterSessionsTemplatesForDate(scheduleDate, sessionTemplates)
-      sessionTemplates.map { sessionTemplate -> createSessionScheduleDto(sessionTemplate) }.toList()
-    }
-  }
-
-  private fun createSessionScheduleDto(sessionTemplate: SessionTemplate): SessionScheduleDto {
-    return SessionScheduleDto(
-      sessionTemplateReference = sessionTemplate.reference,
-      sessionTimeSlot = SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
-      capacity = SessionCapacityDto(sessionTemplate),
-      areLocationGroupsInclusive = sessionTemplate.includeLocationGroupType,
-      prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
-      prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
-      prisonerIncentiveLevelGroupNames = sessionTemplate.permittedSessionIncentiveLevelGroups.map { it.name }.toList(),
-      weeklyFrequency = sessionTemplate.weeklyFrequency,
-      visitType = sessionTemplate.visitType,
-      sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
-      visitRoom = sessionTemplate.visitRoom,
-    )
-  }
+  private fun createSessionScheduleDto(sessionTemplate: SessionTemplate): SessionScheduleDto = SessionScheduleDto(
+    sessionTemplateReference = sessionTemplate.reference,
+    sessionTimeSlot = SessionTimeSlotDto(startTime = sessionTemplate.startTime, endTime = sessionTemplate.endTime),
+    capacity = SessionCapacityDto(sessionTemplate),
+    areLocationGroupsInclusive = sessionTemplate.includeLocationGroupType,
+    prisonerLocationGroupNames = sessionTemplate.permittedSessionLocationGroups.map { it.name }.toList(),
+    prisonerCategoryGroupNames = sessionTemplate.permittedSessionCategoryGroups.map { it.name }.toList(),
+    prisonerIncentiveLevelGroupNames = sessionTemplate.permittedSessionIncentiveLevelGroups.map { it.name }.toList(),
+    weeklyFrequency = sessionTemplate.weeklyFrequency,
+    visitType = sessionTemplate.visitType,
+    sessionDateRange = SessionDateRangeDto(validFromDate = sessionTemplate.validFromDate, validToDate = sessionTemplate.validToDate),
+    visitRoom = sessionTemplate.visitRoom,
+  )
 
   private fun adjustDateByDayOfWeek(dayOfWeek: DayOfWeek, startDate: LocalDate): LocalDate {
     if (startDate.dayOfWeek != dayOfWeek) {
