@@ -7,7 +7,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.PRISONS_PATH
@@ -19,7 +19,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 
 @DisplayName("Get $PRISONS_PATH")
 class GetVisitPrisonsTest : IntegrationTestBase() {
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var spyPrisonRepository: PrisonRepository
 
   private val visitRole = listOf("ROLE_VISIT_SCHEDULER")

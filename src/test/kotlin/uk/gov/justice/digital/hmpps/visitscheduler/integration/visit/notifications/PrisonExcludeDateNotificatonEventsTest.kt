@@ -9,8 +9,8 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
@@ -41,7 +41,7 @@ class PrisonExcludeDateNotificatonEventsTest : NotificationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
-  @SpyBean
+  @MockitoSpyBean
   lateinit var visitNotificationEventServiceSpy: VisitNotificationEventService
 
   @Autowired

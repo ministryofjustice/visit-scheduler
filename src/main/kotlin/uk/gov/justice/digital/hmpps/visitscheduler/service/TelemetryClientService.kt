@@ -30,8 +30,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.OverbookedSessionsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.reporting.SessionVisitCountsDto
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
-import uk.gov.justice.digital.hmpps.visitscheduler.task.VisitTask
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -155,8 +153,8 @@ class TelemetryClientService(
     trackEvent(TelemetryVisitEvents.OVERBOOKED_SESSION_REPORT, event)
   }
 
-  fun trackFlaggedVisitEvent(visit: VisitDto, exception: Exception?) {
-    val visitTrackEvent = createFlaggedVisitTrackEvent(visit, exception)
+  fun trackFlaggedVisitEvent(visit: VisitDto, reason: String) {
+    val visitTrackEvent = createFlaggedVisitTrackEvent(visit, reason)
     trackEvent(FLAGGED_VISIT_EVENT, visitTrackEvent)
   }
 
@@ -178,17 +176,6 @@ class TelemetryClientService(
   fun trackRemoveSessionExcludeDateEvent(sessionTemplateReference: String, excludeDateDto: ExcludeDateDto) {
     val visitTrackEvent = createSessionExcludeDateEventData(sessionTemplateReference, excludeDateDto)
     trackEvent(REMOVE_SESSION_EXCLUDE_DATE_EVENT, visitTrackEvent)
-  }
-
-  private fun handleException(visit: VisitDto, visitTrackEvent: MutableMap<String, String>, e: Exception) {
-    visitTrackEvent["hasException"] = "true"
-    if (e is PrisonerNotInSuppliedPrisonException) {
-      visitTrackEvent["hasPrisonerMoved"] = "true"
-      visitTrackEvent["additionalInformation"] = e.message ?: "Prisoner has moved"
-    } else {
-      visitTrackEvent["additionalInformation"] = e.message ?: "An exception occurred"
-    }
-    VisitTask.log.info("Flagged Visit: $e raised for Visit with reference - ${visit.reference} ,prisoner id - ${visit.prisonerId}, prison code - ${visit.prisonCode}, start time - ${visit.startTimestamp}, end time - ${visit.endTimestamp}, error message - ${e.message}")
   }
 
   private fun trackEvent(visitEvent: TelemetryVisitEvents, properties: Map<String, String>) {
@@ -285,7 +272,7 @@ class TelemetryClientService(
     return data
   }
 
-  private fun createFlaggedVisitTrackEvent(visit: VisitDto, exception: Exception?): MutableMap<String, String> {
+  private fun createFlaggedVisitTrackEvent(visit: VisitDto, reason: String): MutableMap<String, String> {
     val flagVisitMap = mutableMapOf(
       "reference" to visit.reference,
       "prisonerId" to visit.prisonerId,
@@ -295,14 +282,12 @@ class TelemetryClientService(
       "visitStart" to formatDateTimeToString(visit.startTimestamp),
       "visitEnd" to formatDateTimeToString(visit.endTimestamp),
       "visitStatus" to visit.visitStatus.name,
+      "reviewType" to "flag-visits-report",
+      "additionalInformation" to reason,
     )
 
     val eventAudit = visitEventAuditService.getLastEventForBooking(visit.reference)
     createEventAuditData(eventAudit, flagVisitMap)
-
-    exception?.let {
-      handleException(visit, flagVisitMap, exception)
-    }
 
     return flagVisitMap
   }

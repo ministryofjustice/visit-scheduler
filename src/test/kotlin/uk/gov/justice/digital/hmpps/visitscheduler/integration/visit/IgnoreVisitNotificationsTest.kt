@@ -10,7 +10,7 @@ import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
@@ -37,10 +37,10 @@ class IgnoreVisitNotificationsTest : IntegrationTestBase() {
     const val USER = "test_user"
   }
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var telemetryClient: TelemetryClient
 
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var visitNotificationEventRepository: VisitNotificationEventRepository
 
   @Test
