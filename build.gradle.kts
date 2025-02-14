@@ -1,5 +1,5 @@
 plugins {
-  id("uk.gov.justice.hmpps.gradle-spring-boot") version "7.1.1"
+  id("uk.gov.justice.hmpps.gradle-spring-boot") version "7.1.2"
   kotlin("plugin.spring") version "2.1.10"
   kotlin("plugin.jpa") version "2.1.10"
   idea
@@ -56,7 +56,7 @@ dependencies {
   testImplementation("io.jsonwebtoken:jjwt:0.12.6")
   testImplementation("org.springframework.security:spring-security-test")
   testImplementation("org.testcontainers:postgresql:1.20.4")
-  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.780")
+  testImplementation("com.amazonaws:aws-java-sdk-s3:1.12.781")
   testImplementation("com.fasterxml.jackson.datatype:jackson-datatype-jsr310:2.18.2")
   testImplementation("org.junit-pioneer:junit-pioneer:2.3.0")
 }
