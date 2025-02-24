@@ -5,7 +5,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventTy
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import java.time.LocalDateTime
 
-@Schema(description = "Contact")
+@Schema(description = "Visit notification event details.")
 data class VisitNotificationEventDto(
   @Schema(description = "Notification Event Type", required = true)
   val type: NotificationEventType,
