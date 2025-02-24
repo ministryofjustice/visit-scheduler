@@ -416,18 +416,16 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     assertFlaggedVisitEvent(base)
   }
 
-  private fun getVisitAssert(visit: Visit, additionalInformation: String): Consumer<Map<String, String>> {
-    return Consumer<Map<String, String>> {
-      assertThat(it["reference"]).isEqualTo(visit.reference)
-      assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-      assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
-      assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
-      assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
-      assertThat(it["visitStart"]).isEqualTo(formatStartSlotDateTimeToString(visit.sessionSlot))
-      assertThat(it["visitEnd"]).isEqualTo(formatSlotEndDateTimeToString(visit.sessionSlot))
-      assertThat(it["reviewType"]).isEqualTo("flag-visits-report")
-      assertThat(it["additionalInformation"]).isEqualTo(additionalInformation)
-    }
+  private fun getVisitAssert(visit: Visit, additionalInformation: String): Consumer<Map<String, String>> = Consumer<Map<String, String>> {
+    assertThat(it["reference"]).isEqualTo(visit.reference)
+    assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
+    assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
+    assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
+    assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
+    assertThat(it["visitStart"]).isEqualTo(formatStartSlotDateTimeToString(visit.sessionSlot))
+    assertThat(it["visitEnd"]).isEqualTo(formatSlotEndDateTimeToString(visit.sessionSlot))
+    assertThat(it["reviewType"]).isEqualTo("flag-visits-report")
+    assertThat(it["additionalInformation"]).isEqualTo(additionalInformation)
   }
 
   private fun assertFlaggedVisitEvent(test: Consumer<Map<String, String>>) {

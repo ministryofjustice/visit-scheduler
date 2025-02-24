@@ -127,7 +127,5 @@ class FlagVisitsTask(
     }
   }
 
-  private fun getVisitNotifications(visitReference: String): List<NotificationEventType> {
-    return visitNotificationEventService.getNotificationsTypesForBookingReference(visitReference)
-  }
+  private fun getVisitNotifications(visitReference: String): List<NotificationEventType> = visitNotificationEventService.getNotificationsTypesForBookingReference(visitReference)
 }
