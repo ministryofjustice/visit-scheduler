@@ -28,28 +28,24 @@ class ApplicationEntityHelper(
 
   companion object {
 
-    fun createApplication(visit: Visit): Application {
-      return Application(
-        prisonerId = visit.prisonerId,
-        prisonId = visit.prisonId,
-        prison = visit.prison,
-        sessionSlotId = visit.sessionSlot.id,
-        sessionSlot = visit.sessionSlot,
-        visitType = visit.visitType,
-        restriction = visit.visitRestriction,
-        createdBy = "",
-        reservedSlot = true,
-        completed = true,
-        userType = STAFF,
-      )
-    }
-  }
-
-  fun create(visit: Visit): Application {
-    return applicationRepo.saveAndFlush(
-      createApplication(visit),
+    fun createApplication(visit: Visit): Application = Application(
+      prisonerId = visit.prisonerId,
+      prisonId = visit.prisonId,
+      prison = visit.prison,
+      sessionSlotId = visit.sessionSlot.id,
+      sessionSlot = visit.sessionSlot,
+      visitType = visit.visitType,
+      restriction = visit.visitRestriction,
+      createdBy = "",
+      reservedSlot = true,
+      completed = true,
+      userType = STAFF,
     )
   }
+
+  fun create(visit: Visit): Application = applicationRepo.saveAndFlush(
+    createApplication(visit),
+  )
 
   fun create(
     prisonerId: String = "testPrisonerId",
@@ -177,7 +173,5 @@ class ApplicationEntityHelper(
       )
   }
 
-  fun save(application: Application): Application {
-    return applicationRepo.saveAndFlush(application)
-  }
+  fun save(application: Application): Application = applicationRepo.saveAndFlush(application)
 }

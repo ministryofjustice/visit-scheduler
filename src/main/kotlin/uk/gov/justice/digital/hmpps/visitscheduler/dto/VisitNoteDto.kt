@@ -27,7 +27,5 @@ class VisitNoteDto(
     return true
   }
 
-  override fun hashCode(): Int {
-    return type.hashCode()
-  }
+  override fun hashCode(): Int = type.hashCode()
 }

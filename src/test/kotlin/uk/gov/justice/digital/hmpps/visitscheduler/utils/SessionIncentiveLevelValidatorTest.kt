@@ -103,11 +103,9 @@ class SessionIncentiveLevelValidatorTest {
     assertThat(result).isFalse()
   }
 
-  private fun createSessionTemplate(): SessionTemplate {
-    return sessionTemplate(
-      validFromDate = LocalDate.now(),
-    )
-  }
+  private fun createSessionTemplate(): SessionTemplate = sessionTemplate(
+    validFromDate = LocalDate.now(),
+  )
 
   private fun createSessionIncentiveLevelGroup(groupName: String = "group 1", incentiveLevels: List<IncentiveLevel>, prison: Prison): SessionIncentiveLevelGroup {
     val group = SessionIncentiveLevelGroup(
@@ -128,11 +126,9 @@ class SessionIncentiveLevelValidatorTest {
   private fun createPermittedSessionIncentiveLevel(
     prisonerIncentiveLevel: IncentiveLevel,
     group: SessionIncentiveLevelGroup,
-  ): SessionPrisonerIncentiveLevel {
-    return SessionPrisonerIncentiveLevel(
-      sessionIncentiveGroupId = group.id,
-      sessionIncentiveLevelGroup = group,
-      prisonerIncentiveLevel = prisonerIncentiveLevel,
-    )
-  }
+  ): SessionPrisonerIncentiveLevel = SessionPrisonerIncentiveLevel(
+    sessionIncentiveGroupId = group.id,
+    sessionIncentiveLevelGroup = group,
+    prisonerIncentiveLevel = prisonerIncentiveLevel,
+  )
 }

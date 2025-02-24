@@ -31,8 +31,7 @@ class PrisonApiClient(
       .uri("/api/offenders/$offenderNo/housing-location")
       .retrieve()
       .bodyToMono(TYPE_FOR_PRISONER_HOUSING_LOCATIONS)
-      .onErrorResume {
-          e ->
+      .onErrorResume { e ->
         if (!isNotFoundError(e)) {
           LOG.error("getPrisonerHousingLocation Failed get request /api/offenders/$offenderNo/housing-location")
           Mono.error(e)
@@ -64,5 +63,4 @@ class PrisonApiClient(
   }
 }
 
-fun isNotFoundError(e: Throwable?) =
-  e is WebClientResponseException && e.statusCode == NOT_FOUND
+fun isNotFoundError(e: Throwable?) = e is WebClientResponseException && e.statusCode == NOT_FOUND

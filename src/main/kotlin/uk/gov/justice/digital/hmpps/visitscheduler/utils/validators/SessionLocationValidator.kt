@@ -18,9 +18,7 @@ class SessionLocationValidator(
   fun isValid(
     sessionTemplate: SessionTemplate,
     prisonerHousingLevels: Map<PrisonerHousingLevels, String?>?,
-  ): Boolean {
-    return isSessionAvailableToPrisonerLocation(prisonerHousingLevels, sessionTemplate)
-  }
+  ): Boolean = isSessionAvailableToPrisonerLocation(prisonerHousingLevels, sessionTemplate)
 
   private fun isSessionAvailableToPrisonerLocation(
     prisonerLevels: Map<PrisonerHousingLevels, String?>?,

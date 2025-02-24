@@ -11,24 +11,22 @@ import java.time.LocalDateTime
 @Component
 class ApplicationDtoBuilder {
 
-  fun build(applicationEntity: Application): ApplicationDto {
-    return ApplicationDto(
-      reference = applicationEntity.reference,
-      prisonerId = applicationEntity.prisonerId,
-      prisonCode = applicationEntity.prison.code,
-      visitType = applicationEntity.visitType,
-      visitRestriction = applicationEntity.restriction,
-      startTimestamp = applicationEntity.sessionSlot.slotStart,
-      endTimestamp = applicationEntity.sessionSlot.slotEnd,
-      visitContact = applicationEntity.visitContact?.let { ContactDto(it) },
-      visitors = applicationEntity.visitors.map { VisitorDto(it) },
-      visitorSupport = applicationEntity.support?.let { VisitorSupportDto(it) },
-      createdTimestamp = applicationEntity.createTimestamp ?: LocalDateTime.now(),
-      modifiedTimestamp = applicationEntity.modifyTimestamp ?: LocalDateTime.now(),
-      sessionTemplateReference = applicationEntity.sessionSlot.sessionTemplateReference,
-      reserved = applicationEntity.reservedSlot,
-      completed = applicationEntity.completed,
-      userType = applicationEntity.userType,
-    )
-  }
+  fun build(applicationEntity: Application): ApplicationDto = ApplicationDto(
+    reference = applicationEntity.reference,
+    prisonerId = applicationEntity.prisonerId,
+    prisonCode = applicationEntity.prison.code,
+    visitType = applicationEntity.visitType,
+    visitRestriction = applicationEntity.restriction,
+    startTimestamp = applicationEntity.sessionSlot.slotStart,
+    endTimestamp = applicationEntity.sessionSlot.slotEnd,
+    visitContact = applicationEntity.visitContact?.let { ContactDto(it) },
+    visitors = applicationEntity.visitors.map { VisitorDto(it) },
+    visitorSupport = applicationEntity.support?.let { VisitorSupportDto(it) },
+    createdTimestamp = applicationEntity.createTimestamp ?: LocalDateTime.now(),
+    modifiedTimestamp = applicationEntity.modifyTimestamp ?: LocalDateTime.now(),
+    sessionTemplateReference = applicationEntity.sessionSlot.sessionTemplateReference,
+    reserved = applicationEntity.reservedSlot,
+    completed = applicationEntity.completed,
+    userType = applicationEntity.userType,
+  )
 }

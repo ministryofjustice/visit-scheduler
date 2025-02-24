@@ -90,9 +90,7 @@ abstract class NotificationTestBase : IntegrationTestBase() {
     Mockito.verifyNoInteractions(*mocks)
   }
 
-  fun getNotificationCountDto(responseSpec: ResponseSpec): NotificationCountDto =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, NotificationCountDto::class.java)
+  fun getNotificationCountDto(responseSpec: ResponseSpec): NotificationCountDto = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, NotificationCountDto::class.java)
 
-  fun getNotificationTypes(responseSpec: ResponseSpec): Array<NotificationEventType> =
-    objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<NotificationEventType>::class.java)
+  fun getNotificationTypes(responseSpec: ResponseSpec): Array<NotificationEventType> = objectMapper.readValue(responseSpec.expectBody().returnResult().responseBody, Array<NotificationEventType>::class.java)
 }

@@ -68,9 +68,7 @@ class LocationGroupAdminController(
     @Schema(description = "prisonCode", example = "MDI", required = true)
     @PathVariable
     prisonCode: String,
-  ): List<SessionLocationGroupDto> {
-    return sessionTemplateService.getSessionLocationGroups(prisonCode)
-  }
+  ): List<SessionLocationGroupDto> = sessionTemplateService.getSessionLocationGroups(prisonCode)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @GetMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH)
@@ -104,9 +102,7 @@ class LocationGroupAdminController(
     @Schema(description = "reference", example = "afe~dcb~fc", required = true)
     @PathVariable
     reference: String,
-  ): SessionLocationGroupDto {
-    return sessionTemplateService.getSessionLocationGroup(reference)
-  }
+  ): SessionLocationGroupDto = sessionTemplateService.getSessionLocationGroup(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @PostMapping(LOCATION_GROUP_ADMIN_PATH)
@@ -142,9 +138,7 @@ class LocationGroupAdminController(
     @RequestBody
     @Valid
     createLocationSessionGroup: CreateLocationGroupDto,
-  ): SessionLocationGroupDto {
-    return sessionTemplateService.createSessionLocationGroup(createLocationSessionGroup)
-  }
+  ): SessionLocationGroupDto = sessionTemplateService.createSessionLocationGroup(createLocationSessionGroup)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER_CONFIG')")
   @DeleteMapping(REFERENCE_LOCATION_GROUP_ADMIN_PATH, produces = [MediaType.APPLICATION_JSON_VALUE])
@@ -228,7 +222,5 @@ class LocationGroupAdminController(
     reference: String,
     @RequestBody @Valid
     updateLocationSessionGroup: UpdateLocationGroupDto,
-  ): SessionLocationGroupDto {
-    return sessionTemplateService.updateSessionLocationGroup(reference, updateLocationSessionGroup)
-  }
+  ): SessionLocationGroupDto = sessionTemplateService.updateSessionLocationGroup(reference, updateLocationSessionGroup)
 }

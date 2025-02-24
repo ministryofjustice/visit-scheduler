@@ -17,7 +17,10 @@ import org.junit.jupiter.api.extension.ExtensionContext
 import org.springframework.http.HttpStatus
 import org.springframework.http.MediaType
 
-class HmppsAuthExtension : BeforeAllCallback, AfterAllCallback, BeforeEachCallback {
+class HmppsAuthExtension :
+  BeforeAllCallback,
+  AfterAllCallback,
+  BeforeEachCallback {
 
   companion object {
     @JvmField
@@ -86,11 +89,9 @@ class HmppsAuthMockServer : WireMockServer(WIREMOCK_PORT) {
   }
 }
 
-fun getJsonString(obj: Any): String {
-  return ObjectMapper()
-    .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
-    .registerModule(JavaTimeModule())
-    .writer()
-    .withDefaultPrettyPrinter()
-    .writeValueAsString(obj)
-}
+fun getJsonString(obj: Any): String = ObjectMapper()
+  .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+  .registerModule(JavaTimeModule())
+  .writer()
+  .withDefaultPrettyPrinter()
+  .writeValueAsString(obj)

@@ -19,9 +19,7 @@ class SessionIncentiveValidator(
   fun isValid(
     sessionTemplate: SessionTemplate,
     prisoner: PrisonerDto?,
-  ): Boolean {
-    return isSessionAvailableToIncentiveLevel(prisoner?.incentiveLevel, sessionTemplate)
-  }
+  ): Boolean = isSessionAvailableToIncentiveLevel(prisoner?.incentiveLevel, sessionTemplate)
 
   private fun isSessionAvailableToIncentiveLevel(
     prisonerIncentiveLevel: IncentiveLevel?,

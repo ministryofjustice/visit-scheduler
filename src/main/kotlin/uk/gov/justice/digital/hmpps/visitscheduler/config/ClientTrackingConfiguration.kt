@@ -48,12 +48,8 @@ class ClientTrackingInterceptor : HandlerInterceptor {
     return true
   }
 
-  fun getCurrentSpan(): Span {
-    return Span.current()
-  }
+  fun getCurrentSpan(): Span = Span.current()
 
   @Throws(ParseException::class)
-  private fun getClaimsFromJWT(token: String): JWTClaimsSet {
-    return SignedJWT.parse(token.replace("Bearer ", "")).jwtClaimsSet
-  }
+  private fun getClaimsFromJWT(token: String): JWTClaimsSet = SignedJWT.parse(token.replace("Bearer ", "")).jwtClaimsSet
 }

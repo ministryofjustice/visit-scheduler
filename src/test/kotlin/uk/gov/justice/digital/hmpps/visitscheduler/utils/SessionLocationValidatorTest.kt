@@ -506,11 +506,9 @@ class SessionLocationValidatorTest {
     }
   }
 
-  private fun createSessionTemplate(): SessionTemplate {
-    return sessionTemplate(
-      validFromDate = LocalDate.now(),
-    )
-  }
+  private fun createSessionTemplate(): SessionTemplate = sessionTemplate(
+    validFromDate = LocalDate.now(),
+  )
 
   private fun createSessionLocationGroup(groupName: String = "group 1", levelsList: List<AllowedSessionLocationHierarchy>, prison: Prison): SessionLocationGroup {
     val group = SessionLocationGroup(
@@ -531,14 +529,12 @@ class SessionLocationValidatorTest {
   private fun createPermittedSessionLocation(
     allowedSessionLocationHierarchy: AllowedSessionLocationHierarchy,
     group: SessionLocationGroup,
-  ): PermittedSessionLocation {
-    return PermittedSessionLocation(
-      groupId = group.id,
-      sessionLocationGroup = group,
-      levelOneCode = allowedSessionLocationHierarchy.levelOneCode,
-      levelTwoCode = allowedSessionLocationHierarchy.levelTwoCode,
-      levelThreeCode = allowedSessionLocationHierarchy.levelThreeCode,
-      levelFourCode = allowedSessionLocationHierarchy.levelFourCode,
-    )
-  }
+  ): PermittedSessionLocation = PermittedSessionLocation(
+    groupId = group.id,
+    sessionLocationGroup = group,
+    levelOneCode = allowedSessionLocationHierarchy.levelOneCode,
+    levelTwoCode = allowedSessionLocationHierarchy.levelTwoCode,
+    levelThreeCode = allowedSessionLocationHierarchy.levelThreeCode,
+    levelFourCode = allowedSessionLocationHierarchy.levelFourCode,
+  )
 }

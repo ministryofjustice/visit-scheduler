@@ -7,7 +7,5 @@ class MigrateVisitInFutureException(message: String? = null, cause: Throwable? =
   ValidationException(message, cause),
   Supplier<MigrateVisitInFutureException> {
 
-  override fun get(): MigrateVisitInFutureException {
-    return MigrateVisitInFutureException(message, cause)
-  }
+  override fun get(): MigrateVisitInFutureException = MigrateVisitInFutureException(message, cause)
 }

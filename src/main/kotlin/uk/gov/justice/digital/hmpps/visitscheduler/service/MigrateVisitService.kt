@@ -238,9 +238,7 @@ class MigrateVisitService(
     return visitEntity
   }
 
-  private fun isVisitTooFarInTheFuture(visitDate: LocalDateTime): Boolean {
-    return (visitDate.toLocalDate() > LocalDate.now().plusMonths(migrateMaxMonthsInFuture))
-  }
+  private fun isVisitTooFarInTheFuture(visitDate: LocalDateTime): Boolean = (visitDate.toLocalDate() > LocalDate.now().plusMonths(migrateMaxMonthsInFuture))
 
   private fun shouldMigrateWithSessionMapping(migrateVisitRequest: MigrateVisitRequestDto): Boolean {
     val startDate = LocalDate.now().plusDays(migrateSessionTemplateMappingOffsetDays)
@@ -292,20 +290,18 @@ class MigrateVisitService(
     )
   }
 
-  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): MutableMap<String, String> {
-    return mutableMapOf(
-      "reference" to visitEntity.reference,
-      "prisonerId" to visitEntity.prisonerId,
-      "prisonId" to visitEntity.prison.code,
-      "visitType" to visitEntity.visitType.name,
-      "visitRoom" to visitEntity.visitRoom,
-      "sessionTemplateReference" to (visitEntity.sessionSlot.sessionTemplateReference ?: ""),
-      "visitRestriction" to visitEntity.visitRestriction.name,
-      "visitStart" to sessionSlotService.getSessionTimeAndDateString(visitEntity.sessionSlot.slotStart),
-      "visitStatus" to visitEntity.visitStatus.name,
-      "applicationReference" to (visitEntity.getLastCompletedApplication()?.reference ?: ""),
-    )
-  }
+  private fun createVisitTrackEventFromVisitEntity(visitEntity: Visit): MutableMap<String, String> = mutableMapOf(
+    "reference" to visitEntity.reference,
+    "prisonerId" to visitEntity.prisonerId,
+    "prisonId" to visitEntity.prison.code,
+    "visitType" to visitEntity.visitType.name,
+    "visitRoom" to visitEntity.visitRoom,
+    "sessionTemplateReference" to (visitEntity.sessionSlot.sessionTemplateReference ?: ""),
+    "visitRestriction" to visitEntity.visitRestriction.name,
+    "visitStart" to sessionSlotService.getSessionTimeAndDateString(visitEntity.sessionSlot.slotStart),
+    "visitStatus" to visitEntity.visitStatus.name,
+    "applicationReference" to (visitEntity.getLastCompletedApplication()?.reference ?: ""),
+  )
 
   private fun trackEvent(eventName: String, properties: Map<String, String>) {
     try {
@@ -315,14 +311,12 @@ class MigrateVisitService(
     }
   }
 
-  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote {
-    return VisitNote(
-      visitId = visit.id,
-      type = type,
-      text = text,
-      visit = visit,
-    )
-  }
+  private fun createVisitNote(visit: Visit, type: VisitNoteType, text: String): VisitNote = VisitNote(
+    visitId = visit.id,
+    type = type,
+    text = text,
+    visit = visit,
+  )
 
   private fun saveLegacyData(visit: Visit, migrateVisitRequestDto: MigrateVisitRequestDto) {
     val legacyData = LegacyData(
@@ -333,22 +327,18 @@ class MigrateVisitService(
     legacyDataRepository.saveAndFlush(legacyData)
   }
 
-  private fun createVisitContact(visit: Visit, name: String, telephone: String?): VisitContact {
-    return VisitContact(
-      visitId = visit.id,
-      name = name,
-      telephone = telephone,
-      visit = visit,
-      email = null,
-    )
-  }
+  private fun createVisitContact(visit: Visit, name: String, telephone: String?): VisitContact = VisitContact(
+    visitId = visit.id,
+    name = name,
+    telephone = telephone,
+    visit = visit,
+    email = null,
+  )
 
-  private fun createVisitVisitor(visit: Visit, personId: Long): VisitVisitor {
-    return VisitVisitor(
-      nomisPersonId = personId,
-      visitId = visit.id,
-      visit = visit,
-      visitContact = null,
-    )
-  }
+  private fun createVisitVisitor(visit: Visit, personId: Long): VisitVisitor = VisitVisitor(
+    nomisPersonId = personId,
+    visitId = visit.id,
+    visit = visit,
+    visitContact = null,
+  )
 }

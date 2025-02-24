@@ -9,7 +9,9 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 
 @Repository
-interface SessionSlotRepository : JpaRepository<SessionSlot, Long>, JpaSpecificationExecutor<SessionSlot> {
+interface SessionSlotRepository :
+  JpaRepository<SessionSlot, Long>,
+  JpaSpecificationExecutor<SessionSlot> {
 
   @Query(
     "SELECT s FROM SessionSlot s " +

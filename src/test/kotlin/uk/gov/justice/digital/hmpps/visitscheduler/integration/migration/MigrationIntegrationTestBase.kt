@@ -86,16 +86,14 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     visitRoom: String = migrateVisitRequestDto.visitRoom,
     startTime: LocalTime? = null,
     endTime: LocalTime? = null,
-  ): SessionTemplate {
-    return sessionTemplateEntityHelper.create(
-      validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1),
-      prisonCode = migrateVisitRequestDto.prisonCode,
-      dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek,
-      visitRoom = visitRoom,
-      startTime = startTime?.let { startTime } ?: migrateVisitRequestDto.startTimestamp.toLocalTime(),
-      endTime = endTime?.let { endTime } ?: migrateVisitRequestDto.endTimestamp.toLocalTime(),
-    )
-  }
+  ): SessionTemplate = sessionTemplateEntityHelper.create(
+    validFromDate = migrateVisitRequestDto.startTimestamp.toLocalDate().minusDays(1),
+    prisonCode = migrateVisitRequestDto.prisonCode,
+    dayOfWeek = migrateVisitRequestDto.startTimestamp.dayOfWeek,
+    visitRoom = visitRoom,
+    startTime = startTime?.let { startTime } ?: migrateVisitRequestDto.startTimestamp.toLocalTime(),
+    endTime = endTime?.let { endTime } ?: migrateVisitRequestDto.endTimestamp.toLocalTime(),
+  )
 
   protected fun createMigrateVisitRequestDto(
     visitStatus: VisitStatus = BOOKED,
@@ -171,27 +169,23 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     return reference
   }
 
-  protected fun callMigrateVisit(jsonString: String): ResponseSpec {
-    return webTestClient.post().uri(TEST_END_POINT)
-      .headers(roleVisitSchedulerHttpHeaders)
-      .contentType(MediaType.APPLICATION_JSON)
-      .body(
-        BodyInserters.fromValue(
-          jsonString,
-        ),
-      )
-      .exchange()
-  }
+  protected fun callMigrateVisit(jsonString: String): ResponseSpec = webTestClient.post().uri(TEST_END_POINT)
+    .headers(roleVisitSchedulerHttpHeaders)
+    .contentType(MediaType.APPLICATION_JSON)
+    .body(
+      BodyInserters.fromValue(
+        jsonString,
+      ),
+    )
+    .exchange()
 
   protected fun callMigrateVisit(
     authHttpHeaders: (HttpHeaders) -> Unit,
     migrateVisitRequestDto: MigrateVisitRequestDto,
-  ): ResponseSpec {
-    return webTestClient.post().uri(TEST_END_POINT)
-      .headers(authHttpHeaders)
-      .body(BodyInserters.fromValue(migrateVisitRequestDto))
-      .exchange()
-  }
+  ): ResponseSpec = webTestClient.post().uri(TEST_END_POINT)
+    .headers(authHttpHeaders)
+    .body(BodyInserters.fromValue(migrateVisitRequestDto))
+    .exchange()
 
   protected fun assertTelemetryClientEvents(
     visit: Visit,
@@ -288,9 +282,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     name: String? = "Group A",
     prisonCode: String = "MDI",
     vararg category: PrisonerCategoryType,
-  ): MutableList<SessionCategoryGroup> {
-    return mutableListOf(sessionPrisonerCategoryHelper.create(name = name, prisonCode = prisonCode, category.asList()))
-  }
+  ): MutableList<SessionCategoryGroup> = mutableListOf(sessionPrisonerCategoryHelper.create(name = name, prisonCode = prisonCode, category.asList()))
 
   protected fun createSessionLocationGroup(housingLocation: String): MutableList<SessionLocationGroup> {
     val delimiter = "-"

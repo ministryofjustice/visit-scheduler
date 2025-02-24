@@ -41,7 +41,5 @@ class SessionSlot(
     }
   }
 
-  override fun toString(): String {
-    return "SessionSlot(id=$id,reference='$reference')"
-  }
+  override fun toString(): String = "SessionSlot(id=$id,reference='$reference')"
 }

@@ -49,9 +49,7 @@ class PrisonerService(
     return false
   }
 
-  fun getPrisonerHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? {
-    return prisonApiClient.getPrisonerHousingLocation(prisonerId)
-  }
+  fun getPrisonerHousingLocation(prisonerId: String, prisonCode: String): PrisonerHousingLocationsDto? = prisonApiClient.getPrisonerHousingLocation(prisonerId)
 
   fun getLevelsMapForPrisoner(prisonerHousingLocation: PrisonerHousingLocationsDto, sessionTemplates: List<SessionTemplate>?): Map<PrisonerHousingLevels, String?> {
     with(prisonerHousingLocation) {
@@ -102,9 +100,7 @@ class PrisonerService(
     return prisonerHousingLocationForTransitionalPrisoners.toList()
   }
 
-  private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: PrisonerHousingLevels): PrisonerHousingLevelDto? {
-    return levels.stream().filter { level -> level.level == housingLevel.level }.findFirst().orElse(null)
-  }
+  private fun getHousingLevelByLevelNumber(levels: List<PrisonerHousingLevelDto>, housingLevel: PrisonerHousingLevels): PrisonerHousingLevelDto? = levels.stream().filter { level -> level.level == housingLevel.level }.findFirst().orElse(null)
 
   fun getPrisoner(prisonerId: String): PrisonerDto? {
     val prisonerSearchResultDto = prisonerOffenderSearchClient.getPrisoner(prisonerId)
@@ -124,13 +120,9 @@ class PrisonerService(
     }
   }
 
-  fun isPrisonerInTemporaryLocation(levels: List<PrisonerHousingLevelDto>): Boolean {
-    return (levels.isNotEmpty() && TransitionalLocationTypes.contains(levels[0].code))
-  }
+  fun isPrisonerInTemporaryLocation(levels: List<PrisonerHousingLevelDto>): Boolean = (levels.isNotEmpty() && TransitionalLocationTypes.contains(levels[0].code))
 
-  fun hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates: List<SessionTemplate>, prisonersTransitionalLocation: String): Boolean {
-    return sessionTemplates.asSequence().filter { it.includeLocationGroupType }.map { it.permittedSessionLocationGroups }.flatten().map { it.sessionLocations }.flatten().any { it.levelOneCode == prisonersTransitionalLocation }
-  }
+  fun hasPrisonGotSessionsWithPrisonersTransitionalLocation(sessionTemplates: List<SessionTemplate>, prisonersTransitionalLocation: String): Boolean = sessionTemplates.asSequence().filter { it.includeLocationGroupType }.map { it.permittedSessionLocationGroups }.flatten().map { it.sessionLocations }.flatten().any { it.levelOneCode == prisonersTransitionalLocation }
 
   fun getPrisonerPrisonCode(prisonerCode: String): String? {
     try {

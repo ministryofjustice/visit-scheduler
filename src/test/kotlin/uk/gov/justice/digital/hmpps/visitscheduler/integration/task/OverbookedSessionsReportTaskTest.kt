@@ -46,16 +46,14 @@ class OverbookedSessionsReportTaskTest : IntegrationTestBase() {
   lateinit var sessionTemplate6: SessionTemplate
   lateinit var sessionTemplate7: SessionTemplate
 
-  private fun getSessionTemplate(dayOfWeek: DayOfWeek): SessionTemplate {
-    return sessionTemplateEntityHelper.create(
-      prison = prison1,
-      validFromDate = LocalDate.now().minusDays(28).with(TemporalAdjusters.next(DayOfWeek.MONDAY)),
-      validToDate = null,
-      dayOfWeek = dayOfWeek,
-      openCapacity = 1,
-      closedCapacity = 1,
-    )
-  }
+  private fun getSessionTemplate(dayOfWeek: DayOfWeek): SessionTemplate = sessionTemplateEntityHelper.create(
+    prison = prison1,
+    validFromDate = LocalDate.now().minusDays(28).with(TemporalAdjusters.next(DayOfWeek.MONDAY)),
+    validToDate = null,
+    dayOfWeek = dayOfWeek,
+    openCapacity = 1,
+    closedCapacity = 1,
+  )
 
   private fun createVisit(sessionTemplate: SessionTemplate, slotDate: LocalDate? = null, visitRestriction: VisitRestriction = OPEN) {
     visitEntityHelper.create(
@@ -67,12 +65,10 @@ class OverbookedSessionsReportTaskTest : IntegrationTestBase() {
     )
   }
 
-  private fun getNextSlotDate(sessionTemplate: SessionTemplate): LocalDate {
-    return if (LocalDate.now().dayOfWeek == sessionTemplate.dayOfWeek) {
-      LocalDate.now()
-    } else {
-      LocalDate.now().with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
-    }
+  private fun getNextSlotDate(sessionTemplate: SessionTemplate): LocalDate = if (LocalDate.now().dayOfWeek == sessionTemplate.dayOfWeek) {
+    LocalDate.now()
+  } else {
+    LocalDate.now().with(TemporalAdjusters.next(sessionTemplate.dayOfWeek))
   }
 
   @BeforeEach

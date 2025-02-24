@@ -26,13 +26,11 @@ class ReportingTask(
     lockAtLeastFor = ReportingTaskConfiguration.LOCK_AT_LEAST_FOR,
     lockAtMostFor = ReportingTaskConfiguration.LOCK_AT_MOST_FOR,
   )
-  fun getVisitCountsReportByDay(): Map<LocalDate, List<SessionVisitCountsDto>> {
-    return if (!reportingTaskConfiguration.visitCountsReportingEnabled) {
-      LOG.info("Reporting task for visit counts not enabled")
-      emptyMap()
-    } else {
-      visitReportingService.getVisitCountsReportByDay()
-    }
+  fun getVisitCountsReportByDay(): Map<LocalDate, List<SessionVisitCountsDto>> = if (!reportingTaskConfiguration.visitCountsReportingEnabled) {
+    LOG.info("Reporting task for visit counts not enabled")
+    emptyMap()
+  } else {
+    visitReportingService.getVisitCountsReportByDay()
   }
 
   @Scheduled(cron = "\${task.overbooked-sessions-report.cron:0 30 1 * * ?}")
@@ -41,12 +39,10 @@ class ReportingTask(
     lockAtLeastFor = ReportingTaskConfiguration.LOCK_AT_LEAST_FOR,
     lockAtMostFor = ReportingTaskConfiguration.LOCK_AT_MOST_FOR,
   )
-  fun reportOverbookedSessions(): List<OverbookedSessionsDto> {
-    return if (!reportingTaskConfiguration.overbookedSessionsReportingEnabled) {
-      LOG.info("Reporting task for overbooked sessions not enabled")
-      emptyList()
-    } else {
-      visitReportingService.getOverbookedSessions(fromDate = LocalDate.now())
-    }
+  fun reportOverbookedSessions(): List<OverbookedSessionsDto> = if (!reportingTaskConfiguration.overbookedSessionsReportingEnabled) {
+    LOG.info("Reporting task for overbooked sessions not enabled")
+    emptyList()
+  } else {
+    visitReportingService.getOverbookedSessions(fromDate = LocalDate.now())
   }
 }

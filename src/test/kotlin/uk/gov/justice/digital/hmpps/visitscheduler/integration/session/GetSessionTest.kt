@@ -123,13 +123,9 @@ class GetSessionTest : IntegrationTestBase() {
     prisonCode: String,
     sessionDate: LocalDate,
     sessionTemplateReference: String,
-  ): ResponseSpec {
-    return webTestClient.get().uri("$GET_VISIT_SESSION?prisonCode=$prisonCode&sessionDate=$sessionDate&sessionTemplateReference=$sessionTemplateReference")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
-  }
+  ): ResponseSpec = webTestClient.get().uri("$GET_VISIT_SESSION?prisonCode=$prisonCode&sessionDate=$sessionDate&sessionTemplateReference=$sessionTemplateReference")
+    .headers(setAuthorisation(roles = requiredRole))
+    .exchange()
 
-  private fun getResults(returnResult: BodyContentSpec): VisitSessionDto {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, VisitSessionDto::class.java)
-  }
+  private fun getResults(returnResult: BodyContentSpec): VisitSessionDto = objectMapper.readValue(returnResult.returnResult().responseBody, VisitSessionDto::class.java)
 }

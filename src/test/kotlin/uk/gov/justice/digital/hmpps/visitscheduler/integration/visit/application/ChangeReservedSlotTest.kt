@@ -575,19 +575,13 @@ class ChangeReservedSlotTest : IntegrationTestBase() {
     verify(telemetryClient, times(1)).trackEvent(eq("application-slot-changed"), any(), isNull())
   }
 
-  private fun getResult(responseSpec: ResponseSpec): EntityExchangeResult<ByteArray> {
-    return responseSpec.expectStatus().isOk
-      .expectBody()
-      .returnResult()
-  }
+  private fun getResult(responseSpec: ResponseSpec): EntityExchangeResult<ByteArray> = responseSpec.expectStatus().isOk
+    .expectBody()
+    .returnResult()
 
-  private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto {
-    return objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
-  }
+  private fun getApplicationDto(returnResult: EntityExchangeResult<ByteArray>): ApplicationDto = objectMapper.readValue(returnResult.responseBody, ApplicationDto::class.java)
 
-  private fun getApplication(dto: ApplicationDto): Application? {
-    return testApplicationRepository.findByReference(dto.reference)
-  }
+  private fun getApplication(dto: ApplicationDto): Application? = testApplicationRepository.findByReference(dto.reference)
 
   private fun assertApplicationDetails(
     originalApplication: Application,

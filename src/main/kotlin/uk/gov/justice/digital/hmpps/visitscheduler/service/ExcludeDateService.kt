@@ -51,15 +51,11 @@ class ExcludeDateService(
     removeSessionTemplateExcludeDate(sessionTemplate, excludeDateDto)
   }
 
-  fun getExcludeDates(excludeDates: List<IExcludeDate>): List<ExcludeDateDto> {
-    return excludeDates.map {
-      ExcludeDateDto(it.excludeDate, it.actionedBy)
-    }.sortedByDescending { it.excludeDate }
-  }
+  fun getExcludeDates(excludeDates: List<IExcludeDate>): List<ExcludeDateDto> = excludeDates.map {
+    ExcludeDateDto(it.excludeDate, it.actionedBy)
+  }.sortedByDescending { it.excludeDate }
 
-  fun getPrisonExcludeDates(prisonCode: String): List<PrisonExcludeDate> {
-    return prisonExcludeDateRepository.getExcludeDatesByPrisonCode(prisonCode)
-  }
+  fun getPrisonExcludeDates(prisonCode: String): List<PrisonExcludeDate> = prisonExcludeDateRepository.getExcludeDatesByPrisonCode(prisonCode)
 
   private fun addPrisonExcludeDate(prison: Prison, excludeDateDto: ExcludeDateDto) {
     with(excludeDateDto) {
@@ -148,38 +144,26 @@ class ExcludeDateService(
     }
   }
 
-  private fun getPastExcludeDateMessage(excludeDateEntity: ExcludeDateEntity, code: String, excludeDate: LocalDate): String? {
-    return when (excludeDateEntity) {
-      ExcludeDateEntity.PRISON -> messageService.getMessage("validation.add.prison.excludedate.inpast", excludeDate.toString(), code)
-      ExcludeDateEntity.SESSION_TEMPLATE -> messageService.getMessage("validation.add.session.excludedate.inpast", excludeDate.toString(), code)
-    }
+  private fun getPastExcludeDateMessage(excludeDateEntity: ExcludeDateEntity, code: String, excludeDate: LocalDate): String? = when (excludeDateEntity) {
+    ExcludeDateEntity.PRISON -> messageService.getMessage("validation.add.prison.excludedate.inpast", excludeDate.toString(), code)
+    ExcludeDateEntity.SESSION_TEMPLATE -> messageService.getMessage("validation.add.session.excludedate.inpast", excludeDate.toString(), code)
   }
 
-  private fun alreadyAddedExcludeDateMessage(excludeDateEntity: ExcludeDateEntity, code: String, excludeDate: LocalDate): String? {
-    return when (excludeDateEntity) {
-      ExcludeDateEntity.PRISON -> messageService.getMessage("validation.add.prison.excludedate.alreadyexists", excludeDate.toString(), code)
-      ExcludeDateEntity.SESSION_TEMPLATE -> messageService.getMessage("validation.add.session.excludedate.alreadyexists", excludeDate.toString(), code)
-    }
+  private fun alreadyAddedExcludeDateMessage(excludeDateEntity: ExcludeDateEntity, code: String, excludeDate: LocalDate): String? = when (excludeDateEntity) {
+    ExcludeDateEntity.PRISON -> messageService.getMessage("validation.add.prison.excludedate.alreadyexists", excludeDate.toString(), code)
+    ExcludeDateEntity.SESSION_TEMPLATE -> messageService.getMessage("validation.add.session.excludedate.alreadyexists", excludeDate.toString(), code)
   }
 
-  private fun nonExistentExcludeDateMessage(excludeDateEntity: ExcludeDateEntity, code: String, excludeDate: LocalDate): String? {
-    return when (excludeDateEntity) {
-      ExcludeDateEntity.PRISON -> messageService.getMessage("validation.remove.prison.excludedate.doesnotexist", excludeDate.toString(), code)
-      ExcludeDateEntity.SESSION_TEMPLATE -> messageService.getMessage("validation.remove.session.excludedate.doesnotexist", excludeDate.toString(), code)
-    }
+  private fun nonExistentExcludeDateMessage(excludeDateEntity: ExcludeDateEntity, code: String, excludeDate: LocalDate): String? = when (excludeDateEntity) {
+    ExcludeDateEntity.PRISON -> messageService.getMessage("validation.remove.prison.excludedate.doesnotexist", excludeDate.toString(), code)
+    ExcludeDateEntity.SESSION_TEMPLATE -> messageService.getMessage("validation.remove.session.excludedate.doesnotexist", excludeDate.toString(), code)
   }
 
-  private fun getExistingExcludeDates(prison: Prison): Set<LocalDate> {
-    return prison.excludeDates.stream().map { it.excludeDate }.collect(Collectors.toSet())
-  }
+  private fun getExistingExcludeDates(prison: Prison): Set<LocalDate> = prison.excludeDates.stream().map { it.excludeDate }.collect(Collectors.toSet())
 
-  private fun getExistingExcludeDates(sessionTemplate: SessionTemplate): Set<LocalDate> {
-    return sessionTemplate.excludeDates.stream().map { it.excludeDate }.collect(Collectors.toSet())
-  }
+  private fun getExistingExcludeDates(sessionTemplate: SessionTemplate): Set<LocalDate> = sessionTemplate.excludeDates.stream().map { it.excludeDate }.collect(Collectors.toSet())
 
-  private fun isExcludeDateInPast(excludeDate: LocalDate): Boolean {
-    return (excludeDate < LocalDate.now())
-  }
+  private fun isExcludeDateInPast(excludeDate: LocalDate): Boolean = (excludeDate < LocalDate.now())
 }
 
 private enum class ExcludeDateEntity(val desc: String) {

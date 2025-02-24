@@ -9,7 +9,9 @@ import org.springframework.stereotype.Repository
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 
 @Repository
-interface TestVisitRepository : JpaRepository<Visit, Long>, JpaSpecificationExecutor<Visit> {
+interface TestVisitRepository :
+  JpaRepository<Visit, Long>,
+  JpaSpecificationExecutor<Visit> {
 
   fun findByReference(reference: String): Visit
 

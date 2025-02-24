@@ -337,7 +337,5 @@ class PrisonExcludeDatesTest : IntegrationTestBase() {
     verify(telemetryClient, times(0)).trackEvent(eq("remove-exclude-date"), any(), isNull())
   }
 
-  private fun getPrisonExcludeDates(returnResult: BodyContentSpec): Array<ExcludeDateDto> {
-    return objectMapper.readValue(returnResult.returnResult().responseBody, Array<ExcludeDateDto>::class.java)
-  }
+  private fun getPrisonExcludeDates(returnResult: BodyContentSpec): Array<ExcludeDateDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<ExcludeDateDto>::class.java)
 }

@@ -45,8 +45,7 @@ class SnsService(
   private val domaineventsTopic by lazy { hmppsQueueService.findByTopicId(TOPIC_ID) ?: throw RuntimeException("Topic with name $TOPIC_ID doesn't exist") }
   private val domaineventsTopicClient by lazy { domaineventsTopic.snsClient }
 
-  fun LocalDateTime.toOffsetDateFormat(): String =
-    atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+  fun LocalDateTime.toOffsetDateFormat(): String = atZone(ZoneId.of(EVENT_ZONE_ID)).toOffsetDateTime().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME)
 
   fun sendVisitBookedEvent(visit: SnsDomainEventPublishDto) {
     publishToDomainEventsTopic(
@@ -145,7 +144,5 @@ internal data class HMPPSDomainEvent(
 class PublishEventException(message: String? = null, cause: Throwable? = null) :
   RuntimeException(message, cause),
   Supplier<PublishEventException> {
-  override fun get(): PublishEventException {
-    return PublishEventException(message, cause)
-  }
+  override fun get(): PublishEventException = PublishEventException(message, cause)
 }

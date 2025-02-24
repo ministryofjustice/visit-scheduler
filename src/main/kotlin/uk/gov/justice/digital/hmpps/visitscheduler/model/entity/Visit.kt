@@ -108,21 +108,13 @@ class Visit(
     }
   }
 
-  override fun toString(): String {
-    return "Visit(id=$id,reference='$reference')"
-  }
+  override fun toString(): String = "Visit(id=$id,reference='$reference')"
 
-  fun getApplications(): List<Application> {
-    return this.applications
-  }
+  fun getApplications(): List<Application> = this.applications
 
-  fun getLastApplication(): Application? {
-    return this.applications.lastOrNull()
-  }
+  fun getLastApplication(): Application? = this.applications.lastOrNull()
 
-  fun getLastCompletedApplication(): Application? {
-    return this.applications.lastOrNull { it.completed }
-  }
+  fun getLastCompletedApplication(): Application? = this.applications.lastOrNull { it.completed }
 
   fun addApplication(application: Application) {
     applications.add(application)

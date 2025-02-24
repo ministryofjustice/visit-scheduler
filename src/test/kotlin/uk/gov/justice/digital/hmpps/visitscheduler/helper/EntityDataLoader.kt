@@ -88,9 +88,7 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
-    ): Prison {
-      return Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
-    }
+    ): Prison = Prison(code = prisonCode, active = activePrison, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
 
     fun createPrisonDto(
       prisonCode: String = "AWE",
@@ -102,19 +100,17 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 3,
       maxChildVisitors: Int = 3,
       adultAgeYears: Int = 18,
-    ): PrisonDto {
-      return PrisonDto(
-        code = prisonCode,
-        active = activePrison,
-        policyNoticeDaysMin = policyNoticeDaysMin,
-        policyNoticeDaysMax = policyNoticeDaysMax,
-        maxTotalVisitors = maxTotalVisitors,
-        maxAdultVisitors = maxAdultVisitors,
-        maxChildVisitors = maxChildVisitors,
-        adultAgeYears = adultAgeYears,
-        clients = clients,
-      )
-    }
+    ): PrisonDto = PrisonDto(
+      code = prisonCode,
+      active = activePrison,
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
+      maxTotalVisitors = maxTotalVisitors,
+      maxAdultVisitors = maxAdultVisitors,
+      maxChildVisitors = maxChildVisitors,
+      adultAgeYears = adultAgeYears,
+      clients = clients,
+    )
 
     fun updatePrisonDto(
       policyNoticeDaysMin: Int = 10,
@@ -123,9 +119,7 @@ class PrisonEntityHelper(
       maxAdultVisitors: Int = 2,
       maxChildVisitors: Int = 2,
       adultAgeYears: Int = 16,
-    ): UpdatePrisonDto {
-      return UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
-    }
+    ): UpdatePrisonDto = UpdatePrisonDto(policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
   }
 
   @Transactional(propagation = REQUIRES_NEW)
@@ -418,13 +412,9 @@ class VisitEntityHelper(
     )
   }
 
-  fun save(visit: Visit): Visit {
-    return visitRepository.saveAndFlush(visit)
-  }
+  fun save(visit: Visit): Visit = visitRepository.saveAndFlush(visit)
 
-  fun getBookedVisit(reference: String): Visit? {
-    return visitRepository.findBookedVisit(reference)
-  }
+  fun getBookedVisit(reference: String): Visit? = visitRepository.findBookedVisit(reference)
 }
 
 @Component
@@ -470,17 +460,15 @@ class EventAuditEntityHelper(
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = BOOKED_VISIT,
     text: String? = null,
-  ): EventAudit {
-    return create(
-      reference = visit.reference,
-      applicationReference = visit.getLastApplication()?.reference ?: "",
-      sessionTemplateReference = visit.sessionSlot.sessionTemplateReference,
-      actionedByValue = actionedByValue,
-      type = type,
-      applicationMethodType = applicationMethodType,
-      text = text,
-    )
-  }
+  ): EventAudit = create(
+    reference = visit.reference,
+    applicationReference = visit.getLastApplication()?.reference ?: "",
+    sessionTemplateReference = visit.sessionSlot.sessionTemplateReference,
+    actionedByValue = actionedByValue,
+    type = type,
+    applicationMethodType = applicationMethodType,
+    text = text,
+  )
 
   fun create(
     application: Application,
@@ -488,16 +476,14 @@ class EventAuditEntityHelper(
     applicationMethodType: ApplicationMethodType = ApplicationMethodType.PHONE,
     type: EventAuditType = BOOKED_VISIT,
     text: String? = null,
-  ): EventAudit {
-    return create(
-      applicationReference = application.reference,
-      sessionTemplateReference = application.sessionSlot.sessionTemplateReference,
-      actionedByValue = actionedByValue,
-      type = type,
-      applicationMethodType = applicationMethodType,
-      text = text,
-    )
-  }
+  ): EventAudit = create(
+    applicationReference = application.reference,
+    sessionTemplateReference = application.sessionSlot.sessionTemplateReference,
+    actionedByValue = actionedByValue,
+    type = type,
+    applicationMethodType = applicationMethodType,
+    text = text,
+  )
 
   fun create(
     reference: String = "",
@@ -543,9 +529,7 @@ class EventAuditEntityHelper(
     )
   }
 
-  fun save(event: EventAudit): EventAudit {
-    return eventAuditRepository.saveAndFlush(event)
-  }
+  fun save(event: EventAudit): EventAudit = eventAuditRepository.saveAndFlush(event)
 }
 
 @Component
@@ -858,9 +842,7 @@ class VsipReportingEntityHelper(
     vsipReportingRepository.save(VSIPReporting(reportName, reportDate))
   }
 
-  fun get(reportName: VSIPReport): VSIPReporting? {
-    return vsipReportingRepository.findById(reportName).getOrNull()
-  }
+  fun get(reportName: VSIPReport): VSIPReporting? = vsipReportingRepository.findById(reportName).getOrNull()
 }
 
 @Component
@@ -871,14 +853,12 @@ class VisitNotificationEventHelper(
   fun create(
     visitBookingReference: String,
     notificationEventType: NotificationEventType,
-  ): VisitNotificationEvent {
-    return visitNotificationEventRepository.saveAndFlush(
-      VisitNotificationEvent(
-        bookingReference = visitBookingReference,
-        type = notificationEventType,
-      ),
-    )
-  }
+  ): VisitNotificationEvent = visitNotificationEventRepository.saveAndFlush(
+    VisitNotificationEvent(
+      bookingReference = visitBookingReference,
+      type = notificationEventType,
+    ),
+  )
 
   fun getVisitNotifications(
     visitBookingReference: String,

@@ -43,7 +43,5 @@ class LegacyData(
 
   override fun hashCode(): Int = id.hashCode()
 
-  override fun toString(): String {
-    return this::class.simpleName + "(id=$id, leadPersonId=$leadPersonId)"
-  }
+  override fun toString(): String = this::class.simpleName + "(id=$id, leadPersonId=$leadPersonId)"
 }

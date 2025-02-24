@@ -96,11 +96,9 @@ class SessionTemplateComparator(
     return true
   }
 
-  private fun isSessionAvailableToAll(sessionDetails: SessionDetailsDto): Boolean {
-    return sessionDetails.permittedLocationGroups.isEmpty() &&
-      sessionDetails.prisonerCategoryGroups.isEmpty() &&
-      sessionDetails.prisonerIncentiveLevelGroups.isEmpty()
-  }
+  private fun isSessionAvailableToAll(sessionDetails: SessionDetailsDto): Boolean = sessionDetails.permittedLocationGroups.isEmpty() &&
+    sessionDetails.prisonerCategoryGroups.isEmpty() &&
+    sessionDetails.prisonerIncentiveLevelGroups.isEmpty()
 
   private fun hasCommonSessionLocations(newSessionDetails: SessionDetailsDto, existingSessionDetails: SessionDetailsDto): Boolean {
     val existingSessionLocations = sessionTemplateUtil.getPermittedSessionLocations(existingSessionDetails.permittedLocationGroups)
@@ -126,13 +124,11 @@ class SessionTemplateComparator(
       sessionIncentiveLevelMatcher.hasAnyMatch(existingSessionIncentiveLevels, newSessionIncentiveLevels)
   }
 
-  fun hasOverlap(newSessionDetails: SessionDetailsDto, existingSessionDetails: SessionDetailsDto): Boolean {
-    return (
-      (newSessionDetails.dayOfWeek == existingSessionDetails.dayOfWeek) &&
-        hasOverlappingDates(newSessionDetails, existingSessionDetails) &&
-        hasOverlappingTimes(newSessionDetails, existingSessionDetails) &&
-        hasOverlappingWeeklyFrequency(newSessionDetails, existingSessionDetails) &&
-        hasOverlappingPrisonerGroups(newSessionDetails, existingSessionDetails)
-      )
-  }
+  fun hasOverlap(newSessionDetails: SessionDetailsDto, existingSessionDetails: SessionDetailsDto): Boolean = (
+    (newSessionDetails.dayOfWeek == existingSessionDetails.dayOfWeek) &&
+      hasOverlappingDates(newSessionDetails, existingSessionDetails) &&
+      hasOverlappingTimes(newSessionDetails, existingSessionDetails) &&
+      hasOverlappingWeeklyFrequency(newSessionDetails, existingSessionDetails) &&
+      hasOverlappingPrisonerGroups(newSessionDetails, existingSessionDetails)
+    )
 }

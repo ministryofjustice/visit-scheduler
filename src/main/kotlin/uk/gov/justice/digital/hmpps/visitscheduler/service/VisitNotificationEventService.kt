@@ -436,12 +436,10 @@ class VisitNotificationEventService(
     val prisonersNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.prisonerNumber, prisonCode, NON_ASSOCIATION_EVENT)
     val nonAssociationPrisonersNotifications = visitNotificationEventRepository.getEventsBy(notificationDto.nonAssociationPrisonerNumber, prisonCode, NON_ASSOCIATION_EVENT)
 
-    val prisonerEventsToBeDeleted = prisonersNotifications.filter {
-        prisonersNotify ->
+    val prisonerEventsToBeDeleted = prisonersNotifications.filter { prisonersNotify ->
       nonAssociationPrisonersNotifications.any { it.reference == prisonersNotify.reference }
     }
-    val nsPrisonerEventsToBeDeleted = nonAssociationPrisonersNotifications.filter {
-        nsPrisonersNotify ->
+    val nsPrisonerEventsToBeDeleted = nonAssociationPrisonersNotifications.filter { nsPrisonersNotify ->
       prisonerEventsToBeDeleted.any { it.reference == nsPrisonersNotify.reference }
     }
 
@@ -460,10 +458,8 @@ class VisitNotificationEventService(
     return overlappingVisits.toList()
   }
 
-  private fun getVisitsForDateAndPrison(visits: List<VisitDto>, visitDatesByPrison: List<Pair<LocalDate, String>>): List<VisitDto> {
-    return visits.filter {
-      visitDatesByPrison.contains(Pair(it.startTimestamp.toLocalDate(), it.prisonCode))
-    }
+  private fun getVisitsForDateAndPrison(visits: List<VisitDto>, visitDatesByPrison: List<Pair<LocalDate, String>>): List<VisitDto> = visits.filter {
+    visitDatesByPrison.contains(Pair(it.startTimestamp.toLocalDate(), it.prisonCode))
   }
 
   private fun getOverlappingVisitDatesByPrison(primaryPrisonerVisits: List<VisitDto>, nonAssociationPrisonerVisits: List<VisitDto>): List<Pair<LocalDate, String>> {
@@ -481,9 +477,7 @@ class VisitNotificationEventService(
     return (toDate == null) || toDate.isAfter(LocalDateTime.now())
   }
 
-  private fun getValidToDateTime(validToDate: LocalDate?): LocalDateTime? {
-    return validToDate?.let { LocalDateTime.of(validToDate, LocalTime.MAX) }
-  }
+  private fun getValidToDateTime(validToDate: LocalDate?): LocalDateTime? = validToDate?.let { LocalDateTime.of(validToDate, LocalTime.MAX) }
 
   fun getNotificationCountForPrison(
     prisonCode: String,
@@ -514,25 +508,21 @@ class VisitNotificationEventService(
     return notificationGroupDtos
   }
 
-  private fun createPrisonerVisitsNotificationDto(events: MutableList<VisitNotificationEvent>): List<PrisonerVisitsNotificationDto> {
-    return events.map {
-      LOG.info("createPrisonerVisitsNotificationDto Entered - created visit notification for visit with booking reference: {}", it.bookingReference)
-      val visit = this.visitService.getVisitByReference(it.bookingReference)
-      val actionedBy = this.visitEventAuditService.getLastUserToUpdateSlotByReference(it.bookingReference)
+  private fun createPrisonerVisitsNotificationDto(events: MutableList<VisitNotificationEvent>): List<PrisonerVisitsNotificationDto> = events.map {
+    LOG.info("createPrisonerVisitsNotificationDto Entered - created visit notification for visit with booking reference: {}", it.bookingReference)
+    val visit = this.visitService.getVisitByReference(it.bookingReference)
+    val actionedBy = this.visitEventAuditService.getLastUserToUpdateSlotByReference(it.bookingReference)
 
-      PrisonerVisitsNotificationDto(
-        prisonerNumber = visit.prisonerId,
-        lastActionedBy = ActionedByDto(actionedBy),
-        visitDate = visit.startTimestamp.toLocalDate(),
-        bookingReference = it.bookingReference,
-        notificationEventAttributes = it.visitNotificationEventAttributes.map { attribute -> VisitNotificationEventAttributeDto(attribute) }.toList(),
-      )
-    }
+    PrisonerVisitsNotificationDto(
+      prisonerNumber = visit.prisonerId,
+      lastActionedBy = ActionedByDto(actionedBy),
+      visitDate = visit.startTimestamp.toLocalDate(),
+      bookingReference = it.bookingReference,
+      notificationEventAttributes = it.visitNotificationEventAttributes.map { attribute -> VisitNotificationEventAttributeDto(attribute) }.toList(),
+    )
   }
 
-  fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> {
-    return this.visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
-  }
+  fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> = this.visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
 
   @Transactional
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
