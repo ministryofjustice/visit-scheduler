@@ -5,7 +5,7 @@ import jakarta.validation.constraints.NotNull
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEventAttribute
 
-class VisitNotificationEventAttributeDto(
+data class VisitNotificationEventAttributeDto(
   @Schema(description = "Name of the attribute associated with the notification event", example = "VISITOR_RESTRICTION", required = true)
   @field:NotNull
   val attributeName: NotificationEventAttributeType,
