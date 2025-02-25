@@ -291,6 +291,8 @@ class VisitNotificationEventService(
         VISITOR_UNAPPROVED_EVENT,
         VISITOR_APPROVED,
       )
+    } ?: {
+      LOG.error("handleVisitorApprovedNotification cannot process as prisonCode is null - notificationDto - $notificationDto")
     }
   }
 
