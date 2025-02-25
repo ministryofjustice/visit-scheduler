@@ -12,11 +12,11 @@
         </layout>
     </appender>
 
-    <logger name="uk.gov.justice.digital.hmpps.visitscheduler.VisitSchedulerApplicationKt" additivity="false" level="INFO">
+    <logger name="uk.gov.justice.digital.hmpps.visitscheduler.VisitSchedulerApplicationKt" additivity="false" level="DEBUG">
         <appender-ref ref="consoleAppender"/>
     </logger>
 
-    <logger name="uk.gov.justice.digital.hmpps" additivity="false" level="INFO">
+    <logger name="uk.gov.justice.digital.hmpps" additivity="false" level="DEBUG">
         <appender-ref ref="consoleAppender"/>
     </logger>
 
