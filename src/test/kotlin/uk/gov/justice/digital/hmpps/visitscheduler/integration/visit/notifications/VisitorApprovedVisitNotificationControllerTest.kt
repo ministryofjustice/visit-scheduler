@@ -69,7 +69,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.VISITOR_UNAPPROVED_EVENT))
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    whenever(prisonerService.getPrisonerPrisonCode(prisonerId)).thenReturn(prisonCode)
+    whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
 
     // When
     val responseSpec = callNotifyVSiPThatVisitorApproved(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
@@ -88,5 +88,42 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
       isNull(),
     )
     verify(telemetryClient, times(1)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
+  }
+
+  @Test
+  fun `when visitor is from an unsupported prison and is re-approved then processing is skipped`() {
+    // Given
+    val notificationDto = VisitorApprovedUnapprovedNotificationDto(visitorId = visitorId, prisonerNumber = prisonerId)
+
+    val visit1 = createApplicationAndVisit(
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate,
+      prisonerId = prisonerId,
+    )
+    visit1.visitors.add(
+      VisitVisitor(
+        nomisPersonId = visitorId.toLong(),
+        visitId = visit1.id,
+        visit = visit1,
+        visitContact = true,
+      ),
+    )
+    val visit = visitEntityHelper.save(visit1)
+    eventAuditEntityHelper.create(visit1)
+
+    testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.VISITOR_UNAPPROVED_EVENT))
+
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, "XYZ")
+    whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(null)
+
+    // When
+    val responseSpec = callNotifyVSiPThatVisitorApproved(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    verify(visitNotificationEventRepository, times(0)).deleteAll()
+    verify(telemetryClient, times(0)).trackEvent(eq("unflagged-visit-event"), any(), isNull())
   }
 }

@@ -78,7 +78,7 @@ class VisitNotificationEventService(
   fun handleNonAssociations(notificationDto: NonAssociationChangedNotificationDto) {
     LOG.info("NonAssociations notification received : {}", notificationDto)
     if (NON_ASSOCIATION_CREATED == notificationDto.type) {
-      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+      val prisonCode = prisonerService.getPrisonerPrisonCodeFromPrisonId(notificationDto.prisonerNumber)
       prisonCode?.let {
         val affectedVisits = getOverLappingVisits(notificationDto, prisonCode)
 
@@ -87,7 +87,7 @@ class VisitNotificationEventService(
       }
     } else if (notificationDto.type in arrayOf(NON_ASSOCIATION_DELETED, NON_ASSOCIATION_CLOSED)) {
       if (!prisonerService.hasPrisonerGotANonAssociationWith(notificationDto.prisonerNumber, notificationDto.nonAssociationPrisonerNumber)) {
-        val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+        val prisonCode = prisonerService.getPrisonerPrisonCodeFromPrisonId(notificationDto.prisonerNumber)
         prisonCode?.let {
           val affectedNotifications = getAffectedNotifications(notificationDto, it)
           deleteNotificationsThatAreNoLongerValid(affectedNotifications, NON_ASSOCIATION_EVENT, NON_ASSOCIATION_REMOVED)
@@ -149,7 +149,7 @@ class VisitNotificationEventService(
   fun handlePrisonerRestrictionChangeNotification(notificationDto: PrisonerRestrictionChangeNotificationDto) {
     LOG.info("PrisonerRestrictionChange notification received")
     if (isNotificationDatesValid(notificationDto.validToDate)) {
-      val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+      val prisonCode = prisonerService.getPrisonerPrisonCodeFromPrisonId(notificationDto.prisonerNumber)
 
       val startDateTime = (if (LocalDate.now() > notificationDto.validFromDate) LocalDate.now() else notificationDto.validFromDate).atStartOfDay()
       val endDateTime = notificationDto.validToDate?.atTime(LocalTime.MAX)
@@ -179,7 +179,7 @@ class VisitNotificationEventService(
   private fun processAlertsAdded(notificationDto: PrisonerAlertCreatedUpdatedNotificationDto) {
     LOG.info("Entered handlePrisonerAlertCreatedUpdated processAlertsAdded")
 
-    val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
+    val prisonCode = prisonerService.getPrisonerPrisonCodeFromPrisonId(notificationDto.prisonerNumber)
     val affectedVisits = visitService.getFutureBookedVisits(notificationDto.prisonerNumber, prisonCode)
 
     val processVisitNotificationDto = ProcessVisitNotificationDto(affectedVisits, PRISONER_ALERTS_UPDATED_EVENT, null)
@@ -277,19 +277,21 @@ class VisitNotificationEventService(
   fun handleVisitorApprovedNotification(notificationDto: VisitorApprovedUnapprovedNotificationDto) {
     LOG.info("handleVisitorApprovedNotification notification received : {}", notificationDto)
 
-    val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
-    val currentVisitorUnApprovedNotifications = visitNotificationEventRepository.getEventsByVisitor(
-      prisonerNumber = notificationDto.prisonerNumber,
-      prisonCode = prisonCode!!,
-      visitorId = notificationDto.visitorId.toLong(),
-      notificationEvent = VISITOR_UNAPPROVED_EVENT,
-    )
+    val prisonCode = prisonerService.getPrisonerPrisonCodeFromPrisonId(notificationDto.prisonerNumber)
+    prisonCode?.let {
+      val currentVisitorUnApprovedNotifications = visitNotificationEventRepository.getEventsByVisitor(
+        prisonerNumber = notificationDto.prisonerNumber,
+        prisonCode = prisonCode,
+        visitorId = notificationDto.visitorId.toLong(),
+        notificationEvent = VISITOR_UNAPPROVED_EVENT,
+      )
 
-    deleteNotificationsThatAreNoLongerValid(
-      currentVisitorUnApprovedNotifications,
-      VISITOR_UNAPPROVED_EVENT,
-      VISITOR_APPROVED,
-    )
+      deleteNotificationsThatAreNoLongerValid(
+        currentVisitorUnApprovedNotifications,
+        VISITOR_UNAPPROVED_EVENT,
+        VISITOR_APPROVED,
+      )
+    }
   }
 
   @Transactional
