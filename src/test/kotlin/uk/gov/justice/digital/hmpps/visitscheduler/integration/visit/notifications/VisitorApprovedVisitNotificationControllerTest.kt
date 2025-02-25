@@ -69,7 +69,7 @@ class VisitorApprovedVisitNotificationControllerTest : NotificationTestBase() {
     testVisitNotificationEventRepository.saveAndFlush(VisitNotificationEvent(visit.reference, NotificationEventType.VISITOR_UNAPPROVED_EVENT))
 
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
-    whenever(prisonerService.getPrisonerPrisonCode(prisonerId)).thenReturn(prisonCode)
+    whenever(prisonerService.getPrisonerPrisonCodeFromPrisonId(prisonerId)).thenReturn(prisonCode)
 
     // When
     val responseSpec = callNotifyVSiPThatVisitorApproved(webTestClient, roleVisitSchedulerHttpHeaders, notificationDto)
