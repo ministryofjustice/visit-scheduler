@@ -11,10 +11,10 @@ import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT
-import org.springframework.boot.test.mock.mockito.SpyBean
 import org.springframework.http.HttpHeaders
 import org.springframework.http.MediaType
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto
@@ -78,7 +78,7 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
   @Autowired
   protected lateinit var legacyDataRepository: LegacyDataRepository
 
-  @SpyBean
+  @MockitoSpyBean
   protected lateinit var telemetryClient: TelemetryClient
 
   protected fun createSessionTemplateFrom(

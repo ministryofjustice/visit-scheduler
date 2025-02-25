@@ -6,7 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
-import org.springframework.boot.test.mock.mockito.SpyBean
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
@@ -30,7 +30,7 @@ import java.time.LocalDate
 @Transactional
 @DisplayName("Admin $ADMIN_PRISONS_PATH")
 class AdminPrisonsTest : IntegrationTestBase() {
-  @SpyBean
+  @MockitoSpyBean
   private lateinit var spyPrisonRepository: PrisonRepository
 
   private val adminRole = listOf("ROLE_VISIT_SCHEDULER_CONFIG")
