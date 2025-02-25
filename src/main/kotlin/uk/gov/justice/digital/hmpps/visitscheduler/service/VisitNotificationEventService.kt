@@ -278,18 +278,20 @@ class VisitNotificationEventService(
     LOG.debug("handleVisitorApprovedNotification notification received : {}", notificationDto)
 
     val prisonCode = prisonerService.getPrisonerPrisonCode(notificationDto.prisonerNumber)
-    val currentVisitorUnApprovedNotifications = visitNotificationEventRepository.getEventsByVisitor(
-      prisonerNumber = notificationDto.prisonerNumber,
-      prisonCode = prisonCode!!,
-      visitorId = notificationDto.visitorId.toLong(),
-      notificationEvent = VISITOR_UNAPPROVED_EVENT,
-    )
+    prisonCode?.let {
+      val currentVisitorUnApprovedNotifications = visitNotificationEventRepository.getEventsByVisitor(
+        prisonerNumber = notificationDto.prisonerNumber,
+        prisonCode = prisonCode,
+        visitorId = notificationDto.visitorId.toLong(),
+        notificationEvent = VISITOR_UNAPPROVED_EVENT,
+      )
 
-    deleteNotificationsThatAreNoLongerValid(
-      currentVisitorUnApprovedNotifications,
-      VISITOR_UNAPPROVED_EVENT,
-      VISITOR_APPROVED,
-    )
+      deleteNotificationsThatAreNoLongerValid(
+        currentVisitorUnApprovedNotifications,
+        VISITOR_UNAPPROVED_EVENT,
+        VISITOR_APPROVED,
+      )
+    }
   }
 
   @Transactional
