@@ -48,6 +48,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Process
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SaveVisitNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.SessionDateBlockedDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventAttributeDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorApprovedUnapprovedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitorRestrictionUpsertedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
@@ -522,7 +523,9 @@ class VisitNotificationEventService(
     )
   }
 
-  fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> = this.visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
+  fun getNotificationsTypesForBookingReference(bookingReference: String): List<NotificationEventType> = visitNotificationEventRepository.getNotificationsTypesForBookingReference(bookingReference)
+
+  fun getNotificationEventsForBookingReference(bookingReference: String): List<VisitNotificationEventDto> = this.visitNotificationEventRepository.getVisitNotificationEventsByBookingReference(bookingReference).map { VisitNotificationEventDto(it) }
 
   @Transactional
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
