@@ -30,9 +30,6 @@ generic-service:
     FEATURE_EVENTS_SNS_ENABLED: true
     MIGRATE_SESSIONTEMPLATE_MAPPING_OFFSET_DAYS: 0
 
-    # TODO - remove this after testing
-    TASK_FLAG_VISITS_CRON: "0 10 12 * * ?" #every day at 12:10 AM
-
 # CloudPlatform AlertManager receiver to route promethues alerts to slack
 # See https://user-guide.cloud-platform.service.justice.gov.uk/documentation/monitoring-an-app/how-to-create-alarms.html#creating-your-own-custom-alerts
 generic-prometheus-alerts:
