@@ -16,7 +16,7 @@
         <appender-ref ref="consoleAppender"/>
     </logger>
 
-    <logger name="uk.gov.justice.digital.hmpps" additivity="false" level="INFO">
+    <logger name="uk.gov.justice.digital.hmpps" additivity="false" level="DEBUG">
         <appender-ref ref="consoleAppender"/>
     </logger>
 
