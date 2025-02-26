@@ -105,7 +105,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     flagVisitsTask.flagVisits()
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
+    assertFlaggedVisitEvent(prisonerAVisit, "session not suitable")
   }
 
   @Test
@@ -150,7 +150,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     flagVisitsTask.flagVisits()
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
+    assertFlaggedVisitEvent(prisonerAVisit, "session not suitable")
   }
 
   @Test
@@ -189,7 +189,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     flagVisitsTask.flagVisits()
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
+    assertFlaggedVisitEvent(prisonerAVisit, "session not suitable")
   }
 
   @Test
@@ -226,7 +226,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
+    assertFlaggedVisitEvent(prisonerAVisit, "session not suitable")
   }
 
   @Test
@@ -265,7 +265,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit, "Prisoner - $prisonerAId has moved prison")
+    assertFlaggedVisitEvent(prisonerAVisit, "session not suitable")
   }
 
   @Test
@@ -300,7 +300,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
 
     // Then
 
-    assertFlaggedVisitEvent(prisonerAVisit, "possible non-association or session not suitable")
+    assertFlaggedVisitEvent(prisonerAVisit, "session not suitable")
   }
 
   @Test

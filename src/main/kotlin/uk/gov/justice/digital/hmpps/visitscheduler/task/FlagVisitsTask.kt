@@ -9,7 +9,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.FlagVisitTaskConfigura
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonerNotInSuppliedPrisonException
 import uk.gov.justice.digital.hmpps.visitscheduler.service.PrisonsService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SessionService
 import uk.gov.justice.digital.hmpps.visitscheduler.service.TelemetryClientService
@@ -29,7 +28,7 @@ class FlagVisitsTask(
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
-    private const val DEFAULT_VISIT_FLAG_REASON = "possible non-association or session not suitable"
+    private const val DEFAULT_VISIT_FLAG_REASON = "session not suitable"
   }
 
   @Scheduled(cron = "\${task.flag-visits.cron:0 0 3 * * ?}")
@@ -80,7 +79,7 @@ class FlagVisitsTask(
     var sessions = emptyList<VisitSessionDto>()
 
     LOG.debug("Started check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
-    val notifications = getVisitNotifications(visit.reference)
+    val notifications = getVisitNotifications(visit.reference).toSet()
     val hasNotifications = notifications.isNotEmpty()
 
     if (hasNotifications) {
@@ -88,13 +87,10 @@ class FlagVisitsTask(
     } else {
       try {
         sessions = sessionService.getVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays).filter { it.sessionTemplateReference == visit.sessionTemplateReference }
-      } catch (e: PrisonerNotInSuppliedPrisonException) {
-        reason = "Prisoner - ${visit.prisonerId} has moved prison"
-        LOG.debug("Prisoner {} has moved prison", visit.prisonerId)
       } catch (e: Exception) {
         if (isRetry) {
           // only log this if the visit is being retried
-          LOG.info("Exception thrown when retrieving visit sessions for the following parameters - prison code - {}, prisonerId - {}, minOverride - {}, maxOverride - {}", visit.prisonCode, visit.prisonerId, noticeDays, noticeDays)
+          LOG.info("Exception thrown when retrieving visit sessions for the following parameters - prison code - {}, prisonerId - {}, minOverride - {}, maxOverride - {}, exception - {}, {}", visit.prisonCode, visit.prisonerId, noticeDays, noticeDays, e.message, e.toString())
         } else {
           // if isRetry is false it would mean that the visit has not been retried before so set markForRetry to true
           // this is to ensure for exceptions other than PrisonerNotInSuppliedPrisonException the visit is retried once.
@@ -105,7 +101,7 @@ class FlagVisitsTask(
 
     if (hasNotifications || (sessions.isEmpty() && !markForRetry)) {
       trackEvent(visit, reason ?: DEFAULT_VISIT_FLAG_REASON)
-      LOG.info("Flagged Visit: Visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check.", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
+      LOG.info("Flagged Visit: Visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {} flagged for check , hasNotifications is {} and / or session not available - {}.", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp, hasNotifications, sessions.isEmpty())
     }
 
     LOG.debug("Finished check, visit with reference - {}, prisoner id - {}, prison code - {}, start time - {}, end time - {}", visit.reference, visit.prisonerId, visit.prisonCode, visit.startTimestamp, visit.endTimestamp)
