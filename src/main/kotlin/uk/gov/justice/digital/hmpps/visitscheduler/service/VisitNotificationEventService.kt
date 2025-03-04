@@ -54,6 +54,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.Visitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEventAttribute
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.PairedNotificationEventsUtil
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
@@ -64,7 +66,11 @@ class VisitNotificationEventService(
   private val visitNotificationEventRepository: VisitNotificationEventRepository,
   private val prisonerService: PrisonerService,
   private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
+  private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
 ) {
+
+  @Autowired
+  private lateinit var visitRepository: VisitRepository
 
   @Lazy
   @Autowired
@@ -533,8 +539,29 @@ class VisitNotificationEventService(
   fun ignoreVisitNotifications(visitReference: String, ignoreVisitNotification: IgnoreVisitNotificationsDto): VisitDto {
     val visit = visitService.getBookedVisitByReference(visitReference)
     visitEventAuditService.saveIgnoreVisitNotificationEventAudit(ignoreVisitNotification.actionedBy, visit, ignoreVisitNotification.reason)
-    deleteVisitNotificationEvents(visitReference, IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
+    deleteVisitAndPairedNotificationEvents(visitReference, IGNORE_VISIT_NOTIFICATIONS, ignoreVisitNotification.reason)
     return visit
+  }
+
+  @Transactional
+  fun deleteVisitAndPairedNotificationEvents(visitReference: String, reason: UnFlagEventReason, text: String? = null) {
+    val visitNotificationEvents = visitNotificationEventRepository.getVisitNotificationEventsByBookingReference(visitReference)
+    deleteVisitNotificationEvents(visitReference, reason, text)
+
+    // finally audit and delete any associated paired notifications
+    deletePairedNotificationEvents(visitReference, visitNotificationEvents, reason)
+  }
+
+  @Transactional
+  fun deletePairedNotificationEvents(changedVisitReference: String, visitNotificationEvents: List<VisitNotificationEvent>, unFlagEventReason: UnFlagEventReason) {
+    val pairedNotifications = pairedNotificationEventsUtil.getPairedNotificationEvents(visitNotificationEvents)
+    if (pairedNotifications.isNotEmpty()) {
+      val pairedUnFlagEventReason = pairedNotificationEventsUtil.getPairedNotificationEventUnFlagReason(unFlagEventReason)
+
+      pairedNotifications.forEach {
+        deleteVisitNotificationAndAddAuditEventForPairedVisits(notificationReference = it.reference, changedVisitReference = changedVisitReference, reason = pairedUnFlagEventReason)
+      }
+    }
   }
 
   @Transactional
@@ -546,6 +573,28 @@ class VisitNotificationEventService(
 
       // after deleting the visit notifications - update application insights
       visitNotificationFlaggingService.unFlagTrackEvents(visitReference, visitNotificationEvents.map { it.type }, reason, text)
+    }
+  }
+
+  @Transactional
+  fun deleteVisitNotificationAndAddAuditEventForPairedVisits(notificationReference: String, changedVisitReference: String, reason: UnFlagEventReason, text: String? = null) {
+    val visitNotificationEvents = visitNotificationEventRepository.getVisitNotificationEventsByReference(notificationReference).filter { it.bookingReference != changedVisitReference }
+
+    if (visitNotificationEvents.isNotEmpty()) {
+      val pairedUnFlagEventAuditType = pairedNotificationEventsUtil.getPairedVisitEventAuditType(reason)
+      val pairedUnFlagEventAuditText: String = pairedNotificationEventsUtil.getPairedVisitEventAuditText(reason, changedVisitReference)
+
+      for (visitNotificationEvent in visitNotificationEvents) {
+        visitNotificationEventRepository.deleteByReference(notificationReference)
+
+        // finally add an event audit for the paired event
+        visitRepository.findByReference(visitNotificationEvent.bookingReference)?.let { pairedVisit ->
+          visitEventAuditService.savePairedVisitChangeEventAudit(pairedVisit, pairedUnFlagEventAuditType, pairedUnFlagEventAuditText)
+        }
+
+        // after deleting the visit notifications - update application insights
+        visitNotificationFlaggingService.unFlagTrackEvents(visitNotificationEvent.bookingReference, visitNotificationEvents.map { it.type }, reason, text)
+      }
     }
   }
 }
