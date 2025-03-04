@@ -224,8 +224,8 @@ class VisitService(
     )
     snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
 
-    // delete all visit notifications for the cancelled visit from the visit notifications table
-    visitNotificationEventService.deleteVisitNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED)
+    // delete all visit notifications and any paired notifications for the cancelled visit from the visit notifications table
+    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED)
 
     return visitDto
   }

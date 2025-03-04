@@ -164,5 +164,11 @@ interface VisitNotificationEventRepository : JpaRepository<VisitNotificationEven
     bookingReference: String,
   ): List<VisitNotificationEvent>
 
+  fun getVisitNotificationEventsByReference(
+    reference: String,
+  ): List<VisitNotificationEvent>
+
   fun deleteByBookingReference(@Param("bookingReference") bookingReference: String): Int
+
+  fun deleteByReference(@Param("reference") reference: String): Int
 }

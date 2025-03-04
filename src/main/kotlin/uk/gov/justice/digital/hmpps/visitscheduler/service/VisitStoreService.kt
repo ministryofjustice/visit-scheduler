@@ -182,7 +182,7 @@ class VisitStoreService(
   }
 
   private fun handleVisitUpdateEvents(existingBooking: Visit) {
-    visitNotificationEventService.deleteVisitNotificationEvents(existingBooking.reference, VISIT_UPDATED)
+    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(existingBooking.reference, VISIT_UPDATED)
   }
 
   fun cancelVisit(reference: String, cancelVisitDto: CancelVisitDto): VisitDto {

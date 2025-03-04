@@ -13,6 +13,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.ApplicationVisitor
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.ApplicationRepository
 import java.time.LocalDate
@@ -41,11 +42,36 @@ class ApplicationEntityHelper(
       completed = true,
       userType = STAFF,
     )
+
+    fun createUpdateVisitApplication(visit: Visit, newSessionSlot: SessionSlot): Application {
+      val application = Application(
+        prisonerId = visit.prisonerId,
+        prisonId = visit.prisonId,
+        prison = visit.prison,
+        sessionSlotId = newSessionSlot.id,
+        sessionSlot = newSessionSlot,
+        visitType = visit.visitType,
+        restriction = visit.visitRestriction,
+        createdBy = "",
+        reservedSlot = true,
+        completed = false,
+        userType = STAFF,
+      )
+      return application
+    }
   }
 
   fun create(visit: Visit): Application = applicationRepo.saveAndFlush(
     createApplication(visit),
   )
+
+  fun create(visit: Visit, sessionTemplate: SessionTemplate, newSlotDate: LocalDate): Application {
+    val sessionSlot = sessionSlotEntityHelper.create(sessionTemplate.reference, visit.prison.id, newSlotDate, sessionTemplate.startTime, sessionTemplate.endTime)
+
+    return applicationRepo.saveAndFlush(
+      createUpdateVisitApplication(visit, sessionSlot),
+    )
+  }
 
   fun create(
     prisonerId: String = "testPrisonerId",
