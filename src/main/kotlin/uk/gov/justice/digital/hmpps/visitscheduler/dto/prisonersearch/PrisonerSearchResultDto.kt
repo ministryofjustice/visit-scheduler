@@ -15,4 +15,12 @@ data class PrisonerSearchResultDto(
 
   @Schema(description = "Prisoner Category", example = "C")
   val category: String? = null,
+
+  @Schema(
+    description = "Convicted Status",
+    name = "convictedStatus",
+    example = "Convicted",
+    allowableValues = ["Convicted", "Remand"],
+  )
+  val convictedStatus: String? = null,
 )

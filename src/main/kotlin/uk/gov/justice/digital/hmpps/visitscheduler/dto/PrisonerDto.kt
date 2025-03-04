@@ -17,4 +17,12 @@ data class PrisonerDto(
 
   @Schema(description = "prison code", example = "BHI", required = true)
   var prisonCode: String? = null,
+
+  @Schema(
+    description = "Convicted Status",
+    name = "convictedStatus",
+    example = "Convicted",
+    allowableValues = ["Convicted", "Remand"],
+  )
+  val convictedStatus: String? = null,
 )

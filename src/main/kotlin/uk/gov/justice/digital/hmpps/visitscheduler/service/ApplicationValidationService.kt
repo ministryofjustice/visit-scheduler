@@ -94,7 +94,7 @@ class ApplicationValidationService(
     }
 
     // check prisoner's VOs - only applicable if user type = PUBLIC as staff can override VO count
-    checkVOLimits(application.prisonerId)?.also {
+    checkVOLimits(prisoner)?.also {
       errorCodes.add(it)
     }
 
@@ -205,14 +205,15 @@ class ApplicationValidationService(
     return null
   }
 
-  private fun checkVOLimits(prisonerId: String): ApplicationValidationErrorCodes? {
-    // check VO limits
-    val remainingVisitBalance = prisonerService.getVisitBalance(prisonerId = prisonerId)
-    if (remainingVisitBalance <= 0) {
-      LOG.info("not enough VO balance for prisoner - $prisonerId to book visit")
-      return APPLICATION_INVALID_NO_VO_BALANCE
+  private fun checkVOLimits(prisoner: PrisonerDto): ApplicationValidationErrorCodes? {
+    // check VO limits if prisoner is not on Remand.
+    if (prisoner.convictedStatus != "Remand") {
+      val remainingVisitBalance = prisonerService.getVisitBalance(prisonerId = prisoner.prisonerId)
+      if (remainingVisitBalance <= 0) {
+        LOG.info("not enough VO balance for prisoner - ${prisoner.prisonerId} to book visit")
+        return APPLICATION_INVALID_NO_VO_BALANCE
+      }
     }
-
     return null
   }
 
