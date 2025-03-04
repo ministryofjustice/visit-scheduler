@@ -713,7 +713,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   fun `when public application has no pending VOs an exception is thrown`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = -2, remainingPvo = 0)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode, convictedStatus = "Convicted")
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
@@ -733,7 +733,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   @Test
   fun `when call to visit balances returns 404 a validation exception is thrown citing no available VOs`() {
     // Given
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode, convictedStatus = "Convicted")
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     // call to visit balances returns 404
     prisonApiMockServer.stubGetVisitBalances(prisonerId, null)
@@ -755,7 +755,7 @@ class BookVisitValidationTest : IntegrationTestBase() {
   fun `when public application has pending VOs visit is booked successfully`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 0)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode, convictedStatus = "Convicted")
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
@@ -771,9 +771,23 @@ class BookVisitValidationTest : IntegrationTestBase() {
   fun `when public application has pending PVOs visit is booked successfully`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = 0, remainingPvo = 5)
-    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode, convictedStatus = "Convicted")
     nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when public application has a remand prisoner, VO validation is skipped`() {
+    // Given
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode, convictedStatus = "Remand")
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
 
     // When
