@@ -17,6 +17,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.prison.api.PrisonerNonAss
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.utils.PairedNotificationEventsUtil
 
 @ExtendWith(MockitoExtension::class)
 class VisitNotificationEventServiceTest {
@@ -25,6 +26,7 @@ class VisitNotificationEventServiceTest {
   private val visitNotificationFlaggingService = mock<VisitNotificationFlaggingService>()
   private val visitNotificationEventRepository = mock<VisitNotificationEventRepository>()
   private val prisonerService = mock<PrisonerService>()
+  private val pairedNotificationEventsUtil = mock<PairedNotificationEventsUtil>()
 
   private lateinit var visitNotificationEventService: VisitNotificationEventService
 
@@ -34,7 +36,7 @@ class VisitNotificationEventServiceTest {
 
   @BeforeEach
   fun beforeEachTestSetup() {
-    visitNotificationEventService = VisitNotificationEventService(visitService, visitNotificationEventRepository, prisonerService, visitNotificationFlaggingService)
+    visitNotificationEventService = VisitNotificationEventService(visitService, visitNotificationEventRepository, prisonerService, visitNotificationFlaggingService, pairedNotificationEventsUtil)
 
     whenever(prisonerService.getPrisoner(primaryNonAssociationNumber)).thenReturn(
       PrisonerDto(

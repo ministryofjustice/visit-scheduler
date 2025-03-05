@@ -228,6 +228,28 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     )
   }
 
+  fun savePairedVisitChangeEventAudit(
+    visitEntity: Visit,
+    type: EventAuditType,
+    auditText: String,
+  ): EventAudit {
+    val actionedBy = createOrGetActionBy(null, SYSTEM)
+
+    val eventAudit = eventAuditRepository.saveAndFlush(
+      EventAudit(
+        actionedBy = actionedBy,
+        bookingReference = visitEntity.reference,
+        applicationReference = null,
+        sessionTemplateReference = null,
+        type = type,
+        applicationMethodType = NOT_APPLICABLE,
+        text = auditText,
+      ),
+    )
+
+    return eventAudit
+  }
+
   private fun createOrGetActionBy(actionedByValue: String? = null, userType: UserType): ActionedBy {
     var bookerReference: String? = null
     var userName: String? = null
