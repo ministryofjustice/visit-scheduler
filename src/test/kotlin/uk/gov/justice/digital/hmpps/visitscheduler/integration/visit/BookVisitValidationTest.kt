@@ -798,6 +798,22 @@ class BookVisitValidationTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `when public application has a prisoner with unknown conviction status, VO validation is still applied`() {
+    // Given
+    val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 0)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId = prisonerId, prisonCode = prisonCode, convictedStatus = null)
+    nonAssociationsApiMockServer.stubGetPrisonerNonAssociationEmpty(prisonerId)
+    prisonApiMockServer.stubGetVisitBalances(prisonerId, visitBalance)
+    prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "$prisonCode-C-1-C001")
+
+    // When
+    val responseSpec = callVisitBook(webTestClient, roleVisitSchedulerHttpHeaders, reservedPublicApplication.reference)
+
+    // Then
+    responseSpec.expectStatus().isOk
+  }
+
+  @Test
   fun `when session has no pending capacity an exception is thrown`() {
     // Given
     val visitBalance = VisitBalancesDto(remainingVo = 5, remainingPvo = 0)
