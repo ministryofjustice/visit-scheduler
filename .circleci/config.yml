@@ -12,36 +12,6 @@ parameters:
     default: visits-releases
 
 jobs:
-  acceptance_tests_staff_ui_main:
-    docker:
-      - image: maven:3.9.5-eclipse-temurin-21
-      - image: seleniarm/standalone-chromium
-        environment:
-          CHROME_HEADLESS: 1
-    circleci_ip_ranges: true
-
-    steps:
-      - run:
-          name: Checkout VSIP UI Tests
-          command: git clone https://github.com/ministryofjustice/hmpps-vsip-ui-tests.git
-      - run:
-          name: get git status
-          command: |
-            cd hmpps-vsip-ui-tests
-            git checkout main
-            git pull
-            git status
-      - run:
-          name: Change to project directory then clean install
-          command: |
-            cd hmpps-vsip-ui-tests
-            mvn -f pom.xml clean install -Dmaven.test.skip=true
-      - run:
-          name: Change to project directory and run tests
-          command: |
-            cd hmpps-vsip-ui-tests
-            mvn test -Dbrowser=remote-chrome -Dspring.profiles.active="staging" -Dtest=uk.gov.justice.digital.hmpps.vsip.suites.RunSuite
-            
   acceptance_tests_public_ui_main:
     docker:
       - image: mcr.microsoft.com/playwright:v1.44.1-jammy
@@ -201,22 +171,6 @@ workflows:
           requires:
             - deploy_dev
 
-      - acceptance_tests_staff_ui_main:
-          requires:
-            - request-acceptance-tests-staff-approval
-          filters:
-            branches:
-              only:
-                - main
-      - request-acceptance-tests-staff-approval:
-          type: approval
-          requires:
-            - deploy_staging
-          filters:
-            branches:
-              only:
-                - main
-
       - acceptance_tests_public_ui_main:
           requires:
             - request-acceptance-tests-public-approval
@@ -358,22 +312,6 @@ workflows:
             - validate
             - build_docker
             - helm_lint
-          filters:
-            branches:
-              ignore:
-                - main
-
-      - acceptance_tests_staff_ui_main:
-          requires:
-            - request-acceptance-tests-staff-approval
-          filters:
-            branches:
-              ignore:
-                - main
-      - request-acceptance-tests-staff-approval:
-          type: approval
-          requires:
-            - deploy_staging
           filters:
             branches:
               ignore:
