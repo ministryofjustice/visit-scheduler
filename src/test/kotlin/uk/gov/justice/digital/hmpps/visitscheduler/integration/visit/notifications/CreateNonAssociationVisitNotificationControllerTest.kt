@@ -26,6 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
+import java.time.LocalTime
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $VISIT_NOTIFICATION_NON_ASSOCIATION_CHANGE_PATH NON_ASSOCIATION_CREATED")
@@ -227,16 +228,269 @@ class CreateNonAssociationVisitNotificationControllerTest : NotificationTestBase
     responseSpec.expectStatus().isOk
     assertFlaggedVisitEvent(listOf(primaryVisit1, primaryVisit2, secondaryVisit1, secondaryVisit2), NotificationEventType.NON_ASSOCIATION_EVENT)
     verify(telemetryClient, times(4)).trackEvent(eq("flagged-visit-event"), any(), isNull())
-    verify(visitNotificationEventRepository, times(8)).saveAndFlush(any<VisitNotificationEvent>())
+    verify(visitNotificationEventRepository, times(4)).saveAndFlush(any<VisitNotificationEvent>())
 
     val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(8)
+    assertThat(visitNotifications).hasSize(4)
     assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
+    assertThat(visitNotifications[1].bookingReference).isNotEqualTo(visitNotifications[0].bookingReference)
     assertThat(visitNotifications[2].reference).isEqualTo(visitNotifications[3].reference)
-    assertThat(visitNotifications[4].reference).isEqualTo(visitNotifications[5].reference)
-    assertThat(visitNotifications[6].reference).isEqualTo(visitNotifications[7].reference)
+    assertThat(visitNotifications[2].bookingReference).isNotEqualTo(visitNotifications[3].bookingReference)
 
-    assertThat(testEventAuditRepository.getAuditCount(NON_ASSOCIATION_EVENT)).isEqualTo(8)
+    // get a map of references and booking references paired
+    val visitsPerNotificationReference = visitNotifications.groupBy(VisitNotificationEvent::reference, VisitNotificationEvent::bookingReference)
+
+    visitsPerNotificationReference.forEach {
+      val bookingReferences = it.value
+
+      // assert to ensure that there are only 2 booking references per notification reference
+      assertThat(bookingReferences.size).isEqualTo(2)
+
+      // finally assert that
+      // if the booking reference has primaryVisit1.reference then it's paired with secondaryVisit1.reference
+      if (bookingReferences.contains(primaryVisit1.reference)) {
+        assertThat(bookingReferences).contains(secondaryVisit1.reference)
+      }
+
+      // if the booking reference has primaryVisit2.reference then it's paired with secondaryVisit2.reference
+      if (bookingReferences.contains(primaryVisit2.reference)) {
+        assertThat(bookingReferences).contains(secondaryVisit2.reference)
+      }
+    }
+    assertThat(testEventAuditRepository.getAuditCount(NON_ASSOCIATION_EVENT)).isEqualTo(4)
+  }
+
+  @Test
+  fun `when one prisoner has two visits on the same day then visits with same date and prison are flagged and saved`() {
+    // Given
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(prison = prison1, startTime = LocalTime.of(16, 0), endTime = LocalTime.of(17, 0))
+
+    val primaryVisit1 = createApplicationAndVisit(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(primaryVisit1)
+
+    val primaryVisit2 = createApplicationAndVisit(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(primaryVisit2)
+
+    // visit does not overlap
+    createApplicationAndVisit(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(3),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    val secondaryVisit1 = createApplicationAndVisit(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(secondaryVisit1)
+
+    val secondaryVisit2 = createApplicationAndVisit(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(secondaryVisit2)
+
+    // prisoner 2 has a second visit on the day
+    val secondaryVisit3 = createApplicationAndVisit(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate2,
+    )
+    eventAuditEntityHelper.create(secondaryVisit3)
+
+    // visit does not overlap
+    createApplicationAndVisit(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(4),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    // When
+    val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    assertFlaggedVisitEvent(listOf(primaryVisit1, primaryVisit2, secondaryVisit1, secondaryVisit2, secondaryVisit3), NotificationEventType.NON_ASSOCIATION_EVENT)
+    verify(telemetryClient, times(5)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+    verify(visitNotificationEventRepository, times(6)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(6)
+    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
+    assertThat(visitNotifications[1].bookingReference).isNotEqualTo(visitNotifications[0].bookingReference)
+    assertThat(visitNotifications[2].reference).isEqualTo(visitNotifications[3].reference)
+    assertThat(visitNotifications[2].bookingReference).isNotEqualTo(visitNotifications[3].bookingReference)
+    assertThat(visitNotifications[4].reference).isEqualTo(visitNotifications[5].reference)
+    assertThat(visitNotifications[4].bookingReference).isNotEqualTo(visitNotifications[5].bookingReference)
+
+    // get a map of references and booking references paired
+    val visitsPerNotificationReference = visitNotifications.groupBy(VisitNotificationEvent::reference, VisitNotificationEvent::bookingReference)
+
+    visitsPerNotificationReference.forEach {
+      val bookingReferences = it.value
+
+      // assert to ensure that there are only 2 booking references per notification reference
+      assertThat(bookingReferences.size).isEqualTo(2)
+
+      // finally assert that
+      // if the booking reference has primaryVisit1.reference then it's paired with secondaryVisit1.reference
+      if (bookingReferences.contains(primaryVisit1.reference)) {
+        assertThat(bookingReferences).contains(secondaryVisit1.reference)
+      }
+
+      // if the booking reference has secondaryVisit2.reference then it's paired with primaryVisit2.reference
+      if (bookingReferences.contains(secondaryVisit2.reference)) {
+        assertThat(bookingReferences).contains(primaryVisit2.reference)
+      }
+
+      // if the booking reference has secondaryVisit3.reference then it's paired with primaryVisit2.reference
+      if (bookingReferences.contains(secondaryVisit3.reference)) {
+        assertThat(bookingReferences).contains(primaryVisit2.reference)
+      }
+    }
+    assertThat(testEventAuditRepository.getAuditCount(NON_ASSOCIATION_EVENT)).isEqualTo(6)
+  }
+
+  @Test
+  fun `when both prisoners have two visits on the same day then visits with same date and prison are flagged and saved`() {
+    // Given
+    val nonAssociationChangedNotification = NonAssociationChangedNotificationDto(nonAssociationDomainEventType, primaryPrisonerId, secondaryPrisonerId)
+    val sessionTemplate2 = sessionTemplateEntityHelper.create(prison = prison1, startTime = LocalTime.of(16, 0), endTime = LocalTime.of(17, 0))
+
+    val primaryVisit1 = createApplicationAndVisit(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(primaryVisit1)
+
+    val primaryVisit2 = createApplicationAndVisit(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(primaryVisit2)
+
+    // prisoner 2 has a second visit on the day
+    val primaryVisit3 = createApplicationAndVisit(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate2,
+    )
+    eventAuditEntityHelper.create(primaryVisit3)
+
+    // visit does not overlap
+    createApplicationAndVisit(
+      prisonerId = primaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(3),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    val secondaryVisit1 = createApplicationAndVisit(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(1),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(secondaryVisit1)
+
+    val secondaryVisit2 = createApplicationAndVisit(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+    eventAuditEntityHelper.create(secondaryVisit2)
+
+    // prisoner 2 has a second visit on the day
+    val secondaryVisit3 = createApplicationAndVisit(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(2),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate2,
+    )
+    eventAuditEntityHelper.create(secondaryVisit3)
+
+    // visit does not overlap
+    createApplicationAndVisit(
+      prisonerId = secondaryPrisonerId,
+      slotDate = LocalDate.now().plusDays(4),
+      visitStatus = BOOKED,
+      sessionTemplate = sessionTemplate1,
+    )
+
+    // When
+    val responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationChangedNotification)
+
+    // Then
+    responseSpec.expectStatus().isOk
+    assertFlaggedVisitEvent(listOf(primaryVisit1, primaryVisit2, primaryVisit3, secondaryVisit1, secondaryVisit2, secondaryVisit3), NotificationEventType.NON_ASSOCIATION_EVENT)
+    verify(telemetryClient, times(6)).trackEvent(eq("flagged-visit-event"), any(), isNull())
+
+    // primaryVisit1 - 1 event, secondaryVisit1 - 1 event, primaryVisit2, primaryVisit3, secondaryVisit2, secondaryVisit3 - 2 events each
+    verify(visitNotificationEventRepository, times(10)).saveAndFlush(any<VisitNotificationEvent>())
+
+    val visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
+    assertThat(visitNotifications).hasSize(10)
+    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
+    assertThat(visitNotifications[1].bookingReference).isNotEqualTo(visitNotifications[0].bookingReference)
+    assertThat(visitNotifications[2].reference).isEqualTo(visitNotifications[3].reference)
+    assertThat(visitNotifications[2].bookingReference).isNotEqualTo(visitNotifications[3].bookingReference)
+    assertThat(visitNotifications[4].reference).isEqualTo(visitNotifications[5].reference)
+    assertThat(visitNotifications[4].bookingReference).isNotEqualTo(visitNotifications[5].bookingReference)
+    assertThat(visitNotifications[6].reference).isEqualTo(visitNotifications[7].reference)
+    assertThat(visitNotifications[6].bookingReference).isNotEqualTo(visitNotifications[7].bookingReference)
+    assertThat(visitNotifications[8].reference).isEqualTo(visitNotifications[9].reference)
+    assertThat(visitNotifications[8].bookingReference).isNotEqualTo(visitNotifications[9].bookingReference)
+
+    // get a map of references and booking references paired
+    val visitsPerNotificationReference = visitNotifications.groupBy(VisitNotificationEvent::reference, VisitNotificationEvent::bookingReference)
+
+    visitsPerNotificationReference.forEach {
+      val bookingReferences = it.value
+
+      // assert to ensure that there are only 2 booking references per notification reference
+      assertThat(bookingReferences.size).isEqualTo(2)
+
+      // finally assert that
+      // if the booking reference has primaryVisit1.reference then it's paired with secondaryVisit1.reference
+      if (bookingReferences.contains(primaryVisit1.reference)) {
+        assertThat(bookingReferences).contains(secondaryVisit1.reference)
+      }
+
+      // if the booking reference has secondaryVisit2.reference then it's paired with primaryVisit2.reference and primaryVisit3.reference
+      if (bookingReferences.contains(secondaryVisit2.reference)) {
+        assertThat(bookingReferences).containsAnyOf(primaryVisit2.reference, primaryVisit3.reference)
+      }
+
+      // if the booking reference has secondaryVisit3.reference then it's paired with primaryVisit2.reference and primaryVisit3.reference
+      if (bookingReferences.contains(secondaryVisit3.reference)) {
+        assertThat(bookingReferences).containsAnyOf(primaryVisit2.reference, primaryVisit3.reference)
+      }
+    }
+    assertThat(testEventAuditRepository.getAuditCount(NON_ASSOCIATION_EVENT)).isEqualTo(10)
   }
 
   @Test
