@@ -326,10 +326,14 @@ class VisitNotificationEventService(
     }
 
     if (isPairGroupRequired(processVisitNotificationDto.type)) {
-      val affectedPairedVisits = pairWithEachOther(processVisitNotificationDto.affectedVisits)
-      affectedPairedVisits.forEach {
-        if (!visitNotificationEventRepository.isEventARecentPairedDuplicate(it.first.reference, it.second.reference, processVisitNotificationDto.type)) {
-          saveGroupedVisitsNotification(it.toList(), processVisitNotificationDto.type)
+      val affectedVisitsByDateMap = processVisitNotificationDto.affectedVisits.groupBy { it.startTimestamp.toLocalDate() }
+      affectedVisitsByDateMap.forEach {
+        val affectedPairedVisits = pairWithEachOther(it.value)
+
+        affectedPairedVisits.forEach {
+          if (!visitNotificationEventRepository.isEventARecentPairedDuplicate(it.first.reference, it.second.reference, processVisitNotificationDto.type)) {
+            saveGroupedVisitsNotification(it.toList(), processVisitNotificationDto.type)
+          }
         }
       }
     } else {
