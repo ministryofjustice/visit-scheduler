@@ -1,6 +1,7 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.utils
 
 import org.springframework.stereotype.Service
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
@@ -42,5 +43,28 @@ class PairedNotificationEventsUtil {
   fun getPairedVisitEventAuditText(unFlagEventReason: UnFlagEventReason, visitReference: String): String {
     val reason = pairedNotificationsEventUnFlagEventReasonMap[unFlagEventReason] ?: "Paired visit with reference - %s was cancelled, ignored or updated."
     return String.format(reason, visitReference)
+  }
+
+  fun isPairGroupRequired(
+    type: NotificationEventType,
+  ) = pairedNotificationEventTypes.contains(type)
+
+  /**
+   * Groups List into pairs e.g.
+   *  A,B,C,D
+   *  Becomes : AB, AC, AD, BC, BD, CD
+   *  Ignores : AA, BB ,CC
+   */
+  fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
+    val result: MutableList<Pair<VisitDto, VisitDto>> = mutableListOf()
+    affectedVisits.forEachIndexed { index, visitDto ->
+      for (secondIndex in index + 1..<affectedVisits.size) {
+        val otherVisit = affectedVisits[secondIndex]
+        if (visitDto.prisonerId != otherVisit.prisonerId) {
+          result.add(Pair(visitDto, otherVisit))
+        }
+      }
+    }
+    return result
   }
 }

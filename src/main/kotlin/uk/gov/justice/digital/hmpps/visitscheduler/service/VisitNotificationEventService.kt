@@ -325,15 +325,13 @@ class VisitNotificationEventService(
       visitNotificationFlaggingService.flagTrackEvents(it, bookingEventAudit, processVisitNotificationDto.type)
     }
 
-    if (isPairGroupRequired(processVisitNotificationDto.type)) {
+    if (pairedNotificationEventsUtil.isPairGroupRequired(processVisitNotificationDto.type)) {
       val affectedVisitsByDateMap = processVisitNotificationDto.affectedVisits.groupBy { it.startTimestamp.toLocalDate() }
       affectedVisitsByDateMap.forEach {
-        val affectedPairedVisits = pairWithEachOther(it.value)
+        val affectedPairedVisits = pairedNotificationEventsUtil.pairWithEachOther(it.value)
 
-        affectedPairedVisits.forEach {
-          if (!visitNotificationEventRepository.isEventARecentPairedDuplicate(it.first.reference, it.second.reference, processVisitNotificationDto.type)) {
-            saveGroupedVisitsNotification(it.toList(), processVisitNotificationDto.type)
-          }
+        affectedPairedVisits.forEach { pairedVisits ->
+          createPairedNotificationEvent(pairedVisits, processVisitNotificationDto.type)
         }
       }
     } else {
@@ -347,44 +345,11 @@ class VisitNotificationEventService(
     }
   }
 
-  private fun isPairGroupRequired(
-    type: NotificationEventType,
-  ) = NON_ASSOCIATION_EVENT == type
-
-  /**
-   * Groups List into pairs e.g.
-   *  A,B,C,D
-   *  Becomes : AB, AC, AD, BC, BD, CD
-   *  Ignores : AA, BB ,CC
-   */
-  private fun pairWithEachOther(affectedVisits: List<VisitDto>): List<Pair<VisitDto, VisitDto>> {
-    val result: MutableList<Pair<VisitDto, VisitDto>> = mutableListOf()
-    affectedVisits.forEachIndexed { index, visitDto ->
-      for (secondIndex in index + 1..<affectedVisits.size) {
-        val otherVisit = affectedVisits[secondIndex]
-        if (visitDto.prisonerId != otherVisit.prisonerId) {
-          result.add(Pair(visitDto, otherVisit))
-        }
-      }
-    }
-    return result
-  }
-
-  private fun saveGroupedVisitsNotification(
-    affectedVisitsNoDuplicate: List<VisitDto>,
-    type: NotificationEventType,
-  ) {
-    var reference: String? = null
-    affectedVisitsNoDuplicate.forEach {
-      reference = saveVisitNotification(it, reference, type)
-    }
-  }
-
   private fun saveVisitsNotification(
     saveVisitNotificationDto: SaveVisitNotificationDto,
   ) {
     saveVisitNotificationDto.affectedVisits.forEach {
-      saveVisitNotification(it, null, saveVisitNotificationDto.type, saveVisitNotificationDto.notificationEventAttributes)
+      saveVisitNotification(it, saveVisitNotificationDto.type, saveVisitNotificationDto.notificationEventAttributes)
     }
   }
 
@@ -401,23 +366,14 @@ class VisitNotificationEventService(
 
   private fun saveVisitNotification(
     impactedVisit: VisitDto,
-    reference: String?,
     type: NotificationEventType,
     notificationEventAttributes: HashMap<NotificationEventAttributeType, String>? = null,
   ): String {
     val savedVisitNotificationEvent = visitNotificationEventRepository.save(
-      if (reference == null) {
-        VisitNotificationEvent(
-          bookingReference = impactedVisit.reference,
-          type = type,
-        )
-      } else {
-        VisitNotificationEvent(
-          bookingReference = impactedVisit.reference,
-          type = type,
-          _reference = reference,
-        )
-      },
+      VisitNotificationEvent(
+        bookingReference = impactedVisit.reference,
+        type = type,
+      ),
     )
 
     notificationEventAttributes?.forEach {
@@ -547,23 +503,35 @@ class VisitNotificationEventService(
     return visit
   }
 
-  @Transactional
-  fun deleteVisitAndPairedNotificationEvents(visitReference: String, reason: UnFlagEventReason, text: String? = null) {
-    val visitNotificationEvents = visitNotificationEventRepository.getVisitNotificationEventsByBookingReference(visitReference)
-    deleteVisitNotificationEvents(visitReference, reason, text)
+  private fun createPairedNotificationEvent(pairedVisits: Pair<VisitDto, VisitDto>, notificationEventType: NotificationEventType) {
+    createPairedNotificationEvent(pairedVisits.first, pairedVisits.second, notificationEventType)
+    createPairedNotificationEvent(pairedVisits.second, pairedVisits.first, notificationEventType)
+  }
 
-    // finally audit and delete any associated paired notifications
-    deletePairedNotificationEvents(visitReference, visitNotificationEvents, reason)
+  private fun createPairedNotificationEvent(visit1: VisitDto, visit2: VisitDto, notificationEventType: NotificationEventType) {
+    val visitsPairedNotifications = visitNotificationEventRepository.getVisitNotificationEventsByBookingReference(visit1.reference).filter { it.type == notificationEventType }
+    val visitsPairedNotificationEventAttributes = visitsPairedNotifications.flatMap { it.visitNotificationEventAttributes }.filter { it.attributeName == NotificationEventAttributeType.PAIRED_VISIT }
+
+    // if not already added as a paired visit
+    if (!visitsPairedNotificationEventAttributes.map { it.attributeValue }.contains(visit2.reference)) {
+      val notificationEventAttribute = hashMapOf(NotificationEventAttributeType.PAIRED_VISIT to visit2.reference)
+      saveVisitNotification(visit1, notificationEventType, notificationEventAttribute)
+    }
   }
 
   @Transactional
-  fun deletePairedNotificationEvents(changedVisitReference: String, visitNotificationEvents: List<VisitNotificationEvent>, unFlagEventReason: UnFlagEventReason) {
-    val pairedNotifications = pairedNotificationEventsUtil.getPairedNotificationEvents(visitNotificationEvents)
-    if (pairedNotifications.isNotEmpty()) {
-      val pairedUnFlagEventReason = pairedNotificationEventsUtil.getPairedNotificationEventUnFlagReason(unFlagEventReason)
+  fun deleteVisitAndPairedNotificationEvents(visitReference: String, reason: UnFlagEventReason, text: String? = null) {
+    deleteVisitNotificationEvents(visitReference, reason, text)
+    val pairedNotificationEvents = visitNotificationEventRepository.getPairedVisitNotificationEvents(visitReference)
+    // finally audit and delete any associated paired notifications
+    deletePairedNotificationEvents(visitReference, pairedNotificationEvents, reason)
+  }
 
-      pairedNotifications.forEach {
-        deleteVisitNotificationAndAddAuditEventForPairedVisits(notificationReference = it.reference, changedVisitReference = changedVisitReference, reason = pairedUnFlagEventReason)
+  @Transactional
+  fun deletePairedNotificationEvents(changedVisitReference: String, pairedNotificationEvents: List<VisitNotificationEvent>, unFlagEventReason: UnFlagEventReason) {
+    if (pairedNotificationEvents.isNotEmpty()) {
+      pairedNotificationEvents.forEach {
+        deleteVisitNotificationAndAddAuditEventForPairedVisits(it, changedVisitReference, unFlagEventReason)
       }
     }
   }
@@ -581,24 +549,19 @@ class VisitNotificationEventService(
   }
 
   @Transactional
-  fun deleteVisitNotificationAndAddAuditEventForPairedVisits(notificationReference: String, changedVisitReference: String, reason: UnFlagEventReason, text: String? = null) {
-    val visitNotificationEvents = visitNotificationEventRepository.getVisitNotificationEventsByReference(notificationReference).filter { it.bookingReference != changedVisitReference }
+  fun deleteVisitNotificationAndAddAuditEventForPairedVisits(visitNotificationEvent: VisitNotificationEvent, changedVisitReference: String, unFlagEventReason: UnFlagEventReason, text: String? = null) {
+    val pairedUnFlagEventReason = pairedNotificationEventsUtil.getPairedNotificationEventUnFlagReason(unFlagEventReason)
+    val pairedUnFlagEventAuditType = pairedNotificationEventsUtil.getPairedVisitEventAuditType(pairedUnFlagEventReason)
+    val pairedUnFlagEventAuditText: String = pairedNotificationEventsUtil.getPairedVisitEventAuditText(pairedUnFlagEventReason, changedVisitReference)
 
-    if (visitNotificationEvents.isNotEmpty()) {
-      val pairedUnFlagEventAuditType = pairedNotificationEventsUtil.getPairedVisitEventAuditType(reason)
-      val pairedUnFlagEventAuditText: String = pairedNotificationEventsUtil.getPairedVisitEventAuditText(reason, changedVisitReference)
+    visitNotificationEventRepository.deleteByReference(visitNotificationEvent.reference)
 
-      for (visitNotificationEvent in visitNotificationEvents) {
-        visitNotificationEventRepository.deleteByReference(notificationReference)
-
-        // finally add an event audit for the paired event
-        visitRepository.findByReference(visitNotificationEvent.bookingReference)?.let { pairedVisit ->
-          visitEventAuditService.savePairedVisitChangeEventAudit(pairedVisit, pairedUnFlagEventAuditType, pairedUnFlagEventAuditText)
-        }
-
-        // after deleting the visit notifications - update application insights
-        visitNotificationFlaggingService.unFlagTrackEvents(visitNotificationEvent.bookingReference, visitNotificationEvents.map { it.type }, reason, text)
-      }
+    // finally add an event audit for the paired event
+    visitRepository.findByReference(visitNotificationEvent.bookingReference)?.let { pairedVisit ->
+      visitEventAuditService.savePairedVisitChangeEventAudit(pairedVisit, pairedUnFlagEventAuditType, pairedUnFlagEventAuditText)
     }
+
+    // after deleting the visit notifications - update application insights
+    visitNotificationFlaggingService.unFlagTrackEvents(visitNotificationEvent.bookingReference, listOf(visitNotificationEvent.type), pairedUnFlagEventReason, text)
   }
 }
