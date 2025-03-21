@@ -23,11 +23,12 @@ generic-service:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 28
     HMPPS_SQS_USE_WEB_TOKEN: "true"
+    FLAG_VISITS_NUMBER_OF_DAYS_AHEAD: 21
+
   # Pre-existing kubernetes secrets to load as environment variables in the deployment.
   # namespace_secrets:
   #   [name of kubernetes secret]:
   #     [name of environment variable as seen by app]: [key of kubernetes secret to load]
-
   namespace_secrets:
     application-insights:
       APPLICATIONINSIGHTS_CONNECTION_STRING: "APPLICATIONINSIGHTS_CONNECTION_STRING"
