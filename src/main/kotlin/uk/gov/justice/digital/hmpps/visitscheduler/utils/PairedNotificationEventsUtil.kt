@@ -13,7 +13,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.N
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.PAIRED_VISIT_CANCELLED_IGNORED_OR_UPDATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 
 @Service
 class PairedNotificationEventsUtil {
@@ -33,8 +32,6 @@ class PairedNotificationEventsUtil {
     NON_ASSOCIATION_VISIT_UPDATED to "Non-association's visit with reference - %s was updated.",
     NON_ASSOCIATION_VISIT_IGNORED to "Non-association's visit with reference - %s's notifications were ignored.",
   )
-
-  fun getPairedNotificationEvents(visitNotificationEvents: List<VisitNotificationEvent>): List<VisitNotificationEvent> = visitNotificationEvents.filter { pairedNotificationEventTypes.contains(it.type) }
 
   fun getPairedNotificationEventUnFlagReason(unFlagEventReason: UnFlagEventReason) = pairedNotificationsEventUnFlagReasonMap[unFlagEventReason] ?: PAIRED_VISIT_CANCELLED_IGNORED_OR_UPDATED
 
