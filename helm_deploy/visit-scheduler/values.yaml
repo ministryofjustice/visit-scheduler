@@ -23,6 +23,7 @@ generic-service:
     APPLICATIONINSIGHTS_CONFIGURATION_FILE: applicationinsights.json
     BOOKING_NOTICE_PERIOD_MAXIMUM_DAYS: 28
     HMPPS_SQS_USE_WEB_TOKEN: "true"
+    # TODO: Update to 28 post performance analysis
     FLAG_VISITS_NUMBER_OF_DAYS_AHEAD: 21
 
   # Pre-existing kubernetes secrets to load as environment variables in the deployment.
