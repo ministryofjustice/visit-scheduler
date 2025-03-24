@@ -261,6 +261,7 @@ class VisitStoreService(
       visitRestriction = createVisitDto.visitRestriction,
       visitRoom = createVisitDto.visitRoom,
       visitStatus = createVisitDto.visitStatus,
+      userType = UserType.PRIVATE
     )
 
     return visitDtoBuilder.build(visitRepository.saveAndFlush(newVisit))
