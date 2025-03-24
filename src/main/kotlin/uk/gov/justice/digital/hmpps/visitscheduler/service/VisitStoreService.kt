@@ -261,7 +261,18 @@ class VisitStoreService(
       visitRestriction = createVisitDto.visitRestriction,
       visitRoom = createVisitDto.visitRoom,
       visitStatus = createVisitDto.visitStatus,
-      userType = UserType.PRIVATE
+      userType = UserType.PRIVATE,
+    )
+
+    newVisit.visitors.addAll(
+      createVisitDto.visitors?.map {
+        VisitVisitor(
+          visitId = newVisit.id,
+          nomisPersonId = it.nomisPersonId,
+          visitContact = it.visitContact,
+          visit = newVisit
+        )
+      }.orEmpty()
     )
 
     val visit = visitRepository.saveAndFlush(newVisit)
