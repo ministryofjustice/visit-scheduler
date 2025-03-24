@@ -4,5 +4,5 @@ enum class UserType {
   STAFF,
   PUBLIC,
   SYSTEM,
-  PRIVATE
+  PRIVATE,
 }

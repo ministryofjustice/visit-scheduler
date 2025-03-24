@@ -41,7 +41,7 @@ class VisitStoreService(
   private val sessionSlotRepository: SessionSlotRepository,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
-  @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
+  @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
   @Lazy
@@ -270,9 +270,9 @@ class VisitStoreService(
           visitId = newVisit.id,
           nomisPersonId = it.nomisPersonId,
           visitContact = it.visitContact,
-          visit = newVisit
+          visit = newVisit,
         )
-      }.orEmpty()
+      }.orEmpty(),
     )
 
     val visit = visitRepository.saveAndFlush(newVisit)

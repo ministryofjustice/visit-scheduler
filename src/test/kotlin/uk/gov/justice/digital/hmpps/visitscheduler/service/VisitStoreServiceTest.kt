@@ -52,7 +52,7 @@ class VisitStoreServiceTest {
       createDateTime = LocalDateTime.parse("2018-12-01T13:45:00"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 1234, visitContact = true),
-        VisitorDto(nomisPersonId = 4321, visitContact = false)
+        VisitorDto(nomisPersonId = 4321, visitContact = false),
       ),
       actionedBy = "test-user",
     )
@@ -66,7 +66,7 @@ class VisitStoreServiceTest {
         maxTotalVisitors = 2,
         maxAdultVisitors = 1,
         maxChildVisitors = 1,
-        adultAgeYears = 18
+        adultAgeYears = 18,
       )
 
     private val sessionSlot = SessionSlot(
@@ -86,14 +86,15 @@ class VisitStoreServiceTest {
       visitRestriction = createVisitDto.visitRestriction,
       visitRoom = createVisitDto.visitRoom,
       visitStatus = createVisitDto.visitStatus,
-      userType = UserType.PRIVATE)
+      userType = UserType.PRIVATE,
+    )
 
     @Test
     fun `throws an exception if there's no prison found`() {
       whenever(
-        prisonRepository.findByCode(createVisitDto.prisonId)
+        prisonRepository.findByCode(createVisitDto.prisonId),
       ).thenReturn(
-        null
+        null,
       )
 
       assertThrows<PrisonNotFoundException> { visitStoreService.createVisit(createVisitDto) }
@@ -102,7 +103,7 @@ class VisitStoreServiceTest {
     @Test
     fun `creates a visit`() {
       whenever(
-        prisonRepository.findByCode(createVisitDto.prisonId)
+        prisonRepository.findByCode(createVisitDto.prisonId),
       ).thenReturn(prison)
       whenever(sessionSlotRepository.saveAndFlush(sessionSlot)).thenReturn(sessionSlot)
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
