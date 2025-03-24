@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGR
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRIVATE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
@@ -265,6 +266,10 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
       }
       SYSTEM -> {
         actionedByRepository.findActionedByForSystem()
+      }
+      PRIVATE -> {
+        userName = actionedByValue!!
+        actionedByRepository.findActionedByForStaff(userName)
       }
     }
 

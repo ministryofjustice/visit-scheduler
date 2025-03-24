@@ -163,7 +163,7 @@ class VisitService(
     return PageImpl(visits, page, visits.size.toLong())
   }
 
-  fun createVisit(createVisitDto: CreateVisitDto): VisitDto {
+  fun createVisit(createVisitDto: CreateVisitDto): Long {
     return visitStoreService.createVisit(createVisitDto)
   }
 

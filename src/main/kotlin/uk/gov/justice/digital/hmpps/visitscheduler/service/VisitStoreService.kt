@@ -41,7 +41,7 @@ class VisitStoreService(
   private val sessionSlotRepository: SessionSlotRepository,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
-  @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
+  @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int
 ) {
 
   @Lazy
@@ -239,7 +239,7 @@ class VisitStoreService(
     return visitCancellationDateAllowed
   }
 
-  fun createVisit(createVisitDto: CreateVisitDto): VisitDto {
+  fun createVisit(createVisitDto: CreateVisitDto): Long {
     val prison = prisonRepository.findByCode(createVisitDto.prisonId)
       ?: throw PrisonNotFoundException("Prison ${createVisitDto.prisonId} not found")
 
@@ -264,6 +264,7 @@ class VisitStoreService(
       userType = UserType.PRIVATE
     )
 
-    return visitDtoBuilder.build(visitRepository.saveAndFlush(newVisit))
+    val visit = visitRepository.saveAndFlush(newVisit)
+    return visit.id
   }
 }
