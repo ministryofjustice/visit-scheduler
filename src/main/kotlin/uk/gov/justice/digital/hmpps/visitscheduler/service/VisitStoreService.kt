@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
@@ -17,6 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
@@ -24,6 +26,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -32,6 +37,8 @@ import java.time.temporal.ChronoUnit
 @Transactional
 class VisitStoreService(
   private val visitRepository: VisitRepository,
+  private val prisonRepository: PrisonRepository,
+  private val sessionSlotRepository: SessionSlotRepository,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
@@ -230,5 +237,32 @@ class VisitStoreService(
     }
 
     return visitCancellationDateAllowed
+  }
+
+  fun createVisit(createVisitDto: CreateVisitDto): VisitDto {
+    val prison = prisonRepository.findByCode(createVisitDto.prisonId)
+      ?: throw PrisonNotFoundException("Prison ${createVisitDto.prisonId} not found")
+
+    val newSessionSlot = SessionSlot(
+      prisonId = prison.id,
+      slotDate = createVisitDto.startTimestamp.toLocalDate(),
+      slotStart = createVisitDto.startTimestamp,
+      slotEnd = createVisitDto.endTimestamp,
+    )
+    val sessionSlot = sessionSlotRepository.saveAndFlush(newSessionSlot)
+
+    val newVisit = Visit(
+      prisonId = prison.id,
+      prison = prison,
+      prisonerId = createVisitDto.prisonerId,
+      sessionSlotId = sessionSlot.id,
+      sessionSlot = sessionSlot,
+      visitType = createVisitDto.visitType,
+      visitRestriction = createVisitDto.visitRestriction,
+      visitRoom = createVisitDto.visitRoom,
+      visitStatus = createVisitDto.visitStatus,
+    )
+
+    return visitDtoBuilder.build(visitRepository.saveAndFlush(newVisit))
   }
 }
