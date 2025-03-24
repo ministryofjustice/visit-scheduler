@@ -8,6 +8,8 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
+import org.mockito.kotlin.times
+import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.test.context.ActiveProfiles
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrivatePrisonVisitDto
@@ -109,6 +111,7 @@ class VisitStoreServiceTest {
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
 
       val visitId = visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto)
+      verify(visitRepository, times(1)).saveAndFlush(visit)
       assertThat(visitId).isEqualTo(0)
     }
   }
