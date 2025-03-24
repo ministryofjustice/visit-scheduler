@@ -38,14 +38,14 @@ class FlagVisitsTask(
     lockAtMostFor = FlagVisitTaskConfiguration.LOCK_AT_MOST_FOR,
   )
   fun flagVisits() {
-    LOG.debug("Started flagVisits task.")
+    LOG.info("Started flagVisits task.")
     if (!flagVisitTaskConfiguration.flagVisitsEnabled) {
-      LOG.debug("flagVisits task disabled, exiting task.")
+      LOG.info("flagVisits task disabled, exiting task.")
       return
     }
 
     prisonsService.getPrisonCodes().forEach { prisonCode ->
-      LOG.debug("Flagging visits for prison {}.", prisonCode)
+      LOG.info("Flagging visits for prison {}.", prisonCode)
       for (i in 0..flagVisitTaskConfiguration.numberOfDaysAhead) {
         val visitDate = LocalDate.now().plusDays(i.toLong())
 
@@ -70,7 +70,7 @@ class FlagVisitsTask(
       }
     }
 
-    LOG.debug("Finished flagVisits task.")
+    LOG.info("Finished flagVisits task.")
   }
 
   private fun flagVisit(visit: VisitDto, noticeDays: Int, isRetry: Boolean = false): Boolean {
