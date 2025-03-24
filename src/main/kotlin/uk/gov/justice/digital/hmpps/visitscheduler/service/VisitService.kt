@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
@@ -160,6 +161,10 @@ class VisitService(
     }.sortedWith(compareByDescending(nullsFirst()) { it.firstBookedDateTime })
 
     return PageImpl(visits, page, visits.size.toLong())
+  }
+
+  fun createVisit(createVisitDto: CreateVisitDto): VisitDto {
+    return visitStoreService.createVisit(createVisitDto)
   }
 
   private fun setFirstBookedDateTime(visitDto: VisitDto) {
