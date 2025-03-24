@@ -23,16 +23,16 @@ dependencies {
   implementation("org.springframework.boot:spring-boot-starter-security")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-resource-server")
   implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
-  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.3.2")
+  implementation("uk.gov.justice.service.hmpps:hmpps-sqs-spring-boot-starter:5.4.2")
 
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-reactor")
   implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8")
   implementation("io.opentelemetry.instrumentation:opentelemetry-instrumentation-annotations:2.14.0")
 
   implementation("org.springframework.data:spring-data-commons:3.4.4")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.5")
-  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5")
-  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.5")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.6")
+  implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.6")
+  implementation("org.springdoc:springdoc-openapi-starter-common:2.8.6")
 
   implementation("org.springframework.boot:spring-boot-starter-data-jpa")
   implementation("net.javacrumbs.shedlock:shedlock-spring:6.3.0")
