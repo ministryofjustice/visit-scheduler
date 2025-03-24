@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrivatePrisonVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
@@ -239,33 +239,33 @@ class VisitStoreService(
     return visitCancellationDateAllowed
   }
 
-  fun createVisit(createVisitDto: CreateVisitDto): Long {
-    val prison = prisonRepository.findByCode(createVisitDto.prisonId)
-      ?: throw PrisonNotFoundException("Prison ${createVisitDto.prisonId} not found")
+  fun createPrivatePrisonVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): Long {
+    val prison = prisonRepository.findByCode(privatePrisonVisitDto.prisonId)
+      ?: throw PrisonNotFoundException("Prison ${privatePrisonVisitDto.prisonId} not found")
 
     val newSessionSlot = SessionSlot(
       prisonId = prison.id,
-      slotDate = createVisitDto.startTimestamp.toLocalDate(),
-      slotStart = createVisitDto.startTimestamp,
-      slotEnd = createVisitDto.endTimestamp,
+      slotDate = privatePrisonVisitDto.startTimestamp.toLocalDate(),
+      slotStart = privatePrisonVisitDto.startTimestamp,
+      slotEnd = privatePrisonVisitDto.endTimestamp,
     )
     val sessionSlot = sessionSlotRepository.saveAndFlush(newSessionSlot)
 
     val newVisit = Visit(
       prisonId = prison.id,
       prison = prison,
-      prisonerId = createVisitDto.prisonerId,
+      prisonerId = privatePrisonVisitDto.prisonerId,
       sessionSlotId = sessionSlot.id,
       sessionSlot = sessionSlot,
-      visitType = createVisitDto.visitType,
-      visitRestriction = createVisitDto.visitRestriction,
-      visitRoom = createVisitDto.visitRoom,
-      visitStatus = createVisitDto.visitStatus,
+      visitType = privatePrisonVisitDto.visitType,
+      visitRestriction = privatePrisonVisitDto.visitRestriction,
+      visitRoom = privatePrisonVisitDto.visitRoom,
+      visitStatus = privatePrisonVisitDto.visitStatus,
       userType = UserType.PRIVATE,
     )
 
     newVisit.visitors.addAll(
-      createVisitDto.visitors?.map {
+      privatePrisonVisitDto.visitors?.map {
         VisitVisitor(
           visitId = newVisit.id,
           nomisPersonId = it.nomisPersonId,

@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrivatePrisonVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
@@ -163,7 +163,7 @@ class VisitService(
     return PageImpl(visits, page, visits.size.toLong())
   }
 
-  fun createVisit(createVisitDto: CreateVisitDto): Long = visitStoreService.createVisit(createVisitDto)
+  fun createVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): Long = visitStoreService.createVisit(privatePrisonVisitDto)
 
   private fun setFirstBookedDateTime(visitDto: VisitDto) {
     visitDto.firstBookedDateTime = eventAuditService.getLastEventForBookingOrMigration(visitDto.reference)?.createTimestamp

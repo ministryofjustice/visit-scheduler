@@ -10,7 +10,7 @@ import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.whenever
 import org.springframework.test.context.ActiveProfiles
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrivatePrisonVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -39,7 +39,7 @@ class VisitStoreServiceTest {
   @Nested
   @DisplayName("createVisit")
   inner class CreateVisit {
-    private val createVisitDto = CreateVisitDto(
+    private val privatePrisonVisitDto = PrivatePrisonVisitDto(
       prisonerId = "AF34567G",
       prisonId = "MDI",
       clientVisitReference = "client-visit-reference-1",
@@ -71,44 +71,44 @@ class VisitStoreServiceTest {
 
     private val sessionSlot = SessionSlot(
       prisonId = prison.id,
-      slotDate = createVisitDto.startTimestamp.toLocalDate(),
-      slotStart = createVisitDto.startTimestamp,
-      slotEnd = createVisitDto.endTimestamp,
+      slotDate = privatePrisonVisitDto.startTimestamp.toLocalDate(),
+      slotStart = privatePrisonVisitDto.startTimestamp,
+      slotEnd = privatePrisonVisitDto.endTimestamp,
     )
 
     private val visit = Visit(
       prisonId = prison.id,
       prison = prison,
-      prisonerId = createVisitDto.prisonerId,
+      prisonerId = privatePrisonVisitDto.prisonerId,
       sessionSlotId = sessionSlot.id,
       sessionSlot = sessionSlot,
-      visitType = createVisitDto.visitType,
-      visitRestriction = createVisitDto.visitRestriction,
-      visitRoom = createVisitDto.visitRoom,
-      visitStatus = createVisitDto.visitStatus,
+      visitType = privatePrisonVisitDto.visitType,
+      visitRestriction = privatePrisonVisitDto.visitRestriction,
+      visitRoom = privatePrisonVisitDto.visitRoom,
+      visitStatus = privatePrisonVisitDto.visitStatus,
       userType = UserType.PRIVATE,
     )
 
     @Test
     fun `throws an exception if there's no prison found`() {
       whenever(
-        prisonRepository.findByCode(createVisitDto.prisonId),
+        prisonRepository.findByCode(privatePrisonVisitDto.prisonId),
       ).thenReturn(
         null,
       )
 
-      assertThrows<PrisonNotFoundException> { visitStoreService.createVisit(createVisitDto) }
+      assertThrows<PrisonNotFoundException> { visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto) }
     }
 
     @Test
     fun `creates a visit`() {
       whenever(
-        prisonRepository.findByCode(createVisitDto.prisonId),
+        prisonRepository.findByCode(privatePrisonVisitDto.prisonId),
       ).thenReturn(prison)
       whenever(sessionSlotRepository.saveAndFlush(sessionSlot)).thenReturn(sessionSlot)
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
 
-      val visitId = visitStoreService.createVisit(createVisitDto)
+      val visitId = visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto)
       assertThat(visitId).isEqualTo(0)
     }
   }
