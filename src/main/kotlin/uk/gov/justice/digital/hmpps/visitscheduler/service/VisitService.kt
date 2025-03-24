@@ -163,7 +163,7 @@ class VisitService(
     return PageImpl(visits, page, visits.size.toLong())
   }
 
-  fun createVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): Long = visitStoreService.createVisit(privatePrisonVisitDto)
+  fun createVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): Long = visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto)
 
   private fun setFirstBookedDateTime(visitDto: VisitDto) {
     visitDto.firstBookedDateTime = eventAuditService.getLastEventForBookingOrMigration(visitDto.reference)?.createTimestamp
