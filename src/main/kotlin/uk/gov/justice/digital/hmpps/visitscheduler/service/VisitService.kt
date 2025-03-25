@@ -67,9 +67,10 @@ class VisitService(
     return processBookingEvents(booking, bookingRequestDto)
   }
 
-  fun bookPrivatePrisonVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): Long {
+  fun bookPrivatePrisonVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): PrivatePrisonVisitDto {
     val booking = visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto)
 
+    return processPrivatePrisonBookingEvents(booking)
   }
 
   fun updateBookedVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {

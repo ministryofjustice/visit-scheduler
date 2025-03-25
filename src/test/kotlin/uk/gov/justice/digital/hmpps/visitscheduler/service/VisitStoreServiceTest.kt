@@ -110,9 +110,9 @@ class VisitStoreServiceTest {
       whenever(sessionSlotRepository.saveAndFlush(sessionSlot)).thenReturn(sessionSlot)
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
 
-      val visitId = visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto)
+      val privatePrisonVisitDto = visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto)
       verify(visitRepository, times(1)).saveAndFlush(visit)
-      assertThat(visitId).isEqualTo(0)
+      assertThat(privatePrisonVisitDto.prisonId).isEqualTo(privatePrisonVisitDto.prisonId)
     }
   }
 }

@@ -10,6 +10,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import java.time.LocalDateTime
 
 data class PrivatePrisonVisitDto(
+  @Schema(description = "Visit Reference", example = "v9-d7-ed-7u")
+  val reference: String? = null,
   @Schema(description = "Prisoner Id", example = "AF34567G", required = true)
   @field:NotBlank
   val prisonerId: String,

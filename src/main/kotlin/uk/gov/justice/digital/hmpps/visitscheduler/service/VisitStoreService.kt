@@ -239,7 +239,7 @@ class VisitStoreService(
     return visitCancellationDateAllowed
   }
 
-  fun createPrivatePrisonVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): Long {
+  fun createPrivatePrisonVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): PrivatePrisonVisitDto {
     val prison = prisonRepository.findByCode(privatePrisonVisitDto.prisonId)
       ?: throw PrisonNotFoundException("Prison ${privatePrisonVisitDto.prisonId} not found")
 
@@ -276,6 +276,21 @@ class VisitStoreService(
     )
 
     val visit = visitRepository.saveAndFlush(newVisit)
-    return visit.id
+
+    return PrivatePrisonVisitDto(
+      reference = visit.reference,
+      prisonId = visit.prison.code,
+      prisonerId = visit.prisonerId,
+      clientVisitReference = privatePrisonVisitDto.clientVisitReference,
+      visitRoom = visit.visitRoom,
+      visitType = visit.visitType,
+      visitStatus = visit.visitStatus,
+      visitRestriction = visit.visitRestriction,
+      startTimestamp = privatePrisonVisitDto.startTimestamp,
+      endTimestamp = privatePrisonVisitDto.endTimestamp,
+      createDateTime = privatePrisonVisitDto.createDateTime,
+      visitors = privatePrisonVisitDto.visitors,
+      actionedBy = privatePrisonVisitDto.actionedBy,
+    )
   }
 }
