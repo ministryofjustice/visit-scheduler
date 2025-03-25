@@ -201,7 +201,7 @@ class VisitService(
     telemetryClientService.trackPrivatePrisonBookingEvent(privatePrisonVisitDto, createdVisitEventAuditDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
-      reference = privatePrisonVisitDto.clientVisitReference, // Should be reference
+      reference = privatePrisonVisitDto.reference ?: "",
       createdTimestamp = privatePrisonVisitDto.createDateTime,
       modifiedTimestamp = privatePrisonVisitDto.createDateTime,
       prisonerId = privatePrisonVisitDto.prisonerId,
