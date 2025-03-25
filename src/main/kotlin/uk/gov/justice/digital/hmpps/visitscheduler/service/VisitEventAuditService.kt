@@ -233,27 +233,6 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     )
   }
 
-  fun updatePrivatePrisonVisitApplicationAndSaveEvent(
-    privatePrisonVisitDto: PrivatePrisonVisitDto,
-    bookingRequestDto: BookingRequestDto,
-    eventType: EventAuditType,
-  ): EventAuditDto {
-    try {
-      //eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
-      //privatePrisonVisitDto.clientVisitReference
-    } catch (e: InvocationTargetException) {
-      LOG.error("Audit log does not exist for ${privatePrisonVisitDto.clientVisitReference}")
-    }
-
-    return saveBookingEventAudit(
-      bookingRequestDto.actionedBy,
-      privatePrisonVisitDto,
-      eventType,
-      bookingRequestDto.applicationMethodType,
-      userType = bookingRequestDto.userType,
-    )
-  }
-
   fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> = eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it, notifyHistoryDtoBuilder) }
 
   private fun saveCancelledEventAudit(actionedByValue: String, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
