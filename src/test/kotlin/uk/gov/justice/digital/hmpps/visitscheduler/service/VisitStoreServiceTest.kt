@@ -88,7 +88,7 @@ class VisitStoreServiceTest {
       visitRestriction = privatePrisonVisitDto.visitRestriction,
       visitRoom = privatePrisonVisitDto.visitRoom,
       visitStatus = privatePrisonVisitDto.visitStatus,
-      userType = UserType.PRIVATE,
+      userType = UserType.PRISONER,
     )
 
     @Test

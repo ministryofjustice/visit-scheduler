@@ -10,14 +10,17 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrivatePrisonVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.NotifyHistoryDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.BY_PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_APPLICABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CANCELLED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.CHANGING_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.IGNORE_VISIT_NOTIFICATIONS_EVENT
@@ -25,7 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGR
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRIVATE
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
@@ -98,6 +101,28 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
           type = type,
           applicationMethodType = applicationMethodType,
           text = null,
+        ),
+      ),
+      notifyHistoryDtoBuilder,
+    )
+  }
+
+  fun savePrivatePrisonVisitEventAudit(
+    visit: PrivatePrisonVisitDto,
+    eventAuditType: EventAuditType,
+  ): EventAuditDto {
+    val actionedBy = createOrGetActionBy(visit.actionedBy, PRISONER)
+
+    return EventAuditDto(
+      eventAuditRepository.saveAndFlush(
+        EventAudit(
+          actionedBy = actionedBy,
+          type = eventAuditType,
+          applicationMethodType = BY_PRISONER,
+          text = null,
+          bookingReference = null,
+          applicationReference = null,
+          sessionTemplateReference = null,
         ),
       ),
       notifyHistoryDtoBuilder,
@@ -208,6 +233,27 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     )
   }
 
+  fun updatePrivatePrisonVisitApplicationAndSaveEvent(
+    privatePrisonVisitDto: PrivatePrisonVisitDto,
+    bookingRequestDto: BookingRequestDto,
+    eventType: EventAuditType,
+  ): EventAuditDto {
+    try {
+      //eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
+      //privatePrisonVisitDto.clientVisitReference
+    } catch (e: InvocationTargetException) {
+      LOG.error("Audit log does not exist for ${privatePrisonVisitDto.clientVisitReference}")
+    }
+
+    return saveBookingEventAudit(
+      bookingRequestDto.actionedBy,
+      privatePrisonVisitDto,
+      eventType,
+      bookingRequestDto.applicationMethodType,
+      userType = bookingRequestDto.userType,
+    )
+  }
+
   fun findByBookingReferenceOrderById(bookingReference: String): List<EventAuditDto> = eventAuditRepository.findByBookingReferenceOrderById(bookingReference).map { EventAuditDto(it, notifyHistoryDtoBuilder) }
 
   private fun saveCancelledEventAudit(actionedByValue: String, userType: UserType, applicationMethodType: ApplicationMethodType, visit: VisitDto): EventAuditDto {
@@ -267,7 +313,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
       SYSTEM -> {
         actionedByRepository.findActionedByForSystem()
       }
-      PRIVATE -> {
+      PRISONER -> {
         userName = actionedByValue!!
         actionedByRepository.findActionedByForStaff(userName)
       }
