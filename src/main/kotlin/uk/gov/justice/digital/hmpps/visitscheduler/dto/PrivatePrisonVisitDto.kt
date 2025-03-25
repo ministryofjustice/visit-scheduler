@@ -38,7 +38,7 @@ data class PrivatePrisonVisitDto(
   @field:NotNull
   val endTimestamp: LocalDateTime,
   @Schema(description = "The date and time of when the visit was created in NEXUS", example = "2018-12-01T13:45:00", required = false)
-  val createDateTime: LocalDateTime? = null,
+  val createDateTime: LocalDateTime,
   @Schema(description = "List of visitors associated with the visit", required = false)
   val visitors: Set<@Valid VisitorDto>? = setOf(),
   @Schema(description = "Username for user who actioned this request", required = false)

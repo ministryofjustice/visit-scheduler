@@ -193,22 +193,20 @@ class VisitService(
   }
 
   private fun processPrivatePrisonBookingEvents(
-    privatePrisonVisitDto: PrivatePrisonVisitDto,
-    bookingRequestDto: BookingRequestDto,
+    privatePrisonVisitDto: PrivatePrisonVisitDto
   ): PrivatePrisonVisitDto {
-    // id from after or before with client idx
     val createdVisitEventAuditDto = visitEventAuditService.savePrivatePrisonVisitEventAudit(privatePrisonVisitDto, EventAuditType.BOOKED_VISIT)
 
     telemetryClientService.trackPrivatePrisonBookingEvent(privatePrisonVisitDto, createdVisitEventAuditDto)
 
-//    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
-//      bookedVisitDto.clientVisitReference,
-//      bookedVisitDto,
-//      bookedVisitDto.,
-//      bookedVisitDto.prisonerId,
-//      createdVisitEventAuditDto.id,
-//    )
-//    snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      reference = privatePrisonVisitDto.clientVisitReference, // Should be reference
+      createdTimestamp = privatePrisonVisitDto.createDateTime,
+      modifiedTimestamp = privatePrisonVisitDto.createDateTime,
+      prisonerId = privatePrisonVisitDto.prisonerId,
+      eventAuditId = createdVisitEventAuditDto.id,
+    )
+    snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
 
     return privatePrisonVisitDto
   }
