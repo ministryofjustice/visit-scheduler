@@ -18,11 +18,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.IGNO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.UPDATED_NON_ASSOCIATION_VISIT_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.PAIRED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.VISITOR_UNAPPROVED_EVENT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.NonAssociationChangedNotificationDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.visitnotification.VisitNotificationEventAttributeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotificationEventHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callIgnoreVisitNotifications
@@ -32,6 +34,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.CancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.visit.IgnoreVisitNotificationsTest.Companion.USER
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.EventAudit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import java.time.LocalDate
 import java.time.LocalTime
@@ -86,9 +89,10 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     // ensure 2 notifications with the same reference were added
     var visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
-    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(prisoner1Visit.reference)
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(prisoner2Visit.reference)
+    // notification 1 - booking reference for prisoner1 and paired with prisoner2's visit on same day
+    assertNotificationEvent(visitNotifications[0], prisoner1Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner2Visit.reference)))
+    // notification 2 - booking reference for prisoner2 and paired with prisoner1's visit on same day
+    assertNotificationEvent(visitNotifications[1], prisoner2Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit.reference)))
 
     visitNotificationEventHelper.create(prisoner2Visit.reference, VISITOR_UNAPPROVED_EVENT)
     visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
@@ -133,9 +137,11 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     // ensure 2 notifications with the same reference were added
     var visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
-    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(prisoner1Visit.reference)
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(prisoner2Visit.reference)
+    assertThat(visitNotifications).hasSize(2)
+    // notification 1 - booking reference for prisoner1 and paired with prisoner2's visit on same day
+    assertNotificationEvent(visitNotifications[0], prisoner1Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner2Visit.reference)))
+    // notification 2 - booking reference for prisoner2 and paired with prisoner1's visit on same day
+    assertNotificationEvent(visitNotifications[1], prisoner2Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit.reference)))
 
     visitNotificationEventHelper.create(prisoner2Visit.reference, VISITOR_UNAPPROVED_EVENT)
     visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
@@ -183,15 +189,13 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     var responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationCreatedNotification)
     responseSpec.expectStatus().isOk
 
-    // ensure 2 notifications with the same reference were added
+    // ensure 2 notifications were added
     var visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
-    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(prisoner1Visit.reference)
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(prisoner2Visit.reference)
-
-    visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
-    assertThat(visitNotifications).hasSize(2)
+    // notification 1 - booking reference for prisoner1 and paired with prisoner2's visit on same day
+    assertNotificationEvent(visitNotifications[0], prisoner1Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner2Visit.reference)))
+    // notification 2 - booking reference for prisoner2 and paired with prisoner1's visit on same day
+    assertNotificationEvent(visitNotifications[1], prisoner2Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit.reference)))
 
     // when the first visit's notifications are ignored the second visit's non association events are also removed
     val ignoreVisitNotification = IgnoreVisitNotificationsDto("Can be ignored, to be managed by staff.", USER)
@@ -233,17 +237,18 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     var responseSpec = callNotifyVSiPThatNonAssociationHasChanged(webTestClient, roleVisitSchedulerHttpHeaders, nonAssociationCreatedNotification)
     responseSpec.expectStatus().isOk
 
-    // ensure 2 notifications with the same reference were added
+    // ensure 3 notifications with the same reference were added
     var visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(4)
 
-    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(prisoner1Visit.reference)
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(prisoner2Visit1.reference)
-
-    assertThat(visitNotifications[3].reference).isEqualTo(visitNotifications[2].reference)
-    assertThat(visitNotifications[2].bookingReference).isEqualTo(prisoner1Visit.reference)
-    assertThat(visitNotifications[3].bookingReference).isEqualTo(prisoner2Visit2.reference)
+    // notification 1 - booking reference for prisoner1 and paired with prisoner2's visit1 on same day
+    assertNotificationEvent(visitNotifications[0], prisoner1Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner2Visit1.reference)))
+    // notification 2 - booking reference for prisoner2 visit1 and paired with prisoner1's visit on same day
+    assertNotificationEvent(visitNotifications[1], prisoner2Visit1.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit.reference)))
+    // notification 3 - booking reference for prisoner1 and paired with prisoner2's visit2 on same day
+    assertNotificationEvent(visitNotifications[2], prisoner1Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner2Visit2.reference)))
+    // notification 4 - booking reference for prisoner2 visit2 and paired with prisoner1's visit on same day
+    assertNotificationEvent(visitNotifications[3], prisoner2Visit2.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit.reference)))
 
     // when the first visit is cancelled the second visit's non association events are also removed
     val cancelVisitDto = CancelVisitDto(OutcomeDto(OutcomeStatus.PRISONER_CANCELLED, "Prisoner got covid"), CANCELLED_BY_USER, STAFF, PHONE)
@@ -288,13 +293,14 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     var visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(4)
 
-    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(prisoner1Visit1.reference)
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(prisoner2Visit.reference)
-
-    assertThat(visitNotifications[3].reference).isEqualTo(visitNotifications[2].reference)
-    assertThat(visitNotifications[2].bookingReference).isEqualTo(prisoner1Visit2.reference)
-    assertThat(visitNotifications[3].bookingReference).isEqualTo(prisoner2Visit.reference)
+    // notification 1 - booking reference for prisoner1's visit 1 and paired with prisoner2's visit on same day
+    assertNotificationEvent(visitNotifications[0], prisoner1Visit1.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner2Visit.reference)))
+    // notification 2 - booking reference for prisoner2 visit and paired with prisoner1's visit on same day
+    assertNotificationEvent(visitNotifications[1], prisoner2Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit1.reference)))
+    // notification 3 - booking reference for prisoner1's visit 2 and paired with prisoner2's visit on same day
+    assertNotificationEvent(visitNotifications[2], prisoner1Visit2.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner2Visit.reference)))
+    // notification 4 - booking reference for prisoner2 visit and paired with prisoner2's visit on same day
+    assertNotificationEvent(visitNotifications[3], prisoner2Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit2.reference)))
 
     // when 1 of the prisoner 1's visit then the non-association visit's non association events with only that visit are removed
     val ignoreVisitNotification = IgnoreVisitNotificationsDto("Can be ignored, to be managed by staff.", USER)
@@ -307,9 +313,10 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     visitNotifications = testVisitNotificationEventRepository.findAllOrderById()
     assertThat(visitNotifications).hasSize(2)
 
-    assertThat(visitNotifications[1].reference).isEqualTo(visitNotifications[0].reference)
-    assertThat(visitNotifications[0].bookingReference).isEqualTo(prisoner1Visit2.reference)
-    assertThat(visitNotifications[1].bookingReference).isEqualTo(prisoner2Visit.reference)
+    // notification 3 - booking reference for prisoner1's visit 2 and paired with prisoner2's visit on same day
+    assertNotificationEvent(visitNotifications[0], prisoner1Visit2.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner2Visit.reference)))
+    // notification 4 - booking reference for prisoner2 visit and paired with prisoner2's visit on same day
+    assertNotificationEvent(visitNotifications[1], prisoner2Visit.reference, listOf(VisitNotificationEventAttributeDto(PAIRED_VISIT, prisoner1Visit2.reference)))
 
     val eventAudit = this.eventAuditRepository.findLastEventByBookingReference(prisoner2Visit.reference)
     assertEventAudit(eventAudit, IGNORED_NON_ASSOCIATION_VISIT_NOTIFICATIONS_EVENT, prisoner2Visit.reference, "Non-association's visit with reference - ${prisoner1Visit1.reference}'s notifications were ignored.")
@@ -324,5 +331,18 @@ class PairedVisitsNotificationEventTest : NotificationTestBase() {
     assertThat(eventAudit.applicationReference).isNull()
     assertThat(eventAudit.actionedBy.id).isNotNull()
     assertThat(eventAudit.text).isEqualTo(text)
+  }
+
+  private fun assertNotificationEvent(visitNotificationEvent: VisitNotificationEvent, expectedVisitReference: String, expectedNotificationEventAttributes: List<VisitNotificationEventAttributeDto>?) {
+    assertThat(visitNotificationEvent.bookingReference).isEqualTo(expectedVisitReference)
+    if (expectedNotificationEventAttributes != null) {
+      assertThat(visitNotificationEvent.visitNotificationEventAttributes.size).isEqualTo(expectedNotificationEventAttributes.size)
+      for (i in expectedNotificationEventAttributes.indices) {
+        assertThat(visitNotificationEvent.visitNotificationEventAttributes[i].attributeName).isEqualTo(expectedNotificationEventAttributes[i].attributeName)
+        assertThat(visitNotificationEvent.visitNotificationEventAttributes[i].attributeValue).isEqualTo(expectedNotificationEventAttributes[i].attributeValue)
+      }
+    } else {
+      assertThat(visitNotificationEvent.visitNotificationEventAttributes).isNull()
+    }
   }
 }
