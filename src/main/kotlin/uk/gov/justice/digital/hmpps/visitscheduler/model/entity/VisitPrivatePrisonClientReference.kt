@@ -7,17 +7,16 @@ import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 
-
 @Entity
-@Table(name = "VISIT_PRIVATE_PRISON_CLIENT_REFERENCE",)
+@Table(name = "VISIT_PRIVATE_PRISON_CLIENT_REFERENCE")
 class VisitPrivatePrisonClientReference(
-    @Id
-    val visitId: Long,
+  @Id
+  val visitId: Long,
 
-    @Column(name = "client_reference", nullable = false)
-    val clientReference: String,
+  @Column(name = "client_reference", nullable = false)
+  val clientReference: String,
 
-    @OneToOne
-    @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
-    val visit: Visit
+  @OneToOne
+  @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
+  val visit: Visit,
 )
