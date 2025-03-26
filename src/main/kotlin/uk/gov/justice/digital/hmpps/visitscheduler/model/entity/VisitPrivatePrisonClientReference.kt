@@ -2,8 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.model.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
-import jakarta.persistence.GeneratedValue
-import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.JoinColumn
 import jakarta.persistence.OneToOne
@@ -14,7 +12,6 @@ import jakarta.persistence.Table
 @Table(name = "VISIT_PRIVATE_PRISON_CLIENT_REFERENCE",)
 class VisitPrivatePrisonClientReference(
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
     val visitId: Long,
 
     @Column(name = "client_reference", nullable = false)
