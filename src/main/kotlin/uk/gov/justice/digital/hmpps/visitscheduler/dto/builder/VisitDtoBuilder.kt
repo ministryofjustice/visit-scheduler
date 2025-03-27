@@ -46,7 +46,7 @@ class VisitDtoBuilder {
   private fun getApplicationReference(
     visitEntity: Visit,
   ): String? {
-    if (visitEntity.visitFromExternalSystemClientReference != null){
+    if (visitEntity.visitFromExternalSystemClientReference != null) {
       return null
     }
     val application = visitEntity.getLastCompletedApplication()

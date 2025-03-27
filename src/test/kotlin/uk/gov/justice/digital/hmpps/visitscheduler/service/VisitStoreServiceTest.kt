@@ -1,6 +1,5 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.service
 
-import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Nested
 import org.junit.jupiter.api.Test
@@ -12,17 +11,9 @@ import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
-import org.springframework.beans.factory.annotation.Autowired
-import org.springframework.context.annotation.Bean
-import org.springframework.context.annotation.Configuration
-import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
-import org.springframework.test.context.ContextConfiguration
-import org.springframework.test.context.bean.override.mockito.MockitoBean
-import org.springframework.test.context.junit.jupiter.SpringExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -73,7 +64,7 @@ internal class VisitStoreServiceTest {
       visitNotes = listOf(
         VisitNoteDto(
           type = VisitNoteType.VISITOR_CONCERN,
-          text = "Visitor is concerned that his mother in-law is coming!"
+          text = "Visitor is concerned that his mother in-law is coming!",
         ),
       ),
       createDateTime = LocalDateTime.parse("2018-12-01T13:45:00"),
@@ -82,8 +73,8 @@ internal class VisitStoreServiceTest {
         VisitorDto(nomisPersonId = 4321, visitContact = false),
       ),
       visitorSupport = VisitorSupportDto(
-        description = "Visually impaired assistance"
-      )
+        description = "Visually impaired assistance",
+      ),
     )
 
     private val prison =
@@ -134,11 +125,13 @@ internal class VisitStoreServiceTest {
       whenever(
         prisonRepository.findByCode(createVisitFromExternalSystemDto.prisonId),
       ).thenReturn(prison)
-      whenever(sessionSlotService.getSessionSlot(
-        startTimeDate = createVisitFromExternalSystemDto.startTimestamp.truncatedTo(ChronoUnit.MINUTES),
-        endTimeAndDate = createVisitFromExternalSystemDto.endTimestamp.truncatedTo(ChronoUnit.MINUTES),
-        prison = prison
-      )).thenReturn(sessionSlot)
+      whenever(
+        sessionSlotService.getSessionSlot(
+          startTimeDate = createVisitFromExternalSystemDto.startTimestamp.truncatedTo(ChronoUnit.MINUTES),
+          endTimeAndDate = createVisitFromExternalSystemDto.endTimestamp.truncatedTo(ChronoUnit.MINUTES),
+          prison = prison,
+        ),
+      ).thenReturn(sessionSlot)
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
 
       visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)

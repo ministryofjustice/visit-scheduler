@@ -271,7 +271,6 @@ class TelemetryClientService(
     return data
   }
 
-
   private fun createFlaggedVisitTrackEvent(visit: VisitDto, reason: String): MutableMap<String, String> {
     val flagVisitMap = mutableMapOf(
       "reference" to visit.reference,
@@ -432,5 +431,4 @@ class TelemetryClientService(
 
     return data.toMap()
   }
-
 }

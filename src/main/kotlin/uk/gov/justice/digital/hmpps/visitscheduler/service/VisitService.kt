@@ -197,7 +197,7 @@ class VisitService(
 
   private fun processCreateVisitFromExternalSystemEvents(
     bookedVisitDto: VisitDto,
-    createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto
+    createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto,
   ): VisitDto {
     val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(createVisitFromExternalSystemDto.prisonerId, bookedVisitDto, EventAuditType.BOOKED_VISIT, ApplicationMethodType.BY_PRISONER, UserType.PRISONER)
 

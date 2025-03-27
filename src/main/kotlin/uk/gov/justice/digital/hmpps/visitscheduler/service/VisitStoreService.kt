@@ -243,7 +243,7 @@ class VisitStoreService(
     val sessionSlot = sessionSlotService.getSessionSlot(
       startTimeDate = createVisitFromExternalSystemDto.startTimestamp.truncatedTo(ChronoUnit.MINUTES),
       endTimeAndDate = createVisitFromExternalSystemDto.endTimestamp.truncatedTo(ChronoUnit.MINUTES),
-      prison = prison
+      prison = prison,
     )
 
     val newVisit = Visit(
@@ -276,9 +276,9 @@ class VisitStoreService(
           visitId = newVisit.id,
           type = it.type,
           text = it.text,
-          visit = newVisit
+          visit = newVisit,
         )
-      }
+      },
     )
 
     newVisit.visitContact = createVisitFromExternalSystemDto.visitContact.let {
