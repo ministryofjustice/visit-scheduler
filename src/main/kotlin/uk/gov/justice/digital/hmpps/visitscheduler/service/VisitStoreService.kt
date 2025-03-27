@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundExcept
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitPrivatePrisonClientReference
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -299,6 +300,12 @@ class VisitStoreService(
         visit = newVisit,
       )
     }
+
+    newVisit.visitFromExternalSystemClientReference = VisitPrivatePrisonClientReference(
+      visitId = newVisit.id,
+      clientReference = createVisitFromExternalSystemDto.clientVisitReference,
+      visit = newVisit,
+    )
 
     val visitEntity = visitRepository.saveAndFlush(newVisit)
 
