@@ -12,9 +12,13 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.test.context.ActiveProfiles
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
@@ -23,40 +27,52 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 @ExtendWith(MockitoExtension::class)
 @ActiveProfiles("test")
 class VisitStoreServiceTest {
   private val visitRepository = mock<VisitRepository>()
   private val prisonRepository = mock<PrisonRepository>()
-  private val sessionSlotRepository = mock<SessionSlotRepository>()
+  private val sessionSlotService = mock<SessionSlotService>()
   private val applicationValidationService = mock<ApplicationValidationService>()
   private val applicationService = mock<ApplicationService>()
 
-  private val visitStoreService: VisitStoreService = VisitStoreService(visitRepository, prisonRepository, sessionSlotRepository, applicationValidationService, applicationService, 28)
+  private val visitStoreService: VisitStoreService = VisitStoreService(visitRepository, prisonRepository, sessionSlotService, applicationValidationService, applicationService, 28)
 
   @Nested
   @DisplayName("createVisit")
   inner class CreateVisit {
-    private val privatePrisonVisitDto = CreateVisitFromExternalSystemDto(
+    private val createVisitFromExternalSystemDto = CreateVisitFromExternalSystemDto(
       prisonerId = "AF34567G",
       prisonId = "MDI",
       clientVisitReference = "client-visit-reference-1",
       visitRoom = "A1",
       visitType = VisitType.SOCIAL,
-      visitStatus = VisitStatus.BOOKED,
       visitRestriction = VisitRestriction.OPEN,
       startTimestamp = LocalDateTime.parse("2018-12-01T13:45:00"),
       endTimestamp = LocalDateTime.parse("2018-12-01T13:45:00"),
+      visitContact = ContactDto(
+        name = "John Smith",
+        telephone = "01234567890",
+        email = "email@example.com",
+      ),
+      visitNotes = listOf(
+        VisitNoteDto(
+          type = VisitNoteType.VISITOR_CONCERN,
+          text = "Visitor is concerned that his mother in-law is coming!"
+        ),
+      ),
       createDateTime = LocalDateTime.parse("2018-12-01T13:45:00"),
       visitors = setOf(
         VisitorDto(nomisPersonId = 1234, visitContact = true),
         VisitorDto(nomisPersonId = 4321, visitContact = false),
       ),
-      actionedBy = "test-user",
+      visitorSupport = VisitorSupportDto(
+        description = "Visually impaired assistance"
+      )
     )
 
     private val prison =
@@ -73,46 +89,50 @@ class VisitStoreServiceTest {
 
     private val sessionSlot = SessionSlot(
       prisonId = prison.id,
-      slotDate = privatePrisonVisitDto.startTimestamp.toLocalDate(),
-      slotStart = privatePrisonVisitDto.startTimestamp,
-      slotEnd = privatePrisonVisitDto.endTimestamp,
+      slotDate = createVisitFromExternalSystemDto.startTimestamp.toLocalDate(),
+      slotStart = createVisitFromExternalSystemDto.startTimestamp,
+      slotEnd = createVisitFromExternalSystemDto.endTimestamp,
     )
 
     private val visit = Visit(
       prisonId = prison.id,
       prison = prison,
-      prisonerId = privatePrisonVisitDto.prisonerId,
+      prisonerId = createVisitFromExternalSystemDto.prisonerId,
       sessionSlotId = sessionSlot.id,
       sessionSlot = sessionSlot,
-      visitType = privatePrisonVisitDto.visitType,
-      visitRestriction = privatePrisonVisitDto.visitRestriction,
-      visitRoom = privatePrisonVisitDto.visitRoom,
-      visitStatus = privatePrisonVisitDto.visitStatus,
+      visitType = createVisitFromExternalSystemDto.visitType,
+      visitRestriction = createVisitFromExternalSystemDto.visitRestriction,
+      visitRoom = createVisitFromExternalSystemDto.visitRoom,
+      visitStatus = VisitStatus.BOOKED,
       userType = UserType.PRISONER,
     )
 
     @Test
     fun `throws an exception if there's no prison found`() {
       whenever(
-        prisonRepository.findByCode(privatePrisonVisitDto.prisonId),
+        prisonRepository.findByCode(createVisitFromExternalSystemDto.prisonId),
       ).thenReturn(
         null,
       )
 
-      assertThrows<PrisonNotFoundException> { visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto) }
+      assertThrows<PrisonNotFoundException> { visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto) }
     }
 
     @Test
     fun `creates a visit`() {
       whenever(
-        prisonRepository.findByCode(privatePrisonVisitDto.prisonId),
+        prisonRepository.findByCode(createVisitFromExternalSystemDto.prisonId),
       ).thenReturn(prison)
-      whenever(sessionSlotRepository.saveAndFlush(sessionSlot)).thenReturn(sessionSlot)
+      whenever(sessionSlotService.getSessionSlot(
+        startTimeDate = createVisitFromExternalSystemDto.startTimestamp.truncatedTo(ChronoUnit.MINUTES),
+        endTimeAndDate = createVisitFromExternalSystemDto.endTimestamp.truncatedTo(ChronoUnit.MINUTES),
+        prison = prison
+      )).thenReturn(sessionSlot)
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
 
-      val privatePrisonVisitDto = visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto)
+      val visitDto = visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
       verify(visitRepository, times(1)).saveAndFlush(visit)
-      assertThat(privatePrisonVisitDto.prisonId).isEqualTo(privatePrisonVisitDto.prisonId)
+      assertThat(visitDto.prisonCode).isEqualTo(createVisitFromExternalSystemDto.prisonId)
     }
   }
 }
