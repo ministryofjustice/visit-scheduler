@@ -101,6 +101,9 @@ class Visit(
   var reference: String = ""
     private set
 
+  @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
+  val privatePrisonClientReference: VisitPrivatePrisonClientReference? = null
+
   @PostPersist
   fun createReference() {
     if (reference.isBlank()) {
