@@ -26,9 +26,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionSlotRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -38,7 +36,7 @@ import java.time.temporal.ChronoUnit
 class VisitStoreService(
   private val visitRepository: VisitRepository,
   private val prisonRepository: PrisonRepository,
-  private val sessionSlotRepository: SessionSlotRepository,
+  private val sessionSlotService: SessionSlotService,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
@@ -243,13 +241,11 @@ class VisitStoreService(
     val prison = prisonRepository.findByCode(createVisitFromExternalSystemDto.prisonId)
       ?: throw PrisonNotFoundException("Prison ${createVisitFromExternalSystemDto.prisonId} not found")
 
-    val newSessionSlot = SessionSlot(
-      prisonId = prison.id,
-      slotDate = createVisitFromExternalSystemDto.startTimestamp.toLocalDate(),
-      slotStart = createVisitFromExternalSystemDto.startTimestamp,
-      slotEnd = createVisitFromExternalSystemDto.endTimestamp,
+    val sessionSlot = sessionSlotService.getSessionSlot(
+      startTimeDate = createVisitFromExternalSystemDto.startTimestamp.truncatedTo(ChronoUnit.MINUTES),
+      endTimeAndDate = createVisitFromExternalSystemDto.endTimestamp.truncatedTo(ChronoUnit.MINUTES),
+      prison = prison
     )
-    val sessionSlot = sessionSlotRepository.saveAndFlush(newSessionSlot)
 
     val newVisit = Visit(
       prisonId = prison.id,
