@@ -193,6 +193,10 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     bookingRequestDto: BookingRequestDto,
     eventType: EventAuditType,
   ): EventAuditDto {
+    if (bookedVisitDto.applicationReference == null) {
+      // This should not happen as application reference should always be set here
+      throw IllegalArgumentException("Booked visit app reference is not set")
+    }
     try {
       eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
     } catch (e: InvocationTargetException) {

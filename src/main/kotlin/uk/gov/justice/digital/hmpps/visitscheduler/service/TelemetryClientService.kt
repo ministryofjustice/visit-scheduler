@@ -333,7 +333,7 @@ class TelemetryClientService(
     visitDto: VisitDto,
   ): MutableMap<String, String> = mutableMapOf(
     "reference" to visitDto.reference,
-    "applicationReference" to visitDto.applicationReference,
+    "applicationReference" to (visitDto.applicationReference ?: ""),
     "prisonerId" to visitDto.prisonerId,
     "prisonId" to visitDto.prisonCode,
     "visitStatus" to visitDto.visitStatus.name,
