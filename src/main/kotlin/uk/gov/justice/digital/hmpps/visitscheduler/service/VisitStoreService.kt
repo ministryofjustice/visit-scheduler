@@ -239,33 +239,33 @@ class VisitStoreService(
     return visitCancellationDateAllowed
   }
 
-  fun createVisitFromExternalSystem(privatePrisonVisitDto: CreateVisitFromExternalSystemDto): CreateVisitFromExternalSystemDto {
-    val prison = prisonRepository.findByCode(privatePrisonVisitDto.prisonId)
-      ?: throw PrisonNotFoundException("Prison ${privatePrisonVisitDto.prisonId} not found")
+  fun createVisitFromExternalSystem(createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto): VisitDto {
+    val prison = prisonRepository.findByCode(createVisitFromExternalSystemDto.prisonId)
+      ?: throw PrisonNotFoundException("Prison ${createVisitFromExternalSystemDto.prisonId} not found")
 
     val newSessionSlot = SessionSlot(
       prisonId = prison.id,
-      slotDate = privatePrisonVisitDto.startTimestamp.toLocalDate(),
-      slotStart = privatePrisonVisitDto.startTimestamp,
-      slotEnd = privatePrisonVisitDto.endTimestamp,
+      slotDate = createVisitFromExternalSystemDto.startTimestamp.toLocalDate(),
+      slotStart = createVisitFromExternalSystemDto.startTimestamp,
+      slotEnd = createVisitFromExternalSystemDto.endTimestamp,
     )
     val sessionSlot = sessionSlotRepository.saveAndFlush(newSessionSlot)
 
     val newVisit = Visit(
       prisonId = prison.id,
       prison = prison,
-      prisonerId = privatePrisonVisitDto.prisonerId,
+      prisonerId = createVisitFromExternalSystemDto.prisonerId,
       sessionSlotId = sessionSlot.id,
       sessionSlot = sessionSlot,
-      visitType = privatePrisonVisitDto.visitType,
-      visitRestriction = privatePrisonVisitDto.visitRestriction,
-      visitRoom = privatePrisonVisitDto.visitRoom,
+      visitType = createVisitFromExternalSystemDto.visitType,
+      visitRestriction = createVisitFromExternalSystemDto.visitRestriction,
+      visitRoom = createVisitFromExternalSystemDto.visitRoom,
       visitStatus = BOOKED,
       userType = UserType.PRISONER,
     )
 
     newVisit.visitors.addAll(
-      privatePrisonVisitDto.visitors?.map {
+      createVisitFromExternalSystemDto.visitors?.map {
         VisitVisitor(
           visitId = newVisit.id,
           nomisPersonId = it.nomisPersonId,
@@ -275,21 +275,8 @@ class VisitStoreService(
       }.orEmpty(),
     )
 
-    val visit = visitRepository.saveAndFlush(newVisit)
+    val visitEntity = visitRepository.saveAndFlush(newVisit)
 
-    return CreateVisitFromExternalSystemDto(
-      prisonId = visit.prison.code,
-      prisonerId = visit.prisonerId,
-      clientVisitReference = privatePrisonVisitDto.clientVisitReference,
-      visitRoom = visit.visitRoom,
-      visitType = visit.visitType,
-      visitRestriction = visit.visitRestriction,
-      startTimestamp = privatePrisonVisitDto.startTimestamp,
-      endTimestamp = privatePrisonVisitDto.endTimestamp,
-      createDateTime = privatePrisonVisitDto.createDateTime,
-      visitors = privatePrisonVisitDto.visitors,
-      actionedBy = privatePrisonVisitDto.actionedBy,
-      visitContact = privatePrisonVisitDto.visitContact,
-    )
+    return visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
   }
 }

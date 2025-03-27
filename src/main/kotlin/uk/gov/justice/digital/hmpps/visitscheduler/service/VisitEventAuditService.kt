@@ -10,13 +10,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.NotifyHistoryDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.BY_PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_APPLICABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
@@ -100,28 +98,6 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
           type = type,
           applicationMethodType = applicationMethodType,
           text = null,
-        ),
-      ),
-      notifyHistoryDtoBuilder,
-    )
-  }
-
-  fun savePrivatePrisonVisitEventAudit(
-    visit: CreateVisitFromExternalSystemDto,
-    eventAuditType: EventAuditType,
-  ): EventAuditDto {
-    val actionedBy = createOrGetActionBy(visit.actionedBy, PRISONER)
-
-    return EventAuditDto(
-      eventAuditRepository.saveAndFlush(
-        EventAudit(
-          actionedBy = actionedBy,
-          type = eventAuditType,
-          applicationMethodType = BY_PRISONER,
-          text = null,
-          bookingReference = null,
-          applicationReference = null,
-          sessionTemplateReference = null,
         ),
       ),
       notifyHistoryDtoBuilder,

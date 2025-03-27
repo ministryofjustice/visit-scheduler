@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
@@ -63,23 +62,12 @@ class TelemetryClientService(
   }
 
   fun trackBookingEvent(
-    bookingRequestDto: BookingRequestDto,
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
   ) {
     trackEvent(
       VISIT_BOOKED_EVENT,
       createBookedVisitTrackData(null, bookedVisitDto, eventAuditDto, false),
-    )
-  }
-
-  fun trackPrivatePrisonBookingEvent(
-    privatePrisonVisitDto: CreateVisitFromExternalSystemDto,
-    eventAuditDto: EventAuditDto,
-  ) {
-    trackEvent(
-      VISIT_BOOKED_EVENT,
-      createPrivatePrisonBookedVisitTrackData(null, privatePrisonVisitDto, eventAuditDto, false),
     )
   }
 
@@ -283,25 +271,6 @@ class TelemetryClientService(
     return data
   }
 
-  private fun createPrivatePrisonBookedVisitTrackData(
-    privatePrisonVisitDtoBeforeUpdate: CreateVisitFromExternalSystemDto?,
-    privatePrisonVisitDto: CreateVisitFromExternalSystemDto,
-    eventAudit: EventAuditDto,
-    isUpdate: Boolean = false,
-  ): MutableMap<String, String> {
-    val data = createDefaultPrivatePrisonVisitData(privatePrisonVisitDto)
-    data["isUpdated"] = isUpdate.toString()
-//    privatePrisonVisitDto.visitorSupport?.let {
-//      data.put("supportRequired", it.description)
-//    }
-    if (privatePrisonVisitDtoBeforeUpdate != null) {
-      data.putAll(getAdditionalPrivatePrisonDataForUpdate(privatePrisonVisitDtoBeforeUpdate, privatePrisonVisitDto))
-    }
-
-    createEventAuditData(eventAudit, data)
-
-    return data
-  }
 
   private fun createFlaggedVisitTrackEvent(visit: VisitDto, reason: String): MutableMap<String, String> {
     val flagVisitMap = mutableMapOf(
@@ -377,24 +346,6 @@ class TelemetryClientService(
     "hasEmail" to (visitDto.visitContact.email != null).toString(),
     "totalVisitors" to visitDto.visitors.size.toString(),
     "visitors" to getVisitorIdsAsString(visitDto.visitors),
-  )
-
-  private fun createDefaultPrivatePrisonVisitData(
-    privatePrisonVisitDto: CreateVisitFromExternalSystemDto,
-  ): MutableMap<String, String> = mutableMapOf(
-    //"reference" to privatePrisonVisitDto.reference,
-    "prisonerId" to privatePrisonVisitDto.prisonerId,
-    "prisonId" to privatePrisonVisitDto.prisonId,
-    "visitStatus" to privatePrisonVisitDto.visitStatus.name,
-    "visitRestriction" to privatePrisonVisitDto.visitRestriction.name,
-    "visitStart" to formatDateTimeToString(privatePrisonVisitDto.startTimestamp),
-    "visitEnd" to formatDateTimeToString(privatePrisonVisitDto.endTimestamp),
-    "visitType" to privatePrisonVisitDto.visitType.name,
-    "visitRoom" to privatePrisonVisitDto.visitRoom,
-    //"hasPhoneNumber" to (privatePrisonVisitDto.visitContact.telephone != null).toString(),
-    //"hasEmail" to (visitDto.visitContact.email != null).toString(),
-    "totalVisitors" to privatePrisonVisitDto.visitors.orEmpty().size.toString(),
-    "visitors" to getVisitorIdsAsString(privatePrisonVisitDto.visitors.orEmpty().toList()),
   )
 
   private fun createUnFlagData(
@@ -482,21 +433,4 @@ class TelemetryClientService(
     return data.toMap()
   }
 
-  private fun getAdditionalPrivatePrisonDataForUpdate(
-    privatePrisonVisitDtoBeforeUpdate: CreateVisitFromExternalSystemDto,
-    privatePrisonVisitDtoAfterUpdate: CreateVisitFromExternalSystemDto,
-  ): Map<String, String> {
-    val data: MutableMap<String, String> = mutableMapOf()
-    val isSessionChanged = privatePrisonVisitDtoBeforeUpdate.startTimestamp != privatePrisonVisitDtoAfterUpdate.startTimestamp
-    data["hasSessionChanged"] = isSessionChanged.toString()
-    val isDateChanged = privatePrisonVisitDtoBeforeUpdate.startTimestamp.toLocalDate() != privatePrisonVisitDtoAfterUpdate.startTimestamp.toLocalDate()
-    data["hasDateChanged"] = isDateChanged.toString()
-    data["existingVisitSession"] = formatDateTimeToString(privatePrisonVisitDtoBeforeUpdate.startTimestamp)
-    data["newVisitSession"] = formatDateTimeToString(privatePrisonVisitDtoBeforeUpdate.startTimestamp)
-    data["hasVisitorsChanged"] = (privatePrisonVisitDtoBeforeUpdate.visitors != privatePrisonVisitDtoAfterUpdate.visitors).toString()
-    //data["hasNeedsChanged"] = (visitDtoBeforeUpdate.visitorSupport != visitAfterUpdate.visitorSupport).toString()
-    //data["hasContactsChanged"] = (visitDtoBeforeUpdate.visitContact != visitAfterUpdate.visitContact).toString()
-
-    return data.toMap()
-  }
 }
