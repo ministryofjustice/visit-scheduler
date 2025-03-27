@@ -199,7 +199,7 @@ class VisitService(
     bookedVisitDto: VisitDto,
     createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto
   ): VisitDto {
-    val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(createVisitFromExternalSystemDto.actionedBy ?: "", bookedVisitDto, EventAuditType.BOOKED_VISIT, ApplicationMethodType.BY_PRISONER, UserType.PRISONER)
+    val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(createVisitFromExternalSystemDto.prisonerId, bookedVisitDto, EventAuditType.BOOKED_VISIT, ApplicationMethodType.BY_PRISONER, UserType.PRISONER)
 
     telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto)
 

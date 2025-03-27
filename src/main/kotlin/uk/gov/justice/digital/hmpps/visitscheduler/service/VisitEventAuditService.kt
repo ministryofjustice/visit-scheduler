@@ -268,8 +268,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
         actionedByRepository.findActionedByForSystem()
       }
       PRISONER -> {
-        userName = actionedByValue!!
-        actionedByRepository.findActionedByForStaff(userName)
+        TODO()
       }
     }
 

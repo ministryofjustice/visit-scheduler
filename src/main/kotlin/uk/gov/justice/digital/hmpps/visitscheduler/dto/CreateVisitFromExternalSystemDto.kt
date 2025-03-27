@@ -44,6 +44,4 @@ data class CreateVisitFromExternalSystemDto(
   val visitors: Set<@Valid VisitorDto>? = setOf(),
   @Schema(description = "Additional support associated with the visit")
   val visitorSupport: VisitorSupportDto? = null,
-  @Schema(description = "Username for user who actioned this request", required = false)
-  val actionedBy: String?,
 )
