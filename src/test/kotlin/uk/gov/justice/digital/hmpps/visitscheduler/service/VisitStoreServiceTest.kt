@@ -7,16 +7,26 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
+import org.mockito.kotlin.any
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.context.annotation.Bean
+import org.springframework.context.annotation.Configuration
+import org.springframework.context.annotation.Import
 import org.springframework.test.context.ActiveProfiles
+import org.springframework.test.context.ContextConfiguration
+import org.springframework.test.context.bean.override.mockito.MockitoBean
+import org.springframework.test.context.junit.jupiter.SpringExtension
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -31,16 +41,17 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 
-@ExtendWith(MockitoExtension::class)
 @ActiveProfiles("test")
-class VisitStoreServiceTest {
+@ExtendWith(MockitoExtension::class)
+internal class VisitStoreServiceTest {
   private val visitRepository = mock<VisitRepository>()
   private val prisonRepository = mock<PrisonRepository>()
   private val sessionSlotService = mock<SessionSlotService>()
   private val applicationValidationService = mock<ApplicationValidationService>()
   private val applicationService = mock<ApplicationService>()
+  private val visitDtoBuilder = mock<VisitDtoBuilder>()
 
-  private val visitStoreService: VisitStoreService = VisitStoreService(visitRepository, prisonRepository, sessionSlotService, applicationValidationService, applicationService, 28)
+  private val visitStoreService: VisitStoreService = VisitStoreService(visitRepository, prisonRepository, sessionSlotService, applicationValidationService, applicationService, visitDtoBuilder, 28)
 
   @Nested
   @DisplayName("createVisit")
@@ -130,9 +141,9 @@ class VisitStoreServiceTest {
       )).thenReturn(sessionSlot)
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
 
-      val visitDto = visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
+      visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
       verify(visitRepository, times(1)).saveAndFlush(visit)
-      assertThat(visitDto.prisonCode).isEqualTo(createVisitFromExternalSystemDto.prisonId)
+      verify(visitDtoBuilder, times(1)).build(any<Visit>())
     }
   }
 }

@@ -40,6 +40,7 @@ class VisitStoreService(
   private val sessionSlotService: SessionSlotService,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
+  @Autowired private val visitDtoBuilder: VisitDtoBuilder,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
@@ -49,9 +50,6 @@ class VisitStoreService(
 
   @Autowired
   private lateinit var sessionTemplateService: SessionTemplateService
-
-  @Autowired
-  private lateinit var visitDtoBuilder: VisitDtoBuilder
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -307,8 +305,6 @@ class VisitStoreService(
       visit = newVisit,
     )
 
-    val visitEntity = visitRepository.saveAndFlush(newVisit)
-
-    return visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
+    return visitDtoBuilder.build(visitRepository.saveAndFlush(newVisit))
   }
 }
