@@ -275,6 +275,35 @@ class VisitStoreService(
       }.orEmpty(),
     )
 
+    newVisit.visitNotes.addAll(
+      createVisitFromExternalSystemDto.visitNotes.map {
+        VisitNote(
+          visitId = newVisit.id,
+          type = it.type,
+          text = it.text,
+          visit = newVisit
+        )
+      }
+    )
+
+    newVisit.visitContact = createVisitFromExternalSystemDto.visitContact.let {
+      VisitContact(
+        visitId = newVisit.id,
+        name = it.name,
+        telephone = it.telephone,
+        email = it.email,
+        visit = newVisit,
+      )
+    }
+
+    newVisit.support = createVisitFromExternalSystemDto.visitorSupport?.let {
+      VisitSupport(
+        visitId = newVisit.id,
+        description = it.description,
+        visit = newVisit,
+      )
+    }
+
     val visitEntity = visitRepository.saveAndFlush(newVisit)
 
     return visitDtoBuilder.build(visitRepository.saveAndFlush(visitEntity))
