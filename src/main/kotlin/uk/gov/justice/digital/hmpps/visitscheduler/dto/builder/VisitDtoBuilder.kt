@@ -46,6 +46,7 @@ class VisitDtoBuilder {
   private fun getApplicationReference(
     visitEntity: Visit,
   ): String? {
+    // If the visit has an external system client reference then it will not have been created from an application
     if (visitEntity.visitFromExternalSystemClientReference != null) {
       return null
     }
