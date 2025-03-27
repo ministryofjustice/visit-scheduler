@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrivatePrisonVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
@@ -239,7 +239,7 @@ class VisitStoreService(
     return visitCancellationDateAllowed
   }
 
-  fun createPrivatePrisonVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): PrivatePrisonVisitDto {
+  fun createVisitFromExternalSystem(privatePrisonVisitDto: CreateVisitFromExternalSystemDto): CreateVisitFromExternalSystemDto {
     val prison = prisonRepository.findByCode(privatePrisonVisitDto.prisonId)
       ?: throw PrisonNotFoundException("Prison ${privatePrisonVisitDto.prisonId} not found")
 
@@ -260,7 +260,7 @@ class VisitStoreService(
       visitType = privatePrisonVisitDto.visitType,
       visitRestriction = privatePrisonVisitDto.visitRestriction,
       visitRoom = privatePrisonVisitDto.visitRoom,
-      visitStatus = privatePrisonVisitDto.visitStatus,
+      visitStatus = BOOKED,
       userType = UserType.PRISONER,
     )
 
@@ -277,20 +277,19 @@ class VisitStoreService(
 
     val visit = visitRepository.saveAndFlush(newVisit)
 
-    return PrivatePrisonVisitDto(
-      reference = visit.reference,
+    return CreateVisitFromExternalSystemDto(
       prisonId = visit.prison.code,
       prisonerId = visit.prisonerId,
       clientVisitReference = privatePrisonVisitDto.clientVisitReference,
       visitRoom = visit.visitRoom,
       visitType = visit.visitType,
-      visitStatus = visit.visitStatus,
       visitRestriction = visit.visitRestriction,
       startTimestamp = privatePrisonVisitDto.startTimestamp,
       endTimestamp = privatePrisonVisitDto.endTimestamp,
       createDateTime = privatePrisonVisitDto.createDateTime,
       visitors = privatePrisonVisitDto.visitors,
       actionedBy = privatePrisonVisitDto.actionedBy,
+      visitContact = privatePrisonVisitDto.visitContact,
     )
   }
 }

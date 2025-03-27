@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrivatePrisonVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
@@ -67,8 +67,8 @@ class VisitService(
     return processBookingEvents(booking, bookingRequestDto)
   }
 
-  fun bookPrivatePrisonVisit(privatePrisonVisitDto: PrivatePrisonVisitDto): PrivatePrisonVisitDto {
-    val booking = visitStoreService.createPrivatePrisonVisit(privatePrisonVisitDto)
+  fun createVisitFromExternalSystem(createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto): CreateVisitFromExternalSystemDto {
+    val booking = visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
 
     return processPrivatePrisonBookingEvents(booking)
   }
@@ -194,22 +194,22 @@ class VisitService(
   }
 
   private fun processPrivatePrisonBookingEvents(
-    privatePrisonVisitDto: PrivatePrisonVisitDto
-  ): PrivatePrisonVisitDto {
-    val createdVisitEventAuditDto = visitEventAuditService.savePrivatePrisonVisitEventAudit(privatePrisonVisitDto, EventAuditType.BOOKED_VISIT)
+    createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto
+  ): CreateVisitFromExternalSystemDto {
+    val createdVisitEventAuditDto = visitEventAuditService.savePrivatePrisonVisitEventAudit(createVisitFromExternalSystemDto, EventAuditType.BOOKED_VISIT)
 
-    telemetryClientService.trackPrivatePrisonBookingEvent(privatePrisonVisitDto, createdVisitEventAuditDto)
+    telemetryClientService.trackPrivatePrisonBookingEvent(createVisitFromExternalSystemDto, createdVisitEventAuditDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
-      reference = privatePrisonVisitDto.reference ?: "",
-      createdTimestamp = privatePrisonVisitDto.createDateTime,
-      modifiedTimestamp = privatePrisonVisitDto.createDateTime,
-      prisonerId = privatePrisonVisitDto.prisonerId,
+      reference = TODO(),
+      createdTimestamp = createVisitFromExternalSystemDto.createDateTime,
+      modifiedTimestamp = createVisitFromExternalSystemDto.createDateTime,
+      prisonerId = createVisitFromExternalSystemDto.prisonerId,
       eventAuditId = createdVisitEventAuditDto.id,
     )
     snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
 
-    return privatePrisonVisitDto
+    return createVisitFromExternalSystemDto
   }
 
   private fun processUpdateBookingEvents(

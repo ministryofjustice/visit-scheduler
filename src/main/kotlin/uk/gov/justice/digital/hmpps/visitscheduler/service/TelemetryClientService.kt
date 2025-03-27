@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrivatePrisonVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ApplicationDto
@@ -74,7 +74,7 @@ class TelemetryClientService(
   }
 
   fun trackPrivatePrisonBookingEvent(
-    privatePrisonVisitDto: PrivatePrisonVisitDto,
+    privatePrisonVisitDto: CreateVisitFromExternalSystemDto,
     eventAuditDto: EventAuditDto,
   ) {
     trackEvent(
@@ -284,8 +284,8 @@ class TelemetryClientService(
   }
 
   private fun createPrivatePrisonBookedVisitTrackData(
-    privatePrisonVisitDtoBeforeUpdate: PrivatePrisonVisitDto?,
-    privatePrisonVisitDto: PrivatePrisonVisitDto,
+    privatePrisonVisitDtoBeforeUpdate: CreateVisitFromExternalSystemDto?,
+    privatePrisonVisitDto: CreateVisitFromExternalSystemDto,
     eventAudit: EventAuditDto,
     isUpdate: Boolean = false,
   ): MutableMap<String, String> {
@@ -380,7 +380,7 @@ class TelemetryClientService(
   )
 
   private fun createDefaultPrivatePrisonVisitData(
-    privatePrisonVisitDto: PrivatePrisonVisitDto,
+    privatePrisonVisitDto: CreateVisitFromExternalSystemDto,
   ): MutableMap<String, String> = mutableMapOf(
     //"reference" to privatePrisonVisitDto.reference,
     "prisonerId" to privatePrisonVisitDto.prisonerId,
@@ -483,8 +483,8 @@ class TelemetryClientService(
   }
 
   private fun getAdditionalPrivatePrisonDataForUpdate(
-    privatePrisonVisitDtoBeforeUpdate: PrivatePrisonVisitDto,
-    privatePrisonVisitDtoAfterUpdate: PrivatePrisonVisitDto,
+    privatePrisonVisitDtoBeforeUpdate: CreateVisitFromExternalSystemDto,
+    privatePrisonVisitDtoAfterUpdate: CreateVisitFromExternalSystemDto,
   ): Map<String, String> {
     val data: MutableMap<String, String> = mutableMapOf()
     val isSessionChanged = privatePrisonVisitDtoBeforeUpdate.startTimestamp != privatePrisonVisitDtoAfterUpdate.startTimestamp

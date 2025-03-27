@@ -12,7 +12,7 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.mockito.kotlin.whenever
 import org.springframework.test.context.ActiveProfiles
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrivatePrisonVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -41,7 +41,7 @@ class VisitStoreServiceTest {
   @Nested
   @DisplayName("createVisit")
   inner class CreateVisit {
-    private val privatePrisonVisitDto = PrivatePrisonVisitDto(
+    private val privatePrisonVisitDto = CreateVisitFromExternalSystemDto(
       prisonerId = "AF34567G",
       prisonId = "MDI",
       clientVisitReference = "client-visit-reference-1",
