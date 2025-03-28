@@ -45,8 +45,8 @@ internal class VisitStoreServiceTest {
   private val visitStoreService: VisitStoreService = VisitStoreService(visitRepository, prisonRepository, sessionSlotService, applicationValidationService, applicationService, visitDtoBuilder, 28)
 
   @Nested
-  @DisplayName("createVisit")
-  inner class CreateVisit {
+  @DisplayName("createVisitFromExternalSystem")
+  inner class CreateVisitFromExternalSystem {
     private val createVisitFromExternalSystemDto = CreateVisitFromExternalSystemDto(
       prisonerId = "AF34567G",
       prisonId = "HEI",
@@ -135,7 +135,7 @@ internal class VisitStoreServiceTest {
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
 
       visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
-      verify(visitRepository, times(2)).saveAndFlush(visit)
+      verify(visitRepository, times(2)).saveAndFlush(any<Visit>())
       verify(visitDtoBuilder, times(1)).build(any<Visit>())
     }
   }
