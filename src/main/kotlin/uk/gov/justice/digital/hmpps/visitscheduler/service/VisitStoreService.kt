@@ -22,8 +22,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundExcep
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitFromExternalSystemClientReference
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -246,18 +246,20 @@ class VisitStoreService(
       prison = prison,
     )
 
-    val newVisit = visitRepository.saveAndFlush(Visit(
-      prisonId = prison.id,
-      prison = prison,
-      prisonerId = createVisitFromExternalSystemDto.prisonerId,
-      sessionSlotId = sessionSlot.id,
-      sessionSlot = sessionSlot,
-      visitType = createVisitFromExternalSystemDto.visitType,
-      visitRestriction = createVisitFromExternalSystemDto.visitRestriction,
-      visitRoom = createVisitFromExternalSystemDto.visitRoom,
-      visitStatus = BOOKED,
-      userType = UserType.PRISONER,
-    ))
+    val newVisit = visitRepository.saveAndFlush(
+      Visit(
+        prisonId = prison.id,
+        prison = prison,
+        prisonerId = createVisitFromExternalSystemDto.prisonerId,
+        sessionSlotId = sessionSlot.id,
+        sessionSlot = sessionSlot,
+        visitType = createVisitFromExternalSystemDto.visitType,
+        visitRestriction = createVisitFromExternalSystemDto.visitRestriction,
+        visitRoom = createVisitFromExternalSystemDto.visitRoom,
+        visitStatus = BOOKED,
+        userType = UserType.PRISONER,
+      ),
+    )
 
     newVisit.visitors.addAll(
       createVisitFromExternalSystemDto.visitors?.map {

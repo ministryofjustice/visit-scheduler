@@ -766,7 +766,7 @@ fun callNotifyVSiPOfAEvent(
 fun callCreateVisitFromExternalSystem(
   webTestClient: WebTestClient,
   authHttpHeaders: (HttpHeaders) -> Unit,
-  dto: CreateVisitFromExternalSystemDto
+  dto: CreateVisitFromExternalSystemDto,
 ): ResponseSpec = callPost(dto, webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, authHttpHeaders)
 
 fun callGet(

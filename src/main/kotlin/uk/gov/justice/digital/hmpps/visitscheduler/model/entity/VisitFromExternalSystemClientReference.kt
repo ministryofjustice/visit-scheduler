@@ -8,19 +8,18 @@ import jakarta.persistence.OneToOne
 import jakarta.persistence.Table
 import org.hibernate.Hibernate
 
-
 @Entity
 @Table(name = "VISIT_FROM_EXTERNAL_SYSTEM_CLIENT_REFERENCE")
 class VisitFromExternalSystemClientReference(
-    @Id
-    var visitId: Long,
+  @Id
+  var visitId: Long,
 
-    @Column(name = "client_reference", nullable = false)
-    var clientReference: String,
+  @Column(name = "client_reference", nullable = false)
+  var clientReference: String,
 
-    @OneToOne
-    @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
-    var visit: Visit
+  @OneToOne
+  @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
+  var visit: Visit,
 ) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

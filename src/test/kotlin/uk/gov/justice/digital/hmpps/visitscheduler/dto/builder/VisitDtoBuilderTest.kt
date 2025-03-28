@@ -23,8 +23,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitFromExternalSystemClientReference
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
