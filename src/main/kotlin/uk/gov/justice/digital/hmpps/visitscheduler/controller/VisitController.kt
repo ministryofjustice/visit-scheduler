@@ -49,7 +49,7 @@ const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/bo
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISITS_BY: String = "$VISIT_CONTROLLER_PATH/session-template"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
-const val POST_VISIT_FROM_EXTERNAL_SYSTEM: String = "$VISIT_CONTROLLER_PATH/from-external-system"
+const val POST_VISIT_FROM_EXTERNAL_SYSTEM: String = "$VISIT_CONTROLLER_PATH/external-system"
 
 @RestController
 @Validated
