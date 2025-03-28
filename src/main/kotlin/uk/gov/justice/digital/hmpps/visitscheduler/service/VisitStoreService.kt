@@ -246,7 +246,7 @@ class VisitStoreService(
       prison = prison,
     )
 
-    val newVisit = Visit(
+    val newVisit = visitRepository.saveAndFlush(Visit(
       prisonId = prison.id,
       prison = prison,
       prisonerId = createVisitFromExternalSystemDto.prisonerId,
@@ -257,7 +257,7 @@ class VisitStoreService(
       visitRoom = createVisitFromExternalSystemDto.visitRoom,
       visitStatus = BOOKED,
       userType = UserType.PRISONER,
-    )
+    ))
 
     newVisit.visitors.addAll(
       createVisitFromExternalSystemDto.visitors?.map {
