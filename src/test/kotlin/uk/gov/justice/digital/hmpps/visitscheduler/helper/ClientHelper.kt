@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERV
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.POST_VISIT_FROM_EXTERNAL_SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_APPLICATION_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
@@ -54,6 +55,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMP
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
@@ -760,6 +762,12 @@ fun callNotifyVSiPOfAEvent(
   path: String,
   anyDto: Any? = null,
 ): ResponseSpec = callPost(anyDto, webTestClient, path, authHttpHeaders)
+
+fun callCreateVisitFromExternalSystem(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: CreateVisitFromExternalSystemDto
+): ResponseSpec = callPost(dto, webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, authHttpHeaders)
 
 fun callGet(
   webTestClient: WebTestClient,
