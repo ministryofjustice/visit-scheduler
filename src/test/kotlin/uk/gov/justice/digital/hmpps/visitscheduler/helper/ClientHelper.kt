@@ -10,6 +10,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERV
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_APPLICATION_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
@@ -213,6 +214,13 @@ fun callVisitByReference(
   reference: String,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec = callGet(webTestClient, getVisitByReferenceUrl(reference), authHttpHeaders)
+
+fun callVisitByClientReference(
+  webTestClient: WebTestClient,
+  clientReference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec = callGet(webTestClient, getVisitByClientReferenceUrl(clientReference), authHttpHeaders)
+
 
 fun callCreateSessionGroup(
   webTestClient: WebTestClient,
@@ -484,7 +492,12 @@ fun getPrisonIdUrl(url: String, prisonId: String): String = url.replace("{prison
 
 fun getReferenceUrl(url: String, reference: String): String = url.replace("{reference}", reference)
 
+fun getClientReferenceUrl(url: String, clientReference: String): String = url.replace("{clientReference}", clientReference)
+
 fun getVisitByReferenceUrl(reference: String): String = getReferenceUrl(GET_VISIT_BY_REFERENCE, reference)
+
+fun getVisitByClientReferenceUrl(clientReference: String): String = getClientReferenceUrl(
+  GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE, clientReference)
 
 fun getVisitHistoryByReferenceUrl(reference: String): String = getReferenceUrl(GET_VISIT_HISTORY_CONTROLLER_PATH, reference)
 
