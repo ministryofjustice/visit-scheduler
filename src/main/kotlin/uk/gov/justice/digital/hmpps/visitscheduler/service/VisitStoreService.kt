@@ -22,7 +22,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundExcep
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitFromExternalSystemClientReference
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitExternalSystemDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
@@ -301,7 +301,7 @@ class VisitStoreService(
       )
     }
 
-    newVisit.visitFromExternalSystemClientReference = VisitFromExternalSystemClientReference(
+    newVisit.visitExternalSystemDetails = VisitExternalSystemDetails(
       visitId = newVisit.id,
       clientReference = createVisitFromExternalSystemDto.clientVisitReference,
       visit = newVisit,

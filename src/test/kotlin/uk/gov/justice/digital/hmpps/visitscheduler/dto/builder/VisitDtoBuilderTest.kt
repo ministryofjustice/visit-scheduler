@@ -23,7 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitFromExternalSystemClientReference
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitExternalSystemDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
@@ -132,8 +132,8 @@ class VisitDtoBuilderTest {
       }
     }
 
-    visit.visitFromExternalSystemClientReference?.let { visitFromExternalSystemClientReference ->
-      Assertions.assertThat(clientReference).isEqualTo(visitFromExternalSystemClientReference.clientReference)
+    visit.visitExternalSystemDetails?.let { visitExternalSystemDetails ->
+      Assertions.assertThat(clientReference).isEqualTo(visitExternalSystemDetails.clientReference)
     }
   }
 
@@ -175,7 +175,7 @@ class VisitDtoBuilderTest {
     visit.visitContact = VisitContact(1, visit.id, "test", "0123456", "email@example.com", visit)
 
     if (isFromExternalSystem && clientReference != null) {
-      visit.visitFromExternalSystemClientReference = VisitFromExternalSystemClientReference(visit.id, clientReference, visit)
+      visit.visitExternalSystemDetails = VisitExternalSystemDetails(visit.id, clientReference, visit)
     }
     val spyVisit = spy(visit)
 

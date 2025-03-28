@@ -9,8 +9,8 @@ import jakarta.persistence.Table
 import org.hibernate.Hibernate
 
 @Entity
-@Table(name = "VISIT_FROM_EXTERNAL_SYSTEM_CLIENT_REFERENCE")
-class VisitFromExternalSystemClientReference(
+@Table(name = "VISIT_EXTERNAL_SYSTEM_DETAILS")
+class VisitExternalSystemDetails(
   @Id
   var visitId: Long,
 
@@ -24,7 +24,7 @@ class VisitFromExternalSystemClientReference(
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other == null || Hibernate.getClass(this) != Hibernate.getClass(other)) return false
-    other as VisitFromExternalSystemClientReference
+    other as VisitExternalSystemDetails
 
     return visitId == other.visitId
   }
