@@ -31,7 +31,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateVisitFromExternalSystem
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
 import java.time.LocalDateTime
@@ -39,7 +41,7 @@ import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $POST_VISIT_FROM_EXTERNAL_SYSTEM")
-class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
+class CreateVisitFromExternalSystemTest: IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
@@ -51,9 +53,10 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
   @MockitoSpyBean
   private lateinit var snsService: SnsService
 
+  private val prisonId = "MKI"
   private val createVisitFromExternalSystemDto = CreateVisitFromExternalSystemDto(
     prisonerId = "AF34567G",
-    prisonId = "HEI",
+    prisonId = prisonId,
     clientVisitReference = "client-visit-reference-1",
     visitRoom = "A1",
     visitType = VisitType.SOCIAL,
@@ -84,6 +87,8 @@ class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
   @BeforeEach
   internal fun setUp() {
     roleVisitSchedulerHttpHeaders = setAuthorisation(roles = listOf("ROLE_VISIT_SCHEDULER"))
+
+    prisonEntityHelper.create(prisonCode = prisonId)
   }
 
   @Test

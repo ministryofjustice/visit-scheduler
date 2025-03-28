@@ -49,7 +49,7 @@ internal class VisitStoreServiceTest {
   inner class CreateVisitFromExternalSystem {
     private val createVisitFromExternalSystemDto = CreateVisitFromExternalSystemDto(
       prisonerId = "AF34567G",
-      prisonId = "HEI",
+      prisonId = "MKI",
       clientVisitReference = "client-visit-reference-1",
       visitRoom = "A1",
       visitType = VisitType.SOCIAL,
