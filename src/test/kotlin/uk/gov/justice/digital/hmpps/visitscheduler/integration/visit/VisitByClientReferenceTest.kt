@@ -43,6 +43,32 @@ class VisitByClientReferenceTest : IntegrationTestBase() {
   }
 
   @Test
+  fun `Get visit by client reference with multiple visits against clientRef`() {
+    // Given
+
+    val slotDate = sessionDatesUtil.getFirstBookableSessionDay(sessionTemplateDefault)
+    val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
+    val createdVisit1 = visitEntityHelper.create(prisonerId = "FF0000AB", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("John Doe", "01111111111", "email1@example.com"))
+
+    val clientReference = "TESTCLIENTREF2"
+
+    visitEntityHelper.createVisitExternalSystemClientReference(createdVisit, clientReference)
+    visitEntityHelper.createVisitExternalSystemClientReference(createdVisit1, clientReference)
+    visitEntityHelper.save(createdVisit)
+    visitEntityHelper.save(createdVisit1)
+    val reference = createdVisit.reference
+    val reference1 = createdVisit1.reference
+
+    // When
+    val responseSpec = callVisitByClientReference(webTestClient, clientReference, roleVisitSchedulerHttpHeaders)
+
+    // Then
+    responseSpec.expectStatus().isOk
+      .expectBody().json("[$reference, $reference1]")
+  }
+
+
+  @Test
   fun `Get 404 when no visit associated with client reference found`() {
     // Given
 
