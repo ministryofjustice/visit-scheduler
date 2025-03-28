@@ -24,7 +24,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitPrivatePrisonClientReference
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitFromExternalSystemClientReference
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionSlot
@@ -175,7 +175,7 @@ class VisitDtoBuilderTest {
     visit.visitContact = VisitContact(1, visit.id, "test", "0123456", "email@example.com", visit)
 
     if (isFromExternalSystem && clientReference != null) {
-      visit.visitFromExternalSystemClientReference = VisitPrivatePrisonClientReference(visit.id, clientReference, visit)
+      visit.visitFromExternalSystemClientReference = VisitFromExternalSystemClientReference(visit.id, clientReference, visit)
     }
     val spyVisit = spy(visit)
 
