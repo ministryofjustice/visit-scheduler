@@ -49,7 +49,7 @@ internal class VisitStoreServiceTest {
   inner class CreateVisit {
     private val createVisitFromExternalSystemDto = CreateVisitFromExternalSystemDto(
       prisonerId = "AF34567G",
-      prisonId = "MDI",
+      prisonId = "HEI",
       clientVisitReference = "client-visit-reference-1",
       visitRoom = "A1",
       visitType = VisitType.SOCIAL,
@@ -135,7 +135,7 @@ internal class VisitStoreServiceTest {
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
 
       visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
-      verify(visitRepository, times(1)).saveAndFlush(visit)
+      verify(visitRepository, times(2)).saveAndFlush(visit)
       verify(visitDtoBuilder, times(1)).build(any<Visit>())
     }
   }
