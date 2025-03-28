@@ -294,4 +294,12 @@ class VisitService(
 
   @Transactional
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> = getFutureVisitsBy(prisonerNumber = prisonerNumber)
+
+  @Transactional
+  fun getVisitReferenceByClientReference(clientReference: String): List<String> {
+    val visitReference = visitRepository.getVisitReferenceByPrivatePrisonClientReference(clientReference)
+    visitReference?.let {
+      return visitReference
+    } ?: throw VisitNotFoundException("Visit not found for application reference")
+  }
 }
