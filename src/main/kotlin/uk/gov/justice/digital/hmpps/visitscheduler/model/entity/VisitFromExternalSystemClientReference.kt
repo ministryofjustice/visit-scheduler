@@ -9,15 +9,15 @@ import jakarta.persistence.Table
 
 
 @Entity
-@Table(name = "VISIT_PRIVATE_PRISON_CLIENT_REFERENCE",)
-class VisitPrivatePrisonClientReference(
+@Table(name = "VISIT_FROM_EXTERNAL_SYSTEM_CLIENT_REFERENCE")
+class VisitFromExternalSystemClientReference(
     @Id
-    val visitId: Long,
+    var visitId: Long,
 
     @Column(name = "client_reference", nullable = false)
-    val clientReference: String,
+    var clientReference: String,
 
     @OneToOne
     @JoinColumn(name = "VISIT_ID", updatable = false, insertable = false)
-    val visit: Visit
+    var visit: Visit
 )
