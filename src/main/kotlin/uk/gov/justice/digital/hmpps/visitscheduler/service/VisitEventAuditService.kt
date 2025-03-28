@@ -272,7 +272,7 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
         actionedByRepository.findActionedByForSystem()
       }
       PRISONER -> {
-        userName = actionedByValue!!
+        userName = actionedByValue ?: throw IllegalArgumentException("actionedByValue cannot be null for a prisoner user type")
         actionedByRepository.findActionedByForPrisoner(prisonerId = userName)
       }
     }
