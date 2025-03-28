@@ -297,9 +297,10 @@ class VisitService(
 
   @Transactional
   fun getVisitReferenceByClientReference(clientReference: String): List<String> {
-    val visitReference = visitRepository.getVisitReferenceByPrivatePrisonClientReference(clientReference)
-    visitReference?.let {
-      return visitReference
-    } ?: throw VisitNotFoundException("Visit not found for application reference")
+    val visitReference = visitRepository.getVisitReferenceByExternalSystemClientReference(clientReference)
+    if (visitReference.isEmpty()) {
+      throw VisitNotFoundException("Visit not found for external client reference")
+    }
+    return visitReference
   }
 }

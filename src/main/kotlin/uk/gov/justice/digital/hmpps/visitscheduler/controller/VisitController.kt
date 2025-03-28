@@ -33,7 +33,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
-import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.VisitFilter
 import uk.gov.justice.digital.hmpps.visitscheduler.service.VisitService
 import java.time.LocalDate
@@ -48,7 +47,7 @@ const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/bo
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISITS_BY: String = "$VISIT_CONTROLLER_PATH/session-template"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
-const val GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{clientReference}"
+const val GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE: String = "$VISIT_CONTROLLER_PATH/external-system/{clientReference}"
 
 @RestController
 @Validated
@@ -532,14 +531,14 @@ class VisitController(
       ),
       ApiResponse(
         responseCode = "404",
-        description = "Visit reference not found",
+        description = "Client reference not found",
         content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
       ),
     ],
   )
   fun getVisitReferenceByClientReference(
     @Schema(description = "clientReference", example = "AABDC234", required = true)
-    @PathVariable @NotBlank
+    @PathVariable(value = "clientReference") @NotBlank
     clientReference: String,
   ): List<String> = visitService.getVisitReferenceByClientReference(clientReference.trim())
 }

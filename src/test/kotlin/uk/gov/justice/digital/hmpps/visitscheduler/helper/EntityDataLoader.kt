@@ -33,9 +33,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitFromExternalSystemClientReference
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNotifyHistory
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitPrivatePrisonClientReference
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -417,8 +417,8 @@ class VisitEntityHelper(
 
   fun getBookedVisit(reference: String): Visit? = visitRepository.findBookedVisit(reference)
 
-  fun createPrivatePrisonVisitClientReference(visit: Visit, clientReference: String){
-    visit.privatePrisonClientReference = VisitPrivatePrisonClientReference(visitId = visit.id, clientReference = clientReference, visit = visit)
+  fun createVisitExternalSystemClientReference(visit: Visit, clientReference: String){
+    visit.visitFromExternalSystemClientReference = VisitFromExternalSystemClientReference(visitId = visit.id, clientReference = clientReference, visit = visit)
   }
 }
 
