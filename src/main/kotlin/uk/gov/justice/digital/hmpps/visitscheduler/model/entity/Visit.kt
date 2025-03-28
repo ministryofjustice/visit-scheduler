@@ -102,7 +102,7 @@ class Visit(
     private set
 
   @OneToOne(fetch = FetchType.LAZY, cascade = [ALL], mappedBy = "visit", orphanRemoval = true)
-  var visitFromExternalSystemClientReference: VisitFromExternalSystemClientReference? = null
+  var visitExternalSystemDetails: VisitExternalSystemDetails? = null
 
   @PostPersist
   fun createReference() {

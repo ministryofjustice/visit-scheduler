@@ -19,6 +19,7 @@ import org.springframework.security.access.prepost.PreAuthorize
 import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
@@ -29,6 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ApplicationValidationE
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
@@ -47,6 +49,7 @@ const val VISIT_BOOK: String = "$VISIT_CONTROLLER_PATH/{applicationReference}/bo
 const val VISIT_CANCEL: String = "$VISIT_CONTROLLER_PATH/{reference}/cancel"
 const val GET_VISITS_BY: String = "$VISIT_CONTROLLER_PATH/session-template"
 const val GET_VISIT_BY_REFERENCE: String = "$VISIT_CONTROLLER_PATH/{reference}"
+const val POST_VISIT_FROM_EXTERNAL_SYSTEM: String = "$VISIT_CONTROLLER_PATH/external-system"
 
 @RestController
 @Validated
@@ -502,4 +505,50 @@ class VisitController(
     @Pattern(regexp = "^[A-Za-z0-9]+$")
     prisonerNumber: String,
   ): List<VisitDto> = visitService.findFutureVisitsBySessionPrisoner(prisonerNumber)
+
+  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
+  @PostMapping(POST_VISIT_FROM_EXTERNAL_SYSTEM)
+  @ResponseStatus(HttpStatus.OK)
+  @Operation(
+    summary = "Create a visit which already exists in an external system",
+    description = "The visit is assumed to have been validated at this point, this endpoint does not check that this visit is valid.",
+    requestBody = io.swagger.v3.oas.annotations.parameters.RequestBody(
+      content = [
+        Content(
+          mediaType = "application/json",
+          schema = Schema(implementation = CreateVisitFromExternalSystemDto::class),
+        ),
+      ],
+    ),
+    responses = [
+      ApiResponse(
+        responseCode = "200",
+        description = "Visit created",
+      ),
+      ApiResponse(
+        responseCode = "400",
+        description = "Incorrect request to create a visit from an external system",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "401",
+        description = "Unauthorized to access this endpoint",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "403",
+        description = "Incorrect permissions to create a visit from an external system",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+      ApiResponse(
+        responseCode = "404",
+        description = "Entity not found",
+        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
+      ),
+    ],
+  )
+  fun createVisitFromExternalSystem(
+    @RequestBody @Valid
+    createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto,
+  ): VisitDto = visitService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
 }

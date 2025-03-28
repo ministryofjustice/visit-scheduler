@@ -311,7 +311,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     assertThat(visitDto.reference).isEqualTo(originalVisit.reference)
     assertVisitMatchesApplication(visitDto, newApplication)
 
-    val application = testApplicationRepository.findByReference(visitDto.applicationReference)
+    val application = testApplicationRepository.findByReference(visitDto.applicationReference!!)
     assertThat(application!!.completed).isTrue()
 
     // And
@@ -353,7 +353,7 @@ class UpdateVisitTest : IntegrationTestBase() {
     assertThat(visitDto.userType).isNotEqualTo(newApplication.userType)
     assertThat(visitDto.userType).isEqualTo(PUBLIC)
     assertThat(newApplication.userType).isEqualTo(UserType.STAFF)
-    val application = testApplicationRepository.findByReference(visitDto.applicationReference)
+    val application = testApplicationRepository.findByReference(visitDto.applicationReference!!)
     assertThat(application!!.completed).isTrue()
 
     // And

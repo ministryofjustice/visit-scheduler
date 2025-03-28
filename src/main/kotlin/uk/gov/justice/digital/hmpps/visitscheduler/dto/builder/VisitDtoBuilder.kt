@@ -45,7 +45,11 @@ class VisitDtoBuilder {
 
   private fun getApplicationReference(
     visitEntity: Visit,
-  ): String {
+  ): String? {
+    // If the visit has an external system client reference then it will not have been created from an application
+    if (visitEntity.visitExternalSystemDetails?.clientReference != null) {
+      return null
+    }
     val application = visitEntity.getLastCompletedApplication()
     return application?.reference ?: run {
       // This catches an issues when two requests from the booking occur at the same time see bookVisit method in visit service

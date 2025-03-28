@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MatchSessionTemplateToMigratedVisitException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.MigrateVisitInFutureException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.OverCapacityException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.SupportNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
@@ -244,6 +245,20 @@ class VisitSchedulerExceptionHandler(
         ErrorResponse(
           status = HttpStatus.NOT_FOUND,
           userMessage = "Not found",
+          developerMessage = e.message,
+        ),
+      )
+  }
+
+  @ExceptionHandler(PrisonNotFoundException::class)
+  fun handlePrisonNotFoundException(e: PrisonNotFoundException): ResponseEntity<ErrorResponse?>? {
+    log.debug("Prison not found exception caught: {}", e.message)
+    return ResponseEntity
+      .status(HttpStatus.NOT_FOUND)
+      .body(
+        ErrorResponse(
+          status = HttpStatus.NOT_FOUND,
+          userMessage = "Prison not found: ${e.cause?.message}",
           developerMessage = e.message,
         ),
       )

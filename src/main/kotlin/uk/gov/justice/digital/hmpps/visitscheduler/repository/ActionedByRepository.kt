@@ -25,4 +25,10 @@ interface ActionedByRepository : JpaRepository<ActionedBy, Long> {
       "WHERE a.userName is null and a.bookerReference is null and a.userType = 'SYSTEM'",
   )
   fun findActionedByForSystem(): ActionedBy?
+
+  @Query(
+    "SELECT a FROM ActionedBy a " +
+      "WHERE a.userName =  :prisonerId and a.userType = 'PRISONER'",
+  )
+  fun findActionedByForPrisoner(prisonerId: String): ActionedBy?
 }

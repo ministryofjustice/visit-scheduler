@@ -25,6 +25,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.MIGR
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.RESERVED_VISIT
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
@@ -192,6 +193,10 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
     bookingRequestDto: BookingRequestDto,
     eventType: EventAuditType,
   ): EventAuditDto {
+    if (bookedVisitDto.applicationReference == null) {
+      // This should not happen as application reference should always be set here
+      throw IllegalArgumentException("Visit application reference is not set")
+    }
     try {
       eventAuditRepository.updateVisitApplication(bookedVisitDto.applicationReference, bookedVisitDto.reference, bookingRequestDto.applicationMethodType)
     } catch (e: InvocationTargetException) {
@@ -265,6 +270,10 @@ class VisitEventAuditService(private val notifyHistoryDtoBuilder: NotifyHistoryD
       }
       SYSTEM -> {
         actionedByRepository.findActionedByForSystem()
+      }
+      PRISONER -> {
+        userName = actionedByValue!!
+        actionedByRepository.findActionedByForPrisoner(prisonerId = userName)
       }
     }
 
