@@ -40,6 +40,8 @@ class VisitDtoBuilder {
       modifiedTimestamp = visitEntity.modifyTimestamp ?: LocalDateTime.now(),
       sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
       userType = visitEntity.userType,
+      clientVisitReference = visitEntity.visitExternalSystemDetails?.clientReference,
+      clientName = visitEntity.visitExternalSystemDetails?.clientName,
     )
   }
 
