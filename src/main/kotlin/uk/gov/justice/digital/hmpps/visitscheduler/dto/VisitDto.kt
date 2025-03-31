@@ -13,8 +13,8 @@ import java.time.LocalDateTime
 
 @Schema(description = "Visit")
 data class VisitDto(
-  @Schema(description = "Application Reference", example = "dfs-wjs-eqr", required = true)
-  val applicationReference: String,
+  @Schema(description = "Application Reference", example = "dfs-wjs-eqr", required = false)
+  val applicationReference: String?,
   @Schema(description = "session template Reference", example = "dfs-wjs-eqr", required = false)
   val sessionTemplateReference: String? = null,
   @Schema(description = "Visit Reference", example = "v9-d7-ed-7u", required = true)

@@ -55,6 +55,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMP
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
@@ -773,6 +774,12 @@ fun callNotifyVSiPOfAEvent(
   path: String,
   anyDto: Any? = null,
 ): ResponseSpec = callPost(anyDto, webTestClient, path, authHttpHeaders)
+
+fun callCreateVisitFromExternalSystem(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: CreateVisitFromExternalSystemDto,
+): ResponseSpec = callPost(dto, webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, authHttpHeaders)
 
 fun callGet(
   webTestClient: WebTestClient,

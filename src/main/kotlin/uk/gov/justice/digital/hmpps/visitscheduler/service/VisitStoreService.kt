@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
@@ -17,13 +18,16 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.ExpiredVisitAmendException
+import uk.gov.justice.digital.hmpps.visitscheduler.exception.PrisonNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VisitNotFoundException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitExternalSystemDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.PrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
@@ -32,8 +36,11 @@ import java.time.temporal.ChronoUnit
 @Transactional
 class VisitStoreService(
   private val visitRepository: VisitRepository,
+  private val prisonRepository: PrisonRepository,
+  private val sessionSlotService: SessionSlotService,
   private val applicationValidationService: ApplicationValidationService,
   private val applicationService: ApplicationService,
+  @Autowired private val visitDtoBuilder: VisitDtoBuilder,
   @Value("\${visit.cancel.day-limit:28}") private val visitCancellationDayLimit: Int,
 ) {
 
@@ -43,9 +50,6 @@ class VisitStoreService(
 
   @Autowired
   private lateinit var sessionTemplateService: SessionTemplateService
-
-  @Autowired
-  private lateinit var visitDtoBuilder: VisitDtoBuilder
 
   companion object {
     val LOG: Logger = LoggerFactory.getLogger(this::class.java)
@@ -230,5 +234,80 @@ class VisitStoreService(
     }
 
     return visitCancellationDateAllowed
+  }
+
+  fun createVisitFromExternalSystem(createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto): VisitDto {
+    val prison = prisonRepository.findByCode(createVisitFromExternalSystemDto.prisonId)
+      ?: throw PrisonNotFoundException("Prison ${createVisitFromExternalSystemDto.prisonId} not found")
+
+    val sessionSlot = sessionSlotService.getSessionSlot(
+      startTimeDate = createVisitFromExternalSystemDto.startTimestamp.truncatedTo(ChronoUnit.MINUTES),
+      endTimeAndDate = createVisitFromExternalSystemDto.endTimestamp.truncatedTo(ChronoUnit.MINUTES),
+      prison = prison,
+    )
+
+    val newVisit = visitRepository.saveAndFlush(
+      Visit(
+        prisonId = prison.id,
+        prison = prison,
+        prisonerId = createVisitFromExternalSystemDto.prisonerId,
+        sessionSlotId = sessionSlot.id,
+        sessionSlot = sessionSlot,
+        visitType = createVisitFromExternalSystemDto.visitType,
+        visitRestriction = createVisitFromExternalSystemDto.visitRestriction,
+        visitRoom = createVisitFromExternalSystemDto.visitRoom,
+        visitStatus = BOOKED,
+        userType = UserType.PRISONER,
+      ),
+    )
+
+    newVisit.visitors.addAll(
+      createVisitFromExternalSystemDto.visitors?.map {
+        VisitVisitor(
+          visitId = newVisit.id,
+          nomisPersonId = it.nomisPersonId,
+          visitContact = it.visitContact,
+          visit = newVisit,
+        )
+      }.orEmpty(),
+    )
+
+    newVisit.visitNotes.addAll(
+      createVisitFromExternalSystemDto.visitNotes.map {
+        VisitNote(
+          visitId = newVisit.id,
+          type = it.type,
+          text = it.text,
+          visit = newVisit,
+        )
+      },
+    )
+
+    newVisit.visitContact = createVisitFromExternalSystemDto.visitContact.let {
+      VisitContact(
+        visitId = newVisit.id,
+        name = it.name,
+        telephone = it.telephone,
+        email = it.email,
+        visit = newVisit,
+      )
+    }
+
+    newVisit.support = createVisitFromExternalSystemDto.visitorSupport?.let {
+      VisitSupport(
+        visitId = newVisit.id,
+        description = it.description,
+        visit = newVisit,
+      )
+    }
+
+    newVisit.visitExternalSystemDetails = VisitExternalSystemDetails(
+      visitId = newVisit.id,
+      clientName = createVisitFromExternalSystemDto.clientName,
+      clientReference = createVisitFromExternalSystemDto.clientVisitReference,
+      visit = newVisit,
+    )
+
+    return visitDtoBuilder.build(visitRepository.saveAndFlush(newVisit))
   }
 }
