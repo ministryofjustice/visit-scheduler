@@ -39,7 +39,7 @@ import java.time.format.DateTimeFormatter
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("POST $POST_VISIT_FROM_EXTERNAL_SYSTEM")
-class CreateVisitFromExternalSystemTest: IntegrationTestBase() {
+class CreateVisitFromExternalSystemTest : IntegrationTestBase() {
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
 
   @Autowired
