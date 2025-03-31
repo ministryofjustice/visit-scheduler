@@ -27,12 +27,10 @@ class VisitByClientReferenceTest : IntegrationTestBase() {
     val createdVisit = visitEntityHelper.create(prisonerId = "FF0000AA", visitStatus = BOOKED, slotDate = slotDate, sessionTemplate = sessionTemplateDefault, visitContact = ContactDto("Jane Doe", "01111111111", "email@example.com"))
     val clientReference = "TESTCLIENTREF1"
 
-
     visitEntityHelper.createVisitExternalSystemClientReference(createdVisit, clientReference)
     visitEntityHelper.save(createdVisit)
 
     val reference = createdVisit.reference
-
 
     // When
     val responseSpec = callVisitByClientReference(webTestClient, clientReference, roleVisitSchedulerHttpHeaders)
@@ -67,7 +65,6 @@ class VisitByClientReferenceTest : IntegrationTestBase() {
       .expectBody().json("[$reference, $reference1]")
   }
 
-
   @Test
   fun `Get 404 when no visit associated with client reference found`() {
     // Given
@@ -84,5 +81,4 @@ class VisitByClientReferenceTest : IntegrationTestBase() {
     // Then
     responseSpec.expectStatus().isNotFound
   }
-
 }

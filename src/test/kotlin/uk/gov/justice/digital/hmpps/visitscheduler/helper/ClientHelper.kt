@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERV
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.POST_VISIT_FROM_EXTERNAL_SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_APPLICATION_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
@@ -221,7 +222,6 @@ fun callVisitByClientReference(
   clientReference: String,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec = callGet(webTestClient, getVisitByClientReferenceUrl(clientReference), authHttpHeaders)
-
 
 fun callCreateSessionGroup(
   webTestClient: WebTestClient,
@@ -498,7 +498,9 @@ fun getClientReferenceUrl(url: String, clientReference: String): String = url.re
 fun getVisitByReferenceUrl(reference: String): String = getReferenceUrl(GET_VISIT_BY_REFERENCE, reference)
 
 fun getVisitByClientReferenceUrl(clientReference: String): String = getClientReferenceUrl(
-  GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE, clientReference)
+  GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE,
+  clientReference,
+)
 
 fun getVisitHistoryByReferenceUrl(reference: String): String = getReferenceUrl(GET_VISIT_HISTORY_CONTROLLER_PATH, reference)
 

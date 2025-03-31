@@ -417,7 +417,7 @@ class VisitEntityHelper(
 
   fun getBookedVisit(reference: String): Visit? = visitRepository.findBookedVisit(reference)
 
-  fun createVisitExternalSystemClientReference(visit: Visit, clientReference: String){
+  fun createVisitExternalSystemClientReference(visit: Visit, clientReference: String) {
     visit.visitExternalSystemDetails = VisitExternalSystemDetails(visitId = visit.id, clientReference = clientReference, clientName = "MDI", visit = visit)
   }
 }

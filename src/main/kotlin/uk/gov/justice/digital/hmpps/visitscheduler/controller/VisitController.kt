@@ -587,7 +587,8 @@ class VisitController(
   )
   fun getVisitReferenceByClientReference(
     @Schema(description = "clientReference", example = "AABDC234", required = true)
-    @PathVariable(value = "clientReference") @NotBlank
+    @PathVariable(value = "clientReference")
+    @NotBlank
     clientReference: String,
   ): List<String> = visitService.getVisitReferenceByClientReference(clientReference.trim())
 }

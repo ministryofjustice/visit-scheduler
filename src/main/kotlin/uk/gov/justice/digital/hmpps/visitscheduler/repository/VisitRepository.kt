@@ -358,8 +358,8 @@ interface VisitRepository :
   fun findVisitsByReferences(bookingReferences: List<String>): List<Visit>
 
   @Query(
-    "SELECT v.reference FROM Visit v JOIN visit_from_external_system_client_reference vfescr ON v.id = vfescr.visit_id WHERE vfescr.client_reference = :clientReference ORDER BY v.modify_timestamp",
-    nativeQuery = true
+    "SELECT v.reference FROM Visit v JOIN visit_external_system_details vfescr ON v.id = vfescr.visit_id WHERE vfescr.client_reference = :clientReference ORDER BY v.modify_timestamp",
+    nativeQuery = true,
   )
   fun getVisitReferenceByExternalSystemClientReference(clientReference: String): List<String>
 }
