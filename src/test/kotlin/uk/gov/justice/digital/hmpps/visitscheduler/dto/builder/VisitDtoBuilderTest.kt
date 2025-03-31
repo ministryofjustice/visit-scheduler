@@ -70,9 +70,10 @@ class VisitDtoBuilderTest {
     val slotDate = now.toLocalDate()
     val visitStart = now.toLocalTime()
     val visitEnd = visitStart.plusHours(2)
+    val clientName = "client-name"
     val clientReference = "client-reference"
 
-    val visit = create(slotDate = slotDate, visitStart = visitStart, visitEnd = visitEnd, reference = "test", isFromExternalSystem = true, clientReference = clientReference)
+    val visit = create(slotDate = slotDate, visitStart = visitStart, visitEnd = visitEnd, reference = "test", isFromExternalSystem = true, clientName = clientName, clientReference = clientReference)
 
     // When
     val result = toTest.build(visit)
@@ -151,6 +152,7 @@ class VisitDtoBuilderTest {
     sessionTemplateReference: String? = "sessionTemplateReference",
     userType: UserType = UserType.STAFF,
     isFromExternalSystem: Boolean = false,
+    clientName: String? = null,
     clientReference: String? = null,
   ): Visit {
     val sessionSlot = SessionSlot(sessionTemplateReference, prison.id, slotDate, slotDate.atTime(visitStart), slotDate.atTime(visitEnd))
@@ -174,8 +176,8 @@ class VisitDtoBuilderTest {
     visit.visitors.add(VisitVisitor(1, visit.id, 123445, true, visit))
     visit.visitContact = VisitContact(1, visit.id, "test", "0123456", "email@example.com", visit)
 
-    if (isFromExternalSystem && clientReference != null) {
-      visit.visitExternalSystemDetails = VisitExternalSystemDetails(visit.id, clientReference, visit)
+    if (isFromExternalSystem && clientName != null && clientReference != null) {
+      visit.visitExternalSystemDetails = VisitExternalSystemDetails(visit.id, clientName, clientReference, visit)
     }
     val spyVisit = spy(visit)
 
