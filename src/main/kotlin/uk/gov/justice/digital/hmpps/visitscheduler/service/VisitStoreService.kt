@@ -303,6 +303,7 @@ class VisitStoreService(
 
     newVisit.visitExternalSystemDetails = VisitExternalSystemDetails(
       visitId = newVisit.id,
+      clientName = createVisitFromExternalSystemDto.clientName,
       clientReference = createVisitFromExternalSystemDto.clientVisitReference,
       visit = newVisit,
     )

@@ -15,6 +15,9 @@ data class CreateVisitFromExternalSystemDto(
   @Schema(description = "Prison Id", example = "3-character code, example = MDI", required = true)
   @field:NotBlank
   val prisonId: String,
+  @Schema(description = "Client name", example = "client_name", required = true)
+  @field:NotBlank
+  val clientName: String,
   @Schema(description = "Client visit reference", example = "Reference ID in the client system", required = true)
   @field:NotBlank
   val clientVisitReference: String,

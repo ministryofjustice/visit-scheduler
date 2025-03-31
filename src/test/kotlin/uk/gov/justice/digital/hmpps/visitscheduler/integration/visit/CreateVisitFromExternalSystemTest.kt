@@ -31,9 +31,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callCreateVisitFromExternalSystem
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
-import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestVisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.service.SnsService
 import java.time.LocalDateTime
@@ -57,6 +55,7 @@ class CreateVisitFromExternalSystemTest: IntegrationTestBase() {
   private val createVisitFromExternalSystemDto = CreateVisitFromExternalSystemDto(
     prisonerId = "AF34567G",
     prisonId = prisonId,
+    clientName = "client-name",
     clientVisitReference = "client-visit-reference-1",
     visitRoom = "A1",
     visitType = VisitType.SOCIAL,
