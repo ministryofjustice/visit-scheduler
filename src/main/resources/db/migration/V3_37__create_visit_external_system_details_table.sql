@@ -1,6 +1,7 @@
 CREATE TABLE visit_external_system_details
 (
     visit_id         BIGINT       NOT NULL,
+    client_name      VARCHAR(255) NOT NULL,
     client_reference VARCHAR(255) NOT NULL,
     CONSTRAINT pk_visit_external_system_details PRIMARY KEY (visit_id)
 );

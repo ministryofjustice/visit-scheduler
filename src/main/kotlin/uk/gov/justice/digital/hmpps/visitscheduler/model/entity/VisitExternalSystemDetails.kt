@@ -14,6 +14,9 @@ class VisitExternalSystemDetails(
   @Id
   var visitId: Long,
 
+  @Column(name = "client_name", nullable = false)
+  var clientName: String,
+
   @Column(name = "client_reference", nullable = false)
   var clientReference: String,
 
