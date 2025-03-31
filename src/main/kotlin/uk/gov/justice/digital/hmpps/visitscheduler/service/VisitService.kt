@@ -323,4 +323,13 @@ class VisitService(
 
   @Transactional
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> = getFutureVisitsBy(prisonerNumber = prisonerNumber)
+
+  @Transactional
+  fun getVisitReferenceByClientReference(clientReference: String): List<String> {
+    val visitReference = visitRepository.getVisitReferenceByExternalSystemClientReference(clientReference)
+    if (visitReference.isEmpty()) {
+      throw VisitNotFoundException("Visit not found for external client reference")
+    }
+    return visitReference
+  }
 }
