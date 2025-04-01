@@ -20,7 +20,7 @@ class VisitDtoBuilder {
   }
   fun build(visitEntity: Visit): VisitDto {
     val applicationReference = getApplicationReference(visitEntity)
-    val visitExternalSystemDetails = VisitExternalSystemDetailsDto(clientName = visitEntity.visitExternalSystemDetails?.clientName, clientVisitReference = visitEntity.visitExternalSystemDetails?.clientReference) ?: null
+
     return VisitDto(
       applicationReference = applicationReference,
       reference = visitEntity.reference,
@@ -41,7 +41,7 @@ class VisitDtoBuilder {
       modifiedTimestamp = visitEntity.modifyTimestamp ?: LocalDateTime.now(),
       sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
       userType = visitEntity.userType,
-      visitExternalSystemDetails = visitExternalSystemDetails
+      visitExternalSystemDetails = visitEntity.visitExternalSystemDetails?.let { VisitExternalSystemDetailsDto(it) },
     )
   }
 
