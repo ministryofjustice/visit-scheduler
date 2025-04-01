@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitExternalSystemDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -19,7 +20,7 @@ class VisitDtoBuilder {
   }
   fun build(visitEntity: Visit): VisitDto {
     val applicationReference = getApplicationReference(visitEntity)
-
+    val visitExternalSystemDetails = VisitExternalSystemDetailsDto(clientName = visitEntity.visitExternalSystemDetails?.clientName, clientVisitReference = visitEntity.visitExternalSystemDetails?.clientReference) ?: null
     return VisitDto(
       applicationReference = applicationReference,
       reference = visitEntity.reference,
@@ -40,6 +41,7 @@ class VisitDtoBuilder {
       modifiedTimestamp = visitEntity.modifyTimestamp ?: LocalDateTime.now(),
       sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
       userType = visitEntity.userType,
+      visitExternalSystemDetails = visitExternalSystemDetails
     )
   }
 
