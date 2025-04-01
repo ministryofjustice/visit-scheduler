@@ -79,7 +79,7 @@ class VisitDtoBuilderTest {
     val result = toTest.build(visit)
 
     // Then
-    assertVisitDto(result, visit, slotDate, visitStart, visitEnd, clientReference)
+    assertVisitDto(result, visit, slotDate, visitStart, visitEnd)
   }
 
   private fun assertVisitDto(
@@ -88,7 +88,6 @@ class VisitDtoBuilderTest {
     slotDate: LocalDate,
     visitStart: LocalTime,
     visitEnd: LocalTime,
-    clientReference: String? = null,
   ) {
     Assertions.assertThat(visitDto.startTimestamp).isEqualTo(slotDate.atTime(visitStart))
     Assertions.assertThat(visitDto.endTimestamp).isEqualTo(slotDate.atTime(visitEnd))
@@ -133,8 +132,9 @@ class VisitDtoBuilderTest {
       }
     }
 
-    visit.visitExternalSystemDetails?.let { visitExternalSystemDetails ->
-      Assertions.assertThat(clientReference).isEqualTo(visitExternalSystemDetails.clientReference)
+    visit.visitExternalSystemDetails?.let {
+      Assertions.assertThat(visitDto.visitExternalSystemDetails?.clientName).isEqualTo(it.clientName)
+      Assertions.assertThat(visitDto.visitExternalSystemDetails?.clientVisitReference).isEqualTo(it.clientReference)
     }
   }
 
