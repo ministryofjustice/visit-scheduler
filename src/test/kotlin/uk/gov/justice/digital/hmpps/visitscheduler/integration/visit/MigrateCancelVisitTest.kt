@@ -29,6 +29,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.getMigrateCancelVisitUrl
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.migration.MigrationIntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
+import java.time.LocalDate
 
 @DisplayName("Tests for visit cancellations on NOMIS - POST $MIGRATE_CANCEL")
 class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
@@ -168,6 +169,61 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     verify(visitNotificationEventRepositorySpy, times(1)).deleteByBookingReference(eq(visit.reference))
 
     assertThat(visitNotifications.size).isEqualTo(0)
+    assertUnFlagEvent(visitCancelled)
+  }
+
+  @Test
+  fun `when visit cancelled after visit start that has notification events then notification events are deleted and an unflag event is sent`() {
+    // Given
+    // past dated visit - for yesterday
+    val application = createApplicationAndSave(completed = true, sessionTemplate = sessionTemplateDefault, slotDate = LocalDate.now().minusDays(1))
+    val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
+    visitNotificationEventHelper.create(visit.reference, NotificationEventType.NON_ASSOCIATION_EVENT)
+    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RESTRICTION_CHANGE_EVENT)
+    visitNotificationEventHelper.create(visit.reference, NotificationEventType.PRISONER_RELEASED_EVENT)
+
+    var visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
+    assertThat(visitNotifications.size).isEqualTo(3)
+
+    // visit cancelled today
+    val cancelVisitDto = MigratedCancelVisitDto(
+      OutcomeDto(
+        PRISONER_CANCELLED,
+        "Prisoner got covid",
+      ),
+      actionedBy = "user-2",
+    )
+    val reference = visit.reference
+
+    // When
+    val responseSpec = callMigrateCancelVisit(webTestClient, roleVisitSchedulerHttpHeaders, reference, cancelVisitDto)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+      .returnResult()
+
+    // And
+    val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
+    assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
+    assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
+    assertHelper.assertVisitCancellation(visitCancelled, cancelledBy = cancelVisitDto.actionedBy, applicationMethodType = NOT_KNOWN, expectedOutcomeStatus = PRISONER_CANCELLED)
+
+    assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
+    assertCancelledDomainEvent(visitCancelled)
+
+    val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
+    assertThat(eventAuditList).hasSize(1)
+    assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("user-2")
+    assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.CANCELLED_VISIT)
+    assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
+
+    visitNotifications = visitNotificationEventHelper.getVisitNotifications(visit.reference)
+    verify(visitNotificationEventRepositorySpy, times(1)).deleteByBookingReference(eq(visit.reference))
+
+    assertThat(visitNotifications.size).isEqualTo(0)
+
+    // assert that the visit is still unflagged.
     assertUnFlagEvent(visitCancelled)
   }
 
