@@ -11,9 +11,8 @@ import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
-import org.springframework.transaction.annotation.Propagation.SUPPORTS
-import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -31,8 +30,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.getMigrateCancelVisitU
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.migration.MigrationIntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitNotificationEventRepository
 
-@Transactional(propagation = SUPPORTS)
-@DisplayName("Migrate POST /visits")
+@DisplayName("Tests for visit cancellations on NOMIS - POST $MIGRATE_CANCEL")
 class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
   @Autowired
   protected lateinit var visitNotificationEventHelper: VisitNotificationEventHelper
@@ -173,7 +171,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     assertUnFlagEvent(visitCancelled)
   }
 
-  protected fun assertCancelledDomainEvent(
+  private fun assertCancelledDomainEvent(
     cancelledVisit: VisitDto,
   ) {
     verify(telemetryClient).trackEvent(
@@ -186,7 +184,7 @@ class MigrateCancelVisitTest : MigrationIntegrationTestBase() {
     verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
   }
 
-  fun assertUnFlagEvent(
+  private fun assertUnFlagEvent(
     cancelledVisit: VisitDto,
   ) {
     verify(telemetryClient).trackEvent(
