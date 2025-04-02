@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -48,6 +49,7 @@ class MigrateVisitService(
   private val applicationService: ApplicationService,
   private val prisonsService: PrisonsService,
   private val snsService: SnsService,
+  private val visitNotificationEventService: VisitNotificationEventService,
   private val migrationSessionTemplateMatcher: MigrationSessionTemplateMatcher,
   private val telemetryClient: TelemetryClient,
   @Value("\${migrate.sessiontemplate.mapping.offset.days:0}")
@@ -276,6 +278,10 @@ class MigrateVisitService(
       eventAuditDto.id,
     )
     snsService.sendVisitCancelledEvent(snsDomainEventPublishDto)
+
+    // delete all visit notifications and flag the event
+    visitNotificationEventService.deleteVisitAndPairedNotificationEvents(visitDto.reference, UnFlagEventReason.VISIT_CANCELLED_ON_NOMIS)
+
     return visitDto
   }
 

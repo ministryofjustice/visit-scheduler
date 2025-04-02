@@ -330,9 +330,9 @@ class VisitNotificationEventService(
       affectedVisitsByDateMap.forEach {
         val affectedPairedVisits = pairWithEachOther(it.value)
 
-        affectedPairedVisits.forEach {
-          if (!visitNotificationEventRepository.isEventARecentPairedDuplicate(it.first.reference, it.second.reference, processVisitNotificationDto.type)) {
-            saveGroupedVisitsNotification(it.toList(), processVisitNotificationDto.type)
+        affectedPairedVisits.forEach { pairedVisits ->
+          if (!visitNotificationEventRepository.isEventARecentPairedDuplicate(pairedVisits.first.reference, pairedVisits.second.reference, processVisitNotificationDto.type)) {
+            saveGroupedVisitsNotification(pairedVisits.toList(), processVisitNotificationDto.type)
           }
         }
       }
@@ -556,8 +556,7 @@ class VisitNotificationEventService(
     deletePairedNotificationEvents(visitReference, visitNotificationEvents, reason)
   }
 
-  @Transactional
-  fun deletePairedNotificationEvents(changedVisitReference: String, visitNotificationEvents: List<VisitNotificationEvent>, unFlagEventReason: UnFlagEventReason) {
+  private fun deletePairedNotificationEvents(changedVisitReference: String, visitNotificationEvents: List<VisitNotificationEvent>, unFlagEventReason: UnFlagEventReason) {
     val pairedNotifications = pairedNotificationEventsUtil.getPairedNotificationEvents(visitNotificationEvents)
     if (pairedNotifications.isNotEmpty()) {
       val pairedUnFlagEventReason = pairedNotificationEventsUtil.getPairedNotificationEventUnFlagReason(unFlagEventReason)
@@ -568,8 +567,7 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
-  fun deleteVisitNotificationEvents(visitReference: String, reason: UnFlagEventReason, text: String? = null) {
+  private fun deleteVisitNotificationEvents(visitReference: String, reason: UnFlagEventReason, text: String? = null) {
     val visitNotificationEvents = visitNotificationEventRepository.getVisitNotificationEventsByBookingReference(visitReference)
 
     if (visitNotificationEvents.isNotEmpty()) {
@@ -580,8 +578,7 @@ class VisitNotificationEventService(
     }
   }
 
-  @Transactional
-  fun deleteVisitNotificationAndAddAuditEventForPairedVisits(notificationReference: String, changedVisitReference: String, reason: UnFlagEventReason, text: String? = null) {
+  private fun deleteVisitNotificationAndAddAuditEventForPairedVisits(notificationReference: String, changedVisitReference: String, reason: UnFlagEventReason, text: String? = null) {
     val visitNotificationEvents = visitNotificationEventRepository.getVisitNotificationEventsByReference(notificationReference).filter { it.bookingReference != changedVisitReference }
 
     if (visitNotificationEvents.isNotEmpty()) {
