@@ -11,6 +11,7 @@ import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.HttpStatus
 import org.springframework.test.context.TestPropertySource
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
@@ -18,14 +19,10 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.reactive.function.BodyInserters
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateLegacyContactOnVisitRequestDto.Companion.UNKNOWN_TOKEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigrateVisitRequestDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.OutcomeDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType.NOT_KNOWN
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.COMPLETED_NORMALLY
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.NOT_RECORDED
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.OutcomeStatus.PRISONER_CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TelemetryVisitEvents
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitNoteType.STATUS_CHANGED_REASON
@@ -36,7 +33,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OP
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.CANCELLED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
-import uk.gov.justice.digital.hmpps.visitscheduler.helper.callMigrateCancelVisit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Application
@@ -47,6 +43,9 @@ import java.time.LocalDateTime
 @DisplayName("Migrate POST /visits")
 @TestPropertySource(properties = ["migrate.max.months.in.future=6"])
 class MigrateVisitTest : MigrationIntegrationTestBase() {
+
+  @Autowired
+  private lateinit var visitDtoBuilder: VisitDtoBuilder
 
   @BeforeEach
   internal fun setUp() {
@@ -70,7 +69,9 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     val visit = visitRepository.findByReference(reference)
     assertThat(visit).isNotNull
-    visit?.let {
+    val visitDto = visitDtoBuilder.build(visit!!)
+
+    visit.let {
       assertThat(visit.reference).isEqualTo(reference)
       assertThat(visit.prison.code).isEqualTo(PRISON_CODE)
       assertThat(visit.prisonerId).isEqualTo("FF0000FF")
@@ -107,7 +108,7 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
         assertThat(legacyData.migrateDateTime).isNotNull()
         assertThat(legacyData.migrateDateTime?.toLocalDate()).isEqualTo(LocalDate.now())
       }
-      assertTelemetryClientEvents(visit, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
+      assertTelemetryClientEvents(visitDto, TelemetryVisitEvents.VISIT_MIGRATED_EVENT)
 
       val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
       assertThat(eventAuditList).hasSize(1)
@@ -595,46 +596,6 @@ class MigrateVisitTest : MigrationIntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isUnauthorized
-  }
-
-  @Test
-  fun `cancel visit migrated by reference -  with outcome and outcome text`() {
-    // Given
-
-    val application = createApplicationAndSave(completed = true, sessionTemplate = sessionTemplateDefault)
-    val visit = createVisitAndSave(visitStatus = BOOKED, application, sessionTemplateDefault)
-
-    val cancelVisitDto = MigratedCancelVisitDto(
-      OutcomeDto(
-        PRISONER_CANCELLED,
-        "Prisoner got covid",
-      ),
-      CANCELLED_BY_BY_USER,
-    )
-    val reference = visit.reference
-
-    // When
-    val responseSpec = callMigrateCancelVisit(webTestClient, setAuthorisation(roles = listOf("ROLE_MIGRATE_VISITS")), reference, cancelVisitDto)
-
-    // Then
-    val returnResult = responseSpec.expectStatus().isOk
-      .expectBody()
-      .returnResult()
-
-    // And
-    val visitCancelled = objectMapper.readValue(returnResult.responseBody, VisitDto::class.java)
-    assertThat(visitCancelled.visitNotes.size).isEqualTo(1)
-    assertThat(visitCancelled.visitNotes[0].text).isEqualTo("Prisoner got covid")
-    assertHelper.assertVisitCancellation(visitCancelled, cancelledBy = cancelVisitDto.actionedBy, applicationMethodType = NOT_KNOWN, expectedOutcomeStatus = PRISONER_CANCELLED)
-
-    assertTelemetryClientEvents(visitCancelled, TelemetryVisitEvents.CANCELLED_VISIT_MIGRATED_EVENT)
-    assertCancelledDomainEvent(visitCancelled)
-
-    val eventAuditList = eventAuditRepository.findAllByBookingReference(visit.reference)
-    assertThat(eventAuditList).hasSize(1)
-    assertThat(eventAuditList[0].actionedBy.userName).isEqualTo("user-2")
-    assertThat(eventAuditList[0].type).isEqualTo(EventAuditType.CANCELLED_VISIT)
-    assertThat(eventAuditList[0].actionedBy.userType).isEqualTo(STAFF)
   }
 
   @Test
