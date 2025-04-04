@@ -37,4 +37,3 @@ data class UpdateVisitFromExternalSystemDto(
   @field:Valid
   val visitorSupport: VisitorSupportDto? = null,
 )
-

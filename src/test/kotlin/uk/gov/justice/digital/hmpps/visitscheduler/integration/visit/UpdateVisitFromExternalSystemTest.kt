@@ -1,7 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.integration.visit
 
 import com.microsoft.applicationinsights.TelemetryClient
-import org.apache.catalina.User
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
@@ -39,7 +38,6 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
-import java.time.temporal.ChronoUnit
 
 @Transactional(propagation = SUPPORTS)
 @DisplayName("PUT $PUT_VISIT_FROM_EXTERNAL_SYSTEM")
@@ -114,7 +112,7 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
       visitType = VisitType.SOCIAL,
       activePrison = true,
       createContact = true,
-      createApplication = false
+      createApplication = false,
     )
 
     // When
@@ -140,7 +138,7 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
       webTestClient,
       roleVisitSchedulerHttpHeaders,
       reference,
-      updateVisitFromExternalSystemDto
+      updateVisitFromExternalSystemDto,
     )
 
     // Then
@@ -188,7 +186,7 @@ class UpdateVisitFromExternalSystemTest : IntegrationTestBase() {
         assertThat(it["hasSessionChanged"]).isEqualTo("true")
         assertThat(it["hasDateChanged"]).isEqualTo("true")
         assertThat(it["existingVisitSession"]).isEqualTo(visit.sessionSlot.slotStart.format(datetimeFormatter))
-        assertThat(it["newVisitSession"]).isEqualTo(  updatedVisitDto.startTimestamp.format(datetimeFormatter))
+        assertThat(it["newVisitSession"]).isEqualTo(updatedVisitDto.startTimestamp.format(datetimeFormatter))
         assertThat(it["hasVisitorsChanged"]).isEqualTo("true")
         assertThat(it["hasNeedsChanged"]).isEqualTo("true")
         assertThat(it["hasContactsChanged"]).isEqualTo("true")
