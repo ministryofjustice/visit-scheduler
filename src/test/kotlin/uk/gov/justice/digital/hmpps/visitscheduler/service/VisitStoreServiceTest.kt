@@ -14,6 +14,7 @@ import org.mockito.kotlin.whenever
 import org.springframework.test.context.ActiveProfiles
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -137,6 +138,84 @@ internal class VisitStoreServiceTest {
 
       visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
       verify(visitRepository, times(2)).saveAndFlush(any<Visit>())
+      verify(visitDtoBuilder, times(1)).build(any<Visit>())
+    }
+  }
+
+  @Nested
+  @DisplayName("updateVisitFromExternalSystem")
+  inner class UpdateVisitFromExternalSystem {
+    private val updateVisitFromExternalSystemDto = UpdateVisitFromExternalSystemDto(
+      visitRoom = "A1",
+      visitType = VisitType.SOCIAL,
+      visitRestriction = VisitRestriction.OPEN,
+      startTimestamp = LocalDateTime.parse("2018-12-01T13:45:00"),
+      endTimestamp = LocalDateTime.parse("2018-12-01T13:45:00"),
+      visitContact = ContactDto(
+        name = "John Smith",
+        telephone = "01234567890",
+        email = "email@example.com",
+      ),
+      visitNotes = listOf(
+        VisitNoteDto(
+          type = VisitNoteType.VISITOR_CONCERN,
+          text = "Visitor is concerned that his mother in-law is coming!",
+        ),
+      ),
+      visitors = setOf(
+        VisitorDto(nomisPersonId = 1234, visitContact = true),
+        VisitorDto(nomisPersonId = 4321, visitContact = false),
+      ),
+      visitorSupport = VisitorSupportDto(
+        description = "Visually impaired assistance",
+      ),
+    )
+
+    private val prison =
+      Prison(
+        code = "1234",
+        active = true,
+        policyNoticeDaysMin = 1,
+        policyNoticeDaysMax = 2,
+        maxTotalVisitors = 2,
+        maxAdultVisitors = 1,
+        maxChildVisitors = 1,
+        adultAgeYears = 18,
+      )
+
+    private val sessionSlot = SessionSlot(
+      prisonId = prison.id,
+      slotDate = updateVisitFromExternalSystemDto.startTimestamp.toLocalDate(),
+      slotStart = updateVisitFromExternalSystemDto.startTimestamp,
+      slotEnd = updateVisitFromExternalSystemDto.endTimestamp,
+    )
+
+    private val visit = Visit(
+      prisonId = prison.id,
+      prison = prison,
+      prisonerId = "AF34567G",
+      sessionSlotId = sessionSlot.id,
+      sessionSlot = sessionSlot,
+      visitType = updateVisitFromExternalSystemDto.visitType,
+      visitRestriction = updateVisitFromExternalSystemDto.visitRestriction,
+      visitRoom = updateVisitFromExternalSystemDto.visitRoom,
+      visitStatus = VisitStatus.BOOKED,
+      userType = UserType.PRISONER,
+    )
+
+    @Test
+    fun `updates a visit`() {
+      whenever(
+        sessionSlotService.getSessionSlot(
+          startTimeDate = updateVisitFromExternalSystemDto.startTimestamp.truncatedTo(ChronoUnit.MINUTES),
+          endTimeAndDate = updateVisitFromExternalSystemDto.endTimestamp.truncatedTo(ChronoUnit.MINUTES),
+          prison = prison,
+        ),
+      ).thenReturn(sessionSlot)
+      whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
+
+      visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, visit)
+      verify(visitRepository, times(1)).saveAndFlush(any<Visit>())
       verify(visitDtoBuilder, times(1)).build(any<Visit>())
     }
   }
