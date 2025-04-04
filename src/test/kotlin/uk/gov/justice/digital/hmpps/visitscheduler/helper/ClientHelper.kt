@@ -12,9 +12,11 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFER
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.POST_VISIT_FROM_EXTERNAL_SYSTEM
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.PUT_VISIT_FROM_EXTERNAL_SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_APPLICATION_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_EVENTS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
@@ -62,6 +64,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsD
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
@@ -782,6 +785,13 @@ fun callCreateVisitFromExternalSystem(
   authHttpHeaders: (HttpHeaders) -> Unit,
   dto: CreateVisitFromExternalSystemDto,
 ): ResponseSpec = callPost(dto, webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, authHttpHeaders)
+
+fun callUpdateVisitFromExternalSystem(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  reference: String,
+  dto: UpdateVisitFromExternalSystemDto,
+): ResponseSpec = callPut(dto, webTestClient, "$VISIT_CONTROLLER_PATH/external-system/$reference", authHttpHeaders)
 
 fun callGet(
   webTestClient: WebTestClient,

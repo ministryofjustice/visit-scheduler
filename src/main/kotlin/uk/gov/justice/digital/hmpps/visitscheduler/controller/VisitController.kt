@@ -595,7 +595,7 @@ class VisitController(
   ): List<String> = visitService.getVisitReferenceByClientReference(clientReference.trim())
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(PUT_VISIT_FROM_EXTERNAL_SYSTEM)
+  @PutMapping(PUT_VISIT_FROM_EXTERNAL_SYSTEM)
   @ResponseStatus(HttpStatus.OK)
   @Operation(
     summary = "Update visit which already exists in an external system",
