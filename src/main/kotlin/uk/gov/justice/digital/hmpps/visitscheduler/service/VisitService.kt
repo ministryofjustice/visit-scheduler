@@ -15,6 +15,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
@@ -332,4 +333,18 @@ class VisitService(
     }
     return visitReference
   }
+
+  fun updateVisitFromExternalSystem(
+    bookingReference: String,
+    updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto,
+  ): VisitDto {
+    val existingVisit =
+      visitRepository.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
+
+    val updatedVisit = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)
+
+    return updatedVisit
+//    return processApplicationEventsForExistingVisit(application, createApplicationDto, existingVisit)
+  }
+
 }

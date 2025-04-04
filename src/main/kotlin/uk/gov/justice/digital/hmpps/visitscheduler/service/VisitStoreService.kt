@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason.VISIT_UPDATED
@@ -309,5 +310,69 @@ class VisitStoreService(
     )
 
     return visitDtoBuilder.build(visitRepository.saveAndFlush(newVisit))
+  }
+
+  fun updateVisitFromExternalSystem(updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto, existingVisit: Visit): VisitDto {
+    val sessionSlot = sessionSlotService.getSessionSlot(
+      startTimeDate = updateVisitFromExternalSystemDto.startTimestamp.truncatedTo(ChronoUnit.MINUTES),
+      endTimeAndDate = updateVisitFromExternalSystemDto.endTimestamp.truncatedTo(ChronoUnit.MINUTES),
+      prison = existingVisit.prison,
+    )
+
+    existingVisit.sessionSlotId = sessionSlot.id
+    existingVisit.sessionSlot = sessionSlot
+    existingVisit.visitType = updateVisitFromExternalSystemDto.visitType
+    existingVisit.visitRestriction = updateVisitFromExternalSystemDto.visitRestriction
+    existingVisit.visitRoom = updateVisitFromExternalSystemDto.visitRoom
+
+    existingVisit.visitors.clear()
+    existingVisit.visitors.addAll(
+      updateVisitFromExternalSystemDto.visitors?.map {
+        VisitVisitor(
+          visitId = existingVisit.id,
+          nomisPersonId = it.nomisPersonId,
+          visitContact = it.visitContact,
+          visit = existingVisit,
+        )
+      }.orEmpty(),
+    )
+
+    existingVisit.visitNotes.clear()
+    existingVisit.visitNotes.addAll(
+      updateVisitFromExternalSystemDto.visitNotes.map {
+        VisitNote(
+          visitId = existingVisit.id,
+          type = it.type,
+          text = it.text,
+          visit = existingVisit,
+        )
+      },
+    )
+
+    existingVisit.visitContact = existingVisit.visitContact?.also {
+      it.name = updateVisitFromExternalSystemDto.visitContact.name
+      it.telephone = updateVisitFromExternalSystemDto.visitContact.telephone
+      it.email = updateVisitFromExternalSystemDto.visitContact.email
+    } ?: updateVisitFromExternalSystemDto.visitContact.let {
+      VisitContact(
+        visitId = existingVisit.id,
+        name = it.name,
+        telephone = it.telephone,
+        email = it.email,
+        visit = existingVisit,
+      )
+    }
+
+    existingVisit.support = updateVisitFromExternalSystemDto.visitorSupport?.let {
+      existingVisit.support?.also {
+        it.description = updateVisitFromExternalSystemDto.visitorSupport.description
+      } ?: VisitSupport(
+        visitId = existingVisit.id,
+        description = updateVisitFromExternalSystemDto.visitorSupport.description,
+        visit = existingVisit,
+      )
+    }
+
+    return visitDtoBuilder.build(visitRepository.saveAndFlush(existingVisit))
   }
 }
