@@ -216,6 +216,26 @@ class VisitService(
     return bookedVisitDto
   }
 
+  private fun processUpdateVisitFromExternalSystemEvents(
+    existingVisitDto: VisitDto,
+    updatedVisitDto: VisitDto,
+  ): VisitDto {
+    val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(updatedVisitDto.prisonerId, updatedVisitDto, EventAuditType.UPDATED_VISIT, ApplicationMethodType.BY_PRISONER, UserType.PRISONER)
+
+    telemetryClientService.trackUpdateBookingEvent(existingVisitDto, updatedVisitDto, bookingEventAuditDto)
+
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      updatedVisitDto.reference,
+      updatedVisitDto.createdTimestamp,
+      updatedVisitDto.modifiedTimestamp,
+      updatedVisitDto.prisonerId,
+      bookingEventAuditDto.id,
+    )
+    snsService.sendChangedVisitBookedEvent(snsDomainEventPublishDto)
+
+    return updatedVisitDto
+  }
+
   private fun processUpdateBookingEvents(
     visitDtoBeforeUpdate: VisitDto?,
     bookedVisitDto: VisitDto,
@@ -223,7 +243,7 @@ class VisitService(
   ): VisitDto {
     val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, EventAuditType.UPDATED_VISIT)
 
-    telemetryClientService.trackUpdateBookingEvent(visitDtoBeforeUpdate, bookingRequestDto, bookedVisitDto, updatedEventAuditDto)
+    telemetryClientService.trackUpdateBookingEvent(visitDtoBeforeUpdate, bookedVisitDto, updatedEventAuditDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       bookedVisitDto.reference,
@@ -334,17 +354,17 @@ class VisitService(
     return visitReference
   }
 
+  @Transactional
   fun updateVisitFromExternalSystem(
     bookingReference: String,
     updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto,
   ): VisitDto {
     val existingVisit =
       visitRepository.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
+    val existingVisitDto = visitDtoBuilder.build(existingVisit)
 
-    val updatedVisit = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)
+    val updatedVisitDto = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)
 
-    return updatedVisit
-//    return processApplicationEventsForExistingVisit(application, createApplicationDto, existingVisit)
+    return processUpdateVisitFromExternalSystemEvents(existingVisitDto, updatedVisitDto)
   }
-
 }

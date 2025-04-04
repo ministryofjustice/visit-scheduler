@@ -51,7 +51,6 @@ class TelemetryClientService(
 
   fun trackUpdateBookingEvent(
     visitDtoBeforeUpdate: VisitDto?,
-    bookingRequestDto: BookingRequestDto,
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
   ) {
