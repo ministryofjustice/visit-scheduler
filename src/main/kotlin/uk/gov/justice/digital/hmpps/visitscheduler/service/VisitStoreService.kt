@@ -363,12 +363,12 @@ class VisitStoreService(
       )
     }
 
-    existingVisit.support = updateVisitFromExternalSystemDto.visitorSupport?.let {
+    existingVisit.support = updateVisitFromExternalSystemDto.visitorSupport?.let { updatedVisitorSupport ->
       existingVisit.support?.also {
-        it.description = updateVisitFromExternalSystemDto.visitorSupport.description
+        it.description = updatedVisitorSupport.description
       } ?: VisitSupport(
         visitId = existingVisit.id,
-        description = updateVisitFromExternalSystemDto.visitorSupport.description,
+        description = updatedVisitorSupport.description,
         visit = existingVisit,
       )
     }
