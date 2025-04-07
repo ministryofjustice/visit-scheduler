@@ -2,7 +2,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.dto
 
 import io.swagger.v3.oas.annotations.media.Schema
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitExternalSystemDetails
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 
 data class VisitExternalSystemDetailsDto(
   @Schema(description = "Client name", example = "client_name")
@@ -12,6 +11,6 @@ data class VisitExternalSystemDetailsDto(
 ) {
   constructor(visitExternalSystemDetailsEntity: VisitExternalSystemDetails) : this (
     clientName = visitExternalSystemDetailsEntity.clientName,
-    clientVisitReference = visitExternalSystemDetailsEntity.clientReference
+    clientVisitReference = visitExternalSystemDetailsEntity.clientReference,
   )
 }
