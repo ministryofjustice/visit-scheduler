@@ -23,6 +23,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.PrisonEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitExternalSystemDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitVisitor
@@ -56,6 +57,25 @@ class VisitDtoBuilderTest {
 
     // When
 
+    val result = toTest.build(visit)
+
+    // Then
+    assertVisitDto(result, visit, slotDate, visitStart, visitEnd)
+  }
+
+  @Test
+  fun `Visit Dto is built correctly from given entities when it had an external system client reference`() {
+    // Given
+    val now = LocalDateTime.now()
+    val slotDate = now.toLocalDate()
+    val visitStart = now.toLocalTime()
+    val visitEnd = visitStart.plusHours(2)
+    val clientName = "client-name"
+    val clientReference = "client-reference"
+
+    val visit = create(slotDate = slotDate, visitStart = visitStart, visitEnd = visitEnd, reference = "test", isFromExternalSystem = true, clientName = clientName, clientReference = clientReference)
+
+    // When
     val result = toTest.build(visit)
 
     // Then
@@ -111,6 +131,11 @@ class VisitDtoBuilderTest {
         Assertions.assertThat(dtoVisitors.visitContact).isEqualTo(visitor.visitContact)
       }
     }
+
+    visit.visitExternalSystemDetails?.let {
+      Assertions.assertThat(visitDto.visitExternalSystemDetails?.clientName).isEqualTo(it.clientName)
+      Assertions.assertThat(visitDto.visitExternalSystemDetails?.clientVisitReference).isEqualTo(it.clientReference)
+    }
   }
 
   private fun create(
@@ -126,6 +151,9 @@ class VisitDtoBuilderTest {
     outcomeStatus: OutcomeStatus? = null,
     sessionTemplateReference: String? = "sessionTemplateReference",
     userType: UserType = UserType.STAFF,
+    isFromExternalSystem: Boolean = false,
+    clientName: String? = null,
+    clientReference: String? = null,
   ): Visit {
     val sessionSlot = SessionSlot(sessionTemplateReference, prison.id, slotDate, slotDate.atTime(visitStart), slotDate.atTime(visitEnd))
 
@@ -148,11 +176,16 @@ class VisitDtoBuilderTest {
     visit.visitors.add(VisitVisitor(1, visit.id, 123445, true, visit))
     visit.visitContact = VisitContact(1, visit.id, "test", "0123456", "email@example.com", visit)
 
+    if (isFromExternalSystem && clientName != null && clientReference != null) {
+      visit.visitExternalSystemDetails = VisitExternalSystemDetails(visit.id, clientName, clientReference, visit)
+    }
     val spyVisit = spy(visit)
 
     doReturn(reference).`when`(spyVisit).reference
 
-    visit.addApplication(ApplicationEntityHelper.createApplication(spyVisit))
+    if (!isFromExternalSystem) {
+      visit.addApplication(ApplicationEntityHelper.createApplication(spyVisit))
+    }
 
     return spyVisit
   }

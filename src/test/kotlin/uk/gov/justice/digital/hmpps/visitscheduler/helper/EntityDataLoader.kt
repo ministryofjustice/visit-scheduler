@@ -33,6 +33,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.PrisonUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VSIPReporting
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitContact
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitExternalSystemDetails
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNote
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitNotifyHistory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.VisitSupport
@@ -415,6 +416,10 @@ class VisitEntityHelper(
   fun save(visit: Visit): Visit = visitRepository.saveAndFlush(visit)
 
   fun getBookedVisit(reference: String): Visit? = visitRepository.findBookedVisit(reference)
+
+  fun createVisitExternalSystemClientReference(visit: Visit, clientReference: String) {
+    visit.visitExternalSystemDetails = VisitExternalSystemDetails(visitId = visit.id, clientReference = clientReference, clientName = "MDI", visit = visit)
+  }
 }
 
 @Component
