@@ -1,0 +1,275 @@
+package uk.gov.justice.digital.hmpps.visitscheduler.integration.session
+
+import org.assertj.core.api.Assertions.assertThat
+import org.junit.jupiter.api.BeforeEach
+import org.junit.jupiter.api.DisplayName
+import org.junit.jupiter.api.Test
+import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
+import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.AvailableVisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
+import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import java.time.LocalDate
+import java.time.LocalTime
+
+@DisplayName("GET $VISIT_SESSION_CONTROLLER_PATH and GET $VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH with userType")
+class GetSessionsByUserTypeTest : IntegrationTestBase() {
+
+  private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
+
+  private val prisonerId = "A0000001"
+
+  private val prisonCode = "STC"
+
+  private lateinit var nextAllowedDay: LocalDate
+  private lateinit var sessionTemplate1: SessionTemplate
+  private lateinit var sessionTemplate2: SessionTemplate
+  private lateinit var sessionTemplate3: SessionTemplate
+  private lateinit var sessionTemplate4: SessionTemplate
+  private lateinit var sessionTemplate5: SessionTemplate
+
+  @BeforeEach
+  internal fun setUpTests() {
+    prison = prisonEntityHelper.create(prisonCode = prisonCode)
+    prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
+    nextAllowedDay = getNextAllowedDay()
+
+    // session available to STAFF only
+    sessionTemplate1 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("09:01"),
+      endTime = LocalTime.parse("10:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      userTypes = listOf(Pair(STAFF, true)),
+      visitRoom = "Visits Main Hall",
+    )
+
+    // session available to PUBLIC only
+    sessionTemplate2 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("11:01"),
+      endTime = LocalTime.parse("12:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      userTypes = listOf(Pair(PUBLIC, true)),
+      visitRoom = "Visits Main Hall",
+    )
+
+    // session available to STAFF and PUBLIC
+    sessionTemplate3 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("12:01"),
+      endTime = LocalTime.parse("13:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      userTypes = listOf(Pair(STAFF, true), Pair(PUBLIC, true)),
+      visitRoom = "Visits Main Hall",
+    )
+
+    // session not active for STAFF so should not be returned
+    sessionTemplate4 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("13:01"),
+      endTime = LocalTime.parse("14:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      userTypes = listOf(Pair(STAFF, false)),
+      visitRoom = "Visits Main Hall",
+    )
+
+    // session not active for PUBLIC so should not be returned
+    sessionTemplate5 = sessionTemplateEntityHelper.create(
+      validFromDate = nextAllowedDay,
+      validToDate = nextAllowedDay,
+      startTime = LocalTime.parse("14:01"),
+      endTime = LocalTime.parse("15:00"),
+      dayOfWeek = nextAllowedDay.dayOfWeek,
+      prisonCode = prisonCode,
+      userTypes = listOf(Pair(PUBLIC, false)),
+      visitRoom = "Visits Main Hall",
+    )
+  }
+
+  @Test
+  fun `when get visit sessions called with userType STAFF only visit sessions for STAFF are returned`() {
+    // When
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk
+      .expectBody()
+    val visitSessionResults = getVisitSessionResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(2)
+    assertSession(visitSessionResults[0], nextAllowedDay, sessionTemplate1)
+    assertSession(visitSessionResults[1], nextAllowedDay, sessionTemplate3)
+  }
+
+  @Test
+  fun `when get visit sessions called with userType as SYSTEM a BAD_REQUEST error is returned`() {
+    // Given
+    val prisonerId = "A1234AA"
+
+    // When
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = SYSTEM)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+  }
+
+  @Test
+  fun `when get visit sessions called with userType as PUBLIC a BAD_REQUEST error is returned`() {
+    // Given
+    val prisonerId = "A1234AA"
+
+    // When
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = PUBLIC)
+
+    // Then
+    responseSpec.expectStatus().isBadRequest
+  }
+
+  @Test
+  fun `when get available visit sessions called with userType STAFF only available visit sessions for STAFF are returned`() {
+    // When
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = STAFF)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getAvailableVisitSessionResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(2)
+    assertAvailableVisitSession(visitSessionResults[0], nextAllowedDay, sessionTemplate1)
+    assertAvailableVisitSession(visitSessionResults[1], nextAllowedDay, sessionTemplate3)
+  }
+
+  @Test
+  fun `when get available visit sessions called with userType PUBLIC only available visit sessions for PUBLIC are returned`() {
+    // When
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = PUBLIC)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getAvailableVisitSessionResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(2)
+    assertAvailableVisitSession(visitSessionResults[0], nextAllowedDay, sessionTemplate2)
+    assertAvailableVisitSession(visitSessionResults[1], nextAllowedDay, sessionTemplate3)
+  }
+
+  @Test
+  fun `when get available visit sessions called with userType SYSTEM no sessions are returned`() {
+    // When
+    val userType = SYSTEM
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = userType)
+
+    // Then
+    val returnResult = responseSpec.expectStatus().isOk.expectBody()
+    val visitSessionResults = getAvailableVisitSessionResults(returnResult)
+    assertThat(visitSessionResults.size).isEqualTo(0)
+  }
+
+  private fun callGetSessions(
+    prisonCode: String? = "SPC",
+    prisonerId: String,
+    policyNoticeDaysMin: Int? = null,
+    policyNoticeDaysMax: Int? = null,
+    userType: UserType,
+  ): ResponseSpec {
+    val urlParams = mutableListOf(
+      "prisonerId=$prisonerId",
+      "prisonId=$prisonCode",
+      "userType=$userType",
+    )
+    policyNoticeDaysMin?.let {
+      urlParams.add("min=$policyNoticeDaysMin")
+    }
+    policyNoticeDaysMax?.let {
+      urlParams.add("max=$policyNoticeDaysMax")
+    }
+
+    val uri = VISIT_SESSION_CONTROLLER_PATH + "?" + urlParams.joinToString("&")
+
+    return webTestClient.get()
+      .uri(uri)
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+  }
+
+  private fun callGetAvailableSessions(
+    prisonCode: String? = "SPC",
+    prisonerId: String,
+    userType: UserType,
+  ): ResponseSpec {
+    val uri = VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
+    val uriQueryParams = getAvailableSessionsQueryParams(
+      prisonCode = prisonCode!!,
+      prisonerId = prisonerId,
+      userType = userType,
+    ).joinToString("&")
+
+    return webTestClient.get().uri("$uri?$uriQueryParams")
+      .headers(setAuthorisation(roles = requiredRole))
+      .exchange()
+  }
+
+  private fun getAvailableSessionsQueryParams(
+    prisonCode: String,
+    prisonerId: String,
+    sessionRestriction: SessionRestriction = SessionRestriction.OPEN,
+    fromDate: LocalDate = LocalDate.now().plusDays(2),
+    toDate: LocalDate = LocalDate.now().plusDays(28),
+    userType: UserType,
+  ): List<String> {
+    val queryParams = ArrayList<String>()
+    queryParams.add("prisonId=$prisonCode")
+    queryParams.add("prisonerId=$prisonerId")
+    queryParams.add("sessionRestriction=$sessionRestriction")
+    queryParams.add("fromDate=$fromDate")
+    queryParams.add("toDate=$toDate")
+    queryParams.add("userType=${userType.name}")
+    return queryParams
+  }
+
+  private fun getNextAllowedDay(): LocalDate {
+    // The 3 days is based on the default SessionService.policyNoticeDaysMin
+    return LocalDate.now().plusDays(3)
+  }
+
+  private fun assertSession(
+    visitSessionResult: VisitSessionDto,
+    testDate: LocalDate,
+    expectedSessionTemplate: SessionTemplate,
+  ) {
+    assertThat(visitSessionResult.startTimestamp)
+      .isEqualTo(testDate.atTime(expectedSessionTemplate.startTime))
+    assertThat(visitSessionResult.endTimestamp).isEqualTo(testDate.atTime(expectedSessionTemplate.endTime))
+    assertThat(visitSessionResult.startTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
+    assertThat(visitSessionResult.endTimestamp.dayOfWeek).isEqualTo(expectedSessionTemplate.dayOfWeek)
+  }
+
+  private fun assertAvailableVisitSession(
+    visitSession: AvailableVisitSessionDto,
+    expectedDate: LocalDate,
+    expectedSessionTemplate: SessionTemplate,
+  ) {
+    assertThat(visitSession.sessionTemplateReference).isEqualTo(expectedSessionTemplate.reference)
+    assertThat(visitSession.sessionDate).isEqualTo(expectedDate)
+    assertThat(visitSession.sessionTimeSlot.startTime).isEqualTo(expectedSessionTemplate.startTime)
+    assertThat(visitSession.sessionTimeSlot.endTime).isEqualTo(expectedSessionTemplate.endTime)
+  }
+
+  private fun getVisitSessionResults(returnResult: BodyContentSpec): Array<VisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<VisitSessionDto>::class.java)
+
+  private fun getAvailableVisitSessionResults(returnResult: BodyContentSpec): Array<AvailableVisitSessionDto> = objectMapper.readValue(returnResult.returnResult().responseBody, Array<AvailableVisitSessionDto>::class.java)
+}
