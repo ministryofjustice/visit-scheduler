@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict.DOUBLE_BOOKING_OR_RESERVATION
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -142,12 +143,14 @@ class GetSessionsDoubleBookingTest : IntegrationTestBase() {
     policyNoticeDaysMin: Int = 2,
     policyNoticeDaysMax: Int = 28,
     username: String? = null,
+    userType: UserType = UserType.STAFF,
   ): ResponseSpec {
     val uriQueryParams = mutableListOf(
       "prisonId=$prisonCode",
       "prisonerId=$prisonerId",
       "min=$policyNoticeDaysMin",
       "max=$policyNoticeDaysMax",
+      "userType=$userType",
     ).also { params ->
       username?.let {
         params.add("username=$username")
