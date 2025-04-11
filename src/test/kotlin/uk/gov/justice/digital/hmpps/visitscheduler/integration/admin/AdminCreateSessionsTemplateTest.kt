@@ -10,7 +10,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSIO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
@@ -42,8 +43,8 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
     val enhancedIncentives = listOf(IncentiveLevel.ENHANCED, IncentiveLevel.ENHANCED_2, IncentiveLevel.ENHANCED_3)
     val sessionIncentiveGroup = sessionPrisonerIncentiveLevelHelper.create(prisonCode = prison.code, incentiveLevelList = enhancedIncentives)
-    val staffUserClient = UserClientDto(UserType.STAFF, active = false)
-    val publicUserClient = UserClientDto(UserType.PUBLIC, active = true)
+    val staffUserClient = UserClientDto(STAFF, active = false)
+    val publicUserClient = UserClientDto(PUBLIC, active = true)
 
     val dto = createCreateSessionTemplateDto(
       sessionDateRange = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
@@ -86,8 +87,8 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
   @Test
   fun `when create session template with clients list empty session template is created but no clients are added`() {
     // Given
-    val staffUserClient = UserClientDto(UserType.STAFF, active = false)
-    val publicUserClient = UserClientDto(UserType.PUBLIC, active = true)
+    val staffUserClient = UserClientDto(STAFF, active = false)
+    val publicUserClient = UserClientDto(PUBLIC, active = true)
     val dto = createCreateSessionTemplateDto(
       sessionDateRange = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
       userClients = listOf(staffUserClient, publicUserClient),
@@ -116,8 +117,8 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups).isEmpty()
     Assertions.assertThat(sessionTemplateDto.active).isFalse
     Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(2)
-    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(UserType.STAFF, false))
-    Assertions.assertThat(sessionTemplateDto.clients[1]).isEqualTo(UserClientDto(UserType.PUBLIC, true))
+    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(STAFF, false))
+    Assertions.assertThat(sessionTemplateDto.clients[1]).isEqualTo(UserClientDto(PUBLIC, true))
   }
 
   @Test

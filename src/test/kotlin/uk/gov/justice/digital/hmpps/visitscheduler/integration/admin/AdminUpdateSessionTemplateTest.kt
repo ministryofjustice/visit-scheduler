@@ -15,7 +15,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSIO
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -1572,7 +1573,7 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
       name = sessionTemplateDefault.name + " Updated",
       visitRoom = "new room name",
       includeLocationGroupType = true,
-      clients = listOf(UserClientDto(UserType.STAFF, true)),
+      clients = listOf(UserClientDto(STAFF, true)),
     )
 
     // When
@@ -1584,14 +1585,14 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(1)
-    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(UserType.STAFF, true))
+    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(STAFF, true))
   }
 
   @Test
   fun `when session template with existing clients are updated existing clients are replaced with new clients`() {
     // Given
-    val existingClients = listOf(UserClientDto(UserType.STAFF, true))
-    val newClients = listOf(UserClientDto(UserType.PUBLIC, true), UserClientDto(UserType.STAFF, false))
+    val existingClients = listOf(UserClientDto(STAFF, true))
+    val newClients = listOf(UserClientDto(PUBLIC, true), UserClientDto(STAFF, false))
     val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true, clients = existingClients)
 
     val dto = createUpdateSessionTemplateDto(
@@ -1610,14 +1611,14 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(2)
-    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(UserType.PUBLIC, true))
-    Assertions.assertThat(sessionTemplateDto.clients[1]).isEqualTo(UserClientDto(UserType.STAFF, false))
+    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(PUBLIC, true))
+    Assertions.assertThat(sessionTemplateDto.clients[1]).isEqualTo(UserClientDto(STAFF, false))
   }
 
   @Test
   fun `when session template with existing clients are updated but new clients not sent through existing clients are not replaced with new clients`() {
     // Given
-    val existingClients = listOf(UserClientDto(UserType.STAFF, true))
+    val existingClients = listOf(UserClientDto(STAFF, true))
     val newClients = null
     val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true, clients = existingClients)
 
@@ -1638,6 +1639,6 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
     val sessionTemplateDto = getSessionTemplate(responseSpec)
     Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
     Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(1)
-    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(UserType.STAFF, true))
+    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(STAFF, true))
   }
 }
