@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NonAssociationDomainEventType.NON_ASSOCIATION_CREATED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType.NON_ASSOCIATION_EVENT
@@ -470,7 +471,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
       permittedLocationGroups = permittedLocationGroups,
       permittedCategories = permittedCategoryGroups,
       permittedIncentiveLevels = permittedIncentiveLevelGroups,
-      userTypes = userTypes.map { Pair(it, true) },
+      clients = userTypes.map { UserClientDto(it, true) },
     )
   }
 }

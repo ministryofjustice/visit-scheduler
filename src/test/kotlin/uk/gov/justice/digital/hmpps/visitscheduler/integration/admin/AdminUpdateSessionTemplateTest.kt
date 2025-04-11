@@ -12,8 +12,10 @@ import org.mockito.kotlin.verify
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -1559,5 +1561,83 @@ class AdminUpdateSessionTemplateTest : IntegrationTestBase() {
 
     // Then
     responseSpec.expectStatus().isOk
+  }
+
+  @Test
+  fun `when session template with no clients are updated new client are added`() {
+    // Given
+    Assertions.assertThat(sessionTemplateDefault.clients.size).isEqualTo(0)
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplateDefault.name + " Updated",
+      visitRoom = "new room name",
+      includeLocationGroupType = true,
+      clients = listOf(UserClientDto(UserType.STAFF, true)),
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplateDefault.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(1)
+    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(UserType.STAFF, true))
+  }
+
+  @Test
+  fun `when session template with existing clients are updated existing clients are replaced with new clients`() {
+    // Given
+    val existingClients = listOf(UserClientDto(UserType.STAFF, true))
+    val newClients = listOf(UserClientDto(UserType.PUBLIC, true), UserClientDto(UserType.STAFF, false))
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true, clients = existingClients)
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      visitRoom = "new room name",
+      includeLocationGroupType = true,
+      clients = newClients,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(2)
+    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(UserType.PUBLIC, true))
+    Assertions.assertThat(sessionTemplateDto.clients[1]).isEqualTo(UserClientDto(UserType.STAFF, false))
+  }
+
+  @Test
+  fun `when session template with existing clients are updated but new clients not sent through existing clients are not replaced with new clients`() {
+    // Given
+    val existingClients = listOf(UserClientDto(UserType.STAFF, true))
+    val newClients = null
+    val sessionTemplate = sessionTemplateEntityHelper.create(prisonCode = prison.code, isActive = true, clients = existingClients)
+
+    val dto = createUpdateSessionTemplateDto(
+      name = sessionTemplate.name + " Updated",
+      visitRoom = "new room name",
+      includeLocationGroupType = true,
+      // newClients is null
+      clients = newClients,
+    )
+
+    // When
+    val responseSpec = callUpdateSessionTemplateByReference(webTestClient, sessionTemplate.reference, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(1)
+    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(UserType.STAFF, true))
   }
 }

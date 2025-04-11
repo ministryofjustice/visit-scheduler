@@ -1,5 +1,6 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
@@ -171,6 +172,7 @@ fun createCreateSessionTemplateDto(
   categoryGroupReferences: List<String> = listOf(),
   incentiveLevelGroupReferences: List<String> = listOf(),
   includeLocationGroupType: Boolean = true,
+  userClients: List<UserClientDto> = listOf(),
 ): CreateSessionTemplateDto = CreateSessionTemplateDto(
   name = name + dayOfWeek,
   prisonCode = prisonCode,
@@ -184,6 +186,7 @@ fun createCreateSessionTemplateDto(
   categoryGroupReferences = categoryGroupReferences,
   incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   includeLocationGroupType = includeLocationGroupType,
+  clients = userClients,
 )
 
 fun createCreateSessionTemplateDto(
@@ -221,6 +224,7 @@ fun createUpdateSessionTemplateDto(
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
   includeLocationGroupType: Boolean = true,
+  clients: List<UserClientDto>? = null,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = name + dayOfWeek,
   sessionDateRange = sessionDateRange,
@@ -231,6 +235,7 @@ fun createUpdateSessionTemplateDto(
   weeklyFrequency = weeklyFrequency,
   categoryGroupReferences = categoryGroupReferences,
   incentiveLevelGroupReferences = incentiveLevelGroupReferences,
+  clients = clients,
 )
 
 fun createUpdateSessionTemplateDto(

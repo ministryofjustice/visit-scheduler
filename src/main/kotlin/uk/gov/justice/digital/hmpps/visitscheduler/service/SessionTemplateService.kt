@@ -36,6 +36,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.exception.ItemNotFoundExcepti
 import uk.gov.justice.digital.hmpps.visitscheduler.exception.VSiPValidationException
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
@@ -164,6 +165,7 @@ class SessionTemplateService(
       visitType = VisitType.SOCIAL,
       active = false,
       includeLocationGroupType = createSessionTemplateDto.includeLocationGroupType,
+
     )
 
     createSessionTemplateDto.categoryGroupReferences?.let {
@@ -179,6 +181,9 @@ class SessionTemplateService(
     }
 
     val sessionTemplateEntitySave = sessionTemplateRepository.saveAndFlush(sessionTemplateEntity)
+
+    val clients = createSessionTemplateDto.clients.map { SessionTemplateUserClient(sessionTemplateId = sessionTemplateEntitySave.id, sessionTemplate = sessionTemplateEntitySave, userType = it.userType, active = it.active) }
+    sessionTemplateEntitySave.clients.addAll(clients)
 
     return SessionTemplateDto(
       sessionTemplateEntitySave,
@@ -233,6 +238,23 @@ class SessionTemplateService(
     updateSessionTemplateDto.incentiveLevelGroupReferences?.let {
       updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.clear()
       it.toSet().forEach { ref -> updatedSessionTemplateEntity.permittedSessionIncentiveLevelGroups.add(this.getIncentiveLevelGroupByReference(ref)) }
+    }
+
+    updateSessionTemplateDto.clients?.let {
+      updatedSessionTemplateEntity.clients.clear()
+      sessionTemplateRepository.saveAndFlush(updatedSessionTemplateEntity)
+      it.toSet().forEach { userClient ->
+        updatedSessionTemplateEntity.clients.add(
+          SessionTemplateUserClient(
+            sessionTemplate = updatedSessionTemplateEntity,
+            sessionTemplateId = updatedSessionTemplateEntity.id,
+            userType = userClient.userType,
+            active = userClient.active,
+          ),
+        )
+      }
+
+      sessionTemplateRepository.saveAndFlush(updatedSessionTemplateEntity)
     }
     return SessionTemplateDto(updatedSessionTemplateEntity)
   }
