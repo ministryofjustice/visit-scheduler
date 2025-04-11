@@ -7,8 +7,11 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADMIN_SESSION_TEMPLATES_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionDateRangeDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionTimeSlotDto
@@ -40,12 +43,15 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
 
     val enhancedIncentives = listOf(IncentiveLevel.ENHANCED, IncentiveLevel.ENHANCED_2, IncentiveLevel.ENHANCED_3)
     val sessionIncentiveGroup = sessionPrisonerIncentiveLevelHelper.create(prisonCode = prison.code, incentiveLevelList = enhancedIncentives)
+    val staffUserClient = UserClientDto(STAFF, active = false)
+    val publicUserClient = UserClientDto(PUBLIC, active = true)
 
     val dto = createCreateSessionTemplateDto(
       sessionDateRange = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
       locationGroupReferences = mutableListOf(sessionLocationGroup.reference, sessionLocationGroup.reference),
       categoryGroupReferences = mutableListOf(sessionCategoryGroup.reference, sessionCategoryGroup.reference),
       incentiveLevelGroupReferences = mutableListOf(sessionIncentiveGroup.reference, sessionIncentiveGroup.reference),
+      userClients = listOf(staffUserClient, publicUserClient),
     )
 
     // When
@@ -75,6 +81,77 @@ class AdminCreateSessionsTemplateTest : IntegrationTestBase() {
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups.stream().map { it.incentiveLevels }).containsExactlyInAnyOrder(enhancedIncentives)
     Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups[0].reference).isEqualTo(dto.incentiveLevelGroupReferences!![0])
     Assertions.assertThat(sessionTemplateDto.active).isFalse
+    Assertions.assertThat(sessionTemplateDto.clients).isEqualTo(listOf(staffUserClient, publicUserClient))
+  }
+
+  @Test
+  fun `when create session template with clients list empty session template is created but no clients are added`() {
+    // Given
+    val staffUserClient = UserClientDto(STAFF, active = false)
+    val publicUserClient = UserClientDto(PUBLIC, active = true)
+    val dto = createCreateSessionTemplateDto(
+      sessionDateRange = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
+      userClients = listOf(staffUserClient, publicUserClient),
+    )
+
+    // When
+    val responseSpec = callCreateSessionTemplate(webTestClient, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange.validToDate)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.closed).isEqualTo(dto.sessionCapacity.closed)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.open).isEqualTo(dto.sessionCapacity.open)
+    Assertions.assertThat(sessionTemplateDto.prisonCode).isEqualTo(dto.prisonCode)
+    Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(dto.visitRoom)
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.startTime).isEqualTo(dto.sessionTimeSlot.startTime)
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.endTime).isEqualTo(dto.sessionTimeSlot.endTime)
+    Assertions.assertThat(sessionTemplateDto.dayOfWeek).isEqualTo(dto.dayOfWeek)
+    Assertions.assertThat(sessionTemplateDto.permittedLocationGroups).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(dto.weeklyFrequency)
+    Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.active).isFalse
+    Assertions.assertThat(sessionTemplateDto.clients.size).isEqualTo(2)
+    Assertions.assertThat(sessionTemplateDto.clients[0]).isEqualTo(UserClientDto(STAFF, false))
+    Assertions.assertThat(sessionTemplateDto.clients[1]).isEqualTo(UserClientDto(PUBLIC, true))
+  }
+
+  @Test
+  fun `when create session template with clients list populated session template and the user clients are created`() {
+    // Given
+    val dto = createCreateSessionTemplateDto(
+      sessionDateRange = SessionDateRangeDto(LocalDate.now().plusDays(1), null),
+      userClients = emptyList(),
+    )
+
+    // When
+    val responseSpec = callCreateSessionTemplate(webTestClient, dto, setAuthorisation(roles = adminRole))
+
+    // Then
+    responseSpec.expectStatus().isOk
+
+    val sessionTemplateDto = getSessionTemplate(responseSpec)
+    Assertions.assertThat(sessionTemplateDto.name).isEqualTo(dto.name)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validFromDate).isEqualTo(dto.sessionDateRange.validFromDate)
+    Assertions.assertThat(sessionTemplateDto.sessionDateRange.validToDate).isEqualTo(dto.sessionDateRange.validToDate)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.closed).isEqualTo(dto.sessionCapacity.closed)
+    Assertions.assertThat(sessionTemplateDto.sessionCapacity.open).isEqualTo(dto.sessionCapacity.open)
+    Assertions.assertThat(sessionTemplateDto.prisonCode).isEqualTo(dto.prisonCode)
+    Assertions.assertThat(sessionTemplateDto.visitRoom).isEqualTo(dto.visitRoom)
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.startTime).isEqualTo(dto.sessionTimeSlot.startTime)
+    Assertions.assertThat(sessionTemplateDto.sessionTimeSlot.endTime).isEqualTo(dto.sessionTimeSlot.endTime)
+    Assertions.assertThat(sessionTemplateDto.dayOfWeek).isEqualTo(dto.dayOfWeek)
+    Assertions.assertThat(sessionTemplateDto.permittedLocationGroups).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.weeklyFrequency).isEqualTo(dto.weeklyFrequency)
+    Assertions.assertThat(sessionTemplateDto.prisonerCategoryGroups).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.prisonerIncentiveLevelGroups).isEmpty()
+    Assertions.assertThat(sessionTemplateDto.active).isFalse
+    Assertions.assertThat(sessionTemplateDto.clients).isEmpty()
   }
 
   @Test

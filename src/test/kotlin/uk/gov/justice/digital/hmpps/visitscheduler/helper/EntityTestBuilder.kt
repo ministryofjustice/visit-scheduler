@@ -1,7 +1,9 @@
 package uk.gov.justice.digital.hmpps.visitscheduler.helper
 
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.CreateSessionTemplateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.SessionCapacityDto
@@ -22,10 +24,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.Session
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.location.UpdateLocationGroupDto
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Prison
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
 import java.time.DayOfWeek
 import java.time.LocalDate
+import java.time.LocalDateTime
 import java.time.LocalTime
 import java.util.*
 
@@ -57,25 +61,31 @@ fun sessionTemplate(
   isActive: Boolean = true,
   includeLocationGroupType: Boolean = true,
   prison: Prison,
-): SessionTemplate = SessionTemplate(
-  name = name + dayOfWeek,
-  validFromDate = validFromDate,
-  validToDate = validToDate,
-  closedCapacity = closedCapacity,
-  openCapacity = openCapacity,
-  prisonId = prison.id,
-  prison = prison,
-  visitRoom = visitRoom,
-  visitType = visitType,
-  startTime = startTime,
-  endTime = endTime,
-  dayOfWeek = dayOfWeek,
-  weeklyFrequency = weeklyFrequency,
-  active = isActive,
-  permittedSessionLocationGroups = permittedSessionLocationGroups,
-  permittedSessionCategoryGroups = permittedSessionCategoryGroups,
-  includeLocationGroupType = includeLocationGroupType,
-).also { it.reference = UUID.randomUUID().toString() }
+  userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
+): SessionTemplate {
+  var sessionTemplate = SessionTemplate(
+    name = name + dayOfWeek,
+    validFromDate = validFromDate,
+    validToDate = validToDate,
+    closedCapacity = closedCapacity,
+    openCapacity = openCapacity,
+    prisonId = prison.id,
+    prison = prison,
+    visitRoom = visitRoom,
+    visitType = visitType,
+    startTime = startTime,
+    endTime = endTime,
+    dayOfWeek = dayOfWeek,
+    weeklyFrequency = weeklyFrequency,
+    active = isActive,
+    permittedSessionLocationGroups = permittedSessionLocationGroups,
+    permittedSessionCategoryGroups = permittedSessionCategoryGroups,
+    includeLocationGroupType = includeLocationGroupType,
+  ).also { it.reference = UUID.randomUUID().toString() }
+
+  sessionTemplate = addUserClients(sessionTemplate, userTypes)
+  return sessionTemplate
+}
 
 fun sessionTemplate(
   name: String = "sessionTemplate_",
@@ -100,10 +110,11 @@ fun sessionTemplate(
   adultAgeYears: Int = 18,
   isActive: Boolean = true,
   includeLocationGroupType: Boolean = true,
+  userTypes: List<UserType> = listOf(UserType.STAFF, UserType.PUBLIC),
 ): SessionTemplate {
   val prison = Prison(code = prisonCode, active = isActive, policyNoticeDaysMin, policyNoticeDaysMax, maxTotalVisitors, maxAdultVisitors, maxChildVisitors, adultAgeYears)
 
-  return SessionTemplate(
+  var sessionTemplate = SessionTemplate(
     name = name + dayOfWeek,
     validFromDate = validFromDate,
     validToDate = validToDate,
@@ -121,7 +132,31 @@ fun sessionTemplate(
     permittedSessionLocationGroups = permittedSessionLocationGroups,
     permittedSessionCategoryGroups = permittedSessionCategoryGroups,
     includeLocationGroupType = includeLocationGroupType,
+
   ).also { it.reference = UUID.randomUUID().toString() }
+  sessionTemplate = addUserClients(sessionTemplate, userTypes)
+
+  return sessionTemplate
+}
+
+private fun addUserClients(
+  sessionTemplate: SessionTemplate,
+  userTypes: List<UserType>,
+): SessionTemplate {
+  userTypes.forEach { userType ->
+    sessionTemplate.clients.add(
+      SessionTemplateUserClient(
+        sessionTemplateId = sessionTemplate.id,
+        sessionTemplate = sessionTemplate,
+        active = true,
+        userType = userType,
+        createTimestamp = LocalDateTime.now(),
+        modifyTimestamp = LocalDateTime.now(),
+      ),
+    )
+  }
+
+  return sessionTemplate
 }
 
 fun createCreateSessionTemplateDto(
@@ -137,6 +172,7 @@ fun createCreateSessionTemplateDto(
   categoryGroupReferences: List<String> = listOf(),
   incentiveLevelGroupReferences: List<String> = listOf(),
   includeLocationGroupType: Boolean = true,
+  userClients: List<UserClientDto> = listOf(),
 ): CreateSessionTemplateDto = CreateSessionTemplateDto(
   name = name + dayOfWeek,
   prisonCode = prisonCode,
@@ -150,6 +186,7 @@ fun createCreateSessionTemplateDto(
   categoryGroupReferences = categoryGroupReferences,
   incentiveLevelGroupReferences = incentiveLevelGroupReferences,
   includeLocationGroupType = includeLocationGroupType,
+  clients = userClients,
 )
 
 fun createCreateSessionTemplateDto(
@@ -187,6 +224,7 @@ fun createUpdateSessionTemplateDto(
   categoryGroupReferences: MutableList<String> = mutableListOf(),
   incentiveLevelGroupReferences: MutableList<String> = mutableListOf(),
   includeLocationGroupType: Boolean = true,
+  clients: List<UserClientDto>? = null,
 ): UpdateSessionTemplateDto = UpdateSessionTemplateDto(
   name = name + dayOfWeek,
   sessionDateRange = sessionDateRange,
@@ -197,6 +235,7 @@ fun createUpdateSessionTemplateDto(
   weeklyFrequency = weeklyFrequency,
   categoryGroupReferences = categoryGroupReferences,
   incentiveLevelGroupReferences = incentiveLevelGroupReferences,
+  clients = clients,
 )
 
 fun createUpdateSessionTemplateDto(

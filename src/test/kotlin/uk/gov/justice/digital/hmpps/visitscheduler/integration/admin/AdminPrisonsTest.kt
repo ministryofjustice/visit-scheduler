@@ -18,7 +18,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_P
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.PRISON_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
@@ -153,12 +153,12 @@ class AdminPrisonsTest : IntegrationTestBase() {
     assertClientPrisonEntity(dto, prisonCode = "AWE", isActive = false, type = type)
   }
 
-  fun assertClientPrisonDto(dto: PrisonUserClientDto, isActive: Boolean, type: UserType) {
+  fun assertClientPrisonDto(dto: UserClientDto, isActive: Boolean, type: UserType) {
     assertThat(dto.active).isEqualTo(isActive)
     assertThat(dto.userType).isEqualTo(type)
   }
 
-  fun assertClientPrisonEntity(dto: PrisonUserClientDto, prisonCode: String, isActive: Boolean, type: UserType) {
+  fun assertClientPrisonEntity(dto: UserClientDto, prisonCode: String, isActive: Boolean, type: UserType) {
     val client = testPrisonUserClientRepository.getPrisonClient(prisonCode, type)
     assertThat(client).isNotNull
     client?.let {
@@ -187,7 +187,7 @@ class AdminPrisonsTest : IntegrationTestBase() {
   @Test
   fun `create prison`() {
     // Given
-    val clients = listOf(PrisonUserClientDto(PUBLIC, true), PrisonUserClientDto(STAFF, false))
+    val clients = listOf(UserClientDto(PUBLIC, true), UserClientDto(STAFF, false))
     val prisonDto = PrisonEntityHelper.createPrisonDto("AWE", true, clients = clients)
 
     // When
@@ -323,10 +323,10 @@ class AdminPrisonsTest : IntegrationTestBase() {
     return objectMapper.readValue(returnResult.returnResult().responseBody, PrisonDto::class.java)
   }
 
-  private fun getPrisonClientResults(responseSpec: ResponseSpec): PrisonUserClientDto {
+  private fun getPrisonClientResults(responseSpec: ResponseSpec): UserClientDto {
     val returnResult = responseSpec.expectStatus().isOk
       .expectBody()
-    return objectMapper.readValue(returnResult.returnResult().responseBody, PrisonUserClientDto::class.java)
+    return objectMapper.readValue(returnResult.returnResult().responseBody, UserClientDto::class.java)
   }
 
   private fun getPrisonsResults(responseSpec: ResponseSpec): Array<PrisonDto> {

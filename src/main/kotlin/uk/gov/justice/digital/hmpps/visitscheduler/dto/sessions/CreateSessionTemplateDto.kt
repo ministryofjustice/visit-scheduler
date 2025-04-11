@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionCapacityValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeSlotValidation
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import java.time.DayOfWeek
 
 data class CreateSessionTemplateDto(
@@ -61,4 +62,7 @@ data class CreateSessionTemplateDto(
 
   @Schema(description = "Determines behaviour of location groups. True will mean these location groups are included, false means they will be excluded.", required = true)
   val includeLocationGroupType: Boolean,
+
+  @Schema(description = "Session template user clients.", required = false)
+  val clients: List<UserClientDto> = listOf(),
 )

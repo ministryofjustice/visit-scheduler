@@ -16,6 +16,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocatio
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocationTypes.ECL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocationTypes.RECP
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocationTypes.TAP
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -288,7 +289,11 @@ class AdminGetSessionsTemplateLocationsWhenPrisonerIsTransitionalTest : Integrat
     )
   }
 
-  private fun callGetSessionsByPrisonerIdAndPrison(prisonId: String, prisonerId: String): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+  private fun callGetSessionsByPrisonerIdAndPrison(
+    prisonId: String,
+    prisonerId: String,
+    userType: UserType = UserType.STAFF,
+  ): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId&userType=$userType")
     .headers(setAuthorisation(roles = requiredRole))
     .exchange()
 

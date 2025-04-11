@@ -11,6 +11,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionConflict
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus.BOOKED
@@ -387,7 +388,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -421,7 +422,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -454,7 +455,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
 
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -491,7 +492,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -528,7 +529,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -569,7 +570,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -610,7 +611,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -640,7 +641,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -688,7 +689,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -735,7 +736,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1433,7 +1434,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1458,7 +1459,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1496,7 +1497,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1572,7 +1573,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1622,7 +1623,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1660,7 +1661,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1699,7 +1700,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1737,7 +1738,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1774,7 +1775,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(prisonerId, "${prison.code}-C-1-C001")
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -1846,7 +1847,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "${prison.code}-A-1-C001")
 
     // When
-    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange().expectBody()
 
@@ -1921,7 +1922,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "${prison.code}-A-1-C001")
 
     // When
-    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange().expectBody()
 
@@ -1985,7 +1986,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "$associationPrisonerPrison-A-1-C001")
 
     // When
-    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange().expectBody()
 
@@ -2047,7 +2048,7 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonApiMockServer.stubGetPrisonerHousingLocation(associationPrisonerId, "$associationPrisonerPrison-A-1-C001")
 
     // When
-    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseResult = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange().expectBody()
 
@@ -2070,7 +2071,7 @@ class GetSessionsTest : IntegrationTestBase() {
 
     // When
     // get sessions call is being made with the incorrect prison Code
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$incorrectPrisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$incorrectPrisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -2107,7 +2108,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -2143,7 +2144,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -2179,7 +2180,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -2213,7 +2214,7 @@ class GetSessionsTest : IntegrationTestBase() {
     )
 
     // When
-    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId")
+    val responseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF")
       .headers(setAuthorisation(roles = requiredRole))
       .exchange()
 
@@ -2226,11 +2227,15 @@ class GetSessionsTest : IntegrationTestBase() {
     prisonerId: String,
     policyNoticeDaysMin: Int,
     policyNoticeDaysMax: Int,
-  ): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax")
+  ): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonCode&prisonerId=$prisonerId&userType=STAFF&min=$policyNoticeDaysMin&max=$policyNoticeDaysMax&user")
     .headers(setAuthorisation(roles = requiredRole))
     .exchange()
 
-  private fun callGetSessions(prisonId: String? = "MDI", prisonerId: String): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+  private fun callGetSessions(
+    prisonId: String? = "MDI",
+    prisonerId: String,
+    userType: UserType = UserType.STAFF,
+  ): ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId&userType=$userType")
     .headers(setAuthorisation(roles = requiredRole))
     .exchange()
 
