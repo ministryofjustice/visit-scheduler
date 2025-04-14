@@ -1519,7 +1519,6 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       prisonCode,
       prisonerId,
       OPEN,
-
       authHttpHeaders = authHttpHeaders,
     )
 

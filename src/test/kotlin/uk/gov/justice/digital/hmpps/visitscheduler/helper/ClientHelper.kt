@@ -30,10 +30,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ACTIVATE_SESSION_TEMPLATE_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_PRISON_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.ADD_SESSION_TEMPLATE_EXCLUDE_DATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.CATEGORY_GROUP_ADMIN_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.DEACTIVATE_SESSION_TEMPLATE_CLIENT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_CREATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.FIND_MATCHING_SESSION_TEMPLATES_ON_UPDATE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.GET_PRISON_EXCLUDE_DATES
@@ -488,6 +490,40 @@ fun callDeActivateSessionTemplate(
   null,
   webTestClient,
   getReferenceUrl(DEACTIVATE_SESSION_TEMPLATE, sessionTemplateReference),
+  authHttpHeaders,
+)
+
+fun callGetSessionTemplate(
+  webTestClient: WebTestClient,
+  sessionTemplateReference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec = callGet(
+  webTestClient,
+  getReferenceUrl(REFERENCE_SESSION_TEMPLATE_PATH, sessionTemplateReference),
+  authHttpHeaders,
+)
+
+fun callActivateSessionTemplateClient(
+  webTestClient: WebTestClient,
+  sessionTemplateReference: String,
+  userType: UserType,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec = callPut(
+  null,
+  webTestClient,
+  getReferenceUrl(ACTIVATE_SESSION_TEMPLATE_CLIENT, sessionTemplateReference).replace("{type}", userType.name),
+  authHttpHeaders,
+)
+
+fun callDeactivateSessionTemplateClient(
+  webTestClient: WebTestClient,
+  sessionTemplateReference: String,
+  userType: UserType,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec = callPut(
+  null,
+  webTestClient,
+  getReferenceUrl(DEACTIVATE_SESSION_TEMPLATE_CLIENT, sessionTemplateReference).replace("{type}", userType.name),
   authHttpHeaders,
 )
 

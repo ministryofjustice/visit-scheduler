@@ -11,6 +11,8 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTempl
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.CURRENT_OR_FUTURE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SessionTemplateRangeType.HISTORIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitStatus
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType
@@ -47,6 +49,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGro
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateUserClientRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.VisitRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateComparator
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionTemplateMapper
@@ -63,6 +66,7 @@ class SessionTemplateService(
   private val sessionLocationGroupRepository: SessionLocationGroupRepository,
   private val sessionCategoryGroupRepository: SessionCategoryGroupRepository,
   private val sessionIncentiveLevelGroupRepository: SessionIncentiveLevelGroupRepository,
+  private val sessionTemplateUserClientRepository: SessionTemplateUserClientRepository,
   private val visitRepository: VisitRepository,
   private val prisonsService: PrisonsService,
   private val updateSessionTemplateValidator: UpdateSessionTemplateValidator,
@@ -591,6 +595,34 @@ class SessionTemplateService(
     // ensure the prison is enabled
     val sessionTemplate = getSessionTemplate(sessionTemplateReference)
     return excludeDateService.getExcludeDates(sessionTemplate.excludeDates)
+  }
+
+  @Transactional
+  fun activateSessionTemplateClient(sessionTemplateReference: String, type: UserType): UserClientDto = createOrUpdateSessionTemplateClient(sessionTemplateReference, type, true)
+
+  @Transactional
+  fun deActivateSessionTemplateClient(sessionTemplateReference: String, type: UserType): UserClientDto = createOrUpdateSessionTemplateClient(sessionTemplateReference, type, false)
+
+  private fun createOrUpdateSessionTemplateClient(
+    sessionTemplateReference: String,
+    userType: UserType,
+    active: Boolean,
+  ): UserClientDto {
+    val sessionTemplateUserClient: SessionTemplateUserClient
+    if (sessionTemplateUserClientRepository.doesSessionTemplateClientExist(sessionTemplateReference, userType)) {
+      sessionTemplateUserClient = sessionTemplateUserClientRepository.getSessionTemplateClient(sessionTemplateReference, userType)
+      sessionTemplateUserClient.active = active
+    } else {
+      val sessionTemplate = getSessionTemplate(sessionTemplateReference)
+      sessionTemplateUserClient = SessionTemplateUserClient(
+        sessionTemplate = sessionTemplate,
+        sessionTemplateId = sessionTemplate.id,
+        userType = userType,
+        active = active,
+      )
+      sessionTemplate.clients.add(sessionTemplateUserClient)
+    }
+    return UserClientDto(sessionTemplateUserClient.userType, sessionTemplateUserClient.active)
   }
 }
 
