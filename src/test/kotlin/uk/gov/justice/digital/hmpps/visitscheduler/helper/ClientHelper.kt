@@ -25,7 +25,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RECEIVED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RELEASED_CHANGE_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_PRISONER_RESTRICTION_CHANGE_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_TYPES
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_APPROVED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_RESTRICTION_UPSERTED_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH
@@ -710,16 +709,6 @@ fun callCountVisitNotification(
     authHttpHeaders,
   )
 }
-
-fun callGetVisitNotificationTypes(
-  webTestClient: WebTestClient,
-  bookingReference: String,
-  authHttpHeaders: (HttpHeaders) -> Unit,
-): ResponseSpec = callGet(
-  webTestClient,
-  VISIT_NOTIFICATION_TYPES.replace("{reference}", bookingReference),
-  authHttpHeaders,
-)
 
 fun callGetVisitNotificationEvents(
   webTestClient: WebTestClient,

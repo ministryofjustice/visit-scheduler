@@ -13,7 +13,6 @@ import org.springframework.http.HttpHeaders
 import org.springframework.transaction.annotation.Propagation.SUPPORTS
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_EVENTS
-import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_TYPES
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.VISITOR_ID
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventAttributeType.VISITOR_RESTRICTION
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.NotificationEventType
@@ -29,7 +28,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.Vis
 import java.time.LocalDate
 
 @Transactional(propagation = SUPPORTS)
-@DisplayName("GET $VISIT_NOTIFICATION_TYPES")
+@DisplayName("GET $VISIT_NOTIFICATION_EVENTS")
 class GetVisitNotificationEventsTest : NotificationTestBase() {
 
   private lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit

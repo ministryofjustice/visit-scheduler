@@ -326,6 +326,7 @@ class VisitStoreService(
     existingVisit.visitRoom = updateVisitFromExternalSystemDto.visitRoom
 
     existingVisit.visitors.clear()
+    visitRepository.saveAndFlush(existingVisit)
     existingVisit.visitors.addAll(
       updateVisitFromExternalSystemDto.visitors?.map {
         VisitVisitor(
@@ -338,6 +339,7 @@ class VisitStoreService(
     )
 
     existingVisit.visitNotes.clear()
+    visitRepository.saveAndFlush(existingVisit)
     existingVisit.visitNotes.addAll(
       updateVisitFromExternalSystemDto.visitNotes.map {
         VisitNote(
