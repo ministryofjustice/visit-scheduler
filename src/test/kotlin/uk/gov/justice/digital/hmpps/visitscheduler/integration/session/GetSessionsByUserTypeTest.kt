@@ -5,11 +5,9 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
-import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
@@ -22,7 +20,6 @@ import java.time.LocalTime
 
 @DisplayName("GET $VISIT_SESSION_CONTROLLER_PATH and GET $VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH with userType")
 class GetSessionsByUserTypeTest : IntegrationTestBase() {
-
   private val requiredRole = listOf("ROLE_VISIT_SCHEDULER")
 
   private val prisonerId = "A0000001"
@@ -35,9 +32,11 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
   private lateinit var sessionTemplate3: SessionTemplate
   private lateinit var sessionTemplate4: SessionTemplate
   private lateinit var sessionTemplate5: SessionTemplate
+  private lateinit var authHttpHeaders: (org.springframework.http.HttpHeaders) -> Unit
 
   @BeforeEach
   internal fun setUpTests() {
+    authHttpHeaders = setAuthorisation(roles = requiredRole)
     prison = prisonEntityHelper.create(prisonCode = prisonCode)
     prisonOffenderSearchMockServer.stubGetPrisonerByString(prisonerId, prisonCode)
     nextAllowedDay = getNextAllowedDay()
@@ -106,7 +105,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
   @Test
   fun `when get visit sessions called with userType STAFF only visit sessions for STAFF are returned`() {
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = STAFF, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk
@@ -123,7 +122,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = SYSTEM)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = SYSTEM, authHttpHeaders = setAuthorisation(roles = requiredRole))
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -135,7 +134,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
     val prisonerId = "A1234AA"
 
     // When
-    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = PUBLIC)
+    val responseSpec = callGetSessions(prisonCode, prisonerId, userType = PUBLIC, authHttpHeaders = authHttpHeaders)
 
     // Then
     responseSpec.expectStatus().isBadRequest
@@ -144,7 +143,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
   @Test
   fun `when get available visit sessions called with userType STAFF only available visit sessions for STAFF are returned`() {
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = STAFF)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = STAFF, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -157,7 +156,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
   @Test
   fun `when get available visit sessions called with userType PUBLIC only available visit sessions for PUBLIC are returned`() {
     // When
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = PUBLIC)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = PUBLIC, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
@@ -171,74 +170,12 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
   fun `when get available visit sessions called with userType SYSTEM no sessions are returned`() {
     // When
     val userType = SYSTEM
-    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = userType)
+    val responseSpec = callGetAvailableSessions(prisonCode, prisonerId, userType = userType, sessionRestriction = OPEN, authHttpHeaders = authHttpHeaders)
 
     // Then
     val returnResult = responseSpec.expectStatus().isOk.expectBody()
     val visitSessionResults = getAvailableVisitSessionResults(returnResult)
     assertThat(visitSessionResults.size).isEqualTo(0)
-  }
-
-  private fun callGetSessions(
-    prisonCode: String? = "SPC",
-    prisonerId: String,
-    policyNoticeDaysMin: Int? = null,
-    policyNoticeDaysMax: Int? = null,
-    userType: UserType,
-  ): ResponseSpec {
-    val urlParams = mutableListOf(
-      "prisonerId=$prisonerId",
-      "prisonId=$prisonCode",
-      "userType=$userType",
-    )
-    policyNoticeDaysMin?.let {
-      urlParams.add("min=$policyNoticeDaysMin")
-    }
-    policyNoticeDaysMax?.let {
-      urlParams.add("max=$policyNoticeDaysMax")
-    }
-
-    val uri = VISIT_SESSION_CONTROLLER_PATH + "?" + urlParams.joinToString("&")
-
-    return webTestClient.get()
-      .uri(uri)
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
-  }
-
-  private fun callGetAvailableSessions(
-    prisonCode: String? = "SPC",
-    prisonerId: String,
-    userType: UserType,
-  ): ResponseSpec {
-    val uri = VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
-    val uriQueryParams = getAvailableSessionsQueryParams(
-      prisonCode = prisonCode!!,
-      prisonerId = prisonerId,
-      userType = userType,
-    ).joinToString("&")
-
-    return webTestClient.get().uri("$uri?$uriQueryParams")
-      .headers(setAuthorisation(roles = requiredRole))
-      .exchange()
-  }
-
-  private fun getAvailableSessionsQueryParams(
-    prisonCode: String,
-    prisonerId: String,
-    sessionRestriction: SessionRestriction = SessionRestriction.OPEN,
-    fromDate: LocalDate = LocalDate.now().plusDays(2),
-    toDate: LocalDate = LocalDate.now().plusDays(28),
-    userType: UserType,
-  ): List<String> {
-    val queryParams = ArrayList<String>()
-    queryParams.add("prisonId=$prisonCode")
-    queryParams.add("prisonerId=$prisonerId")
-    queryParams.add("sessionRestriction=$sessionRestriction")
-    queryParams.add("fromDate=$fromDate")
-    queryParams.add("toDate=$toDate")
-    queryParams.add("userType=${userType.name}")
-    return queryParams
   }
 
   private fun getNextAllowedDay(): LocalDate {
