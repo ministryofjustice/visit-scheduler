@@ -854,7 +854,6 @@ class SessionServiceTest {
         dayOfWeek = MONDAY,
         startTime = LocalTime.parse("11:30"),
         endTime = LocalTime.parse("12:30"),
-
       )
 
       val secondSession = sessionTemplate(

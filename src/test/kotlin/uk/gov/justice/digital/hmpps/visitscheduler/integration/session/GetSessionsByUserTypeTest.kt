@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction.OPEN
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
@@ -49,7 +50,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
       endTime = LocalTime.parse("10:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prisonCode,
-      userTypes = listOf(Pair(STAFF, true)),
+      clients = listOf(UserClientDto(STAFF, true)),
       visitRoom = "Visits Main Hall",
     )
 
@@ -61,7 +62,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
       endTime = LocalTime.parse("12:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prisonCode,
-      userTypes = listOf(Pair(PUBLIC, true)),
+      clients = listOf(UserClientDto(PUBLIC, true)),
       visitRoom = "Visits Main Hall",
     )
 
@@ -73,7 +74,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
       endTime = LocalTime.parse("13:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prisonCode,
-      userTypes = listOf(Pair(STAFF, true), Pair(PUBLIC, true)),
+      clients = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
       visitRoom = "Visits Main Hall",
     )
 
@@ -85,7 +86,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
       endTime = LocalTime.parse("14:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prisonCode,
-      userTypes = listOf(Pair(STAFF, false)),
+      clients = listOf(UserClientDto(STAFF, false)),
       visitRoom = "Visits Main Hall",
     )
 
@@ -97,7 +98,7 @@ class GetSessionsByUserTypeTest : IntegrationTestBase() {
       endTime = LocalTime.parse("15:00"),
       dayOfWeek = nextAllowedDay.dayOfWeek,
       prisonCode = prisonCode,
-      userTypes = listOf(Pair(PUBLIC, false)),
+      clients = listOf(UserClientDto(PUBLIC, false)),
       visitRoom = "Visits Main Hall",
     )
   }

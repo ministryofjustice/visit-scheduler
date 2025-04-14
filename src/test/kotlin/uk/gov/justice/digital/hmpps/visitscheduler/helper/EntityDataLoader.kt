@@ -6,8 +6,8 @@ import org.springframework.transaction.annotation.Propagation.REQUIRES_NEW
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonUserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType.BOOKED_VISIT
@@ -96,7 +96,7 @@ class PrisonEntityHelper(
     fun createPrisonDto(
       prisonCode: String = "AWE",
       activePrison: Boolean = true,
-      clients: List<PrisonUserClientDto> = mutableListOf(),
+      clients: List<UserClientDto> = mutableListOf(),
       policyNoticeDaysMin: Int = 2,
       policyNoticeDaysMax: Int = 28,
       maxTotalVisitors: Int = 6,
@@ -618,7 +618,7 @@ class SessionTemplateEntityHelper(
     isActive: Boolean = true,
     includeLocationGroupType: Boolean = true,
     excludeDates: MutableList<LocalDate> = mutableListOf(),
-    userTypes: List<Pair<UserType, Boolean>> = listOf(Pair(STAFF, true), Pair(PUBLIC, true)),
+    clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -641,7 +641,7 @@ class SessionTemplateEntityHelper(
       isActive = isActive,
       includeLocationGroupType = includeLocationGroupType,
       excludeDates = excludeDates,
-      userTypes = userTypes,
+      clients = clients,
     )
   }
 
@@ -665,7 +665,7 @@ class SessionTemplateEntityHelper(
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
     includeLocationGroupType: Boolean = true,
     excludeDates: MutableList<LocalDate> = mutableListOf(),
-    userTypes: List<Pair<UserType, Boolean>> = listOf(Pair(STAFF, true), Pair(PUBLIC, true)),
+    clients: List<UserClientDto> = listOf(UserClientDto(STAFF, true), UserClientDto(PUBLIC, true)),
   ): SessionTemplate {
     val sessionTemplate = sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -701,13 +701,13 @@ class SessionTemplateEntityHelper(
       )
     }
 
-    userTypes.forEach { userType ->
+    clients.forEach { userType ->
       sessionTemplateUserClientRepository.saveAndFlush(
         SessionTemplateUserClient(
           sessionTemplateId = sessionTemplate.id,
           sessionTemplate = sessionTemplate,
-          userType = userType.first,
-          active = userType.second,
+          userType = userType.userType,
+          active = userType.active,
         ),
       )
     }
