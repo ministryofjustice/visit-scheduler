@@ -42,6 +42,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.application.Appl
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.notification.VisitNotificationEvent
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateExcludeDate
+import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplateUserClient
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionPrisonerCategory
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.incentive.SessionIncentiveLevelGroup
@@ -54,6 +55,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionCategoryGro
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionIncentiveLevelGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionLocationGroupRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateExcludeDateRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.repository.SessionTemplateUserClientRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestActionedByRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestApplicationRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepository
@@ -594,6 +596,7 @@ class SessionTemplateEntityHelper(
   private val sessionRepository: TestSessionTemplateRepository,
   private val prisonEntityHelper: PrisonEntityHelper,
   private val sessionTemplateExcludeDateRepository: SessionTemplateExcludeDateRepository,
+  private val sessionTemplateUserClientRepository: SessionTemplateUserClientRepository,
 ) {
   fun create(
     name: String = "sessionTemplate_",
@@ -615,6 +618,7 @@ class SessionTemplateEntityHelper(
     isActive: Boolean = true,
     includeLocationGroupType: Boolean = true,
     excludeDates: MutableList<LocalDate> = mutableListOf(),
+    userTypes: List<Pair<UserType, Boolean>> = listOf(Pair(STAFF, true), Pair(PUBLIC, true)),
   ): SessionTemplate {
     val prison = prisonEntityHelper.create(prisonCode, activePrison)
 
@@ -637,6 +641,7 @@ class SessionTemplateEntityHelper(
       isActive = isActive,
       includeLocationGroupType = includeLocationGroupType,
       excludeDates = excludeDates,
+      userTypes = userTypes,
     )
   }
 
@@ -660,6 +665,7 @@ class SessionTemplateEntityHelper(
     permittedIncentiveLevels: MutableList<SessionIncentiveLevelGroup> = mutableListOf(),
     includeLocationGroupType: Boolean = true,
     excludeDates: MutableList<LocalDate> = mutableListOf(),
+    userTypes: List<Pair<UserType, Boolean>> = listOf(Pair(STAFF, true), Pair(PUBLIC, true)),
   ): SessionTemplate {
     val sessionTemplate = sessionRepository.saveAndFlush(
       SessionTemplate(
@@ -691,6 +697,17 @@ class SessionTemplateEntityHelper(
           sessionTemplate = sessionTemplate,
           excludeDate = excludeDate,
           actionedBy = "TEST_USER",
+        ),
+      )
+    }
+
+    userTypes.forEach { userType ->
+      sessionTemplateUserClientRepository.saveAndFlush(
+        SessionTemplateUserClient(
+          sessionTemplateId = sessionTemplate.id,
+          sessionTemplate = sessionTemplate,
+          userType = userType.first,
+          active = userType.second,
         ),
       )
     }

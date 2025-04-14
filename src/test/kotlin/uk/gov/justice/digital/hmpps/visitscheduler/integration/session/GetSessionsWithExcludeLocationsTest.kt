@@ -6,6 +6,7 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.test.web.reactive.server.WebTestClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.TransitionalLocationTypes
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.sessions.VisitSessionDto
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
@@ -447,7 +448,11 @@ class GetSessionsWithExcludeLocationsTest : IntegrationTestBase() {
     assertSession(visitSessionResults[0], nextAllowedDay, tapSessionTemplate)
   }
 
-  private fun callGetSessionsByPrisonerIdAndPrison(prisonId: String, prisonerId: String): WebTestClient.ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId")
+  private fun callGetSessionsByPrisonerIdAndPrison(
+    prisonId: String,
+    prisonerId: String,
+    userType: UserType = UserType.STAFF,
+  ): WebTestClient.ResponseSpec = webTestClient.get().uri("/visit-sessions?prisonId=$prisonId&prisonerId=$prisonerId&userType=$userType")
     .headers(setAuthorisation(roles = requiredRole))
     .exchange()
 

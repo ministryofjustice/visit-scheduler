@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus.BAD_REQUEST
 import org.springframework.test.web.reactive.server.WebTestClient.BodyContentSpec
 import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.IncentiveLevel
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.PrisonerCategoryType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.SessionRestriction
@@ -2767,13 +2768,14 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     policyNoticeDaysMax: Int = 28,
     excludedApplicationReference: String? = null,
     username: String? = null,
+    userType: UserType = UserType.PUBLIC,
   ): ResponseSpec {
     val today = LocalDate.now()
     val fromDate = today.plusDays(policyNoticeDaysMin.toLong())
     val toDate = today.plusDays(policyNoticeDaysMax.toLong())
     val dateRange = DateRange(fromDate, toDate)
 
-    val uri = "/visit-sessions/available"
+    val uri = VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
     val uriQueryParams = getAvailableSessionsQueryParams(
       prisonCode = prisonCode!!,
       prisonerId = prisonerId,
@@ -2783,6 +2785,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
       policyNoticeDaysMax = policyNoticeDaysMax,
       excludedApplicationReference = excludedApplicationReference,
       username = username,
+      userType = userType,
     ).joinToString("&")
 
     return webTestClient.get().uri("$uri?$uriQueryParams")
@@ -2799,6 +2802,7 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     policyNoticeDaysMax: Int,
     excludedApplicationReference: String?,
     username: String?,
+    userType: UserType,
   ): List<String> {
     val queryParams = ArrayList<String>()
     queryParams.add("prisonId=$prisonCode")
@@ -2816,6 +2820,8 @@ class GetAvailableSessionsTest : IntegrationTestBase() {
     username?.let {
       queryParams.add("username=$username")
     }
+
+    queryParams.add("userType=${userType.name}")
     return queryParams
   }
   private fun getNextAllowedDay(): LocalDate {
