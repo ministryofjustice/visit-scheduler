@@ -51,7 +51,6 @@ const val VISIT_NOTIFICATION_VISITOR_APPROVED_PATH: String = "$VISIT_NOTIFICATIO
 const val VISIT_NOTIFICATION_VISITOR_UNAPPROVED_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visitor/unapproved"
 const val VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/count"
 const val FUTURE_NOTIFICATION_VISIT_GROUPS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/{prisonCode}/groups"
-const val VISIT_NOTIFICATION_TYPES: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/types"
 const val VISIT_NOTIFICATION_EVENTS: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/events"
 const val VISIT_NOTIFICATION_IGNORE: String = "$VISIT_NOTIFICATION_CONTROLLER_PATH/visit/{reference}/ignore"
 
@@ -476,34 +475,6 @@ class VisitNotificationController(
     @PathVariable
     reference: String,
   ): List<VisitNotificationEventDto> = visitNotificationEventService.getNotificationEventsForBookingReference(reference)
-
-  @PreAuthorize("hasRole('VISIT_SCHEDULER')")
-  @GetMapping(VISIT_NOTIFICATION_TYPES)
-  @Operation(
-    summary = "get visit notification types by booking reference",
-    description = "Retrieve visit  notification types by booking reference",
-    responses = [
-      ApiResponse(
-        responseCode = "200",
-        description = "Retrieved visit  notification types by booking reference",
-      ),
-      ApiResponse(
-        responseCode = "401",
-        description = "Unauthorized to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-      ApiResponse(
-        responseCode = "403",
-        description = "Incorrect permissions to access this endpoint",
-        content = [Content(mediaType = "application/json", schema = Schema(implementation = ErrorResponse::class))],
-      ),
-    ],
-  )
-  fun getNotificationTypesForBookingReference(
-    @Schema(description = "bookingReference", example = "v9*d7*ed*7u", required = true)
-    @PathVariable
-    reference: String,
-  ): List<NotificationEventType> = visitNotificationEventService.getNotificationsTypesForBookingReference(reference)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @PutMapping(VISIT_NOTIFICATION_IGNORE)
