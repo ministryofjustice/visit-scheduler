@@ -343,7 +343,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     test = getVisitAssert(prisonerBVisit, NON_ASSOCIATION_EVENT.description)
     test.accept(flaggedVisitForPrisoner2)
 
-    verify(sessionService, times(0)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), any())
+    verify(sessionService, times(0)).getAllVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), any())
   }
 
   @Test
@@ -388,7 +388,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     test = getVisitAssert(prisonerBVisit, NON_ASSOCIATION_EVENT.description)
     test.accept(flaggedVisitForPrisoner2)
 
-    verify(sessionService, times(0)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), any())
+    verify(sessionService, times(0)).getAllVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), any())
   }
 
   @Test
@@ -408,7 +408,7 @@ class FlagVisitsTaskTest : IntegrationTestBase() {
     // When
     flagVisitsTask.flagVisits()
     verify(telemetryClient, times(0)).trackEvent(eq("flagged-visit-event"), mapCapture.capture(), isNull())
-    verify(sessionService, times(1)).getVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), any())
+    verify(sessionService, times(1)).getAllVisitSessions(any(), any(), anyOrNull(), anyOrNull(), anyOrNull(), anyOrNull(), any())
   }
 
   private fun assertFlaggedVisitEvent(visit: Visit, additionalInformation: String) {

@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitExternalSystemDetailsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitNoteDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorSupportDto
@@ -40,12 +41,17 @@ class VisitDtoBuilder {
       modifiedTimestamp = visitEntity.modifyTimestamp ?: LocalDateTime.now(),
       sessionTemplateReference = visitEntity.sessionSlot.sessionTemplateReference,
       userType = visitEntity.userType,
+      visitExternalSystemDetails = visitEntity.visitExternalSystemDetails?.let { VisitExternalSystemDetailsDto(it) },
     )
   }
 
   private fun getApplicationReference(
     visitEntity: Visit,
-  ): String {
+  ): String? {
+    // If the visit has an external system client reference then it will not have been created from an application
+    if (visitEntity.visitExternalSystemDetails?.clientReference != null) {
+      return null
+    }
     val application = visitEntity.getLastCompletedApplication()
     return application?.reference ?: run {
       // This catches an issues when two requests from the booking occur at the same time see bookVisit method in visit service

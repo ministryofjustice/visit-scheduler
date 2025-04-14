@@ -13,8 +13,8 @@ import java.time.LocalDateTime
 
 @Schema(description = "Visit")
 data class VisitDto(
-  @Schema(description = "Application Reference", example = "dfs-wjs-eqr", required = true)
-  val applicationReference: String,
+  @Schema(description = "Application Reference", example = "dfs-wjs-eqr", required = false)
+  val applicationReference: String?,
   @Schema(description = "session template Reference", example = "dfs-wjs-eqr", required = false)
   val sessionTemplateReference: String? = null,
   @Schema(description = "Visit Reference", example = "v9-d7-ed-7u", required = true)
@@ -60,4 +60,6 @@ data class VisitDto(
   val userType: UserType,
   @Schema(description = "Date the visit was first booked or migrated", example = "2018-12-01T13:45:00", required = false)
   var firstBookedDateTime: LocalDateTime? = null,
+  @Schema(description = "External system details associated with the visit")
+  val visitExternalSystemDetails: VisitExternalSystemDetailsDto?,
 )

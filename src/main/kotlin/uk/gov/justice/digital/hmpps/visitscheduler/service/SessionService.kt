@@ -60,7 +60,7 @@ class SessionService(
   }
 
   @Transactional(readOnly = true)
-  fun getVisitSession(prisonCode: String, sessionDate: LocalDate, sessionTemplateReference: String): VisitSessionDto {
+  fun getIndividualVisitSession(prisonCode: String, sessionDate: LocalDate, sessionTemplateReference: String): VisitSessionDto {
     val sessionTemplates = sessionTemplateRepository.findValidSessionTemplatesForSession(
       prisonCode,
       sessionDate,
@@ -91,7 +91,7 @@ class SessionService(
   }
 
   @Transactional(readOnly = true)
-  fun getVisitSessions(
+  fun getAllVisitSessions(
     prisonCode: String,
     prisonerId: String,
     currentApplicationReference: String? = null,
@@ -115,18 +115,6 @@ class SessionService(
       usernameToExcludeFromReservedApplications = usernameToExcludeFromReservedApplications,
       userType = userType,
     )
-  }
-
-  private fun getVisitSessions(
-    prisonCode: String,
-    prisonerId: String,
-    dateRange: DateRange,
-    excludedApplicationReference: String? = null,
-    usernameToExcludeFromReservedApplications: String? = null,
-    userType: UserType,
-  ): List<VisitSessionDto> {
-    val prison = prisonsService.findPrisonByCode(prisonCode)
-    return getVisitSessions(prison, prisonerId, dateRange, excludedApplicationReference, usernameToExcludeFromReservedApplications, userType)
   }
 
   private fun getVisitSessions(
@@ -176,7 +164,7 @@ class SessionService(
   }
 
   @Transactional(readOnly = true)
-  fun getAvailableVisitSessions(
+  fun getOnlyAvailableVisitSessions(
     prisonCode: String,
     prisonerId: String,
     sessionRestriction: SessionRestriction,
@@ -195,8 +183,10 @@ class SessionService(
       usernameToExcludeFromReservedApplications,
     )
     // get all visit sessions for usertype
+    val prison = prisonsService.findPrisonByCode(prisonCode)
+
     val visitSessions = getVisitSessions(
-      prisonCode = prisonCode,
+      prison = prison,
       prisonerId = prisonerId,
       dateRange = dateRange,
       excludedApplicationReference = excludedApplicationReference,

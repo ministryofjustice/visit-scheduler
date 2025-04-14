@@ -87,7 +87,7 @@ class FlagVisitsTask(
       reason = notifications.joinToString(", ") { it.description }
     } else {
       try {
-        sessions = sessionService.getVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays, userType = UserType.STAFF).filter { it.sessionTemplateReference == visit.sessionTemplateReference }
+        sessions = sessionService.getAllVisitSessions(prisonCode = visit.prisonCode, prisonerId = visit.prisonerId, minOverride = noticeDays, maxOverride = noticeDays, userType = UserType.STAFF).filter { it.sessionTemplateReference == visit.sessionTemplateReference }
       } catch (e: Exception) {
         if (isRetry) {
           // only log this if the visit is being retried
