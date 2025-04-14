@@ -20,6 +20,8 @@ import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.config.ErrorResponse
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CALLBACK_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFY_CONTROLLER_CREATE_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_SESSION_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ContactDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitorDto
@@ -56,6 +58,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.helper.SessionTemplateEntityH
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitEntityHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VisitNotifyHistoryHelper
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.VsipReportingEntityHelper
+import uk.gov.justice.digital.hmpps.visitscheduler.helper.callGet
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.callPut
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.LocalStackContainer
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.container.PostgresContainer
@@ -73,6 +76,7 @@ import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestEventAuditRepo
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestPrisonUserClientRepository
 import uk.gov.justice.digital.hmpps.visitscheduler.repository.TestSessionSlotRepository
+import uk.gov.justice.digital.hmpps.visitscheduler.service.DateRange
 import uk.gov.justice.digital.hmpps.visitscheduler.utils.SessionDatesUtil
 import java.time.LocalDate
 import java.time.LocalDateTime
@@ -440,4 +444,103 @@ abstract class IntegrationTestBase {
     templateId = templateID,
     templateVersion = templateVersion,
   )
+
+  protected fun callGetSessions(
+    prisonCode: String? = "SPC",
+    prisonerId: String,
+    policyNoticeDaysMin: Int? = null,
+    policyNoticeDaysMax: Int? = null,
+    userName: String? = null,
+    userType: UserType,
+    authHttpHeaders: (HttpHeaders) -> Unit,
+  ): ResponseSpec {
+    val urlParams = mutableListOf(
+      "prisonerId=$prisonerId",
+      "prisonId=$prisonCode",
+      "userType=$userType",
+    )
+    policyNoticeDaysMin?.let {
+      urlParams.add("min=$policyNoticeDaysMin")
+    }
+    policyNoticeDaysMax?.let {
+      urlParams.add("max=$policyNoticeDaysMax")
+    }
+    userName?.let {
+      urlParams.add("username=$userName")
+    }
+
+    val uri = VISIT_SESSION_CONTROLLER_PATH + "?" + urlParams.joinToString("&")
+
+    return callGet(
+      webTestClient,
+      uri,
+      authHttpHeaders,
+    )
+  }
+
+  protected fun callGetAvailableSessions(
+    prisonCode: String? = "SPC",
+    prisonerId: String,
+    sessionRestriction: SessionRestriction,
+    policyNoticeDaysMin: Int = 2,
+    policyNoticeDaysMax: Int = 28,
+    excludedApplicationReference: String? = null,
+    username: String? = null,
+    userType: UserType = UserType.PUBLIC,
+    authHttpHeaders: (HttpHeaders) -> Unit,
+  ): ResponseSpec {
+    val today = LocalDate.now()
+    val fromDate = today.plusDays(policyNoticeDaysMin.toLong())
+    val toDate = today.plusDays(policyNoticeDaysMax.toLong())
+    val dateRange = DateRange(fromDate, toDate)
+
+    val uri = VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH
+    val uriQueryParams = getAvailableSessionsQueryParams(
+      prisonCode = prisonCode!!,
+      prisonerId = prisonerId,
+      sessionRestriction = sessionRestriction,
+      dateRange = dateRange,
+      policyNoticeDaysMin = policyNoticeDaysMin,
+      policyNoticeDaysMax = policyNoticeDaysMax,
+      excludedApplicationReference = excludedApplicationReference,
+      username = username,
+      userType = userType,
+    ).joinToString("&")
+
+    return webTestClient.get().uri("$uri?$uriQueryParams")
+      .headers(authHttpHeaders)
+      .exchange()
+  }
+
+  private fun getAvailableSessionsQueryParams(
+    prisonCode: String,
+    prisonerId: String,
+    sessionRestriction: SessionRestriction,
+    dateRange: DateRange,
+    policyNoticeDaysMin: Int,
+    policyNoticeDaysMax: Int,
+    excludedApplicationReference: String?,
+    username: String?,
+    userType: UserType,
+  ): List<String> {
+    val queryParams = ArrayList<String>()
+    queryParams.add("prisonId=$prisonCode")
+    queryParams.add("prisonerId=$prisonerId")
+    queryParams.add("sessionRestriction=$sessionRestriction")
+    queryParams.add("fromDate=${dateRange.fromDate}")
+    queryParams.add("toDate=${dateRange.toDate}")
+    queryParams.add("policyNoticeDaysMin=$policyNoticeDaysMin")
+    queryParams.add("policyNoticeDaysMax=$policyNoticeDaysMax")
+
+    excludedApplicationReference?.let {
+      queryParams.add("excludedApplicationReference=$excludedApplicationReference")
+    }
+
+    username?.let {
+      queryParams.add("username=$username")
+    }
+
+    queryParams.add("userType=${userType.name}")
+    return queryParams
+  }
 }
