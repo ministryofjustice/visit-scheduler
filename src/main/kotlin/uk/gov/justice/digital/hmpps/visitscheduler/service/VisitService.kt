@@ -13,12 +13,16 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.SnsDomainEventPublishDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.EventAuditDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.builder.VisitDtoBuilder
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.EventAuditType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UnFlagEventReason
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.CLOSED
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitRestriction.OPEN
@@ -64,6 +68,12 @@ class VisitService(
 
     val booking = visitStoreService.createOrUpdateBooking(applicationReference, bookingRequestDto)
     return processBookingEvents(booking, bookingRequestDto)
+  }
+
+  fun createVisitFromExternalSystem(createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto): VisitDto {
+    val booking = visitStoreService.createVisitFromExternalSystem(createVisitFromExternalSystemDto)
+
+    return processCreateVisitFromExternalSystemEvents(booking, createVisitFromExternalSystemDto)
   }
 
   fun updateBookedVisit(applicationReference: String, bookingRequestDto: BookingRequestDto): VisitDto {
@@ -172,7 +182,7 @@ class VisitService(
   ): VisitDto {
     val bookingEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, EventAuditType.BOOKED_VISIT)
 
-    telemetryClientService.trackBookingEvent(bookingRequestDto, bookedVisitDto, bookingEventAuditDto)
+    telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       bookedVisitDto.reference,
@@ -186,6 +196,46 @@ class VisitService(
     return bookedVisitDto
   }
 
+  private fun processCreateVisitFromExternalSystemEvents(
+    bookedVisitDto: VisitDto,
+    createVisitFromExternalSystemDto: CreateVisitFromExternalSystemDto,
+  ): VisitDto {
+    val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(createVisitFromExternalSystemDto.prisonerId, bookedVisitDto, EventAuditType.BOOKED_VISIT, ApplicationMethodType.BY_PRISONER, UserType.PRISONER)
+
+    telemetryClientService.trackBookingEvent(bookedVisitDto, bookingEventAuditDto)
+
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      bookedVisitDto.reference,
+      bookedVisitDto.createdTimestamp,
+      bookedVisitDto.modifiedTimestamp,
+      bookedVisitDto.prisonerId,
+      bookingEventAuditDto.id,
+    )
+    snsService.sendVisitBookedEvent(snsDomainEventPublishDto)
+
+    return bookedVisitDto
+  }
+
+  private fun processUpdateVisitFromExternalSystemEvents(
+    existingVisitDto: VisitDto,
+    updatedVisitDto: VisitDto,
+  ): VisitDto {
+    val bookingEventAuditDto = visitEventAuditService.saveBookingEventAudit(updatedVisitDto.prisonerId, updatedVisitDto, EventAuditType.UPDATED_VISIT, ApplicationMethodType.BY_PRISONER, UserType.PRISONER)
+
+    telemetryClientService.trackUpdateBookingEvent(existingVisitDto, updatedVisitDto, bookingEventAuditDto)
+
+    val snsDomainEventPublishDto = SnsDomainEventPublishDto(
+      updatedVisitDto.reference,
+      updatedVisitDto.createdTimestamp,
+      updatedVisitDto.modifiedTimestamp,
+      updatedVisitDto.prisonerId,
+      bookingEventAuditDto.id,
+    )
+    snsService.sendChangedVisitBookedEvent(snsDomainEventPublishDto)
+
+    return updatedVisitDto
+  }
+
   private fun processUpdateBookingEvents(
     visitDtoBeforeUpdate: VisitDto?,
     bookedVisitDto: VisitDto,
@@ -193,7 +243,7 @@ class VisitService(
   ): VisitDto {
     val updatedEventAuditDto = visitEventAuditService.updateVisitApplicationAndSaveEvent(bookedVisitDto, bookingRequestDto, EventAuditType.UPDATED_VISIT)
 
-    telemetryClientService.trackUpdateBookingEvent(visitDtoBeforeUpdate, bookingRequestDto, bookedVisitDto, updatedEventAuditDto)
+    telemetryClientService.trackUpdateBookingEvent(visitDtoBeforeUpdate, bookedVisitDto, updatedEventAuditDto)
 
     val snsDomainEventPublishDto = SnsDomainEventPublishDto(
       bookedVisitDto.reference,
@@ -294,4 +344,27 @@ class VisitService(
 
   @Transactional
   fun findFutureVisitsBySessionPrisoner(prisonerNumber: String): List<VisitDto> = getFutureVisitsBy(prisonerNumber = prisonerNumber)
+
+  @Transactional
+  fun getVisitReferenceByClientReference(clientReference: String): List<String> {
+    val visitReference = visitRepository.getVisitReferenceByExternalSystemClientReference(clientReference)
+    if (visitReference.isEmpty()) {
+      throw VisitNotFoundException("Visit not found for external client reference")
+    }
+    return visitReference
+  }
+
+  @Transactional
+  fun updateVisitFromExternalSystem(
+    bookingReference: String,
+    updateVisitFromExternalSystemDto: UpdateVisitFromExternalSystemDto,
+  ): VisitDto {
+    val existingVisit =
+      visitRepository.findBookedVisit(bookingReference) ?: throw VisitNotFoundException("Visit $bookingReference not found")
+    val existingVisitDto = visitDtoBuilder.build(existingVisit)
+
+    val updatedVisitDto = visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, existingVisit)
+
+    return processUpdateVisitFromExternalSystemEvents(existingVisitDto, updatedVisitDto)
+  }
 }

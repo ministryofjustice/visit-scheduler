@@ -14,7 +14,9 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidati
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_PRISON_PRISONER_MISMATCH
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_NOT_AVAILABLE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_SESSION_TEMPLATE_NOT_FOUND
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_USER_TYPE
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationValidationErrorCodes.APPLICATION_INVALID_VISIT_ALREADY_BOOKED
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PRISONER
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.PUBLIC
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.STAFF
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType.SYSTEM
@@ -53,6 +55,8 @@ class ApplicationValidationService(
       STAFF -> getStaffApplicationValidationErrors(bookingRequestDto, application, existingBooking)
 
       SYSTEM -> getSystemApplicationValidationErrors()
+
+      PRISONER -> listOf(APPLICATION_INVALID_USER_TYPE)
     }
 
     if (errorCodes.isNotEmpty()) {
@@ -251,5 +255,6 @@ class ApplicationValidationService(
     STAFF -> applicationService.isExpiredApplication(application.modifyTimestamp!!)
     PUBLIC -> false
     SYSTEM -> false
+    PRISONER -> false
   }
 }

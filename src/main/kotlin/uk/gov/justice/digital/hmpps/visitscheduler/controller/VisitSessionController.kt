@@ -94,7 +94,7 @@ class VisitSessionController(
     username: String? = null,
     @RequestParam
     userType: UserType,
-  ): List<VisitSessionDto> = sessionService.getVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType)
+  ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(VISIT_SESSIONS_AVAILABLE_CONTROLLER_PATH)
@@ -164,7 +164,7 @@ class VisitSessionController(
     @Schema(description = "type", example = "STAFF", required = true)
     @RequestParam
     userType: UserType,
-  ): List<AvailableVisitSessionDto> = sessionService.getAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, userType = userType)
+  ): List<AvailableVisitSessionDto> = sessionService.getOnlyAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, userType = userType)
 
   @PreAuthorize("hasRole('VISIT_SCHEDULER')")
   @GetMapping(GET_SESSION_SCHEDULE)
@@ -308,5 +308,5 @@ class VisitSessionController(
       example = "xye-fjc-abc",
     )
     sessionTemplateReference: String,
-  ): VisitSessionDto? = sessionService.getVisitSession(prisonCode, sessionDate, sessionTemplateReference)
+  ): VisitSessionDto? = sessionService.getIndividualVisitSession(prisonCode, sessionDate, sessionTemplateReference)
 }
