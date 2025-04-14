@@ -6,7 +6,6 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
-import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
@@ -51,7 +50,6 @@ class TelemetryClientService(
 
   fun trackUpdateBookingEvent(
     visitDtoBeforeUpdate: VisitDto?,
-    bookingRequestDto: BookingRequestDto,
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
   ) {
@@ -62,7 +60,6 @@ class TelemetryClientService(
   }
 
   fun trackBookingEvent(
-    bookingRequestDto: BookingRequestDto,
     bookedVisitDto: VisitDto,
     eventAuditDto: EventAuditDto,
   ) {
@@ -333,7 +330,7 @@ class TelemetryClientService(
     visitDto: VisitDto,
   ): MutableMap<String, String> = mutableMapOf(
     "reference" to visitDto.reference,
-    "applicationReference" to visitDto.applicationReference,
+    "applicationReference" to (visitDto.applicationReference ?: ""),
     "prisonerId" to visitDto.prisonerId,
     "prisonId" to visitDto.prisonCode,
     "visitStatus" to visitDto.visitStatus.name,

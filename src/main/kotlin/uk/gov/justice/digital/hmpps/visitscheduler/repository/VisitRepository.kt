@@ -356,4 +356,10 @@ interface VisitRepository :
     "SELECT v FROM Visit v WHERE v.reference in :bookingReferences order by v.modifyTimestamp",
   )
   fun findVisitsByReferences(bookingReferences: List<String>): List<Visit>
+
+  @Query(
+    "SELECT v.reference FROM Visit v JOIN visit_external_system_details vfescr ON v.id = vfescr.visit_id WHERE vfescr.client_reference = :clientReference ORDER BY v.modify_timestamp",
+    nativeQuery = true,
+  )
+  fun getVisitReferenceByExternalSystemClientReference(clientReference: String): List<String>
 }

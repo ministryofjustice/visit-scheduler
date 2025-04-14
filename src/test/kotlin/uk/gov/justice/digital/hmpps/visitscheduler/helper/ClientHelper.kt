@@ -10,9 +10,12 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERV
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.APPLICATION_RESERVE_SLOT
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_BY_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_HISTORY_CONTROLLER_PATH
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.POST_VISIT_FROM_EXTERNAL_SYSTEM
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.UPDATE_VISIT_BY_APPLICATION_REFERENCE
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_BOOK
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CANCEL
+import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_CONTROLLER_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_COUNT_FOR_PRISON_PATH
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_EVENTS
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.VISIT_NOTIFICATION_IGNORE
@@ -54,11 +57,13 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.admin.SESSION_TEMP
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.migration.MIGRATE_CANCEL
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.BookingRequestDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.CancelVisitDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.CreateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.ExcludeDateDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.MigratedCancelVisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.PrisonDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdatePrisonDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.UpdateVisitFromExternalSystemDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.ChangeApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.application.CreateApplicationDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.ApplicationMethodType
@@ -213,6 +218,12 @@ fun callVisitByReference(
   reference: String,
   authHttpHeaders: (HttpHeaders) -> Unit,
 ): ResponseSpec = callGet(webTestClient, getVisitByReferenceUrl(reference), authHttpHeaders)
+
+fun callVisitByClientReference(
+  webTestClient: WebTestClient,
+  clientReference: String,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+): ResponseSpec = callGet(webTestClient, getVisitByClientReferenceUrl(clientReference), authHttpHeaders)
 
 fun callCreateSessionGroup(
   webTestClient: WebTestClient,
@@ -484,7 +495,14 @@ fun getPrisonIdUrl(url: String, prisonId: String): String = url.replace("{prison
 
 fun getReferenceUrl(url: String, reference: String): String = url.replace("{reference}", reference)
 
+fun getClientReferenceUrl(url: String, clientReference: String): String = url.replace("{clientReference}", clientReference)
+
 fun getVisitByReferenceUrl(reference: String): String = getReferenceUrl(GET_VISIT_BY_REFERENCE, reference)
+
+fun getVisitByClientReferenceUrl(clientReference: String): String = getClientReferenceUrl(
+  GET_VISIT_REFERENCE_BY_CLIENT_REFERENCE,
+  clientReference,
+)
 
 fun getVisitHistoryByReferenceUrl(reference: String): String = getReferenceUrl(GET_VISIT_HISTORY_CONTROLLER_PATH, reference)
 
@@ -760,6 +778,19 @@ fun callNotifyVSiPOfAEvent(
   path: String,
   anyDto: Any? = null,
 ): ResponseSpec = callPost(anyDto, webTestClient, path, authHttpHeaders)
+
+fun callCreateVisitFromExternalSystem(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  dto: CreateVisitFromExternalSystemDto,
+): ResponseSpec = callPost(dto, webTestClient, POST_VISIT_FROM_EXTERNAL_SYSTEM, authHttpHeaders)
+
+fun callUpdateVisitFromExternalSystem(
+  webTestClient: WebTestClient,
+  authHttpHeaders: (HttpHeaders) -> Unit,
+  reference: String,
+  dto: UpdateVisitFromExternalSystemDto,
+): ResponseSpec = callPut(dto, webTestClient, "$VISIT_CONTROLLER_PATH/external-system/$reference", authHttpHeaders)
 
 fun callGet(
   webTestClient: WebTestClient,
