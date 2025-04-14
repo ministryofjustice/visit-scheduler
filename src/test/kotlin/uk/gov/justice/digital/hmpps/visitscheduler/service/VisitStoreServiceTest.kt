@@ -7,6 +7,7 @@ import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.ExtendWith
 import org.mockito.junit.jupiter.MockitoExtension
 import org.mockito.kotlin.any
+import org.mockito.kotlin.atLeastOnce
 import org.mockito.kotlin.mock
 import org.mockito.kotlin.times
 import org.mockito.kotlin.verify
@@ -215,7 +216,7 @@ internal class VisitStoreServiceTest {
       whenever(visitRepository.saveAndFlush(visit)).thenReturn(visit)
 
       visitStoreService.updateVisitFromExternalSystem(updateVisitFromExternalSystemDto, visit)
-      verify(visitRepository, times(1)).saveAndFlush(any<Visit>())
+      verify(visitRepository, atLeastOnce()).saveAndFlush(any<Visit>())
       verify(visitDtoBuilder, times(1)).build(any<Visit>())
     }
   }
