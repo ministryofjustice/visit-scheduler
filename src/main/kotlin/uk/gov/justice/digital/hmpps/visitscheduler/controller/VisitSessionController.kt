@@ -93,6 +93,7 @@ class VisitSessionController(
     )
     username: String? = null,
     @RequestParam
+    @Parameter(description = "userType", example = "STAFF", required = true)
     userType: UserType,
   ): List<VisitSessionDto> = sessionService.getAllVisitSessions(prisonCode, prisonerId, minOverride = min, maxOverride = max, usernameToExcludeFromReservedApplications = username, userType = userType)
 
@@ -161,8 +162,8 @@ class VisitSessionController(
       example = "user-1",
     )
     username: String? = null,
-    @Schema(description = "type", example = "STAFF", required = true)
     @RequestParam
+    @Parameter(description = "userType", example = "STAFF", required = true)
     userType: UserType,
   ): List<AvailableVisitSessionDto> = sessionService.getOnlyAvailableVisitSessions(prisonCode, prisonerId, sessionRestriction, DateRange(fromDate, toDate), excludedApplicationReference, usernameToExcludeFromReservedApplications = username, userType = userType)
 
