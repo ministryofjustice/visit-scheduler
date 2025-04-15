@@ -266,7 +266,7 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitDto.visitContact.telephone).isEqualTo(applicationWithContact.visitContact!!.telephone)
     assertVisitMatchesApplication(visitDto, applicationWithContact)
 
-    val application = testApplicationRepository.findByReference(visitDto.applicationReference)
+    val application = testApplicationRepository.findByReference(visitDto.applicationReference!!)
     assertThat(application!!.completed).isTrue()
 
     // And
@@ -301,7 +301,7 @@ class BookVisitTest : IntegrationTestBase() {
     assertThat(visitDto.visitContact.telephone).isNull()
     assertVisitMatchesApplication(visitDto, applicationWithNoPhoneNumberNoEmail)
 
-    val application = testApplicationRepository.findByReference(visitDto.applicationReference)
+    val application = testApplicationRepository.findByReference(visitDto.applicationReference!!)
     assertThat(application!!.completed).isTrue()
 
     // And

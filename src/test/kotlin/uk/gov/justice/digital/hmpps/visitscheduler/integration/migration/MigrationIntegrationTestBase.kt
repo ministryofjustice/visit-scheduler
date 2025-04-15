@@ -3,7 +3,6 @@ package uk.gov.justice.digital.hmpps.visitscheduler.integration.migration
 import com.microsoft.applicationinsights.TelemetryClient
 import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.extension.ExtendWith
-import org.mockito.kotlin.any
 import org.mockito.kotlin.eq
 import org.mockito.kotlin.isNull
 import org.mockito.kotlin.times
@@ -40,7 +39,6 @@ import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.VisitType.SOCIAL
 import uk.gov.justice.digital.hmpps.visitscheduler.helper.AllowedSessionLocationHierarchy
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.IntegrationTestBase
 import uk.gov.justice.digital.hmpps.visitscheduler.integration.mock.HmppsAuthExtension
-import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.Visit
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.SessionTemplate
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.category.SessionCategoryGroup
 import uk.gov.justice.digital.hmpps.visitscheduler.model.entity.session.location.SessionLocationGroup
@@ -65,9 +63,6 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
 
     @JvmStatic
     protected val PRISON_CODE = "MGV"
-
-    @JvmStatic
-    protected val CANCELLED_BY_BY_USER = "user-2"
   }
 
   protected lateinit var roleVisitSchedulerHttpHeaders: (HttpHeaders) -> Unit
@@ -188,24 +183,24 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
     .exchange()
 
   protected fun assertTelemetryClientEvents(
-    visit: Visit,
+    visit: VisitDto,
     type: TelemetryVisitEvents,
   ) {
-    val visitStart = visit.sessionSlot.slotStart.format(DateTimeFormatter.ISO_DATE_TIME)
+    val visitStart = visit.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME)
 
     verify(telemetryClient).trackEvent(
       eq(type.eventName),
       org.mockito.kotlin.check {
         Assertions.assertThat(it["reference"]).isEqualTo(visit.reference)
         Assertions.assertThat(it["prisonerId"]).isEqualTo(visit.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prison.code)
+        Assertions.assertThat(it["prisonId"]).isEqualTo(visit.prisonCode)
         Assertions.assertThat(it["visitType"]).isEqualTo(visit.visitType.name)
         Assertions.assertThat(it["visitRoom"]).isEqualTo(visit.visitRoom)
-        Assertions.assertThat(it["sessionTemplateReference"]).isEqualTo(visit.sessionSlot.sessionTemplateReference)
+        Assertions.assertThat(it["sessionTemplateReference"]).isEqualTo(visit.sessionTemplateReference)
         Assertions.assertThat(it["visitRestriction"]).isEqualTo(visit.visitRestriction.name)
         Assertions.assertThat(it["visitStart"]).isEqualTo(visitStart)
         Assertions.assertThat(it["visitStatus"]).isEqualTo(visit.visitStatus.name)
-        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.getLastApplication()?.reference)
+        Assertions.assertThat(it["applicationReference"]).isEqualTo(visit.applicationReference)
         Assertions.assertThat(it["outcomeStatus"]).isEqualTo(visit.outcomeStatus!!.name)
       },
       isNull(),
@@ -213,69 +208,18 @@ abstract class MigrationIntegrationTestBase : IntegrationTestBase() {
 
     val eventsMap = mutableMapOf(
       "reference" to visit.reference,
-      "applicationReference" to visit.getLastApplication()?.reference,
+      "applicationReference" to visit.applicationReference,
       "prisonerId" to visit.prisonerId,
-      "prisonId" to visit.prison.code,
+      "prisonId" to visit.prisonCode,
       "visitType" to visit.visitType.name,
       "visitRoom" to visit.visitRoom,
-      "sessionTemplateReference" to visit.sessionSlot.sessionTemplateReference,
+      "sessionTemplateReference" to visit.sessionTemplateReference,
       "visitRestriction" to visit.visitRestriction.name,
       "visitStart" to visitStart,
       "visitStatus" to visit.visitStatus.name,
       "outcomeStatus" to visit.outcomeStatus!!.name,
     )
     verify(telemetryClient, times(1)).trackEvent(type.eventName, eventsMap, null)
-  }
-
-  protected fun assertTelemetryClientEvents(
-    visitDto: VisitDto,
-    type: TelemetryVisitEvents,
-  ) {
-    verify(telemetryClient).trackEvent(
-      eq(type.eventName),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(visitDto.reference)
-        Assertions.assertThat(it["prisonerId"]).isEqualTo(visitDto.prisonerId)
-        Assertions.assertThat(it["prisonId"]).isEqualTo(visitDto.prisonCode)
-        Assertions.assertThat(it["visitType"]).isEqualTo(visitDto.visitType.name)
-        Assertions.assertThat(it["visitRoom"]).isEqualTo(visitDto.visitRoom)
-        Assertions.assertThat(it["sessionTemplateReference"]).isEqualTo(visitDto.sessionTemplateReference)
-        Assertions.assertThat(it["visitRestriction"]).isEqualTo(visitDto.visitRestriction.name)
-        Assertions.assertThat(it["visitStart"]).isEqualTo(visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME))
-        Assertions.assertThat(it["visitStatus"]).isEqualTo(visitDto.visitStatus.name)
-        Assertions.assertThat(it["applicationReference"]).isEqualTo(visitDto.applicationReference)
-        Assertions.assertThat(it["outcomeStatus"]).isEqualTo(visitDto.outcomeStatus!!.name)
-      },
-      isNull(),
-    )
-
-    val eventsMap = mutableMapOf(
-      "reference" to visitDto.reference,
-      "applicationReference" to visitDto.applicationReference,
-      "prisonerId" to visitDto.prisonerId,
-      "prisonId" to visitDto.prisonCode,
-      "visitType" to visitDto.visitType.name,
-      "visitRoom" to visitDto.visitRoom,
-      "sessionTemplateReference" to visitDto.sessionTemplateReference,
-      "visitRestriction" to visitDto.visitRestriction.name,
-      "visitStart" to visitDto.startTimestamp.format(DateTimeFormatter.ISO_DATE_TIME),
-      "visitStatus" to visitDto.visitStatus.name,
-      "outcomeStatus" to visitDto.outcomeStatus!!.name,
-    )
-    verify(telemetryClient, times(1)).trackEvent(type.eventName, eventsMap, null)
-  }
-
-  protected fun assertCancelledDomainEvent(
-    cancelledVisit: VisitDto,
-  ) {
-    verify(telemetryClient).trackEvent(
-      eq("prison-visit.cancelled-domain-event"),
-      org.mockito.kotlin.check {
-        Assertions.assertThat(it["reference"]).isEqualTo(cancelledVisit.reference)
-      },
-      isNull(),
-    )
-    verify(telemetryClient, times(1)).trackEvent(eq("prison-visit.cancelled-domain-event"), any(), isNull())
   }
 
   protected fun cratePermittedCategories(
