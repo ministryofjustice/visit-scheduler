@@ -11,10 +11,10 @@ import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.Session
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionDateRangeValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.controller.validators.SessionTimeSlotValidation
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.UserClientDto
+import uk.gov.justice.digital.hmpps.visitscheduler.dto.enums.UserType
 import java.time.DayOfWeek
 
 data class CreateSessionTemplateDto(
-
   @Schema(description = "Name for Session template", example = "Monday Xmas", required = true)
   @field:NotBlank
   @field:Size(max = 100)
@@ -64,5 +64,5 @@ data class CreateSessionTemplateDto(
   val includeLocationGroupType: Boolean,
 
   @Schema(description = "Session template user clients.", required = false)
-  val clients: List<UserClientDto> = listOf(),
+  val clients: List<UserClientDto> = listOf(UserClientDto(UserType.STAFF, true), UserClientDto(UserType.PUBLIC, true)),
 )
