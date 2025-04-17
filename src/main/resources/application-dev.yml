@@ -33,6 +33,10 @@ non-associations:
     url: https://non-associations-api-dev.hmpps.service.justice.gov.uk
     timeout: 10s
 
+prisoner-contact.registry:
+  url: https://prisoner-contact-registry-dev.prison.service.justice.gov.uk
+  timeout: 10s
+
 policy:
   session:
     booking-notice-period:

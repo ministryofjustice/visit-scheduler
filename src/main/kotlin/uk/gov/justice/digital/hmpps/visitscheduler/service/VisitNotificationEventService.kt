@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.Lazy
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import uk.gov.justice.digital.hmpps.visitscheduler.client.PrisonerContactRegistryClient
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.IgnoreVisitNotificationsDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.VisitDto
 import uk.gov.justice.digital.hmpps.visitscheduler.dto.audit.ActionedByDto
@@ -67,6 +68,7 @@ class VisitNotificationEventService(
   private val prisonerService: PrisonerService,
   private val visitNotificationFlaggingService: VisitNotificationFlaggingService,
   private val pairedNotificationEventsUtil: PairedNotificationEventsUtil,
+  private val prisonerContactRegistryClient: PrisonerContactRegistryClient,
 ) {
 
   @Autowired
@@ -271,6 +273,13 @@ class VisitNotificationEventService(
     )
 
     if (affectedVisits.isNotEmpty()) {
+      // check if the visitor that was unapproved is still a SOCIAL contact as we have instances where the
+      // non-SOCIAL relationship of the visitor has been unapproved which should not affect visits.
+      if (doesSocialRelationshipForVisitorStillExist(notificationDto.prisonerNumber, notificationDto.visitorId)) {
+        LOG.info("Visitor ID {} still exists as a SOCIAL contact for prisoner {}, ignoring contact unapproved event.", notificationDto.visitorId, notificationDto.prisonerNumber)
+        return
+      }
+
       val notificationAttributes = hashMapOf(
         NotificationEventAttributeType.VISITOR_ID to notificationDto.visitorId,
       )
@@ -285,6 +294,13 @@ class VisitNotificationEventService(
 
     val prisonCode = prisonerService.getPrisonerPrisonCodeFromPrisonId(notificationDto.prisonerNumber)
     prisonCode?.let {
+      // check if the visitor that was approved is still a SOCIAL contact as we have instances where the
+      // non-SOCIAL relationship of the visitor has been approved which should not affect visits.
+      if (!doesSocialRelationshipForVisitorStillExist(notificationDto.prisonerNumber, notificationDto.visitorId)) {
+        LOG.info("Visitor ID {} does not exist as a SOCIAL contact for prisoner {}, ignoring contact approved event.", notificationDto.visitorId, notificationDto.prisonerNumber)
+        return
+      }
+
       val currentVisitorUnApprovedNotifications = visitNotificationEventRepository.getEventsByVisitor(
         prisonerNumber = notificationDto.prisonerNumber,
         prisonCode = prisonCode,
@@ -597,5 +613,10 @@ class VisitNotificationEventService(
         visitNotificationFlaggingService.unFlagTrackEvents(visitNotificationEvent.bookingReference, visitNotificationEvents.map { it.type }, reason, text)
       }
     }
+  }
+
+  private fun doesSocialRelationshipForVisitorStillExist(prisonerId: String, visitorId: String): Boolean {
+    val prisonerApprovedContacts = prisonerContactRegistryClient.getPrisonersSocialContacts(prisonerId, withAddress = false, approvedVisitorsOnly = true)
+    return prisonerApprovedContacts?.filter { it.personId != null }?.map { it.personId.toString() }?.contains(visitorId) ?: false
   }
 }

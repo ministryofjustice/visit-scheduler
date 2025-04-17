@@ -43,6 +43,11 @@ non-associations:
     url: http://localhost:8094
     timeout: 5s
 
+prisoner-contact:
+  registry:
+    url: http://localhost:8095
+    timeout: 5s
+
 policy:
   session:
     non-association:
